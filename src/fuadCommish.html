@@ -1,0 +1,173 @@
+<div id="commishdiv"></div>
+<script id="commish-penalty-form" type="text/x-handlebars-template">
+    <div style="border: 1px solid black; padding-top: 1em;" align="left">
+        <form action="http://football4.myfantasyleague.com/2012/edit_salary_adjustments" method="post">
+            <input type="hidden" name="LEAGUE_ID" value="{{leagueId}}">
+            <table align="center" cellspacing="1" class="report">
+                <caption><span>Create New Salary Adjustments</span></caption>
+                <tbody>
+                <tr>
+                    <th>Franchise</th>
+                    <th>Amount</th>
+                    <th>Explanation</th>
+                </tr>
+                {{#each franchises}}
+                {{#if this.penaltyReason}}
+                <tr class="{{../../rowClass}}">
+                    <td>{{this.teamName}}</td>
+                    <td><input type="text" name="{{this.franchiseId}}" size="7" value="{{this.pendingPenalty}}"></td>
+                    <td><input type="text" name="EXPLANATION{{this.franchiseId}}" size="45"
+                               value="{{this.penaltyReason}}">
+                    </td>
+                </tr>
+                {{/if}}
+                {{/each}}
+                </tbody>
+            </table>
+            <p class="form_buttons">
+                <input type="submit" value="Update Salary Adjustments">
+            </p>
+        </form>
+    </div>
+</script>
+<script id="commish-contract-form" type="text/x-handlebars-template">
+    <div style="border: 1px solid black; padding-top: 1em;" align="left">
+        <form action="http://football4.myfantasyleague.com/2012/set_salaries" method="post">
+            <input type="hidden" name="LEAGUE_ID" value="{{leagueId}}">
+            <input type="hidden" name="DISPLAY" value="LEAGUE">
+            <table align="center" cellspacing="1" class="report">
+                <tbody>
+                <tr>
+                    <th>Player</th>
+                    <th>Salary</th>
+                    <th>Contract Year</th>
+                    <th>Contract Status</th>
+                    <th>Other Contract Information</th>
+                </tr>
+                {{#each franchises}}
+                {{#each this.signedPlayers}}
+                <tr class="{{../../rowClass}}">
+                    <td>{{this.fullName}}</td>
+                    <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
+                    <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
+                    <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
+                    <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
+                </tr>
+                {{/each}}
+                {{#each this.pendingDroppedPlayers}}
+                <tr class="{{../../rowClass}}">
+                    <td>{{this.fullName}}</td>
+                    <td><input type="text" name="{{this.playerId}}" value="" size="9"></td>
+                    <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
+                    <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
+                    <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
+                </tr>
+                {{/each}}
+                {{/each}}
+                </tbody>
+            </table>
+            <p class="form_buttons">
+                <input type="submit" value="Save Salary/Contract Information">
+            </p>
+        </form>
+    </div>
+</script>
+<script type="text/javascript">
+    fuad.commish = (function ($, _, fuadUtil, fuadAjax) {
+        var mainContentDivSelector = "#commishdiv";
+
+        var createCommishContent = function () {
+            if (fuadUtil.isLoggedInAsCommish()) {
+                addRulesViolations();
+                addSalaryPenaltyForm();
+                addContractUpdateForm();
+                addPostTradeDeadlineJsButton();
+            } else {
+                $(mainContentDivSelector).html("<div>This tab is for commissioner use only.</div>");
+            }
+        };
+
+        var addRulesViolations = function () {
+            var warnings = [];
+            var week = fuadAjax.data.week;
+            $.each(fuadAjax.data.franchises, function (franchiseId, franchise) {
+                if (franchise.salary > fuadUtil.salaryCap) {
+                    warnings.push(franchise.teamName + " is over the salary cap with a total salary of " + franchise.salary + "!");
+                }
+                if (week < 16 && franchise.numPlayers > fuadUtil.rosterMax) {
+                    warnings.push(franchise.teamName + " is over the roster limit with " + franchise.numPlayers + " players!");
+                }
+                if (week < 16 && franchise.numPlayers < fuadUtil.rosterMin) {
+                    warnings.push(franchise.teamName + " is under the roster limit with " + franchise.numPlayers + " players!");
+                }
+                if (week < 15) {
+                    _.chain(franchise.lineup)
+                            .filter(function (player) {
+                                return player.injured
+                            })
+                            .each(function (player) {
+                                warnings.push(franchise.teamName + " started injured/suspended player " + player.fullName + " in week " + week + "!");
+                            })
+                            .value();
+                }
+            });
+            var html = "<div align='left'>";
+            _.each(warnings, function (warning) {
+                html += "<span class='warning'>" + warning + "</span><br/>";
+            });
+            html += "</div>";
+            $(mainContentDivSelector).append(html);
+        };
+
+        var addSalaryPenaltyForm = function () {
+            var source = $("#commish-penalty-form").html();
+            var template = Handlebars.compile(source);
+            var html = template({
+                leagueId:fuadUtil.leagueId,
+                franchises:_.map(fuadAjax.data.franchises, function (franchise) {
+                    return franchise;
+                }),
+                rowClass:fuadUtil.getRowStripingFunction()
+            });
+            $(mainContentDivSelector).append(html);
+        };
+
+        var addContractUpdateForm = function () {
+            var source = $("#commish-contract-form").html();
+            var template = Handlebars.compile(source);
+            var html = template({
+                leagueId:fuadUtil.leagueId,
+                franchises:_.map(fuadAjax.data.franchises, function (franchise) {
+                    return franchise;
+                }),
+                rowClass:fuadUtil.getRowStripingFunction()
+            });
+            $(mainContentDivSelector).append(html);
+        };
+
+        var addPostTradeDeadlineJsButton = function () {
+            $(mainContentDivSelector).append(
+                    "<div style='border: 1px solid black; padding-top: 1em;'><p class='form_buttons'><input type='button' id='newJsButton' value='Generate post-deadline JS'/></p></div>"
+            );
+            $("#newJsButton").on("click", function (event) {
+                var msgLines = ["    var beforeTradeDeadline = false;",
+                    "    if (!beforeTradeDeadline) {"];
+                $.each(fuadUtil.settings, function (position, positionSettings) {
+                    var lineEnding;
+                    msgLines.push("        settings." + position + ".rookieBaselineSalary = " + positionSettings.rookieBaselineSalary + ";");
+                    msgLines.push("        settings." + position + ".franchisePlayers = [");
+                    $.each(positionSettings.franchisePlayers, function (index, player) {
+                        lineEnding = index < positionSettings.franchisePlayers.length - 1 ? "," : "";
+                        msgLines.push('            {fullName:"' + player.fullName + '", salary:' + player.salary + "}" + lineEnding);
+                    });
+                    msgLines.push("        ];");
+                });
+                msgLines.push("    }");
+                console.log(msgLines.join("\n"));
+            });
+        };
+
+        // subscribe to the ajax data loaded event to create the commish tab content
+        fuadUtil.subscribeToDataLoadedEvent(createCommishContent);
+    }(jQuery, _, fuad.util, fuad.ajax));
+</script>

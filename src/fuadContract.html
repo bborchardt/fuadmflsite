@@ -1,0 +1,202 @@
+<table align="center" cellPadding="0" cellSpacing="0" id="homepagecolumns">
+    <tr>
+        <td valign="top" class="homepagecolumn" width="65%">
+            <input id="playersByYearCheckBox" type="checkbox" checked="true"/>Group Players By Year
+            <div id="contractscolumn1"></div>
+        </td>
+        <td valign="top" id="contractscolumn2" class="homepagecolumn" width="35%"></td>
+    </tr>
+</table>
+<script id="player-table-template" type="text/x-handlebars-template">
+    <table align="center" cellspacing="1" class="homepagemodule report">
+        <caption><span>{{title}}</span></caption>
+        <tbody>
+        <tr>
+            <th class="player">Player</th>
+            <th>Position</th>
+            <th class="salary">Salary</th>
+            <th class="contractyear">Years</th>
+            <th class="salary">Cap Penalty (if waived)</th>
+            <th class="salary">Net Cap Space (if waived)</th>
+            <th>Franchise</th>
+        </tr>
+        {{#each players}}
+        <tr class="{{../rowClass}}">
+            <td class="player">{{this.fullName}}</td>
+            <td>{{this.nflPosition}}</td>
+            <td class="salary">${{this.salary}}</td>
+            <td class="contractyear">{{this.years}}</td>
+            <td class="salary">${{this.capPenalty}}</td>
+            <td class="salary">${{this.netCapSpace}}</td>
+            <td>{{this.franchise.teamName}}</td>
+        </tr>
+        {{/each}}
+        </tbody>
+    </table>
+</script>
+<script id="rookie-table-template" type="text/x-handlebars-template">
+    <table align="center" cellspacing="1" class="homepagemodule report">
+        <caption><span>Rookie Salaries</span></caption>
+        <tbody>
+        <tr>
+            <th>Overall Pick #</th>
+            <th>QB</th>
+            <th>RB</th>
+            <th>WR</th>
+            <th>TE</th>
+            <th>PK</th>
+        </tr>
+        {{#each picks}}
+        <tr class="{{../rowClass}}">
+            <td>{{this.pickNum}}</td>
+            {{#each this.positionSalaries}}
+            <td class="salary">${{this}}</td>
+            {{/each}}
+        </tr>
+        {{/each}}
+        </tbody>
+    </table>
+</script>
+<script id="franchise-table-template" type="text/x-handlebars-template">
+    <table align="center" cellspacing="1" class="homepagemodule report">
+        <caption><span>Top {{franchisePlayerCount}} {{position}} Salaries</span></caption>
+        <tbody>
+        <tr>
+            <th class="player">Player</th>
+            <th class="salary">Salary</th>
+        </tr>
+        {{#each franchisePlayers}}
+        <tr class="{{../rowClass}}">
+            <td class="player">{{this.fullName}}</td>
+            <td class="salary">${{this.salary}}</td>
+        </tr>
+        {{/each}}
+        <tr>
+            <th class="player">Franchise {{position}} Salary Next Year</th>
+            <th class="salary">${{franchiseSalary}}</th>
+        </tr>
+        </tbody>
+    </table>
+</script>
+<script type="text/javascript">
+    fuad.contract = (function ($, Modernizr, fuadUtil, fuadAjax) {
+        var loadContractReport = function () {
+            if (Modernizr.localstorage) {
+                if(!localStorage["playersByContractYearChecked"]) {
+                    $("#playersByYearCheckBox").attr("checked", false);
+                }
+            }
+            $("#playersByYearCheckBox").on("change", togglePlayerReportType);
+            togglePlayerReportType();
+            addRookiesToPage();
+            addFranchisePlayersToPage();
+        };
+
+        var togglePlayerReportType = function() {
+            var checked = $("#playersByYearCheckBox").attr("checked");
+            if(checked) {
+                addPlayersByContractYearToPage();
+            } else {
+                addAllPlayersToPage();
+            }
+            if (Modernizr.localstorage) {
+                localStorage["playersByContractYearChecked"] = checked ? "true" : "";
+            }
+        };
+
+        /**
+         * Add players to the left column of the page grouped by contract years.
+         */
+        var addPlayersByContractYearToPage = function () {
+            $("#contractscolumn1").html('');
+            var playersByYear = getPlayersByPosSalaryNameGroupByYear();
+            var playerTableTemplate = Handlebars.compile($("#player-table-template").html());
+            $.each(playersByYear, function (years, playersForYear) {
+                var html = playerTableTemplate({
+                    title:years === 0 ? "Restricted Free Agents" : years + " Year Players",
+                    players:playersForYear,
+                    rowClass:fuadUtil.getRowStripingFunction()
+                });
+                $("#contractscolumn1").append(html);
+            });
+        };
+
+        /**
+         * Add players to the left column of the page in a single table.
+         */
+        var addAllPlayersToPage = function () {
+            var players = getPlayersByPosSalaryYearName();
+            var playerTableTemplate = Handlebars.compile($("#player-table-template").html());
+            var html = playerTableTemplate({
+                title:"Rostered Players",
+                players:players,
+                rowClass:fuadUtil.getRowStripingFunction()
+            });
+            $("#contractscolumn1").html(html);
+        };
+
+        var getPlayersByPosSalaryNameGroupByYear = function () {
+            var playersByYear = _.groupBy(fuadAjax.data.rosteredPlayerArray, function (player) {
+                return player.years;
+            });
+            $.each(playersByYear, function (years, playersForYear) {
+                playersForYear.sort(function (player1, player2) {
+                    return fuadUtil.compareObjects(player1, player2, ["nflPosition", "salary", "fullName"], {
+                        nflPosition:fuadUtil.comparePositions,
+                        salary:fuadUtil.compareDesc
+                    });
+                });
+            });
+            return playersByYear;
+        };
+
+        var getPlayersByPosSalaryYearName = function() {
+            return _.map(fuadAjax.data.rosteredPlayerArray, function(player) { return player; })
+                    .sort(function(player1, player2) {
+                        return fuadUtil.compareObjects(player1, player2, ["nflPosition", "salary", "years", "fullName"], {
+                            nflPosition:fuadUtil.comparePositions,
+                            salary:fuadUtil.compareDesc,
+                            years:fuadUtil.compareDesc
+                        });
+                    });
+        };
+
+        /**
+         * Add the rookie draft salaries by position to the right column of the page.
+         */
+        var addRookiesToPage = function () {
+            var rookiePicks = [];
+            for (var pick = 1; pick <= fuadUtil.numRookiesToDisplay; pick++) {
+                var salaries = [];
+                $.each(fuadUtil.settings, function (position, positionSettings) {
+                    var salary = Math.round(Math.max(1, positionSettings.rookieBaselineSalary * Math.pow(0.8, pick - 1)));
+                    salaries.push(salary);
+                });
+                rookiePicks.push({pickNum:pick, positionSalaries:salaries});
+            }
+            var rookieTableTemplate = Handlebars.compile($("#rookie-table-template").html());
+            var html = rookieTableTemplate({picks:rookiePicks, rowClass:fuadUtil.getRowStripingFunction()});
+            $("#contractscolumn2").append(html);
+        };
+
+        var addFranchisePlayersToPage = function () {
+            var franchiseTableTemplate = Handlebars.compile($("#franchise-table-template").html());
+            $.each(fuadUtil.settings, function (position, positionSettings) {
+                var total = _.reduce(positionSettings.franchisePlayers, function (total, franchisePlayer) {
+                    return total + franchisePlayer.salary;
+                }, 0);
+                var html = franchiseTableTemplate({
+                    franchisePlayerCount:fuadUtil.franchisePlayerCount,
+                    rowClass:fuadUtil.getRowStripingFunction(),
+                    position:position,
+                    franchiseSalary:Math.round(total / fuadUtil.franchisePlayerCount),
+                    franchisePlayers:positionSettings.franchisePlayers
+                });
+                $("#contractscolumn2").append(html);
+            });
+        };
+
+        // subscribe to the ajax data loaded event to create the contracts tab content
+        fuadUtil.subscribeToDataLoadedEvent(loadContractReport);
+    }(jQuery, Modernizr, fuad.util, fuad.ajax));
+</script>
