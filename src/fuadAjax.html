@@ -122,9 +122,11 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
                 i;
         for (i = 0; i < playerNodes.length; i++) {
             var playerNode = playerNodes[i];
+            var names = playerNode.getAttribute("name").split(",");
+            var fullName = names[1].trim() + " " + names[0];
             data.players[getHashId(playerNode)] = new Player(
                     playerNode.getAttribute("id"),
-                    playerNode.getAttribute("name"),
+                    fullName,
                     playerNode.getAttribute("position"),
                     playerNode.getAttribute("team")
             );
