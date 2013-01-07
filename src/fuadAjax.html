@@ -332,9 +332,8 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
     };
 
     var getHashId = function (node, idAttribute) {
-        var id = node.getAttribute ? node.getAttribute(idAttribute ? idAttribute : "id") : node;
+        var id = typeof node === "string" ? node : node.getAttribute(idAttribute ? idAttribute : "id");
         return id + "a";
-
     };
 
     // schedule initialization when ready
