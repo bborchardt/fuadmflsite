@@ -50,7 +50,7 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
      */
     var init = function () {
         var loadOrder = [];
-        if (isLocallyStoredDateYoungerThan("playersStoreDate", (1000 * 60 * 60 * 24))) {
+        if (isLocallyStoredDateYoungerThan("playersStoreDate", (1000 * 60 * 60 * 24)) && localStorage["players"]) {
             data.players = JSON.parse(localStorage["players"]);
         } else {
             loadOrder.push({url:fuadUtil.playersDataUrl, loadFunction:loadPlayerData});
@@ -162,7 +162,8 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
                 var player = data.players[getHashId(playerNode)];
                 player.franchise = franchise;
                 player.status = playerNode.getAttribute("status");
-                player.salary = parseFloat(playerNode.getAttribute("salary"));
+                var salary = parseFloat(playerNode.getAttribute("salary"));
+                player.salary = salary < 1 ? 0 : salary;
                 player.years = parseFloat(playerNode.getAttribute("contractYear"));
                 player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
                 player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
@@ -262,7 +263,8 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
         for (i = 0; i < playerNodes.length; i++) {
             var playerNode = playerNodes[i];
             var player = data.players[getHashId(playerNode)];
-            player.salary = parseFloat(playerNode.getAttribute("salary"));
+            var salary = parseFloat(playerNode.getAttribute("salary"));
+            player.salary = salary < 1 ? 0 : salary;
             player.years = parseFloat(playerNode.getAttribute("contractYear"));
             player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
             player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
