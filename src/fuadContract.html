@@ -111,9 +111,15 @@
             $("#contractscolumn1").html('');
             var playersByYear = getPlayersByPosSalaryNameGroupByYear();
             var playerTableTemplate = Handlebars.compile($("#player-table-template").html());
-            $.each(playersByYear, function (years, playersForYear) {
+            var years = [];
+            $.each(playersByYear, function (year, playersForYear) {
+                years.push(year)
+            });
+            years.sort();
+            $.each(years, function (year) {
+                var playersForYear = playersByYear[year]
                 var html = playerTableTemplate({
-                    title:years === 0 ? "Restricted Free Agents" : years + " Year Players",
+                    title:year === 0 ? "Restricted Free Agents" : year + " Year Players",
                     players:playersForYear,
                     rowClass:fuadUtil.getRowStripingFunction()
                 });

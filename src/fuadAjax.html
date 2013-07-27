@@ -160,20 +160,24 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
             for (j = 0; j < playerNodes.length; j++) {
                 var playerNode = playerNodes[j];
                 var player = data.players[getHashId(playerNode)];
-                player.franchise = franchise;
-                player.status = playerNode.getAttribute("status");
-                var salary = parseFloat(playerNode.getAttribute("salary"));
-                player.salary = salary < 1 ? 0 : salary;
-                player.years = parseFloat(playerNode.getAttribute("contractYear"));
-                player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
-                player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
-                player.contractStatus = playerNode.getAttribute("contractStatus");
-                data.rosteredPlayerArray.push(player);
-                if (playerNode.getAttribute("status") === "ROSTER") {
-                    franchise.numPlayers++;
-                }
-                if (player.years === 0) {
-                    player.franchise.signedPlayers.push(player);
+                if(player) {
+                    player.franchise = franchise;
+                    player.status = playerNode.getAttribute("status");
+                    var salary = parseFloat(playerNode.getAttribute("salary"));
+                    player.salary = salary < 1 ? 0 : salary;
+                    player.years = parseFloat(playerNode.getAttribute("contractYear"));
+                    player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
+                    player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
+                    player.contractStatus = playerNode.getAttribute("contractStatus");
+                    data.rosteredPlayerArray.push(player);
+                    if (playerNode.getAttribute("status") === "ROSTER") {
+                        franchise.numPlayers++;
+                    }
+                    if (player.years === 0) {
+                        player.franchise.signedPlayers.push(player);
+                    }
+                } else {
+                    console.log("player not found in loadRosterData: " + playerNode)
                 }
             }
         }
@@ -188,35 +192,55 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
             if (type === "WAIVER") {
                 _.each(transactionNode.getAttribute("added").split(","), function (playerId) {
                     if (playerId) {
-                        data.players[getHashId(playerId)].transactions.push(new Transaction(
-                                transactionNode.getAttribute("timestamp"),
-                                data.franchises[getHashId(transactionNode, "franchise")],
-                                true
-                        ));
+                        var player = data.players[getHashId(playerId)];
+                        if(player) {
+                            player.transactions.push(new Transaction(
+                                    transactionNode.getAttribute("timestamp"),
+                                    data.franchises[getHashId(transactionNode, "franchise")],
+                                    true
+                            ));
+                        } else {
+                            console.log("player not found in loadTransactionData: " + playerId)
+                        }
                     }
                 });
                 _.each(transactionNode.getAttribute("dropped").split(","), function (playerId) {
                     if (playerId) {
-                        data.players[getHashId(playerId)].transactions.push(new Transaction(
-                                transactionNode.getAttribute("timestamp"),
-                                data.franchises[getHashId(transactionNode, "franchise")],
-                                false
-                        ));
+                        var player = data.players[getHashId(playerId)];
+                        if(player) {
+                            player.transactions.push(new Transaction(
+                                    transactionNode.getAttribute("timestamp"),
+                                    data.franchises[getHashId(transactionNode, "franchise")],
+                                    false
+                            ));
+                        } else {
+                            console.log("player not found in loadTransactionData: " + playerId)
+                        }
                     }
                 });
             } else if (type === "BBID_WAIVER") {
                 var info = transactionNode.getAttribute("transaction").split("|");
-                data.players[getHashId(info[0])].transactions.push(new Transaction(
-                        transactionNode.getAttribute("timestamp"),
-                        data.franchises[getHashId(transactionNode, "franchise")],
-                        true
-                ));
-                if (info[2] !== "0000") {
-                    data.players[getHashId(info[2])].transactions.push(new Transaction(
+                var player = data.players[getHashId(info[0])];
+                if(player) {
+                    player.transactions.push(new Transaction(
                             transactionNode.getAttribute("timestamp"),
                             data.franchises[getHashId(transactionNode, "franchise")],
-                            false
+                            true
                     ));
+                } else {
+                    console.log("player not found in loadTransactionData: " + info[0])
+                }
+                if (info[2] !== "0000") {
+                    player = data.players[getHashId(info[2])];
+                    if(player) {
+                        player.transactions.push(new Transaction(
+                                transactionNode.getAttribute("timestamp"),
+                                data.franchises[getHashId(transactionNode, "franchise")],
+                                false
+                        ));
+                    } else {
+                        console.log("player not found in loadTransactionData: " + info[2])
+                    }
                 }
             }
         }
@@ -251,7 +275,11 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
             $.each(franchiseNode.getElementsByTagName("player"), function (playerIndex, playerNode) {
                 if (playerNode.getAttribute("status") === "starter") {
                     var player = data.players[getHashId(playerNode)];
-                    franchise.lineup.push(player);
+                    if(player) {
+                        franchise.lineup.push(player);
+                    } else {
+                        console.log("player not found in loadWeeklyResultsNode: " + playerNode)
+                    }
                 }
             });
         });
@@ -264,12 +292,16 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
             var playerNode = playerNodes[i];
             var player = data.players[getHashId(playerNode)];
             var salary = parseFloat(playerNode.getAttribute("salary"));
-            player.salary = salary < 1 ? 0 : salary;
-            player.years = parseFloat(playerNode.getAttribute("contractYear"));
-            player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
-            player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
-            if (player.salary > 1 || player.years > 0 && player.transactions.length > 0 && !player.transactions[0].added) {
-                player.transactions[0].franchise.pendingDroppedPlayers.push(player);
+            if(player) {
+                player.salary = salary < 1 ? 0 : salary;
+                player.years = parseFloat(playerNode.getAttribute("contractYear"));
+                player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
+                player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
+                if (player.salary > 1 || player.years > 0 && player.transactions.length > 0 && !player.transactions[0].added) {
+                    player.transactions[0].franchise.pendingDroppedPlayers.push(player);
+                }
+            } else {
+                console.log("player not found in loadFreeAgentData: " + playerNode)
             }
         }
         _.each(data.franchises, function (franchise) {
@@ -288,7 +320,11 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
             var status = injuryNode.getAttribute("status");
             if (status === "IR" || status === "Out" || status === "Suspended") {
                 var player = data.players[getHashId(injuryNode)];
-                player.injured = true;
+                if(player) {
+                    player.injured = true;
+                } else {
+                    console.log("player not found in loadInjuriesData: " + injuryNode)
+                }
             }
         });
     };
