@@ -77,6 +77,8 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
                     $("#ajaxLoadEventSpan").trigger("ajaxDataLoaded");
                 }}
         );
+        // disable ajax caching
+        $.ajaxSetup({ cache: false });
         loadAjaxData(loadOrder, 0);
     };
 
@@ -297,7 +299,7 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
                 player.years = parseFloat(playerNode.getAttribute("contractYear"));
                 player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
                 player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
-                if (player.salary > 1 || player.years > 0 && player.transactions.length > 0 && !player.transactions[0].added) {
+                if ((player.salary > 1 || player.years > 0) && player.transactions.length > 0 && !player.transactions[0].added) {
                     player.transactions[0].franchise.pendingDroppedPlayers.push(player);
                 }
             } else {
