@@ -1,7 +1,21 @@
 <div id="commishdiv"></div>
+<script id="rule-violation-table" type="text/x-handlebars-template">
+    <table class="homepagemodule report" cellspacing="1" align="center">
+        <caption><span>Roster and Salary Cap Violations</span></caption>
+        <tbody><tr class="oddtablerow"><td><ul>
+            {{#if warnings}}
+            {{#each warnings}}
+            <li><span class="warning">{{this}}</span></li>
+            {{/each}}
+            {{else}}
+            <li>No violations found.</li>
+            {{/if}}
+        </ul></td></tr></tbody>
+    </table>
+</script>
 <script id="commish-penalty-form" type="text/x-handlebars-template">
     <div style="border: 1px solid black; padding-top: 1em;" align="left">
-        <form action="http://football4.myfantasyleague.com/2012/edit_salary_adjustments" method="post">
+        <form action="{{penaltyUrl}}" method="post">
             <input type="hidden" name="LEAGUE_ID" value="{{leagueId}}">
             <table align="center" cellspacing="1" class="report">
                 <caption><span>Create New Salary Adjustments</span></caption>
@@ -32,12 +46,13 @@
 </script>
 <script id="commish-contract-form" type="text/x-handlebars-template">
     <div style="border: 1px solid black; padding-top: 1em;" align="left">
-        <form action="http://football4.myfantasyleague.com/2012/set_salaries" method="post">
+        <form action="{{contractUrl}}" method="post">
             <input type="hidden" name="LEAGUE_ID" value="{{leagueId}}">
             <input type="hidden" name="DISPLAY" value="LEAGUE">
             <table align="center" cellspacing="1" class="report">
                 <tbody>
                 <tr>
+                    <th>Team</th>
                     <th>Player</th>
                     <th>Salary</th>
                     <th>Contract Year</th>
@@ -45,19 +60,23 @@
                     <th>Other Contract Information</th>
                 </tr>
                 {{#each franchises}}
-                {{#each this.signedPlayers}}
+                {{#each this.pendingDroppedPlayers}}
                 <tr class="{{../../rowClass}}">
+                    <td>Free Agent</td>
                     <td>{{this.fullName}}</td>
-                    <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
+                    <td><input type="text" name="{{this.playerId}}" value="" size="9"></td>
                     <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
                     <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
                     <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
                 </tr>
                 {{/each}}
-                {{#each this.pendingDroppedPlayers}}
+                {{/each}}
+                {{#each franchises}}
+                {{#each this.signedPlayers}}
                 <tr class="{{../../rowClass}}">
+                    <td>{{../this.teamName}}</td>
                     <td>{{this.fullName}}</td>
-                    <td><input type="text" name="{{this.playerId}}" value="" size="9"></td>
+                    <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
                     <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
                     <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
                     <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
@@ -77,8 +96,8 @@
         var mainContentDivSelector = "#commishdiv";
 
         var createCommishContent = function () {
+            addRulesViolations();
             if (fuadUtil.isLoggedInAsCommish()) {
-                addRulesViolations();
                 addSalaryPenaltyForm();
                 addContractUpdateForm();
                 addPostTradeDeadlineJsButton();
@@ -111,12 +130,12 @@
                             .value();
                 }
             });
-            var html = "<div align='left'>";
-            _.each(warnings, function (warning) {
-                html += "<span class='warning'>" + warning + "</span><br/>";
+            var source = $("#rule-violation-table").html();
+            var template = Handlebars.compile(source);
+            var html = template({
+                warnings: warnings
             });
-            html += "</div>";
-            $(mainContentDivSelector).append(html);
+            $("#tabcontent0").find("#homepagecolumn1").prepend(html);
         };
 
         var addSalaryPenaltyForm = function () {
@@ -124,6 +143,7 @@
             var template = Handlebars.compile(source);
             var html = template({
                 leagueId:fuadUtil.leagueId,
+                penaltyUrl:fuadUtil.reportUrl + '/edit_salary_adjustments',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;
                 }),
@@ -137,6 +157,7 @@
             var template = Handlebars.compile(source);
             var html = template({
                 leagueId:fuadUtil.leagueId,
+                contractUrl:fuadUtil.reportUrl + '/set_salaries',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;
                 }),

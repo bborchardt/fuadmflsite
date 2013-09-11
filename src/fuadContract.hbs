@@ -1,10 +1,19 @@
 <table align="center" cellPadding="0" cellSpacing="0" id="homepagecolumns">
     <tr>
         <td valign="top" class="homepagecolumn" width="65%">
-            <input id="playersByYearCheckBox" type="checkbox" checked="true"/>Group Players By Year
+            <label><input id="playersByYearCheckBox" type="checkbox" checked="true"/>Group Players By Year</label>
             <div id="contractscolumn1"></div>
         </td>
-        <td valign="top" id="contractscolumn2" class="homepagecolumn" width="35%"></td>
+        <td valign="top" class="homepagecolumn" width="35%">
+            <table align="center" cellspacing="1" class="homepagemodule report">
+                <caption><span>Cap Penalty Calculator</span></caption>
+                <tbody><tr class="oddtablerow"><td>
+                    &nbsp;&nbsp;&nbsp;&nbsp;$<input id="calculator_salary" type="text" size="3"/> for <input id="calculator_years" type="text" size="3"/> Years =
+                    $<input id="calculator_result" type="text" size="3" readonly="true"/> Penalty for Dropping
+                </td></tr></tbody>
+            </table>
+            <div id="contractscolumn2"></div>
+        </td>
     </tr>
 </table>
 <script id="player-table-template" type="text/x-handlebars-template">
@@ -86,10 +95,22 @@
                     $("#playersByYearCheckBox").attr("checked", false);
                 }
             }
+            $("#calculator_salary").on("keyup", updateCapPenalty);
+            $("#calculator_years").on("keyup", updateCapPenalty);
             $("#playersByYearCheckBox").on("change", togglePlayerReportType);
             togglePlayerReportType();
             addRookiesToPage();
             addFranchisePlayersToPage();
+        };
+
+        var updateCapPenalty = function() {
+            var salary = $("#calculator_salary").val();
+            var years = $("#calculator_years").val();
+            if(!isNaN(salary) && !isNaN(years) && salary > 0 && years > 0) {
+                $("#calculator_result").val(fuadUtil.getCapPenalty(years, salary));
+            } else {
+                $("#calculator_result").val('');
+            }
         };
 
         var togglePlayerReportType = function() {
@@ -116,14 +137,16 @@
                 years.push(year)
             });
             years.sort();
-            $.each(years, function (year) {
+            $.each(years, function (index, year) {
                 var playersForYear = playersByYear[year]
-                var html = playerTableTemplate({
-                    title:year === 0 ? "Restricted Free Agents" : year + " Year Players",
-                    players:playersForYear,
-                    rowClass:fuadUtil.getRowStripingFunction()
-                });
-                $("#contractscolumn1").append(html);
+                if(playersForYear) {
+                    var html = playerTableTemplate({
+                        title:year == 0 ? "Restricted Free Agents" : year + " Year Players",
+                        players:playersForYear,
+                        rowClass:fuadUtil.getRowStripingFunction()
+                    });
+                    $("#contractscolumn1").append(html);
+                }
             });
         };
 

@@ -37,7 +37,7 @@
         };
 
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
-        var beforeTradeDeadline = false;
+        var beforeTradeDeadline = true;
         if (!beforeTradeDeadline) {
             settings.QB.rookieBaselineSalary = 5;
             settings.QB.franchisePlayers = [
@@ -82,7 +82,9 @@
         }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE
 
-        var baseUrl = document.location.href.substring(0, document.location.href.indexOf(year) + 5);
+        var currentUrl = document.location.href;
+        var baseUrl = currentUrl.substring(0, currentUrl.indexOf(year) + 5);
+        var baseUrlSuffix = currentUrl.substring(currentUrl.indexOf('://') + 3, currentUrl.indexOf('.')).replace('www', '').replace('football', '');
         // set if we want to test a specific week (leave blank for "current" week)
         var week = "";
 
@@ -159,8 +161,8 @@
             weeklyResultsDataUrl:baseUrl + "export?TYPE=weeklyResults&L=" + leagueId + "&W=" + week,
             transactionsDataUrl:baseUrl + "export?TYPE=transactions&L=" + leagueId + "&W=" + week,
             freeAgentDataUrl:baseUrl + "export?TYPE=freeAgents&L=" + leagueId + "&W=" + week,
-            homeUrl:"http://www4.myfantasyleague.com/" + year,
-            reportUrl:"http://football4.myfantasyleague.com/" + year,
+            homeUrl:"http://www" + baseUrlSuffix + ".myfantasyleague.com/" + year,
+            reportUrl:"http://football" + baseUrlSuffix + ".myfantasyleague.com/" + year,
             settings:settings,
             // functions
             isLoggedInAsCommish:function () {
