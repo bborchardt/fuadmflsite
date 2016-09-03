@@ -36,35 +36,34 @@
         var init = function () {
             insertMenuItem(sections.franchise, "Home", fuadUtil.homeUrl + "/home/" + fuadUtil.leagueId, true);
 
-            updateMenuItem(sections.league, "Rosters", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=07");
+            updateMenuItem(sections.league, "Rosters", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=07");
             deleteMenuItem(sections.league, "Calendar");
             deleteMenuItem(sections.league, "Scoring Rules");
-            insertMenuItem(sections.league, "Recaps", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=177", true);
-            insertMenuItem(sections.league, "Guru", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=169", true);
+            insertMenuItem(sections.league, "Recaps", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=177", true);
+            insertMenuItem(sections.league, "Guru", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=169", true);
             if (fuadUtil.isLoggedInAsCommish()) {
-                insertMenuItem(sections.league, "Cap Penalties", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=131", true);
-                insertMenuItem(sections.league, "Set Contracts", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=36", true);
+                insertMenuItem(sections.league, "Cap Penalties", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=131", true);
+                insertMenuItem(sections.league, "Set Contracts", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=36", true);
             }
-            insertMenuItem(sections.league, "Schedules", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=15");
-            insertMenuItem(sections.league, "Prior Bids", fuadUtil.reportUrl + "/processed_waivers?L=" + fuadUtil.leagueId);
-            insertMenuItem(sections.league, "Starting Lineups", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=06");
+            insertMenuItem(sections.league, "Schedules", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=15");
+            insertMenuItem(sections.league, "Prior Bids", fuadUtil.homeUrl + "/processed_waivers?L=" + fuadUtil.leagueId);
+            insertMenuItem(sections.league, "Starting Lineups", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=06");
 
             deleteMenuItem(sections.standings, "Standings");
             deleteMenuItem(sections.standings, "Power Rank");
             deleteMenuItem(sections.standings, "Bar Chart");
-            insertMenuItem(sections.standings, "Playoffs", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=79");
-            insertMenuItem(sections.standings, "Draft Picks", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=100&SORT=FYR");
-            insertMenuItem(sections.standings, "League History", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=156");
+            insertMenuItem(sections.standings, "Playoffs", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=79");
+            insertMenuItem(sections.standings, "Draft Picks", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=100&SORT=FYR");
+            insertMenuItem(sections.standings, "League History", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=156");
 
-            updateMenuItem(sections.players, "Player Stats", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=08");
+            updateMenuItem(sections.players, "Player Stats", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=08");
             deleteMenuItem(sections.players, "Most Added");
             deleteMenuItem(sections.players, "Most Dropped");
-            insertMenuItem(sections.players, "Locked Players", fuadUtil.reportUrl + "/locked_players?L=" + fuadUtil.leagueId, true);
-            insertMenuItem(sections.players, "Practice Report", fuadUtil.reportUrl + "/practice?L=" + fuadUtil.leagueId, true);
-            insertMenuItem(sections.players, "Injury Report", fuadUtil.reportUrl + "/injury?L=" + fuadUtil.leagueId, true);
+            insertMenuItem(sections.players, "Locked Players", fuadUtil.homeUrl + "/locked_players?L=" + fuadUtil.leagueId, true);
+            insertMenuItem(sections.players, "Practice Report", fuadUtil.homeUrl + "/practice?L=" + fuadUtil.leagueId, true);
+            insertMenuItem(sections.players, "Injury Report", fuadUtil.homeUrl + "/injury?L=" + fuadUtil.leagueId, true);
 
-            insertMenuItem(sections.help, "Scoring System", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=09", true);
-            insertMenuItem(sections.help, "Rules", fuadUtil.reportUrl + "/options?L=" + fuadUtil.leagueId + "&O=26", true);
+            insertMenuItem(sections.help, "Scoring System", fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=09", true);
         };
 
         $(function () {

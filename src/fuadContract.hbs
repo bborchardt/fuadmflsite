@@ -30,15 +30,15 @@
             <th>Franchise</th>
         </tr>
         {{#each players}}
-        <tr class="{{../rowClass}}">
-            <td class="player">{{this.fullName}}</td>
-            <td>{{this.nflPosition}}</td>
-            <td class="salary">${{this.salary}}</td>
-            <td class="contractyear">{{this.years}}</td>
-            <td class="salary">${{this.capPenalty}}</td>
-            <td class="salary">${{this.netCapSpace}}</td>
-            <td>{{this.franchise.teamName}}</td>
-        </tr>
+            <tr class="{{../rowClass}}">
+                <td class="player">{{this.fullName}}</td>
+                <td>{{this.nflPosition}}</td>
+                <td class="salary">${{this.salary}}</td>
+                <td class="contractyear">{{this.years}}</td>
+                <td class="salary">${{this.capPenalty}}</td>
+                <td class="salary">${{this.netCapSpace}}</td>
+                <td>{{this.franchise.teamName}}</td>
+            </tr>
         {{/each}}
         </tbody>
     </table>
@@ -56,12 +56,12 @@
             <th>PK</th>
         </tr>
         {{#each picks}}
-        <tr class="{{../rowClass}}">
-            <td>{{this.pickNum}}</td>
-            {{#each this.positionSalaries}}
-            <td class="salary">${{this}}</td>
-            {{/each}}
-        </tr>
+            <tr class="{{../rowClass}}">
+                <td>{{this.pickNum}}</td>
+                {{#each this.positionSalaries}}
+                    <td class="salary">${{this}}</td>
+                {{/each}}
+            </tr>
         {{/each}}
         </tbody>
     </table>
@@ -75,10 +75,10 @@
             <th class="salary">Salary</th>
         </tr>
         {{#each franchisePlayers}}
-        <tr class="{{../rowClass}}">
-            <td class="player">{{this.fullName}}</td>
-            <td class="salary">${{this.salary}}</td>
-        </tr>
+            <tr class="{{../rowClass}}">
+                <td class="player">{{this.fullName}}</td>
+                <td class="salary">${{this.salary}}</td>
+            </tr>
         {{/each}}
         <tr>
             <th class="player">Franchise {{position}} Salary Next Year</th>

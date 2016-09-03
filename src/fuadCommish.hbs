@@ -4,11 +4,11 @@
         <caption><span>Roster and Salary Cap Violations</span></caption>
         <tbody><tr class="oddtablerow"><td><ul>
             {{#if warnings}}
-            {{#each warnings}}
-            <li><span class="warning">{{this}}</span></li>
-            {{/each}}
+                {{#each warnings}}
+                    <li><span class="warning">{{this}}</span></li>
+                {{/each}}
             {{else}}
-            <li>No violations found.</li>
+                <li>No violations found.</li>
             {{/if}}
         </ul></td></tr></tbody>
     </table>
@@ -26,15 +26,15 @@
                     <th>Explanation</th>
                 </tr>
                 {{#each franchises}}
-                {{#if this.penaltyReason}}
-                <tr class="{{../../rowClass}}">
-                    <td>{{this.teamName}}</td>
-                    <td><input type="text" name="{{this.franchiseId}}" size="7" value="{{this.pendingPenalty}}"></td>
-                    <td><input type="text" name="EXPLANATION{{this.franchiseId}}" size="45"
-                               value="{{this.penaltyReason}}">
-                    </td>
-                </tr>
-                {{/if}}
+                    {{#if this.penaltyReason}}
+                        <tr class="{{../../rowClass}}">
+                            <td>{{this.teamName}}</td>
+                            <td><input type="text" name="{{this.franchiseId}}" size="7" value="{{this.pendingPenalty}}"></td>
+                            <td><input type="text" name="EXPLANATION{{this.franchiseId}}" size="45"
+                                       value="{{this.penaltyReason}}">
+                            </td>
+                        </tr>
+                    {{/if}}
                 {{/each}}
                 </tbody>
             </table>
@@ -60,28 +60,28 @@
                     <th>Other Contract Information</th>
                 </tr>
                 {{#each franchises}}
-                {{#each this.pendingDroppedPlayers}}
-                <tr class="{{../../rowClass}}">
-                    <td>Free Agent</td>
-                    <td>{{this.fullName}}</td>
-                    <td><input type="text" name="{{this.playerId}}" value="" size="9"></td>
-                    <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
-                    <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
-                    <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
-                </tr>
-                {{/each}}
+                    {{#each this.pendingDroppedPlayers}}
+                        <tr class="{{../../rowClass}}">
+                            <td>Free Agent</td>
+                            <td>{{this.fullName}}</td>
+                            <td><input type="text" name="{{this.playerId}}" value="" size="9"></td>
+                            <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
+                            <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
+                            <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
+                        </tr>
+                    {{/each}}
                 {{/each}}
                 {{#each franchises}}
-                {{#each this.signedPlayers}}
-                <tr class="{{../../rowClass}}">
-                    <td>{{../this.teamName}}</td>
-                    <td>{{this.fullName}}</td>
-                    <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
-                    <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
-                    <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
-                    <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
-                </tr>
-                {{/each}}
+                    {{#each this.signedPlayers}}
+                        <tr class="{{../../rowClass}}">
+                            <td>{{../this.teamName}}</td>
+                            <td>{{this.fullName}}</td>
+                            <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
+                            <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
+                            <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
+                            <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
+                        </tr>
+                    {{/each}}
                 {{/each}}
                 </tbody>
             </table>
@@ -143,7 +143,7 @@
             var template = Handlebars.compile(source);
             var html = template({
                 leagueId:fuadUtil.leagueId,
-                penaltyUrl:fuadUtil.reportUrl + '/edit_salary_adjustments',
+                penaltyUrl:fuadUtil.homeUrl + '/edit_salary_adjustments',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;
                 }),
@@ -157,7 +157,7 @@
             var template = Handlebars.compile(source);
             var html = template({
                 leagueId:fuadUtil.leagueId,
-                contractUrl:fuadUtil.reportUrl + '/set_salaries',
+                contractUrl:fuadUtil.homeUrl + '/set_salaries',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;
                 }),

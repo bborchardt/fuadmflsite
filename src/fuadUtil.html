@@ -9,8 +9,8 @@
     var fuad = {};
     fuad.util = (function (global, document, $) {
         // update these after upgrading site
-        var year = "2013";
-        var leagueId = "34866";
+        var year = "2016";
+        var leagueId = "48571";
 
         // contains all positional settings needed for rookie draft and franchise player calculations
         var settings = {
@@ -39,45 +39,45 @@
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
         var beforeTradeDeadline = true;
         if (!beforeTradeDeadline) {
-            settings.QB.rookieBaselineSalary = 5;
+            settings.QB.rookieBaselineSalary = 2;
             settings.QB.franchisePlayers = [
-                {fullName:"Brees, Drew", salary:150},
-                {fullName:"Brady, Tom", salary:140},
-                {fullName:"Rodgers, Aaron", salary:83},
-                {fullName:"Romo, Tony", salary:55},
-                {fullName:"Rivers, Philip", salary:40}
+                {fullName:"Matthew Stafford", salary:50},
+                {fullName:"Aaron Rodgers", salary:50},
+                {fullName:"Matt Ryan", salary:40},
+                {fullName:"Drew Brees", salary:37},
+                {fullName:"Tom Brady", salary:35}
             ];
-            settings.RB.rookieBaselineSalary = 12;
+            settings.RB.rookieBaselineSalary = 10;
             settings.RB.franchisePlayers = [
-                {fullName:"Forte, Matt", salary:120},
-                {fullName:"Peterson, Adrian", salary:87},
-                {fullName:"Turner, Michael", salary:70},
-                {fullName:"Jackson, Fred", salary:69},
-                {fullName:"Gore, Frank", salary:65}
+                {fullName:"Adrian Peterson", salary:120},
+                {fullName:"Jamaal Charles", salary:106},
+                {fullName:"Marshawn Lynch", salary:95},
+                {fullName:"Justin Forsett", salary:90},
+                {fullName:"Matt Forte", salary:87}
             ];
             settings.WR.rookieBaselineSalary = 2;
             settings.WR.franchisePlayers = [
-                {fullName:"White, Roddy", salary:70},
-                {fullName:"Marshall, Brandon", salary:63},
-                {fullName:"Fitzgerald, Larry", salary:62},
-                {fullName:"Garcon, Pierre", salary:60},
-                {fullName:"Welker, Wes", salary:60}
+                {fullName:"Demaryius Thomas", salary:116},
+                {fullName:"Dez Bryant", salary:90},
+                {fullName:"Calvin Johnson", salary:83},
+                {fullName:"Julian Edelman", salary:55},
+                {fullName:"Andre Johnson", salary:52}
             ];
             settings.TE.rookieBaselineSalary = 1;
             settings.TE.franchisePlayers = [
-                {fullName:"Witten, Jason", salary:30},
-                {fullName:"Gates, Antonio", salary:22},
-                {fullName:"Gonzalez, Tony", salary:15},
-                {fullName:"Tamme, Jacob", salary:13},
-                {fullName:"Lewis, Marcedes", salary:7}
+                {fullName:"Greg Olsen", salary:40},
+                {fullName:"Rob Gronkowski", salary:40},
+                {fullName:"Jason Witten", salary:24},
+                {fullName:"Martellus Bennett", salary:23},
+                {fullName:"Jimmy Graham", salary:22}
             ];
             settings.PK.rookieBaselineSalary = 1;
             settings.PK.franchisePlayers = [
-                {fullName:"Hartley, Garrett", salary:1},
-                {fullName:"Bironas, Rob", salary:1},
-                {fullName:"Graham, Shayne", salary:1},
-                {fullName:"Kaeding, Nate", salary:1},
-                {fullName:"Hanson, Jason", salary:1}
+                {fullName:"Adam Vinatieri", salary:5},
+                {fullName:"Graham Gano", salary:2},
+                {fullName:"Dan Bailey", salary:1},
+                {fullName:"Caleb Sturgis", salary:1},
+                {fullName:"Brandon McManus", salary:1}
             ];
         }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE

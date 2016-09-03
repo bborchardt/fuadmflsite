@@ -1,214 +1,239 @@
 <script type="text/javascript">
-fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
-    var Player = function (playerId, fullName, nflPosition, team) {
-        this.playerId = playerId;
-        this.fullName = fullName;
-        this.nflPosition = nflPosition;
-        this.team = team;
-        this.franchise = null;
-        this.status = null;
-        this.salary = 0;
-        this.years = 0;
-        this.capPenalty = 0;
-        this.netCapSpace = 0;
-        this.contractStatus = null;
-        this.injured = false;
-        this.transactions = [];
-    };
-    var Franchise = function (franchiseId, teamName) {
-        this.franchiseId = franchiseId;
-        this.teamName = teamName;
-        this.salary = 0;
-        this.numPlayers = 0;
-        this.lineup = [];
-        this.pendingDroppedPlayers = [];
-        this.pendingPenalty = 0;
-        this.penaltyReason = "";
-        this.signedPlayers = [];
-    };
-    var Transaction = function (timestamp, franchise, added) {
-        this.timestamp = timestamp;
-        this.franchise = franchise;
-        this.added = added;
-    };
+    fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
+        var Player = function (playerId, fullName, nflPosition, team) {
+            this.playerId = playerId;
+            this.fullName = fullName;
+            this.nflPosition = nflPosition;
+            this.team = team;
+            this.franchise = null;
+            this.status = null;
+            this.salary = 0;
+            this.years = 0;
+            this.capPenalty = 0;
+            this.netCapSpace = 0;
+            this.contractStatus = null;
+            this.injured = false;
+            this.transactions = [];
+        };
+        var Franchise = function (franchiseId, teamName) {
+            this.franchiseId = franchiseId;
+            this.teamName = teamName;
+            this.salary = 0;
+            this.numPlayers = 0;
+            this.lineup = [];
+            this.pendingDroppedPlayers = [];
+            this.pendingPenalty = 0;
+            this.penaltyReason = "";
+            this.signedPlayers = [];
+        };
+        var Transaction = function (timestamp, franchise, added) {
+            this.timestamp = timestamp;
+            this.franchise = franchise;
+            this.added = added;
+        };
 
-    // all data loaded via ajax
-    var data = {
-        // hash of all player id/Player object
-        players:{},
-        // array of rostered Player objects
-        rosteredPlayerArray:[],
-        // hash of franchise id/Franchise object
-        franchises:{},
-        // the most recent week we have scores for
-        week:""
-    };
+        // all data loaded via ajax
+        var data = {
+            // hash of all player id/Player object
+            players:{},
+            // array of rostered Player objects
+            rosteredPlayerArray:[],
+            // hash of franchise id/Franchise object
+            franchises:{},
+            // the most recent week we have scores for
+            week:""
+        };
 
-    /**
-     * Kick off the data load process via ajax. The ajax success handlers chain off each other
-     * to start the next load until we're done. All loading is done asynchronously.
-     */
-    var init = function () {
-        var loadOrder = [];
-        if (isLocallyStoredDateYoungerThan("playersStoreDate", (1000 * 60 * 60 * 24)) && localStorage["players"]) {
-            data.players = JSON.parse(localStorage["players"]);
-        } else {
-            loadOrder.push({url:fuadUtil.playersDataUrl, loadFunction:loadPlayerData});
-        }
-        loadOrder.push(
-                {url:fuadUtil.franchiseDataUrl, loadFunction:loadFranchiseData},
-                {url:fuadUtil.rostersDataUrl, loadFunction:loadRosterData},
-                {url:fuadUtil.transactionsDataUrl, loadFunction:loadTransactionData},
-                {url:fuadUtil.standingsDataUrl, loadFunction:loadStandingsData},
-                {url:fuadUtil.weeklyResultsDataUrl, loadFunction:loadWeeklyResultsData},
-                {url:fuadUtil.freeAgentDataUrl, loadFunction:loadFreeAgentData},
-                {
-                    url:function () {
-                        return fuadUtil.injuriesDataUrl + data.week;
+        /**
+         * Kick off the data load process via ajax. The ajax success handlers chain off each other
+         * to start the next load until we're done. All loading is done asynchronously.
+         */
+        var init = function () {
+            var loadOrder = [];
+            if (isLocallyStoredDateYoungerThan("playersStoreDate", (1000 * 60 * 60 * 24)) && localStorage["players"]) {
+                data.players = JSON.parse(localStorage["players"]);
+            } else {
+                loadOrder.push({url:fuadUtil.playersDataUrl, loadFunction:loadPlayerData});
+            }
+            loadOrder.push(
+                    {url:fuadUtil.franchiseDataUrl, loadFunction:loadFranchiseData},
+                    {url:fuadUtil.rostersDataUrl, loadFunction:loadRosterData},
+                    {url:fuadUtil.transactionsDataUrl, loadFunction:loadTransactionData},
+                    {url:fuadUtil.standingsDataUrl, loadFunction:loadStandingsData},
+                    {url:fuadUtil.weeklyResultsDataUrl, loadFunction:loadWeeklyResultsData},
+                    {url:fuadUtil.freeAgentDataUrl, loadFunction:loadFreeAgentData},
+                    {
+                        url:function () {
+                            return fuadUtil.injuriesDataUrl + data.week;
+                        },
+                        loadFunction:loadInjuriesData
                     },
-                    loadFunction:loadInjuriesData
-                },
-                {loadFunction:function () {
-                    if (fuadUtil.beforeTradeDeadline) {
-                        // calculate franchise and rookie salaries from the player data we just loaded
-                        setFranchiseAndRookieSettings();
-                    }
-                    // notify all subscribers that the data has been loaded and is ready for use
-                    $("#ajaxLoadEventSpan").trigger("ajaxDataLoaded");
-                }}
-        );
-        // disable ajax caching
-        $.ajaxSetup({ cache: false });
-        loadAjaxData(loadOrder, 0);
-    };
-
-    var isLocallyStoredDateYoungerThan = function (key, milliseconds) {
-        var stored = false;
-        if (Modernizr.localstorage) {
-            var storedDate = localStorage[key];
-            if (fuadUtil.cacheData && storedDate) {
-                if (Date.now() - new Date(parseInt(storedDate)).getTime() < milliseconds) {
-                    stored = true;
-                }
-            }
-        }
-        return stored;
-    };
-
-    /**
-     * Recursively load data via ajax in the order specified.
-     * @param loadOrder array of objects with url and loadFunction properties
-     * @param loadOrderIndex tracks the current index into the loadOrder array
-     */
-    var loadAjaxData = function (loadOrder, loadOrderIndex) {
-        var url = loadOrder[loadOrderIndex].url;
-        var loadFunction = loadOrder[loadOrderIndex].loadFunction;
-        if (url) {
-            var success = function (xml) {
-                loadFunction(xml);
-                if (loadOrderIndex + 1 < loadOrder.length) {
-                    loadAjaxData(loadOrder, loadOrderIndex + 1);
-                }
-            };
-            if (_.isFunction(url)) {
-                url = url();
-            }
-            $.get(url, success, "xml");
-        } else {
-            loadFunction();
-        }
-    };
-
-    var loadPlayerData = function (xml) {
-        var playerNodes = xml.getElementsByTagName("player"),
-                i;
-        for (i = 0; i < playerNodes.length; i++) {
-            var playerNode = playerNodes[i];
-            var names = playerNode.getAttribute("name").split(",");
-            var fullName = names[1].trim() + " " + names[0];
-            data.players[getHashId(playerNode)] = new Player(
-                    playerNode.getAttribute("id"),
-                    fullName,
-                    playerNode.getAttribute("position"),
-                    playerNode.getAttribute("team")
-            );
-        }
-        if (Modernizr.localstorage) {
-            localStorage["playersStoreDate"] = Date.now();
-            localStorage["players"] = JSON.stringify(data.players);
-        }
-    };
-
-    var loadFranchiseData = function (xml) {
-        var franchiseNodes = xml.getElementsByTagName("franchise"),
-                i;
-        for (i = 0; i < franchiseNodes.length; i++) {
-            var franchiseNode = franchiseNodes[i];
-            data.franchises[getHashId(franchiseNode)] = new Franchise(
-                    franchiseNode.getAttribute("id"),
-                    franchiseNode.getAttribute("name")
-            );
-        }
-    };
-
-    var loadRosterData = function (xml) {
-        var franchiseNodes = xml.getElementsByTagName("franchise"),
-                i,
-                j;
-        for (i = 0; i < franchiseNodes.length; i++) {
-            var franchiseNode = franchiseNodes[i];
-            var franchise = data.franchises[getHashId(franchiseNode)];
-            var playerNodes = franchiseNodes[i].getElementsByTagName("player");
-            for (j = 0; j < playerNodes.length; j++) {
-                var playerNode = playerNodes[j];
-                var player = data.players[getHashId(playerNode)];
-                if(player) {
-                    player.franchise = franchise;
-                    player.status = playerNode.getAttribute("status");
-                    var salary = parseFloat(playerNode.getAttribute("salary"));
-                    player.salary = salary < 1 ? 0 : salary;
-                    player.years = parseFloat(playerNode.getAttribute("contractYear"));
-                    player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
-                    player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
-                    player.contractStatus = playerNode.getAttribute("contractStatus");
-                    data.rosteredPlayerArray.push(player);
-                    if (playerNode.getAttribute("status") === "ROSTER") {
-                        franchise.numPlayers++;
-                    }
-                    if (player.years === 0) {
-                        player.franchise.signedPlayers.push(player);
-                    }
-                } else {
-                    console.log("player not found in loadRosterData: " + playerNode)
-                }
-            }
-        }
-    };
-
-    var loadTransactionData = function (xml) {
-        var transactionNodes = xml.getElementsByTagName("transaction"),
-                i;
-        for (i = 0; i < transactionNodes.length; i++) {
-            var transactionNode = transactionNodes[i];
-            var type = transactionNode.getAttribute("type");
-            if (type === "WAIVER") {
-                _.each(transactionNode.getAttribute("added").split(","), function (playerId) {
-                    if (playerId) {
-                        var player = data.players[getHashId(playerId)];
-                        if(player) {
-                            player.transactions.push(new Transaction(
-                                    transactionNode.getAttribute("timestamp"),
-                                    data.franchises[getHashId(transactionNode, "franchise")],
-                                    true
-                            ));
-                        } else {
-                            console.log("player not found in loadTransactionData: " + playerId)
+                    {loadFunction:function () {
+                        if (fuadUtil.beforeTradeDeadline) {
+                            // calculate franchise and rookie salaries from the player data we just loaded
+                            setFranchiseAndRookieSettings();
                         }
+                        // notify all subscribers that the data has been loaded and is ready for use
+                        $("#ajaxLoadEventSpan").trigger("ajaxDataLoaded");
+                    }}
+            );
+            // disable ajax caching
+            $.ajaxSetup({ cache: false });
+            loadAjaxData(loadOrder, 0);
+        };
+
+        var isLocallyStoredDateYoungerThan = function (key, milliseconds) {
+            var stored = false;
+            if (Modernizr.localstorage) {
+                var storedDate = localStorage[key];
+                if (fuadUtil.cacheData && storedDate) {
+                    if (Date.now() - new Date(parseInt(storedDate)).getTime() < milliseconds) {
+                        stored = true;
                     }
-                });
-                _.each(transactionNode.getAttribute("dropped").split(","), function (playerId) {
-                    if (playerId) {
-                        var player = data.players[getHashId(playerId)];
+                }
+            }
+            return stored;
+        };
+
+        /**
+         * Recursively load data via ajax in the order specified.
+         * @param loadOrder array of objects with url and loadFunction properties
+         * @param loadOrderIndex tracks the current index into the loadOrder array
+         */
+        var loadAjaxData = function (loadOrder, loadOrderIndex) {
+            var url = loadOrder[loadOrderIndex].url;
+            var loadFunction = loadOrder[loadOrderIndex].loadFunction;
+            if (url) {
+                var success = function (xml) {
+                    loadFunction(xml);
+                    if (loadOrderIndex + 1 < loadOrder.length) {
+                        loadAjaxData(loadOrder, loadOrderIndex + 1);
+                    }
+                };
+                if (_.isFunction(url)) {
+                    url = url();
+                }
+                $.get(url, success, "xml");
+            } else {
+                loadFunction();
+            }
+        };
+
+        var loadPlayerData = function (xml) {
+            var playerNodes = xml.getElementsByTagName("player"),
+                    i;
+            for (i = 0; i < playerNodes.length; i++) {
+                var playerNode = playerNodes[i];
+                var names = playerNode.getAttribute("name").split(",");
+                var fullName = names[1].trim() + " " + names[0];
+                data.players[getHashId(playerNode)] = new Player(
+                        playerNode.getAttribute("id"),
+                        fullName,
+                        playerNode.getAttribute("position"),
+                        playerNode.getAttribute("team")
+                );
+            }
+            if (Modernizr.localstorage) {
+                localStorage["playersStoreDate"] = Date.now();
+                localStorage["players"] = JSON.stringify(data.players);
+            }
+        };
+
+        var loadFranchiseData = function (xml) {
+            var franchiseNodes = xml.getElementsByTagName("franchise"),
+                    i;
+            for (i = 0; i < franchiseNodes.length; i++) {
+                var franchiseNode = franchiseNodes[i];
+                data.franchises[getHashId(franchiseNode)] = new Franchise(
+                        franchiseNode.getAttribute("id"),
+                        franchiseNode.getAttribute("name")
+                );
+            }
+        };
+
+        var loadRosterData = function (xml) {
+            var franchiseNodes = xml.getElementsByTagName("franchise"),
+                    i,
+                    j;
+            for (i = 0; i < franchiseNodes.length; i++) {
+                var franchiseNode = franchiseNodes[i];
+                var franchise = data.franchises[getHashId(franchiseNode)];
+                var playerNodes = franchiseNodes[i].getElementsByTagName("player");
+                for (j = 0; j < playerNodes.length; j++) {
+                    var playerNode = playerNodes[j];
+                    var player = data.players[getHashId(playerNode)];
+                    if(player) {
+                        player.franchise = franchise;
+                        player.status = playerNode.getAttribute("status");
+                        var salary = parseFloat(playerNode.getAttribute("salary"));
+                        player.salary = salary < 1 ? 0 : salary;
+                        player.years = parseFloat(playerNode.getAttribute("contractYear"));
+                        player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
+                        player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
+                        player.contractStatus = playerNode.getAttribute("contractStatus");
+                        data.rosteredPlayerArray.push(player);
+                        if (playerNode.getAttribute("status") === "ROSTER") {
+                            franchise.numPlayers++;
+                        }
+                        if (player.years === 0) {
+                            player.franchise.signedPlayers.push(player);
+                        }
+                    } else {
+                        console.log("player not found in loadRosterData: " + playerNode)
+                    }
+                }
+            }
+        };
+
+        var loadTransactionData = function (xml) {
+            var transactionNodes = xml.getElementsByTagName("transaction"),
+                    i;
+            for (i = 0; i < transactionNodes.length; i++) {
+                var transactionNode = transactionNodes[i];
+                var type = transactionNode.getAttribute("type");
+                if (type === "WAIVER") {
+                    _.each(transactionNode.getAttribute("added").split(","), function (playerId) {
+                        if (playerId) {
+                            var player = data.players[getHashId(playerId)];
+                            if(player) {
+                                player.transactions.push(new Transaction(
+                                        transactionNode.getAttribute("timestamp"),
+                                        data.franchises[getHashId(transactionNode, "franchise")],
+                                        true
+                                ));
+                            } else {
+                                console.log("player not found in loadTransactionData: " + playerId)
+                            }
+                        }
+                    });
+                    _.each(transactionNode.getAttribute("dropped").split(","), function (playerId) {
+                        if (playerId) {
+                            var player = data.players[getHashId(playerId)];
+                            if(player) {
+                                player.transactions.push(new Transaction(
+                                        transactionNode.getAttribute("timestamp"),
+                                        data.franchises[getHashId(transactionNode, "franchise")],
+                                        false
+                                ));
+                            } else {
+                                console.log("player not found in loadTransactionData: " + playerId)
+                            }
+                        }
+                    });
+                } else if (type === "BBID_WAIVER") {
+                    var info = transactionNode.getAttribute("transaction").split("|");
+                    var player = data.players[getHashId(info[0])];
+                    if(player) {
+                        player.transactions.push(new Transaction(
+                                transactionNode.getAttribute("timestamp"),
+                                data.franchises[getHashId(transactionNode, "franchise")],
+                                true
+                        ));
+                    } else {
+                        console.log("player not found in loadTransactionData: " + info[0])
+                    }
+                    if (info[2] !== "0000") {
+                        player = data.players[getHashId(info[2])];
                         if(player) {
                             player.transactions.push(new Transaction(
                                     transactionNode.getAttribute("timestamp"),
@@ -216,174 +241,149 @@ fuad.ajax = (function ($, _, document, Modernizr, fuadUtil) {
                                     false
                             ));
                         } else {
-                            console.log("player not found in loadTransactionData: " + playerId)
+                            console.log("player not found in loadTransactionData: " + info[2])
+                        }
+                    }
+                }
+            }
+            _.each(data.players, function (player) {
+                player.transactions.sort(function (transaction1, transaction2) {
+                    return fuadUtil.compareObjects(transaction1, transaction2, ["timestamp"], {
+                        timestamp:fuadUtil.compareDesc
+                    })
+                });
+            });
+        };
+
+        var loadStandingsData = function (xml) {
+            var franchiseNodes = xml.getElementsByTagName("franchise"),
+                    i;
+            for (i = 0; i < franchiseNodes.length; i++) {
+                var franchiseNode = franchiseNodes[i];
+                var franchise = data.franchises[getHashId(franchiseNode)];
+                franchise.salary = parseFloat(franchiseNode.getElementsByTagName("salary")[0].childNodes[0].nodeValue);
+            }
+        };
+
+        var loadWeeklyResultsData = function (xml) {
+            var weeklyResultsNode = xml.getElementsByTagName("weeklyResults")[0];
+            data.week = weeklyResultsNode.getAttribute("week");
+            loadWeeklyResultsNode(weeklyResultsNode);
+        };
+
+        var loadWeeklyResultsNode = function (weeklyResultsNode) {
+            $.each(weeklyResultsNode.getElementsByTagName("franchise"), function (franchiseIndex, franchiseNode) {
+                var franchise = data.franchises[getHashId(franchiseNode)];
+                $.each(franchiseNode.getElementsByTagName("player"), function (playerIndex, playerNode) {
+                    if (playerNode.getAttribute("status") === "starter") {
+                        var player = data.players[getHashId(playerNode)];
+                        if(player) {
+                            franchise.lineup.push(player);
+                        } else {
+                            console.log("player not found in loadWeeklyResultsNode: " + playerNode)
                         }
                     }
                 });
-            } else if (type === "BBID_WAIVER") {
-                var info = transactionNode.getAttribute("transaction").split("|");
-                var player = data.players[getHashId(info[0])];
+            });
+        };
+
+        var loadFreeAgentData = function (xml) {
+            var playerNodes = xml.getElementsByTagName("player"),
+                    i;
+            for (i = 0; i < playerNodes.length; i++) {
+                var playerNode = playerNodes[i];
+                var player = data.players[getHashId(playerNode)];
+                var salary = parseFloat(playerNode.getAttribute("salary"));
                 if(player) {
-                    player.transactions.push(new Transaction(
-                            transactionNode.getAttribute("timestamp"),
-                            data.franchises[getHashId(transactionNode, "franchise")],
-                            true
-                    ));
-                } else {
-                    console.log("player not found in loadTransactionData: " + info[0])
-                }
-                if (info[2] !== "0000") {
-                    player = data.players[getHashId(info[2])];
-                    if(player) {
-                        player.transactions.push(new Transaction(
-                                transactionNode.getAttribute("timestamp"),
-                                data.franchises[getHashId(transactionNode, "franchise")],
-                                false
-                        ));
-                    } else {
-                        console.log("player not found in loadTransactionData: " + info[2])
+                    player.salary = salary < 1 ? 0 : salary;
+                    player.years = parseFloat(playerNode.getAttribute("contractYear"));
+                    player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
+                    player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
+                    if ((player.salary > 1 || player.years > 0) && player.transactions.length > 0 && !player.transactions[0].added) {
+                        player.transactions[0].franchise.pendingDroppedPlayers.push(player);
                     }
+                } else {
+                    console.log("player not found in loadFreeAgentData: " + playerNode)
                 }
             }
-        }
-        _.each(data.players, function (player) {
-            player.transactions.sort(function (transaction1, transaction2) {
-                return fuadUtil.compareObjects(transaction1, transaction2, ["timestamp"], {
-                    timestamp:fuadUtil.compareDesc
-                })
+            _.each(data.franchises, function (franchise) {
+                franchise.pendingPenalty = _.reduce(franchise.pendingDroppedPlayers, function (total, player) {
+                    return total + player.capPenalty;
+                }, 0);
+                franchise.penaltyReason = _.reduce(franchise.pendingDroppedPlayers, function (reason, player) {
+                    var playerReason = player.fullName + " (" + player.years + "yrs@" + player.salary + ")";
+                    return reason ? reason + " : " + playerReason : playerReason;
+                }, "");
             });
-        });
-    };
+        };
 
-    var loadStandingsData = function (xml) {
-        var franchiseNodes = xml.getElementsByTagName("franchise"),
-                i;
-        for (i = 0; i < franchiseNodes.length; i++) {
-            var franchiseNode = franchiseNodes[i];
-            var franchise = data.franchises[getHashId(franchiseNode)];
-            franchise.salary = parseFloat(franchiseNode.getElementsByTagName("salary")[0].childNodes[0].nodeValue);
-        }
-    };
-
-    var loadWeeklyResultsData = function (xml) {
-        var weeklyResultsNode = xml.getElementsByTagName("weeklyResults")[0];
-        data.week = weeklyResultsNode.getAttribute("week");
-        loadWeeklyResultsNode(weeklyResultsNode);
-    };
-
-    var loadWeeklyResultsNode = function (weeklyResultsNode) {
-        $.each(weeklyResultsNode.getElementsByTagName("franchise"), function (franchiseIndex, franchiseNode) {
-            var franchise = data.franchises[getHashId(franchiseNode)];
-            $.each(franchiseNode.getElementsByTagName("player"), function (playerIndex, playerNode) {
-                if (playerNode.getAttribute("status") === "starter") {
-                    var player = data.players[getHashId(playerNode)];
+        var loadInjuriesData = function (xml) {
+            $.each(xml.getElementsByTagName("injury"), function (index, injuryNode) {
+                var status = injuryNode.getAttribute("status");
+                if (status === "IR" || status === "Out" || status === "Suspended") {
+                    var player = data.players[getHashId(injuryNode)];
                     if(player) {
-                        franchise.lineup.push(player);
+                        player.injured = true;
                     } else {
-                        console.log("player not found in loadWeeklyResultsNode: " + playerNode)
+                        console.log("player not found in loadInjuriesData: " + injuryNode)
                     }
                 }
             });
-        });
-    };
+        };
 
-    var loadFreeAgentData = function (xml) {
-        var playerNodes = xml.getElementsByTagName("player"),
-                i;
-        for (i = 0; i < playerNodes.length; i++) {
-            var playerNode = playerNodes[i];
-            var player = data.players[getHashId(playerNode)];
-            var salary = parseFloat(playerNode.getAttribute("salary"));
-            if(player) {
-                player.salary = salary < 1 ? 0 : salary;
-                player.years = parseFloat(playerNode.getAttribute("contractYear"));
-                player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
-                player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
-                if ((player.salary > 1 || player.years > 0) && player.transactions.length > 0 && !player.transactions[0].added) {
-                    player.transactions[0].franchise.pendingDroppedPlayers.push(player);
+        /**
+         * Update the settings object to contain data needed for both rookie draft and franchise
+         * player calculations and display.
+         */
+        var setFranchiseAndRookieSettings = function () {
+            var nflPosition = null,
+                    positionIndex = 0,
+                    i,
+                    players = getPlayersByPositionSalary();
+            for (i = 0; i < players.length; i++) {
+                var player = players[i];
+                if (player.nflPosition !== nflPosition) {
+                    nflPosition = player.nflPosition;
+                    positionIndex = 1;
                 }
-            } else {
-                console.log("player not found in loadFreeAgentData: " + playerNode)
-            }
-        }
-        _.each(data.franchises, function (franchise) {
-            franchise.pendingPenalty = _.reduce(franchise.pendingDroppedPlayers, function (total, player) {
-                return total + player.capPenalty;
-            }, 0);
-            franchise.penaltyReason = _.reduce(franchise.pendingDroppedPlayers, function (reason, player) {
-                var playerReason = player.fullName + " (" + player.years + "yrs@" + player.salary + ")";
-                return reason ? reason + " : " + playerReason : playerReason;
-            }, "");
-        });
-    };
-
-    var loadInjuriesData = function (xml) {
-        $.each(xml.getElementsByTagName("injury"), function (index, injuryNode) {
-            var status = injuryNode.getAttribute("status");
-            if (status === "IR" || status === "Out" || status === "Suspended") {
-                var player = data.players[getHashId(injuryNode)];
-                if(player) {
-                    player.injured = true;
-                } else {
-                    console.log("player not found in loadInjuriesData: " + injuryNode)
+                if (positionIndex <= fuadUtil.franchisePlayerCount) {
+                    if (!fuadUtil.settings[nflPosition].franchisePlayers) {
+                        fuadUtil.settings[nflPosition].franchisePlayers = [];
+                    }
+                    fuadUtil.settings[nflPosition].franchisePlayers[positionIndex - 1] = {
+                        fullName:player.fullName,
+                        salary:player.salary
+                    };
                 }
-            }
-        });
-    };
-
-    /**
-     * Update the settings object to contain data needed for both rookie draft and franchise
-     * player calculations and display.
-     */
-    var setFranchiseAndRookieSettings = function () {
-        var nflPosition = null,
-                positionIndex = 0,
-                i,
-                players = getPlayersByPositionSalary();
-        for (i = 0; i < players.length; i++) {
-            var player = players[i];
-            if (player.nflPosition !== nflPosition) {
-                nflPosition = player.nflPosition;
-                positionIndex = 1;
-            }
-            if (positionIndex <= fuadUtil.franchisePlayerCount) {
-                if (!fuadUtil.settings[nflPosition].franchisePlayers) {
-                    fuadUtil.settings[nflPosition].franchisePlayers = [];
+                if (positionIndex === fuadUtil.settings[nflPosition].rookieBaselineRank) {
+                    fuadUtil.settings[nflPosition].rookieBaselineSalary = player.salary;
                 }
-                fuadUtil.settings[nflPosition].franchisePlayers[positionIndex - 1] = {
-                    fullName:player.fullName,
-                    salary:player.salary
-                };
+                positionIndex++;
             }
-            if (positionIndex === fuadUtil.settings[nflPosition].rookieBaselineRank) {
-                fuadUtil.settings[nflPosition].rookieBaselineSalary = player.salary;
-            }
-            positionIndex++;
-        }
-    };
+        };
 
-    var getPlayersByPositionSalary = function () {
-        return data.rosteredPlayerArray.sort(function (player1, player2) {
-            return fuadUtil.compareObjects(player1, player2, ["nflPosition", "salary"], {
-                nflPosition:fuadUtil.comparePositions,
-                salary:fuadUtil.compareDesc
+        var getPlayersByPositionSalary = function () {
+            return data.rosteredPlayerArray.sort(function (player1, player2) {
+                return fuadUtil.compareObjects(player1, player2, ["nflPosition", "salary"], {
+                    nflPosition:fuadUtil.comparePositions,
+                    salary:fuadUtil.compareDesc
+                });
             });
+        };
+
+        var getHashId = function (node, idAttribute) {
+            var id = typeof node === "string" ? node : node.getAttribute(idAttribute ? idAttribute : "id");
+            return id + "a";
+        };
+
+        // schedule initialization when ready
+        $(function () {
+            init();
         });
-    };
 
-    var getHashId = function (node, idAttribute) {
-        var id = typeof node === "string" ? node : node.getAttribute(idAttribute ? idAttribute : "id");
-        return id + "a";
-    };
-
-    // schedule initialization when ready
-    $(function () {
-        init();
-    });
-
-    return {
-        data:data,
-        init:init
-    };
-}(jQuery, _, document, Modernizr, fuad.util));
+        return {
+            data:data,
+            init:init
+        };
+    }(jQuery, _, document, Modernizr, fuad.util));
 </script>
