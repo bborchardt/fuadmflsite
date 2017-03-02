@@ -191,7 +191,37 @@
             for (i = 0; i < transactionNodes.length; i++) {
                 var transactionNode = transactionNodes[i];
                 var type = transactionNode.getAttribute("type");
-                if (type === "WAIVER") {
+                if (type === "FREE_AGENT") {
+                    var addsDrops = transactionNode.getAttribute("transaction").split("|");
+                    _.each(addsDrops[0].split(","), function (playerId) {
+                        if (playerId) {
+                            var player = data.players[getHashId(playerId)];
+                            if(player) {
+                                player.transactions.push(new Transaction(
+                                        transactionNode.getAttribute("timestamp"),
+                                        data.franchises[getHashId(transactionNode, "franchise")],
+                                        true
+                                ));
+                            } else {
+                                console.log("player not found in loadTransactionData: " + playerId)
+                            }
+                        }
+                    });
+                    _.each(addsDrops[1].split(","), function (playerId) {
+                        if (playerId) {
+                            var player = data.players[getHashId(playerId)];
+                            if(player) {
+                                player.transactions.push(new Transaction(
+                                        transactionNode.getAttribute("timestamp"),
+                                        data.franchises[getHashId(transactionNode, "franchise")],
+                                        false
+                                ));
+                            } else {
+                                console.log("player not found in loadTransactionData: " + playerId)
+                            }
+                        }
+                    });
+                } else if (type === "WAIVER") {
                     _.each(transactionNode.getAttribute("added").split(","), function (playerId) {
                         if (playerId) {
                             var player = data.players[getHashId(playerId)];
