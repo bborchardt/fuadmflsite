@@ -1,0 +1,27 @@
+<div id="fuadlinksdiv"></div>
+<script id="fuad-link-list" type="text/x-handlebars-template">
+    <ul>
+        {{#each links}}
+            <li><a href={{this.link}}>{{this.text}}</a></li>
+        {{/each}}
+    </ul>
+</script>
+<script type="text/javascript">
+    fuad.links = (function ($, fuadUtil) {
+        var init = function () {
+            var links = [
+                {text: "Rosters", link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=07"}
+            ];
+            var source = $("#fuad-link-list").html();
+            var template = Handlebars.compile(source);
+            var html = template({
+                links: links
+            });
+            $("#fuadlinksdiv").append(html);
+        };
+
+        $(function () {
+            init();
+        });
+    }(jQuery, fuad.util));
+</script>
