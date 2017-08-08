@@ -76,7 +76,11 @@
                         <tr class="{{../../rowClass}}">
                             <td>{{../this.teamName}}</td>
                             <td>{{this.fullName}}</td>
-                            <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
+                            {{#if ../../beforeDraft}}
+                                <td><input type="text" name="{{this.playerId}}" value="0.01" size="9"></td>
+                            {{else}}
+                                <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
+                            {{/if}}
                             <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
                             <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
                             <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
@@ -157,6 +161,7 @@
             var template = Handlebars.compile(source);
             var html = template({
                 leagueId:fuadUtil.leagueId,
+                beforeDraft:fuadUtil.beforeDraft,
                 contractUrl:fuadUtil.homeUrl + '/set_salaries',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;

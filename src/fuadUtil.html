@@ -9,8 +9,9 @@
     var fuad = {};
     fuad.util = (function (global, document, $) {
         // update these after upgrading site
-        var year = "2016";
+        var year = "2017";
         var leagueId = "48571";
+        var beforeDraft = true;
 
         // contains all positional settings needed for rookie draft and franchise player calculations
         var settings = {
@@ -37,47 +38,47 @@
         };
 
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
-        var beforeTradeDeadline = true;
+        var beforeTradeDeadline = false;
         if (!beforeTradeDeadline) {
-            settings.QB.rookieBaselineSalary = 2;
+            settings.QB.rookieBaselineSalary = 3;
             settings.QB.franchisePlayers = [
-                {fullName:"Matthew Stafford", salary:50},
+                {fullName:"Andrew Luck", salary:66},
                 {fullName:"Aaron Rodgers", salary:50},
-                {fullName:"Matt Ryan", salary:40},
+                {fullName:"Cam Newton", salary:42},
                 {fullName:"Drew Brees", salary:37},
-                {fullName:"Tom Brady", salary:35}
+                {fullName:"Carson Palmer", salary:30}
             ];
-            settings.RB.rookieBaselineSalary = 10;
+            settings.RB.rookieBaselineSalary = 6;
             settings.RB.franchisePlayers = [
-                {fullName:"Adrian Peterson", salary:120},
-                {fullName:"Jamaal Charles", salary:106},
-                {fullName:"Marshawn Lynch", salary:95},
-                {fullName:"Justin Forsett", salary:90},
-                {fullName:"Matt Forte", salary:87}
+                {fullName:"Adrian Peterson", salary:101},
+                {fullName:"LeSean McCoy", salary:42},
+                {fullName:"Jamaal Charles", salary:41},
+                {fullName:"DeMarco Murray", salary:30},
+                {fullName:"Darren McFadden", salary:30}
             ];
-            settings.WR.rookieBaselineSalary = 2;
+            settings.WR.rookieBaselineSalary = 1;
             settings.WR.franchisePlayers = [
-                {fullName:"Demaryius Thomas", salary:116},
-                {fullName:"Dez Bryant", salary:90},
-                {fullName:"Calvin Johnson", salary:83},
-                {fullName:"Julian Edelman", salary:55},
-                {fullName:"Andre Johnson", salary:52}
+                {fullName:"A.J. Green", salary:98},
+                {fullName:"Antonio Brown", salary:95},
+                {fullName:"Julio Jones", salary:90},
+                {fullName:"Jordy Nelson", salary:61},
+                {fullName:"Kelvin Benjamin", salary:52}
             ];
             settings.TE.rookieBaselineSalary = 1;
             settings.TE.franchisePlayers = [
-                {fullName:"Greg Olsen", salary:40},
-                {fullName:"Rob Gronkowski", salary:40},
-                {fullName:"Jason Witten", salary:24},
-                {fullName:"Martellus Bennett", salary:23},
-                {fullName:"Jimmy Graham", salary:22}
+                {fullName:"Rob Gronkowski", salary:50},
+                {fullName:"Jordan Reed", salary:39},
+                {fullName:"Greg Olsen", salary:30},
+                {fullName:"Coby Fleener", salary:22},
+                {fullName:"Martellus Bennett", salary:18}
             ];
             settings.PK.rookieBaselineSalary = 1;
             settings.PK.franchisePlayers = [
-                {fullName:"Adam Vinatieri", salary:5},
+                {fullName:"Stephen Gostkowski", salary:5},
+                {fullName:"Matt Bryant", salary:2},
+                {fullName:"Steven Hauschka", salary:2},
                 {fullName:"Graham Gano", salary:2},
-                {fullName:"Dan Bailey", salary:1},
-                {fullName:"Caleb Sturgis", salary:1},
-                {fullName:"Brandon McManus", salary:1}
+                {fullName:"Dan Bailey", salary:1}
             ];
         }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE
@@ -145,6 +146,7 @@
             cacheData:true,
             year:year,
             leagueId:leagueId,
+            beforeDraft:beforeDraft,
             salaryCap:250,
             rosterMax:25,
             rosterMin:18,
