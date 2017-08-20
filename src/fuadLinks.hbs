@@ -1,21 +1,97 @@
 <div id="fuadlinksdiv"></div>
 <script id="fuad-link-list" type="text/x-handlebars-template">
-    <ul>
-        {{#each links}}
-            <li><a href={{this.link}}>{{this.text}}</a></li>
-        {{/each}}
-    </ul>
+    <table id="homepagecolumns" cellspacing="0" cellpadding="0" align="center">
+        <tbody>
+        <tr>
+            <td class="homepagecolumn" width="50%" valign="top">
+                {{#each sections}}
+                    <table class="homepagemodule report" cellspacing="1" align="center">
+                        <caption><span>{{this.name}}</span></caption>
+                        <tbody>
+                        <tr>
+                            <td>
+                                <ul>
+                                    {{#each this.links}}
+                                        <li><a href={{this.link}}>{{this.text}}</a></li>
+                                    {{/each}}
+                                </ul>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                {{/each}}
+            </td>
+        </tr>
+        </tbody>
+    </table>
 </script>
 <script type="text/javascript">
     fuad.links = (function ($, fuadUtil) {
         var init = function () {
-            var links = [
-                {text: "Rosters", link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=07"}
+            var sections = [
+                {
+                    name: "League",
+                    links: [
+                        {
+                            text: "Rosters",
+                            link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=07"
+                        },
+                        {
+                            text: "Prior FA Bids",
+                            link: fuadUtil.homeUrl + "/processed_waivers?L=" + fuadUtil.leagueId
+                        },
+                        {
+                            text: "Future Draft Picks",
+                            link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=100&SORT=FYR"
+                        },
+                        {
+                            text: "Player Stats",
+                            link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=08"
+                        },
+                        {
+                            text: "Locked Players",
+                            link: fuadUtil.homeUrl + "/locked_players?L=" + fuadUtil.leagueId
+                        },
+                        {
+                            text: "League History",
+                            link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=156"
+                        },
+                        {
+                            text: "Accounting Report",
+                            link: fuadUtil.homeUrl + "/accounting_report?L=" + fuadUtil.leagueId
+                        },
+                        {
+                            text: "Scoring System",
+                            link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=09"
+                        },
+                        {
+                            text: "League Bylaws",
+                            link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=26"
+                        }
+                    ]
+                }
             ];
+            if (fuadUtil.isLoggedInAsCommish()) {
+                sections.push(
+                        {
+                            name: "Commish",
+                            links: [
+                                {
+                                    text: "Cap Penalties",
+                                    link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=131"
+                                },
+                                {
+                                    text: "Set Contracts",
+                                    link: fuadUtil.homeUrl + "/options?L=" + fuadUtil.leagueId + "&O=36"
+                                }
+                            ]
+                        }
+                );
+            }
             var source = $("#fuad-link-list").html();
             var template = Handlebars.compile(source);
             var html = template({
-                links: links
+                sections: sections
             });
             $("#fuadlinksdiv").append(html);
         };
