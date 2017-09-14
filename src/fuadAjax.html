@@ -252,7 +252,8 @@
                     });
                 } else if (type === "BBID_WAIVER") {
                     var info = transactionNode.getAttribute("transaction").split("|");
-                    var player = data.players[getHashId(info[0])];
+                    var playerId = info[0].split(",")[0];
+                    var player = data.players[getHashId(playerId)];
                     if(player) {
                         player.transactions.push(new Transaction(
                                 transactionNode.getAttribute("timestamp"),
@@ -260,10 +261,11 @@
                                 true
                         ));
                     } else {
-                        console.log("player not found in loadTransactionData: " + info[0])
+                        console.log("added player not found in loadTransactionData: " + info)
                     }
                     if (info[2] !== "0000") {
-                        player = data.players[getHashId(info[2])];
+                        playerId = info[2].split(",")[0];
+                        player = data.players[getHashId(playerId)];
                         if(player) {
                             player.transactions.push(new Transaction(
                                     transactionNode.getAttribute("timestamp"),
@@ -271,7 +273,7 @@
                                     false
                             ));
                         } else {
-                            console.log("player not found in loadTransactionData: " + info[2])
+                            console.log("dropped player not found in loadTransactionData: " + info)
                         }
                     }
                 }
