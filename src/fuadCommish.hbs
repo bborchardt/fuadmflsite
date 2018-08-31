@@ -29,10 +29,8 @@
                     {{#if this.penaltyReason}}
                         <tr class="{{../../rowClass}}">
                             <td>{{this.teamName}}</td>
-                            <td><input type="text" name="{{this.franchiseId}}" size="7" value="{{this.pendingPenalty}}"></td>
-                            <td><input type="text" name="EXPLANATION{{this.franchiseId}}" size="45"
-                                       value="{{this.penaltyReason}}">
-                            </td>
+                            <td><input type="text" id="ADJ_{{this.franchiseId}}" name="ADJ_{{this.franchiseId}}" size="7" value="{{this.pendingPenalty}}"></td>
+                            <td><input type="text" id="EXP_{{this.franchiseId}}" name="EXP_{{this.franchiseId}}" size="45" value="{{this.penaltyReason}}"></td>
                         </tr>
                     {{/if}}
                 {{/each}}
@@ -56,18 +54,14 @@
                     <th>Player</th>
                     <th>Salary</th>
                     <th>Contract Year</th>
-                    <th>Contract Status</th>
-                    <th>Other Contract Information</th>
                 </tr>
                 {{#each franchises}}
                     {{#each this.pendingDroppedPlayers}}
                         <tr class="{{../../rowClass}}">
                             <td>Free Agent</td>
                             <td>{{this.fullName}}</td>
-                            <td><input type="text" name="{{this.playerId}}" value="" size="9"></td>
-                            <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
-                            <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
-                            <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
+                            <td><input type="text" id="SAL_{{this.playerId}}" name="SAL_{{this.playerId}}" value="" size="9"></td>
+                            <td><input type="text" id="CY_{{this.playerId}}" name="CY_{{this.playerId}}" value="" size="4"></td>
                         </tr>
                     {{/each}}
                 {{/each}}
@@ -77,13 +71,11 @@
                             <td>{{../this.teamName}}</td>
                             <td>{{this.fullName}}</td>
                             {{#if ../../beforeDraft}}
-                                <td><input type="text" name="{{this.playerId}}" value="0.01" size="9"></td>
+                                <td><input type="text" id="SAL_{{this.playerId}}" name="SAL_{{this.playerId}}" value="0.01" size="9"></td>
                             {{else}}
-                                <td><input type="text" name="{{this.playerId}}" value="{{this.salary}}" size="9"></td>
+                                <td><input type="text" id="SAL_{{this.playerId}}" name="SAL_{{this.playerId}}" value="{{this.salary}}" size="9"></td>
                             {{/if}}
-                            <td><input type="text" name="{{this.playerId}}_CONTRACT_YEAR" value="" size="4"></td>
-                            <td><input type="text" name="{{this.playerId}}_CONTRACT_STATUS" value="" size="5"></td>
-                            <td><input type="text" name="{{this.playerId}}_CONTRACT_INFO" value="" size="20"></td>
+                            <td><input type="text" id="CY_{{this.playerId}}" name="CY_{{this.playerId}}" value="" size="4"></td>
                         </tr>
                     {{/each}}
                 {{/each}}
@@ -147,7 +139,7 @@
             var template = Handlebars.compile(source);
             var html = template({
                 leagueId:fuadUtil.leagueId,
-                penaltyUrl:fuadUtil.homeUrl + '/edit_salary_adjustments',
+                penaltyUrl:fuadUtil.homeUrl + '/csetup?LEAGUE_ID=' + fuadUtil.leagueId + '&C=SALADJ&form_name=adj&L=' + fuadUtil.leagueId + '',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;
                 }),
@@ -162,7 +154,7 @@
             var html = template({
                 leagueId:fuadUtil.leagueId,
                 beforeDraft:fuadUtil.beforeDraft,
-                contractUrl:fuadUtil.homeUrl + '/set_salaries',
+                contractUrl:fuadUtil.homeUrl + '/csetup?LEAGUE_ID=' + fuadUtil.leagueId + '&C=SALARIES&form_name=salaries&L=' + fuadUtil.leagueId + '',
                 franchises:_.map(fuadAjax.data.franchises, function (franchise) {
                     return franchise;
                 }),

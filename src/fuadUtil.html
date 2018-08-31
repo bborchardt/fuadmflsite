@@ -1,10 +1,15 @@
 <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
-<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
+<script type="text/javascript"
+        src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
 <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.0/jquery-1.8.0.min.js"></script>
-<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.rc.1/handlebars.min.js"></script>
+<script type="text/javascript"
+        src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.rc.1/handlebars.min.js"></script>
 <span id="ajaxLoadEventSpan"></span>
 <script type="text/javascript">
-    window.console = window.console || {log: function() {}};
+    window.console = window.console || {
+                log: function () {
+                }
+            };
     jQuery.noConflict();
     var fuad = {};
     fuad.util = (function (global, document, $) {
@@ -15,25 +20,25 @@
 
         // contains all positional settings needed for rookie draft and franchise player calculations
         var settings = {
-            QB:{
-                sortOrder:1,
-                rookieBaselineRank:15
+            QB: {
+                sortOrder: 1,
+                rookieBaselineRank: 15
             },
-            RB:{
-                sortOrder:2,
-                rookieBaselineRank:20
+            RB: {
+                sortOrder: 2,
+                rookieBaselineRank: 20
             },
-            WR:{
-                sortOrder:3,
-                rookieBaselineRank:35
+            WR: {
+                sortOrder: 3,
+                rookieBaselineRank: 35
             },
-            TE:{
-                sortOrder:4,
-                rookieBaselineRank:15
+            TE: {
+                sortOrder: 4,
+                rookieBaselineRank: 15
             },
-            PK:{
-                sortOrder:5,
-                rookieBaselineRank:15
+            PK: {
+                sortOrder: 5,
+                rookieBaselineRank: 15
             }
         };
 
@@ -42,43 +47,43 @@
         if (!beforeTradeDeadline) {
             settings.QB.rookieBaselineSalary = 3;
             settings.QB.franchisePlayers = [
-                {fullName:"Andrew Luck", salary:66},
-                {fullName:"Aaron Rodgers", salary:50},
-                {fullName:"Cam Newton", salary:42},
-                {fullName:"Drew Brees", salary:37},
-                {fullName:"Carson Palmer", salary:30}
+                {fullName: "Aaron Rodgers", salary: 62},
+                {fullName: "Andrew Luck", salary: 45},
+                {fullName: "Drew Brees", salary: 37},
+                {fullName: "Cam Newton", salary: 30},
+                {fullName: "Russell Wilson", salary: 30}
             ];
-            settings.RB.rookieBaselineSalary = 6;
+            settings.RB.rookieBaselineSalary = 5;
             settings.RB.franchisePlayers = [
-                {fullName:"Adrian Peterson", salary:101},
-                {fullName:"LeSean McCoy", salary:42},
-                {fullName:"Jamaal Charles", salary:41},
-                {fullName:"DeMarco Murray", salary:30},
-                {fullName:"Darren McFadden", salary:30}
+                {fullName: "Lamar Miller", salary: 87},
+                {fullName: "DeMarco Murray", salary: 56},
+                {fullName: "LeSean McCoy", salary: 42},
+                {fullName: "LeGarrette Blount", salary: 30},
+                {fullName: "Mark Ingram", salary: 28}
             ];
-            settings.WR.rookieBaselineSalary = 1;
+            settings.WR.rookieBaselineSalary = 2;
             settings.WR.franchisePlayers = [
-                {fullName:"A.J. Green", salary:98},
-                {fullName:"Antonio Brown", salary:95},
-                {fullName:"Julio Jones", salary:90},
-                {fullName:"Jordy Nelson", salary:61},
-                {fullName:"Kelvin Benjamin", salary:52}
+                {fullName: "A.J. Green", salary: 106},
+                {fullName: "Antonio Brown", salary: 100},
+                {fullName: "Julio Jones", salary: 90},
+                {fullName: "T.Y. Hilton", salary: 81},
+                {fullName: "Jordy Nelson", salary: 80}
             ];
             settings.TE.rookieBaselineSalary = 1;
             settings.TE.franchisePlayers = [
-                {fullName:"Rob Gronkowski", salary:50},
-                {fullName:"Jordan Reed", salary:39},
-                {fullName:"Greg Olsen", salary:30},
-                {fullName:"Coby Fleener", salary:22},
-                {fullName:"Martellus Bennett", salary:18}
+                {fullName: "Rob Gronkowski", salary: 50},
+                {fullName: "Greg Olsen", salary: 34},
+                {fullName: "Martellus Bennett", salary: 25},
+                {fullName: "Jordan Reed", salary: 21},
+                {fullName: "Kyle Rudolph", salary: 16}
             ];
             settings.PK.rookieBaselineSalary = 1;
             settings.PK.franchisePlayers = [
-                {fullName:"Stephen Gostkowski", salary:5},
-                {fullName:"Matt Bryant", salary:2},
-                {fullName:"Steven Hauschka", salary:2},
-                {fullName:"Graham Gano", salary:2},
-                {fullName:"Dan Bailey", salary:1}
+                {fullName: "Wil Lutz", salary: 1},
+                {fullName: "Blair Walsh", salary: 1},
+                {fullName: "Stephen Gostkowski", salary: 1},
+                {fullName: "Mason Crosby", salary: 1},
+                {fullName: "Justin Tucker", salary: 1}
             ];
         }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE
@@ -143,34 +148,34 @@
 
         return {
             // data
-            cacheData:true,
-            year:year,
-            leagueId:leagueId,
-            beforeDraft:beforeDraft,
-            salaryCap:250,
-            rosterMax:25,
-            rosterMin:18,
-            franchisePlayerCount:5,
-            numRookiesToDisplay:15,
-            beforeTradeDeadline:beforeTradeDeadline,
-            baseUrl:baseUrl,
-            playersDataUrl:baseUrl + "export?TYPE=players&L=&W=" + week,
-            franchiseDataUrl:baseUrl + "export?TYPE=league&L=" + leagueId + "&W=" + week,
-            standingsDataUrl:baseUrl + "export?TYPE=standings&L=" + leagueId + "&W=" + week,
-            rostersDataUrl:baseUrl + "export?TYPE=rosters&L=" + leagueId + "&W=" + week,
+            cacheData: true,
+            year: year,
+            leagueId: leagueId,
+            beforeDraft: beforeDraft,
+            salaryCap: 250,
+            rosterMax: 25,
+            rosterMin: 18,
+            franchisePlayerCount: 5,
+            numRookiesToDisplay: 15,
+            beforeTradeDeadline: beforeTradeDeadline,
+            baseUrl: baseUrl,
+            playersDataUrl: baseUrl + "export?TYPE=players&L=&W=" + week,
+            franchiseDataUrl: baseUrl + "export?TYPE=league&L=" + leagueId + "&W=" + week,
+            standingsDataUrl: baseUrl + "export?TYPE=standings&L=" + leagueId + "&W=" + week,
+            rostersDataUrl: baseUrl + "export?TYPE=rosters&L=" + leagueId + "&W=" + week,
             // no week for injuries since we get dynamically off weekly results
-            injuriesDataUrl:baseUrl + "export?TYPE=injuries&L=" + leagueId + "&W=",
-            weeklyResultsDataUrl:baseUrl + "export?TYPE=weeklyResults&L=" + leagueId + "&W=" + week,
-            transactionsDataUrl:baseUrl + "export?TYPE=transactions&L=" + leagueId + "&W=" + week,
-            freeAgentDataUrl:baseUrl + "export?TYPE=freeAgents&L=" + leagueId + "&W=" + week,
-            homeUrl:"http://www" + baseUrlSuffix + ".myfantasyleague.com/" + year,
-            reportUrl:"http://football" + baseUrlSuffix + ".myfantasyleague.com/" + year,
-            settings:settings,
+            injuriesDataUrl: baseUrl + "export?TYPE=injuries&L=" + leagueId + "&W=",
+            weeklyResultsDataUrl: baseUrl + "export?TYPE=weeklyResults&L=" + leagueId + "&W=" + week,
+            transactionsDataUrl: baseUrl + "export?TYPE=transactions&L=" + leagueId + "&W=" + week,
+            freeAgentDataUrl: baseUrl + "export?TYPE=freeAgents&L=" + leagueId + "&W=" + week,
+            homeUrl: "http://www" + baseUrlSuffix + ".myfantasyleague.com/" + year,
+            reportUrl: "http://football" + baseUrlSuffix + ".myfantasyleague.com/" + year,
+            settings: settings,
             // functions
-            isLoggedInAsCommish:function () {
+            isLoggedInAsCommish: function () {
                 return typeof global.franchise_id !== "undefined" && global.franchise_id === '0000';
             },
-            getCapPenalty:function(years, salary) {
+            getCapPenalty: function (years, salary) {
                 var capPenalty = 0;
                 if (years > 0) {
                     capPenalty = Math.ceil(Math.max(1, 0.4 * salary * years));
@@ -187,10 +192,10 @@
                     return oddRow ? "oddtablerow" : "eventablerow";
                 };
             },
-            compareObjects:compareObjects,
-            compareDesc:compareDesc,
-            comparePositions:comparePositions,
-            subscribeToDataLoadedEvent:function(callback) {
+            compareObjects: compareObjects,
+            compareDesc: compareDesc,
+            comparePositions: comparePositions,
+            subscribeToDataLoadedEvent: function (callback) {
                 $("#ajaxLoadEventSpan").on("ajaxDataLoaded", callback);
             }
         };
