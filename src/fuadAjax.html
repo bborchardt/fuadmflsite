@@ -50,8 +50,8 @@
          */
         var init = function () {
             var loadOrder = [];
-            if (isLocallyStoredDateYoungerThan("playersStoreDate", (1000 * 60 * 60 * 24)) && localStorage["players"]) {
-                data.players = JSON.parse(localStorage["players"]);
+            if (isLocallyStoredDateYoungerThan("playersStoreDate" + fuadUtil.year, (1000 * 60 * 60 * 24)) && localStorage["players" + fuadUtil.year]) {
+                data.players = JSON.parse(localStorage["players" + fuadUtil.year]);
             } else {
                 loadOrder.push({url:fuadUtil.playersDataUrl, loadFunction:loadPlayerData});
             }
@@ -134,8 +134,8 @@
                 );
             }
             if (Modernizr.localstorage) {
-                localStorage["playersStoreDate"] = Date.now();
-                localStorage["players"] = JSON.stringify(data.players);
+                localStorage["playersStoreDate" + fuadUtil.year] = Date.now();
+                localStorage["players" + fuadUtil.year] = JSON.stringify(data.players);
             }
         };
 

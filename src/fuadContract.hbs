@@ -91,7 +91,7 @@
     fuad.contract = (function ($, Modernizr, fuadUtil, fuadAjax) {
         var loadContractReport = function () {
             if (Modernizr.localstorage) {
-                if(!localStorage["playersByContractYearChecked"]) {
+                if(!localStorage["playersByContractYearChecked" + fuadUtil.year]) {
                     $("#playersByYearCheckBox").attr("checked", false);
                 }
             }
@@ -121,7 +121,7 @@
                 addAllPlayersToPage();
             }
             if (Modernizr.localstorage) {
-                localStorage["playersByContractYearChecked"] = checked ? "true" : "";
+                localStorage["playersByContractYearChecked" + fuadUtil.year] = checked ? "true" : "";
             }
         };
 
