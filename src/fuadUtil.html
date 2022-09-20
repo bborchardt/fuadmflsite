@@ -13,7 +13,7 @@
         // update these after upgrading site
         var year = "2022";
         var leagueId = "48571";
-        var beforeDraft = false;
+        var beforeDraft = true;
 
         // contains all positional settings needed for rookie draft and franchise player calculations
         var settings = {
@@ -40,7 +40,7 @@
         };
 
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
-        var beforeTradeDeadline = true;
+        var beforeTradeDeadline = false;
     if (!beforeTradeDeadline) {
         settings.QB.rookieBaselineSalary = 1;
         settings.QB.franchisePlayers = [
@@ -73,16 +73,16 @@
             {fullName:"Logan Thomas", salary:18},
             {fullName:"Jonnu Smith", salary:11},
             {fullName:"Rob Gronkowski", salary:10}
-        ];
-        settings.PK.rookieBaselineSalary = 1;
-        settings.PK.franchisePlayers = [
+            ];
+            settings.PK.rookieBaselineSalary = 1;
+            settings.PK.franchisePlayers = [
             {fullName:"Daniel Carlson", salary:2},
             {fullName:"Ryan Succop", salary:2},
             {fullName:"Tyler Bass", salary:2},
             {fullName:"Justin Tucker", salary:2},
             {fullName:"Matt Prater", salary:1}
-        ];
-    }
+            ];
+        }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE
 
         var currentUrl = document.location.href;
@@ -158,7 +158,7 @@
             baseUrl: baseUrl,
             playersDataUrl: "https://api.myfantasyleague.com/" + year + "/export?TYPE=players&L=&W=" + week,
             franchiseDataUrl: baseUrl + "export?TYPE=league&L=" + leagueId + "&W=" + week,
-            standingsDataUrl: baseUrl + "export?TYPE=standings&L=" + leagueId + "&W=" + week,
+            salaryAdjustmentsDataUrl: baseUrl + "export?TYPE=salaryAdjustments&L=" + leagueId + "&W=",
             rostersDataUrl: baseUrl + "export?TYPE=rosters&L=" + leagueId + "&W=" + week,
             // no week for injuries since we get dynamically off weekly results
             injuriesDataUrl: baseUrl + "export?TYPE=injuries&L=" + leagueId + "&W=",

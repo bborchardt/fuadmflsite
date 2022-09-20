@@ -57,9 +57,9 @@
             }
             loadOrder.push(
                     {url:fuadUtil.franchiseDataUrl, loadFunction:loadFranchiseData},
+                    {url:fuadUtil.salaryAdjustmentsDataUrl, loadFunction:loadSalaryAdjustmentsData},
                     {url:fuadUtil.rostersDataUrl, loadFunction:loadRosterData},
                     {url:fuadUtil.transactionsDataUrl, loadFunction:loadTransactionData},
-                    {url:fuadUtil.standingsDataUrl, loadFunction:loadStandingsData},
                     {url:fuadUtil.weeklyResultsDataUrl, loadFunction:loadWeeklyResultsData},
                     {url:fuadUtil.freeAgentDataUrl, loadFunction:loadFreeAgentData},
                     {
@@ -169,6 +169,7 @@
                         player.status = playerNode.getAttribute("status");
                         var salary = parseFloat(playerNode.getAttribute("salary"));
                         player.salary = salary < 1 ? 0 : salary;
+                        franchise.salary = franchise.salary + player.salary;
                         player.years = parseFloat(playerNode.getAttribute("contractYear"));
                         player.capPenalty = fuadUtil.getCapPenalty(player.years, player.salary);
                         player.netCapSpace = player.years === 0 ? 0 : (player.salary - player.capPenalty);
@@ -289,13 +290,14 @@
             });
         };
 
-        var loadStandingsData = function (xml) {
-            var franchiseNodes = xml.getElementsByTagName("franchise"),
+        var loadSalaryAdjustmentsData = function (xml) {
+            var salaryAdjustmentNodes = xml.getElementsByTagName("salaryAdjustment"),
                     i;
-            for (i = 0; i < franchiseNodes.length; i++) {
-                var franchiseNode = franchiseNodes[i];
-                var franchise = data.franchises[getHashId(franchiseNode)];
-                franchise.salary = parseFloat(franchiseNode.getElementsByTagName("salary")[0].childNodes[0].nodeValue);
+            for (i = 0; i < salaryAdjustmentNodes.length; i++) {
+                var salaryAdjustmentNode = salaryAdjustmentNodes[i];
+                var franchise = data.franchises[getHashId(salaryAdjustmentNode, "franchise_id")];
+                var amount = parseFloat(salaryAdjustmentNode.getAttribute("amount"));
+                franchise.salary = franchise.salary + amount;
             }
         };
 
