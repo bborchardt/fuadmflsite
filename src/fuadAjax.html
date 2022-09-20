@@ -104,6 +104,7 @@
             var url = loadOrder[loadOrderIndex].url;
             var loadFunction = loadOrder[loadOrderIndex].loadFunction;
             if (url) {
+                console.log("Loading url: " + url);
                 var success = function (xml) {
                     loadFunction(xml);
                     if (loadOrderIndex + 1 < loadOrder.length) {
@@ -161,7 +162,8 @@
                 var playerNodes = franchiseNodes[i].getElementsByTagName("player");
                 for (j = 0; j < playerNodes.length; j++) {
                     var playerNode = playerNodes[j];
-                    var player = data.players[getHashId(playerNode)];
+                    var playerHashId = getHashId(playerNode)
+                    var player = data.players[playerHashId];
                     if(player) {
                         player.franchise = franchise;
                         player.status = playerNode.getAttribute("status");
@@ -179,7 +181,7 @@
                             player.franchise.signedPlayers.push(player);
                         }
                     } else {
-                        console.log("player not found in loadRosterData: " + playerNode)
+                        console.log("player not found in loadRosterData: " + playerHashId)
                     }
                 }
             }

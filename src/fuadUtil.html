@@ -13,7 +13,7 @@
         // update these after upgrading site
         var year = "2022";
         var leagueId = "48571";
-        var beforeDraft = true;
+        var beforeDraft = false;
 
         // contains all positional settings needed for rookie draft and franchise player calculations
         var settings = {
@@ -40,49 +40,49 @@
         };
 
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
-        var beforeTradeDeadline = false;
-        if (!beforeTradeDeadline) {
-            settings.QB.rookieBaselineSalary = 3;
-            settings.QB.franchisePlayers = [
-                {fullName:"Aaron Rodgers", salary:62},
-                {fullName:"Andrew Luck", salary:45},
-                {fullName:"Drew Brees", salary:37},
-                {fullName:"Cam Newton", salary:30},
-                {fullName:"Russell Wilson", salary:30}
-            ];
-            settings.RB.rookieBaselineSalary = 5;
-            settings.RB.franchisePlayers = [
-                {fullName:"Lamar Miller", salary:87},
-                {fullName:"DeMarco Murray", salary:56},
-                {fullName:"LeSean McCoy", salary:42},
-                {fullName:"LeGarrette Blount", salary:30},
-                {fullName:"Mark Ingram", salary:28}
-            ];
-            settings.WR.rookieBaselineSalary = 2;
-            settings.WR.franchisePlayers = [
-                {fullName:"A.J. Green", salary:106},
-                {fullName:"Antonio Brown", salary:100},
-                {fullName:"Julio Jones", salary:90},
-                {fullName:"T.Y. Hilton", salary:81},
-                {fullName:"Jordy Nelson", salary:80}
-            ];
-            settings.TE.rookieBaselineSalary = 1;
-            settings.TE.franchisePlayers = [
-                {fullName:"Rob Gronkowski", salary:50},
-                {fullName:"Greg Olsen", salary:34},
-                {fullName:"Martellus Bennett", salary:25},
-                {fullName:"Jordan Reed", salary:21},
-                {fullName:"Kyle Rudolph", salary:16}
-            ];
-            settings.PK.rookieBaselineSalary = 1;
-            settings.PK.franchisePlayers = [
-                {fullName:"Wil Lutz", salary:1},
-                {fullName:"Blair Walsh", salary:1},
-                {fullName:"Stephen Gostkowski", salary:1},
-                {fullName:"Mason Crosby", salary:1},
-                {fullName:"Justin Tucker", salary:1}
-            ];
-        }
+        var beforeTradeDeadline = true;
+    if (!beforeTradeDeadline) {
+        settings.QB.rookieBaselineSalary = 1;
+        settings.QB.franchisePlayers = [
+            {fullName:"Aaron Rodgers", salary:50},
+            {fullName:"Dak Prescott", salary:38},
+            {fullName:"Russell Wilson", salary:30},
+            {fullName:"Ryan Tannehill", salary:25},
+            {fullName:"Tom Brady", salary:23}
+        ];
+        settings.RB.rookieBaselineSalary = 4;
+        settings.RB.franchisePlayers = [
+            {fullName:"Jonathan Taylor", salary:50},
+            {fullName:"Aaron Jones", salary:43},
+            {fullName:"Ezekiel Elliott", salary:42},
+            {fullName:"Derrick Henry", salary:40},
+            {fullName:"David Johnson", salary:40}
+        ];
+        settings.WR.rookieBaselineSalary = 1;
+        settings.WR.franchisePlayers = [
+            {fullName:"Davante Adams", salary:120},
+            {fullName:"Stefon Diggs", salary:100},
+            {fullName:"Tyreek Hill", salary:92},
+            {fullName:"DeAndre Hopkins", salary:80},
+            {fullName:"Keenan Allen", salary:77}
+        ];
+        settings.TE.rookieBaselineSalary = 1;
+        settings.TE.franchisePlayers = [
+            {fullName:"Darren Waller", salary:42},
+            {fullName:"Travis Kelce", salary:23},
+            {fullName:"Logan Thomas", salary:18},
+            {fullName:"Jonnu Smith", salary:11},
+            {fullName:"Rob Gronkowski", salary:10}
+        ];
+        settings.PK.rookieBaselineSalary = 1;
+        settings.PK.franchisePlayers = [
+            {fullName:"Daniel Carlson", salary:2},
+            {fullName:"Ryan Succop", salary:2},
+            {fullName:"Tyler Bass", salary:2},
+            {fullName:"Justin Tucker", salary:2},
+            {fullName:"Matt Prater", salary:1}
+        ];
+    }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE
 
         var currentUrl = document.location.href;
