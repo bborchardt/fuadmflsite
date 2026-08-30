@@ -1,0 +1,564 @@
+<title>Tier 0 Punchlist</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+
+  :root {
+    --ground:      #ECEEEF;
+    --surface:     #F8F9F9;
+    --surface-2:   #E0E4E6;
+    --ink:         #14181B;
+    --ink-2:       #47525A;
+    --ink-3:       #717E86;
+    --rule:        #CBD2D6;
+    --rule-strong: #A9B4BA;
+    --accent:      #A66A12;
+    --accent-ink:  #7A4E0C;
+    --accent-wash: #F0E4CE;
+    --good:        #2E6F4E;
+    --good-wash:   #DCE8E0;
+    --bad:         #9B392C;
+    --bad-wash:    #F0DEDA;
+    --warn:        #8A6410;
+
+    --f-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --f-body:    "Source Serif 4", Georgia, "Times New Roman", serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --measure: 68ch;
+    --wide: 1120px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #131719;
+      --surface:     #1A2023;
+      --surface-2:   #232B2F;
+      --ink:         #E9EDEF;
+      --ink-2:       #AAB5BB;
+      --ink-3:       #7E8A91;
+      --rule:        #2C353A;
+      --rule-strong: #414D53;
+      --accent:      #DFA646;
+      --accent-ink:  #EFC079;
+      --accent-wash: #2E2716;
+      --good:        #63B489;
+      --good-wash:   #16291F;
+      --bad:         #DE7B6D;
+      --bad-wash:    #2C1A17;
+      --warn:        #D2A445;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #131719;
+    --surface:     #1A2023;
+    --surface-2:   #232B2F;
+    --ink:         #E9EDEF;
+    --ink-2:       #AAB5BB;
+    --ink-3:       #7E8A91;
+    --rule:        #2C353A;
+    --rule-strong: #414D53;
+    --accent:      #DFA646;
+    --accent-ink:  #EFC079;
+    --accent-wash: #2E2716;
+    --good:        #63B489;
+    --good-wash:   #16291F;
+    --bad:         #DE7B6D;
+    --bad-wash:    #2C1A17;
+    --warn:        #D2A445;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  .col { max-width: var(--measure); }
+
+  p { margin: 0 0 1em; }
+  a { color: var(--accent-ink); text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: 0.84em;
+    background: var(--surface-2);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .mast {
+    border-bottom: 3px solid var(--ink);
+    padding: 56px 0 22px;
+    margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 800;
+    font-size: clamp(2.4rem, 7vw, 4.1rem);
+    line-height: 0.98;
+    letter-spacing: -0.028em;
+    margin: 0 0 0.42em;
+    text-wrap: balance;
+    max-width: 16ch;
+  }
+  .standfirst {
+    font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 58ch;
+    margin: 0;
+  }
+  .mast-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 30px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .mast-foot b {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { padding-top: 58px; }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    line-height: 1.12;
+    letter-spacing: -0.018em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .sec-mark {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 1.06rem;
+    letter-spacing: -0.006em;
+    margin: 30px 0 8px;
+  }
+  .lede { color: var(--ink-2); margin-bottom: 26px; }
+
+  /* ---------- matrix ---------- */
+
+  .scroller {
+    overflow-x: auto;
+    margin-top: 28px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 720px;
+    font-family: var(--f-display);
+    font-size: 0.87rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: middle;
+  }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+  tbody th {
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+  tbody tr.pick { background: var(--accent-wash); }
+  td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 0.82rem; }
+  .dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 7px;
+    vertical-align: -1px;
+  }
+  .dot.g { background: var(--good); }
+  .dot.a { background: var(--warn); }
+  .dot.r { background: var(--bad); }
+
+  /* ---------- callout ---------- */
+
+  .call {
+    border: 1px solid var(--accent);
+    border-left-width: 4px;
+    background: var(--accent-wash);
+    padding: 20px 22px;
+    margin: 30px 0 0;
+  }
+  .call h3 { margin-top: 0; color: var(--accent-ink); }
+  .call p:last-child { margin-bottom: 0; }
+  .call ol { margin: 0; padding-left: 1.2em; }
+  .call li { margin-bottom: 9px; font-size: 0.97rem; line-height: 1.55; }
+
+  /* ---------- checklist ---------- */
+
+  .checks { list-style: none; padding: 0; margin: 24px 0 0; }
+  .checks li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    align-items: baseline;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.97rem;
+    line-height: 1.55;
+  }
+  .checks li::before {
+    content: "";
+    width: 11px; height: 11px;
+    border: 1.5px solid var(--accent);
+    display: block;
+    transform: translateY(2px);
+  }
+
+  /* ---------- code specimens (added in the verification pass) ---------- */
+  .spec {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-left-width: 3px;
+    padding: 14px 16px;
+    margin: 18px 0;
+    overflow-x: auto;
+    max-width: var(--wide);
+  }
+  .spec.bad  { background: var(--bad-wash);  border-color: var(--bad);  }
+  .spec.good { background: var(--good-wash); border-color: var(--good); }
+
+  .tag-ok   { color: var(--good); }
+  .tag-part { color: var(--warn); }
+
+  .caveat {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    border: 1px dashed var(--rule-strong);
+    padding: 15px 17px;
+    margin-top: 26px;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 3px solid var(--ink);
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 700px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 18px 72px; }
+    .step { grid-template-columns: 1fr; gap: 6px; }
+    .step-n { justify-self: start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- numbered steps (a real sequence: do these in order) ---------- */
+  .steps { display: grid; gap: 20px; margin-top: 30px; }
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 4px 18px;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule-strong);
+    padding: 18px 20px;
+  }
+  .step.key { border-left-color: var(--accent); }
+  .step-n {
+    font-family: var(--f-mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-3);
+    border: 1px solid var(--rule-strong);
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    line-height: 1;
+  }
+  .step.key .step-n { color: var(--accent-ink); border-color: var(--accent); background: var(--accent-wash); }
+  .step-b h3 { margin: 4px 0 6px; }
+  .step-b p { font-size: 0.95rem; line-height: 1.55; color: var(--ink-2); }
+  .step-b p:last-child { margin-bottom: 0; }
+  .step-b ol, .step-b ul { margin: 0 0 1em; padding-left: 1.15em; }
+  .step-b li { font-size: 0.95rem; line-height: 1.5; margin-bottom: 6px; color: var(--ink-2); }
+  .where {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .where b { color: var(--accent-ink); font-weight: 600; }
+  td.bad-cell { color: var(--bad); font-weight: 600; }
+  tbody tr.flag { background: var(--bad-wash); }
+  .note-dim { color: var(--ink-3); font-style: italic; }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow"><span>League 48571</span><span>·</span><span>Tier 0</span><span>·</span><span>No code required</span></p>
+    <h1>Tier 0 Punchlist</h1>
+    <p class="standfirst">Five things the commissioner can change in MFL admin this week. Measuring the live site first made the list shorter and more specific than expected.</p>
+    <div class="mast-foot">
+      <span><b>Companion to</b> The FUAD Site Rebuild</span>
+      <span><b>Live</b> www44.myfantasyleague.com/2026/home/48571</span>
+      <span><b>Measured</b> 30 Aug 2026</span>
+    </div>
+  </header>
+
+  <section>
+    <span class="sec-mark">What measuring changed</span>
+    <h2>Seven of eight tabs are already fine on a phone</h2>
+    <div class="col">
+      <p class="lede">The options review said the mobile experience was broadly bad and that the fix was mostly ours. Rendering every tab at 390&thinsp;px says something narrower — and more actionable.</p>
+      <p>One tab is the problem, and the thing making it a problem is an MFL module the commissioner can move or remove. That turns the headline mobile complaint into a Tier 0 fix rather than a code project.</p>
+    </div>
+
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Tab</th>
+            <th scope="col">Height at 390px</th>
+            <th scope="col">Horizontal overflow</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Main</th><td class="n">1,036px</td><td><span class="dot g"></span>None</td></tr>
+          <tr class="flag"><th scope="row">Standings</th><td class="n">1,998px</td><td class="bad-cell"><span class="dot r"></span>Power Rankings — 514px into 390px</td></tr>
+          <tr><th scope="row">Transactions</th><td class="n">786px</td><td><span class="dot g"></span>None</td></tr>
+          <tr><th scope="row">Calendar</th><td class="n">913px</td><td><span class="dot g"></span>None</td></tr>
+          <tr><th scope="row">Contracts · Commish · Links</th><td class="n">—</td><td><span class="dot a"></span>Not measurable this way</td></tr>
+          <tr><th scope="row">Live Scoring</th><td class="n">—</td><td><span class="dot a"></span>Empty in preseason</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p style="margin-top:24px">Two caveats, stated plainly. <b>Contracts, Commish and Links can't be measured this way</b> — their content is drawn by our JavaScript, which the preview harness strips, so they report an empty shell. The seven-column contract table remains untested here and is still a Tier 1/2 problem. And some modules look empty because this was captured on 30 August, logged out: League Chat, Poll, Trade Bait and Live Scoring will fill in during the season. <b>Don't prune a module for being empty today.</b></p>
+    </div>
+  </section>
+
+  <section>
+    <span class="sec-mark">Already done</span>
+    <h2>Don't spend time here</h2>
+    <div class="col">
+      <p>The options review listed "check the mobile setting" as step one. It's done — the page already serves <code>&lt;meta name="viewport" content="initial-scale=1.0, width=device-width"&gt;</code> and loads <code>skins17/BlueMesh/responsive.css</code>. At 390&thinsp;px the menu and tab bar collapse to hamburgers and the two home-page columns stack to full width. MFL's own CSS is doing its job.</p>
+      <p>The easy win is already collected — which is also why what's left is more specific.</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="sec-mark">The work, in order</span>
+    <h2>Five changes, all in admin</h2>
+
+    <div class="steps">
+
+      <div class="step key">
+        <span class="step-n">1</span>
+        <div class="step-b">
+          <span class="where"><b>For Commissioners → Setup →</b> Home Page Modules and Tabs</span>
+          <h3>Remove or relocate Power Rankings</h3>
+          <p>This is the one real mobile fix in Tier 0. The module carries sixteen columns — Franchise, W-L-T, PF, PP, EFF, Bench Points, Max PF, Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power Rank, W, L, T, PCT. At 390&thinsp;px the last four are simply off-screen with no scroll affordance, so members don't know they're missing anything.</p>
+          <ol>
+            <li><b>Move it to its own tab</b> — keeps Standings readable, and anyone wanting the deep numbers opens a page that's expected to be wide.</li>
+            <li><b>Drop it</b> — nothing links to it and the same information is in MFL's own reports.</li>
+            <li><b>Keep and accept the clipping</b> — only if the league actively uses it.</li>
+          </ol>
+          <p>Re-measure afterwards with <code>MFL_TAB=1 node preview.js</code>.</p>
+        </div>
+      </div>
+
+      <div class="step key">
+        <span class="step-n">2</span>
+        <div class="step-b">
+          <span class="where"><b>For Commissioners → Setup →</b> Home Page Modules and Tabs</span>
+          <h3>Fix the duplicated navigation</h3>
+          <p>The page shows two rows of navigation. MFL's own row carries Home, Rosters, Draft, Submit Lineup, Add/Drops, Trades, Player Stats, <b>Standings</b>, <b>Transactions</b>, <b>Live Scoring</b> and Schedule. Our custom row carries Main, <b>Standings</b>, <b>Transactions</b>, Contracts, Calendar, Commish, Links and <b>Live Scoring</b>.</p>
+          <p>Three of our eight tabs duplicate a destination MFL already provides one row above. On a phone both rows collapse into separate hamburgers, so a member opens one, doesn't find what they want, and opens the other.</p>
+          <p><b>Proposal:</b> drop the custom Standings, Transactions and Live Scoring tabs and let MFL's native pages own those jobs. That leaves five — Main, Contracts, Calendar, Commish, Links — of which Contracts is the one that genuinely justifies a custom tab. It also resolves step 1 for free, since Power Rankings lives on the custom Standings tab.</p>
+          <p><b>Confirm first:</b> open MFL's native Standings page on a phone and check it reads better than the custom tab. If it doesn't, keep the tab and just do step 1.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-n">3</span>
+        <div class="step-b">
+          <span class="where"><b>Edit</b> the home page message that renders it</span>
+          <h3>Move the Cap Penalty Calculator off the Main tab</h3>
+          <p>It sits in the right column of the Main tab today. It's one of ours, it's genuinely useful, and it is not something a member needs on first paint — it answers "what would it cost to cut this guy", which is a question you go looking for.</p>
+          <p>The principle from the options review was <i>common functions obvious, advanced functions possible</i>. This is an advanced function in the most prominent slot on the site. Move it to the Contracts tab, beside the data it operates on.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-n">4</span>
+        <div class="step-b">
+          <span class="where"><b>For Commissioners → Setup → Appearance Setup →</b> Select a Skin</span>
+          <h3>Reconsider the skin — for legibility, not layout</h3>
+          <p>The league is on <b>BlueMesh</b> from MFL's 2017 set: dark navy ground, blue headers, white text. It is neither broken nor ugly. Its weaknesses on a phone are daylight contrast and fairly dense table rows.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroller" style="margin-top:22px">
+      <table>
+        <thead>
+          <tr><th scope="col">Skin</th><th scope="col">Character</th><th scope="col">Main tab, 390px</th><th scope="col">Power Rankings width</th></tr>
+        </thead>
+        <tbody>
+          <tr class="pick"><th scope="row">BlueMesh <span class="note-dim">(current)</span></th><td>Dark navy, blue headers</td><td class="n">1,036px</td><td class="n">514px</td></tr>
+          <tr><th scope="row">AllAmerican</th><td>White ground, dark red headers, navy nav</td><td class="n">1,040px</td><td class="n">525px</td></tr>
+          <tr><th scope="row">AquaGreen</th><td>Light, green headers</td><td class="n">1,026px</td><td class="n">514px</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="steps" style="margin-top:20px">
+      <div class="step">
+        <span class="step-n">4b</span>
+        <div class="step-b">
+          <p>A light skin is markedly easier to read on a phone outdoors. But note the last column: <b>the skin does not affect the overflow at all.</b> Choose for legibility and expect nothing else to change.</p>
+          <p>Preview any skin against the real page before committing — MFL's picker only shows a generic thumbnail:</p>
+        </div>
+      </div>
+    </div>
+
+    <pre class="spec">cd tools/skin-preview &amp;&amp; node preview.js AllAmerican AquaGreen</pre>
+
+    <div class="col">
+      <p>The full skin list is only visible inside Appearance Setup — the names aren't discoverable from outside — so take them from that screen and pass them in with spaces removed: "All American" becomes <code>AllAmerican</code>.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-n">5</span>
+        <div class="step-b">
+          <span class="where"><b>Post</b> one league message before Week 1</span>
+          <h3>Point the league at a phone app for lineups</h3>
+          <p>All three are still published: <b>MFL Modern</b> (newest, free for one team, logs in with existing MFL credentials), <b>MFL Mobile</b> and <b>MFL Platinum</b>. Rosters, lineups and live scoring are the most common member jobs and are entirely MFL-native, so an app does them well with no work from us.</p>
+          <p><b>The limit to be honest about:</b> apps generally don't render custom home page modules, so members living in an app won't see the Contracts tab at all. That's the argument for not letting Tier 0 be the whole answer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="sec-mark">Scope</span>
+    <h2>What Tier 0 will not fix</h2>
+    <div class="col">
+      <p class="lede">Worth being clear so expectations match the work.</p>
+    </div>
+    <ul class="checks">
+      <li>The <b>contract tables</b> — seven columns, drawn by our code. Untouched by any setting or skin. That's Tier 1/2.</li>
+      <li>The <b>injuries bug</b> — a one-line code fix, unrelated to any of this, and worth doing on its own.</li>
+      <li>The <b>eight sequential data requests</b> behind the Contracts tab.</li>
+      <li>The <b>annual code edits</b> for <code>year</code>, <code>beforeDraft</code> and the post-deadline block.</li>
+    </ul>
+  </section>
+
+  <section>
+    <span class="sec-mark">Before you start</span>
+    <h2>The checklist</h2>
+    <ul class="checks">
+      <li>Decide Power Rankings: own tab, remove, or keep</li>
+      <li>Check MFL's native Standings on a phone, then drop the duplicate custom tabs</li>
+      <li>Move the Cap Penalty Calculator to the Contracts tab</li>
+      <li>Preview two or three skins against the real page; switch or keep deliberately</li>
+      <li>Post one league message recommending a phone app</li>
+      <li>Re-run <code>MFL_TAB=all node preview.js</code> and confirm no tab overflows</li>
+    </ul>
+  </section>
+
+  <section>
+    <span class="sec-mark">Method</span>
+    <h2>How these numbers were produced</h2>
+    <div class="col">
+      <p>Figures come from <code>tools/skin-preview</code>, which mirrors the live home page, swaps in a skin's stylesheets, and screenshots at 390&times;844 and 1440&times;900, flagging any table wider than the viewport.</p>
+    </div>
+    <div class="call">
+      <h3>One correction worth recording</h3>
+      <p>An early version of the harness stripped every script, including the inline <code>show_tab(0)</code> call that hides all tabs but the first. That made the page render all eight tabs stacked and report <b>~4,050px</b> on a phone — which looked like a damning result and was entirely an artifact of the measurement.</p>
+      <p>The tool now re-implements the tab initialisation, and the real figure is <b>1,036px</b>. Every number on this page is from the corrected version. It's a reminder that a harness that strips the page's behaviour will happily invent a problem to solve.</p>
+    </div>
+    <p class="caveat">Everything was captured logged out, so member-only and commissioner-only views may differ. The harness cannot render tabs whose content our own JavaScript draws — Contracts, Commish and Links — so those are excluded from the table above rather than reported as small.</p>
+  </section>
+
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · Tier 0 · 30 August 2026</footer>
+
+</div>
