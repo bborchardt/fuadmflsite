@@ -459,6 +459,26 @@
   .sources ul { padding-left: 1.1em; margin: 0; }
   .sources li { margin-bottom: 6px; }
 
+  /* ---------- code specimens (added in the verification pass) ---------- */
+  .spec {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-left-width: 3px;
+    padding: 14px 16px;
+    margin: 18px 0;
+    overflow-x: auto;
+    max-width: var(--wide);
+  }
+  .spec.bad  { background: var(--bad-wash);  border-color: var(--bad);  }
+  .spec.good { background: var(--good-wash); border-color: var(--good); }
+
+  .tag-ok   { color: var(--good); }
+  .tag-part { color: var(--warn); }
+
   .caveat {
     font-family: var(--f-mono);
     font-size: 12px;
@@ -507,8 +527,20 @@
       <span><b>Repo</b> bborchardt/fuadmflsite</span>
       <span><b>Live</b> www44.myfantasyleague.com/2026/home/48571</span>
       <span><b>Reviewed</b> 30 Aug 2026</span>
+      <span><b>Revised</b> 30 Aug 2026 &middot; verified against the live site</span>
     </div>
   </header>
+
+  <div class="call" style="margin-bottom:44px">
+    <h3>What changed in this revision</h3>
+    <p>The first draft was written in a session where every <code>myfantasyleague.com</code> domain was blocked, so the central constraint rested on forum posts and three claims were flagged unverified. This pass reached the live site, the 2026 API and the league's own home page.</p>
+    <ol>
+      <li><b>All three open claims are settled.</b> The cross-origin limit is confirmed twice over — by response header and by MFL's written terms.</li>
+      <li><b>The repo/production drift is fully reconciled</b> — and far smaller than feared. Three of five files never diverged at all.</li>
+      <li><b>A live bug surfaced</b> that no amount of code reading would have caught: injured-player detection has never worked.</li>
+      <li><b>Two first-draft findings were wrong</b> and are corrected below, both marked <i>Revised</i>. The mobile diagnosis and the "check your settings" recommendation both need restating.</li>
+    </ol>
+  </div>
 
   <!-- ============ THE CONSTRAINT ============ -->
   <section>
@@ -516,7 +548,11 @@
     <h2>Code can live anywhere. Data can't.</h2>
     <div class="col">
       <p class="lede">Every option below is really an answer to one question: where does the JavaScript run when it asks MFL for your rosters?</p>
-      <p>MFL's export API is same-origin only for browsers. Per MFL's own developer guidance, calling the API from a page outside <code>myfantasyleague.com</code> is blocked by normal browser security, and <b>they will not add your domain to their cross-origin allowlist</b>. Private-league data is gated further: authorization rides on the logged-in user's cookie, so a server has to log in as a real member to see it.</p>
+      <p>MFL's export API is same-origin only for browsers. This is no longer an inference — every export response carries a <b>static</b> allow-origin header naming MFL's own host, and it is never reflected back. Sending <code>Origin: https://bborchardt.github.io</code>, <code>Origin: https://evil.example.com</code>, or no origin at all returns the identical value:</p>
+      <pre class="spec">HTTP/1.1 200 OK
+Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
+      <p>And MFL's 2026 API terms list this under <b>forbidden uses</b>, in their words: <i>"Accessing the API via Javascript from web pages outside the myfantasyleague.com domain. Normal browser security will prevent this from working and we will not put your domain in our cross-domain file to allow it."</i> <b>Revised:</b> the first draft treated this as a technical obstacle. It is also a terms-of-service line — which changes the verdict on Tier 4.</p>
+      <p>The rate limit points the same way. MFL throttles per IP address, and says so explicitly: <i>"if your client is spread across many users, it won't be affected&hellip; mobile apps and calls from within league pages should not [be] affected."</i> In-page code spreads across twelve members' own connections and is <b>named as exempt</b>. A cron job or proxy funnels the whole league through one address — exactly the shape the limits target. That is an argument for Tier 2 and against Tiers 3&ndash;4, from MFL directly.</p>
       <p>But loading a <code>&lt;script src&gt;</code> or a stylesheet from another domain has never been restricted — your current site already pulls jQuery and Handlebars from cdnjs. So the code and the data have completely different rules, and that gap is where the good options live.</p>
     </div>
 
@@ -529,12 +565,12 @@
       <div class="lane no">
         <div class="lane-path"><span>Your JS on a site you host</span><span class="arrow">→</span><span><code>/2026/export?TYPE=rosters</code></span></div>
         <span class="verdict no">Blocked</span>
-        <p class="lane-note">The browser refuses the cross-origin read and MFL declines to allowlist third-party domains. No amount of front-end work gets around this; it needs a server in the middle.</p>
+        <p class="lane-note">Confirmed by direct test — the allow-origin header is hardcoded to MFL's own host. No amount of front-end work gets around this; it needs a server in the middle, and MFL's terms forbid building one for this purpose.</p>
       </div>
       <div class="lane maybe">
         <div class="lane-path"><span>A build job or serverless function</span><span class="arrow">→</span><span><code>/2026/export?TYPE=rosters</code></span></div>
         <span class="verdict maybe">Works, with strings</span>
-        <p class="lane-note">Server-side calls are fine and explicitly supported — but you need the league API key, a stored MFL login for private data, a registered User-Agent, and roughly one request per second with aggressive caching. That's a credential to rotate and a rate limit to respect, forever.</p>
+        <p class="lane-note">Server-side calls are fine and explicitly supported. <b>Revised:</b> no API key is needed to read this league — all seven league endpoints answer unauthenticated. But you inherit the per-IP rate limit that in-page code is exempt from, plus a registered User-Agent, ~1 request/sec, and a stored MFL login if the league ever goes private.</p>
       </div>
     </div>
   </section>
@@ -542,52 +578,52 @@
   <!-- ============ AUDIT ============ -->
   <section>
     <span class="sec-mark">Where it actually hurts</span>
-    <h2>What I found in the repo</h2>
+    <h2>What I found in the repo, re-checked against production</h2>
     <div class="col">
-      <p class="lede">Five files, about 1,150 lines, pasted by hand into MFL's home page message boxes. The logic is sound — the packaging is what's aged.</p>
+      <p class="lede">Five files, about 1,150 lines, pasted by hand into MFL's home page message boxes. The logic is sound — the packaging is what's aged. Everything below was re-checked against the live 2026 site.</p>
     </div>
 
     <ul class="findings">
       <li>
         <span class="f-tag">Drift</span>
         <div class="f-body">
-          <b>Git no longer matches production.</b>
-          <span class="f-sub">The last commit is "Updates for 2022" and <code>fuadUtil.html</code> still says <code>var year = "2022"</code>, with franchise-player salaries frozen at 2021 names. The live site is on 2026. The real source of truth is a set of textareas in MFL admin, which means the repo can't be trusted as a starting point until it's reconciled.</span>
+          <b>Reconciled &mdash; and much smaller than it looked.</b>
+          <span class="f-sub"><b>Revised.</b> The first draft said nobody knew what was actually running. Now we do: all five modules were pulled off the live page and diffed. Ignoring whitespace, the <i>entire</i> drift is <code>year</code> <code>"2022"</code>&rarr;<code>"2026"</code>, <code>beforeDraft</code> <code>true</code>&rarr;<code>false</code>, the 58-line franchise/rookie settings block refreshed to 2025 names, and one stray production-only <code>console.log</code> in <code>fuadAjax</code>. <code>fuadContract</code>, <code>fuadCommish</code> and <code>fuadLinks</code> are <b>byte-identical</b>. The drift sits entirely inside the block the code itself labels <i>"update these after upgrading site"</i> — the annual ritual, exactly where you'd expect it. Reconciliation is a mechanical 60-line commit, not archaeology. It also means the paste workflow is <i>faithful and recoverable</i>, which matters later.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Mobile</span>
         <div class="f-body">
-          <b>The layout is a fixed-width table from 2001.</b>
-          <span class="f-sub"><code>&lt;table id="homepagecolumns"&gt;</code> with <code>width="65%"</code> / <code>width="35%"</code>, <code>cellspacing</code> and <code>align="center"</code>. A seven-column contract table cannot reflow on a phone. This is the single biggest reason the site feels bad on mobile — and it's yours, not MFL's.</span>
+          <b>The outer layout already stacks. Our tables are what overflow.</b>
+          <span class="f-sub"><b>Revised, and this narrows the job.</b> The first draft blamed <code>&lt;table id="homepagecolumns"&gt;</code> and its <code>width="65%"</code>/<code>35%</code>. But MFL's own <code>responsive.css</code> already forces <code>#homepagecolumn1, #homepagecolumn2 { width:100%!important }</code> below 62.5em — the two-column shell <i>does</i> collapse correctly on a phone. What doesn't reflow is the seven-column contract table <i>we</i> generate (Player, Position, Salary, Contract Year, Cap Penalty, Net Cap Space, Franchise), overflowing sideways inside its now-full-width column. Better still, MFL's stylesheet already ships the table&rarr;card idiom — <code>.report th{display:none} .report td{display:block}</code> — just scoped to one page. Our tables already carry MFL's <code>class="homepagemodule report"</code>, so reusing that pattern is native rather than an override.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Setting</span>
         <div class="f-body">
-          <b>MFL may already be trying to help, and the markup is fighting it.</b>
-          <span class="f-sub">When <i>Desktop View On Mobile</i> is set to No, MFL injects a viewport meta tag and a responsive stylesheet into the skin. Worth confirming that's on — a responsive skin wrapped around a rigid table still reads as broken.</span>
+          <b>Already correct. Nothing to change — and the easy win is already spent.</b>
+          <span class="f-sub"><b>Revised.</b> The live page serves <code>&lt;meta name="viewport" content="initial-scale=1.0, width=device-width"&gt;</code> and loads <code>skins17/BlueMesh/responsive.css</code>. <i>Desktop View On Mobile</i> is off already and the skin is a responsive one. That retires the first draft's step-one recommendation as a no-op — welcome news, but it also means the remaining mobile problem is <b>entirely ours</b>. There is no setting left to flip.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Fragile</span>
         <div class="f-body">
-          <b>One line reaches into MFL's own markup.</b>
-          <span class="f-sub"><code>fuadCommish.hbs:134</code> does <code>$("#tabcontent0").find("#homepagecolumn1").prepend(html)</code>. That depends on MFL's internal DOM structure and IDs. It is the most likely thing in the codebase to break silently on an MFL update, and the hardest to notice when it does.</span>
+          <b>One line reaches into MFL's own markup — around an MFL bug.</b>
+          <span class="f-sub"><code>fuadCommish.hbs:134</code> does <code>$("#tabcontent0").find("#homepagecolumn1").prepend(html)</code>. <b>New context:</b> the live page contains <b>eight</b> elements carrying <code>id="homepagecolumn1"</code>, one per tab — invalid HTML that MFL ships anyway, and the whole reason this selector has to be scoped through <code>#tabcontent0</code>. So the line is working around a markup bug on MFL's side, which makes it likelier than average to break the day they clean it up. Replace it with our own mount point.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Stack</span>
         <div class="f-body">
-          <b>Every dependency is 13+ years old, and one is load-bearing.</b>
-          <span class="f-sub">jQuery 1.8.0, Underscore 1.4.2, Modernizr 2.6.2, Handlebars 1.0.rc.1 — a release candidate. The checkbox handling uses <code>.attr("checked")</code>, whose meaning changed in jQuery 1.9, so the version pin isn't a preference, it's a dependency. Modernizr is loaded to feature-detect <code>localStorage</code>, which has been universal for over a decade.</span>
+          <b>Every dependency is 13+ years old &mdash; and all four are safe to delete.</b>
+          <span class="f-sub">jQuery 1.8.0, Underscore 1.4.2, Modernizr 2.6.2, Handlebars 1.0.rc.1 — a release candidate. The checkbox handling uses <code>.attr("checked")</code>, whose meaning changed in jQuery 1.9, so the version pin isn't a preference, it's a dependency. Modernizr is loaded to feature-detect <code>localStorage</code>, universal for over a decade. <b>New:</b> MFL's own <code>mfl_common.js</code> contains no jQuery and no <code>$</code> usage, and the page loads jQuery exactly once — from our tag. <b>Nothing on MFL's side depends on any of these</b>, so dropping all four is safe from the platform's point of view; the <code>jQuery.noConflict()</code> call is defensive, not load-bearing.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Speed</span>
         <div class="f-body">
-          <b>Eight requests in a chain, each waiting on the last.</b>
-          <span class="f-sub">Players, franchises, salary adjustments, rosters, transactions, weekly results, free agents, injuries — loaded strictly in sequence as XML, when six of the eight are independent and could run at once. The full NFL player database is fetched and cached into <code>localStorage</code>; on a phone that's a lot of parsing before anything renders. <code>JSON=1</code> is available and would drop the XML parsing entirely.</span>
+          <b>Eight requests in a chain &mdash; measured at 2.50&thinsp;s, against 0.58&thinsp;s in parallel.</b>
+          <span class="f-sub">Players, franchises, salary adjustments, rosters, transactions, weekly results, free agents, injuries — strictly sequential XML. Timed end-to-end from a datacenter on a warm connection: <b>2.50&thinsp;s sequential vs 0.58&thinsp;s for the same eight at once</b>, a 4.3&times; gap that widens sharply on phone networks. The ordering is a <i>processing</i> dependency, not a fetching one — only <code>injuries</code> truly needs a prior response (<code>week</code>, from <code>weeklyResults</code>). Fetch all eight together, then process in order. <b>Revised on <code>JSON=1</code>:</b> it works everywhere but is <i>not</i> a payload win — players 190&thinsp;KB&rarr;183&thinsp;KB, freeAgents 51&thinsp;KB&rarr;48&thinsp;KB, about 5%. Switch to delete the XML DOM-walking code, not to save bytes.</span>
         </div>
       </li>
       <li>
@@ -601,10 +637,38 @@
         <span class="f-tag">Keep</span>
         <div class="f-body">
           <b>The architecture is genuinely right, though.</b>
-          <span class="f-sub">Running same-origin inside MFL gets you cookie auth, private-league access, per-member identity, zero hosting, zero secrets — and it's purely additive, so MFL keeps owning lineups, trades, waivers and scoring. Whatever you build next, don't give this up cheaply.</span>
+          <span class="f-sub">Running same-origin inside MFL gets you cookie auth, private-league access, per-member identity, zero hosting, zero secrets — and now demonstrably a <b>rate-limit exemption MFL grants in writing</b> to "calls from within league pages." It's purely additive, so MFL keeps owning lineups, trades, waivers and scoring. Whatever you build next, don't give this up cheaply.</span>
         </div>
       </li>
     </ul>
+  </section>
+
+  <!-- ============ THE LIVE BUG ============ -->
+  <section>
+    <span class="sec-mark">Found by actually calling the API</span>
+    <h2>Injured-player detection has never worked</h2>
+    <div class="col">
+      <p class="lede">This is independent of every option below, it has been broken the whole time, and no amount of code reading would have caught it. It deserves a one-line fix regardless of what you decide.</p>
+      <p><code>fuadUtil.html:164</code> builds the injuries URL off the <i>league</i> host:</p>
+    </div>
+    <pre class="spec">injuriesDataUrl: baseUrl + "export?TYPE=injuries&amp;L=" + leagueId + "&amp;W="</pre>
+    <div class="col">
+      <p>which resolves to <code>www44.myfantasyleague.com/2026/export?TYPE=injuries&amp;L=48571&amp;W=1</code>. MFL answers that with an error document — at every week tried:</p>
+    </div>
+    <pre class="spec bad">&lt;error&gt;Invalid request. This API request must go to api.myfantasyleague.com&lt;/error&gt;</pre>
+    <div class="col">
+      <p>The reason is in MFL's own docs: <i>"if the request does not take a league parameter (L=), it must be sent to the host <code>api</code>."</i> Injuries is global NFL data, not league data — it takes no <code>L</code>. Drop it, switch hosts, and 36&thinsp;KB of real <code>&lt;injury&gt;</code> nodes come back:</p>
+    </div>
+    <pre class="spec good">https://api.myfantasyleague.com/2026/export?TYPE=injuries&amp;W=1   &rarr;  200, 36 KB</pre>
+    <div class="col">
+      <p><b>What it costs you.</b> <code>loadInjuriesData</code> runs <code>getElementsByTagName("injury")</code> over an <i>error</i> document, finds nothing, and silently sets no flags. <code>player.injured</code> is therefore never <code>true</code> — so this check in <code>fuadCommish.hbs:121</code> has never once fired:</p>
+    </div>
+    <pre class="spec">warnings.push(franchise.teamName + " started injured/suspended player " + player.fullName + …)</pre>
+    <div class="col">
+      <p>A league-rules warning shown on the Main tab to everyone has been dead for years, with no error and no empty state to hint at it. It fails quietly because the loader treats <i>any</i> HTTP 200 as success.</p>
+      <p>The fix is one line. The lesson is bigger: <b>eight unchecked <code>$.get</code> calls means any of them can fail exactly this quietly.</b> Whichever tier you pick, the loader needs to check that a response is the shape it expected — and say so on the page when it isn't.</p>
+    </div>
+    <p class="caveat">Tested logged-out. The error is host-routing, not authentication, so it will behave identically for a signed-in member — but it costs nothing to confirm in the browser console.</p>
   </section>
 
   <!-- ============ OPTIONS ============ -->
@@ -620,7 +684,7 @@
       <!-- 0 -->
       <div class="opt pick">
         <div class="opt-head">
-          <span class="tier">TIER 0 · an afternoon</span>
+          <span class="tier">TIER 0 · ~2 hours, revised down</span>
           <h3 class="opt-title">Settings, skin, and send everyone to an app</h3>
           <p class="opt-what">Write no code. Confirm <i>Desktop View On Mobile</i> is off, pick a modern skin from MFL's 40+ (or a free responsive template from MFL.football / MFLaddons), tidy the home page module and tab arrangement, and tell the league to use <b>MFL Modern</b>, MFL Mobile or MFL Platinum on their phones.</p>
         </div>
@@ -631,7 +695,7 @@
               <li>Rosters, lineups and live scores — the job you said matters most — are 100% MFL-native. Third-party apps already do them well on mobile, and someone else maintains them.</li>
               <li>MFL Modern is free for one team in one league and logs in with existing MFL credentials, so there's nothing for you to administer.</li>
               <li>Zero maintenance, zero risk, survives every MFL change. Nothing to rewrite next August.</li>
-              <li>Establishes the visual baseline before you spend effort — you may find half the complaint disappears.</li>
+              <li>All three apps are still listed and live — MFL Modern (newest), MFL Mobile, MFL Platinum — so the recommendation still stands.</li>
             </ul>
           </div>
           <div class="con">
@@ -644,7 +708,7 @@
             </ul>
           </div>
         </div>
-        <p class="opt-foot"><b>Verdict</b> Do this first regardless of what else you choose. It's the highest return per hour on the page, and it tells you how much of the remaining problem is really yours to solve.</p>
+        <p class="opt-foot"><b>Verdict &mdash; revised</b> Still worth doing, but it is no longer the free win it looked like. The mobile setting and responsive skin are <i>already correct</i>, so this tier shrinks to "pick a nicer skin, tidy the tabs, point members at an app." The easy half has already been collected — which means the remaining mobile problem is entirely yours.</p>
       </div>
 
       <!-- 1 -->
@@ -673,7 +737,7 @@
             </ul>
           </div>
         </div>
-        <p class="opt-foot"><b>Verdict</b> A solid answer if you later decide you want zero infrastructure. Otherwise it's Tier 2 minus the part that fixes the drift.</p>
+        <p class="opt-foot"><b>Verdict &mdash; revised upward</b> A more respectable fallback than the first draft allowed. Now that the drift turns out to be 60 contained lines rather than scattered rot, the paste workflow looks faithful rather than lossy — and it doubles as Tier 2's safety net.</p>
       </div>
 
       <!-- 2 -->
@@ -689,7 +753,7 @@
             <ul>
               <li>Modern tooling and auto-deploy — exactly the budget you set — with none of the data problems, because the code still executes on MFL's origin.</li>
               <li>Deploying is <code>git push</code>. You stop visiting MFL admin, and the repo becomes the source of truth again.</li>
-              <li>No API key, no stored credentials, no proxy, no CORS workaround, no rate-limit accounting. Private league and commissioner views keep working by cookie.</li>
+              <li>No API key, no stored credentials, no proxy, no CORS workaround — and <b>no rate-limit exposure</b>, since MFL exempts "calls from within league pages" in writing. Private league and commissioner views keep working by cookie.</li>
               <li>One URL for the league. Members never learn a second site exists.</li>
               <li>Point the loader at <code>localhost</code> in your own browser to preview changes against real league data before shipping.</li>
               <li>Nothing here is a backdoor — external <code>&lt;script src&gt;</code> is what the site already does, and MFL gives leagues disk space for custom code.</li>
@@ -698,15 +762,15 @@
           <div class="con">
             <h4>Against</h4>
             <ul>
-              <li>The MFL page now depends on GitHub Pages being reachable. Mitigate by keeping a built copy in MFL's own league file space as a fallback source.</li>
+              <li>The MFL page now depends on GitHub Pages being reachable. <b>Fallback corrected:</b> the first draft proposed parking a built copy in MFL's league file space. Only partly supported — league files do serve same-origin from <code>fflnetdynamic2026/48571_*</code>, but the documented upload UI accepts <b>CSS only</b> and directory listing is 403, so treat JS hosting there as unconfirmed. The reliable fallback is the mechanism already in use: paste the built bundle into a home page module. That is Tier 1 — which makes Tier 1 the genuine safety net for Tier 2, since the two share all their code.</li>
               <li>You still inherit MFL's page chrome, skin CSS and tab structure. You're designing a room inside someone else's house.</li>
-              <li>If MFL ever adds a Content-Security-Policy that blocks third-party scripts, the loader breaks — low odds, and the MFL-hosted fallback copy covers it.</li>
+              <li><b>Re-assessed:</b> the first draft worried about a future MFL Content-Security-Policy blocking third-party scripts. The league page sends <b>no CSP header at all</b> today (nor <code>X-Frame-Options</code>), so this is hypothetical rather than a live constraint.</li>
               <li>Someone still pastes the loader once per season when the league rolls over.</li>
               <li>Slightly more moving parts than Tier 1 for a commissioner who inherits this in five years.</li>
             </ul>
           </div>
         </div>
-        <p class="opt-foot"><b>Verdict</b> The recommendation. It is the only option that gets you a modern build pipeline without giving up cookie auth, per-member identity, or the single-destination experience.</p>
+        <p class="opt-foot"><b>Verdict</b> Still the recommendation, and better supported than in the first draft. The only option that gets a modern build pipeline without giving up cookie auth, per-member identity, the rate-limit exemption, or the single-destination experience.</p>
       </div>
 
       <!-- 3 -->
@@ -730,9 +794,9 @@
             <h4>Against</h4>
             <ul>
               <li><b>Data is only as fresh as the last cron run</b> — which directly undercuts rosters, lineups and live scores, the job you named as most common.</li>
-              <li>Private-league data needs a stored MFL login or API key in GitHub secrets: a real credential to guard and rotate.</li>
+              <li><b>Revised:</b> no API key is needed to read this league — all seven league endpoints answer unauthenticated, so the credential burden is lighter than first stated. But the per-IP rate limit now applies where in-page code was exempt, and a stored MFL login returns the moment the league goes private.</li>
               <li>The site can't tell who's viewing, so there's no "your team" view and no commissioner-only tools without building auth yourself.</li>
-              <li>Two destinations, or an iframe that behaves badly on phones.</li>
+              <li>Two destinations, or an iframe. (The iframe would at least <i>work</i> — MFL sends no <code>X-Frame-Options</code> — but it still behaves badly on phones.)</li>
               <li>Every MFL auth or export change is now your emergency. This is the option most likely to force a rewrite.</li>
             </ul>
           </div>
@@ -759,14 +823,14 @@
           <div class="con">
             <h4>Against</h4>
             <ul>
-              <li>You now own credentials, a proxy, cache invalidation, and rate-limit compliance for your entire league's traffic funnelled through one identity.</li>
-              <li>MFL says plainly they won't allowlist third-party domains for browser access. Proxying around that is legal but leans on the letter rather than the spirit — the thing you asked to avoid.</li>
+              <li>You now own credentials, a proxy, cache invalidation, and rate-limit compliance for your entire league funnelled through <b>one IP</b> — precisely the pattern MFL's per-IP throttle is built to catch, and the exemption in-page code enjoys is forfeited.</li>
+              <li><b>Revised, and now firmer.</b> The first draft called this "leaning on the letter rather than the spirit." With MFL's terms in hand it reads worse than that: cross-domain JavaScript access is listed under <b>forbidden uses</b>, alongside "looking for loop holes or other ways to cheat or circumvent league rules." A proxy exists purely to defeat a restriction MFL states plainly.</li>
               <li>Most to maintain, most to break, highest chance of a forced rewrite when MFL changes login or session handling.</li>
               <li>Directly contradicts "stable year to year."</li>
             </ul>
           </div>
         </div>
-        <p class="opt-foot"><b>Verdict</b> Not recommended. It buys design freedom at exactly the price you said you didn't want to pay.</p>
+        <p class="opt-foot"><b>Verdict</b> Not recommended — on stronger evidence than the first draft had. It buys design freedom at exactly the price you said you didn't want to pay, and does it against MFL's written terms.</p>
       </div>
 
       <!-- 5 -->
@@ -844,17 +908,19 @@
             <th scope="col">Design freedom</th>
             <th scope="col">Knows the member</th>
             <th scope="col">Secrets to hold</th>
+            <th scope="col">Rate-limited</th>
           </tr>
         </thead>
         <tbody>
           <tr class="pick">
             <th scope="row">0 · Settings &amp; apps</th>
-            <td class="n">~4 hrs</td>
+            <td class="n">~2 hrs</td>
             <td><span class="dot g"></span>None</td>
             <td><span class="dot g"></span>Yes</td>
             <td><span class="dot r"></span>None</td>
             <td><span class="dot g"></span>Yes</td>
             <td><span class="dot g"></span>None</td>
+            <td><span class="dot g"></span>No</td>
           </tr>
           <tr>
             <th scope="row">1 · Modernize in place</th>
@@ -864,6 +930,7 @@
             <td><span class="dot a"></span>Within MFL</td>
             <td><span class="dot g"></span>Yes</td>
             <td><span class="dot g"></span>None</td>
+            <td><span class="dot g"></span>No</td>
           </tr>
           <tr class="pick">
             <th scope="row">2 · Loader + Pages</th>
@@ -873,6 +940,7 @@
             <td><span class="dot a"></span>Within MFL</td>
             <td><span class="dot g"></span>Yes</td>
             <td><span class="dot g"></span>None</td>
+            <td><span class="dot g"></span>No</td>
           </tr>
           <tr>
             <th scope="row">3 · Static companion</th>
@@ -881,7 +949,8 @@
             <td><span class="dot r"></span>Stale</td>
             <td><span class="dot g"></span>Total</td>
             <td><span class="dot r"></span>No</td>
-            <td><span class="dot a"></span>MFL login</td>
+            <td><span class="dot a"></span>Login, if private</td>
+            <td><span class="dot r"></span>Yes, per-IP</td>
           </tr>
           <tr>
             <th scope="row">4 · Companion + proxy</th>
@@ -891,6 +960,7 @@
             <td><span class="dot g"></span>Total</td>
             <td><span class="dot a"></span>Build it</td>
             <td><span class="dot r"></span>Key + login</td>
+            <td><span class="dot r"></span>Yes, per-IP</td>
           </tr>
           <tr>
             <th scope="row">5 · Hybrid</th>
@@ -900,6 +970,7 @@
             <td><span class="dot g"></span>Total, publicly</td>
             <td><span class="dot g"></span>Yes, in MFL</td>
             <td><span class="dot g"></span>None</td>
+            <td><span class="dot a"></span>Half</td>
           </tr>
           <tr>
             <th scope="row">6 · Change platform</th>
@@ -909,6 +980,7 @@
             <td><span class="dot r"></span>Theirs</td>
             <td><span class="dot g"></span>Yes</td>
             <td><span class="dot g"></span>None</td>
+            <td><span class="dot g"></span>n/a</td>
           </tr>
         </tbody>
       </table>
@@ -921,11 +993,14 @@
     <h2>Tier 0 this week, Tier 2 as the project</h2>
     <div class="call">
       <h3>The sequence</h3>
+      <p style="margin-top:0">Reordered from the first draft — verification retired step one and added a new one at the top.</p>
       <ol>
-        <li><b>Check the mobile setting and the skin first.</b> If <i>Desktop View On Mobile</i> is still on, or the skin is a 2012 pick, you're solving a problem MFL already solved. Cheap, and it changes what "outdated" means before you write anything.</li>
-        <li><b>Reconcile the repo with production.</b> Pull the current text out of each home page message and commit it. Right now nobody knows what's actually running — that has to be true before any rebuild.</li>
+        <li><s>Check the mobile setting and the skin.</s> <b>Done — already correct.</b> Viewport and <code>responsive.css</code> are live on the page today. Re-pick the skin if you want it prettier, but there is no fix owed here.</li>
+        <li><b>Fix the injuries URL.</b> One line. It restores a league-rules warning that has been dead for years, and it is independent of every choice below. Do it whether or not anything else happens.</li>
+        <li><b>Reconcile the repo with production.</b> Now a known, ~60-line commit rather than an unknown — the exact diff is in this document. Do it before writing new code so the starting point is honest.</li>
         <li><b>Build the loader.</b> One home page message with a mount div and two tags. Everything else in the repo, built and deployed by Actions. Deploying stops meaning "log into MFL."</li>
-        <li><b>Rewrite the contract views mobile-first</b> — cards under a breakpoint, table above — and derive year and league ID from the URL so the season rollover stops being a code edit.</li>
+        <li><b>Rewrite the contract views mobile-first</b> — cards under ~35.5em, matching MFL's own breakpoint and its <code>.report</code> card idiom, table above — and derive year and league ID from the URL so the season rollover stops being a code edit.</li>
+        <li><b>Parallelize the data load.</b> <code>Promise.all</code> the eight fetches (2.50&thinsp;s &rarr; 0.58&thinsp;s measured), and check each response's shape so the next silent failure isn't silent.</li>
         <li><b>Point the league at MFL Modern</b> for phone lineup-setting, and stop trying to out-build it.</li>
       </ol>
     </div>
@@ -960,15 +1035,16 @@
     <span class="sec-mark">So you're not rewriting this in 2029</span>
     <h2>The year-to-year stability checklist</h2>
     <div class="col">
-      <p class="lede">Whatever you build, these are the rules that decide whether it survives unattended. Most of the current pain traces to breaking three of them.</p>
+      <p class="lede">Whatever you build, these are the rules that decide whether it survives unattended. Most of the current pain traces to breaking three of them — and the injuries bug traces to a fourth.</p>
     </div>
     <ul class="checks">
       <li>Derive year and league ID from <code>document.location</code>. Never hardcode a season.</li>
-      <li>Depend on exactly one MFL DOM hook — your own mount point. Delete the <code>#tabcontent0 / #homepagecolumn1</code> reach-in; it will break and it will break quietly.</li>
-      <li>Use only documented <code>export?TYPE=</code> endpoints. Never parse MFL's rendered HTML.</li>
+      <li>Depend on exactly one MFL DOM hook — your own mount point. Delete the <code>#tabcontent0 / #homepagecolumn1</code> reach-in, which currently works around eight duplicate IDs in MFL's own markup.</li>
+      <li>Use only documented <code>export?TYPE=</code> endpoints, <b>on the right host</b> — league-scoped calls to the league server, <code>L</code>-less calls (<code>players</code>, <code>injuries</code>) to <code>api</code>. The injuries bug is what forgetting this costs.</li>
+      <li>Validate every response's shape. Never treat HTTP 200 as success — that is exactly how a dead feature stays invisible for years.</li>
       <li>Compute the post-deadline franchise and rookie baselines rather than pasting generated code. If a snapshot is genuinely needed, store it in MFL, not in the source file.</li>
       <li>Pin exact dependency versions, and vendor them into the build so a CDN outage isn't a league outage.</li>
-      <li>Keep a built copy of the bundle in MFL's league file space as a fallback if the primary host is external.</li>
+      <li>Keep the paste fallback working — it is Tier 2's safety net, and the reconciliation shows it is faithful. (League file space is CSS-only as far as we could verify, so don't rely on it for JS.)</li>
       <li>Write down the season rollover procedure in the repo. There isn't a README today, and the ritual lives only in your head.</li>
       <li>Prefer boring, dependency-light code. This site is edited a few days a year by one person; cleverness costs more than it returns.</li>
     </ul>
@@ -977,17 +1053,56 @@
   <!-- ============ CAVEAT + SOURCES ============ -->
   <section>
     <span class="sec-mark">Provenance</span>
-    <h2>What to verify before committing</h2>
+    <h2>Verification results</h2>
 
-    <p class="caveat">All <code>myfantasyleague.com</code> domains were blocked by this session's network policy, so I could not open your live site, the API docs, or the MFL forums directly. The repo analysis is first-hand from the code. The MFL platform specifics below come from search results and third-party sources, and three claims are worth confirming yourself before you build on them: (1) that MFL still declines cross-origin browser access and won't allowlist domains — check Help → Developer's API while logged in; (2) that league file space accepts a JS/CSS upload you can reference by URL; (3) that your league's <i>Desktop View On Mobile</i> setting is currently off.</p>
+    <div class="col">
+      <p class="lede">The first draft flagged three load-bearing claims it couldn't check. All three are now settled.</p>
+    </div>
+
+    <ul class="findings">
+      <li>
+        <span class="f-tag">Claim 1</span>
+        <div class="f-body">
+          <b>Cross-origin browser access is refused, and domains won't be allowlisted. <span class="tag-ok">Confirmed, twice over.</span></b>
+          <span class="f-sub">A static <code>Access-Control-Allow-Origin: https://www44.myfantasyleague.com</code> on every export, never reflected back whatever origin you send — and MFL's terms list the practice under forbidden uses in writing. This was the load-bearing claim for the whole options split, and it holds.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Claim 2</span>
+        <div class="f-body">
+          <b>League file space can host a JS/CSS file at a URL. <span class="tag-part">Only partly.</span></b>
+          <span class="f-sub">Same-origin league files do serve correctly from <code>fflnetdynamic2026/48571_*</code>, but the documented upload path (Appearance Setup) accepts <b>CSS only</b> and directory listing returns 403. Treat JS hosting there as unconfirmed — which is why Tier 2's fallback has been re-pointed at the paste mechanism instead.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Claim 3</span>
+        <div class="f-body">
+          <b>The league's <i>Desktop View On Mobile</i> setting. <span class="tag-ok">Already off.</span></b>
+          <span class="f-sub">Viewport meta and <code>skins17/BlueMesh/responsive.css</code> are both present on the live page. Nothing to change — and the corollary is that the remaining mobile problem is entirely ours.</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="col">
+      <p>Also pulled live and folded into the sections above: the current home page module contents (the reconciliation), the skin in use, the 2026 API rules on hosts, registration and rate limits, and the eight-request timing.</p>
+    </div>
+
+    <p class="caveat">Everything above was observed logged-out, so three things still warrant a signed-in check: the injuries call from a member's browser (expected to fail identically, since the error is host-routing rather than auth); whether Appearance Setup will accept a <code>.js</code> upload; and whether any commissioner-only view differs from what the public page exposes.</p>
 
     <div class="sources col">
-      <h3>Sources</h3>
+      <h3>Verified directly this pass <span style="font-weight:400">(all reachable, 30 Aug 2026)</span></h3>
       <ul>
-        <li><a href="https://api.myfantasyleague.com/2026/api_info">MFL Developers Program — 2026 API documentation</a> (export types, cookie authorization, rate limiting, caching guidance)</li>
+        <li><a href="https://www44.myfantasyleague.com/2026/home/48571">The live league home page</a> — source of the reconciliation, the skin, the viewport setting and the mount points</li>
+        <li><a href="https://api.myfantasyleague.com/2026/api_info">MFL 2026 API documentation</a> — hosts, rate limits, forbidden uses, caching guidance</li>
+        <li>Export endpoints tested: <code>league</code>, <code>rosters</code>, <code>freeAgents</code>, <code>transactions</code>, <code>weeklyResults</code>, <code>salaryAdjustments</code> on <code>www44</code>; <code>players</code> and <code>injuries</code> on <code>api.myfantasyleague.com</code></li>
+        <li><a href="https://www44.myfantasyleague.com/skins17/BlueMesh/responsive.css">The active skin's responsive stylesheet</a> — breakpoints and the <code>.report</code> card idiom</li>
+        <li>League file space pattern — <code>https://www44.myfantasyleague.com/fflnetdynamic2026/</code></li>
+      </ul>
+      <h3>Background</h3>
+      <ul>
         <li><a href="https://home.myfantasyleague.com/features/appearance-customization/">MFL — Appearance customization</a> and <a href="https://home.myfantasyleague.com/features/developers-api/">Open Developer's API</a></li>
         <li><a href="https://home.myfantasyleague.com/use.html">MFL Acceptable Use</a> — league disk space for custom HTML/code</li>
-        <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=27624">MFL forums — Loading cross-domain XML data in JavaScript</a> (the no-allowlist statement)</li>
+        <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=15112">MFL forums — Uploading custom CSS files</a> (commissioner-only, via Appearance Setup)</li>
         <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=35576">MFL forums — New user display settings</a> (Desktop View On Mobile, responsive.css)</li>
         <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=35720">MFL forums — Free Mobile Template</a> and <a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=35498">Custom MFL Tabs</a></li>
         <li><a href="https://apps.apple.com/us/app/mfl-modern/id6751516222">MFL Modern</a>, <a href="https://apps.apple.com/us/app/mfl-mobile-myfantasyleague/id639397317">MFL Mobile</a>, <a href="https://apps.apple.com/us/app/mfl-platinum/id452910130">MFL Platinum</a></li>
@@ -997,6 +1112,6 @@
     </div>
   </section>
 
-  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 30 August 2026</footer>
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 30 August 2026 · revised the same day against the live site</footer>
 
 </div>
