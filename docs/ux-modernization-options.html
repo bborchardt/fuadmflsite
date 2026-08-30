@@ -1,0 +1,1002 @@
+<title>The FUAD Site Rebuild</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:      #ECEEEF;
+    --surface:     #F8F9F9;
+    --surface-2:   #E0E4E6;
+    --ink:         #14181B;
+    --ink-2:       #47525A;
+    --ink-3:       #717E86;
+    --rule:        #CBD2D6;
+    --rule-strong: #A9B4BA;
+    --accent:      #A66A12;
+    --accent-ink:  #7A4E0C;
+    --accent-wash: #F0E4CE;
+    --good:        #2E6F4E;
+    --good-wash:   #DCE8E0;
+    --bad:         #9B392C;
+    --bad-wash:    #F0DEDA;
+    --warn:        #8A6410;
+
+    --f-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --f-body:    "Source Serif 4", Georgia, "Times New Roman", serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --measure: 68ch;
+    --wide: 1120px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #131719;
+      --surface:     #1A2023;
+      --surface-2:   #232B2F;
+      --ink:         #E9EDEF;
+      --ink-2:       #AAB5BB;
+      --ink-3:       #7E8A91;
+      --rule:        #2C353A;
+      --rule-strong: #414D53;
+      --accent:      #DFA646;
+      --accent-ink:  #EFC079;
+      --accent-wash: #2E2716;
+      --good:        #63B489;
+      --good-wash:   #16291F;
+      --bad:         #DE7B6D;
+      --bad-wash:    #2C1A17;
+      --warn:        #D2A445;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #131719;
+    --surface:     #1A2023;
+    --surface-2:   #232B2F;
+    --ink:         #E9EDEF;
+    --ink-2:       #AAB5BB;
+    --ink-3:       #7E8A91;
+    --rule:        #2C353A;
+    --rule-strong: #414D53;
+    --accent:      #DFA646;
+    --accent-ink:  #EFC079;
+    --accent-wash: #2E2716;
+    --good:        #63B489;
+    --good-wash:   #16291F;
+    --bad:         #DE7B6D;
+    --bad-wash:    #2C1A17;
+    --warn:        #D2A445;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  .col { max-width: var(--measure); }
+
+  p { margin: 0 0 1em; }
+  a { color: var(--accent-ink); text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: 0.84em;
+    background: var(--surface-2);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .mast {
+    border-bottom: 3px solid var(--ink);
+    padding: 56px 0 22px;
+    margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 800;
+    font-size: clamp(2.4rem, 7vw, 4.1rem);
+    line-height: 0.98;
+    letter-spacing: -0.028em;
+    margin: 0 0 0.42em;
+    text-wrap: balance;
+    max-width: 16ch;
+  }
+  .standfirst {
+    font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 58ch;
+    margin: 0;
+  }
+  .mast-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 30px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .mast-foot b {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { padding-top: 58px; }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    line-height: 1.12;
+    letter-spacing: -0.018em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .sec-mark {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 1.06rem;
+    letter-spacing: -0.006em;
+    margin: 30px 0 8px;
+  }
+  .lede { color: var(--ink-2); margin-bottom: 26px; }
+
+  /* ---------- lanes diagram ---------- */
+
+  .lanes {
+    display: grid;
+    gap: 12px;
+    margin: 28px 0 14px;
+  }
+  .lane {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 18px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--rule-strong);
+    padding: 15px 18px;
+  }
+  .lane.ok    { border-left-color: var(--good); }
+  .lane.no    { border-left-color: var(--bad); }
+  .lane.maybe { border-left-color: var(--warn); }
+
+  .lane-path {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .lane-path .arrow { color: var(--ink-3); }
+  .lane-note {
+    grid-column: 1 / -1;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .verdict {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 4px 9px;
+    border-radius: 2px;
+  }
+  .verdict.ok    { background: var(--good-wash); color: var(--good); }
+  .verdict.no    { background: var(--bad-wash);  color: var(--bad); }
+  .verdict.maybe { background: var(--accent-wash); color: var(--accent-ink); }
+
+  /* ---------- findings list ---------- */
+
+  .findings {
+    list-style: none;
+    padding: 0;
+    margin: 26px 0 0;
+    border-top: 1px solid var(--rule);
+  }
+  .findings li {
+    border-bottom: 1px solid var(--rule);
+    padding: 15px 0;
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 6px 22px;
+    align-items: baseline;
+  }
+  .findings dt, .f-tag {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-top: 4px;
+  }
+  .f-body { font-size: 0.97rem; line-height: 1.55; }
+  .f-body b { font-weight: 600; }
+  .f-sub {
+    display: block;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    margin-top: 3px;
+  }
+
+  /* ---------- option cards ---------- */
+
+  .opts { display: grid; gap: 22px; margin-top: 30px; }
+
+  .opt {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--rule-strong);
+  }
+  .opt.pick { border-top-color: var(--accent); }
+
+  .opt-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 18px;
+    align-items: start;
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tier {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    border: 1px solid var(--rule-strong);
+    padding: 5px 8px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .opt.pick .tier {
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+  .opt-title {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 1.24rem;
+    letter-spacing: -0.012em;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .opt-what {
+    grid-column: 2;
+    color: var(--ink-2);
+    font-size: 0.97rem;
+    line-height: 1.55;
+    margin: 8px 0 0;
+  }
+  .opt-what code { font-size: 0.8em; }
+
+  .pc {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .pc > div { padding: 18px 22px 20px; }
+  .pc > div + div { border-left: 1px solid var(--rule); }
+  .pc h4 {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 11px;
+  }
+  .pc .pro h4 { color: var(--good); }
+  .pc .con h4 { color: var(--bad); }
+  .pc ul { margin: 0; padding-left: 1.05em; }
+  .pc li {
+    font-size: 0.93rem;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .pc li::marker { color: var(--ink-3); }
+
+  .opt-foot {
+    border-top: 1px solid var(--rule);
+    padding: 14px 22px;
+    font-size: 0.93rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+    background: var(--surface-2);
+  }
+  .opt-foot b {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-right: 8px;
+  }
+
+  /* ---------- matrix ---------- */
+
+  .scroller {
+    overflow-x: auto;
+    margin-top: 28px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 720px;
+    font-family: var(--f-display);
+    font-size: 0.87rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: middle;
+  }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+  tbody th {
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+  tbody tr.pick { background: var(--accent-wash); }
+  td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 0.82rem; }
+  .dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 7px;
+    vertical-align: -1px;
+  }
+  .dot.g { background: var(--good); }
+  .dot.a { background: var(--warn); }
+  .dot.r { background: var(--bad); }
+
+  /* ---------- callout ---------- */
+
+  .call {
+    border: 1px solid var(--accent);
+    border-left-width: 4px;
+    background: var(--accent-wash);
+    padding: 20px 22px;
+    margin: 30px 0 0;
+  }
+  .call h3 { margin-top: 0; color: var(--accent-ink); }
+  .call p:last-child { margin-bottom: 0; }
+  .call ol { margin: 0; padding-left: 1.2em; }
+  .call li { margin-bottom: 9px; font-size: 0.97rem; line-height: 1.55; }
+
+  /* ---------- checklist ---------- */
+
+  .checks { list-style: none; padding: 0; margin: 24px 0 0; }
+  .checks li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    align-items: baseline;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.97rem;
+    line-height: 1.55;
+  }
+  .checks li::before {
+    content: "";
+    width: 11px; height: 11px;
+    border: 1.5px solid var(--accent);
+    display: block;
+    transform: translateY(2px);
+  }
+
+  /* ---------- sources ---------- */
+
+  .sources { font-size: 0.87rem; line-height: 1.6; color: var(--ink-2); }
+  .sources ul { padding-left: 1.1em; margin: 0; }
+  .sources li { margin-bottom: 6px; }
+
+  .caveat {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    border: 1px dashed var(--rule-strong);
+    padding: 15px 17px;
+    margin-top: 26px;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 3px solid var(--ink);
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 700px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 18px 72px; }
+    .pc { grid-template-columns: 1fr; }
+    .pc > div + div { border-left: 0; border-top: 1px solid var(--rule); }
+    .findings li { grid-template-columns: 1fr; gap: 2px; }
+    .findings dt, .f-tag { padding-top: 0; }
+    .opt-head { grid-template-columns: 1fr; }
+    .opt-what { grid-column: 1; }
+    .lane { grid-template-columns: 1fr; align-items: start; gap: 8px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow"><span>League 48571</span><span>·</span><span>Contract Dynasty</span><span>·</span><span>UI/UX options review</span></p>
+    <h1>The FUAD Site Rebuild</h1>
+    <p class="standfirst">Seven ways to make the league site look and feel current — ordered by how much you'd be signing up to maintain. One constraint decides most of it.</p>
+    <div class="mast-foot">
+      <span><b>Repo</b> bborchardt/fuadmflsite</span>
+      <span><b>Live</b> www44.myfantasyleague.com/2026/home/48571</span>
+      <span><b>Reviewed</b> 30 Aug 2026</span>
+    </div>
+  </header>
+
+  <!-- ============ THE CONSTRAINT ============ -->
+  <section>
+    <span class="sec-mark">The constraint that decides everything</span>
+    <h2>Code can live anywhere. Data can't.</h2>
+    <div class="col">
+      <p class="lede">Every option below is really an answer to one question: where does the JavaScript run when it asks MFL for your rosters?</p>
+      <p>MFL's export API is same-origin only for browsers. Per MFL's own developer guidance, calling the API from a page outside <code>myfantasyleague.com</code> is blocked by normal browser security, and <b>they will not add your domain to their cross-origin allowlist</b>. Private-league data is gated further: authorization rides on the logged-in user's cookie, so a server has to log in as a real member to see it.</p>
+      <p>But loading a <code>&lt;script src&gt;</code> or a stylesheet from another domain has never been restricted — your current site already pulls jQuery and Handlebars from cdnjs. So the code and the data have completely different rules, and that gap is where the good options live.</p>
+    </div>
+
+    <div class="lanes">
+      <div class="lane ok">
+        <div class="lane-path"><span>Your JS running inside the MFL page</span><span class="arrow">→</span><span><code>/2026/export?TYPE=rosters</code></span></div>
+        <span class="verdict ok">Works</span>
+        <p class="lane-note">Same origin. The member's session cookie rides along automatically, so private-league data and commissioner-only views just work — and <code>window.franchise_id</code> tells you who's looking. No key, no secret, no server. This is what your current site does, and it's the single best thing about it.</p>
+      </div>
+      <div class="lane no">
+        <div class="lane-path"><span>Your JS on a site you host</span><span class="arrow">→</span><span><code>/2026/export?TYPE=rosters</code></span></div>
+        <span class="verdict no">Blocked</span>
+        <p class="lane-note">The browser refuses the cross-origin read and MFL declines to allowlist third-party domains. No amount of front-end work gets around this; it needs a server in the middle.</p>
+      </div>
+      <div class="lane maybe">
+        <div class="lane-path"><span>A build job or serverless function</span><span class="arrow">→</span><span><code>/2026/export?TYPE=rosters</code></span></div>
+        <span class="verdict maybe">Works, with strings</span>
+        <p class="lane-note">Server-side calls are fine and explicitly supported — but you need the league API key, a stored MFL login for private data, a registered User-Agent, and roughly one request per second with aggressive caching. That's a credential to rotate and a rate limit to respect, forever.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AUDIT ============ -->
+  <section>
+    <span class="sec-mark">Where it actually hurts</span>
+    <h2>What I found in the repo</h2>
+    <div class="col">
+      <p class="lede">Five files, about 1,150 lines, pasted by hand into MFL's home page message boxes. The logic is sound — the packaging is what's aged.</p>
+    </div>
+
+    <ul class="findings">
+      <li>
+        <span class="f-tag">Drift</span>
+        <div class="f-body">
+          <b>Git no longer matches production.</b>
+          <span class="f-sub">The last commit is "Updates for 2022" and <code>fuadUtil.html</code> still says <code>var year = "2022"</code>, with franchise-player salaries frozen at 2021 names. The live site is on 2026. The real source of truth is a set of textareas in MFL admin, which means the repo can't be trusted as a starting point until it's reconciled.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Mobile</span>
+        <div class="f-body">
+          <b>The layout is a fixed-width table from 2001.</b>
+          <span class="f-sub"><code>&lt;table id="homepagecolumns"&gt;</code> with <code>width="65%"</code> / <code>width="35%"</code>, <code>cellspacing</code> and <code>align="center"</code>. A seven-column contract table cannot reflow on a phone. This is the single biggest reason the site feels bad on mobile — and it's yours, not MFL's.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Setting</span>
+        <div class="f-body">
+          <b>MFL may already be trying to help, and the markup is fighting it.</b>
+          <span class="f-sub">When <i>Desktop View On Mobile</i> is set to No, MFL injects a viewport meta tag and a responsive stylesheet into the skin. Worth confirming that's on — a responsive skin wrapped around a rigid table still reads as broken.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Fragile</span>
+        <div class="f-body">
+          <b>One line reaches into MFL's own markup.</b>
+          <span class="f-sub"><code>fuadCommish.hbs:134</code> does <code>$("#tabcontent0").find("#homepagecolumn1").prepend(html)</code>. That depends on MFL's internal DOM structure and IDs. It is the most likely thing in the codebase to break silently on an MFL update, and the hardest to notice when it does.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Stack</span>
+        <div class="f-body">
+          <b>Every dependency is 13+ years old, and one is load-bearing.</b>
+          <span class="f-sub">jQuery 1.8.0, Underscore 1.4.2, Modernizr 2.6.2, Handlebars 1.0.rc.1 — a release candidate. The checkbox handling uses <code>.attr("checked")</code>, whose meaning changed in jQuery 1.9, so the version pin isn't a preference, it's a dependency. Modernizr is loaded to feature-detect <code>localStorage</code>, which has been universal for over a decade.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Speed</span>
+        <div class="f-body">
+          <b>Eight requests in a chain, each waiting on the last.</b>
+          <span class="f-sub">Players, franchises, salary adjustments, rosters, transactions, weekly results, free agents, injuries — loaded strictly in sequence as XML, when six of the eight are independent and could run at once. The full NFL player database is fetched and cached into <code>localStorage</code>; on a phone that's a lot of parsing before anything renders. <code>JSON=1</code> is available and would drop the XML parsing entirely.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Ritual</span>
+        <div class="f-body">
+          <b>Three hand-edits a year, one of them via the console.</b>
+          <span class="f-sub"><code>year</code>, <code>beforeDraft</code> and <code>beforeTradeDeadline</code> are hardcoded, and after the trade deadline a commissioner clicks a button that <code>console.log</code>s a block of JavaScript to copy back into the source. Year and league ID are both already sitting in the page URL and could be derived. This is exactly the "avoid rewrites, stay stable year to year" problem you named.</span>
+        </div>
+      </li>
+      <li>
+        <span class="f-tag">Keep</span>
+        <div class="f-body">
+          <b>The architecture is genuinely right, though.</b>
+          <span class="f-sub">Running same-origin inside MFL gets you cookie auth, private-league access, per-member identity, zero hosting, zero secrets — and it's purely additive, so MFL keeps owning lineups, trades, waivers and scoring. Whatever you build next, don't give this up cheaply.</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ============ OPTIONS ============ -->
+  <section>
+    <span class="sec-mark">The options — ordered by what you'd be committing to</span>
+    <h2>Seven routes, from an afternoon to a migration</h2>
+    <div class="col">
+      <p class="lede">The tiers aren't a ranking. They're escalating commitment: each one costs more to build and more to keep alive than the one above it. Tiers 0 and 2 are the ones I'd actually do.</p>
+    </div>
+
+    <div class="opts">
+
+      <!-- 0 -->
+      <div class="opt pick">
+        <div class="opt-head">
+          <span class="tier">TIER 0 · an afternoon</span>
+          <h3 class="opt-title">Settings, skin, and send everyone to an app</h3>
+          <p class="opt-what">Write no code. Confirm <i>Desktop View On Mobile</i> is off, pick a modern skin from MFL's 40+ (or a free responsive template from MFL.football / MFLaddons), tidy the home page module and tab arrangement, and tell the league to use <b>MFL Modern</b>, MFL Mobile or MFL Platinum on their phones.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>Rosters, lineups and live scores — the job you said matters most — are 100% MFL-native. Third-party apps already do them well on mobile, and someone else maintains them.</li>
+              <li>MFL Modern is free for one team in one league and logs in with existing MFL credentials, so there's nothing for you to administer.</li>
+              <li>Zero maintenance, zero risk, survives every MFL change. Nothing to rewrite next August.</li>
+              <li>Establishes the visual baseline before you spend effort — you may find half the complaint disappears.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li>Does nothing for the contract and cap layer, which is your league's actual differentiator and the whole reason this repo exists.</li>
+              <li>You don't control the design; a skin repaints, it doesn't reorganize what's on the page.</li>
+              <li>Third-party apps can be abandoned, go paid, or lag MFL's feature changes. Three exist today; that's also a hint none is definitive.</li>
+              <li>Apps generally won't render your custom home page modules, so members on mobile may not see the contract views at all.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> Do this first regardless of what else you choose. It's the highest return per hour on the page, and it tells you how much of the remaining problem is really yours to solve.</p>
+      </div>
+
+      <!-- 1 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="tier">TIER 1 · a weekend</span>
+          <h3 class="opt-title">Modernize in place, keep pasting</h3>
+          <p class="opt-what">Same deployment model — files pasted into home page messages — but rewrite them. Drop all four libraries for vanilla ES2020 and template literals, replace the table layout with CSS grid plus a card view under a breakpoint, switch to <code>JSON=1</code>, run the independent fetches with <code>Promise.all</code>, and derive year and league ID from the URL.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>Smallest possible change of habit — nothing new to learn, nothing new to host.</li>
+              <li>Kills the two worst problems outright: the rigid table and the hardcoded year.</li>
+              <li>Zero dependencies means nothing left to bit-rot. A file with no CDN links is the most stable artifact you can put in an MFL textarea.</li>
+              <li>Keeps every advantage of running same-origin.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li>Still deploys by copy-paste into a textarea, so git will drift from production again — that's how you got here.</li>
+              <li>No local preview, no tests, no way to try a change without editing the live league site.</li>
+              <li>Under-uses the budget you said you'd accept. You're willing to run a build; this option declines it.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> A solid answer if you later decide you want zero infrastructure. Otherwise it's Tier 2 minus the part that fixes the drift.</p>
+      </div>
+
+      <!-- 2 -->
+      <div class="opt pick">
+        <div class="opt-head">
+          <span class="tier">TIER 2 · a week, then git push</span>
+          <h3 class="opt-title">A three-line loader in MFL, the real app on GitHub Pages</h3>
+          <p class="opt-what">One home page message holds a mount point and two tags pointing at <code>bborchardt.github.io/fuadmflsite/</code>. Everything else lives in the repo, builds with Vite or esbuild, and deploys on push via GitHub Actions. The app renders <i>inside</i> the MFL page, so every data call is still same-origin.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>Modern tooling and auto-deploy — exactly the budget you set — with none of the data problems, because the code still executes on MFL's origin.</li>
+              <li>Deploying is <code>git push</code>. You stop visiting MFL admin, and the repo becomes the source of truth again.</li>
+              <li>No API key, no stored credentials, no proxy, no CORS workaround, no rate-limit accounting. Private league and commissioner views keep working by cookie.</li>
+              <li>One URL for the league. Members never learn a second site exists.</li>
+              <li>Point the loader at <code>localhost</code> in your own browser to preview changes against real league data before shipping.</li>
+              <li>Nothing here is a backdoor — external <code>&lt;script src&gt;</code> is what the site already does, and MFL gives leagues disk space for custom code.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li>The MFL page now depends on GitHub Pages being reachable. Mitigate by keeping a built copy in MFL's own league file space as a fallback source.</li>
+              <li>You still inherit MFL's page chrome, skin CSS and tab structure. You're designing a room inside someone else's house.</li>
+              <li>If MFL ever adds a Content-Security-Policy that blocks third-party scripts, the loader breaks — low odds, and the MFL-hosted fallback copy covers it.</li>
+              <li>Someone still pastes the loader once per season when the league rolls over.</li>
+              <li>Slightly more moving parts than Tier 1 for a commissioner who inherits this in five years.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> The recommendation. It is the only option that gets you a modern build pipeline without giving up cookie auth, per-member identity, or the single-destination experience.</p>
+      </div>
+
+      <!-- 3 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="tier">TIER 3 · two weeks + a secret to rotate</span>
+          <h3 class="opt-title">A companion site with data baked at build time</h3>
+          <p class="opt-what">A GitHub Actions cron fetches the MFL exports server-side, commits the JSON, and a static site (Astro, SvelteKit, Next export) renders a fully custom dashboard. Optionally iframed back into an MFL tab.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>Total design freedom — real components, dark mode, charts, a proper mobile navigation, none of MFL's chrome.</li>
+              <li>Fast, because the data is pre-computed static JSON. Nothing is calculated in the member's browser.</li>
+              <li>Testable and previewable like any normal app, with PR previews.</li>
+              <li>Room to blend in outside data — dynasty values, ADP, historical charts — that MFL doesn't carry.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li><b>Data is only as fresh as the last cron run</b> — which directly undercuts rosters, lineups and live scores, the job you named as most common.</li>
+              <li>Private-league data needs a stored MFL login or API key in GitHub secrets: a real credential to guard and rotate.</li>
+              <li>The site can't tell who's viewing, so there's no "your team" view and no commissioner-only tools without building auth yourself.</li>
+              <li>Two destinations, or an iframe that behaves badly on phones.</li>
+              <li>Every MFL auth or export change is now your emergency. This is the option most likely to force a rewrite.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> Genuinely good for read-only, slow-moving content. A poor fit for the jobs you actually prioritized.</p>
+      </div>
+
+      <!-- 4 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="tier">TIER 4 · ongoing ownership</span>
+          <h3 class="opt-title">Companion site plus a serverless proxy</h3>
+          <p class="opt-what">Tier 3, but a Cloudflare Worker or Vercel function proxies MFL calls live at request time, holding the API key and a logged-in session cookie.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>Live data and full design freedom at the same time — the only option that gets both.</li>
+              <li>A place to cache, precompute and shape data into an API that fits your league's rules exactly.</li>
+              <li>Could eventually serve a real mobile app or notifications.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li>You now own credentials, a proxy, cache invalidation, and rate-limit compliance for your entire league's traffic funnelled through one identity.</li>
+              <li>MFL says plainly they won't allowlist third-party domains for browser access. Proxying around that is legal but leans on the letter rather than the spirit — the thing you asked to avoid.</li>
+              <li>Most to maintain, most to break, highest chance of a forced rewrite when MFL changes login or session handling.</li>
+              <li>Directly contradicts "stable year to year."</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> Not recommended. It buys design freedom at exactly the price you said you didn't want to pay.</p>
+      </div>
+
+      <!-- 5 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="tier">TIER 5 · later, if you want one</span>
+          <h3 class="opt-title">Hybrid — Tier 2 for the league, a small public site for the front porch</h3>
+          <p class="opt-what">The in-MFL app owns everything that needs authentication: cap sheets, contracts, commissioner tools, live views. A separate static site owns the read-only, no-auth material — league history, bylaws, records, hall of fame, championship charts.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>Each half uses the mechanism it's actually suited to, with no compromises in either.</li>
+              <li>The public site can be genuinely beautiful and shareable without touching a credential.</li>
+              <li>League history is exactly the content that doesn't need to be fresh — the Tier 3 staleness problem evaporates.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li>Two build targets and two deploys, even in one monorepo.</li>
+              <li>More concepts for a future commissioner to hold in their head.</li>
+              <li>Easy to start and never finish, leaving a half-built second site.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> A good year-two move on top of Tier 2, not a starting point.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="tier">TIER 6 · due diligence</span>
+          <h3 class="opt-title">Leave MFL for a platform with native contracts</h3>
+          <p class="opt-what">League Tycoon handles salary caps, multi-year extensions, rookie scales and franchise tags natively at about $12 per team per year, and imports MFL salary and contract data plus past seasons. Fantrax has native salary cap and a cleaner web UI, but a weak app.</p>
+        </div>
+        <div class="pc">
+          <div class="pro">
+            <h4>For</h4>
+            <ul>
+              <li>The contract logic you hand-maintain becomes someone else's product feature. The annual JavaScript ritual ends permanently.</li>
+              <li>Modern, mobile-first UI is their problem, not yours — and it's the whole basis of their competition.</li>
+              <li>Import claims to carry salaries, contract years and up to 20 prior seasons across, so the history isn't necessarily lost.</li>
+            </ul>
+          </div>
+          <div class="con">
+            <h4>Against</h4>
+            <ul>
+              <li><b>Your rules are idiosyncratic.</b> Anything the platform doesn't model natively — your specific cap-penalty formula, your rookie salary curve, your RFA handling — becomes <i>worse</i> than today, because you lose the escape hatch of writing your own code.</li>
+              <li>MFL's openness is precisely why this repo works at all. A polished closed platform trades that away.</li>
+              <li>Migration risk mid-dynasty, and buy-in needed from every owner.</li>
+              <li>Betting a 25-year league on a newer company is a bigger bet than staying.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="opt-foot"><b>Verdict</b> Worth an hour of looking so you know what you're choosing against. Not a recommendation — your custom rules are the reason to stay.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ MATRIX ============ -->
+  <section>
+    <span class="sec-mark">Side by side</span>
+    <h2>How they compare</h2>
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Option</th>
+            <th scope="col">Build effort</th>
+            <th scope="col">Yearly upkeep</th>
+            <th scope="col">Live data</th>
+            <th scope="col">Design freedom</th>
+            <th scope="col">Knows the member</th>
+            <th scope="col">Secrets to hold</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="pick">
+            <th scope="row">0 · Settings &amp; apps</th>
+            <td class="n">~4 hrs</td>
+            <td><span class="dot g"></span>None</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot r"></span>None</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot g"></span>None</td>
+          </tr>
+          <tr>
+            <th scope="row">1 · Modernize in place</th>
+            <td class="n">~2 days</td>
+            <td><span class="dot a"></span>Paste per season</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot a"></span>Within MFL</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot g"></span>None</td>
+          </tr>
+          <tr class="pick">
+            <th scope="row">2 · Loader + Pages</th>
+            <td class="n">~1 week</td>
+            <td><span class="dot g"></span>git push</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot a"></span>Within MFL</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot g"></span>None</td>
+          </tr>
+          <tr>
+            <th scope="row">3 · Static companion</th>
+            <td class="n">~2 weeks</td>
+            <td><span class="dot a"></span>Cron + secret</td>
+            <td><span class="dot r"></span>Stale</td>
+            <td><span class="dot g"></span>Total</td>
+            <td><span class="dot r"></span>No</td>
+            <td><span class="dot a"></span>MFL login</td>
+          </tr>
+          <tr>
+            <th scope="row">4 · Companion + proxy</th>
+            <td class="n">~3 weeks</td>
+            <td><span class="dot r"></span>Real ops</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot g"></span>Total</td>
+            <td><span class="dot a"></span>Build it</td>
+            <td><span class="dot r"></span>Key + login</td>
+          </tr>
+          <tr>
+            <th scope="row">5 · Hybrid</th>
+            <td class="n">2 + 2 wks</td>
+            <td><span class="dot a"></span>Two deploys</td>
+            <td><span class="dot g"></span>Where it counts</td>
+            <td><span class="dot g"></span>Total, publicly</td>
+            <td><span class="dot g"></span>Yes, in MFL</td>
+            <td><span class="dot g"></span>None</td>
+          </tr>
+          <tr>
+            <th scope="row">6 · Change platform</th>
+            <td class="n">migration</td>
+            <td><span class="dot g"></span>Theirs</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot r"></span>Theirs</td>
+            <td><span class="dot g"></span>Yes</td>
+            <td><span class="dot g"></span>None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ RECOMMENDATION ============ -->
+  <section>
+    <span class="sec-mark">If it were mine</span>
+    <h2>Tier 0 this week, Tier 2 as the project</h2>
+    <div class="call">
+      <h3>The sequence</h3>
+      <ol>
+        <li><b>Check the mobile setting and the skin first.</b> If <i>Desktop View On Mobile</i> is still on, or the skin is a 2012 pick, you're solving a problem MFL already solved. Cheap, and it changes what "outdated" means before you write anything.</li>
+        <li><b>Reconcile the repo with production.</b> Pull the current text out of each home page message and commit it. Right now nobody knows what's actually running — that has to be true before any rebuild.</li>
+        <li><b>Build the loader.</b> One home page message with a mount div and two tags. Everything else in the repo, built and deployed by Actions. Deploying stops meaning "log into MFL."</li>
+        <li><b>Rewrite the contract views mobile-first</b> — cards under a breakpoint, table above — and derive year and league ID from the URL so the season rollover stops being a code edit.</li>
+        <li><b>Point the league at MFL Modern</b> for phone lineup-setting, and stop trying to out-build it.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ UX PRINCIPLES ============ -->
+  <section>
+    <span class="sec-mark">Independent of which option you pick</span>
+    <h2>What to actually design</h2>
+    <div class="col">
+      <p class="lede">The technology question is separate from the information-architecture one. These apply either way.</p>
+
+      <h3>Lead with one "My Team" view</h3>
+      <p>Today the contract tab opens with every rostered player in the league, grouped by contract year. That's a reference document, not a landing page. The questions members actually arrive with are: how much cap space do I have, am I legal on roster count, who's expiring, and what does it cost me to cut this guy. Put those five numbers at the top, for the logged-in franchise — you already know who they are.</p>
+
+      <h3>Cards on phones, table on desktop, one data source</h3>
+      <p>A seven-column contract table is the right tool at 1200px and useless at 390px. Render the same player objects as stacked cards below a breakpoint. This single change does more for perceived quality than any restyling.</p>
+
+      <h3>Make contract state legible, not numeric</h3>
+      <p>"Years: 0" currently means restricted free agent, which you have to know to read. A badge — <i>RFA</i>, <i>Expiring</i>, <i>Signed thru 2028</i> — carries it at a glance. Encode state in form and color, not just digits.</p>
+
+      <h3>Advanced things stay possible, but behind a door</h3>
+      <p>The cap penalty calculator, the rookie salary scale, the franchise-tag tables and the commissioner forms are all genuinely useful and none belong on first paint. Put them behind a Tools section. Progressive disclosure is how you get "common functions easy, advanced functions possible" without two separate sites.</p>
+
+      <h3>Design the empty and slow states</h3>
+      <p>Eight chained requests means members currently stare at a blank column. Render the shell immediately, fill sections as data lands, and say something when a fetch fails instead of silently rendering nothing.</p>
+    </div>
+  </section>
+
+  <!-- ============ STABILITY ============ -->
+  <section>
+    <span class="sec-mark">So you're not rewriting this in 2029</span>
+    <h2>The year-to-year stability checklist</h2>
+    <div class="col">
+      <p class="lede">Whatever you build, these are the rules that decide whether it survives unattended. Most of the current pain traces to breaking three of them.</p>
+    </div>
+    <ul class="checks">
+      <li>Derive year and league ID from <code>document.location</code>. Never hardcode a season.</li>
+      <li>Depend on exactly one MFL DOM hook — your own mount point. Delete the <code>#tabcontent0 / #homepagecolumn1</code> reach-in; it will break and it will break quietly.</li>
+      <li>Use only documented <code>export?TYPE=</code> endpoints. Never parse MFL's rendered HTML.</li>
+      <li>Compute the post-deadline franchise and rookie baselines rather than pasting generated code. If a snapshot is genuinely needed, store it in MFL, not in the source file.</li>
+      <li>Pin exact dependency versions, and vendor them into the build so a CDN outage isn't a league outage.</li>
+      <li>Keep a built copy of the bundle in MFL's league file space as a fallback if the primary host is external.</li>
+      <li>Write down the season rollover procedure in the repo. There isn't a README today, and the ritual lives only in your head.</li>
+      <li>Prefer boring, dependency-light code. This site is edited a few days a year by one person; cleverness costs more than it returns.</li>
+    </ul>
+  </section>
+
+  <!-- ============ CAVEAT + SOURCES ============ -->
+  <section>
+    <span class="sec-mark">Provenance</span>
+    <h2>What to verify before committing</h2>
+
+    <p class="caveat">All <code>myfantasyleague.com</code> domains were blocked by this session's network policy, so I could not open your live site, the API docs, or the MFL forums directly. The repo analysis is first-hand from the code. The MFL platform specifics below come from search results and third-party sources, and three claims are worth confirming yourself before you build on them: (1) that MFL still declines cross-origin browser access and won't allowlist domains — check Help → Developer's API while logged in; (2) that league file space accepts a JS/CSS upload you can reference by URL; (3) that your league's <i>Desktop View On Mobile</i> setting is currently off.</p>
+
+    <div class="sources col">
+      <h3>Sources</h3>
+      <ul>
+        <li><a href="https://api.myfantasyleague.com/2026/api_info">MFL Developers Program — 2026 API documentation</a> (export types, cookie authorization, rate limiting, caching guidance)</li>
+        <li><a href="https://home.myfantasyleague.com/features/appearance-customization/">MFL — Appearance customization</a> and <a href="https://home.myfantasyleague.com/features/developers-api/">Open Developer's API</a></li>
+        <li><a href="https://home.myfantasyleague.com/use.html">MFL Acceptable Use</a> — league disk space for custom HTML/code</li>
+        <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=27624">MFL forums — Loading cross-domain XML data in JavaScript</a> (the no-allowlist statement)</li>
+        <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=35576">MFL forums — New user display settings</a> (Desktop View On Mobile, responsive.css)</li>
+        <li><a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=35720">MFL forums — Free Mobile Template</a> and <a href="http://forums.myfantasyleague.com/forums/index.php?showtopic=35498">Custom MFL Tabs</a></li>
+        <li><a href="https://apps.apple.com/us/app/mfl-modern/id6751516222">MFL Modern</a>, <a href="https://apps.apple.com/us/app/mfl-mobile-myfantasyleague/id639397317">MFL Mobile</a>, <a href="https://apps.apple.com/us/app/mfl-platinum/id452910130">MFL Platinum</a></li>
+        <li><a href="https://leaguetycoon.com/compare/league-tycoon-vs-myfantasyleague/">League Tycoon vs MyFantasyLeague</a> and <a href="https://leaguetycoon.com/features/league-import/">league import</a>; <a href="https://www.fantasypros.com/2026/07/best-dynasty-fantasy-football-platforms/">FantasyPros — Best dynasty platforms 2026</a></li>
+        <li><a href="https://github.com/alexciarlillo/mfl-league-site">alexciarlillo/mfl-league-site</a> — a prior-art companion site built on the MFL API</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 30 August 2026</footer>
+
+</div>
