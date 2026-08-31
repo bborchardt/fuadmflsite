@@ -432,7 +432,7 @@
       <div class="step key">
         <span class="step-n">1</span>
         <div class="step-b">
-          <span class="where"><b>For Commissioners → Setup →</b> Home Page Modules and Tabs</span>
+          <span class="where"><b>csetup?L=48571&amp;C=HMPGMOD</b> — Home Page Modules and Tabs Setup</span>
           <h3>Remove or relocate Power Rankings</h3>
           <p>This is the one real mobile fix in Tier 0. The module carries sixteen columns — Franchise, W-L-T, PF, PP, EFF, Bench Points, Max PF, Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power Rank, W, L, T, PCT. At 390&thinsp;px the last four are simply off-screen with no scroll affordance, so members don't know they're missing anything.</p>
           <ol>
@@ -447,7 +447,7 @@
       <div class="step key">
         <span class="step-n">2</span>
         <div class="step-b">
-          <span class="where"><b>For Commissioners → Setup →</b> Home Page Modules and Tabs</span>
+          <span class="where"><b>csetup?L=48571&amp;C=HMPGMOD</b> — Home Page Modules and Tabs Setup</span>
           <h3>Fix the duplicated navigation</h3>
           <p>The page shows two rows of navigation. MFL's own row carries Home, Rosters, Draft, Submit Lineup, Add/Drops, Trades, Player Stats, <b>Standings</b>, <b>Transactions</b>, <b>Live Scoring</b> and Schedule. Our custom row carries Main, <b>Standings</b>, <b>Transactions</b>, Contracts, Calendar, Commish, Links and <b>Live Scoring</b>.</p>
           <p>Three of our eight tabs duplicate a destination MFL already provides one row above. On a phone both rows collapse into separate hamburgers, so a member opens one, doesn't find what they want, and opens the other.</p>
@@ -459,7 +459,7 @@
       <div class="step">
         <span class="step-n">3</span>
         <div class="step-b">
-          <span class="where"><b>Edit</b> the home page message that renders it</span>
+          <span class="where"><b>csetup?L=48571&amp;C=HMPGMSG</b> — Home Page Message Setup</span>
           <h3>Move the Cap Penalty Calculator off the Main tab</h3>
           <p>It sits in the right column of the Main tab today. It's one of ours, it's genuinely useful, and it is not something a member needs on first paint — it answers "what would it cost to cut this guy", which is a question you go looking for.</p>
           <p>The principle from the options review was <i>common functions obvious, advanced functions possible</i>. This is an advanced function in the most prominent slot on the site. Move it to the Contracts tab, beside the data it operates on.</p>
@@ -469,7 +469,7 @@
       <div class="step">
         <span class="step-n">4</span>
         <div class="step-b">
-          <span class="where"><b>For Commissioners → Setup → Appearance Setup →</b> Select a Skin</span>
+          <span class="where"><b>csetup?L=48571&amp;C=SKIN</b> — Select A Skin</span>
           <h3>Reconsider the skin — for legibility, not layout</h3>
           <p>The league is on <b>BlueMesh</b> from MFL's 2017 set: dark navy ground, blue headers, white text. It is neither broken nor ugly. Its weaknesses on a phone are daylight contrast and fairly dense table rows.</p>
         </div>
@@ -543,6 +543,28 @@
       <li>Post one league message recommending a phone app</li>
       <li>Re-run <code>MFL_TAB=all node preview.js</code> and confirm no tab overflows</li>
     </ul>
+  </section>
+
+  <section>
+    <span class="sec-mark">Reference</span>
+    <h2>The admin screens, by URL</h2>
+    <div class="col">
+      <p>All under <code>https://www44.myfantasyleague.com/2026/</code>, commissioner login required. Taken from MFL's own help centre rather than reconstructed from menu paths — the menu wording has changed between seasons, the <code>C=</code> parameters haven't.</p>
+    </div>
+    <div class="scroller">
+      <table>
+        <thead><tr><th scope="col">Screen</th><th scope="col">URL</th><th scope="col">Used in</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Home Page Modules and Tabs Setup</th><td class="n">csetup?L=48571&amp;C=HMPGMOD</td><td>Steps 1, 2</td></tr>
+          <tr><th scope="row">Home Page Message Setup</th><td class="n">csetup?L=48571&amp;C=HMPGMSG</td><td>Step 3</td></tr>
+          <tr><th scope="row">Select A Skin</th><td class="n">csetup?L=48571&amp;C=SKIN</td><td>Step 4</td></tr>
+          <tr><th scope="row">Images &amp; Other URLs Setup <span class="note-dim">(custom CSS upload)</span></th><td class="n">csetup?L=48571&amp;C=IMAGES</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <p style="margin-top:22px">Source: <a href="https://www44.myfantasyleague.com/2026/support?CATEGORY=Appearance%20%26%20Customization&amp;SUBCATEGORY=Site%20Appearance">MFL Help Centre — Site Appearance</a>, which is also the primary source for the CSS-upload path: <i>"define your own CSS and upload using the Images &amp; Other URLs Setup screen, or select from one of our predefined skins with the Select A Skin screen."</i></p>
+    </div>
   </section>
 
   <section>

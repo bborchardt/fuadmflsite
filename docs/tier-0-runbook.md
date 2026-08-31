@@ -65,7 +65,7 @@ The easy win is already collected.
 
 ### 1. Remove or relocate Power Rankings — *the one real mobile fix here*
 
-**Where:** For Commissioners → Setup → Home Page Modules and Tabs
+**Where:** `csetup?L=48571&C=HMPGMOD` — Home Page Modules and Tabs Setup
 
 Power Rankings carries Franchise, W-L-T, PF, PP, EFF, Bench Points, Max PF,
 Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power Rank, W, L, T, PCT.
@@ -84,7 +84,7 @@ Re-measure afterwards with `tools/skin-preview` (`MFL_TAB=1`).
 
 ### 2. Fix the duplicated navigation
 
-**Where:** For Commissioners → Setup → Home Page Modules and Tabs
+**Where:** `csetup?L=48571&C=HMPGMOD` — Home Page Modules and Tabs Setup
 
 The page currently shows two rows of navigation. MFL's own row carries:
 
@@ -114,7 +114,7 @@ step 1.
 
 ### 3. Move the Cap Penalty Calculator off the Main tab
 
-**Where:** the home page message that renders it
+**Where:** `csetup?L=48571&C=HMPGMSG` — Home Page Message Setup
 
 The calculator currently sits in the right column of the Main tab. It's one of
 ours, it's genuinely useful, and it is not something a member needs on first
@@ -127,7 +127,7 @@ Move it to the Contracts tab, next to the contract data it operates on.
 
 ### 4. Reconsider the skin
 
-**Where:** For Commissioners → Setup → Appearance Setup → Select a Skin
+**Where:** `csetup?L=48571&C=SKIN` — Select A Skin
 
 The league is on **BlueMesh** (from MFL's 2017 skin set) — dark navy ground,
 blue module headers, white text. It is not broken and it is not ugly. Its
@@ -197,6 +197,25 @@ Worth being clear so expectations match:
 - [ ] Preview two or three skins against the real page; switch or keep deliberately
 - [ ] Post one league message recommending a phone app
 - [ ] Re-run `MFL_TAB=all node preview.js` and confirm no tab overflows
+
+---
+
+## Admin screens referenced
+
+All under `https://www44.myfantasyleague.com/2026/`, commissioner login required.
+Taken from MFL's own help centre rather than reconstructed from menu paths.
+
+| Screen | URL |
+|---|---|
+| Home Page Modules and Tabs Setup | `csetup?L=48571&C=HMPGMOD` |
+| Home Page Message Setup | `csetup?L=48571&C=HMPGMSG` |
+| Select A Skin | `csetup?L=48571&C=SKIN` |
+| Images & Other URLs Setup *(custom CSS upload)* | `csetup?L=48571&C=IMAGES` |
+
+Source: [MFL Help Centre — Site Appearance](https://www44.myfantasyleague.com/2026/support?CATEGORY=Appearance%20%26%20Customization&SUBCATEGORY=Site%20Appearance).
+That page is also the primary source for the CSS-upload path: *"define your own CSS and
+upload using the Images & Other URLs Setup screen, or select from one of our predefined
+skins with the Select A Skin screen."*
 
 ---
 
