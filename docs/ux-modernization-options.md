@@ -235,7 +235,8 @@ so MFL keeps owning lineups, trades, waivers and scoring. Don't give this up che
 **Revised down from ~4 hrs:** the mobile setting and responsive skin are already done, so this
 tier is now only "pick a nicer skin, tidy the module and tab arrangement, point members at an
 app." All three apps are still listed and live: **MFL Modern** (newest, free for one team),
-MFL Mobile, MFL Platinum.
+MFL Mobile, MFL Platinum. (The first draft also suggested a free third-party responsive
+template; that recommendation is withdrawn — see the note on sources.)
 
 - **For:** rosters/lineups/live scores are 100% MFL-native and these apps do them well on
   mobile, maintained by someone else. Zero risk, survives every MFL change.
@@ -285,9 +286,10 @@ data call is still same-origin.
   `X-Frame-Options`), so this is a hypothetical rather than a live constraint.
 - **Fallback, corrected:** the first draft proposed keeping a built copy in MFL's league file
   space. Partially supported — league files do live same-origin under
-  `www44.myfantasyleague.com/fflnetdynamic2026/48571_*` and serve fine, but the documented
-  upload UI (Appearance Setup) accepts **CSS only**, and directory listing is 403. Treat JS
-  hosting there as unconfirmed. **The reliable fallback is the mechanism already in use:**
+  `www44.myfantasyleague.com/fflnetdynamic2026/48571_*` and serve fine, but MFL's help centre
+  documents the upload path for **CSS** only — *"define your own CSS and upload using the
+  Images & Other URLs Setup screen"* — and directory listing is 403. Treat JS hosting there as
+  unconfirmed. **The reliable fallback is the mechanism already in use:**
   paste the built bundle straight into a home page module. That is Tier 1, which makes Tier 1
   the genuine safety net for Tier 2 — a nice property, since the two share all their code.
 - **Verdict:** still the recommendation, and better supported than in the first draft. The only
@@ -407,7 +409,7 @@ The first draft flagged three load-bearing claims. All three are now settled.
 | # | Claim | Result |
 |---|---|---|
 | 1 | MFL declines cross-origin browser access and won't allowlist domains | **Confirmed, twice.** Static `Access-Control-Allow-Origin: https://www44.myfantasyleague.com` on every export, never reflected; and MFL's terms list it under forbidden uses in writing. |
-| 2 | League file space accepts a JS/CSS upload referenceable by URL | **Partly.** Same-origin `fflnetdynamic2026/48571_*` files serve correctly; the documented upload path is CSS-only and listing is 403. JS hosting unconfirmed — Tier 2's fallback re-pointed at the paste mechanism instead (§5). |
+| 2 | League file space accepts a JS/CSS upload referenceable by URL | **Partly.** Same-origin `fflnetdynamic2026/48571_*` files serve correctly; listing is 403. MFL's own help centre documents the upload path as **CSS**: *"define your own CSS and upload using the Images & Other URLs Setup screen."* No documented path for JS, so treat JS hosting as unconfirmed — Tier 2's fallback re-pointed at the paste mechanism instead (§5). |
 | 3 | The league's *Desktop View On Mobile* setting | **Already off.** Viewport meta and `skins17/BlueMesh/responsive.css` both present. Nothing to change. |
 
 Also pulled live and folded in: the current home page module contents (§2 reconciliation), the
@@ -454,11 +456,27 @@ Verified directly this pass (all reachable, 30 Aug 2026):
 - Active skin and breakpoints — https://www44.myfantasyleague.com/skins17/BlueMesh/responsive.css
 - League file space pattern — `https://www44.myfantasyleague.com/fflnetdynamic2026/`
 
+**A note on the forum citations.** The first draft cited five MFL support-forum
+topics. Those forums are now **permanently closed** — every topic returns 503, and the
+notice redirects to FantasySharks, which is different forum software, so the old topic IDs
+do not map there. Three of the five have no Wayback snapshot at all. Since the draft that
+cited them could not open `myfantasyleague.com`, those citations rested on search-result
+snippets rather than the pages themselves.
+
+They have been removed rather than redirected. Everything they supported is now cited to a
+primary source that was read directly: the cross-origin restriction to MFL's 2026 API terms
+and the measured `Access-Control-Allow-Origin` header; the mobile setting to the live page's
+own markup; and the CSS-upload path to MFL's help centre. One claim went the other way and
+has been dropped: the first draft's suggestion of a *"free responsive template from
+MFL.football / MFLaddons"* came from a forum post that is gone, and both sites refuse
+requests here, so it is no longer offered as a recommendation.
+
 Background:
 
+- MFL Help Centre, Site Appearance — https://www44.myfantasyleague.com/2026/support?CATEGORY=Appearance%20%26%20Customization&SUBCATEGORY=Site%20Appearance
+  (primary source for the CSS-upload path and the skin picker)
 - MFL Open Developer's API — https://home.myfantasyleague.com/features/developers-api/
 - MFL appearance customization — https://home.myfantasyleague.com/features/appearance-customization/
-- Uploading custom CSS files (commissioner-only, Appearance Setup) — http://forums.myfantasyleague.com/forums/index.php?showtopic=15112
 - MFL Modern — https://apps.apple.com/us/app/mfl-modern/id6751516222
 - MFL Mobile — https://apps.apple.com/us/app/mfl-mobile-myfantasyleague/id639397317
 - MFL Platinum — https://apps.apple.com/us/app/mfl-platinum/id452910130
