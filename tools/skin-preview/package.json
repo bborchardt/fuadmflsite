@@ -1,0 +1,13 @@
+{
+  "name": "fuad-skin-preview",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Render the FUAD league home page under any MFL skin, at phone and desktop widths.",
+  "scripts": {
+    "preview": "node preview.js",
+    "tabs": "MFL_TAB=all node preview.js"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}

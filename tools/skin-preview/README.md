@@ -8,9 +8,12 @@ members actually use.
 ## Setup
 
 ```
-npm install playwright        # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 if Chromium already exists
-node preview.js               # current skin, Main tab, phone + desktop
+npm install        # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 if Chromium already exists
+node preview.js    # current skin, Main tab, phone + desktop
 ```
+
+If Node's fetch doesn't pick up a proxy in your environment, prefix with
+`NODE_USE_ENV_PROXY=1`.
 
 Set `CHROME_PATH` if Chromium isn't in one of the default locations.
 
