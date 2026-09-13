@@ -32,10 +32,18 @@ const TABS = (process.env.MFL_TAB || '0') === 'all'
   ? TAB_NAMES.map((_, i) => i)
   : [parseInt(process.env.MFL_TAB || '0', 10)];
 
-const CHROME = process.env.CHROME_PATH || [
+/* Where to find a browser, in order of preference:
+ *   1. CHROME_PATH, if you want to pin one explicitly
+ *   2. a preinstalled Chromium, for container images that ship one
+ *   3. nothing — let Playwright use the browser it downloaded itself,
+ *      which is the normal case on a developer machine
+ * Only 1 and 2 produce an executablePath; 3 leaves it undefined so
+ * Playwright resolves its own, wherever it caches them per platform. */
+const PREINSTALLED = [
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   '/opt/pw-browsers/chromium/chrome-linux/chrome',
-].find(p => fs.existsSync(p));
+];
+const CHROME = process.env.CHROME_PATH || PREINSTALLED.find(p => fs.existsSync(p));
 
 async function get(url) {
   const res = await fetch(url);
@@ -95,12 +103,27 @@ function serve(dir) {
 }
 
 (async () => {
-  if (!CHROME) { console.error('No Chromium found. Set CHROME_PATH.'); process.exit(1); }
   fs.mkdirSync(OUT, { recursive: true });
 
   const skins = process.argv.slice(2);
-  const { chromium } = require('playwright');
-  const browser = await chromium.launch({ executablePath: CHROME });
+
+  let chromium;
+  try {
+    ({ chromium } = require('playwright'));
+  } catch {
+    console.error('playwright is not installed. From this directory:\n  npm install');
+    process.exit(1);
+  }
+
+  let browser;
+  try {
+    browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
+  } catch (e) {
+    console.error(`Could not start Chromium: ${e.message.split('\n')[0]}`);
+    console.error('Install the browser Playwright expects:\n  npx playwright install chromium');
+    console.error('Or point at one you already have:\n  CHROME_PATH=/path/to/chrome node preview.js');
+    process.exit(1);
+  }
   const srv = await serve(OUT);
   const origin = `http://127.0.0.1:${srv.address().port}`;
 

@@ -8,12 +8,24 @@ members actually use.
 ## Setup
 
 ```
-npm install        # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 if Chromium already exists
+npm install        # also downloads the Chromium Playwright needs
 node preview.js    # current skin, Main tab, phone + desktop
 ```
 
-If Node's fetch doesn't pick up a proxy in your environment, prefix with
-`NODE_USE_ENV_PROXY=1`.
+Needs Node 18+ (for built-in `fetch`). If Node's fetch doesn't pick up a proxy in
+your environment, prefix commands with `NODE_USE_ENV_PROXY=1`.
+
+**Finding a browser.** By default Playwright uses the Chromium it downloaded during
+`npm install`, wherever it caches that for your platform — nothing to configure. If
+that download was skipped (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`, common in container
+images that ship their own), the tool looks for a preinstalled Chromium under
+`/opt/pw-browsers`. Failing both, it tells you to run:
+
+```
+npx playwright install chromium
+```
+
+To pin a specific binary instead — a system Chrome, say — set `CHROME_PATH`.
 
 Set `CHROME_PATH` if Chromium isn't in one of the default locations.
 
