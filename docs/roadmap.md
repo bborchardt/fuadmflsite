@@ -65,9 +65,15 @@ commissioner write:
 - `fcfsWaiver` with `FRANCHISE_ID` for add/drop moves on a team's behalf
 
 Candidates:
-1. **Cap penalties on drops.** Today's Commish tab already detects these: a free agent still carrying
-   a contract, last moved by a drop. Apply the `salaryAdj`, then reset the player to $1 / 0 years.
-   Avoid double-applying by matching the adjustment description, e.g. "Name (2yrs@10)".
+1. **Cap penalties on drops** (next). Today's Commish tab already detects these: a free agent still
+   carrying a contract, last moved by a drop. Decided:
+   - one `salaryAdj` per player, then reset the player to $1 / 0 years
+   - the description carries the drop date, e.g. "Name (2yrs@10, 10/03)", so a second drop on the
+     same contract isn't mistaken for one already applied; matching it avoids double-applying
+   - a team the uncharged penalties would put over the cap is held: nothing is charged or reset,
+     so the commissioner can reverse the move (e.g. a blind bid with a drop), and the run fails
+   - the logic lives in `jobs/`, so the live version is untouched
+   - a dry run that only logs comes first; a workflow variable turns the writes on
 2. **Contract years on adds:**
    - **Blind bids:** the years are in the bid message, visible only on the logged-in Prior FA Bids page
      (`/<season>/processed_waivers?L=48571`), not in the API. **Need a saved copy of that page to build
