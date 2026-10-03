@@ -24,24 +24,31 @@ jobs:
   chores:
     runs-on: ubuntu-latest
     outputs:
-      snapshot: ${{ steps.run.outputs.snapshot }}
+      publish: ${{ steps.run.outputs.publish }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: master
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Check out league-data
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git fetch --depth=1 origin league-data; then
+          # exit code 2 means the branch doesn't exist; anything else nonzero is a real problem
+          status=0; git ls-remote --exit-code --heads origin league-data > /dev/null || status=$?
+          if [ "$status" -eq 0 ]; then
+            git fetch --depth=1 origin league-data
             git worktree add -B league-data league-data FETCH_HEAD
-          else
+          elif [ "$status" -eq 2 ]; then
+            echo "No league-data branch yet; starting one"
             git worktree add --orphan -b league-data league-data
+          else
+            echo "::error::Couldn't reach the repository to check for league-data (git exit $status)"
+            exit 1
           fi
 
       - name: Run chores
@@ -70,7 +77,7 @@ jobs:
 
   publish:
     needs: chores
-    if: always() && needs.chores.outputs.snapshot == 'written'
+    if: always() && needs.chores.outputs.publish == 'true'
     uses: ./.github/workflows/pages.yml
     permissions:
       contents: read

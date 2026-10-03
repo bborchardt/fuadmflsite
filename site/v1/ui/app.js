@@ -129,7 +129,7 @@ async function franchiseView(season, league, dataBase) {
 
 function snapshotStatus(view, season) {
     if (view.phase === "final" && view.missing) {
-        return `The ${season} trade deadline has passed and no snapshot is published yet. The daily job normally takes it; if it hasn't run, commit the JSON below to the league-data branch as data/${snapshotFileName(season)}.`;
+        return `The ${season} trade deadline has passed and no snapshot is published yet. The daily job normally takes it; if it hasn't run, commit the JSON below to the league-data branch as data/${snapshotFileName(season)} and the next morning's daily job publishes it.`;
     }
     if (view.phase === "final") {
         return `The ${season} snapshot is published.`;
@@ -177,7 +177,18 @@ export async function start({dataBase}) {
         showInMounts(found, "fuad-error", `${error.message}. Try reloading the page.`);
         throw error;
     }
-    renderViolations(league);
+    const render = (what, mount, draw) => {
+        try {
+            draw();
+        } catch (error) {
+            console.error("[fuad]", error);
+            if (mount) {
+                mount.innerHTML = `<div class="fuad-error"></div>`;
+                mount.firstChild.textContent = `Couldn't show the ${what}: ${error.message}. Try reloading the page.`;
+            }
+        }
+    };
+    render("violations", null, () => renderViolations(league));
 
     let view;
     try {
@@ -186,10 +197,11 @@ export async function start({dataBase}) {
         view = {topSalaries: franchiseTopSalaries(league.rosteredPlayers), phase: "live", note: `Projected franchise salaries (couldn't check the season calendar: ${error.message}).`};
     }
     if (found.contracts) {
-        renderContracts(found.contracts, {league, season: context.season, franchise: view, storage});
+        render("Contracts tab", found.contracts, () =>
+            renderContracts(found.contracts, {league, season: context.season, franchise: view, storage}));
     }
     if (found.commish) {
-        renderCommish(found.commish, {
+        render("Commish tab", found.commish, () => renderCommish(found.commish, {
             ...context,
             league,
             // the rookie draft is held offline before week 1, so "previous" stands in for "before the draft"
@@ -199,6 +211,6 @@ export async function start({dataBase}) {
                 takenAt: new Date().toISOString(),
                 source: "Commish tab backup"
             }), null, 2)
-        });
+        }));
     }
 }

@@ -39,10 +39,16 @@ export function makeSnapshot(season, topSalaries, {takenAt, source}) {
     return {season: Number(season), takenAt, source, positions: topSalaries};
 }
 
-/** Check a snapshot read from a file; returns its positions or throws. */
+/** Check a snapshot read from a file (it may have been edited by hand); returns its positions or throws. */
 export function readSnapshot(snapshot, season) {
-    if (!snapshot || Number(snapshot.season) !== Number(season) || typeof snapshot.positions !== "object") {
+    const positions = snapshot && snapshot.positions;
+    const wellFormed = snapshot
+        && Number(snapshot.season) === Number(season)
+        && positions && typeof positions === "object" && !Array.isArray(positions)
+        && Object.values(positions).every((players) => Array.isArray(players)
+            && players.every((player) => player && typeof player.fullName === "string" && Number.isFinite(player.salary)));
+    if (!wellFormed) {
         throw new Error(`the ${season} franchise snapshot is malformed`);
     }
-    return snapshot.positions;
+    return positions;
 }

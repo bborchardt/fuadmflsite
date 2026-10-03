@@ -4,7 +4,7 @@
   "description": "FUAD league site code, served from GitHub Pages and loaded by the MFL league header",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",

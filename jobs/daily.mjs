@@ -1,4 +1,4 @@
-// Daily league chores, run by .github/workflows/daily.yml (Node 20+).
+// Daily league chores, run by .github/workflows/daily.yml (Node 24+).
 //
 // One chore so far: after the trade deadline, snapshot the season's franchise salaries.
 // Everything the job writes goes to a checkout of the league-data branch (DATA_DIR):
@@ -12,10 +12,11 @@
 //   MFL_USER_AGENT              optional; set it if the client is registered with MFL
 //   SEASON                      default: the NFL season that started most recently
 //   RULES_VERSION               which site version's league logic to use, default v1
-//   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false
+//   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
+//   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
 //   NOW                         optional ISO time, for testing
 
-import {existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
+import {existsSync, readFileSync, readdirSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 
@@ -37,6 +38,7 @@ const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
 const season = Number(process.env.SEASON || latestSeason(now));
 const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (github.com/bborchardt/fuadmflsite)";
 const headers = {"User-Agent": userAgent};
+const pagesData = process.env.PAGES_DATA_URL || "https://bborchardt.github.io/fuadmflsite/data/";
 const LATE_AFTER_DAYS = 7;
 const entries = [];
 
@@ -55,13 +57,19 @@ function setOutput(name, value) {
     }
 }
 
-/** Log in as commissioner and keep the session cookie for later requests. */
+/**
+ * Log in as commissioner and keep the session cookie for later requests. MFL answers with
+ * <status MFL_USER_ID="...">OK</status>, or <error>...</error> on bad credentials. The value
+ * is Base64; MFL's docs say it may need +, / and = escaped, so both forms are tried against a
+ * request that needs a login. Returns a problem description, or null if logged in (or no
+ * login is configured).
+ */
 async function login() {
     const username = process.env.MFL_USERNAME;
     const password = process.env.MFL_PASSWORD;
     if (!username || !password) {
         log("No MFL login configured; reading public league data only.");
-        return;
+        return null;
     }
     const response = await fetch(`${API_BASE}/${season}/login`, {
         method: "POST",
@@ -69,14 +77,30 @@ async function login() {
         body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
     });
     const body = await response.text();
-    const name = (/cookie_name="([^"]+)"/.exec(body) || [])[1];
-    const value = (/cookie_value="([^"]+)"/.exec(body) || [])[1];
-    if (!response.ok || !name || !value) {
-        const reason = (/<error>([^<]*)<\/error>/.exec(body) || [])[1] || `HTTP ${response.status}`;
-        throw new Error(`MFL login failed: ${reason}`);
+    const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
+    const cookie = /<status\s+([A-Za-z_][\w-]*)="([^"]*)"/.exec(body);
+    if (error || !response.ok || !cookie) {
+        return `MFL login failed: ${error || `HTTP ${response.status}, no session cookie in the response`}`;
     }
-    headers.Cookie = `${name}=${value}`;
-    log("Logged in to MFL as commissioner.");
+    const [, name, value] = cookie;
+    for (const candidate of [value, encodeURIComponent(value)]) {
+        if (await loginWorks(`${name}=${candidate}`)) {
+            headers.Cookie = `${name}=${candidate}`;
+            log("Logged in to MFL as commissioner.");
+            return null;
+        }
+    }
+    return "MFL login succeeded but MFL didn't accept the session cookie";
+}
+
+/** A request that only answers with a login: the account's leagues for the season. */
+async function loginWorks(cookie) {
+    try {
+        const leagues = await fetchExport(exportUrl(API_BASE, season, "myleagues"), "leagues", {init: {headers: {...headers, Cookie: cookie}}});
+        return JSON.stringify(leagues).includes(leagueId);
+    } catch (error) {
+        return false;
+    }
 }
 
 const fetchFrom = (base, type, params, section = type) =>
@@ -120,6 +144,27 @@ async function franchiseSnapshot() {
     return true;
 }
 
+/**
+ * Snapshots on league-data that the published site doesn't have yet, e.g. one committed by
+ * hand. Any of these means the site needs publishing.
+ */
+async function unpublishedSnapshots() {
+    const dir = join(dataDir, "data");
+    const files = existsSync(dir) ? readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
+    const missing = [];
+    for (const file of files) {
+        try {
+            const response = await fetch(new URL(file, pagesData), {method: "HEAD", headers});
+            if (response.status === 404) {
+                missing.push(file);
+            }
+        } catch (error) {
+            log(`Couldn't check whether ${file} is published (${error.message}); will check again tomorrow.`);
+        }
+    }
+    return missing;
+}
+
 /** Append this run's entries to the chore log, or a monthly heartbeat if nothing happened. */
 function updateChoreLog() {
     const file = join(dataDir, "chore-log.md");
@@ -140,14 +185,25 @@ function updateChoreLog() {
 }
 
 let snapshotWritten = false;
+let publish = false;
 try {
-    await login();
+    // Snapshots only need public league data, so a broken login is reported but doesn't stop them.
+    const loginProblem = await login();
+    if (loginProblem) {
+        choreLog(`${loginProblem}. Continuing with public league data.`);
+        process.exitCode = 1;
+    }
     snapshotWritten = await franchiseSnapshot();
+    const missing = snapshotWritten ? [] : await unpublishedSnapshots();
+    if (missing.length) {
+        choreLog(`Publishing snapshots that weren't on the site yet: ${missing.join(", ")}.`);
+    }
+    publish = snapshotWritten || missing.length > 0;
 } catch (error) {
     choreLog(`Failed: ${error.message}`);
     process.exitCode = 1;
 } finally {
     const logChanged = updateChoreLog();
     setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
-    setOutput("snapshot", snapshotWritten ? "written" : "none");
+    setOutput("publish", publish ? "true" : "false");
 }

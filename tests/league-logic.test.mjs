@@ -86,6 +86,12 @@ test("snapshots round-trip and reject the wrong season", () => {
     assert.deepEqual(readSnapshot(JSON.parse(JSON.stringify(snapshot)), 2026), {QB: [{fullName: "A", salary: 1}]});
     assert.throws(() => readSnapshot(snapshot, 2025));
     assert.throws(() => readSnapshot(null, 2026));
+    // hand-edited files: null or array positions, non-array players, missing names or salaries
+    assert.throws(() => readSnapshot({season: 2026, positions: null}, 2026));
+    assert.throws(() => readSnapshot({season: 2026, positions: []}, 2026));
+    assert.throws(() => readSnapshot({season: 2026, positions: {QB: {fullName: "A", salary: 1}}}, 2026));
+    assert.throws(() => readSnapshot({season: 2026, positions: {QB: [{fullName: "A"}]}}, 2026));
+    assert.throws(() => readSnapshot({season: 2026, positions: {QB: [{salary: 1}]}}, 2026));
 });
 
 test("league model: salaries, cap, roster counts, pending penalties and injured starters", () => {

@@ -76,11 +76,13 @@ a player cut later reads $1.
 `.github/workflows/daily.yml` runs `jobs/daily.mjs` every morning, logged in to MFL as commissioner.
 It works on the NFL season that started most recently. After that season's trade deadline it takes
 the franchise salary snapshot, commits it to `league-data` and publishes the site. A snapshot taken
-more than a week late is marked for checking.
+more than a week late is marked for checking. Snapshots only need public league data, so a failed
+login is logged and fails the run, but doesn't stop the snapshot.
 
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
 least once a month. It re-enables itself on every run, because GitHub turns off scheduled workflows
 after 60 days without repository activity.
 
 If a snapshot is ever missing, the Commish tab says so and its **Show franchise snapshot** button
-produces the file to commit to `league-data` by hand.
+produces the file to commit to `league-data` by hand. The job publishes any snapshot on
+`league-data` that the site doesn't have yet, so a hand-committed one goes live on its next run.
