@@ -368,80 +368,59 @@
   <header class="mast">
     <p class="eyebrow"><span>League 48571</span><span>·</span><span>Week 4</span><span>·</span><span>3 Oct 2026</span></p>
     <h1>Week 4 Site Check</h1>
-    <p class="standfirst">The league site works on desktop and phones. The problems are in the experience: a Contracts tab members have to dig through, a dated look, and a deploy process that drifts. Each line below is the whole point.</p>
+    <p class="standfirst">Six problems with the league site, and the plan to fix them. v1 rebuilds the foundation with no visible change; the Contracts redesign, a new look and commissioner automation follow as versions you preview before switching on.</p>
     <nav class="tally" aria-label="Sections">
       <a class="now" href="#wrong"><b>6</b><span>Problems</span></a>
-      <a class="admin" href="#path"><b>5</b><span>Steps to fix</span></a>
-      <a class="soon" href="#soon"><b>1</b><span>Coming up</span></a>
+      <a class="admin" href="#decided"><b>4</b><span>Decisions</span></a>
+      <a class="soon" href="#ships"><b>4</b><span>Versions</span></a>
       <a class="ok" href="#ruled-out"><b>4</b><span>Ruled out</span></a>
     </nav>
   </header>
 
   <section id="wrong">
     <span class="sec-mark">What's wrong</span>
-    <h2>Six problems, three pieces of work</h2>
+    <h2>Six problems, four versions</h2>
     <ol class="rows">
-      <li class="row now">
-        <span class="num">01</span>
-        <div class="what"><h3>The Contracts tab is a reference document, not a tool</h3>
-          <p>About 18 phone screens listing every rostered player in the league. Members have to dig for their own cap space.</p></div>
-        <div class="act"><b>Fix · A</b>Rebuild around "My Team", with cards on phones.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#a">Details</a></div>
-      </li>
-      <li class="row now">
-        <span class="num">02</span>
-        <div class="what"><h3>The site looks dated</h3>
-          <p>None of MFL's stock skins fix it.</p></div>
-        <div class="act"><b>Fix · C</b>Our own league-wide stylesheet in the shared header.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#c">Details</a></div>
-      </li>
-      <li class="row admin">
-        <span class="num">03</span>
-        <div class="what"><h3>Three navigation rows on desktop</h3>
-          <p>Phones show one swipeable nav row. Desktop shows all three, and MFL's two rows can't be removed.</p></div>
-        <div class="act"><b>Fix · C</b>Restyle so MFL's dropdown recedes and our tabs read as the league's own.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#c">Details</a></div>
-      </li>
-      <li class="row admin">
-        <span class="num">04</span>
-        <div class="what"><h3>Every release is pasted into five places</h3>
-          <p>The header plus four home page messages. The repo drifts whenever one is missed.</p></div>
-        <div class="act"><b>Fix · Option 2</b>Load the code from GitHub Pages; deploy with git push.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#option-2">Details</a></div>
-      </li>
-      <li class="row admin">
-        <span class="num">05</span>
-        <div class="what"><h3>A yearly code ritual</h3>
-          <p><code>year</code>, <code>beforeDraft</code> and the post-deadline console paste.</p></div>
-        <div class="act"><b>Fix · B</b>Derive the season from the URL; snapshot the deadline to a file.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#b">Details</a></div>
-      </li>
-      <li class="row admin">
-        <span class="num">06</span>
-        <div class="what"><h3>2012-era code underneath</h3>
-          <p>Four old libraries, eight requests in a row, and nothing checked, so failures go unnoticed.</p></div>
-        <div class="act"><b>Fix · B</b>Plain modern JavaScript, parallel requests, visible errors.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#b">Details</a></div>
-      </li>
+      <li class="row now"><span class="num">01</span>
+        <div class="what"><h3>The Contracts tab is a reference document, not a tool</h3><p>About 18 phone screens listing every rostered player in the league.</p></div>
+        <div class="act"><b>Fixed by</b>A · "My Team" Contracts</div></li>
+      <li class="row now"><span class="num">02</span>
+        <div class="what"><h3>The site looks dated</h3><p>None of MFL's stock skins fix it.</p></div>
+        <div class="act"><b>Fixed by</b>C · league-wide look</div></li>
+      <li class="row admin"><span class="num">03</span>
+        <div class="what"><h3>Three navigation rows on desktop</h3><p>Phones show one swipeable nav row. Desktop shows all three, and MFL's two can't be removed.</p></div>
+        <div class="act"><b>Fixed by</b>C · league-wide look</div></li>
+      <li class="row admin"><span class="num">04</span>
+        <div class="what"><h3>Every release is pasted into five places</h3><p>The repo drifts whenever one is missed.</p></div>
+        <div class="act"><b>Fixed by</b>v1 · versioned code on GitHub Pages</div></li>
+      <li class="row admin"><span class="num">05</span>
+        <div class="what"><h3>Commissioner chores are manual</h3><p>Contract years, cap penalties, watching for over-cap moves, and the post-deadline paste.</p></div>
+        <div class="act"><b>Fixed by</b>v1 · franchise snapshot<br>Chores · the rest</div></li>
+      <li class="row admin"><span class="num">06</span>
+        <div class="what"><h3>2012-era code underneath</h3><p>Four old libraries, eight requests in a row, and nothing checked.</p></div>
+        <div class="act"><b>Fixed by</b>v1 · engine rebuild</div></li>
     </ol>
   </section>
 
-  <section id="path">
-    <span class="sec-mark">Recommended path</span>
-    <h2>Delivery first, then Contracts, then the look</h2>
+  <section id="decided">
+    <span class="sec-mark">Decided</span>
+    <h2>How it will work</h2>
+    <ul class="plain">
+      <li><b>Versioned code on GitHub Pages.</b> The MFL header points at <code>…/fuadmflsite/v1/fuad.js</code>. New versions start dark; activating and reverting are one-line header edits; each season's site pins its own version.</li>
+      <li><b>Franchise salaries switch automatically:</b> last season's snapshot until the week 1 kickoff, a live projection until the week 12 trade deadline, then this season's snapshot.</li>
+      <li><b>A daily GitHub job</b> logs in as commissioner, takes the franchise snapshot, keeps a chore log on its own branch, and keeps itself alive.</li>
+      <li><b>League logic is written once</b>, shared by the page and the job.</li>
+    </ul>
+  </section>
+
+  <section id="ships">
+    <span class="sec-mark">What ships when</span>
+    <h2>v1 first, the visible changes after</h2>
     <ol class="path">
-      <li><span class="num">1</span><div><h3>Set up Option 2: load from GitHub Pages</h3><p>Move today's code over unchanged and paste a two-tag header. Members see no difference.</p></div><span class="size">½ day</span></li>
-      <li><span class="num">2</span><div><h3>A · "My Team" Contracts</h3><p>Cap space, roster count, expiring contracts and cut costs first; cards on phones.</p></div><span class="size">2–3 days</span></li>
-      <li><span class="num">3</span><div><h3>B · Engine cleanup</h3><p>Old libraries out, requests in parallel, every response checked.</p></div><span class="size">~1 day</span></li>
-      <li><span class="num">4</span><div><h3>C · League-wide look</h3><p>Our own stylesheet on every page, in A's visual language.</p></div><span class="size">2–4 days</span></li>
-      <li class="later"><span class="num">5</span><div><h3>Post-deadline snapshot as a file</h3><p>Replaces the console ritual. If Option 2 isn't live by the deadline, paste the old way once more.</p></div><span class="size">small</span></li>
-    </ol>
-  </section>
-
-  <section id="soon">
-    <span class="sec-mark">Coming up</span>
-    <h2>This season's post-deadline paste</h2>
-    <ol class="rows">
-      <li class="row soon">
-        <span class="num">—</span>
-        <div class="what"><h3>Production still has <code>beforeTradeDeadline = true</code></h3>
-          <p>After the deadline, click the button on the Commish tab, paste the console output into <code>fuadUtil.html</code>, and commit the same change to the repo.</p></div>
-        <div class="act"><b>When</b>The week the deadline passes.</div>
-      </li>
+      <li><span class="num">v1</span><div><h3>New foundation, no visible change</h3><p>Delivery, engine rebuild, automatic franchise salaries, the daily job. Live well before the trade deadline (Wed 25 Nov, 7:00 pm Central).</p></div><span class="size">2–3 days</span></li>
+      <li class="later"><span class="num">A</span><div><h3>"My Team" Contracts</h3><p>Cap space, roster count, expiring contracts and cut costs first; cards on phones. Previewed before activation.</p></div><span class="size">later</span></li>
+      <li class="later"><span class="num">C</span><div><h3>League-wide look</h3><p>Our own stylesheet on every page and a calmer desktop navigation. Previewed before activation.</p></div><span class="size">later</span></li>
+      <li class="later"><span class="num">+</span><div><h3>Commissioner chores</h3><p>Cap penalties, contract years from bid messages, over-cap flags, and a chores queue on the Commish tab.</p></div><span class="size">later</span></li>
     </ol>
   </section>
 
@@ -449,10 +428,10 @@
     <span class="sec-mark">Ruled out</span>
     <h2>Considered and set aside</h2>
     <ul class="plain">
-      <li><b>A separate companion site (Option 3).</b> A second destination is a new navigation layer, and it can't tell who's viewing.</li>
-      <li><b>A proxy (Option 4).</b> Against MFL's API terms.</li>
-      <li><b>Leaving MFL (Option 6).</b> Would lose the custom rules MFL's openness allows.</li>
-      <li><b>A public league-history site (Option 5).</b> Optional, and only after A–C.</li>
+      <li><b>A separate companion site.</b> A second destination, and it can't tell who's viewing.</li>
+      <li><b>A proxy for MFL's API.</b> Against MFL's terms.</li>
+      <li><b>Leaving MFL.</b> Would give up the custom rules.</li>
+      <li><b>A public league-history site.</b> Optional, after A and C.</li>
     </ul>
   </section>
 
@@ -460,10 +439,10 @@
     <span class="sec-mark">Ground rules</span>
     <h2>From your decisions</h2>
     <ul class="plain">
-      <li>The site must work well in a <b>phone browser</b>.</li>
-      <li><b>No new navigation layer.</b> Everything lives inside a tab.</li>
-      <li>The <b>custom tabs stay</b> as members know them.</li>
-      <li>Stay within <b>MFL's rules</b>, and keep upkeep modest.</li>
+      <li>Works well in a <b>phone browser</b>.</li>
+      <li><b>No new navigation layer</b>; the <b>custom tabs stay</b>.</li>
+      <li>Within <b>MFL's rules</b>.</li>
+      <li>As few <b>chores to remember</b> as possible.</li>
     </ul>
   </section>
 
@@ -471,7 +450,7 @@
     <span class="sec-mark">The detail</span>
     <h2>Read further only if you want the reasoning</h2>
     <div class="docs" style="grid-template-columns:1fr">
-      <a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s"><strong>The FUAD Site Rebuild</strong><span>Where things stand, the platform facts that decide the options, the three pieces of work, and each delivery option with its trade-offs.</span></a>
+      <a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s"><strong>The FUAD Site Rebuild</strong><span>The site today, what MFL allows, every decision with its reasoning, and what each version contains.</span></a>
     </div>
   </section>
 
