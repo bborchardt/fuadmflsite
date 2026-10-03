@@ -3,32 +3,33 @@
 **League:** 48571 (contract dynasty) · **Live site:** `https://www44.myfantasyleague.com/2026/home/48571`
 **As of:** 3 Oct 2026, Week 4 · **Summary:** [`findings.md`](findings.md)
 
-This is the current analysis. It replaces the August review and folds in everything
-learned since: what the platform allows, what's already fixed, and what you've decided.
-History lives in git and in PRs #1–#3.
+An analysis of the league site as it is today: what's wrong with it, what MFL allows, what
+to build, and how to deliver it.
 
 ---
 
 ## 1. Where things stand
 
-**Working today:**
-- The injured-starter warning, the fixed rookie salary table and the Contracts tab layout on
-  phones (PR #1).
-- MFL's nav bar stays visible on phones as a swipeable row, on every league page (PR #3).
-- The redundant Live Scoring tab is gone. Seven custom tabs remain: Main, Standings,
-  Transactions, Contracts, Calendar, Commish, Links.
-- The repo matches production line for line.
+**The site today:**
+- MFL's BlueMesh skin, with three navigation rows: MFL's dropdown menu, MFL's nav bar, and
+  seven custom tabs (Main, Standings, Transactions, Contracts, Calendar, Commish, Links).
+- On phones, the dropdown menu and the custom tabs each collapse to a "+" bar, and MFL's nav
+  bar shows as a swipeable row on every league page.
+- League features are custom code: a rules-violation check on Main, plus the Contracts,
+  Commish and Links tabs. It's pasted into the shared page header (fuadUtil) and home page
+  messages 3–6.
+- The repo matches what's deployed.
 
-**Still wrong:**
+**What's wrong with it:**
 
 | Problem | Evidence |
 |---|---|
 | **The site looks dated**, and none of MFL's stock skins fix that | Your judgment; BlueMesh dates from MFL's 2017 skin set |
 | **The Contracts tab is a reference document, not a tool** | 15,226px on a phone, about 18 screens, listing every rostered player in the league. Members have to dig for their own cap space. |
 | **Three navigation rows on desktop** | MFL's dropdown menu, MFL's nav bar and our tabs. Phones are now workable; desktop is still cluttered. |
-| **Deploying means pasting into five places** | Header (fuadUtil) plus home page messages 3–6. The repo drifted for four seasons before PR #1. |
+| **Deploying means pasting into five places** | Header (fuadUtil) plus home page messages 3–6. The repo goes out of date whenever a paste is missed. |
 | **A yearly code ritual** | `year`, `beforeDraft`, and the post-deadline franchise-player paste via the browser console |
-| **2012-era code underneath** | jQuery 1.8, Underscore 1.4, Modernizr 2.6 and Handlebars 1.0 RC from cdnjs. Eight data requests run one after another (0.75s; about 0.25s in parallel). No response is checked, which is how the injuries bug hid for years. |
+| **2012-era code underneath** | jQuery 1.8, Underscore 1.4, Modernizr 2.6 and Handlebars 1.0 RC from cdnjs. Eight data requests run one after another (0.75s; about 0.25s in parallel). No response is checked, so a failed request goes unnoticed. |
 
 ---
 
@@ -41,7 +42,7 @@ History lives in git and in PRs #1–#3.
 | MFL's data API is **same-origin only**. Exports send a fixed `Access-Control-Allow-Origin: https://www44.myfantasyleague.com`, and MFL's 2026 API terms forbid JavaScript access from other domains. | League data can only be read by code running **inside an MFL page**. A site hosted elsewhere can't read it in the browser. |
 | MFL's rate limits are per IP, and its terms say "calls from within league pages should not [be] affected". | In-page code is exempt. Servers and proxies are not. |
 | Loading `<script src>` or a stylesheet from another domain is unrestricted, and the league page sends **no Content-Security-Policy**. | Code can be *hosted* anywhere, as long as it *runs* inside the MFL page. |
-| **fuadUtil sits in the shared header of every league page.** | One paste reaches every page. CSS there outranks the skin (PR #3 proved it), so a league-wide look is possible without a stock skin. |
+| **fuadUtil sits in the shared header of every league page.** | One paste reaches every page. CSS there outranks the skin (the phone nav bar works this way), so a league-wide look is possible without a stock skin. |
 | Images & Other URLs Setup has a **League CSS field (file or URL)** and a "Load jQuery" switch. | MFL supports custom league CSS. Restyling is within the rules. |
 | Our tabs are configurable (up to 10; "Main" is fixed). MFL's nav bar and dropdown menu are not. | We can shape our tabs, never MFL's rows. |
 | MFL wraps home page modules in a box that scrolls sideways on phones. | Wide MFL modules like Power Rankings are usable on phones as they are. |
@@ -89,7 +90,7 @@ Invisible to members, but it makes everything else cheaper and less fragile.
 - Derive `year` and the league ID from the page URL, so the season rollover is no longer a
   code edit.
 - Replace the post-deadline console ritual. How depends on delivery: a committed JSON file
-  under Tier 2, or a generated paste under Tier 1.
+  under Option 2, or a generated paste under Option 1.
 
 **Size:** about 2 days, less if done alongside A.
 
@@ -115,14 +116,13 @@ the visual language.
 
 ## 4. How it gets to the site
 
-These are the remaining tiers, renumbered from August. Tier 0 (settings, skin and apps) is
-done and dropped from the list.
+Six delivery options, from least to most change.
 
-### Tier 1 — Keep pasting
+### Option 1 — Keep pasting
 
-Same as today: edit files in the repo, paste them into the header and messages 3–6.
+Edit files in the repo, then paste them into the header and messages 3–6.
 
-- **For:** nothing new to set up or learn. Every change so far has shipped this way.
+- **For:** nothing new to set up or learn. It's how the site is deployed today.
 - **Against:**
   - Five paste targets per release, and the repo drifts whenever one is missed.
   - MFL's textareas are awkward for 400-line files.
@@ -130,7 +130,7 @@ Same as today: edit files in the repo, paste them into the header and messages 3
 - **Fits:** fine for small changes. It gets painful once A–C put far more code in those
   textareas.
 
-### Tier 2 — Load from GitHub Pages ← RECOMMENDED
+### Option 2 — Load from GitHub Pages ← RECOMMENDED
 
 fuadUtil shrinks to two tags, and messages 3–6 shrink to empty mount points. Everything
 else is served from `bborchardt.github.io/fuadmflsite/` and goes live on `git push`.
@@ -149,11 +149,11 @@ else is served from `bborchardt.github.io/fuadmflsite/` and goes live on `git pu
   - The post-deadline snapshot becomes a small JSON file in the repo instead of console output.
   - **No build step required.** Pages can serve plain files from the repo. Add a bundler
     later only if the code grows to need one.
-  - We can keep testing as we have been: serve the live page with the new files swapped in
-    before pushing.
+  - Changes can be tested on real league data first, by serving the live page with the new
+    files swapped in.
 - **Against:**
   - Custom content depends on GitHub Pages being up. If it's down, MFL's own pages still work
-    but our tabs are empty. Keeping the last paste-able version in the repo covers that (Tier 1
+    but our tabs are empty. Keeping a paste-able build in the repo covers that (Option 1
     as the fallback).
   - Pages caches files for up to 10 minutes, so a push takes a few minutes to reach members.
   - If MFL ever adds a Content-Security-Policy, external scripts could be blocked. There is
@@ -161,7 +161,7 @@ else is served from `bborchardt.github.io/fuadmflsite/` and goes live on `git pu
 - **Setup:** about half a day. Enable Pages, move the current code over unchanged, paste the
   two-tag header, and verify. Members see no difference until we ship A–C.
 
-### Tier 3 — A separate companion site, data baked at build time
+### Option 3 — A separate companion site, data baked at build time
 
 A static site of its own, fed by a scheduled job that downloads MFL exports.
 
@@ -170,14 +170,14 @@ A static site of its own, fed by a scheduled job that downloads MFL exports.
   last scheduled run, and the job is subject to MFL's per-IP rate limits.
 - **Verdict:** not recommended for anything members use week to week.
 
-### Tier 4 — Companion site plus a proxy
+### Option 4 — Companion site plus a proxy
 
-Tier 3 with a server relaying MFL calls live.
+Option 3 with a server relaying MFL calls live.
 
 - **Verdict:** rejected. It exists only to get around MFL's same-origin rule, which MFL's
   terms forbid in writing, and it funnels the whole league through one rate-limited IP.
 
-### Tier 5 — A small public site for league history
+### Option 5 — A small public site for league history
 
 Read-only and public: champions, records, bylaws, draft history. Nothing that needs to be
 live or logged in.
@@ -185,15 +185,14 @@ live or logged in.
 - **For:** a shareable "front porch" with no data constraints at all.
 - **Against:** a second destination, though a rarely visited one. One more thing to maintain.
 - **Verdict:** optional, and only after A–C. It could live on the same GitHub Pages site as
-  Tier 2.
+  Option 2.
 
-### Tier 6 — Leave MFL
+### Option 6 — Leave MFL
 
 League Tycoon models salary caps, extensions, rookie scales and franchise tags natively.
 
-- **Changed since August:** the fixed rookie salary table makes the league's rules simpler to
-  model elsewhere.
-- **Unchanged:** the custom cap-penalty formula, RFA handling and the franchise-tag
+- **For:** the league's fixed rookie salary table would be easy to model elsewhere.
+- **Against:** the custom cap-penalty formula, RFA handling and the franchise-tag
   calculation would all depend on another platform's feature set, and a 25-year dynasty
   would need every owner to agree to move.
 - **Verdict:** worth knowing about, not recommended. MFL's openness is what makes A–C possible.
@@ -215,13 +214,13 @@ League Tycoon models salary caps, extensions, rookie scales and franchise tags n
 
 ## 6. Recommended sequence
 
-1. **Set up Tier 2** (½ day). Move the current code to GitHub Pages unchanged and paste the
+1. **Set up Option 2** (½ day). Move the current code to GitHub Pages unchanged and paste the
    two-tag header. Nothing changes for members.
 2. **Build A, "My Team" Contracts** (2–3 days), with B's cleanup done in the files A touches.
 3. **Finish B** (about 1 day): the remaining library removal, parallel loading and response
    checks.
 4. **Design and ship C, the league-wide look** (2–4 days), using A's visual language.
-5. **Replace the post-deadline ritual** with a committed snapshot. If Tier 2 isn't live by
+5. **Replace the post-deadline ritual** with a committed snapshot. If Option 2 isn't live by
    this season's deadline, do the paste the old way once more.
 
 Each step ships on its own and can be rolled back with `git revert`.

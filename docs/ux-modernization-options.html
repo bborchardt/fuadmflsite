@@ -537,7 +537,7 @@
   <header class="mast">
     <p class="eyebrow"><span>League 48571</span><span>·</span><span>Contract Dynasty</span><span>·</span><span>Modernization options</span></p>
     <h1>The FUAD Site Rebuild</h1>
-    <p class="standfirst">What's left to fix on the league site, the three pieces of work that fix it, and the best way to deliver them. Rewritten in Week 4 around everything learned since August.</p>
+    <p class="standfirst">An analysis of the league site as it is today: what's wrong with it, what MFL allows, three pieces of work that fix it, and how to deliver them.</p>
     <div class="mast-foot">
       <span><b>Summary</b> <a href="https://claude.ai/artifact/SHszcQr1L8zGEBcqhJvXjn">Week 4 Site Check</a></span>
       <span><b>Repo</b> bborchardt/fuadmflsite</span>
@@ -547,16 +547,13 @@
 
   <!-- ============ STATE ============ -->
   <section id="where">
-    <span class="sec-mark">Where things stand</span>
-    <h2>The bugs are fixed. The experience isn't.</h2>
-    <ul class="now-working" aria-label="Working today">
-      <li>Injured-starter warning</li>
-      <li>Fixed rookie salary table</li>
-      <li>Contracts layout on phones</li>
-      <li>Nav bar on phones, every page</li>
-      <li>Live Scoring tab removed</li>
-      <li>Repo matches production</li>
-    </ul>
+    <span class="sec-mark">The site today</span>
+    <h2>It works. The experience is the problem.</h2>
+    <div class="col">
+      <p class="lede">MFL's BlueMesh skin, with three navigation rows: MFL's dropdown menu, MFL's nav bar, and seven custom tabs (Main, Standings, Transactions, Contracts, Calendar, Commish, Links). On phones the dropdown menu and the custom tabs each collapse to a "+" bar, and MFL's nav bar shows as a swipeable row on every league page.</p>
+      <p>The league's own features are custom code: a rules-violation check on Main, plus the Contracts, Commish and Links tabs. That code is pasted into the shared page header (fuadUtil) and home page messages 3–6, and the repo matches what's deployed.</p>
+      <h3>What's wrong with it</h3>
+    </div>
     <ul class="findings">
       <li>
         <span class="f-tag">Contracts</span>
@@ -571,12 +568,12 @@
       <li>
         <span class="f-tag">Navigation</span>
         <div class="f-body"><b>Three rows on desktop.</b>
-          <span class="f-sub">MFL's dropdown menu, MFL's nav bar and our tabs. Phones have been workable since PR #3; desktop is still cluttered, and MFL's two rows can't be removed.</span></div>
+          <span class="f-sub">MFL's dropdown menu, MFL's nav bar and our tabs. On phones the nav bar is one swipeable row; on desktop all three rows show, and MFL's two can't be removed.</span></div>
       </li>
       <li>
         <span class="f-tag">Deploy</span>
         <div class="f-body"><b>Every release is pasted into five places.</b>
-          <span class="f-sub">The header (fuadUtil) plus home page messages 3–6. The repo drifted for four seasons before PR #1.</span></div>
+          <span class="f-sub">The header (fuadUtil) plus home page messages 3–6. The repo goes out of date whenever a paste is missed.</span></div>
       </li>
       <li>
         <span class="f-tag">Ritual</span>
@@ -586,7 +583,7 @@
       <li>
         <span class="f-tag">Engine</span>
         <div class="f-body"><b>2012-era code underneath.</b>
-          <span class="f-sub">jQuery 1.8, Underscore 1.4, Modernizr 2.6 and Handlebars 1.0 RC. Eight data requests run one after another (0.75&thinsp;s; about 0.25&thinsp;s in parallel), and no response is checked. That's how the injuries bug hid for years.</span></div>
+          <span class="f-sub">jQuery 1.8, Underscore 1.4, Modernizr 2.6 and Handlebars 1.0 RC. Eight data requests run one after another (0.75&thinsp;s; about 0.25&thinsp;s in parallel), and no response is checked, so a failed request goes unnoticed.</span></div>
       </li>
     </ul>
   </section>
@@ -613,7 +610,7 @@
       </div>
     </div>
     <ul class="findings">
-      <li><span class="f-tag">League-wide hook</span><div class="f-body"><b>fuadUtil sits in the shared header of every league page.</b><span class="f-sub">One paste reaches every page, and CSS there outranks the skin, as PR #3 proved. So a league-wide look doesn't need a stock skin.</span></div></li>
+      <li><span class="f-tag">League-wide hook</span><div class="f-body"><b>fuadUtil sits in the shared header of every league page.</b><span class="f-sub">One paste reaches every page, and CSS there outranks the skin, as the phone nav bar shows. So a league-wide look doesn't need a stock skin.</span></div></li>
       <li><span class="f-tag">Custom CSS</span><div class="f-body"><b>MFL supports league CSS by file or URL.</b><span class="f-sub">Images &amp; Other URLs Setup has a League CSS field. Restyling the site is within MFL's rules.</span></div></li>
       <li><span class="f-tag">Navigation</span><div class="f-body"><b>Our tabs are configurable; MFL's rows are not.</b><span class="f-sub">Up to 10 tabs, renameable, with "Main" fixed. The nav bar's links and the dropdown menu can't be changed.</span></div></li>
       <li><span class="f-tag">Phones</span><div class="f-body"><b>Wide MFL modules already scroll sideways.</b><span class="f-sub">MFL wraps home page modules in a scrolling box, so tables like Power Rankings are usable on phones as they are.</span></div></li>
@@ -663,7 +660,7 @@
           <li>Fetch the eight data requests in parallel and render as data arrives.</li>
           <li>Check every response, and show a message on the page when something fails.</li>
           <li>Derive <code>year</code> and the league ID from the page URL, so the season rollover is no longer a code edit.</li>
-          <li>Replace the post-deadline console ritual: a committed JSON file under Tier 2, or a generated paste under Tier 1.</li>
+          <li>Replace the post-deadline console ritual: a committed JSON file under Option 2, or a generated paste under Option 1.</li>
         </ul></div>
       </div>
 
@@ -687,18 +684,18 @@
   <section id="delivery">
     <span class="sec-mark">How it gets to the site</span>
     <h2>Six ways to deliver it, two worth doing</h2>
-    <div class="col"><p class="lede">The remaining tiers. Tier 0 (settings, skin and apps) is done and dropped from the list.</p></div>
+    <div class="col"><p class="lede">From least to most change.</p></div>
     <div class="opts">
 
-      <div class="opt" id="tier-1">
+      <div class="opt" id="option-1">
         <div class="opt-head">
-          <span class="tier">TIER 1 · no setup</span>
+          <span class="tier">OPTION 1 · no setup</span>
           <h3 class="opt-title">Keep pasting</h3>
-          <p class="opt-what">As today: edit files in the repo, paste them into the header and messages 3–6.</p>
+          <p class="opt-what">Edit files in the repo, then paste them into the header and messages 3–6.</p>
         </div>
         <div class="pc">
           <div class="pro"><h4>For</h4><ul>
-            <li>Nothing new to set up or learn. Every change so far has shipped this way.</li>
+            <li>Nothing new to set up or learn. It's how the site is deployed today.</li>
           </ul></div>
           <div class="con"><h4>Against</h4><ul>
             <li>Five paste targets per release, and the repo drifts whenever one is missed.</li>
@@ -706,12 +703,12 @@
             <li>The post-deadline ritual stays a console copy-and-paste.</li>
           </ul></div>
         </div>
-        <p class="opt-foot"><b>Fits</b> Small changes. It gets painful once A–C put far more code in those textareas. It's also Tier 2's fallback.</p>
+        <p class="opt-foot"><b>Fits</b> Small changes. It gets painful once A–C put far more code in those textareas. It's also Option 2's fallback.</p>
       </div>
 
-      <div class="opt pick" id="tier-2">
+      <div class="opt pick" id="option-2">
         <div class="opt-head">
-          <span class="tier">TIER 2 · ½ day setup</span>
+          <span class="tier">OPTION 2 · ½ day setup</span>
           <h3 class="opt-title">Load from GitHub Pages</h3>
           <p class="opt-what">fuadUtil shrinks to two tags and messages 3–6 to empty mount points. Everything else is served from <code>bborchardt.github.io/fuadmflsite/</code> and goes live on <code>git push</code>.</p>
         </div>
@@ -725,7 +722,7 @@
             <li>The code still <b>runs inside the MFL page</b>: data access, logged-in identity, commissioner views and the rate-limit exemption all work as today.</li>
             <li>The post-deadline snapshot becomes a small JSON file in the repo.</li>
             <li><b>No build step required.</b> Pages serves plain files. Add a bundler later only if the code needs one.</li>
-            <li>Same testing as now: serve the live page with new files swapped in before pushing.</li>
+            <li>Changes can be tested on real league data first, by serving the live page with the new files swapped in.</li>
           </ul></div>
           <div class="con"><h4>Against</h4><ul>
             <li>Custom content depends on GitHub Pages being up. If it's down, MFL's pages still work but our tabs are empty. A paste-able fallback build covers it.</li>
@@ -736,36 +733,36 @@
         <p class="opt-foot"><b>Recommended</b> Half a day to move today's code over unchanged. Members see no difference until A–C ship.</p>
       </div>
 
-      <div class="opt out" id="tier-3">
+      <div class="opt out" id="option-3">
         <div class="opt-head">
-          <span class="tier">TIER 3 · not recommended</span>
+          <span class="tier">OPTION 3 · not recommended</span>
           <h3 class="opt-title">A separate companion site, data baked at build time</h3>
           <p class="opt-what">A static site of its own, fed by a scheduled job that downloads MFL exports.</p>
         </div>
         <p class="opt-foot"><b>Fails requirements</b> It's a second destination, a new navigation layer, and it can't tell who's viewing, so there's no "My Team". Its data is only as fresh as the last run, and the job is subject to MFL's per-IP rate limits.</p>
       </div>
 
-      <div class="opt out" id="tier-4">
+      <div class="opt out" id="option-4">
         <div class="opt-head">
-          <span class="tier">TIER 4 · rejected</span>
+          <span class="tier">OPTION 4 · rejected</span>
           <h3 class="opt-title">Companion site plus a proxy</h3>
-          <p class="opt-what">Tier 3 with a server relaying MFL calls live.</p>
+          <p class="opt-what">Option 3 with a server relaying MFL calls live.</p>
         </div>
         <p class="opt-foot"><b>Against MFL's terms</b> It exists only to get around the same-origin rule, which MFL forbids in writing, and it funnels the whole league through one rate-limited IP.</p>
       </div>
 
-      <div class="opt" id="tier-5">
+      <div class="opt" id="option-5">
         <div class="opt-head">
-          <span class="tier">TIER 5 · optional, later</span>
+          <span class="tier">OPTION 5 · optional, later</span>
           <h3 class="opt-title">A small public site for league history</h3>
           <p class="opt-what">Read-only and public: champions, records, bylaws, draft history. Nothing live, nothing that needs a login.</p>
         </div>
-        <p class="opt-foot"><b>Verdict</b> A shareable "front porch" with no data constraints, but a second destination and one more thing to maintain. Only after A–C. It could share Tier 2's GitHub Pages site.</p>
+        <p class="opt-foot"><b>Verdict</b> A shareable "front porch" with no data constraints, but a second destination and one more thing to maintain. Only after A–C. It could share Option 2's GitHub Pages site.</p>
       </div>
 
-      <div class="opt out" id="tier-6">
+      <div class="opt out" id="option-6">
         <div class="opt-head">
-          <span class="tier">TIER 6 · not recommended</span>
+          <span class="tier">OPTION 6 · not recommended</span>
           <h3 class="opt-title">Leave MFL</h3>
           <p class="opt-what">League Tycoon models salary caps, extensions, rookie scales and franchise tags natively.</p>
         </div>
@@ -800,11 +797,11 @@
     <div class="call">
       <h3>Each step ships on its own and rolls back with <code>git revert</code></h3>
       <ol>
-        <li><b>Set up Tier 2</b> (½ day). Move today's code to GitHub Pages unchanged and paste the two-tag header. Nothing changes for members.</li>
+        <li><b>Set up Option 2</b> (½ day). Move today's code to GitHub Pages unchanged and paste the two-tag header. Nothing changes for members.</li>
         <li><b>Build A, "My Team" Contracts</b> (2–3 days), doing B's cleanup in the files it touches.</li>
         <li><b>Finish B</b> (about 1 day): the remaining library removal, parallel loading and response checks.</li>
         <li><b>Design and ship C, the league-wide look</b> (2–4 days), using A's visual language.</li>
-        <li><b>Replace the post-deadline ritual</b> with a committed snapshot. If Tier 2 isn't live by this season's deadline, do the paste the old way once more.</li>
+        <li><b>Replace the post-deadline ritual</b> with a committed snapshot. If Option 2 isn't live by this season's deadline, do the paste the old way once more.</li>
       </ol>
     </div>
   </section>
@@ -845,6 +842,6 @@
     </div>
   </section>
 
-  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 3 October 2026 · rewritten after Tier 0</footer>
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 3 October 2026</footer>
 
 </div>
