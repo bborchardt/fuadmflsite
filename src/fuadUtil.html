@@ -1,3 +1,16 @@
+<style>
+    /* This header is on every league page, so these styles are league-wide.
+       Selectors start with "body" so they outrank the skin's own rules. */
+
+    /* Keep MFL's nav bar (Home, Rosters, Submit Lineup...) on phones. The skin hides it
+       below 54.25em; show it instead as one row that swipes sideways, with full-size tap targets. */
+    @media (max-width: 54.25em) {
+        body #hsubmenu { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        body #hsubmenu ul { display: flex; float: none; left: 0; width: max-content; }
+        body #hsubmenu ul li { display: block; flex: none; float: none; right: 0; width: auto; white-space: nowrap; }
+        body #hsubmenu ul li a { padding: 15px 14px; }
+    }
+</style>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 <script type="text/javascript"
         src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
@@ -11,78 +24,75 @@
     var fuad = {};
     fuad.util = (function (global, document, $) {
         // update these after upgrading site
-        var year = "2022";
+        var year = "2026";
         var leagueId = "48571";
-        var beforeDraft = true;
+        var beforeDraft = false;
 
-        // contains all positional settings needed for rookie draft and franchise player calculations
+        // contains all positional settings needed for rookie draft and franchise player calculations.
+        // rookieBaselineSalary is the league's fixed salary for the first rookie pick at each position;
+        // each later pick is 80% of the one before it.
         var settings = {
             QB: {
                 sortOrder: 1,
-                rookieBaselineRank: 15
+                rookieBaselineSalary: 6
             },
             RB: {
                 sortOrder: 2,
-                rookieBaselineRank: 20
+                rookieBaselineSalary: 10
             },
             WR: {
                 sortOrder: 3,
-                rookieBaselineRank: 35
+                rookieBaselineSalary: 10
             },
             TE: {
                 sortOrder: 4,
-                rookieBaselineRank: 15
+                rookieBaselineSalary: 4
             },
             PK: {
                 sortOrder: 5,
-                rookieBaselineRank: 15
+                rookieBaselineSalary: 1
             }
         };
 
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
-        var beforeTradeDeadline = false;
+        var beforeTradeDeadline = true;
     if (!beforeTradeDeadline) {
-        settings.QB.rookieBaselineSalary = 1;
         settings.QB.franchisePlayers = [
-            {fullName:"Aaron Rodgers", salary:50},
-            {fullName:"Dak Prescott", salary:38},
-            {fullName:"Russell Wilson", salary:30},
-            {fullName:"Ryan Tannehill", salary:25},
-            {fullName:"Tom Brady", salary:23}
+            {fullName:"Lamar Jackson", salary:100},
+            {fullName:"Baker Mayfield", salary:70},
+            {fullName:"Josh Allen", salary:55},
+            {fullName:"Justin Herbert", salary:55},
+            {fullName:"Jordan Love", salary:52}
         ];
-        settings.RB.rookieBaselineSalary = 4;
         settings.RB.franchisePlayers = [
-            {fullName:"Jonathan Taylor", salary:50},
-            {fullName:"Aaron Jones", salary:43},
-            {fullName:"Ezekiel Elliott", salary:42},
-            {fullName:"Derrick Henry", salary:40},
-            {fullName:"David Johnson", salary:40}
+            {fullName:"Jahmyr Gibbs", salary:64},
+            {fullName:"Saquon Barkley", salary:64},
+            {fullName:"Derrick Henry", salary:60},
+            {fullName:"Christian McCaffrey", salary:57},
+            {fullName:"Kyren Williams", salary:56}
         ];
-        settings.WR.rookieBaselineSalary = 1;
         settings.WR.franchisePlayers = [
-            {fullName:"Davante Adams", salary:120},
-            {fullName:"Stefon Diggs", salary:100},
-            {fullName:"Tyreek Hill", salary:92},
-            {fullName:"DeAndre Hopkins", salary:80},
-            {fullName:"Keenan Allen", salary:77}
+            {fullName:"Justin Jefferson", salary:80},
+            {fullName:"Nico Collins", salary:65},
+            {fullName:"CeeDee Lamb", salary:61},
+            {fullName:"Tee Higgins", salary:51},
+            {fullName:"DK Metcalf", salary:50}
         ];
-        settings.TE.rookieBaselineSalary = 1;
         settings.TE.franchisePlayers = [
-            {fullName:"Darren Waller", salary:42},
-            {fullName:"Travis Kelce", salary:23},
-            {fullName:"Logan Thomas", salary:18},
-            {fullName:"Jonnu Smith", salary:11},
-            {fullName:"Rob Gronkowski", salary:10}
-            ];
-            settings.PK.rookieBaselineSalary = 1;
-            settings.PK.franchisePlayers = [
-            {fullName:"Daniel Carlson", salary:2},
-            {fullName:"Ryan Succop", salary:2},
-            {fullName:"Tyler Bass", salary:2},
-            {fullName:"Justin Tucker", salary:2},
-            {fullName:"Matt Prater", salary:1}
-            ];
-        }
+            {fullName:"George Kittle", salary:42},
+            {fullName:"T.J. Hockenson", salary:36},
+            {fullName:"Travis Kelce", salary:29},
+            {fullName:"Jonnu Smith", salary:20},
+            {fullName:"Mark Andrews", salary:15}
+        ];
+        settings.PK.franchisePlayers = [
+            {fullName:"Daniel Carlson", salary:5},
+            {fullName:"Brandon Aubrey", salary:3},
+            {fullName:"Evan McPherson", salary:2},
+            {fullName:"Chris Boswell", salary:2},
+            {fullName:"Jason Sanders", salary:1}
+        ];
+    }
         // END SECTION TO UPDATE AFTER TRADE DEADLINE
 
         var currentUrl = document.location.href;
@@ -161,7 +171,8 @@
             salaryAdjustmentsDataUrl: baseUrl + "export?TYPE=salaryAdjustments&L=" + leagueId + "&W=",
             rostersDataUrl: baseUrl + "export?TYPE=rosters&L=" + leagueId + "&W=" + week,
             // no week for injuries since we get dynamically off weekly results
-            injuriesDataUrl: baseUrl + "export?TYPE=injuries&L=" + leagueId + "&W=",
+            // injuries aren't league data, so MFL only serves them from the api host, without L=
+            injuriesDataUrl: "https://api.myfantasyleague.com/" + year + "/export?TYPE=injuries&W=",
             weeklyResultsDataUrl: baseUrl + "export?TYPE=weeklyResults&L=" + leagueId + "&W=" + week,
             transactionsDataUrl: baseUrl + "export?TYPE=transactions&L=" + leagueId + "&W=" + week,
             freeAgentDataUrl: baseUrl + "export?TYPE=freeAgents&L=" + leagueId + "&W=" + week,

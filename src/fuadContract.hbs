@@ -1,3 +1,11 @@
+<style>
+    /* MFL's responsive skin only stacks its own columns, so stack ours on phones too,
+       sidebar (calculator and salary tables) first. 62.5em is MFL's own breakpoint. */
+    @media (max-width: 62.5em) {
+        tr:has(> td > #contractscolumn1) { display: flex; flex-direction: column-reverse; }
+        tr:has(> td > #contractscolumn1) > td { width: 100% !important; box-sizing: border-box; }
+    }
+</style>
 <table align="center" cellPadding="0" cellSpacing="0" id="homepagecolumns">
     <tr>
         <td valign="top" class="homepagecolumn" width="65%">
