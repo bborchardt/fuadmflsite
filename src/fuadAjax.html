@@ -356,7 +356,8 @@
         var loadInjuriesData = function (xml) {
             $.each(xml.getElementsByTagName("injury"), function (index, injuryNode) {
                 var status = injuryNode.getAttribute("status");
-                if (status === "IR" || status === "Out" || status === "Suspended") {
+                // IR also comes as IR-R, IR-PUP and IR-NFI
+                if ((status && status.indexOf("IR") === 0) || status === "Out" || status === "Suspended") {
                     var player = data.players[getHashId(injuryNode)];
                     if(player) {
                         player.injured = true;

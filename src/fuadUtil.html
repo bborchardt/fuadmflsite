@@ -161,7 +161,8 @@
             salaryAdjustmentsDataUrl: baseUrl + "export?TYPE=salaryAdjustments&L=" + leagueId + "&W=",
             rostersDataUrl: baseUrl + "export?TYPE=rosters&L=" + leagueId + "&W=" + week,
             // no week for injuries since we get dynamically off weekly results
-            injuriesDataUrl: baseUrl + "export?TYPE=injuries&L=" + leagueId + "&W=",
+            // injuries aren't league data, so MFL only serves them from the api host, without L=
+            injuriesDataUrl: "https://api.myfantasyleague.com/" + year + "/export?TYPE=injuries&W=",
             weeklyResultsDataUrl: baseUrl + "export?TYPE=weeklyResults&L=" + leagueId + "&W=" + week,
             transactionsDataUrl: baseUrl + "export?TYPE=transactions&L=" + leagueId + "&W=" + week,
             freeAgentDataUrl: baseUrl + "export?TYPE=freeAgents&L=" + leagueId + "&W=" + week,
