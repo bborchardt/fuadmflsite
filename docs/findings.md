@@ -28,7 +28,7 @@ Each line is the whole point. Follow a link only if you want the reasoning.
   - last season's snapshot until the week 1 kickoff
   - a live projection until the week 12 trade deadline
   - this season's snapshot after it
-- **A daily GitHub job** logs in as commissioner. It takes the franchise snapshot, keeps a chore log on its own branch, and keeps itself alive.
+- **A daily GitHub job** logs in as commissioner. It takes the franchise snapshot and keeps a chore log, both on its own `league-data` branch since master is protected, and keeps itself alive.
 - **League logic is written once**, shared by the page and the job.
 
 ## What ships when

@@ -83,7 +83,8 @@ Each phase is labeled on the page. The commissioner button stays as a manual bac
 - Runs early each morning (Central time) and logs in as commissioner, with the password in
   GitHub's encrypted secrets.
 - **v1:** takes the franchise snapshot after the deadline and publishes it.
-- **Chore log** on its own `chore-log` branch: an entry when something happens, plus a monthly
+- **Writes only to its own `league-data` branch** (master is protected): franchise snapshots,
+  published with the site, and a chore log with an entry when something happens, plus a monthly
   heartbeat.
 - **Keepalive:** the job re-enables itself through GitHub's API on every run, so a quiet
   offseason can't switch it off.
