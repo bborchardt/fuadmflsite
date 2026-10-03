@@ -3,6 +3,10 @@
 Read `README.md` (what the repo is) and `docs/roadmap.md` (what's live, what's next, decisions,
 league rules, MFL facts) before starting.
 
+This is the **analysis branch** (`claude/fantasy-football-tier0-setup`): the roadmap, these notes
+and the verification and skin preview tools. It is never merged. Code work branches from master;
+update this branch's roadmap when decisions change.
+
 ## How changes ship
 
 - master is protected: every change goes through a PR. The daily job writes only to `league-data`.
@@ -14,7 +18,8 @@ league rules, MFL facts) before starting.
 ## Testing
 
 - `npm test`: unit tests for `site/vN/lib/` and the UI logic (Node 24+).
-- `python3 tools/verify/verify.py compare --local vN`: renders the live league page as published and
+- `python3 tools/verify/verify.py compare --local vN` (on this branch; run it against a master
+  checkout by copying it, or from a worktree): renders the live league page as published and
   with the working copy's version swapped in, then compares every area. Use `phases` to check the
   franchise salary phases with a faked clock. It needs the `playwright` Python package and Google
   Chrome. Prove a check can see a change before trusting a "no differences".

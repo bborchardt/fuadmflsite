@@ -34,13 +34,11 @@ decided. A and C change what members see, and the commissioner wants member feed
 
 ### A. "My Team" Contracts
 
-- Open with the viewer's franchise:
+- Open with the viewer's franchise, which MFL's `franchise_id` identifies:
   - cap space against $300
   - roster count against 23–30
   - expiring contracts
   - what cutting each player costs
-
-  MFL's `franchise_id` identifies the viewer.
 - Cards on phones, a table on desktop, from the same data.
 - Contract state as badges (*RFA*, *Expiring*, *Signed thru 2028*) instead of "Years: 0".
 - The full league roster one tap away. Reference tables (rookie salaries, franchise salaries,
