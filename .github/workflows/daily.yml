@@ -1,0 +1,85 @@
+# Daily league chores. See jobs/daily.mjs for what it does.
+#
+# GitHub turns off scheduled workflows after 60 days without repository activity, so the
+# last step re-enables this workflow on every run. The chore log lives on its own branch
+# (chore-log) so it never clutters master.
+name: Daily chores
+
+on:
+  schedule:
+    - cron: "0 11 * * *" # 11:00 UTC, 5-6 am Central
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: daily-chores
+  cancel-in-progress: false
+
+jobs:
+  chores:
+    runs-on: ubuntu-latest
+    outputs:
+      snapshot: ${{ steps.run.outputs.snapshot }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check out the chore log
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch --depth=1 origin chore-log; then
+            git worktree add -B chore-log chore-log FETCH_HEAD
+          else
+            git worktree add --orphan -b chore-log chore-log
+          fi
+
+      - name: Run chores
+        id: run
+        env:
+          MFL_USERNAME: ${{ secrets.MFL_USERNAME }}
+          MFL_PASSWORD: ${{ secrets.MFL_PASSWORD }}
+          MFL_USER_AGENT: ${{ vars.MFL_USER_AGENT }}
+          RULES_VERSION: ${{ vars.RULES_VERSION || 'v1' }}
+          CHORE_LOG_FILE: chore-log/chore-log.md
+        run: node jobs/daily.mjs
+
+      - name: Commit the franchise snapshot
+        if: steps.run.outputs.snapshot == 'written'
+        run: |
+          git add site/data
+          git commit -m "Add the franchise salary snapshot taken after the trade deadline"
+          git push origin HEAD:master
+
+      - name: Commit the chore log
+        if: always()
+        working-directory: chore-log
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add chore-log.md
+            git commit -m "Chore log: $(date -u +%Y-%m-%d)"
+            git push origin chore-log
+          fi
+
+      - name: Keep this schedule alive
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/daily.yml/enable"
+
+  publish:
+    needs: chores
+    if: needs.chores.outputs.snapshot == 'written'
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
