@@ -1,37 +1,43 @@
 // Daily league chores, run by .github/workflows/daily.yml (Node 20+).
 //
-// v1 does one chore: after the trade deadline, snapshot this season's franchise
-// salaries into site/data/franchise-<season>.json. It also keeps the chore log.
+// One chore so far: after the trade deadline, snapshot the season's franchise salaries.
+// Everything the job writes goes to a checkout of the league-data branch (DATA_DIR):
+// snapshots in data/, and chore-log.md.
 //
 // Environment:
-//   MFL_USERNAME, MFL_PASSWORD  commissioner login (GitHub secrets); without them the job reads public data only
+//   DATA_DIR                    checkout of the league-data branch (required)
+//   MFL_USERNAME, MFL_PASSWORD  commissioner login; without them the job reads public data only
 //   MFL_LEAGUE_ID               default 48571
 //   MFL_HOST                    league host, default https://www44.myfantasyleague.com
 //   MFL_USER_AGENT              optional; set it if the client is registered with MFL
-//   SEASON                      default: the current year
+//   SEASON                      default: the NFL season that started most recently
 //   RULES_VERSION               which site version's league logic to use, default v1
-//   CHORE_LOG_FILE              chore log to append to (the chore-log branch's checkout)
-//   GITHUB_OUTPUT               set by GitHub Actions; receives snapshot=written|none
+//   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false
 //   NOW                         optional ISO time, for testing
 
 import {existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
-import {dirname, join} from "node:path";
+import {dirname, join, resolve} from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = process.env.RULES_VERSION || "v1";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
-const {API_BASE, exportUrl, fetchExport, firstKickoff} = await lib("mfl.js");
+const {API_BASE, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
-const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
+const {latestSeason, makeSnapshot, snapshotFileName} = await lib("franchise.js");
 
+if (!process.env.DATA_DIR) {
+    throw new Error("DATA_DIR must point at a checkout of the league-data branch");
+}
+const dataDir = resolve(process.env.DATA_DIR);
 const leagueId = process.env.MFL_LEAGUE_ID || "48571";
 const host = process.env.MFL_HOST || "https://www44.myfantasyleague.com";
 const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
-const season = Number(process.env.SEASON || now.getUTCFullYear());
+const season = Number(process.env.SEASON || latestSeason(now));
 const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (github.com/bborchardt/fuadmflsite)";
 const headers = {"User-Agent": userAgent};
+const LATE_AFTER_DAYS = 7;
 const entries = [];
 
 function log(message) {
@@ -63,13 +69,12 @@ async function login() {
         body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
     });
     const body = await response.text();
-    const cookie = /cookie_name="([^"]+)"[^>]*cookie_value="([^"]+)"/.exec(body)
-        || /cookie_value="([^"]+)"[^>]*cookie_name="([^"]+)"/.exec(body);
-    if (!response.ok || !cookie) {
+    const name = (/cookie_name="([^"]+)"/.exec(body) || [])[1];
+    const value = (/cookie_value="([^"]+)"/.exec(body) || [])[1];
+    if (!response.ok || !name || !value) {
         const reason = (/<error>([^<]*)<\/error>/.exec(body) || [])[1] || `HTTP ${response.status}`;
         throw new Error(`MFL login failed: ${reason}`);
     }
-    const [name, value] = cookie[0].startsWith("cookie_name") ? [cookie[1], cookie[2]] : [cookie[2], cookie[1]];
     headers.Cookie = `${name}=${value}`;
     log("Logged in to MFL as commissioner.");
 }
@@ -77,16 +82,17 @@ async function login() {
 const fetchFrom = (base, type, params, section = type) =>
     fetchExport(exportUrl(base, season, type, params), section, {init: {headers}});
 
-/** After the deadline, write this season's franchise snapshot if it doesn't exist yet. */
+/** After the deadline, write the season's franchise snapshot if it doesn't exist yet. */
 async function franchiseSnapshot() {
-    const file = join(root, "site", "data", snapshotFileName(season));
+    const file = join(dataDir, "data", snapshotFileName(season));
     if (existsSync(file)) {
         log(`The ${season} franchise snapshot already exists.`);
         return false;
     }
-    const deadline = firstKickoff(await fetchFrom(API_BASE, "nflSchedule", {W: TRADE_DEADLINE_WEEK}));
+    const deadline = await weekKickoff(season, TRADE_DEADLINE_WEEK, {init: {headers}});
     if (!deadline) {
-        throw new Error(`MFL's ${season} schedule lists no week ${TRADE_DEADLINE_WEEK} games`);
+        log(`MFL hasn't published the ${season} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
+        return false;
     }
     if (now < deadline) {
         log(`The ${season} trade deadline is ${deadline.toISOString()}; nothing to snapshot yet.`);
@@ -99,20 +105,24 @@ async function franchiseSnapshot() {
     ]);
     const built = buildLeague({players: playersFromExport(players), league, rosters});
     const top = franchiseTopSalaries(built.rosteredPlayers);
-    const snapshot = makeSnapshot(season, top, {takenAt: now.toISOString(), source: "Daily job, after the trade deadline"});
+    const daysLate = Math.floor((now - deadline) / 86400000);
+    const late = daysLate >= LATE_AFTER_DAYS;
+    const source = late
+        ? `Daily job, ${daysLate} days after the trade deadline: rosters may have changed since, so check it`
+        : "Daily job, after the trade deadline";
+    const snapshot = makeSnapshot(season, top, {takenAt: now.toISOString(), source});
     mkdirSync(dirname(file), {recursive: true});
     writeFileSync(file, JSON.stringify(snapshot, null, 2) + "\n");
     const summary = Object.entries(top).map(([position, list]) => `${position} $${franchiseSalary(list)}`).join(", ");
-    choreLog(`Took the ${season} franchise salary snapshot (${summary}).`);
+    choreLog(late
+        ? `Took the ${season} franchise salary snapshot ${daysLate} days late (${summary}). Rosters may have changed since the deadline; check it.`
+        : `Took the ${season} franchise salary snapshot (${summary}).`);
     return true;
 }
 
 /** Append this run's entries to the chore log, or a monthly heartbeat if nothing happened. */
 function updateChoreLog() {
-    const file = process.env.CHORE_LOG_FILE;
-    if (!file) {
-        return;
-    }
+    const file = join(dataDir, "chore-log.md");
     const stamp = now.toISOString().slice(0, 16).replace("T", " ") + " UTC";
     let text = existsSync(file) ? readFileSync(file, "utf8") : "# Chore log\n\nWhat the daily job did, newest last.\n\n";
     if (entries.length) {
@@ -121,23 +131,23 @@ function updateChoreLog() {
         const last = [...text.matchAll(/^- (\d{4}-\d{2}-\d{2})/gm)].pop();
         const days = last ? (now - new Date(`${last[1]}T00:00:00Z`)) / 86400000 : Infinity;
         if (days < 30) {
-            return;
+            return false;
         }
         text += `- ${stamp}: Heartbeat. Nothing to do; the daily job is running.\n`;
     }
-    mkdirSync(dirname(file), {recursive: true});
     writeFileSync(file, text);
+    return true;
 }
 
+let snapshotWritten = false;
 try {
     await login();
-    const written = await franchiseSnapshot();
-    setOutput("snapshot", written ? "written" : "none");
+    snapshotWritten = await franchiseSnapshot();
 } catch (error) {
     choreLog(`Failed: ${error.message}`);
-    updateChoreLog();
-    setOutput("snapshot", "none");
     process.exitCode = 1;
-    throw error;
+} finally {
+    const logChanged = updateChoreLog();
+    setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
+    setOutput("snapshot", snapshotWritten ? "written" : "none");
 }
-updateChoreLog();

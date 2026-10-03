@@ -4,8 +4,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {capPenalty, netCapSpace, rookieSalary, franchiseTopSalaries, franchiseSalary, positionOrder} from "../site/v1/lib/rules.js";
-import {asArray, displayName, firstKickoff} from "../site/v1/lib/mfl.js";
-import {franchisePhase, makeSnapshot, readSnapshot} from "../site/v1/lib/franchise.js";
+import {asArray, displayName, firstKickoff, weekKickoff} from "../site/v1/lib/mfl.js";
+import {franchisePhase, latestSeason, makeSnapshot, readSnapshot} from "../site/v1/lib/franchise.js";
 import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";
 
 test("cap penalty is 40% of salary per year, at least $1 and at least $1 a year", () => {
@@ -61,7 +61,24 @@ test("franchise phase: previous before week 1, live until the deadline, final af
     assert.equal(franchisePhase(new Date("2026-08-01T00:00:00Z"), start, deadline), "previous");
     assert.equal(franchisePhase(new Date("2026-10-03T00:00:00Z"), start, deadline), "live");
     assert.equal(franchisePhase(deadline, start, deadline), "final");
-    assert.equal(franchisePhase(new Date("2026-10-03T00:00:00Z"), null, null), "live");
+    // MFL hasn't published the schedule (offseason after renewal): the season hasn't started
+    assert.equal(franchisePhase(new Date("2027-03-01T00:00:00Z"), null, null), "previous");
+});
+
+test("the daily job's season is the one that started most recently", () => {
+    assert.equal(latestSeason(new Date("2026-09-01T00:00:00Z")), 2026);
+    assert.equal(latestSeason(new Date("2026-11-26T11:00:00Z")), 2026);
+    assert.equal(latestSeason(new Date("2027-01-02T00:00:00Z")), 2026);
+    assert.equal(latestSeason(new Date("2027-08-31T23:59:00Z")), 2026);
+});
+
+test("an unpublished schedule reads as no kickoff, other failures still throw", async () => {
+    const respond = (status, body) => async () => new Response(JSON.stringify(body), {status});
+    assert.equal(await weekKickoff(2027, 1, {fetchImpl: respond(404, {})}), null);
+    assert.equal(await weekKickoff(2026, 25, {fetchImpl: respond(200, {nflSchedule: {week: "25"}})}), null);
+    const kickoff = await weekKickoff(2026, 12, {fetchImpl: respond(200, {nflSchedule: {matchup: [{kickoff: "1795654800"}]}})});
+    assert.equal(kickoff.getTime(), 1795654800 * 1000);
+    await assert.rejects(weekKickoff(2026, 12, {fetchImpl: respond(500, {})}), /HTTP 500/);
 });
 
 test("snapshots round-trip and reject the wrong season", () => {

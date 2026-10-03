@@ -1,6 +1,9 @@
-# Publishes site/ to GitHub Pages: https://bborchardt.github.io/fuadmflsite/
+# Publishes the site to GitHub Pages: https://bborchardt.github.io/fuadmflsite/
+# Code comes from master's site/ folder; franchise snapshots come from the league-data
+# branch's data/ folder and are published at /fuadmflsite/data/.
+#
 # Runs on every push to master that touches site/, on demand, and from the daily job
-# after it writes a franchise snapshot (pushes made by a workflow don't trigger others).
+# after it writes a snapshot (pushes made by a workflow don't trigger other workflows).
 name: Publish site
 
 on:
@@ -29,6 +32,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: master
+
+      - name: Add franchise snapshots from league-data
+        run: |
+          mkdir -p site/data
+          if git fetch --depth=1 origin league-data; then
+            git archive FETCH_HEAD data | tar -x -C site || echo "league-data has no data/ folder yet"
+          else
+            echo "No league-data branch yet; publishing without snapshots"
+          fi
+          ls site/data
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

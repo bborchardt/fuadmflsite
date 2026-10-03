@@ -23,10 +23,12 @@ export function exportUrl(base, season, type, params = {}) {
 }
 
 export class MflError extends Error {
-    constructor(what, why) {
+    constructor(what, why, status) {
         super(`Couldn't load ${what}: ${why}`);
         this.name = "MflError";
         this.what = what;
+        // the HTTP status, when the failure was one
+        this.status = status;
     }
 }
 
@@ -43,7 +45,7 @@ export async function fetchExport(url, section, {fetchImpl = fetch, init} = {}) 
         throw new MflError(section, `network error (${error.message})`);
     }
     if (!response.ok) {
-        throw new MflError(section, `HTTP ${response.status}`);
+        throw new MflError(section, `HTTP ${response.status}`, response.status);
     }
     let body;
     try {
@@ -59,6 +61,21 @@ export async function fetchExport(url, section, {fetchImpl = fetch, init} = {}) 
         throw new MflError(section, `the response had no "${section}" section`);
     }
     return body[section];
+}
+
+/**
+ * The first kickoff of an NFL week, or null if MFL hasn't published that season's schedule
+ * yet (it answers 404 for an unknown season and lists no games for an empty week).
+ */
+export async function weekKickoff(season, week, options) {
+    try {
+        return firstKickoff(await fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule", options));
+    } catch (error) {
+        if (error instanceof MflError && error.status === 404) {
+            return null;
+        }
+        throw error;
+    }
 }
 
 /** The first kickoff (a Date) in an nflSchedule export, or null if it lists no games. */

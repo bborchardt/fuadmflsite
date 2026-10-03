@@ -10,6 +10,8 @@ import {start} from "./ui/app.js";
 const PREVIEW_KEY = "fuad.preview";
 const PAGES_BASE = "https://bborchardt.github.io/fuadmflsite/";
 const LOCAL_BASE = "http://localhost:8000/";
+// Franchise snapshots are league data, not code: always read the published ones, even in a local preview.
+const DATA_BASE = new URL("data/", PAGES_BASE);
 
 const here = new URL("./", import.meta.url).href;
 const versionHere = (here.match(/\/(v\d+)\/$/) || [])[1] || "v1";
@@ -73,21 +75,32 @@ function previewBadge(base, problem) {
     const hint = isLocal
         ? "Is tools/dev-server.py running, and does the browser allow this site to access your local network? "
         : "Is that version published? ";
-    badge.textContent = problem ? `Preview of ${label} failed to load. ${hint}` : `Previewing ${label}. `;
-    const exit = document.createElement("a");
-    exit.href = "?fuadPreview=off";
-    exit.textContent = "Exit preview";
-    badge.append(exit);
+    badge.textContent = problem
+        ? `Preview of ${label} failed to load, so it's been turned off. ${hint}`
+        : `Previewing ${label}. `;
+    if (!problem) {
+        const exit = document.createElement("a");
+        const url = new URL(window.location.href);
+        url.searchParams.set("fuadPreview", "off");
+        exit.href = url.href;
+        exit.textContent = "Exit preview";
+        badge.append(exit);
+    }
     document.body.append(badge);
+}
+
+/** Run this version: the one the header loads, or the one being previewed. */
+function boot() {
+    window.fuadVersion = versionHere;
+    start({dataBase: DATA_BASE}).catch((error) => console.error("[fuad]", error));
 }
 
 /** Swap this version for the previewed one: its stylesheet replaces ours, its script runs instead. */
 function loadPreview(base) {
-    for (const link of document.querySelectorAll("link[rel=stylesheet]")) {
-        if (link.href === `${here}fuad.css`) {
-            link.disabled = true;
-        }
-    }
+    const ours = [...document.querySelectorAll("link[rel=stylesheet]")].filter((link) => link.href === `${here}fuad.css`);
+    ours.forEach((link) => {
+        link.disabled = true;
+    });
     const style = document.createElement("link");
     style.rel = "stylesheet";
     style.href = `${base}fuad.css`;
@@ -95,7 +108,17 @@ function loadPreview(base) {
     const script = document.createElement("script");
     script.type = "module";
     script.src = `${base}fuad.js`;
-    script.onerror = () => previewBadge(base, true);
+    script.onerror = () => {
+        // Forget a preview that can't load, so a shared ?fuadPreview= link can't leave someone
+        // stuck, and fall back to the header's version for this page.
+        writePreview(null);
+        style.remove();
+        ours.forEach((link) => {
+            link.disabled = false;
+        });
+        previewBadge(base, true);
+        boot();
+    };
     document.head.append(script);
 }
 
@@ -104,9 +127,8 @@ const preview = readPreview();
 if (preview && allowed(preview) && preview !== here) {
     loadPreview(preview);
 } else {
-    window.fuadVersion = versionHere;
     if (preview && preview === here) {
         previewBadge(here, false);
     }
-    start({dataBase: new URL("../data/", import.meta.url)}).catch((error) => console.error("[fuad]", error));
+    boot();
 }

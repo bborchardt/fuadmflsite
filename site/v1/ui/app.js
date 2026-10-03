@@ -1,7 +1,7 @@
 // Loads the league's data on the home page and renders the league's own features.
 // On other league pages it does nothing; only the stylesheet applies there.
 
-import {API_BASE, exportUrl, fetchExport, firstKickoff} from "../lib/mfl.js";
+import {API_BASE, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
 import {franchisePhase, makeSnapshot, readSnapshot, snapshotFileName} from "../lib/franchise.js";
@@ -79,11 +79,11 @@ function showInMounts(found, className, message) {
     }
 }
 
-/** Kickoff times for the start of the season and the trade deadline (cached a day). */
+/** Kickoff times for the start of the season and the trade deadline; null until MFL publishes the schedule (cached a day). */
 async function kickoffs(season) {
     const times = await cached(`fuad.kickoffs.${season}`, DAY, async () => {
         const [start, deadline] = await Promise.all([PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK].map((week) =>
-            fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule").then(firstKickoff)));
+            weekKickoff(season, week)));
         return {start: start && start.getTime(), deadline: deadline && deadline.getTime()};
     });
     return {start: times.start && new Date(times.start), deadline: times.deadline && new Date(times.deadline)};
@@ -129,7 +129,7 @@ async function franchiseView(season, league, dataBase) {
 
 function snapshotStatus(view, season) {
     if (view.phase === "final" && view.missing) {
-        return `The ${season} trade deadline has passed and no snapshot is published yet. The daily job normally takes it; if it hasn't run, commit the JSON below as site/data/${snapshotFileName(season)}.`;
+        return `The ${season} trade deadline has passed and no snapshot is published yet. The daily job normally takes it; if it hasn't run, commit the JSON below to the league-data branch as data/${snapshotFileName(season)}.`;
     }
     if (view.phase === "final") {
         return `The ${season} snapshot is published.`;
@@ -147,7 +147,7 @@ async function loadLeague({season, leagueId}) {
     });
     const weeklyResultsPromise = league("weeklyResults");
     const injuriesPromise = weeklyResultsPromise.then((weeklyResults) =>
-        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week}), "injuries"));
+        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries"));
     const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
         league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise
@@ -189,11 +189,11 @@ export async function start({dataBase}) {
         renderContracts(found.contracts, {league, season: context.season, franchise: view, storage});
     }
     if (found.commish) {
-        const times = await kickoffs(context.season).catch(() => ({}));
         renderCommish(found.commish, {
             ...context,
             league,
-            beforeDraft: Boolean(times.start && new Date() < times.start),
+            // the rookie draft is held offline before week 1, so "previous" stands in for "before the draft"
+            beforeDraft: view.phase === "previous",
             snapshotStatus: snapshotStatus(view, context.season),
             snapshotJson: () => JSON.stringify(makeSnapshot(context.season, franchiseTopSalaries(league.rosteredPlayers), {
                 takenAt: new Date().toISOString(),
