@@ -1,3 +1,16 @@
+<style>
+    /* This header is on every league page, so these styles are league-wide.
+       Selectors start with "body" so they outrank the skin's own rules. */
+
+    /* Keep MFL's nav bar (Home, Rosters, Submit Lineup...) on phones. The skin hides it
+       below 54.25em; show it instead as one row that swipes sideways, with full-size tap targets. */
+    @media (max-width: 54.25em) {
+        body #hsubmenu { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        body #hsubmenu ul { display: flex; float: none; left: 0; width: max-content; }
+        body #hsubmenu ul li { display: block; flex: none; float: none; right: 0; width: auto; white-space: nowrap; }
+        body #hsubmenu ul li a { padding: 15px 14px; }
+    }
+</style>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 <script type="text/javascript"
         src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
