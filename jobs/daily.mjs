@@ -23,7 +23,7 @@ import {fileURLToPath, pathToFileURL} from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = process.env.RULES_VERSION || "v1";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
-const {API_BASE, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
+const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {latestSeason, makeSnapshot, snapshotFileName} = await lib("franchise.js");
@@ -62,7 +62,7 @@ function setOutput(name, value) {
  * <status MFL_USER_ID="...">OK</status>, or <error>...</error> on bad credentials. The value
  * is Base64; MFL's docs say it may need +, / and = escaped, so both forms are tried against a
  * request that needs a login. Returns a problem description, or null if logged in (or no
- * login is configured).
+ * login is configured). Never throws: snapshots only need public data.
  */
 async function login() {
     const username = process.env.MFL_USERNAME;
@@ -71,21 +71,25 @@ async function login() {
         log("No MFL login configured; reading public league data only.");
         return null;
     }
-    const response = await fetch(`${API_BASE}/${season}/login`, {
-        method: "POST",
-        headers: {...headers, "Content-Type": "application/x-www-form-urlencoded"},
-        body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
-    });
-    const body = await response.text();
-    const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
-    const cookie = /<status\s+([A-Za-z_][\w-]*)="([^"]*)"/.exec(body);
-    if (error || !response.ok || !cookie) {
-        return `MFL login failed: ${error || `HTTP ${response.status}, no session cookie in the response`}`;
+    let response, body;
+    try {
+        response = await fetch(`${API_BASE}/${season}/login`, {
+            method: "POST",
+            headers: {...headers, "Content-Type": "application/x-www-form-urlencoded"},
+            body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
+        });
+        body = await response.text();
+    } catch (error) {
+        return `MFL login failed: network error (${error.message})`;
     }
-    const [, name, value] = cookie;
+    const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
+    const value = (/<status\b[^>]*\bMFL_USER_ID="([^"]*)"/.exec(body) || [])[1];
+    if (error || !response.ok || !value) {
+        return `MFL login failed: ${error || `HTTP ${response.status}, no MFL_USER_ID in the response`}`;
+    }
     for (const candidate of [value, encodeURIComponent(value)]) {
-        if (await loginWorks(`${name}=${candidate}`)) {
-            headers.Cookie = `${name}=${candidate}`;
+        if (await loginWorks(`MFL_USER_ID=${candidate}`)) {
+            headers.Cookie = `MFL_USER_ID=${candidate}`;
             log("Logged in to MFL as commissioner.");
             return null;
         }
@@ -93,11 +97,15 @@ async function login() {
     return "MFL login succeeded but MFL didn't accept the session cookie";
 }
 
-/** A request that only answers with a login: the account's leagues for the season. */
+/**
+ * Whether a session cookie works: the account's leagues for the season. Logged out, MFL
+ * returns an empty list, so any league at all means the cookie was accepted.
+ */
 async function loginWorks(cookie) {
     try {
-        const leagues = await fetchExport(exportUrl(API_BASE, season, "myleagues"), "leagues", {init: {headers: {...headers, Cookie: cookie}}});
-        return JSON.stringify(leagues).includes(leagueId);
+        const leagues = await fetchExport(exportUrl(API_BASE, season, "myleagues", {YEAR: season}), "leagues",
+            {init: {headers: {...headers, Cookie: cookie}}});
+        return asArray(leagues.league).length > 0;
     } catch (error) {
         return false;
     }
@@ -145,24 +153,25 @@ async function franchiseSnapshot() {
 }
 
 /**
- * Snapshots on league-data that the published site doesn't have yet, e.g. one committed by
- * hand. Any of these means the site needs publishing.
+ * Snapshots on league-data that the published site doesn't have, or has an older copy of
+ * (e.g. one committed or corrected by hand). Any of these means the site needs publishing.
  */
-async function unpublishedSnapshots() {
+async function snapshotsToPublish() {
     const dir = join(dataDir, "data");
     const files = existsSync(dir) ? readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
-    const missing = [];
+    const stale = [];
     for (const file of files) {
         try {
-            const response = await fetch(new URL(file, pagesData), {method: "HEAD", headers});
-            if (response.status === 404) {
-                missing.push(file);
+            const response = await fetch(new URL(file, pagesData), {headers, cache: "no-store"});
+            const local = readFileSync(join(dir, file), "utf8");
+            if (response.status === 404 || (response.ok && (await response.text()) !== local)) {
+                stale.push(file);
             }
         } catch (error) {
             log(`Couldn't check whether ${file} is published (${error.message}); will check again tomorrow.`);
         }
     }
-    return missing;
+    return stale;
 }
 
 /** Append this run's entries to the chore log, or a monthly heartbeat if nothing happened. */
@@ -194,11 +203,11 @@ try {
         process.exitCode = 1;
     }
     snapshotWritten = await franchiseSnapshot();
-    const missing = snapshotWritten ? [] : await unpublishedSnapshots();
-    if (missing.length) {
-        choreLog(`Publishing snapshots that weren't on the site yet: ${missing.join(", ")}.`);
+    const stale = snapshotWritten ? [] : await snapshotsToPublish();
+    if (stale.length) {
+        choreLog(`Publishing snapshots that are new or changed since the site was last published: ${stale.join(", ")}.`);
     }
-    publish = snapshotWritten || missing.length > 0;
+    publish = snapshotWritten || stale.length > 0;
 } catch (error) {
     choreLog(`Failed: ${error.message}`);
     process.exitCode = 1;
