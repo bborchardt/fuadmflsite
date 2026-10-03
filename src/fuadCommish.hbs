@@ -172,7 +172,6 @@
                     "    if (!beforeTradeDeadline) {"];
                 $.each(fuadUtil.settings, function (position, positionSettings) {
                     var lineEnding;
-                    msgLines.push("        settings." + position + ".rookieBaselineSalary = " + positionSettings.rookieBaselineSalary + ";");
                     msgLines.push("        settings." + position + ".franchisePlayers = [");
                     $.each(positionSettings.franchisePlayers, function (index, player) {
                         lineEnding = index < positionSettings.franchisePlayers.length - 1 ? "," : "";

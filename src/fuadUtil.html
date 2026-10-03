@@ -15,34 +15,35 @@
         var leagueId = "48571";
         var beforeDraft = false;
 
-        // contains all positional settings needed for rookie draft and franchise player calculations
+        // contains all positional settings needed for rookie draft and franchise player calculations.
+        // rookieBaselineSalary is the league's fixed salary for the first rookie pick at each position;
+        // each later pick is 80% of the one before it.
         var settings = {
             QB: {
                 sortOrder: 1,
-                rookieBaselineRank: 15
+                rookieBaselineSalary: 6
             },
             RB: {
                 sortOrder: 2,
-                rookieBaselineRank: 20
+                rookieBaselineSalary: 10
             },
             WR: {
                 sortOrder: 3,
-                rookieBaselineRank: 35
+                rookieBaselineSalary: 10
             },
             TE: {
                 sortOrder: 4,
-                rookieBaselineRank: 15
+                rookieBaselineSalary: 4
             },
             PK: {
                 sortOrder: 5,
-                rookieBaselineRank: 15
+                rookieBaselineSalary: 1
             }
         };
 
         // UPDATE THIS SECTION AFTER TRADE DEADLINE
         var beforeTradeDeadline = true;
     if (!beforeTradeDeadline) {
-        settings.QB.rookieBaselineSalary = 20;
         settings.QB.franchisePlayers = [
             {fullName:"Lamar Jackson", salary:100},
             {fullName:"Baker Mayfield", salary:70},
@@ -50,7 +51,6 @@
             {fullName:"Justin Herbert", salary:55},
             {fullName:"Jordan Love", salary:52}
         ];
-        settings.RB.rookieBaselineSalary = 9;
         settings.RB.franchisePlayers = [
             {fullName:"Jahmyr Gibbs", salary:64},
             {fullName:"Saquon Barkley", salary:64},
@@ -58,7 +58,6 @@
             {fullName:"Christian McCaffrey", salary:57},
             {fullName:"Kyren Williams", salary:56}
         ];
-        settings.WR.rookieBaselineSalary = 1;
         settings.WR.franchisePlayers = [
             {fullName:"Justin Jefferson", salary:80},
             {fullName:"Nico Collins", salary:65},
@@ -66,7 +65,6 @@
             {fullName:"Tee Higgins", salary:51},
             {fullName:"DK Metcalf", salary:50}
         ];
-        settings.TE.rookieBaselineSalary = 1;
         settings.TE.franchisePlayers = [
             {fullName:"George Kittle", salary:42},
             {fullName:"T.J. Hockenson", salary:36},
@@ -74,7 +72,6 @@
             {fullName:"Jonnu Smith", salary:20},
             {fullName:"Mark Andrews", salary:15}
         ];
-        settings.PK.rookieBaselineSalary = 1;
         settings.PK.franchisePlayers = [
             {fullName:"Daniel Carlson", salary:5},
             {fullName:"Brandon Aubrey", salary:3},
