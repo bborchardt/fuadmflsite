@@ -1,8 +1,8 @@
-<!-- FUAD league code, v1. Served from GitHub Pages; see README.md to activate or revert a version. -->
+<!-- FUAD league code, served from GitHub Pages. Goes in a home page message set to appear on all league pages. -->
 <script>
     function fuadUnavailable() {
         var show = function () {
-            ["fuad-contracts", "commishdiv"].forEach(function (id) {
+            ["fuad-contracts", "commishdiv", "fuadlinksdiv"].forEach(function (id) {
                 var mount = document.getElementById(id);
                 if (mount) { mount.innerHTML = '<div class="fuad-unavailable">League tools are temporarily unavailable. MFL\'s own pages still work.</div>'; }
             });
