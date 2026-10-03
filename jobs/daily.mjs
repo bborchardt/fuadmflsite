@@ -1,6 +1,10 @@
 // Daily league chores, run by .github/workflows/daily.yml (Node 24+).
 //
-// One chore so far: after the trade deadline, snapshot the season's franchise salaries.
+// Chores:
+// - charge the cap penalty for each dropped player still carrying a contract, then reset the
+//   player to $1 / 0 years, unless that puts the team over the cap. Only logged unless
+//   DROP_PENALTIES=apply.
+// - after the trade deadline, snapshot the season's franchise salaries.
 // Everything the job writes goes to a checkout of the league-data branch (DATA_DIR):
 // snapshots in data/, and chore-log.md.
 //
@@ -14,6 +18,7 @@
 //   RULES_VERSION               which site version's league logic to use, default v1
 //   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
+//   DROP_PENALTIES              "apply" to charge drop penalties; anything else only logs them
 //   NOW                         optional ISO time, for testing
 
 import {existsSync, readFileSync, readdirSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
@@ -25,8 +30,10 @@ const version = process.env.RULES_VERSION || "v1";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
-const {TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
+const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {latestSeason, makeSnapshot, snapshotFileName} = await lib("franchise.js");
+const {MAX_PENALTIES_PER_RUN, alreadyCharged, capHolds, pendingPenalties, resetSalaryXml, salaryAdjXml} =
+    await import("./drop-penalties.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -42,6 +49,7 @@ const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (githu
 const mflHeaders = {"User-Agent": userAgent};
 const pagesData = process.env.PAGES_DATA_URL || "https://bborchardt.github.io/fuadmflsite/data/";
 const LATE_AFTER_DAYS = 7;
+const applyDropPenalties = process.env.DROP_PENALTIES === "apply";
 const entries = [];
 
 function log(message) {
@@ -121,6 +129,90 @@ async function loginWorks(cookie) {
 
 const fetchFrom = (base, type, params, section = type) =>
     fetchExport(exportUrl(base, season, type, params), section, {init: {headers: mflHeaders}});
+
+/**
+ * Send one of MFL's commissioner imports. MFL answers <status>OK</status>, or <error>...</error>
+ * with HTTP 200; anything but OK throws, so a surprise stops the chore rather than being guessed at.
+ */
+async function mflImport(type, data, params = {}) {
+    let response, body;
+    try {
+        response = await fetch(`${host}/${season}/import`, {
+            method: "POST",
+            headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
+            body: new URLSearchParams({TYPE: type, L: leagueId, DATA: data, ...params})
+        });
+        body = await response.text();
+    } catch (error) {
+        throw new Error(`MFL's ${type} import failed: network error (${error.message})`);
+    }
+    const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
+    if (error || !response.ok || !/<status\b[^>]*>\s*OK\s*<\/status>/i.test(body)) {
+        throw new Error(`MFL's ${type} import failed: ${error || `HTTP ${response.status}, "${body.trim().slice(0, 200)}"`}`);
+    }
+}
+
+/**
+ * Charge the cap penalty for each dropped player still carrying a contract, then reset the
+ * player to $1 / 0 years, which clears them from the Commish tab. A penalty already charged
+ * (by an earlier run that failed before the reset, or by hand) is skipped, and only the reset
+ * is done. A team the penalties would put over the cap is left alone for the commissioner to
+ * reverse the move, and the run fails so they hear about it. Without DROP_PENALTIES=apply it
+ * only logs what it would do.
+ */
+async function dropPenalties(loggedIn) {
+    const [players, league, salaryAdjustments, rosters, transactions, freeAgents] = await Promise.all([
+        fetchFrom(API_BASE, "players"),
+        fetchFrom(host, "league", {L: leagueId}),
+        fetchFrom(host, "salaryAdjustments", {L: leagueId}),
+        fetchFrom(host, "rosters", {L: leagueId}),
+        fetchFrom(host, "transactions", {L: leagueId}),
+        fetchFrom(host, "freeAgents", {L: leagueId})
+    ]);
+    const built = buildLeague({players: playersFromExport(players), league, salaryAdjustments, rosters, transactions, freeAgents});
+    const penalties = pendingPenalties(built);
+    if (!penalties.length) {
+        log("No dropped players owe a cap penalty.");
+        return;
+    }
+    const adjustments = asArray(salaryAdjustments.salaryAdjustment);
+    const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
+    const holds = capHolds(built, penalties, adjustments, SALARY_CAP);
+    const held = [...holds].map(([franchiseId, total]) => {
+        const team = penalties.filter((penalty) => penalty.franchiseId === franchiseId);
+        return `${team[0].teamName} would be at $${total} with the penalties for ${team.map((penalty) => penalty.explanation).join(", ")}: `
+            + `over the $${SALARY_CAP} cap, so the move should be reversed. Left for the commissioner.`;
+    });
+    if (!applyDropPenalties) {
+        held.forEach((message) => choreLog(`Dry run: ${message}`));
+        for (const penalty of penalties.filter((penalty) => !holds.has(penalty.franchiseId))) {
+            choreLog(alreadyCharged(penalty, adjustments)
+                ? `Dry run: would reset ${penalty.fullName} to $1 / 0 years (penalty already charged).`
+                : `Dry run: would charge ${describe(penalty)}, then reset the player to $1 / 0 years.`);
+        }
+        return;
+    }
+    if (penalties.length > MAX_PENALTIES_PER_RUN) {
+        throw new Error(`${penalties.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
+            + `expected in a day, so none were charged. Check the Commish tab and charge them by hand.`);
+    }
+    if (!loggedIn) {
+        throw new Error(`${penalties.length} dropped player(s) owe a cap penalty, but the job isn't logged in, so none were charged.`);
+    }
+    for (const penalty of penalties.filter((penalty) => !holds.has(penalty.franchiseId))) {
+        if (alreadyCharged(penalty, adjustments)) {
+            await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
+            choreLog(`Reset ${penalty.fullName} to $1 / 0 years; the cap penalty was already charged.`);
+        } else {
+            await mflImport("salaryAdj", salaryAdjXml(penalty));
+            await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
+            choreLog(`Charged ${describe(penalty)}, and reset the player to $1 / 0 years.`);
+        }
+    }
+    if (held.length) {
+        throw new Error(held.join(" "));
+    }
+}
 
 /** After the deadline, write the season's franchise snapshot if it doesn't exist yet. */
 async function franchiseSnapshot() {
@@ -208,6 +300,13 @@ try {
     const loginProblem = await login();
     if (loginProblem) {
         choreLog(`${loginProblem}. Continuing with public league data.`);
+        process.exitCode = 1;
+    }
+    try {
+        await dropPenalties(!loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD));
+    } catch (error) {
+        // the snapshot doesn't depend on this, so carry on
+        choreLog(`Drop penalties: ${error.message}`);
         process.exitCode = 1;
     }
     snapshotWritten = await franchiseSnapshot();
