@@ -37,7 +37,9 @@ const host = process.env.MFL_HOST || "https://www44.myfantasyleague.com";
 const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
 const season = Number(process.env.SEASON || latestSeason(now));
 const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (github.com/bborchardt/fuadmflsite)";
-const headers = {"User-Agent": userAgent};
+// Headers for MFL requests only: after login they carry the commissioner's session cookie,
+// so never send them anywhere else.
+const mflHeaders = {"User-Agent": userAgent};
 const pagesData = process.env.PAGES_DATA_URL || "https://bborchardt.github.io/fuadmflsite/data/";
 const LATE_AFTER_DAYS = 7;
 const entries = [];
@@ -75,7 +77,7 @@ async function login() {
     try {
         response = await fetch(`${API_BASE}/${season}/login`, {
             method: "POST",
-            headers: {...headers, "Content-Type": "application/x-www-form-urlencoded"},
+            headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
             body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
         });
         body = await response.text();
@@ -89,7 +91,7 @@ async function login() {
     }
     for (const candidate of [value, encodeURIComponent(value)]) {
         if (await loginWorks(`MFL_USER_ID=${candidate}`)) {
-            headers.Cookie = `MFL_USER_ID=${candidate}`;
+            mflHeaders.Cookie = `MFL_USER_ID=${candidate}`;
             log("Logged in to MFL as commissioner.");
             return null;
         }
@@ -98,21 +100,27 @@ async function login() {
 }
 
 /**
- * Whether a session cookie works: the account's leagues for the season. Logged out, MFL
- * returns an empty list, so any league at all means the cookie was accepted.
+ * Whether a session cookie works: logged in, MFL lists the account's leagues; logged out, it
+ * lists none. Last season is checked too, because the job moves to a new season on September 1
+ * and the league may not be renewed for it yet.
  */
 async function loginWorks(cookie) {
-    try {
-        const leagues = await fetchExport(exportUrl(API_BASE, season, "myleagues", {YEAR: season}), "leagues",
-            {init: {headers: {...headers, Cookie: cookie}}});
-        return asArray(leagues.league).length > 0;
-    } catch (error) {
-        return false;
+    for (const year of [season, season - 1]) {
+        try {
+            const leagues = await fetchExport(exportUrl(API_BASE, year, "myleagues", {YEAR: year}), "leagues",
+                {init: {headers: {...mflHeaders, Cookie: cookie}}});
+            if (asArray(leagues.league).length > 0) {
+                return true;
+            }
+        } catch (error) {
+            // try the next year; a cookie that works nowhere fails below
+        }
     }
+    return false;
 }
 
 const fetchFrom = (base, type, params, section = type) =>
-    fetchExport(exportUrl(base, season, type, params), section, {init: {headers}});
+    fetchExport(exportUrl(base, season, type, params), section, {init: {headers: mflHeaders}});
 
 /** After the deadline, write the season's franchise snapshot if it doesn't exist yet. */
 async function franchiseSnapshot() {
@@ -121,7 +129,7 @@ async function franchiseSnapshot() {
         log(`The ${season} franchise snapshot already exists.`);
         return false;
     }
-    const deadline = await weekKickoff(season, TRADE_DEADLINE_WEEK, {init: {headers}});
+    const deadline = await weekKickoff(season, TRADE_DEADLINE_WEEK, {init: {headers: mflHeaders}});
     if (!deadline) {
         log(`MFL hasn't published the ${season} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
         return false;
@@ -162,7 +170,7 @@ async function snapshotsToPublish() {
     const stale = [];
     for (const file of files) {
         try {
-            const response = await fetch(new URL(file, pagesData), {headers, cache: "no-store"});
+            const response = await fetch(new URL(file, pagesData), {headers: {"User-Agent": userAgent}, cache: "no-store"});
             const local = readFileSync(join(dir, file), "utf8");
             if (response.status === 404 || (response.ok && (await response.text()) !== local)) {
                 stale.push(file);
