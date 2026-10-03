@@ -350,185 +350,131 @@
   }
 </style>
 
+<style>
+  .path { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .path li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 4px 20px; align-items: baseline;
+    background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--accent); padding: 14px 18px; }
+  .path li.later { border-left-color: var(--rule-strong); }
+  .path .size { font-family: var(--f-mono); font-size: 12px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .path h3 { font-family: var(--f-display); font-weight: 700; font-size: 1.02rem; margin: 0 0 3px; }
+  .path p { font-size: 0.92rem; color: var(--ink-2); margin: 0; line-height: 1.5; }
+  .plain { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule); }
+  .plain li { padding: 11px 0; border-bottom: 1px solid var(--rule); font-size: 0.95rem; line-height: 1.5; }
+  .plain b { font-family: var(--f-display); }
+  @media (max-width: 760px) { .path li { grid-template-columns: 26px minmax(0, 1fr); } .path .size { grid-column: 2; } }
+</style>
 <div class="wrap">
 
   <header class="mast">
-    <p class="eyebrow"><span>League 48571</span><span>·</span><span>Week 4</span><span>·</span><span>Checked 3 Oct 2026</span><span>·</span><span>Updated after PR #1 shipped</span></p>
+    <p class="eyebrow"><span>League 48571</span><span>·</span><span>Week 4</span><span>·</span><span>3 Oct 2026</span></p>
     <h1>Week 4 Site Check</h1>
-    <p class="standfirst">The three live bugs are fixed and deployed, and the repo now matches production exactly. What's left is six admin tidy-ups and the post-deadline paste. Each line below is the whole finding; follow a link only if you want the evidence.</p>
-    <nav class="tally" aria-label="Findings by group">
-      <a class="admin" href="#admin"><b>6</b><span>Admin tidy-ups</span></a>
+    <p class="standfirst">The bugs are fixed and the site works on phones. What's left is the experience: a Contracts tab members have to dig through, a dated look, and a deploy process that drifts. Each line below is the whole point.</p>
+    <nav class="tally" aria-label="Sections">
+      <a class="now" href="#wrong"><b>6</b><span>Still wrong</span></a>
+      <a class="admin" href="#path"><b>5</b><span>Steps to fix</span></a>
       <a class="soon" href="#soon"><b>1</b><span>Coming up</span></a>
-      <a class="fixed" href="#fixed"><b>4</b><span>Fixed 3 Oct</span></a>
-      <a class="ok" href="#background"><b>4</b><span>No action owed</span></a>
+      <a class="ok" href="#ruled-out"><b>4</b><span>Ruled out</span></a>
     </nav>
   </header>
 
-  <section id="admin">
-    <span class="sec-mark">Still to do · admin, no code</span>
-    <h2>Settings the commissioner can change</h2>
+  <section id="wrong">
+    <span class="sec-mark">Still wrong</span>
+    <h2>Six problems, three pieces of work</h2>
     <ol class="rows">
+      <li class="row now">
+        <span class="num">01</span>
+        <div class="what"><h3>The Contracts tab is a reference document, not a tool</h3>
+          <p>About 18 phone screens listing every rostered player in the league. Members have to dig for their own cap space.</p></div>
+        <div class="act"><b>Fix · A</b>Rebuild around "My Team", with cards on phones.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#a">Details</a></div>
+      </li>
+      <li class="row now">
+        <span class="num">02</span>
+        <div class="what"><h3>The site looks dated</h3>
+          <p>None of MFL's stock skins fix it.</p></div>
+        <div class="act"><b>Fix · C</b>Our own league-wide stylesheet in the shared header.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#c">Details</a></div>
+      </li>
+      <li class="row admin">
+        <span class="num">03</span>
+        <div class="what"><h3>Three navigation rows on desktop</h3>
+          <p>Phones are workable since PR #3. Desktop is still cluttered, and MFL's two rows can't be removed.</p></div>
+        <div class="act"><b>Fix · C</b>Restyle so MFL's dropdown recedes and our tabs read as the league's own.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#c">Details</a></div>
+      </li>
       <li class="row admin">
         <span class="num">04</span>
-        <div class="what">
-          <h3>The Standings tab cuts off columns on phones</h3>
-          <p>Power Rankings runs 588px into a 390px screen, up from 514px preseason. The page can't scroll sideways, so the missing columns just vanish.</p>
-        </div>
-        <div class="act"><b>Fix</b>Move Power Rankings to its own tab, or drop it.<br><a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU#step-1">Runbook step 1</a></div>
+        <div class="what"><h3>Every release is pasted into five places</h3>
+          <p>The header plus four home page messages. The repo drifts whenever one is missed.</p></div>
+        <div class="act"><b>Fix · Tier 2</b>Load the code from GitHub Pages; deploy with git push.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#tier-2">Details</a></div>
       </li>
       <li class="row admin">
         <span class="num">05</span>
-        <div class="what">
-          <h3>Two custom tabs duplicate MFL's own menu</h3>
-          <p>Standings and Live Scoring appear in both navigation rows, which become two separate hamburger menus on a phone.</p>
-        </div>
-        <div class="act"><b>Fix</b>Drop them, after checking MFL's native pages on a phone.<br><a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU#step-2">Runbook step 2</a></div>
+        <div class="what"><h3>A yearly code ritual</h3>
+          <p><code>year</code>, <code>beforeDraft</code> and the post-deadline console paste.</p></div>
+        <div class="act"><b>Fix · B</b>Derive the season from the URL; snapshot the deadline to a file.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#b">Details</a></div>
       </li>
       <li class="row admin">
         <span class="num">06</span>
-        <div class="what">
-          <h3>The Transactions tab has no transactions on it <span class="tag fix">Corrected</span></h3>
-          <p>It holds Trade Bait, Top Free Agents and the Starter Points chart. Transactions are on Main.</p>
-        </div>
-        <div class="act"><b>Fix</b>Rename it, e.g. "Players".<br><a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU#step-3">Runbook step 3</a></div>
+        <div class="what"><h3>2012-era code underneath</h3>
+          <p>Four old libraries, eight requests in a row, and nothing checked. That's how the injuries bug hid for years.</p></div>
+        <div class="act"><b>Fix · B</b>Plain modern JavaScript, parallel requests, visible errors.<br><a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s#b">Details</a></div>
       </li>
-      <li class="row admin">
-        <span class="num">07</span>
-        <div class="what">
-          <h3>League Chat, Poll and Trade Bait are still empty</h3>
-          <p>Four weeks into the season. The message board has seven topics in the same period, so members talk there.</p>
-        </div>
-        <div class="act"><b>Fix</b>Remove them.<br><a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU#step-4">Runbook step 4</a></div>
-      </li>
-      <li class="row admin">
-        <span class="num">08</span>
-        <div class="what">
-          <h3>The skin is still BlueMesh</h3>
-          <p>Not broken. A light skin reads better outdoors. Changing skin doesn't change layout.</p>
-        </div>
-        <div class="act"><b>Fix</b>Optional.<br><a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU#step-5">Runbook step 5</a></div>
-      </li>
-      <li class="row admin">
-        <span class="num">09</span>
-        <div class="what">
-          <h3>All three MFL phone apps are still listed</h3>
-          <p>MFL Modern, MFL Mobile and MFL Platinum handle lineups well. None of them show the Contracts tab.</p>
-        </div>
-        <div class="act"><b>Fix</b>Post one league message.<br><a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU#step-6">Runbook step 6</a></div>
-      </li>
+    </ol>
+  </section>
+
+  <section id="path">
+    <span class="sec-mark">Recommended path</span>
+    <h2>Delivery first, then Contracts, then the look</h2>
+    <ol class="path">
+      <li><span class="num">1</span><div><h3>Set up Tier 2: load from GitHub Pages</h3><p>Move today's code over unchanged and paste a two-tag header. Members see no difference.</p></div><span class="size">½ day</span></li>
+      <li><span class="num">2</span><div><h3>A · "My Team" Contracts</h3><p>Cap space, roster count, expiring contracts and cut costs first; cards on phones.</p></div><span class="size">2–3 days</span></li>
+      <li><span class="num">3</span><div><h3>B · Engine cleanup</h3><p>Old libraries out, requests in parallel, every response checked.</p></div><span class="size">~1 day</span></li>
+      <li><span class="num">4</span><div><h3>C · League-wide look</h3><p>Our own stylesheet on every page, in A's visual language.</p></div><span class="size">2–4 days</span></li>
+      <li class="later"><span class="num">5</span><div><h3>Post-deadline snapshot as a file</h3><p>Replaces the console ritual. If Tier 2 isn't live by the deadline, paste the old way once more.</p></div><span class="size">small</span></li>
     </ol>
   </section>
 
   <section id="soon">
     <span class="sec-mark">Coming up</span>
-    <h2>Due when the trade deadline passes</h2>
+    <h2>This season's post-deadline paste</h2>
     <ol class="rows">
       <li class="row soon">
-        <span class="num">10</span>
-        <div class="what">
-          <h3>The post-deadline paste is still ahead</h3>
-          <p>Production has <code>beforeTradeDeadline = true</code>. After the deadline, the commissioner clicks the button on the Commish tab, copies the console output and pastes it into <code>fuadUtil.html</code>. It now covers franchise players only, since rookie baselines are fixed by rule.</p>
-        </div>
-        <div class="act"><b>When</b>The week the deadline passes. Commit the same change to the repo so the two stay matched.</div>
-      </li>
-    </ol>
-  </section>
-
-  <section id="fixed">
-    <span class="sec-mark">Fixed · deployed 3 Oct 2026</span>
-    <h2>Shipped in <a href="https://github.com/bborchardt/fuadmflsite/pull/1">PR #1</a>, verified on the live page</h2>
-    <ol class="rows">
-      <li class="row fixed">
-        <span class="num">01</span>
-        <div class="what">
-          <h3>The injured-starter warning works <span class="tag done">Fixed</span></h3>
-          <p>Injuries now load from MFL's api host: 464 records, 347 players flagged, 55 of them rostered. IR-R, IR-PUP and IR-NFI count as injured too. No Week 3 starter was injured, so "No violations found" is now a real result.</p>
-          <span class="was-line">Was: the request went to the wrong host, got an error, and flagged nobody.</span>
-        </div>
-      </li>
-      <li class="row fixed">
-        <span class="num">02</span>
-        <div class="what">
-          <h3>Rookie salaries use the league's fixed baselines <span class="tag done">Superseded</span></h3>
-          <p>QB $6, RB $10, WR $10, TE $4, PK $1 for the first pick, each later pick still 80% of the one before. The table runs from those values at pick 1 to $1 across the board at pick 15.</p>
-          <span class="was-line">Was: kicker salaries showed $NaN, because the baseline was the 15th-highest kicker salary and only 14 were rostered.</span>
-        </div>
-      </li>
-      <li class="row fixed">
-        <span class="num">03</span>
-        <div class="what">
-          <h3>The Contracts tab stacks on phones <span class="tag done">Fixed</span></h3>
-          <p>Below MFL's 62.5em breakpoint the two columns go full width, with the calculator and salary tables first. No table overflows. Desktop is unchanged.</p>
-          <span class="was-line">Was: the sidebar was crushed into 134px and its text overlapped.</span>
-        </div>
-      </li>
-      <li class="row fixed">
-        <span class="num">11</span>
-        <div class="what">
-          <h3>The repo matches production <span class="tag done">Fixed</span></h3>
-          <p>All five files in <code>src/</code> match the live page line for line.</p>
-          <span class="was-line">Was: the repo still had 2022 season values, and production had a stray debug line.</span>
-        </div>
-      </li>
-    </ol>
-  </section>
-
-  <section id="background">
-    <span class="sec-mark">Background</span>
-    <h2>No action owed</h2>
-    <ol class="rows">
-      <li class="row ok">
-        <span class="num">12</span>
-        <div class="what">
-          <h3>MFL's platform rules are unchanged, so the Tier 2 plan stands <span class="tag same">Unchanged</span></h3>
-          <p>Cross-origin reads are still blocked and the page still sends no CSP. The API terms still forbid off-site JavaScript and exempt in-page calls from rate limits. A thin loader in MFL with the app on GitHub Pages is still the recommendation.</p>
-        </div>
-      </li>
-      <li class="row ok">
-        <span class="num">13</span>
-        <div class="what">
-          <h3>Data loading is slow in shape, not in size</h3>
-          <p>Eight requests run one after another, taking 0.75s on home broadband. In parallel it would be about 0.25s. Worth fixing in a rewrite, not urgent on its own.</p>
-        </div>
-      </li>
-      <li class="row ok">
-        <span class="num">14</span>
-        <div class="what">
-          <h3>No JavaScript errors on any tab</h3>
-          <p>Checked again after the fixes deployed. The four 2012-era libraries still load from cdnjs and still work.</p>
-        </div>
-      </li>
-      <li class="row ok">
         <span class="num">—</span>
-        <div class="what">
-          <h3>The Contracts tab is still long on a phone</h3>
-          <p>15,226px, about 18 screens, because it lists every rostered player in the league. That needs a "My Team" view, which is a content change rather than a bug fix.</p>
-        </div>
+        <div class="what"><h3>Production still has <code>beforeTradeDeadline = true</code></h3>
+          <p>After the deadline, click the button on the Commish tab, paste the console output into <code>fuadUtil.html</code>, and commit the same change to the repo.</p></div>
+        <div class="act"><b>When</b>The week the deadline passes.</div>
       </li>
     </ol>
+  </section>
+
+  <section id="ruled-out">
+    <span class="sec-mark">Ruled out</span>
+    <h2>Considered and set aside</h2>
+    <ul class="plain">
+      <li><b>A separate companion site (Tier 3).</b> A second destination is a new navigation layer, and it can't tell who's viewing.</li>
+      <li><b>A proxy (Tier 4).</b> Against MFL's API terms.</li>
+      <li><b>Leaving MFL (Tier 6).</b> Would lose the custom rules MFL's openness allows.</li>
+      <li><b>A public league-history site (Tier 5).</b> Optional, and only after A–C.</li>
+    </ul>
   </section>
 
   <section>
-    <span class="sec-mark">Corrected since August</span>
-    <h2>What the August pass got wrong</h2>
-    <p style="max-width:var(--measure);color:var(--ink-2)">The August pass measured a copy of the page with our scripts stripped out. Loading the real page with our scripts running overturned four claims.</p>
-    <ul class="fixes">
-      <li><span class="was">Move the Cap Penalty Calculator off the Main tab.</span><span class="now">It has always been on the Contracts tab. Step removed.</span></li>
-      <li><span class="was">The seven-column contract table overflows sideways on a phone.</span><span class="now">It squeezes to fit. The sidebar beside it was what broke (03).</span></li>
-      <li><span class="was">Three custom tabs duplicate MFL's menu.</span><span class="now">Two do. Transactions is misnamed, not a duplicate (06).</span></li>
-      <li><span class="was">Contracts, Commish and Links can't be measured.</span><span class="now">They can, by loading the live page in a real browser.</span></li>
+    <span class="sec-mark">Ground rules</span>
+    <h2>From your decisions</h2>
+    <ul class="plain">
+      <li>The site must work well in a <b>phone browser</b>.</li>
+      <li><b>No new navigation layer.</b> Everything lives inside a tab.</li>
+      <li>The <b>custom tabs stay</b> as members know them.</li>
+      <li>Stay within <b>MFL's rules</b>, and keep upkeep modest.</li>
     </ul>
   </section>
 
   <section>
     <span class="sec-mark">The detail</span>
-    <h2>Read further only if you want the evidence</h2>
-    <div class="docs">
-      <a href="https://claude.ai/artifact/Ngzsgi2rtSPDSd3kExfzDU"><strong>Tier 0 Punchlist</strong><span>The six remaining admin changes, step by step, with the admin screen for each.</span></a>
-      <a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s"><strong>The FUAD Site Rebuild</strong><span>The bugs and their fixes in full, the platform constraints, and the seven rebuild options with the Tier 2 recommendation.</span></a>
+    <h2>Read further only if you want the reasoning</h2>
+    <div class="docs" style="grid-template-columns:1fr">
+      <a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s"><strong>The FUAD Site Rebuild</strong><span>Where things stand, the platform facts that decide the options, the three pieces of work, and each delivery option with its trade-offs.</span></a>
     </div>
   </section>
 
-  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · docs/findings.md · 3 October 2026 · updated after PR #1</footer>
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · docs/findings.md · 3 October 2026</footer>
 
 </div>
