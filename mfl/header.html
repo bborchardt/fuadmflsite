@@ -1,0 +1,14 @@
+<!-- FUAD league code, v1. Served from GitHub Pages; see README.md to activate or revert a version. -->
+<script>
+    function fuadUnavailable() {
+        var show = function () {
+            ["fuad-contracts", "commishdiv"].forEach(function (id) {
+                var mount = document.getElementById(id);
+                if (mount) { mount.innerHTML = '<div class="fuad-unavailable">League tools are temporarily unavailable. MFL\'s own pages still work.</div>'; }
+            });
+        };
+        if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", show); } else { show(); }
+    }
+</script>
+<link rel="stylesheet" href="https://bborchardt.github.io/fuadmflsite/v1/fuad.css">
+<script type="module" src="https://bborchardt.github.io/fuadmflsite/v1/fuad.js" onerror="fuadUnavailable()"></script>
