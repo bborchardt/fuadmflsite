@@ -2,7 +2,24 @@
 
 **League:** 48571 (contract dynasty) · **Live site:** `https://www44.myfantasyleague.com/2026/home/48571`
 **Prepared:** 30 Aug 2026 · **Revised:** 30 Aug 2026 — verification pass with full network access
+**Re-verified:** 3 Oct 2026, Week 4 — live page measured in a real browser with our scripts running
+**Updated:** 3 Oct 2026 — the three live fixes shipped in [PR #1](https://github.com/bborchardt/fuadmflsite/pull/1) and were verified on the live page
 **Status:** research only, no code changes made
+
+> **Short version:** read [`findings.md`](findings.md) first. It lists every current finding
+> in one line each. This document holds the evidence and the option-by-option reasoning.
+>
+> **What the 3 Oct pass changed.** The platform facts behind the recommendation all re-checked
+> unchanged, so **Tier 2 still stands.** In-season measurement found a second live bug
+> (kicker rookie salaries show `$NaN`, §3). It also corrected the mobile diagnosis: our contract
+> table squeezes to fit, and the Contracts *sidebar* is what breaks on a phone (§4). A
+> three-line CSS fix for that is tested and in the runbook. Passages changed in this pass are
+> marked **3 Oct**.
+>
+> **Since then, PR #1 shipped and is live.** It fixed the injuries bug and stacks the Contracts
+> sidebar on phones. It replaced the computed rookie baselines with the league's new fixed table,
+> which retires the kicker bug, and it reconciled the repo with production. Passages about these
+> are marked **Fixed**.
 
 Goals this was written against: good looking, intuitive, common functions obvious
 while advanced functions stay possible, mobile friendly, within the spirit of what
@@ -91,6 +108,13 @@ strips blank lines, so ignoring whitespace, the entire drift is:
 | `fuadCommish.hbs` | **byte-identical** |
 | `fuadLinks.hbs` | **byte-identical** |
 
+**3 Oct: unchanged.** The same diff was re-run against the Week 4 page. It shows the same
+settings block and the same debug line, and no other edits.
+
+**Fixed, 3 Oct.** PR #1 copied production's season block into the repo and dropped the debug
+line on the next paste. After deployment, all five files in `src/` match the live page line
+for line. Keep them matched: commit the post-deadline paste to the repo when it happens.
+
 This is much better news than feared. The drift is confined to the block the code itself
 labels *"update these after upgrading site"* — the annual ritual, exactly where you'd expect
 it. Three of five files never diverged at all.
@@ -102,9 +126,21 @@ ever want to fall back to Tier 1.
 
 ---
 
-## 3. Live bug: injured-player detection has never worked
+## 3. Live bugs
 
-**New — only findable with network access.**
+### Injured-player detection has never worked
+
+**Fixed, 3 Oct (PR #1).** `injuriesDataUrl` now points at
+`api.myfantasyleague.com/<year>/export?TYPE=injuries&W=`. On the live page the request returns
+464 injury records and flags 347 players (it flagged none before), 55 of them rostered. The
+status match also widened from exactly `IR` to anything starting with `IR`, which picks up
+`IR-R`, `IR-PUP` and `IR-NFI` (66 more players). No Week 3 starter was injured, so "No
+violations found" is now a genuine result. The analysis below is kept as the record of what
+was wrong.
+
+**Before the fix:** in Week 4 the page requested
+`export?TYPE=injuries&L=48571&W=3` from `www44` and got back the same error document. The Main
+tab's rule-violations box read "No violations found" whatever the lineups contained.
 
 `fuadUtil.html:164` builds the injuries URL off the league host:
 
@@ -146,6 +182,37 @@ the shape it expected, and say so on the page when it isn't.
 *Caveat:* tested logged-out. The error is host-routing, not authentication, so it will behave
 identically for a signed-in member — but it costs nothing to confirm in the browser console.
 
+### Kicker rookie salaries showed `$NaN`
+
+**Superseded, 3 Oct (PR #1).** The league adopted a new rule: first-pick rookie salaries are
+fixed at QB $6, RB $10, WR $10, TE $4 and PK $1, and each later pick is still 80% of the one
+before. They live in the `settings` table in `fuadUtil.html`, and the code no longer derives
+them from rostered salaries at all. The live table now runs from $6/$10/$10/$4/$1 at pick 1
+to $1 across the board at pick 15. The post-deadline generator emits franchise players only.
+What follows is the record of the bug the rule replaced.
+
+**Found 3 Oct.** The Rookie Salaries table on the Contracts tab showed `$NaN` in every row of
+the PK column.
+
+Before the trade deadline (`beforeTradeDeadline = true`), the hardcoded baselines in
+`fuadUtil.html` are skipped. Each position's rookie baseline is computed live in
+`setFranchiseAndRookieSettings` (`fuadAjax.html:374`) as the salary of the Nth-highest-paid
+rostered player at that position. The ranks are QB 15, RB 20, WR 35, TE 15, **PK 15**. Only
+**14 kickers are rostered**, so the loop never reaches rank 15 and `settings.PK.rookieBaselineSalary`
+stays `undefined`. Then `Math.max(1, undefined * …)` gives `NaN`.
+
+Read from the live page:
+
+```
+QB rank 15 → $25   RB rank 20 → $10   WR rank 35 → $1   TE rank 15 → $2   PK rank 15 → undefined
+```
+
+The proposed fix was a fallback for when fewer players are rostered than the baseline rank.
+The fixed table made that unnecessary.
+
+The same lesson as the injuries bug applies. Nothing checks that a computed value exists, so a
+missing one renders as `$NaN` instead of failing loudly.
+
 ---
 
 ## 4. Repo audit (updated)
@@ -158,11 +225,27 @@ identically for a signed-in member — but it costs nothing to confirm in the br
 #homepagecolumn1, #homepagecolumn2, … { width:100%!important; float:left }
 ```
 
-So the two-column shell **already stacks correctly on a phone.** What does not reflow is the
-seven-column contract table we generate ourselves — Player, Position, Salary, Contract Year,
-Cap Penalty, Net Cap Space, Franchise — which overflows horizontally inside its now-full-width
-column. The target is narrower and more tractable than the first draft implied: fix our
-Handlebars tables, not MFL's layout.
+So the two-column shell **already stacks correctly on a phone.**
+
+**3 Oct, corrected.** This section used to say the seven-column contract table overflows
+sideways. Measured on the live page with our scripts running, it doesn't. It squeezes into
+250px and wraps team names. The real break is one level in. The Contracts message nests its
+*own* 65% / 35% table inside MFL's column, and MFL's stacking rule targets
+`#homepagecolumn1`-style IDs, which our cells don't have. On a 390px phone:
+
+| | Width | Height |
+|---|---|---|
+| Rostered Players (65%) | 250px | 15,148px |
+| Calculator, Rookie Salaries, Top 5 tables (35%) | **134px**, text overlapping | 15,148px |
+
+**Fixed, 3 Oct (PR #1).** A three-line CSS rule in `fuadContract.hbs` stacks the two columns
+below MFL's 62.5em breakpoint, with the sidebar first. On the live page at 390px both columns
+are now full width and no table overflows. Desktop is unchanged. What remains is **length**: the roster table is 13,800px, about 16 phone screens, because it
+lists every rostered player in the league. That is a content decision, and §8's "My Team" view
+is the answer.
+
+Elsewhere on a phone, only the Standings tab clips: Power Rankings runs to 588px and League
+Standings to 415px. Both are MFL modules, handled in the runbook.
 
 Helpfully, MFL's stylesheet already contains the table→card idiom, scoped to one page:
 
@@ -180,7 +263,8 @@ of what MFL allows."
 `<meta name="viewport" content="initial-scale=1.0, width=device-width">` and loads
 `skins17/BlueMesh/responsive.css`. *Desktop View On Mobile* is already off and the skin is a
 responsive one. The first draft's step-one recommendation is a no-op — good news, but it also
-means **the easy win is already spent**; the remaining mobile problem is entirely ours.
+means **the easy win is already spent**. The remaining mobile problems are our Contracts layout
+and MFL's Power Rankings module, which is an admin setting.
 
 ### Speed — measured, and worse in shape than in size
 Eight strictly sequential XML requests. Measured from a datacenter, warm:
@@ -190,7 +274,12 @@ Eight strictly sequential XML requests. Measured from a datacenter, warm:
 | Sequential, as shipped | **2.50 s** |
 | Same eight in parallel | **0.58 s** |
 
-A 4.3× gap on a fast connection; far wider on phone networks, which is where it hurts. The
+A 4.3× gap on a fast connection; far wider on phone networks, which is where it hurts.
+
+**3 Oct:** from home broadband in a real browser, the chain took about **0.75 s**, with
+`players` (250 ms) the longest single request. Run in parallel, the floor is about 0.25 s. The
+gap is real but smaller than the datacenter figure suggested. Fix it as part of a rewrite, not
+on its own. The
 ordering is a processing dependency, not a fetching one — only `injuries` genuinely needs a
 prior response (`week`, from `weeklyResults`). Fetch all eight at once, then process in order.
 
@@ -209,6 +298,8 @@ jQuery exactly once — from our tag. Nothing on MFL's side depends on these fou
 dropping all of them is safe from the platform's point of view. The `jQuery.noConflict()` call
 is defensive, not load-bearing.
 
+**3 Oct:** no JavaScript errors on any tab, at either width. The old stack is dated but working.
+
 ### Fragile — one line reaches into MFL's own markup
 `src/fuadCommish.hbs:134` — `$("#tabcontent0").find("#homepagecolumn1").prepend(html)`.
 **New context:** the live page contains **eight** elements with `id="homepagecolumn1"`, one per
@@ -221,6 +312,10 @@ than average to break when MFL cleans that up. Replace it with our own mount poi
 commissioner clicks a button that `console.log`s a block of JavaScript to copy back into the
 source (`addPostTradeDeadlineJsButton`). Year and league ID are both already derivable — the
 code does it for `baseUrl` and then ignores its own work for `year`.
+
+**3 Oct:** production still has `beforeTradeDeadline = true`, so this season's post-deadline
+paste is still to come. Since PR #1 it carries franchise players only. Rookie baselines are a
+fixed table now, so they are no longer part of the ritual.
 
 ### Keep — the architecture is genuinely right
 Same-origin execution buys cookie auth, private-league access, per-member identity, zero
@@ -245,6 +340,9 @@ template; that recommendation is withdrawn — see the note on sources.)
   contract views at all. Three competing apps is itself a hint that none is definitive.
 - **Verdict:** still worth doing, but it is no longer the free win it looked like — the free
   part is already collected.
+- **3 Oct:** the admin tidy-up is not done yet. The Contracts CSS fix, the biggest phone fix
+  available without a rewrite, shipped as code in PR #1. The runbook also corrects two of its
+  August steps.
 
 ### Tier 1 — Modernize in place, keep pasting (~2 days, paste per season)
 Same deployment model, rewritten files. Drop all four libraries for vanilla ES2020 + template
@@ -362,22 +460,25 @@ UI but a weak app.
 
 ## 7. Recommended sequence
 
-**Revised — reordered, because verification moved two items.**
+**3 Oct — reordered for mid-season.** Steps 1, 2 and 5 are done. Steps 3 and 4 are this
+season's remaining work. Everything from step 6 on is off-season work.
 
 1. ~~Check the mobile setting and skin.~~ **Done — already correct.** Viewport and
    `responsive.css` are live. Optionally re-pick the skin for looks; there is no fix owed here.
-2. **Fix the injuries URL** (§3). One line, restores a dead league-rules warning, independent of
-   which tier you choose. Do it now whether or not anything else happens.
-3. **Reconcile the repo with production.** Now a known, 60-line commit (§2) rather than an
-   unknown. Do it before writing new code so the starting point is honest.
-4. **Build the loader** (Tier 2). One home page message; everything else in the repo, built and
+2. ~~Fix the live bugs and the Contracts layout.~~ **Done in PR #1**: the injuries URL, the
+   fixed rookie baselines that replaced the kicker fallback, and the Contracts CSS.
+3. **Do the runbook's admin tidy.** All settings, no code.
+4. **Do the post-deadline paste** the week the trade deadline passes (§4, Ritual).
+5. ~~Reconcile the repo with production.~~ **Done in PR #1.** The repo and the live page now
+   match line for line, so new work starts from an honest base.
+6. **Build the loader** (Tier 2). One home page message; everything else in the repo, built and
    deployed by Actions.
-5. **Rewrite the contract views mobile-first** — cards under ~35.5em matching MFL's own
+7. **Rewrite the contract views mobile-first** — cards under ~35.5em matching MFL's own
    breakpoint and its `.report` card idiom, table above — and derive year and league ID from
    the URL so the season rollover stops being a code edit.
-6. **Parallelize the data load** — `Promise.all` the eight fetches (2.50 s → 0.58 s measured),
+8. **Parallelize the data load** — `Promise.all` the eight fetches (2.50 s → 0.58 s measured),
    and check each response's shape so the next silent failure isn't silent.
-7. **Point the league at MFL Modern** for phone lineup-setting; stop trying to out-build it.
+9. **Point the league at MFL Modern** for phone lineup-setting; stop trying to out-build it.
 
 ---
 
@@ -416,6 +517,13 @@ Also pulled live and folded in: the current home page module contents (§2 recon
 skin in use (BlueMesh, `skins17`), the 2026 API rules on hosts, registration and rate limits
 (§1), and the eight-request timing (§4).
 
+**3 Oct re-check.** Claims 1 and 3 hold. The CORS header is still static, the viewport meta
+and `responsive.css` are still served, and there is still no CSP or `X-Frame-Options`. The API
+terms still carry the same forbidden-use, host-routing and rate-limit language. All three
+phone apps are still listed. New this pass: the live page was driven in Chrome with our
+scripts running, which measured the custom tabs for the first time (§4) and found the kicker
+bug (§3).
+
 Still worth a signed-in check, since everything above was observed logged-out:
 
 - The injuries call from a member's browser (§3) — expected to fail identically, as the error is
@@ -435,7 +543,8 @@ Still worth a signed-in check, since everything above was observed logged-out:
       to the league server, `L`-less calls (`players`, `injuries`) to `api`. §3 is what
       forgetting this costs.
 - [ ] Validate every response's shape; never treat HTTP 200 as success.
-- [ ] Compute post-deadline franchise and rookie baselines rather than pasting generated code.
+- [ ] Compute post-deadline franchise salaries rather than pasting generated code. (Rookie
+      baselines are now a fixed table set by league rule, so they need neither.)
       If a snapshot is genuinely needed, store it in MFL, not in the source file.
 - [ ] Pin exact dependency versions and vendor them into the build, so a CDN outage isn't a
       league outage. (Currently four libraries load from cdnjs at runtime.)
@@ -447,7 +556,7 @@ Still worth a signed-in check, since everything above was observed logged-out:
 
 ## Sources
 
-Verified directly this pass (all reachable, 30 Aug 2026):
+Verified directly (all reachable, 30 Aug 2026; re-checked 3 Oct 2026):
 
 - Live league home page — https://www44.myfantasyleague.com/2026/home/48571
 - MFL 2026 API rules, hosts, rate limits, forbidden uses — https://api.myfantasyleague.com/2026/api_info

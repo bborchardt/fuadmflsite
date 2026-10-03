@@ -528,11 +528,25 @@
       <span><b>Live</b> www44.myfantasyleague.com/2026/home/48571</span>
       <span><b>Reviewed</b> 30 Aug 2026</span>
       <span><b>Revised</b> 30 Aug 2026 &middot; verified against the live site</span>
+      <span><b>Re-verified</b> 3 Oct 2026 &middot; Week 4, measured in a real browser</span>
+      <span><b>Updated</b> 3 Oct 2026 &middot; after PR #1 shipped</span>
     </div>
   </header>
 
+  <div class="call">
+    <h3>3 October: what's current</h3>
+    <p>For the one-screen version, read <a href="https://claude.ai/artifact/SHszcQr1L8zGEBcqhJvXjn">Week 4 Site Check</a> first, or <code>docs/findings.md</code> in the repo. This page holds the evidence and the option-by-option reasoning.</p>
+    <ol>
+      <li><b>The recommendation stands.</b> Every platform fact behind Tier 2 re-checked unchanged: a fixed CORS header, no CSP, and the same API terms.</li>
+      <li><b>The live bugs are fixed.</b> <a href="https://github.com/bborchardt/fuadmflsite/pull/1">PR #1</a> shipped and was verified on the live page. The injured-starter warning works. Rookie salaries use the league's new fixed baselines, which retires the kicker <code>$NaN</code>. The Contracts tab stacks on phones. The repo now matches production line for line.</li>
+      <li><b>The mobile diagnosis was wrong in one place.</b> Our contract table squeezes to fit a phone. The Contracts <i>sidebar</i> was what broke, crushed to 134&thinsp;px with overlapping text. That is now fixed.</li>
+      <li><b>The Tier 0 admin changes haven't been made yet.</b> The season is in Week 4.</li>
+    </ol>
+    <p style="margin-top:12px">Passages changed in this pass are marked <b>3 Oct</b>, and those resolved by PR #1 are marked <b>Fixed</b>.</p>
+  </div>
+
   <div class="call" style="margin-bottom:44px">
-    <h3>What changed in this revision</h3>
+    <h3>What changed in the 30 August revision</h3>
     <p>The first draft was written in a session where every <code>myfantasyleague.com</code> domain was blocked, so the central constraint rested on forum posts and three claims were flagged unverified. This pass reached the live site, the 2026 API and the league's own home page.</p>
     <ol>
       <li><b>All three open claims are settled.</b> The cross-origin limit is confirmed twice over — by response header and by MFL's written terms.</li>
@@ -588,21 +602,21 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
         <span class="f-tag">Drift</span>
         <div class="f-body">
           <b>Reconciled &mdash; and much smaller than it looked.</b>
-          <span class="f-sub"><b>Revised.</b> The first draft said nobody knew what was actually running. Now we do: all five modules were pulled off the live page and diffed. Ignoring whitespace, the <i>entire</i> drift is <code>year</code> <code>"2022"</code>&rarr;<code>"2026"</code>, <code>beforeDraft</code> <code>true</code>&rarr;<code>false</code>, the 58-line franchise/rookie settings block refreshed to 2025 names, and one stray production-only <code>console.log</code> in <code>fuadAjax</code>. <code>fuadContract</code>, <code>fuadCommish</code> and <code>fuadLinks</code> are <b>byte-identical</b>. The drift sits entirely inside the block the code itself labels <i>"update these after upgrading site"</i> — the annual ritual, exactly where you'd expect it. Reconciliation is a mechanical 60-line commit, not archaeology. It also means the paste workflow is <i>faithful and recoverable</i>, which matters later.</span>
+          <span class="f-sub"><b>Revised.</b> The first draft said nobody knew what was actually running. Now we do: all five modules were pulled off the live page and diffed. Ignoring whitespace, the <i>entire</i> drift is <code>year</code> <code>"2022"</code>&rarr;<code>"2026"</code>, <code>beforeDraft</code> <code>true</code>&rarr;<code>false</code>, the 58-line franchise/rookie settings block refreshed to 2025 names, and one stray production-only <code>console.log</code> in <code>fuadAjax</code>. <code>fuadContract</code>, <code>fuadCommish</code> and <code>fuadLinks</code> are <b>byte-identical</b>. The drift sits entirely inside the block the code itself labels <i>"update these after upgrading site"</i> — the annual ritual, exactly where you'd expect it. Reconciliation is a mechanical 60-line commit, not archaeology. It also means the paste workflow is <i>faithful and recoverable</i>, which matters later. <b>3 Oct:</b> re-diffed against the Week 4 page. Same block, same debug line, nothing else. <b>Fixed:</b> PR #1 brought the repo up to date, and after deployment all five files match the live page line for line. Commit the post-deadline paste to the repo when it happens so they stay matched.</span>
         </div>
       </li>
-      <li>
+      <li id="mobile">
         <span class="f-tag">Mobile</span>
         <div class="f-body">
-          <b>The outer layout already stacks. Our tables are what overflow.</b>
-          <span class="f-sub"><b>Revised, and this narrows the job.</b> The first draft blamed <code>&lt;table id="homepagecolumns"&gt;</code> and its <code>width="65%"</code>/<code>35%</code>. But MFL's own <code>responsive.css</code> already forces <code>#homepagecolumn1, #homepagecolumn2 { width:100%!important }</code> below 62.5em — the two-column shell <i>does</i> collapse correctly on a phone. What doesn't reflow is the seven-column contract table <i>we</i> generate (Player, Position, Salary, Contract Year, Cap Penalty, Net Cap Space, Franchise), overflowing sideways inside its now-full-width column. Better still, MFL's stylesheet already ships the table&rarr;card idiom — <code>.report th{display:none} .report td{display:block}</code> — just scoped to one page. Our tables already carry MFL's <code>class="homepagemodule report"</code>, so reusing that pattern is native rather than an override.</span>
+          <b>The outer layout already stacks. Our Contracts sidebar is what breaks.</b>
+          <span class="f-sub"><b>Revised, and this narrows the job.</b> The first draft blamed <code>&lt;table id="homepagecolumns"&gt;</code> and its <code>width="65%"</code>/<code>35%</code>. But MFL's own <code>responsive.css</code> already forces <code>#homepagecolumn1, #homepagecolumn2 { width:100%!important }</code> below 62.5em — the two-column shell <i>does</i> collapse correctly on a phone. <b>3 Oct, corrected:</b> this used to say our seven-column contract table overflows sideways. Measured with our scripts running, it doesn't. It squeezes into 250&thinsp;px. The break is one level in: the Contracts message nests its <i>own</i> 65%/35% table, and MFL's stacking rule only targets its own column IDs. On a 390&thinsp;px phone the sidebar (calculator, Rookie Salaries, Top 5 tables) gets <b>134&thinsp;px</b> and its text overlaps. <b>Fixed in PR #1:</b> a three-line CSS rule in <code>fuadContract.hbs</code> stacks the two columns with the sidebar first. On the live page at 390&thinsp;px no table overflows, and desktop is unchanged. What remains is length: the tab is 15,226&thinsp;px on a phone, about 18 screens, because it lists every rostered player in the league. Only Standings clips elsewhere: Power Rankings to 588&thinsp;px and League Standings to 415&thinsp;px, both MFL modules. Separately, MFL's stylesheet already ships the table&rarr;card idiom — <code>.report th{display:none} .report td{display:block}</code> — just scoped to one page. Our tables already carry MFL's <code>class="homepagemodule report"</code>, so reusing that pattern is native rather than an override.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Setting</span>
         <div class="f-body">
           <b>Already correct. Nothing to change — and the easy win is already spent.</b>
-          <span class="f-sub"><b>Revised.</b> The live page serves <code>&lt;meta name="viewport" content="initial-scale=1.0, width=device-width"&gt;</code> and loads <code>skins17/BlueMesh/responsive.css</code>. <i>Desktop View On Mobile</i> is off already and the skin is a responsive one. That retires the first draft's step-one recommendation as a no-op — welcome news, but it also means the remaining mobile problem is <b>entirely ours</b>. There is no setting left to flip.</span>
+          <span class="f-sub"><b>Revised.</b> The live page serves <code>&lt;meta name="viewport" content="initial-scale=1.0, width=device-width"&gt;</code> and loads <code>skins17/BlueMesh/responsive.css</code>. <i>Desktop View On Mobile</i> is off already and the skin is a responsive one. That retires the first draft's step-one recommendation as a no-op — welcome news, but it also means there is no setting left to flip. What remains is our Contracts layout and MFL's Power Rankings module, which is an admin setting.</span>
         </div>
       </li>
       <li>
@@ -616,21 +630,21 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
         <span class="f-tag">Stack</span>
         <div class="f-body">
           <b>Every dependency is 13+ years old &mdash; and all four are safe to delete.</b>
-          <span class="f-sub">jQuery 1.8.0, Underscore 1.4.2, Modernizr 2.6.2, Handlebars 1.0.rc.1 — a release candidate. The checkbox handling uses <code>.attr("checked")</code>, whose meaning changed in jQuery 1.9, so the version pin isn't a preference, it's a dependency. Modernizr is loaded to feature-detect <code>localStorage</code>, universal for over a decade. <b>New:</b> MFL's own <code>mfl_common.js</code> contains no jQuery and no <code>$</code> usage, and the page loads jQuery exactly once — from our tag. <b>Nothing on MFL's side depends on any of these</b>, so dropping all four is safe from the platform's point of view; the <code>jQuery.noConflict()</code> call is defensive, not load-bearing.</span>
+          <span class="f-sub">jQuery 1.8.0, Underscore 1.4.2, Modernizr 2.6.2, Handlebars 1.0.rc.1 — a release candidate. The checkbox handling uses <code>.attr("checked")</code>, whose meaning changed in jQuery 1.9, so the version pin isn't a preference, it's a dependency. Modernizr is loaded to feature-detect <code>localStorage</code>, universal for over a decade. <b>New:</b> MFL's own <code>mfl_common.js</code> contains no jQuery and no <code>$</code> usage, and the page loads jQuery exactly once — from our tag. <b>Nothing on MFL's side depends on any of these</b>, so dropping all four is safe from the platform's point of view; the <code>jQuery.noConflict()</code> call is defensive, not load-bearing. <b>3 Oct:</b> no JavaScript errors on any tab, at either width.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Speed</span>
         <div class="f-body">
           <b>Eight requests in a chain &mdash; measured at 2.50&thinsp;s, against 0.58&thinsp;s in parallel.</b>
-          <span class="f-sub">Players, franchises, salary adjustments, rosters, transactions, weekly results, free agents, injuries — strictly sequential XML. Timed end-to-end from a datacenter on a warm connection: <b>2.50&thinsp;s sequential vs 0.58&thinsp;s for the same eight at once</b>, a 4.3&times; gap that widens sharply on phone networks. The ordering is a <i>processing</i> dependency, not a fetching one — only <code>injuries</code> truly needs a prior response (<code>week</code>, from <code>weeklyResults</code>). Fetch all eight together, then process in order. <b>Revised on <code>JSON=1</code>:</b> it works everywhere but is <i>not</i> a payload win — players 190&thinsp;KB&rarr;183&thinsp;KB, freeAgents 51&thinsp;KB&rarr;48&thinsp;KB, about 5%. Switch to delete the XML DOM-walking code, not to save bytes.</span>
+          <span class="f-sub">Players, franchises, salary adjustments, rosters, transactions, weekly results, free agents, injuries — strictly sequential XML. Timed end-to-end from a datacenter on a warm connection: <b>2.50&thinsp;s sequential vs 0.58&thinsp;s for the same eight at once</b>, a 4.3&times; gap that widens sharply on phone networks. The ordering is a <i>processing</i> dependency, not a fetching one — only <code>injuries</code> truly needs a prior response (<code>week</code>, from <code>weeklyResults</code>). Fetch all eight together, then process in order. <b>Revised on <code>JSON=1</code>:</b> it works everywhere but is <i>not</i> a payload win — players 190&thinsp;KB&rarr;183&thinsp;KB, freeAgents 51&thinsp;KB&rarr;48&thinsp;KB, about 5%. Switch to delete the XML DOM-walking code, not to save bytes. <b>3 Oct:</b> from home broadband in a real browser the chain took about <b>0.75&thinsp;s</b>, and in parallel it would take about 0.25&thinsp;s. The gap is real but smaller than the datacenter figure. Fix it as part of a rewrite, not on its own.</span>
         </div>
       </li>
       <li>
         <span class="f-tag">Ritual</span>
         <div class="f-body">
           <b>Three hand-edits a year, one of them via the console.</b>
-          <span class="f-sub"><code>year</code>, <code>beforeDraft</code> and <code>beforeTradeDeadline</code> are hardcoded, and after the trade deadline a commissioner clicks a button that <code>console.log</code>s a block of JavaScript to copy back into the source. Year and league ID are both already sitting in the page URL and could be derived. This is exactly the "avoid rewrites, stay stable year to year" problem you named.</span>
+          <span class="f-sub"><code>year</code>, <code>beforeDraft</code> and <code>beforeTradeDeadline</code> are hardcoded, and after the trade deadline a commissioner clicks a button that <code>console.log</code>s a block of JavaScript to copy back into the source. Year and league ID are both already sitting in the page URL and could be derived. This is exactly the "avoid rewrites, stay stable year to year" problem you named. <b>3 Oct:</b> production still has <code>beforeTradeDeadline = true</code>, so this season's post-deadline paste is still to come. Since PR #1 it carries franchise players only. Rookie baselines are now a fixed table set by league rule, so they are no longer part of the ritual.</span>
         </div>
       </li>
       <li>
@@ -643,12 +657,15 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
     </ul>
   </section>
 
-  <!-- ============ THE LIVE BUG ============ -->
-  <section>
-    <span class="sec-mark">Found by actually calling the API</span>
-    <h2>Injured-player detection has never worked</h2>
+  <!-- ============ THE LIVE BUGS ============ -->
+  <section id="bugs">
+    <span class="sec-mark">Found by running the real page · fixed in PR #1</span>
+    <h2>Two live bugs, both resolved</h2>
     <div class="col">
-      <p class="lede">This is independent of every option below, it has been broken the whole time, and no amount of code reading would have caught it. It deserves a one-line fix regardless of what you decide.</p>
+      <p class="lede">Both were independent of every option below, both failed silently, and neither would have been caught by reading the code. Both are resolved and live as of 3 Oct. The analysis is kept as the record of what was wrong, and of why the loader should check its responses.</p>
+      <h3>Injured-player detection had never worked <span class="tag-ok">Fixed</span></h3>
+      <p><b>Fixed, 3 Oct (<a href="https://github.com/bborchardt/fuadmflsite/pull/1">PR #1</a>).</b> Injuries now load from <code>api.myfantasyleague.com</code>. On the live page the request returns 464 records and flags 347 players (it flagged none before), 55 of them rostered. The status match also widened from exactly <code>IR</code> to anything starting with <code>IR</code>, which adds <code>IR-R</code>, <code>IR-PUP</code> and <code>IR-NFI</code>. No Week 3 starter was injured, so "No violations found" is now a genuine result.</p>
+      <p><b>Before the fix:</b> in Week 4 the page requested <code>TYPE=injuries&amp;L=48571&amp;W=3</code> from <code>www44</code> and got the same error back. The Main tab's rule-violations box read "No violations found" whatever the lineups contained.</p>
       <p><code>fuadUtil.html:164</code> builds the injuries URL off the <i>league</i> host:</p>
     </div>
     <pre class="spec">injuriesDataUrl: baseUrl + "export?TYPE=injuries&amp;L=" + leagueId + "&amp;W="</pre>
@@ -669,6 +686,17 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
       <p>The fix is one line. The lesson is bigger: <b>eight unchecked <code>$.get</code> calls means any of them can fail exactly this quietly.</b> Whichever tier you pick, the loader needs to check that a response is the shape it expected — and say so on the page when it isn't.</p>
     </div>
     <p class="caveat">Tested logged-out. The error is host-routing, not authentication, so it will behave identically for a signed-in member — but it costs nothing to confirm in the browser console.</p>
+
+    <div class="col">
+      <h3 id="kicker">Kicker rookie salaries showed <code>$NaN</code> <span class="tag-ok">Superseded</span></h3>
+      <p><b>Superseded, 3 Oct (<a href="https://github.com/bborchardt/fuadmflsite/pull/1">PR #1</a>).</b> The league adopted a new rule: first-pick rookie salaries are fixed at QB $6, RB $10, WR $10, TE $4 and PK $1, and each later pick is still 80% of the one before. The code no longer derives baselines from rostered salaries at all. The live table now runs from $6/$10/$10/$4/$1 at pick 1 to $1 across the board at pick 15.</p>
+      <p><b>The bug it replaced:</b> the Rookie Salaries table on the Contracts tab showed <code>$NaN</code> in every row of the PK column. Before the trade deadline the hardcoded baselines are skipped, and each position's baseline is computed live as the salary of the Nth-highest-paid rostered player. For kickers N is 15, and <b>only 14 kickers are rostered</b>. The loop never reaches rank 15, the baseline stays <code>undefined</code>, and <code>Math.max(1, undefined * …)</code> is <code>NaN</code>. Read from the live page:</p>
+    </div>
+    <pre class="spec bad">QB rank 15 &rarr; $25   RB rank 20 &rarr; $10   WR rank 35 &rarr; $1   TE rank 15 &rarr; $2   PK rank 15 &rarr; undefined</pre>
+    <div class="col">
+      <p>The proposed fix was a fallback for when fewer players are rostered than the baseline rank. The fixed table made that unnecessary.</p>
+      <p>It teaches the same lesson as the injuries bug. Nothing checks that a computed value exists, so a missing one renders as <code>$NaN</code> instead of failing loudly.</p>
+    </div>
   </section>
 
   <!-- ============ OPTIONS ============ -->
@@ -708,7 +736,7 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
             </ul>
           </div>
         </div>
-        <p class="opt-foot"><b>Verdict &mdash; revised</b> Still worth doing, but it is no longer the free win it looked like. The mobile setting and responsive skin are <i>already correct</i>, so this tier shrinks to "pick a nicer skin, tidy the tabs, point members at an app." The easy half has already been collected — which means the remaining mobile problem is entirely yours.</p>
+        <p class="opt-foot"><b>Verdict &mdash; revised</b> Still worth doing, but it is no longer the free win it looked like. The mobile setting and responsive skin are <i>already correct</i>, so this tier shrinks to "pick a nicer skin, tidy the tabs, point members at an app." The easy half has already been collected. <b>3 Oct:</b> the admin tidy-up is not done yet. The Contracts CSS fix, the biggest phone fix available without a rewrite, shipped as code in PR #1. The runbook also corrects two of its August steps.</p>
       </div>
 
       <!-- 1 -->
@@ -990,14 +1018,16 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
   <!-- ============ RECOMMENDATION ============ -->
   <section>
     <span class="sec-mark">If it were mine</span>
-    <h2>Tier 0 this week, Tier 2 as the project</h2>
-    <div class="call">
+    <h2>Fix this season's bugs now, Tier 2 in the off-season</h2>
+    <div class="call" id="sequence">
       <h3>The sequence</h3>
-      <p style="margin-top:0">Reordered from the first draft — verification retired step one and added a new one at the top.</p>
+      <p style="margin-top:0"><b>3 Oct, reordered for mid-season.</b> Steps 1, 2 and 5 are done. Steps 3 and 4 are this season's remaining work. Everything from step 6 on is off-season work.</p>
       <ol>
         <li><s>Check the mobile setting and the skin.</s> <b>Done — already correct.</b> Viewport and <code>responsive.css</code> are live on the page today. Re-pick the skin if you want it prettier, but there is no fix owed here.</li>
-        <li><b>Fix the injuries URL.</b> One line. It restores a league-rules warning that has been dead for years, and it is independent of every choice below. Do it whether or not anything else happens.</li>
-        <li><b>Reconcile the repo with production.</b> Now a known, ~60-line commit rather than an unknown — the exact diff is in this document. Do it before writing new code so the starting point is honest.</li>
+        <li><s>Fix the live bugs and the Contracts layout.</s> <b>Done in <a href="https://github.com/bborchardt/fuadmflsite/pull/1">PR #1</a>:</b> the injuries URL, the fixed rookie baselines that replaced the kicker fallback, and the Contracts CSS.</li>
+        <li><b>Do the runbook's admin tidy.</b> All settings, no code.</li>
+        <li><b>Do the post-deadline paste</b> the week the trade deadline passes.</li>
+        <li><s>Reconcile the repo with production.</s> <b>Done in PR #1.</b> The repo and the live page now match line for line, so new work starts from an honest base.</li>
         <li><b>Build the loader.</b> One home page message with a mount div and two tags. Everything else in the repo, built and deployed by Actions. Deploying stops meaning "log into MFL."</li>
         <li><b>Rewrite the contract views mobile-first</b> — cards under ~35.5em, matching MFL's own breakpoint and its <code>.report</code> card idiom, table above — and derive year and league ID from the URL so the season rollover stops being a code edit.</li>
         <li><b>Parallelize the data load.</b> <code>Promise.all</code> the eight fetches (2.50&thinsp;s &rarr; 0.58&thinsp;s measured), and check each response's shape so the next silent failure isn't silent.</li>
@@ -1042,7 +1072,7 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
       <li>Depend on exactly one MFL DOM hook — your own mount point. Delete the <code>#tabcontent0 / #homepagecolumn1</code> reach-in, which currently works around eight duplicate IDs in MFL's own markup.</li>
       <li>Use only documented <code>export?TYPE=</code> endpoints, <b>on the right host</b> — league-scoped calls to the league server, <code>L</code>-less calls (<code>players</code>, <code>injuries</code>) to <code>api</code>. The injuries bug is what forgetting this costs.</li>
       <li>Validate every response's shape. Never treat HTTP 200 as success — that is exactly how a dead feature stays invisible for years.</li>
-      <li>Compute the post-deadline franchise and rookie baselines rather than pasting generated code. If a snapshot is genuinely needed, store it in MFL, not in the source file.</li>
+      <li>Compute the post-deadline franchise salaries rather than pasting generated code. (Rookie baselines are now a fixed table set by league rule.) If a snapshot is genuinely needed, store it in MFL, not in the source file.</li>
       <li>Pin exact dependency versions, and vendor them into the build so a CDN outage isn't a league outage.</li>
       <li>Keep the paste fallback working — it is Tier 2's safety net, and the reconciliation shows it is faithful. (League file space is CSS-only as far as we could verify, so don't rely on it for JS.)</li>
       <li>Write down the season rollover procedure in the repo. There isn't a README today, and the ritual lives only in your head.</li>
@@ -1078,7 +1108,7 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
         <span class="f-tag">Claim 3</span>
         <div class="f-body">
           <b>The league's <i>Desktop View On Mobile</i> setting. <span class="tag-ok">Already off.</span></b>
-          <span class="f-sub">Viewport meta and <code>skins17/BlueMesh/responsive.css</code> are both present on the live page. Nothing to change — and the corollary is that the remaining mobile problem is entirely ours.</span>
+          <span class="f-sub">Viewport meta and <code>skins17/BlueMesh/responsive.css</code> are both present on the live page. Nothing to change.</span>
         </div>
       </li>
     </ul>
@@ -1087,10 +1117,14 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
       <p>Also pulled live and folded into the sections above: the current home page module contents (the reconciliation), the skin in use, the 2026 API rules on hosts, registration and rate limits, and the eight-request timing.</p>
     </div>
 
+    <div class="col">
+      <p><b>3 Oct re-check.</b> Claims 1 and 3 hold. The CORS header is still static, the viewport meta and <code>responsive.css</code> are still served, and there is still no CSP or <code>X-Frame-Options</code>. The API terms still carry the same forbidden-use, host-routing and rate-limit language. All three phone apps are still listed. New this pass: the live page was driven in Chrome with our scripts running. That measured the custom tabs for the first time and found the kicker bug.</p>
+    </div>
+
     <p class="caveat">Everything above was observed logged-out, so three things still warrant a signed-in check: the injuries call from a member's browser (expected to fail identically, since the error is host-routing rather than auth); whether Appearance Setup will accept a <code>.js</code> upload; and whether any commissioner-only view differs from what the public page exposes.</p>
 
     <div class="sources col">
-      <h3>Verified directly this pass <span style="font-weight:400">(all reachable, 30 Aug 2026)</span></h3>
+      <h3>Verified directly <span style="font-weight:400">(all reachable, 30 Aug 2026; re-checked 3 Oct 2026)</span></h3>
       <ul>
         <li><a href="https://www44.myfantasyleague.com/2026/home/48571">The live league home page</a> — source of the reconciliation, the skin, the viewport setting and the mount points</li>
         <li><a href="https://api.myfantasyleague.com/2026/api_info">MFL 2026 API documentation</a> — hosts, rate limits, forbidden uses, caching guidance</li>
@@ -1116,6 +1150,6 @@ Access-Control-Allow-Origin: https://www44.myfantasyleague.com</pre>
     </div>
   </section>
 
-  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 30 August 2026 · revised the same day against the live site</footer>
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · 30 August 2026 · revised the same day · re-verified 3 October 2026 · updated after PR #1</footer>
 
 </div>

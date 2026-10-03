@@ -1,202 +1,179 @@
 # Tier 0 — settings, skin and apps
 
 **League:** 48571 · **Live:** `https://www44.myfantasyleague.com/2026/home/48571`
-**Prepared:** 30 Aug 2026 · Companion to `ux-modernization-options.md`
+**Prepared:** 30 Aug 2026 · **Re-verified:** 3 Oct 2026, Week 4 ·
+**Updated:** 3 Oct 2026, after PR #1 was deployed · Companion to
+[`findings.md`](findings.md) and [`ux-modernization-options.md`](ux-modernization-options.md)
 
 Tier 0 is the no-code tier: everything here is done in MFL's admin screens by
-the commissioner. Nothing in this document requires a deploy, and nothing in it
-can break the season.
-
-This runbook exists because the options review recommended Tier 0 first but
-described it in one paragraph. Measuring the live site changed the picture
-enough to be worth writing down.
+the commissioner. Nothing in this document requires a deploy.
 
 ---
 
-## What measuring changed
+## At a glance
 
-The options review said the mobile experience was broadly bad and the fix was
-mostly ours. That was too pessimistic. Rendering every tab at 390px says
-something narrower:
+| Step | Change | Why | Where |
+|---|---|---|---|
+| 1 | Move or remove Power Rankings | Standings tab cuts off columns on phones | Home Page Modules and Tabs |
+| 2 | Drop the Standings and Live Scoring tabs | They duplicate MFL's own menu | Home Page Modules and Tabs |
+| 3 | Rename the Transactions tab | It holds Trade Bait and free agents, not transactions | Home Page Modules and Tabs |
+| 4 | Remove League Chat, Poll and Trade Bait | Still empty after four weeks | Home Page Modules and Tabs |
+| 5 | Reconsider the skin | Optional; legibility only | Select A Skin |
+| 6 | Post one message recommending a phone app | Lineups on phones | League message |
 
-| Tab | Phone height | Horizontal overflow |
-|---|---|---|
-| Main | 1,036px | none |
-| **Standings** | **1,998px** | **yes — Power Rankings, 514px into a 390px screen** |
-| Transactions | 786px | none |
-| Calendar | 913px | none |
-| Contracts, Commish, Links | *not measurable — see below* | |
-| Live Scoring | empty (preseason) | |
+None of these have been done yet. As of 3 Oct the page still has eight tabs,
+Power Rankings, and the BlueMesh skin.
 
-**Seven of the eight tabs are fine on a phone.** One is not. The whole mobile
-complaint, on the MFL-native side, is the Standings tab — and specifically
-MFL's own *Power Rankings* module, which has fourteen columns and cannot fit a
-phone at any skin. That is a module you can remove or relocate in admin, which
-makes it a Tier 0 fix rather than a code fix.
-
-Two caveats, stated plainly:
-
-- **Contracts, Commish and Links can't be measured this way.** Their content is
-  drawn by our JavaScript, which the preview harness strips. They report ~765px,
-  which is just the empty shell. The options review's concern about the
-  seven-column contract table is untested here and remains a Tier 1/2 problem.
-- Some modules look empty because it is 30 August and this was captured logged
-  out. League Chat, Poll, Trade Bait and Live Scoring will populate in season.
-  Don't prune a module for being empty today.
+**Done:** the earlier first step, a CSS rule that stacks the Contracts tab's two
+columns on phones, shipped with the code fixes in
+[PR #1](https://github.com/bborchardt/fuadmflsite/pull/1) and is live. It is now
+part of `src/fuadContract.hbs`, so there is nothing to paste.
 
 ---
 
-## Already done — don't spend time here
+## How the tabs measure on a phone
 
-- **Mobile mode is on.** The page serves
-  `<meta name="viewport" content="initial-scale=1.0, width=device-width">` and
-  loads `skins17/BlueMesh/responsive.css`. *Desktop View On Mobile* is already
-  set correctly.
-- **The responsive skin works.** At 390px the main menu and tab bar collapse to
-  hamburgers and the two home-page columns stack to full width. MFL's own CSS is
-  doing its job.
+Measured by loading the live page in Chrome at 390×844, with our scripts
+running, on 3 Oct 2026:
 
-The options review listed "check the mobile setting" as step one. It's done.
-The easy win is already collected.
+| Tab | What's on it | Phone height | Cut off on the right |
+|---|---|---|---|
+| Main | rule violations, trades, message board, transactions, poll, chat, owner activity | 1,809px | none |
+| **Standings** | standings, Power Rankings, next week's schedule | 2,312px | **Power Rankings to 588px, League Standings to 415px** |
+| Transactions | Trade Bait, Top 10 Free Agents, Starter Points chart | 990px | none |
+| Contracts | every rostered player; calculator and salary tables above it on phones | 15,226px | none since the 3 Oct fix (was: sidebar crushed to 134px) |
+| Calendar | weekly and monthly calendar | 1,632px | none |
+| Commish | commissioner forms (empty when logged out) | 35px | none |
+| Links | league links | 244px | none |
+| Live Scoring | one scores summary | 330px | none |
+
+The page never scrolls sideways (`scrollWidth` stays at 390). Anything past the
+right edge is invisible, and a member has no hint that columns are missing.
+
+Already done, no work owed: the page serves a proper viewport meta and loads
+`skins17/BlueMesh/responsive.css`, so MFL's own menus collapse and its two home
+page columns stack.
 
 ---
 
 ## The work, in order
 
-### 1. Remove or relocate Power Rankings — *the one real mobile fix here*
+### 1. Move or remove Power Rankings
 
 **Where:** `csetup?L=48571&C=HMPGMOD` — Home Page Modules and Tabs Setup
 
-Power Rankings carries Franchise, W-L-T, PF, PP, EFF, Bench Points, Max PF,
-Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power Rank, W, L, T, PCT.
-At 390px the last four columns are simply off-screen with no scroll affordance —
-members don't know they're missing.
+Power Rankings has sixteen columns: Franchise, W-L-T, PF, PP, Eff, Bench
+Points, Max PF, Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power
+Rank, W, L, T, Pct. With real stats in it, it now runs **588px** into a 390px
+screen. It was 514px preseason. The right third is simply gone on a phone.
 
 Options, best first:
 
-1. Move it to its own tab, so the Standings tab stays readable and anyone who
-   wants the deep numbers opens a page that's expected to be wide.
-2. Drop it. Nothing else links to it and the same information is in MFL's own
-   reports.
-3. Keep it and accept the clipping — only if the league actively uses it.
+1. Move it to its own tab, so anyone who wants the deep numbers opens a page
+   that's expected to be wide.
+2. Drop it. MFL's menu already links Power Rank (`options?L=48571&O=101`).
+3. Keep it and accept the clipping, only if the league actively uses it.
 
-Re-measure afterwards with `tools/skin-preview` (`MFL_TAB=1`).
+League Standings also clips, by 25px (the last column, Avg PA). The team logos
+make its rows tall. That is MFL's module, so leave it unless step 2 removes the
+tab anyway.
 
-### 2. Fix the duplicated navigation
+### 2. Drop the two duplicate tabs
 
-**Where:** `csetup?L=48571&C=HMPGMOD` — Home Page Modules and Tabs Setup
+**Where:** `csetup?L=48571&C=HMPGMOD`
 
-The page currently shows two rows of navigation. MFL's own row carries:
+MFL's own navigation row already carries **Standings** and **Live Scoring**,
+and so does our custom tab row. On a phone both rows collapse into separate
+hamburger menus, so a member can open the wrong one first.
 
-> Home · Rosters · Draft · Submit Lineup · Add/Drops · Trades · Player Stats ·
-> **Standings** · **Transactions** · **Live Scoring** · Schedule
+Drop the custom **Standings** and **Live Scoring** tabs. The Live Scoring tab
+holds a single score summary, and MFL's page (`ajax_ls?L=48571`) is the real
+thing. If you do this, step 1 resolves itself, since Power Rankings lives on the
+Standings tab.
 
-Our custom tab row carries:
+Check MFL's native Standings page on a phone first. If it reads worse than the
+custom tab, keep the tab and just do step 1.
 
-> Main · **Standings** · **Transactions** · Contracts · Calendar · Commish ·
-> Links · **Live Scoring**
+### 3. Rename the Transactions tab
 
-Three of our eight tabs duplicate a destination MFL already provides one row
-above. On a phone both rows collapse into two separate hamburgers, so a member
-opens one, doesn't find what they want, and opens the other.
+**Where:** `csetup?L=48571&C=HMPGMOD`
 
-Proposal: drop the custom **Standings**, **Transactions** and **Live Scoring**
-tabs and let MFL's native pages own those jobs. That leaves five tabs —
-Main, Contracts, Calendar, Commish, Links — of which Contracts is the one that
-actually justifies a custom tab.
+The August runbook said this tab duplicated MFL's Transactions page. It doesn't.
+It holds **Trade Bait, Top 10 Free Agents and the Starter Points chart**. The
+league's transactions list is on Main. The tab is only misnamed.
 
-This also removes the Power Rankings problem in step 1 for free, since that
-module lives on the custom Standings tab.
+Rename it to something that says what's there, such as **Players** or **Free
+Agents**. Keep it.
 
-Worth confirming first: open MFL's native Standings page on a phone and check
-it reads better than the custom tab. If it doesn't, keep the tab and just do
-step 1.
+### 4. Remove the unused modules
 
-### 3. Move the Cap Penalty Calculator off the Main tab
+**Where:** `csetup?L=48571&C=HMPGMOD`
 
-**Where:** `csetup?L=48571&C=HMPGMSG` — Home Page Message Setup
+In August these were empty because it was preseason, and the runbook said to
+wait. Four weeks into the season:
 
-The calculator currently sits in the right column of the Main tab. It's one of
-ours, it's genuinely useful, and it is not something a member needs on first
-paint — it answers "what would it cost to cut this guy", which is a question you
-go looking for. The options review's principle was "common functions obvious,
-advanced functions possible." This is an advanced function in the most prominent
-slot on the site.
+- **League Chat:** "No Chat Messages To Display".
+- **League Poll:** "No Current League Polls".
+- **Trade Bait:** "No franchises have entered Trade Bait yet".
 
-Move it to the Contracts tab, next to the contract data it operates on.
+The message board is active over the same period, with seven topics since 6 Sep.
+So the league has a place to talk and doesn't use these. Removing League Chat
+and Poll shortens Main on a phone. Removing Trade Bait leaves the renamed tab
+from step 3 with free agents and the chart.
 
-### 4. Reconsider the skin
+### 5. Reconsider the skin
 
 **Where:** `csetup?L=48571&C=SKIN` — Select A Skin
 
-The league is on **BlueMesh** (from MFL's 2017 skin set) — dark navy ground,
-blue module headers, white text. It is not broken and it is not ugly. Its
-weaknesses on a phone are contrast in daylight and fairly dense table rows.
+Still **BlueMesh** (dark navy, blue headers). It isn't broken. A light skin
+reads better on a phone outdoors. The skin doesn't affect layout: Power Rankings
+measured 514, 525 and 514px under BlueMesh, AllAmerican and AquaGreen in August.
+Choose for legibility only.
 
-For comparison I rendered the same page under two alternates:
-
-| Skin | Character | Phone height, Main tab |
-|---|---|---|
-| BlueMesh (current) | dark navy, blue headers | 1,036px |
-| AllAmerican | white ground, dark red headers, navy nav | 1,040px |
-| AquaGreen | light, green headers | 1,026px |
-
-A light skin is markedly easier to read on a phone outdoors. Nothing else
-changes: **the skin does not affect the overflow at all** — Power Rankings
-measured 514px, 525px and 514px under the three skins respectively. Choose a
-skin for legibility, not expecting it to fix layout.
-
-Preview any skin against the real page before committing to it:
+Preview skins against the real page before switching:
 
 ```
 cd tools/skin-preview && node preview.js AllAmerican AquaGreen
 ```
 
-MFL's picker only shows a generic thumbnail; this shows your page. The full
-skin list is only visible inside Appearance Setup — the names aren't
-discoverable from outside — so take the names from that screen and pass them in
-(spaces removed: "All American" → `AllAmerican`).
+### 6. Point members at a phone app
 
-### 5. Point the league at a phone app for lineups
+All three are still listed on the App Store (checked 3 Oct):
 
-All three are still published:
+- **MFL Modern:** newest, free for one team, uses existing MFL logins
+- **MFL Mobile**
+- **MFL Platinum**
 
-- **MFL Modern** — newest, free for one team, logs in with existing MFL credentials
-- **MFL Mobile** — long-standing
-- **MFL Platinum** — long-standing
+Rosters, lineups and live scoring are the most common member jobs and are all
+MFL-native, so an app handles them well. Say so in one league message.
 
-Rosters, lineups and live scoring are the most common member jobs and are
-entirely MFL-native, so an app does them well with no work from us. Say so in a
-league message once, before Week 1.
-
-The limit to be honest about: apps generally don't render custom home page
-modules, so members living in an app **won't see the Contracts tab at all**.
-That's the argument for not letting Tier 0 be the whole answer.
+Apps don't render custom home page modules, so members who live in an app
+**won't see the Contracts tab at all**. That's why Tier 0 can't be the whole
+answer.
 
 ---
 
 ## What Tier 0 will not fix
 
-Worth being clear so expectations match:
+- **The length of the Contracts tab.** 13,800px of roster on a phone. Needs a
+  "My Team" view.
+- **The eight sequential data requests.**
+- **The annual code edits** for `year`, `beforeDraft` and the post-deadline
+  block. The post-deadline one is due this season.
 
-- The **contract tables** — seven columns, drawn by our code. Untouched by any
-  setting or skin. That's Tier 1/2.
-- The **injuries bug** (see the options review, §3) — a one-line code fix,
-  unrelated to any of this, and worth doing on its own.
-- The **eight sequential data requests** on the Contracts tab.
-- The **annual code edits** for `year`, `beforeDraft` and the post-deadline block.
+The injured-starter warning and the kicker `$NaN` were code bugs outside Tier 0.
+Both were fixed in PR #1.
 
 ---
 
 ## Checklist
 
-- [ ] Decide Power Rankings: own tab, remove, or keep
-- [ ] Check MFL's native Standings on a phone, then drop the duplicate custom tabs
-      (Standings, Transactions, Live Scoring)
-- [ ] Move the Cap Penalty Calculator to the Contracts tab
-- [ ] Preview two or three skins against the real page; switch or keep deliberately
+- [ ] Check MFL's native Standings page on a phone
+- [ ] Drop the custom Standings and Live Scoring tabs, or move Power Rankings
+- [ ] Rename the Transactions tab
+- [ ] Remove League Chat, Poll and Trade Bait
+- [ ] Preview two or three skins; switch or keep deliberately
 - [ ] Post one league message recommending a phone app
-- [ ] Re-run `MFL_TAB=all node preview.js` and confirm no tab overflows
 
 ---
 
@@ -208,29 +185,30 @@ Taken from MFL's own help centre rather than reconstructed from menu paths.
 | Screen | URL |
 |---|---|
 | Home Page Modules and Tabs Setup | `csetup?L=48571&C=HMPGMOD` |
-| Home Page Message Setup | `csetup?L=48571&C=HMPGMSG` |
+| Home Page Message Setup *(where our code lives)* | `csetup?L=48571&C=HMPGMSG` |
 | Select A Skin | `csetup?L=48571&C=SKIN` |
 | Images & Other URLs Setup *(custom CSS upload)* | `csetup?L=48571&C=IMAGES` |
 
 Source: [MFL Help Centre — Site Appearance](https://www44.myfantasyleague.com/2026/support?CATEGORY=Appearance%20%26%20Customization&SUBCATEGORY=Site%20Appearance).
-That page is also the primary source for the CSS-upload path: *"define your own CSS and
-upload using the Images & Other URLs Setup screen, or select from one of our predefined
-skins with the Select A Skin screen."*
 
 ---
 
 ## Method
 
-Figures come from `tools/skin-preview`, which mirrors the live home page,
-swaps in a skin's stylesheets, and screenshots at 390×844 and 1440×900.
+**3 Oct pass.** The live page was loaded directly in Chrome (via Playwright) at
+390×844 and 1440×900, logged out. Because it ran on MFL's own origin, our
+scripts ran too, so the Contracts, Commish and Links tabs were measured for the
+first time. Each tab was shown with MFL's own `show_tab()`, and every table
+whose right edge passed the viewport was recorded. The Contracts CSS fix was
+tested by injecting it into the same live page, then re-checked on the live page
+after PR #1 was deployed.
 
-One correction worth recording, because it nearly became a false finding: an
-early version of the harness stripped all scripts, including the inline
-`show_tab(0)` call that hides every tab but the first. That made the page render
-all eight tabs stacked and report ~4,050px on a phone — which looked like a
-damning result and was entirely an artifact of the harness. The tool now
-re-implements the tab initialisation, and the real figure is 1,036px. The
-per-tab table above is from the corrected version.
+**30 Aug pass.** `tools/skin-preview` mirrors the page locally and swaps the
+skin stylesheet. It strips scripts, so it can only measure MFL-native tabs. That
+limitation caused two wrong conclusions in the first runbook: it placed the Cap
+Penalty Calculator on Main (it is on Contracts) and assumed the contract table
+overflowed sideways (it squeezes; the sidebar was what broke). Use it to compare
+skins, not to judge our own tabs.
 
-Everything was captured logged out, so member-only and commissioner-only views
-may differ.
+Logged-out caveat: the Commish tab and franchise-specific views were not seen
+as a member or commissioner would see them.

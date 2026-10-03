@@ -366,6 +366,10 @@
   td.bad-cell { color: var(--bad); font-weight: 600; }
   tbody tr.flag { background: var(--bad-wash); }
   .note-dim { color: var(--ink-3); font-style: italic; }
+  .step { scroll-margin-top: 16px; }
+  tbody tr.done { color: var(--ink-3); }
+  .tag-new { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bad); margin-left: 6px; white-space: nowrap; }
+  .tag-fix { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--warn); margin-left: 6px; white-space: nowrap; }
 </style>
 
 <div class="wrap">
@@ -373,146 +377,128 @@
   <header class="mast">
     <p class="eyebrow"><span>League 48571</span><span>·</span><span>Tier 0</span><span>·</span><span>No code required</span></p>
     <h1>Tier 0 Punchlist</h1>
-    <p class="standfirst">Five things the commissioner can change in MFL admin this week. Measuring the live site first made the list shorter and more specific than expected.</p>
+    <p class="standfirst">Six settings the commissioner can change in MFL admin. The code fixes, including the Contracts tab on phones, shipped separately in PR #1. None of these six have been done yet.</p>
     <div class="mast-foot">
-      <span><b>Companion to</b> The FUAD Site Rebuild</span>
-      <span><b>Live</b> www44.myfantasyleague.com/2026/home/48571</span>
+      <span><b>Summary</b> <a href="https://claude.ai/artifact/SHszcQr1L8zGEBcqhJvXjn">Week 4 Site Check</a></span>
+      <span><b>Companion to</b> <a href="https://claude.ai/artifact/HorKPiTmWb3u6AAnMVC16s">The FUAD Site Rebuild</a></span>
       <span><b>Measured</b> 30 Aug 2026</span>
+      <span><b>Re-verified</b> 3 Oct 2026 · Week 4</span>
+      <span><b>Updated</b> after PR #1 shipped</span>
     </div>
   </header>
 
   <section>
-    <span class="sec-mark">What measuring changed</span>
-    <h2>Seven of eight tabs are already fine on a phone</h2>
-    <div class="col">
-      <p class="lede">The options review said the mobile experience was broadly bad and that the fix was mostly ours. Rendering every tab at 390&thinsp;px says something narrower — and more actionable.</p>
-      <p>One tab is the problem, and the thing making it a problem is an MFL module the commissioner can move or remove. That turns the headline mobile complaint into a Tier 0 fix rather than a code project.</p>
-    </div>
-
+    <span class="sec-mark">At a glance</span>
+    <h2>Six changes, in order</h2>
     <div class="scroller">
       <table>
-        <thead>
-          <tr>
-            <th scope="col">Tab</th>
-            <th scope="col">Height at 390px</th>
-            <th scope="col">Horizontal overflow</th>
-          </tr>
-        </thead>
+        <thead><tr><th scope="col">Step</th><th scope="col">Change</th><th scope="col">Why</th><th scope="col">Where</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Main</th><td class="n">1,036px</td><td><span class="dot g"></span>None</td></tr>
-          <tr class="flag"><th scope="row">Standings</th><td class="n">1,998px</td><td class="bad-cell"><span class="dot r"></span>Power Rankings — 514px into 390px</td></tr>
-          <tr><th scope="row">Transactions</th><td class="n">786px</td><td><span class="dot g"></span>None</td></tr>
-          <tr><th scope="row">Calendar</th><td class="n">913px</td><td><span class="dot g"></span>None</td></tr>
-          <tr><th scope="row">Contracts · Commish · Links</th><td class="n">—</td><td><span class="dot a"></span>Not measurable this way</td></tr>
-          <tr><th scope="row">Live Scoring</th><td class="n">—</td><td><span class="dot a"></span>Empty in preseason</td></tr>
+          <tr><td class="n">1</td><th scope="row"><a href="#step-1">Move or remove Power Rankings</a></th><td>Standings tab cuts off columns on phones</td><td>Modules and Tabs</td></tr>
+          <tr><td class="n">2</td><th scope="row"><a href="#step-2">Drop the Standings and Live Scoring tabs</a></th><td>They duplicate MFL's own menu</td><td>Modules and Tabs</td></tr>
+          <tr><td class="n">3</td><th scope="row"><a href="#step-3">Rename the Transactions tab</a></th><td>It holds Trade Bait and free agents <span class="tag-fix">Corrected</span></td><td>Modules and Tabs</td></tr>
+          <tr><td class="n">4</td><th scope="row"><a href="#step-4">Remove Chat, Poll and Trade Bait</a></th><td>Still empty after four weeks</td><td>Modules and Tabs</td></tr>
+          <tr><td class="n">5</td><th scope="row"><a href="#step-5">Reconsider the skin</a></th><td>Optional; legibility only</td><td>Select A Skin</td></tr>
+          <tr><td class="n">6</td><th scope="row"><a href="#step-6">Recommend a phone app</a></th><td>Lineups on phones</td><td>League message</td></tr>
         </tbody>
       </table>
     </div>
-
     <div class="col">
-      <p style="margin-top:24px">Two caveats, stated plainly. <b>Contracts, Commish and Links can't be measured this way</b> — their content is drawn by our JavaScript, which the preview harness strips, so they report an empty shell. The seven-column contract table remains untested here and is still a Tier 1/2 problem. And some modules look empty because this was captured on 30 August, logged out: League Chat, Poll, Trade Bait and Live Scoring will fill in during the season. <b>Don't prune a module for being empty today.</b></p>
+      <p style="margin-top:22px"><b>Done:</b> the earlier first step, a CSS rule that stacks the Contracts tab's two columns on phones, shipped with the code fixes in <a href="https://github.com/bborchardt/fuadmflsite/pull/1">PR #1</a> and is live. It is part of <code>src/fuadContract.hbs</code> now, so there's nothing to paste.</p>
+      <p>The August version also had a step to move the Cap Penalty Calculator off the Main tab. It was wrong: the calculator has always been on the Contracts tab, so that step is gone.</p>
     </div>
   </section>
 
   <section>
-    <span class="sec-mark">Already done</span>
-    <h2>Don't spend time here</h2>
+    <span class="sec-mark">Measured 3 Oct, scripts running</span>
+    <h2>One tab still breaks on a phone</h2>
     <div class="col">
-      <p>The options review listed "check the mobile setting" as step one. It's done — the page already serves <code>&lt;meta name="viewport" content="initial-scale=1.0, width=device-width"&gt;</code> and loads <code>skins17/BlueMesh/responsive.css</code>. At 390&thinsp;px the menu and tab bar collapse to hamburgers and the two home-page columns stack to full width. MFL's own CSS is doing its job.</p>
-      <p>The easy win is already collected — which is also why what's left is more specific.</p>
+      <p class="lede">The live page was loaded in Chrome at 390&times;844, with our scripts running, so the Contracts, Commish and Links tabs were measured for the first time.</p>
+    </div>
+    <div class="scroller">
+      <table>
+        <thead><tr><th scope="col">Tab</th><th scope="col">What's on it</th><th scope="col">Height at 390px</th><th scope="col">Problem</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Main</th><td>Rule violations, trades, message board, transactions, poll, chat, owner activity</td><td class="n">1,809px</td><td><span class="dot g"></span>None</td></tr>
+          <tr class="flag"><th scope="row">Standings</th><td>Standings, Power Rankings, next week's schedule</td><td class="n">2,312px</td><td class="bad-cell"><span class="dot r"></span>Power Rankings to 588px; Standings to 415px</td></tr>
+          <tr><th scope="row">Transactions</th><td>Trade Bait, Top 10 Free Agents, Starter Points chart</td><td class="n">990px</td><td><span class="dot g"></span>None</td></tr>
+          <tr><th scope="row">Contracts</th><td>Every rostered player; calculator and salary tables above it on phones</td><td class="n">15,226px</td><td><span class="dot g"></span>None since PR #1 <span class="note-dim">(was: sidebar crushed to 134px)</span></td></tr>
+          <tr><th scope="row">Calendar</th><td>Weekly and monthly calendar</td><td class="n">1,632px</td><td><span class="dot g"></span>None</td></tr>
+          <tr><th scope="row">Commish</th><td>Commissioner forms (empty logged out)</td><td class="n">35px</td><td><span class="dot g"></span>None</td></tr>
+          <tr><th scope="row">Links</th><td>League links</td><td class="n">244px</td><td><span class="dot g"></span>None</td></tr>
+          <tr><th scope="row">Live Scoring</th><td>One scores summary</td><td class="n">330px</td><td><span class="dot g"></span>None</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <p style="margin-top:22px">The page never scrolls sideways, so anything past the right edge is simply invisible. A member has no hint that columns are missing. Already done, with no work owed: the viewport meta and <code>responsive.css</code> are live, so MFL's own menus collapse and its columns stack.</p>
     </div>
   </section>
 
   <section>
     <span class="sec-mark">The work, in order</span>
-    <h2>Five changes, all in admin</h2>
+    <h2>Six changes, in detail</h2>
 
     <div class="steps">
-
-      <div class="step key">
+      <div class="step key" id="step-1">
         <span class="step-n">1</span>
         <div class="step-b">
           <span class="where"><b>csetup?L=48571&amp;C=HMPGMOD</b> — Home Page Modules and Tabs Setup</span>
-          <h3>Remove or relocate Power Rankings</h3>
-          <p>This is the one real mobile fix in Tier 0. The module carries sixteen columns — Franchise, W-L-T, PF, PP, EFF, Bench Points, Max PF, Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power Rank, W, L, T, PCT. At 390&thinsp;px the last four are simply off-screen with no scroll affordance, so members don't know they're missing anything.</p>
+          <h3>Move or remove Power Rankings</h3>
+          <p>Sixteen columns: Franchise, W-L-T, PF, PP, Eff, Bench Points, Max PF, Min PF, Coulda Won, Woulda Lost, Power Rank, Alternate Power Rank, W, L, T, Pct. With real stats in it, it now runs <b>588&thinsp;px</b> into a 390&thinsp;px screen. It was 514&thinsp;px preseason. The right third is gone on a phone.</p>
           <ol>
-            <li><b>Move it to its own tab</b> — keeps Standings readable, and anyone wanting the deep numbers opens a page that's expected to be wide.</li>
-            <li><b>Drop it</b> — nothing links to it and the same information is in MFL's own reports.</li>
-            <li><b>Keep and accept the clipping</b> — only if the league actively uses it.</li>
+            <li><b>Move it to its own tab</b>, where a wide page is expected.</li>
+            <li><b>Drop it.</b> MFL's menu already links Power Rank (<code>options?L=48571&amp;O=101</code>).</li>
+            <li><b>Keep it and accept the clipping</b>, only if the league actively uses it.</li>
           </ol>
-          <p>Re-measure afterwards with <code>MFL_TAB=1 node preview.js</code>.</p>
+          <p>League Standings also clips, by 25&thinsp;px (the Avg PA column). It is MFL's module, so leave it unless step 2 removes the tab anyway.</p>
         </div>
       </div>
 
-      <div class="step key">
+      <div class="step key" id="step-2">
         <span class="step-n">2</span>
         <div class="step-b">
           <span class="where"><b>csetup?L=48571&amp;C=HMPGMOD</b> — Home Page Modules and Tabs Setup</span>
-          <h3>Fix the duplicated navigation</h3>
-          <p>The page shows two rows of navigation. MFL's own row carries Home, Rosters, Draft, Submit Lineup, Add/Drops, Trades, Player Stats, <b>Standings</b>, <b>Transactions</b>, <b>Live Scoring</b> and Schedule. Our custom row carries Main, <b>Standings</b>, <b>Transactions</b>, Contracts, Calendar, Commish, Links and <b>Live Scoring</b>.</p>
-          <p>Three of our eight tabs duplicate a destination MFL already provides one row above. On a phone both rows collapse into separate hamburgers, so a member opens one, doesn't find what they want, and opens the other.</p>
-          <p><b>Proposal:</b> drop the custom Standings, Transactions and Live Scoring tabs and let MFL's native pages own those jobs. That leaves five — Main, Contracts, Calendar, Commish, Links — of which Contracts is the one that genuinely justifies a custom tab. It also resolves step 1 for free, since Power Rankings lives on the custom Standings tab.</p>
-          <p><b>Confirm first:</b> open MFL's native Standings page on a phone and check it reads better than the custom tab. If it doesn't, keep the tab and just do step 1.</p>
+          <h3>Drop the two duplicate tabs</h3>
+          <p>MFL's own navigation row already carries <b>Standings</b> and <b>Live Scoring</b>, and so does our custom row. On a phone both rows collapse into separate hamburger menus, so a member can open the wrong one first.</p>
+          <p>Drop the custom Standings and Live Scoring tabs. The Live Scoring tab holds a single score summary, and MFL's own page (<code>ajax_ls?L=48571</code>) is the real thing. Dropping Standings also resolves step 1.</p>
+          <p><b>Check first:</b> open MFL's native Standings page on a phone. If it reads worse than the custom tab, keep the tab and just do step 1.</p>
         </div>
       </div>
 
-      <div class="step">
+      <div class="step" id="step-3">
         <span class="step-n">3</span>
         <div class="step-b">
-          <span class="where"><b>csetup?L=48571&amp;C=HMPGMSG</b> — Home Page Message Setup</span>
-          <h3>Move the Cap Penalty Calculator off the Main tab</h3>
-          <p>It sits in the right column of the Main tab today. It's one of ours, it's genuinely useful, and it is not something a member needs on first paint — it answers "what would it cost to cut this guy", which is a question you go looking for.</p>
-          <p>The principle from the options review was <i>common functions obvious, advanced functions possible</i>. This is an advanced function in the most prominent slot on the site. Move it to the Contracts tab, beside the data it operates on.</p>
+          <span class="where"><b>csetup?L=48571&amp;C=HMPGMOD</b> — Home Page Modules and Tabs Setup</span>
+          <h3>Rename the Transactions tab</h3>
+          <p>The August runbook said this tab duplicated MFL's Transactions page. It doesn't. It holds <b>Trade Bait, Top 10 Free Agents and the Starter Points chart</b>, and the league's transactions list is on Main. The tab is only misnamed. Rename it to something like <b>Players</b> or <b>Free Agents</b>, and keep it.</p>
         </div>
       </div>
 
-      <div class="step">
+      <div class="step" id="step-4">
         <span class="step-n">4</span>
         <div class="step-b">
-          <span class="where"><b>csetup?L=48571&amp;C=SKIN</b> — Select A Skin</span>
-          <h3>Reconsider the skin — for legibility, not layout</h3>
-          <p>The league is on <b>BlueMesh</b> from MFL's 2017 set: dark navy ground, blue headers, white text. It is neither broken nor ugly. Its weaknesses on a phone are daylight contrast and fairly dense table rows.</p>
+          <span class="where"><b>csetup?L=48571&amp;C=HMPGMOD</b> — Home Page Modules and Tabs Setup</span>
+          <h3>Remove the unused modules</h3>
+          <p>In August these were empty because it was preseason, and the advice was to wait. Four weeks in, <b>League Chat</b>, <b>League Poll</b> and <b>Trade Bait</b> are all still empty. Over the same period the message board has seven topics since 6 Sep, so the league has a place to talk and doesn't use these. Removing Chat and Poll shortens Main on a phone.</p>
         </div>
       </div>
-    </div>
 
-    <div class="scroller" style="margin-top:22px">
-      <table>
-        <thead>
-          <tr><th scope="col">Skin</th><th scope="col">Character</th><th scope="col">Main tab, 390px</th><th scope="col">Power Rankings width</th></tr>
-        </thead>
-        <tbody>
-          <tr class="pick"><th scope="row">BlueMesh <span class="note-dim">(current)</span></th><td>Dark navy, blue headers</td><td class="n">1,036px</td><td class="n">514px</td></tr>
-          <tr><th scope="row">AllAmerican</th><td>White ground, dark red headers, navy nav</td><td class="n">1,040px</td><td class="n">525px</td></tr>
-          <tr><th scope="row">AquaGreen</th><td>Light, green headers</td><td class="n">1,026px</td><td class="n">514px</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="steps" style="margin-top:20px">
-      <div class="step">
-        <span class="step-n">4b</span>
-        <div class="step-b">
-          <p>A light skin is markedly easier to read on a phone outdoors. But note the last column: <b>the skin does not affect the overflow at all.</b> Choose for legibility and expect nothing else to change.</p>
-          <p>Preview any skin against the real page before committing — MFL's picker only shows a generic thumbnail:</p>
-        </div>
-      </div>
-    </div>
-
-    <pre class="spec">cd tools/skin-preview &amp;&amp; node preview.js AllAmerican AquaGreen</pre>
-
-    <div class="col">
-      <p>The full skin list is only visible inside Appearance Setup — the names aren't discoverable from outside — so take them from that screen and pass them in with spaces removed: "All American" becomes <code>AllAmerican</code>.</p>
-    </div>
-
-    <div class="steps">
-      <div class="step">
+      <div class="step" id="step-5">
         <span class="step-n">5</span>
         <div class="step-b">
-          <span class="where"><b>Post</b> one league message before Week 1</span>
-          <h3>Point the league at a phone app for lineups</h3>
-          <p>All three are still published: <b>MFL Modern</b> (newest, free for one team, logs in with existing MFL credentials), <b>MFL Mobile</b> and <b>MFL Platinum</b>. Rosters, lineups and live scoring are the most common member jobs and are entirely MFL-native, so an app does them well with no work from us.</p>
-          <p><b>The limit to be honest about:</b> apps generally don't render custom home page modules, so members living in an app won't see the Contracts tab at all. That's the argument for not letting Tier 0 be the whole answer.</p>
+          <span class="where"><b>csetup?L=48571&amp;C=SKIN</b> — Select A Skin</span>
+          <h3>Reconsider the skin, for legibility only</h3>
+          <p>Still <b>BlueMesh</b>: dark navy, blue headers. It isn't broken. A light skin reads better on a phone outdoors. The skin doesn't change layout: Power Rankings measured 514, 525 and 514&thinsp;px under BlueMesh, AllAmerican and AquaGreen in August. Preview against the real page with <code>cd tools/skin-preview &amp;&amp; node preview.js AllAmerican AquaGreen</code>.</p>
+        </div>
+      </div>
+
+      <div class="step" id="step-6">
+        <span class="step-n">6</span>
+        <div class="step-b">
+          <span class="where"><b>Post</b> one league message</span>
+          <h3>Point members at a phone app</h3>
+          <p>All three are still listed on the App Store as of 3 Oct: <b>MFL Modern</b> (newest, free for one team, uses existing MFL logins), <b>MFL Mobile</b> and <b>MFL Platinum</b>. They handle rosters, lineups and live scoring well. They don't render custom home page modules, so app users <b>won't see the Contracts tab at all</b>. That's why Tier 0 can't be the whole answer.</p>
         </div>
       </div>
     </div>
@@ -521,27 +507,24 @@
   <section>
     <span class="sec-mark">Scope</span>
     <h2>What Tier 0 will not fix</h2>
-    <div class="col">
-      <p class="lede">Worth being clear so expectations match the work.</p>
-    </div>
     <ul class="checks">
-      <li>The <b>contract tables</b> — seven columns, drawn by our code. Untouched by any setting or skin. That's Tier 1/2.</li>
-      <li>The <b>injuries bug</b> — a one-line code fix, unrelated to any of this, and worth doing on its own.</li>
-      <li>The <b>eight sequential data requests</b> behind the Contracts tab.</li>
-      <li>The <b>annual code edits</b> for <code>year</code>, <code>beforeDraft</code> and the post-deadline block.</li>
+      <li>The <b>length of the Contracts tab</b>: 13,800&thinsp;px of roster on a phone. Needs a "My Team" view.</li>
+      <li>The <b>eight sequential data requests</b>.</li>
+      <li>The <b>annual code edits</b> for <code>year</code>, <code>beforeDraft</code> and the post-deadline block. The post-deadline one is due this season.</li>
     </ul>
+    <div class="col"><p style="margin-top:20px">The injured-starter warning and the kicker <code>$NaN</code> were code bugs outside Tier 0. Both were fixed in PR #1.</p></div>
   </section>
 
   <section>
     <span class="sec-mark">Before you start</span>
     <h2>The checklist</h2>
     <ul class="checks">
-      <li>Decide Power Rankings: own tab, remove, or keep</li>
-      <li>Check MFL's native Standings on a phone, then drop the duplicate custom tabs</li>
-      <li>Move the Cap Penalty Calculator to the Contracts tab</li>
-      <li>Preview two or three skins against the real page; switch or keep deliberately</li>
+      <li>Check MFL's native Standings page on a phone</li>
+      <li>Drop the custom Standings and Live Scoring tabs, or move Power Rankings</li>
+      <li>Rename the Transactions tab</li>
+      <li>Remove League Chat, Poll and Trade Bait</li>
+      <li>Preview two or three skins; switch or keep deliberately</li>
       <li>Post one league message recommending a phone app</li>
-      <li>Re-run <code>MFL_TAB=all node preview.js</code> and confirm no tab overflows</li>
     </ul>
   </section>
 
@@ -549,21 +532,21 @@
     <span class="sec-mark">Reference</span>
     <h2>The admin screens, by URL</h2>
     <div class="col">
-      <p>All under <code>https://www44.myfantasyleague.com/2026/</code>, commissioner login required. Taken from MFL's own help centre rather than reconstructed from menu paths — the menu wording has changed between seasons, the <code>C=</code> parameters haven't.</p>
+      <p>All under <code>https://www44.myfantasyleague.com/2026/</code>, commissioner login required. Taken from MFL's own help centre rather than reconstructed from menu paths: the menu wording has changed between seasons, but the <code>C=</code> parameters haven't.</p>
     </div>
     <div class="scroller">
       <table>
         <thead><tr><th scope="col">Screen</th><th scope="col">URL</th><th scope="col">Used in</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Home Page Modules and Tabs Setup</th><td class="n">csetup?L=48571&amp;C=HMPGMOD</td><td>Steps 1, 2</td></tr>
-          <tr><th scope="row">Home Page Message Setup</th><td class="n">csetup?L=48571&amp;C=HMPGMSG</td><td>Step 3</td></tr>
-          <tr><th scope="row">Select A Skin</th><td class="n">csetup?L=48571&amp;C=SKIN</td><td>Step 4</td></tr>
+          <tr><th scope="row">Home Page Modules and Tabs Setup</th><td class="n">csetup?L=48571&amp;C=HMPGMOD</td><td>Steps 1–4</td></tr>
+          <tr><th scope="row">Select A Skin</th><td class="n">csetup?L=48571&amp;C=SKIN</td><td>Step 5</td></tr>
+          <tr><th scope="row">Home Page Message Setup <span class="note-dim">(where our code lives)</span></th><td class="n">csetup?L=48571&amp;C=HMPGMSG</td><td>—</td></tr>
           <tr><th scope="row">Images &amp; Other URLs Setup <span class="note-dim">(custom CSS upload)</span></th><td class="n">csetup?L=48571&amp;C=IMAGES</td><td>—</td></tr>
         </tbody>
       </table>
     </div>
     <div class="col">
-      <p style="margin-top:22px">Source: <a href="https://www44.myfantasyleague.com/2026/support?CATEGORY=Appearance%20%26%20Customization&amp;SUBCATEGORY=Site%20Appearance">MFL Help Centre — Site Appearance</a>, which is also the primary source for the CSS-upload path: <i>"define your own CSS and upload using the Images &amp; Other URLs Setup screen, or select from one of our predefined skins with the Select A Skin screen."</i></p>
+      <p style="margin-top:22px">Source: <a href="https://www44.myfantasyleague.com/2026/support?CATEGORY=Appearance%20%26%20Customization&amp;SUBCATEGORY=Site%20Appearance">MFL Help Centre — Site Appearance</a>.</p>
     </div>
   </section>
 
@@ -571,16 +554,15 @@
     <span class="sec-mark">Method</span>
     <h2>How these numbers were produced</h2>
     <div class="col">
-      <p>Figures come from <code>tools/skin-preview</code>, which mirrors the live home page, swaps in a skin's stylesheets, and screenshots at 390&times;844 and 1440&times;900, flagging any table wider than the viewport.</p>
+      <p><b>3 Oct.</b> The live page was loaded directly in Chrome via Playwright, at 390&times;844 and 1440&times;900, logged out. Because it ran on MFL's own origin, our scripts ran too. Each tab was shown with MFL's own <code>show_tab()</code>, and every table whose right edge passed the viewport was recorded. The Contracts CSS was tested by injecting it into the same page, then re-checked on the live page after PR #1 was deployed.</p>
     </div>
     <div class="call">
-      <h3>One correction worth recording</h3>
-      <p>An early version of the harness stripped every script, including the inline <code>show_tab(0)</code> call that hides all tabs but the first. That made the page render all eight tabs stacked and report <b>~4,050px</b> on a phone — which looked like a damning result and was entirely an artifact of the measurement.</p>
-      <p>The tool now re-implements the tab initialisation, and the real figure is <b>1,036px</b>. Every number on this page is from the corrected version. It's a reminder that a harness that strips the page's behaviour will happily invent a problem to solve.</p>
+      <h3>What the August method got wrong</h3>
+      <p><code>tools/skin-preview</code> mirrors the page locally and swaps the skin stylesheet. It strips scripts, so it can't see anything our code draws. That caused two wrong conclusions in the first runbook: it placed the Cap Penalty Calculator on Main (it is on Contracts), and it assumed the contract table overflowed sideways (it squeezes; the sidebar was what broke). Use the tool to compare skins, not to judge our own tabs.</p>
     </div>
-    <p class="caveat">Everything was captured logged out, so member-only and commissioner-only views may differ. The harness cannot render tabs whose content our own JavaScript draws — Contracts, Commish and Links — so those are excluded from the table above rather than reported as small.</p>
+    <p class="caveat">Captured logged out, so the Commish tab and franchise-specific views were not seen as a member or commissioner would see them.</p>
   </section>
 
-  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · Tier 0 · 30 August 2026</footer>
+  <footer>Prepared for the FUAD league · bborchardt/fuadmflsite · Tier 0 · 30 August 2026 · re-verified 3 October 2026 · updated after PR #1</footer>
 
 </div>
