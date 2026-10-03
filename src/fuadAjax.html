@@ -70,8 +70,8 @@
                     },
                     {loadFunction:function () {
                         if (fuadUtil.beforeTradeDeadline) {
-                            // calculate franchise and rookie salaries from the player data we just loaded
-                            setFranchiseAndRookieSettings();
+                            // calculate franchise salaries from the player data we just loaded
+                            setFranchiseSettings();
                         }
                         // notify all subscribers that the data has been loaded and is ready for use
                         $("#ajaxLoadEventSpan").trigger("ajaxDataLoaded");
@@ -356,7 +356,8 @@
         var loadInjuriesData = function (xml) {
             $.each(xml.getElementsByTagName("injury"), function (index, injuryNode) {
                 var status = injuryNode.getAttribute("status");
-                if (status === "IR" || status === "Out" || status === "Suspended") {
+                // IR also comes as IR-R, IR-PUP and IR-NFI
+                if ((status && status.indexOf("IR") === 0) || status === "Out" || status === "Suspended") {
                     var player = data.players[getHashId(injuryNode)];
                     if(player) {
                         player.injured = true;
@@ -368,10 +369,10 @@
         };
 
         /**
-         * Update the settings object to contain data needed for both rookie draft and franchise
+         * Update the settings object with the top salaries at each position, for franchise
          * player calculations and display.
          */
-        var setFranchiseAndRookieSettings = function () {
+        var setFranchiseSettings = function () {
             var nflPosition = null,
                     positionIndex = 0,
                     i,
@@ -390,9 +391,6 @@
                         fullName:player.fullName,
                         salary:player.salary
                     };
-                }
-                if (positionIndex === fuadUtil.settings[nflPosition].rookieBaselineRank) {
-                    fuadUtil.settings[nflPosition].rookieBaselineSalary = player.salary;
                 }
                 positionIndex++;
             }
