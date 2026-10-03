@@ -1,0 +1,88 @@
+# FUAD league site
+
+Custom features for the Fuad Reveiz Fan Club Dynasty League on MyFantasyLeague: the Contracts,
+Commish and Links tabs, and the roster and salary cap violations box on the Main tab.
+
+The code lives in this repo and is published to GitHub Pages. A home page message that appears
+on every league page loads it, so it runs inside MFL and reads league data as the member
+viewing the page.
+
+## What's here
+
+| Path | What it is |
+|---|---|
+| `site/v<N>/` | One folder per version: what MFL loads |
+| `site/v<N>/fuad.js`, `fuad.css` | The entry point and the league-wide styles |
+| `site/v<N>/lib/` | League rules and logic, shared with the daily job |
+| `site/v<N>/ui/` | The Main, Contracts, Commish and Links features |
+| `mfl/` | What gets pasted into MFL's home page messages |
+| `jobs/daily.mjs` | The daily job |
+| `legacy/` | The code from before versions, kept as a paste-able fallback |
+| `tests/` | Unit tests for the shared league logic (`npm test`) |
+| `tools/dev-server.py` | Serves `site/` locally for previews |
+
+The `league-data` branch holds what the daily job writes: franchise salary snapshots and its
+chore log. It's published alongside the site.
+
+## How MFL loads it
+
+`mfl/message-header.html` goes in a home page message that appears on all league pages. It loads
+one version's `fuad.js` and `fuad.css` from GitHub Pages. The other files in `mfl/` are one-line
+mount points that go in the home page messages wired into the matching custom tabs.
+
+If GitHub Pages can't be reached, the tabs say "League tools are temporarily unavailable" and MFL's
+own pages keep working. For a long outage, `legacy/` can be pasted in instead, as before versions.
+
+## Versions
+
+The header message names one version. A version can be changed in place, which reaches every
+season using it, or copied to a new folder and changed there. A new version is published but dark
+until the header message is switched to it, and switching back reverts it. Which to do is the
+maintainer's call: small fixes in place, rule changes and riskier work in a new version.
+
+MFL keeps each season's site and copies the home page messages forward at renewal, so past seasons
+keep loading the version they ended on. League rules live in each version's `lib/rules.js`, so a
+season keeps the rules it was played under.
+
+## Previewing
+
+A `?fuadPreview=` parameter on any league page loads another version in that browser only:
+
+| Value | Loads |
+|---|---|
+| `v<N>` | a published version |
+| `local` or `local:v<N>` | the working copy served by `tools/dev-server.py` |
+| `off` | the version in the header message again |
+
+An orange badge shows while previewing. A preview that fails to load is turned off. For local
+previews, Chrome asks once whether the MFL site may access the local network.
+
+## Franchise salaries
+
+The Contracts tab shows the salaries that apply right now. It works the dates out from MFL's NFL
+schedule:
+
+| When | Shows |
+|---|---|
+| Before the season's first kickoff, including while MFL hasn't published the schedule | Last season's snapshot |
+| From the first kickoff to the trade deadline (the first kickoff of the deadline week in `rules.js`) | A live projection from current salaries |
+| After the deadline | This season's snapshot |
+
+Snapshots have to be taken at the deadline, because MFL reports today's salary for every past week:
+a player cut later reads $1.
+
+## The daily job
+
+`.github/workflows/daily.yml` runs `jobs/daily.mjs` every morning, logged in to MFL as commissioner.
+It works on the NFL season that started most recently. After that season's trade deadline it takes
+the franchise salary snapshot, commits it to `league-data` and publishes the site. A snapshot taken
+more than a week late is marked for checking. Snapshots only need public league data, so a failed
+login is logged and fails the run, but doesn't stop the snapshot.
+
+It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
+least once a month. It re-enables itself on every run, because GitHub turns off scheduled workflows
+after 60 days without repository activity.
+
+If a snapshot is ever missing, the Commish tab says so and its **Show franchise snapshot** button
+produces the file to commit to `league-data` by hand. The job publishes any snapshot on
+`league-data` that the site doesn't have yet, so a hand-committed one goes live on its next run.
