@@ -4,21 +4,32 @@
 import {esc, fragment} from "./html.js";
 import {ruleViolations} from "../lib/violations.js";
 
-/** Put the violations box at the top of the Main tab's first column (MFL's #tabcontent0). */
-export function renderViolations(league) {
+/**
+ * Put the violations box at the top of the Main tab's first column (MFL's #tabcontent0), or
+ * redraw it in place. `readings` are what the message board says about adds in their hour
+ * (contract-years.js's postReadings), once loaded. Returns whether the box is on this page.
+ */
+export function renderViolations(league, readings) {
     const column = document.querySelector("#tabcontent0 #homepagecolumn1");
     if (!column) {
-        return;
+        return false;
     }
-    const items = ruleViolations(league, {pendingAdds: league.pendingAdds || []});
+    const items = ruleViolations(league, {pendingAdds: league.pendingAdds || [], readings});
     const list = items.length
         ? items.map((item) => item.warning
             ? `<li><span class="warning">${esc(item.text)}</span></li>`
             : `<li>${esc(item.text)}</li>`).join("")
         : "<li>All clear.</li>";
-    column.prepend(fragment(`
-    <table class="homepagemodule report" cellspacing="1" align="center">
+    const box = fragment(`
+    <table id="fuad-alerts" class="homepagemodule report" cellspacing="1" align="center">
         <caption><span>League Alerts</span></caption>
         <tbody><tr class="oddtablerow"><td><ul>${list}</ul></td></tr></tbody>
-    </table>`));
+    </table>`);
+    const drawn = document.getElementById("fuad-alerts");
+    if (drawn) {
+        drawn.replaceWith(box);
+    } else {
+        column.prepend(box);
+    }
+    return true;
 }

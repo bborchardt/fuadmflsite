@@ -78,7 +78,14 @@ test("an add in its posting window shows when its contract length is due, as a n
     const added = {playerId: "1", name: "Keenum, Case", franchiseId: "0003", type: "FREE_AGENT", added: T - 600};
     const teams = {week: "5", franchises: new Map([["0003", {...franchise("Cool Runnings", 250, 25), franchiseId: "0003"}]])};
     assert.deepEqual(items(teams, {pendingAdds: [added], now: T}), [{kind: "contract", franchiseId: "0003", warning: false,
-        text: "Cool Runnings added Case Keenum: post his contract length on the message board by 10:32 PM CT, or it will be 1 year."}]);
+        text: "Cool Runnings added Case Keenum: post his contract length on the message board by 10:32 PM CT, like \"Keenum: 3 years\", or it will be 1 year."}]);
+    // what the board says so far: a length read, or one that couldn't be, as a warning
+    const reading = (state, years) => new Map([["1", years ? {state, years} : {state}]]);
+    assert.deepEqual(items(teams, {pendingAdds: [added], readings: reading("read", 2), now: T}), [{kind: "contract", franchiseId: "0003", warning: false,
+        text: "Cool Runnings added Case Keenum: read 2 years from the message board. To change it, edit your latest post or post again by 10:32 PM CT."}]);
+    assert.match(items(teams, {pendingAdds: [added], readings: reading("read", 1), now: T})[0].text, /read 1 year from/);
+    assert.deepEqual(items(teams, {pendingAdds: [added], readings: reading("problem"), now: T}), [{kind: "contract", franchiseId: "0003", warning: true,
+        text: "Cool Runnings added Case Keenum: couldn't read his contract length from the message board. Edit your latest post or post again by 10:32 PM CT, like \"Keenum: 3 years\"."}]);
     // once the hour is up, or for a blind bid (its length is in the bid comment), nothing shows
     assert.deepEqual(items(teams, {pendingAdds: [added], now: T + 3000}), []);
     assert.deepEqual(items(teams, {pendingAdds: [{...added, type: "BBID_WAIVER"}], now: T}), []);

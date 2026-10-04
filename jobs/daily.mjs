@@ -8,8 +8,8 @@
 // - charge the cap penalty for each dropped player still carrying a contract, then reset the
 //   player to $1 / 0 years, except on a team over the cap. Only logged unless
 //   DROP_PENALTIES=apply.
-// - set contract years for added players from the blind bid comment or the message board's
-//   contract thread (1 year if none is stated), flagging anything unclear. Only logged unless
+// - set contract years for added players from the blind bid comment or a message board post
+//   (1 year if none is stated), flagging anything unclear. Only logged unless
 //   CONTRACT_YEARS=apply.
 // - after the trade deadline, snapshot the season's franchise salaries. Last season's is
 //   checked too, so a missing one is still taken after the league is renewed.
@@ -49,8 +49,8 @@ const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, sal
     await import("./drop-penalties.mjs");
 const {contractDeadline, pendingAdds, windowClosed} = await lib("adds.js");
 const {ruleViolations, seasonPhase} = await lib("violations.js");
-const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, readProcessedWaivers, teamPlayers} =
-    await import("./contract-years.mjs");
+const {decideYears, readProcessedWaivers, teamPlayers} = await lib("contract-years.js");
+const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
 if (!process.env.DATA_DIR) {
@@ -259,18 +259,19 @@ async function processedWaivers(period) {
 
 /**
  * Set contract years for players added with none: from the blind bid comment, or the team's
- * posts in the message board's contract thread, or 1 year if neither states one. Anything
+ * posts on the message board, or 1 year if neither states one. Anything
  * unclear is flagged and left for the commissioner, and the run fails so they hear about it.
  * Teams over the cap are skipped, like their drop penalties: the add may be reversed, and a
  * dropped player with contract years would owe a penalty. Without CONTRACT_YEARS=apply it only
  * logs what it would do.
  */
 async function contractYears(loggedIn, {rosters, transactions, playerNames}, over) {
-    const held = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => over.has(add.franchiseId));
+    const pending = pendingAdds({rosters, transactions, players: playerNames});
+    const held = pending.filter((add) => over.has(add.franchiseId));
     for (const add of held) {
         choreLog(`Contract years: ${add.name} held, since the team is over the cap or the roster limit. Left for the commissioner.`);
     }
-    const waiting = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
+    const waiting = pending.filter((add) => !over.has(add.franchiseId));
     // decided once the owner's posting window has closed
     const adds = waiting.filter((add) => windowClosed(add, now.getTime() / 1000));
     if (waiting.length > adds.length) {
@@ -299,7 +300,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         bidRequests.push(...(await processedWaivers(period)).map((request) => ({...request, period})));
     }
     const {contracts, flags} = decideYears({
-        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), contractDeadline
+        adds, pending, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), contractDeadline
     });
     for (const flag of flags) {
         choreLog(`Contract years: ${flag}. Left for the commissioner.`);
