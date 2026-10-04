@@ -106,8 +106,9 @@ for the commissioner and fails the run, so a stated length is never replaced by 
 the `CONTRACT_YEARS` repository variable is `apply`, it only logs what it would do.
 
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
-least once a month. It re-enables itself on every run, because GitHub turns off scheduled workflows
-after 60 days without repository activity.
+least once a month. Each run's entries also appear on the run's summary page in GitHub Actions,
+which a failed run's notification email links to. It re-enables itself on every run, because GitHub
+turns off scheduled workflows after 60 days without repository activity.
 
 If a snapshot is ever missing, the Commish tab says so and its **Show franchise snapshot** button
 produces the file to commit to `league-data` by hand. The job publishes any snapshot on

@@ -26,6 +26,8 @@
 //   RULES_VERSION               which site version's league logic to use, default v1
 //   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
+//   GITHUB_STEP_SUMMARY         set by GitHub Actions; receives this run's chore log entries, shown on
+//                               the run's page (GitHub's failure email links to it)
 //   DROP_PENALTIES              "apply" to charge drop penalties; anything else only logs them
 //   CONTRACT_YEARS              "apply" to set contract years for adds; anything else only logs them
 //   NOW                         optional ISO time, for testing
@@ -169,6 +171,21 @@ async function loginWorks(cookie) {
 
 const fetchFrom = (base, type, params, section = type, year = season) =>
     fetchExport(exportUrl(base, year, type, params), section, {init: {headers: mflHeaders}});
+
+/** Put this run's chore log entries on the run's summary page, where the failure email leads. */
+function writeSummary() {
+    if (!process.env.GITHUB_STEP_SUMMARY) {
+        return;
+    }
+    const outcome = process.exitCode ? "Needs attention" : "OK";
+    const lines = entries.length ? entries.map((entry) => `- ${entry}`).join("\n") : "Nothing to do.";
+    try {
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores: ${outcome}\n\n${lines}\n`);
+    } catch (error) {
+        // the summary is a convenience; the chore log already has everything
+        log(`Couldn't write the run summary: ${error.message}`);
+    }
+}
 
 /**
  * Send one of MFL's commissioner imports. MFL answers <status>OK</status>, or <error>...</error>
@@ -509,4 +526,5 @@ try {
     const logChanged = updateChoreLog();
     setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
     setOutput("publish", publish ? "true" : "false");
+    writeSummary();
 }
