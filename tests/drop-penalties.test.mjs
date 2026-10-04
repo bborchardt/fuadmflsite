@@ -3,7 +3,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";
-import {alreadyCharged, capHolds, dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
+import {capTotals} from "../jobs/over-cap.mjs";
+import {alreadyCharged, dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
 const DROPPED = Date.UTC(2026, 9, 3, 16) / 1000;
@@ -61,21 +62,21 @@ test("a penalty counts as charged only for the same franchise, naming the player
     assert.equal(alreadyCharged(gordon, [adjustment("0001", "Ollie Gordon (2yrs@10)", DROPPED)]), false);
 });
 
-test("a team the uncharged penalties would put over the cap is held", () => {
+test("cap totals count drop penalties still to be charged", () => {
     const rosters = {franchise: [
         {id: "0001", player: {id: "7", status: "ROSTER", salary: "299", contractYear: "1"}},
         {id: "0002", player: {id: "8", status: "ROSTER", salary: "290", contractYear: "1"}}
     ]};
-    const holds = (adjustments) => {
+    const totals = (adjustments) => {
         const model = league({rosters, salaryAdjustments: {salaryAdjustment: adjustments}});
-        return [...capHolds(model, pendingPenalties(model), adjustments, 300)];
+        return [...capTotals(model, pendingPenalties(model), adjustments)];
     };
-    // Alpha: 299 + Mixon's $1 = 300, at the cap. Beta: 290 + Gordon's $8 = 298.
-    assert.deepEqual(holds([]), []);
+    // Alpha: 299 + Mixon's $1. Beta: 290 + Gordon's $8.
+    assert.deepEqual(totals([]), [["0001", 300], ["0002", 298]]);
     // a $3 fine pushes Beta to 301
-    assert.deepEqual(holds([{franchise_id: "0002", amount: "3", description: "Late lineup", timestamp: String(DROPPED)}]), [["0002", 301]]);
-    // Gordon's penalty charged by hand before the reset isn't counted twice: 290 + 8 = 298
-    assert.deepEqual(holds([{franchise_id: "0002", amount: "8", description: "Ollie Gordon (2yrs@10)", timestamp: String(DROPPED)}]), []);
+    assert.deepEqual(totals([{franchise_id: "0002", amount: "3", description: "Late lineup", timestamp: String(DROPPED)}]), [["0001", 300], ["0002", 301]]);
+    // Gordon's penalty charged by hand before the reset isn't counted twice: 290 + 8
+    assert.deepEqual(totals([{franchise_id: "0002", amount: "8", description: "Ollie Gordon (2yrs@10)", timestamp: String(DROPPED)}]), [["0001", 300], ["0002", 298]]);
 });
 
 test("a penalty needs charging unless it's $0 or already charged", () => {
