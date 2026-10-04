@@ -1,27 +1,24 @@
 # Working on this repo
 
-Read README.md, then docs/design.md and docs/mfl.md before changing behavior.
+docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves in surprising ways.
 
-## Changes
-- master is protected: every change is a PR. The daily job writes only to `league-data`.
-- Visible or rule changes go in a new `site/vN/` (a copy of the current one); small fixes may
-  change a live version in place. Ask the maintainer which.
-- A new version's `lib/` must keep the exports the daily job reads.
-- Before merging: `npm test`, `verify.py compare --local vN`, and a reviewer pass focused on
-  functional breakage, repeated until no blockers.
+## Easy to trip over
+- `site/vN/` runs live in members' browsers as soon as master deploys. Visible or rule changes go in
+  a new version; ask the maintainer before changing a live one in place.
+- The daily job loads `lib/` from the version `RULES_VERSION` names: a new version must keep the
+  exports it reads, or its flags silently stop.
+- Members include older iPhones: a syntax error (e.g. regex lookbehind, Safari 16.4+) in a module
+  `fuad.js` imports statically breaks every tab. Load such code with a dynamic `import()`.
+- MFL throttles by machine and doesn't say how much: test against saved exports, make one live run
+  at the end, and never send the job's registered User-Agent from a dev machine.
+- Changes in MFL's header or tab messages are made by the commissioner by hand: give the exact lines
+  to paste, tab messages first and the header last.
+- `verify.py` can report "no differences" for an area it doesn't see: prove it notices a change first.
+- Python tools run through uv (`uv run --no-project --with playwright …`), never global installs.
 
-## Testing
-- `npm test` (Node 24+).
-- Python tools run with uv, never global installs:
-  `uv run --no-project --with playwright python tools/verify/verify.py compare --local v1`
-- Test against saved exports; MFL throttles heavy use. One live run at the end.
-- Prove a check can see a change before trusting "no differences".
-
-## Writing
-- Comments only where code is non-obvious: why, not what. Brief.
-- Docs describe the current state: no history, nothing that restates the code or goes stale.
-- The README says what the repo is, what it does and how to use it; details go in docs/.
-
-## Working with the commissioner
-- Present options one at a time and wait for explicit approval.
-- Verify claims against the live site or MFL's docs rather than assuming.
+## Conventions
+- Before merging, a reviewer pass focused on functional breakage, repeated until no blockers.
+- Comments only where the code is non-obvious, saying why. Docs describe the current state, with no
+  history.
+- With the commissioner: present options one at a time and wait for approval; verify claims against
+  the live site rather than assuming.
