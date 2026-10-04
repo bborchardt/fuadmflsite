@@ -43,7 +43,7 @@ const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} =
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
-const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, teamPlayers} =
+const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, readyToDecide, teamPlayers} =
     await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
@@ -228,7 +228,11 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
     for (const add of held) {
         choreLog(`Contract years: ${add.name} held, since the team is over the cap. Left for the commissioner.`);
     }
-    const adds = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
+    const waiting = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
+    const adds = waiting.filter((add) => readyToDecide(add, now.getTime() / 1000));
+    if (waiting.length > adds.length) {
+        log(`${waiting.length - adds.length} add(s) made in the last hour will be decided at the next run.`);
+    }
     if (!adds.length) {
         log("No added players are waiting for contract years.");
         return;

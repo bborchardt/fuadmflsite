@@ -3,7 +3,7 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {contractsXml, decideYears, pendingAdds, readProcessedWaivers, readYears, yearMentions} from "../jobs/contract-years.mjs";
+import {contractsXml, decideYears, pendingAdds, readProcessedWaivers, readYears, readyToDecide, yearMentions} from "../jobs/contract-years.mjs";
 
 const T = 1790000000;
 const players = new Map([
@@ -276,6 +276,11 @@ test("posts about other players on the team don't touch an add", () => {
     const result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Cooper Rush 4 years")]);
     assert.deepEqual(result.flags, []);
     assert.equal(result.contracts[0].years, 1);
+});
+
+test("an add under an hour old waits for the next run", () => {
+    assert.equal(readyToDecide({added: T}, T + 3599), false);
+    assert.equal(readyToDecide({added: T}, T + 3600), true);
 });
 
 test("the import keeps each salary exactly as MFL has it", () => {

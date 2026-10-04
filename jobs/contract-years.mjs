@@ -7,6 +7,13 @@ export const MIN_YEARS = 1;
 export const MAX_YEARS = 5;
 /** Years for an add whose owner stated none. */
 export const DEFAULT_YEARS = 1;
+/** An add younger than this waits for the next run, so a late-night add has time to be posted about. */
+export const MIN_AGE_HOURS = 1;
+
+/** Whether an add is old enough to decide at a run at `now` (Unix seconds). */
+export function readyToDecide(add, now) {
+    return now - add.added >= MIN_AGE_HOURS * 3600;
+}
 /** More contracts than this in one run looks like a bug rather than a busy day, so none are set. */
 export const MAX_CONTRACTS_PER_RUN = 15;
 
