@@ -6,12 +6,12 @@ import assert from "node:assert/strict";
 import {contractsXml, decideYears, pendingAdds, readProcessedWaivers, readYears, yearMentions} from "../jobs/contract-years.mjs";
 
 const T = 1790000000;
-const DAYS_14 = 14 * 86400;
+const LOOKBACK = 7 * 86400;
 const players = new Map([
     ["1", {name: "Brazzell II, Chris"}], ["2", {name: "All, Erick"}], ["3", {name: "Wilson, Emanuel"}],
     ["4", {name: "Palmer, Joshua"}], ["5", {name: "Rush, Cooper"}], ["6", {name: "Keenum, Case"}],
     ["7", {name: "Wilson, Garrett"}], ["8", {name: "St. Brown, Amon-Ra"}], ["9", {name: "Allen, Josh"}],
-    ["10", {name: "Allen, Keenan"}], ["11", {name: "Cameron, Josh"}]
+    ["10", {name: "Allen, Keenan"}], ["11", {name: "Cameron, Josh"}], ["12", {name: "Smith, Geno"}], ["13", {name: "Lock, Drew"}]
 ]);
 const candidate = (playerId) => ({playerId, name: players.get(playerId).name});
 
@@ -63,12 +63,12 @@ test("blind bids are read from the processed waivers page, with their comments",
     const requests = readProcessedWaivers(page(
         row("0006", "Wilson, Emanuel SEA RB ($2.00)",
             "Add Wilson, Emanuel SEA RB for $2.00 and drop None<br>\nAdd Palmer, Joshua BUF WR for $1.00 and drop None<br>\n"
-            + "Submitted Tue Sep 22 3:15:29 p.m. CT 2026<br>Comments: Wilson 2yrs, Palmer 1 yr<br>")
+            + "Submitted Tue Sep 22 3:15:29 p.m. CT 2026<br>Comments: Wilson 2yrs,<br>\nPalmer 1 yr<br>")
         + row("0008", "None", "Add Keenum, Case DEN QB for $2.00 and drop None<br>\nSubmitted Wed Sep 23 7:43:30 p.m. CT 2026<br>")
         + row("0002", "St. Brown, Amon-Ra DET WR ($9.00)",
             "Add St. Brown, Amon-Ra DET WR for $9.00 and drop None<br>\nSubmitted Wed<br>Comments: it&#39;s 4 years<br>")));
     assert.deepEqual(requests, [
-        {franchiseId: "0006", granted: "Wilson, Emanuel", adds: ["Wilson, Emanuel", "Palmer, Joshua"], comment: "Wilson 2yrs, Palmer 1 yr"},
+        {franchiseId: "0006", granted: "Wilson, Emanuel", adds: ["Wilson, Emanuel", "Palmer, Joshua"], comment: "Wilson 2yrs,\n\nPalmer 1 yr"},
         {franchiseId: "0008", granted: null, adds: ["Keenum, Case"], comment: ""},
         {franchiseId: "0002", granted: "St. Brown, Amon-Ra", adds: ["St. Brown, Amon-Ra"], comment: "it's 4 years"}
     ]);
@@ -105,13 +105,13 @@ test("pending adds: 0 years and last moved by the team's own add", () => {
         {type: "BBID_WAIVER", franchise: "0006", transaction: "3,|2|", timestamp: String(T + 120)}
     ];
     assert.deepEqual(pendingAdds({rosters, transactions, players}), [
-        {playerId: "1", name: "Brazzell II, Chris", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - DAYS_14},
+        {playerId: "1", name: "Brazzell II, Chris", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - LOOKBACK},
         {playerId: "4", name: "Palmer, Joshua", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - 100},
-        {playerId: "3", name: "Wilson, Emanuel", franchiseId: "0006", salary: "2.00", type: "BBID_WAIVER", added: T + 120, since: T + 120 - DAYS_14}
+        {playerId: "3", name: "Wilson, Emanuel", franchiseId: "0006", salary: "2.00", type: "BBID_WAIVER", added: T + 120, since: T + 120 - LOOKBACK}
     ]);
 });
 
-const add = (playerId, franchiseId, type, since = T - DAYS_14, added = T) =>
+const add = (playerId, franchiseId, type, since = T - LOOKBACK, added = T) =>
     ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added, since});
 // every team's roster holds all the test players, so names in posts are recognized
 const teams = new Map(["0003", "0005", "0006", "0007", "0008", "0009"].map((franchiseId) =>
@@ -195,6 +195,16 @@ test("every length in a post is accounted for", () => {
     assert.deepEqual(result.flags, []);
     assert.equal(result.contracts[0].years, 1);
     assert.equal(decide([add("10", "0003", "FREE_AGENT")], [post("0003", "Keenan Allen 3 years")]).contracts[0].years, 3);
+});
+
+test("naming a teammate in full doesn't hide the add's length", () => {
+    const decide = (body) => decideYears({adds: [add("13", "0003", "FREE_AGENT")], posts: [post("0003", body)], bidRequests: [], teams, threadFound: true});
+    for (const body of ["Backup for Geno Smith: Lock 2 years", "2 years for Lock, backup to Geno Smith", "Geno Smith hurt so Lock 2 years",
+        "Lock 2 years, backup to Geno Smith", "Drew Lock 2 years (Geno Smith backup)"]) {
+        const result = decide(body);
+        assert.deepEqual(result.flags, [], body);
+        assert.equal(result.contracts[0].years, 2, body);
+    }
 });
 
 test("a post must name the player: a bare count isn't a valid post", () => {

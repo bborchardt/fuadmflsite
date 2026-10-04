@@ -9,10 +9,14 @@ export const MAX_YEARS = 5;
 export const DEFAULT_YEARS = 1;
 /** More contracts than this in one run looks like a bug rather than a busy day, so none are set. */
 export const MAX_CONTRACTS_PER_RUN = 15;
-/** How far back a post can come before an add, when the player has no earlier move. */
-export const POST_LOOKBACK_DAYS = 14;
-/** The message board thread owners post contract lengths in, by subject. */
-export const CONTRACT_THREAD = /free agent contracts?/i;
+/** How far back a post can come before a blind bid is processed, when the player has no earlier move. */
+export const POST_LOOKBACK_DAYS = 7;
+/**
+ * The message board threads owners post contract lengths in, by subject. The name changes
+ * from season to season ("Free Agent Contracts", "Contracts", "Add/Drop Contracts..."), and
+ * posts are matched by team, time and player name, so any thread about contracts is read.
+ */
+export const CONTRACT_THREAD = /contract/i;
 
 const ADD_TYPES = new Set(["FREE_AGENT", "WAIVER", "BBID_WAIVER"]);
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
@@ -103,28 +107,33 @@ function nameForms(name) {
 const hasWords = (text, words) => words && ` ${text} `.includes(` ${words} `);
 
 /**
- * The candidates a stretch of text names: by full name first, then by surname. Returns null if
- * it names one of `others` (players who aren't candidates) instead: "Josh Allen 3 years" is
- * about a rostered Josh Allen, not a pending Keenan Allen.
+ * The candidates a stretch of text names: by full name first, then by surname. A surname match
+ * is ruled out when the text names one of `others` (players who aren't candidates) in full and
+ * that full name contains the surname: "Josh Allen 3 years" is about a rostered Josh Allen, not
+ * a pending Keenan Allen. Returns null if the text names only `others`, and [] if it names
+ * nobody the job knows.
  */
 function named(text, candidates, others = []) {
     const normalized = normalize(text);
-    const by = (form) => (list) => list.filter((player) => hasWords(normalized, nameForms(player.name)[form]));
-    for (const form of [by("full"), by("surname")]) {
-        if (form(candidates).length) {
-            return form(candidates);
-        }
-        if (form(others).length) {
-            return null;
-        }
+    const byFull = candidates.filter((candidate) => hasWords(normalized, nameForms(candidate.name).full));
+    if (byFull.length) {
+        return byFull;
     }
-    return [];
+    const othersInFull = others.filter((other) => hasWords(normalized, nameForms(other.name).full));
+    const bySurname = candidates.filter((candidate) => {
+        const surname = nameForms(candidate.name).surname;
+        return hasWords(normalized, surname) && !othersInFull.some((other) => hasWords(nameForms(other.name).full, surname));
+    });
+    if (bySurname.length) {
+        return bySurname;
+    }
+    return othersInFull.length || others.some((other) => hasWords(normalized, nameForms(other.name).surname)) ? null : [];
 }
 
 const NUMBER_WORDS = {one: 1, two: 2, three: 3, four: 4, five: 5};
 const YEARS = /(\$\s*)?\b(\d+|one|two|three|four|five)\s*-?\s*(?:years?|yrs?)\b/gi;
 /** Words that can sit beside a bare count without naming anyone: "1 year contract please". */
-const FILLER = new Set(["a", "for", "the", "contract", "length", "deal", "please", "pls", "thanks", "thx", "on", "of", "him"]);
+const FILLER = new Set(["a", "for", "each", "both", "the", "contract", "length", "deal", "please", "pls", "thanks", "thx", "on", "of", "him"]);
 
 /** The year counts a text states, with where they sit: "Wilson 2yrs, Palmer 1 year" gives 2 and 1. */
 export function yearMentions(text) {
@@ -172,6 +181,20 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
             years.set(candidate.playerId, count);
         }
     };
+    // a bid comment of bare counts only, like "1 year" or "2 years / 1 year": the same count
+    // covers every player in the bid, or one count per line goes with the players in order
+    const rest = normalize(mentions.reduceRight((left, mention) => left.slice(0, mention.start) + " " + left.slice(mention.end), text));
+    if (bareForAll && mentions.length && rest.split(" ").filter(Boolean).every((word) => FILLER.has(word))) {
+        const counts = mentions.map((mention) => mention.years);
+        if (new Set(counts).size === 1) {
+            candidates.forEach((candidate) => set(candidate, counts[0]));
+        } else if (counts.length === candidates.length) {
+            candidates.forEach((candidate, i) => set(candidate, counts[i]));
+        } else {
+            problems.push(`"${text.trim()}" gives ${counts.join(", ")} years for ${candidates.map((candidate) => candidate.name).join(" and ")}`);
+        }
+        return {years, problems, unplaced};
+    }
     mentions.forEach((mention, i) => {
         const before = text.slice(i ? mentions[i - 1].end : 0, mention.start);
         const after = text.slice(mention.end, i + 1 < mentions.length ? mentions[i + 1].start : text.length);
@@ -184,9 +207,7 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
             return;
         }
         const isBare = mentions.length === 1 && bare(text, mention);
-        if (!who.length && isBare && bareForAll) {
-            candidates.forEach((candidate) => set(candidate, mention.years));
-        } else if (!who.length && isBare && allowBare && candidates.length === 1) {
+        if (!who.length && isBare && allowBare && candidates.length === 1) {
             set(candidates[0], mention.years);
         } else if (!who.length && isBare && allowBare) {
             problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
@@ -237,7 +258,8 @@ export function readProcessedWaivers(html) {
             // the player the request won, or null
             granted: (/^(.+?) [A-Z]{2,3} [A-Za-z]{1,4} \(\$/.exec(decode(cells[2]).trim()) || [])[1] || null,
             adds: [...request.matchAll(/^Add (.+?) [A-Z]{2,3} [A-Za-z]{1,4} for \$/gm)].map((match) => match[1]),
-            comment: (/^Comments:\s*(.*)$/m.exec(request) || [])[1] || ""
+            // the comment runs to the end of the cell, over several lines if the owner wrote them
+            comment: ((/^Comments:\s*([\s\S]*)$/m.exec(request) || [])[1] || "").trim()
         });
     }
     return requests;
@@ -290,7 +312,9 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
                 }
             }
         }
-        for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) > add.since)) {
+        // a free agent add can't be posted about before it's made; a blind bid can, before it's processed
+        const from = add.type === "BBID_WAIVER" ? add.since : add.added;
+        for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) >= from)) {
             const body = postText(post.body);
             const postTime = Number(post.postTime);
             const afterAdd = postTime >= add.added;
