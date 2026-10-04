@@ -254,8 +254,8 @@ export function teamPlayers({rosters, players}) {
  * ({franchise, postTime, body}), `bidRequests` the readProcessedWaivers entries for the
  * periods of pending blind bids, `teams` the teamPlayers map, and `threadFound` whether the
  * contract thread exists. An add's sources are its blind bid comment (if any) and its team's
- * posts since the player's previous move. A post made before the add counts only if it names
- * the player: a bare "3 years" from then is about an earlier add.
+ * posts since the player's previous move. A post must name the player (a bare "1 yr" post
+ * isn't valid, so it's ignored); a bare count in a bid comment covers every player in the bid.
  * Agreeing sources set the years; disagreeing or unreadable ones flag the add. An add with
  * no years stated gets DEFAULT_YEARS, unless the thread is missing, which flags it instead.
  * A comment, or a post naming the add, that gives no length the reader understands is flagged
@@ -298,7 +298,8 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
             // the team's other pending adds this post can be about: made by then, or named in it
             const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add
                 && other.since < postTime && (other.added <= postTime || (named(body, [other]) || []).length));
-            const read = readYears(body, [add, ...others], {allowBare: afterAdd, known: team});
+            // a post must name the player: a bare "1 yr" isn't a valid post
+            const read = readYears(body, [add, ...others], {allowBare: false, known: team});
             const own = read.problems.filter((problem) => problem.includes(add.name));
             const namesAdd = (named(body, [add], team.filter((player) => player.playerId !== add.playerId)) || []).length > 0;
             if (read.years.has(add.playerId)) {

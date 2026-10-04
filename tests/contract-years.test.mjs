@@ -161,12 +161,8 @@ test("conflicts, a missing bid and a missing thread are flagged, not guessed", (
 
 test("a stated length that can't be placed is flagged, never defaulted", () => {
     const decide = (adds, posts, bidRequests, teamMap = teams) => decideYears({adds, posts, bidRequests, teams: teamMap, threadFound: true});
-    // a bare count from a team with two pending adds
-    let result = decide([add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")], [post("0008", "3 years")], []);
-    assert.deepEqual(result.contracts, []);
-    assert.equal(result.flags.length, 2);
     // a length in a form the reader doesn't know
-    result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 2y")], []);
+    let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 2y")], []);
     assert.match(result.flags[0], /post "Keenum 2y" names the player but gives no length the job can read/);
     result = decide([add("6", "0008", "BBID_WAIVER")], [], [bid("0008", ["Keenum, Case"], "two seasons")]);
     assert.match(result.flags[0], /blind bid comment "two seasons" gives no length the job can read/);
@@ -199,20 +195,22 @@ test("every length in a post is accounted for", () => {
     assert.deepEqual(result.flags, []);
     assert.equal(result.contracts[0].years, 1);
     assert.equal(decide([add("10", "0003", "FREE_AGENT")], [post("0003", "Keenan Allen 3 years")]).contracts[0].years, 3);
-    // a bare post for the first add, before the second was made
-    result = decide([add("6", "0003", "FREE_AGENT"), add("11", "0003", "FREE_AGENT", T - DAYS_14, T + 3600)], [post("0003", "3 years")]);
-    assert.deepEqual(result.flags, []);
-    assert.deepEqual(result.contracts.map(({playerId, years}) => ({playerId, years})), [{playerId: "6", years: 3}, {playerId: "11", years: 1}]);
 });
 
-test("old bare posts and posts about other players don't touch a later add", () => {
-    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams, threadFound: true});
-    // "3 years" posted a day before this add was for an earlier one
-    let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "3 years", T - 86400)]);
+test("a post must name the player: a bare count isn't a valid post", () => {
+    const result = decideYears({adds: [add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")],
+        posts: [post("0008", "3 years"), post("0008", "1 yr")], bidRequests: [], teams, threadFound: true});
     assert.deepEqual(result.flags, []);
-    assert.equal(result.contracts[0].years, 1);
+    assert.deepEqual(result.contracts.map(({playerId, years, source}) => ({playerId, years, source})), [
+        {playerId: "6", years: 1, source: "no length stated: the default"},
+        {playerId: "5", years: 1, source: "no length stated: the default"}
+    ]);
+});
+
+test("posts about other players on the team don't touch an add", () => {
+    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams, threadFound: true});
     // a post after the add about another player on the team
-    result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Cooper Rush 4 years")]);
+    const result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Cooper Rush 4 years")]);
     assert.deepEqual(result.flags, []);
     assert.equal(result.contracts[0].years, 1);
 });
