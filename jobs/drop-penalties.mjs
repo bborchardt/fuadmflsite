@@ -45,24 +45,6 @@ export function alreadyCharged(penalty, adjustments) {
 }
 
 /**
- * Franchises whose penalties are held for the commissioner, as a Map of franchise id -> total:
- * those that would be over the cap once their uncharged penalties are counted. A drop that
- * pushes a team over the cap (say, alongside a blind bid) should be reversed, not charged, and
- * charging it would reset the player's contract. `league` must be built with salary
- * adjustments, so each franchise's salary includes what's already charged.
- */
-export function capHolds(league, penalties, adjustments, cap) {
-    const totals = new Map();
-    for (const penalty of penalties) {
-        const total = totals.has(penalty.franchiseId)
-            ? totals.get(penalty.franchiseId)
-            : league.franchises.get(penalty.franchiseId).salary;
-        totals.set(penalty.franchiseId, total + (needsCharge(penalty, adjustments) ? penalty.amount : 0));
-    }
-    return new Map([...totals].filter(([, total]) => total > cap));
-}
-
-/**
  * Whether a penalty still has to be charged. A dropped player with no years left owes nothing,
  * so they're only reset; MFL would reject or keep a $0 adjustment.
  */

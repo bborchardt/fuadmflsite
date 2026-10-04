@@ -1,8 +1,10 @@
 // Daily league chores, run by .github/workflows/daily.yml (Node 24+).
 //
 // Chores:
+// - flag every team over the cap, counting drop penalties still owed, and fail the run so the
+//   commissioner hears about it.
 // - charge the cap penalty for each dropped player still carrying a contract, then reset the
-//   player to $1 / 0 years, unless that puts the team over the cap. Only logged unless
+//   player to $1 / 0 years, except on a team over the cap. Only logged unless
 //   DROP_PENALTIES=apply.
 // - after the trade deadline, snapshot the season's franchise salaries. Last season's is
 //   checked too, so a missing one is still taken after the league is renewed.
@@ -35,8 +37,9 @@ const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
-const {MAX_PENALTIES_PER_RUN, capHolds, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
+const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
+const {RECENT_MOVE_DAYS, capTotals, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -182,15 +185,8 @@ async function mflImport(type, data, params = {}) {
     }
 }
 
-/**
- * Charge the cap penalty for each dropped player still carrying a contract, then reset the
- * player to $1 / 0 years, which clears them from the Commish tab. A penalty already charged
- * (by an earlier run that failed before the reset, or by hand), or a $0 one, is skipped, and
- * only the reset is done. A team the penalties would put over the cap is left alone for the commissioner to
- * reverse the move, and the run fails so they hear about it. Without DROP_PENALTIES=apply it
- * only logs what it would do.
- */
-async function dropPenalties(loggedIn) {
+/** The league as both cap chores need it: built with adjustments, transactions and free agents. */
+async function leagueState() {
     const [players, league, salaryAdjustments, rosters, transactions, freeAgents] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
@@ -199,38 +195,78 @@ async function dropPenalties(loggedIn) {
         fetchFrom(host, "transactions", {L: leagueId}),
         fetchFrom(host, "freeAgents", {L: leagueId})
     ]);
-    const built = buildLeague({players: playersFromExport(players), league, salaryAdjustments, rosters, transactions, freeAgents});
-    const penalties = pendingPenalties(built);
+    const playerMap = playersFromExport(players);
+    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents});
+    return {
+        players: playerMap,
+        built,
+        penalties: pendingPenalties(built),
+        adjustments: asArray(salaryAdjustments.salaryAdjustment),
+        transactions: asArray(transactions.transaction)
+    };
+}
+
+/**
+ * Flag every team over the cap, counting drop penalties still owed, with its recent moves. The
+ * run fails so the commissioner hears about it, every day until the team is back under. Returns
+ * the over-cap franchise ids, whose drop penalties are held.
+ */
+function overCap({players, built, penalties, adjustments, transactions}) {
+    const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
+    const over = new Set();
+    for (const [franchiseId, total] of capTotals(built, penalties, adjustments)) {
+        if (total <= SALARY_CAP) {
+            continue;
+        }
+        over.add(franchiseId);
+        choreLog(`Over the cap: ${overCapMessage({
+            teamName: built.franchises.get(franchiseId).teamName,
+            total,
+            cap: SALARY_CAP,
+            moves: recentMoves(transactions, franchiseId, {players, franchises: built.franchises, since}),
+            held: penalties.filter((penalty) => penalty.franchiseId === franchiseId).map((penalty) => penalty.explanation)
+        })}`);
+        process.exitCode = 1;
+    }
+    if (!over.size) {
+        log("No team is over the cap.");
+    }
+    return over;
+}
+
+/**
+ * Charge the cap penalty for each dropped player still carrying a contract, then reset the
+ * player to $1 / 0 years, which clears them from the Commish tab. A penalty already charged
+ * (by an earlier run that failed before the reset, or by hand), or a $0 one, is skipped, and
+ * only the reset is done. Teams over the cap are skipped: their flag names the held penalties,
+ * since charging them would reset a contract the commissioner may restore by reversing the
+ * move. Without DROP_PENALTIES=apply it only logs what it would do.
+ */
+async function dropPenalties(loggedIn, {penalties, adjustments}, over) {
     if (!penalties.length) {
         log("No dropped players owe a cap penalty.");
         return;
     }
-    const adjustments = asArray(salaryAdjustments.salaryAdjustment);
     const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
     const noCharge = (penalty) => penalty.amount > 0 ? "penalty already charged" : "no penalty owed";
-    const holds = capHolds(built, penalties, adjustments, SALARY_CAP);
-    const held = [...holds].map(([franchiseId, total]) => {
-        const team = penalties.filter((penalty) => penalty.franchiseId === franchiseId);
-        return `${team[0].teamName} would be at $${total} with the penalties for ${team.map((penalty) => penalty.explanation).join(", ")}: `
-            + `over the $${SALARY_CAP} cap, so the move should be reversed. Left for the commissioner.`;
-    });
+    const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId));
     if (!applyDropPenalties) {
-        held.forEach((message) => choreLog(`Dry run: ${message}`));
-        for (const penalty of penalties.filter((penalty) => !holds.has(penalty.franchiseId))) {
+        for (const penalty of toApply) {
             choreLog(needsCharge(penalty, adjustments)
                 ? `Dry run: would charge ${describe(penalty)}, then reset the player to $1 / 0 years.`
                 : `Dry run: would reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
         }
         return;
     }
-    if (penalties.length > MAX_PENALTIES_PER_RUN) {
-        throw new Error(`${penalties.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
+    // held penalties don't count: they can wait for weeks on a team over the cap
+    if (toApply.length > MAX_PENALTIES_PER_RUN) {
+        throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
             + `expected in a day, so none were charged. Check the Commish tab and charge them by hand.`);
     }
-    if (!loggedIn) {
-        throw new Error(`${penalties.length} dropped player(s) owe a cap penalty, but the job isn't logged in, so none were charged.`);
+    if (toApply.length && !loggedIn) {
+        throw new Error(`${toApply.length} dropped player(s) owe a cap penalty, but the job isn't logged in, so none were charged.`);
     }
-    for (const penalty of penalties.filter((penalty) => !holds.has(penalty.franchiseId))) {
+    for (const penalty of toApply) {
         if (needsCharge(penalty, adjustments)) {
             await mflImport("salaryAdj", salaryAdjXml(penalty));
             await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
@@ -239,9 +275,6 @@ async function dropPenalties(loggedIn) {
             await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
             choreLog(`Reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
         }
-    }
-    if (held.length) {
-        throw new Error(held.join(" "));
     }
 }
 
@@ -336,10 +369,12 @@ try {
         process.exitCode = 1;
     }
     try {
-        await dropPenalties(!loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD));
+        const state = await leagueState();
+        const over = overCap(state);
+        await dropPenalties(!loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD), state, over);
     } catch (error) {
-        // the snapshot doesn't depend on this, so carry on
-        choreLog(`Drop penalties: ${error.message}`);
+        // the snapshot doesn't depend on these, so carry on
+        choreLog(`Cap chores: ${error.message}`);
         process.exitCode = 1;
     }
     for (const year of [season - 1, season]) {

@@ -84,11 +84,14 @@ login is logged and fails the run, but doesn't stop the snapshot.
 It also charges cap penalties for drops. A dropped player still carrying a contract gets a salary
 adjustment for the penalty, described like "Name (2yrs@10, 10/03)" with the drop date, and is reset
 to $1 / 0 years, which clears them from the Commish tab. An adjustment naming the player made since
-the drop counts as already charged, so a penalty entered by hand isn't charged twice. A team the
-penalties would put over the cap is left alone, with the dropped player's contract intact, so the
-commissioner can reverse the move; the run fails so they hear about it. Unless the
+the drop counts as already charged, so a penalty entered by hand isn't charged twice. Unless the
 `DROP_PENALTIES` repository variable is `apply`, it only logs what it would do. More drops in one run
 than a busy day would bring are left for the commissioner rather than charged.
+
+It flags every team over the cap, all year, counting drop penalties still owed. The chore log names
+the team, its total and its moves in the last week, and the run fails so the commissioner hears about
+it, every day until the team is back under. It doesn't reverse anything. A team over the cap has its
+drop penalties held, with the dropped players' contracts intact, so the move can be reversed.
 
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
 least once a month. It re-enables itself on every run, because GitHub turns off scheduled workflows
