@@ -124,7 +124,13 @@ function named(text, candidates, others = []) {
 }
 
 const NUMBER_WORDS = {one: 1, two: 2, three: 3, four: 4, five: 5};
-const YEARS = /(\$\s*)?\b(\d+|one|two|three|four|five)\s*-?\s*(?:years?|yrs?)\b/gi;
+// a count right after a digit, "." or "-" is part of something else: "1.5 years", "2-3 years"
+const YEARS = /(\$\s*)?(?<![\d.,-])\b(\d+|one|two|three|four|five)\s*-?\s*(?:years?|yrs?)\b/gi;
+/**
+ * Where a sentence ends: a full stop after a word of three or more letters or a number, a line
+ * break, or ; ! ?. Not after an initial or short abbreviation ("D. Jones", "St. Brown", "Jr.").
+ */
+const SENTENCE_END = /(?<=\b[A-Za-z]{3,}|\d)\.\s|[\n;!?]/;
 /** Words that can sit beside a bare count without naming anyone: "1 year contract please". */
 const FILLER = new Set(["a", "for", "each", "both", "the", "contract", "length", "deal", "please", "pls", "thanks", "thx", "on", "of", "him"]);
 
@@ -189,13 +195,17 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
         return {years, problems, unplaced};
     }
     mentions.forEach((mention, i) => {
-        const before = text.slice(i ? mentions[i - 1].end : 0, mention.start);
+        // a name pairs with a count in the same sentence: "Got Hill. Been here 5 years" isn't Hill's.
+        // When the count's sentence is only the count, the name is the sentence before: "Hill. 1 year."
+        const sentences = text.slice(i ? mentions[i - 1].end : 0, mention.start).split(SENTENCE_END);
+        const onlyCount = normalize(sentences[sentences.length - 1]).split(" ").filter(Boolean).every((word) => FILLER.has(word));
+        const before = sentences.slice(onlyCount ? -2 : -1).join(" ");
         const after = text.slice(mention.end, i + 1 < mentions.length ? mentions[i + 1].start : text.length);
         let who = named(before, candidates, others);
         if (who && !who.length) {
             // "3 years for Wilson": a name in the same sentence, or a list the count introduces
             // ("2 years each:" or "2 years:" followed by names)
-            const sentence = after.split(/\.\s|[\n;!?]/)[0];
+            const sentence = after.split(SENTENCE_END)[0];
             who = named(/\b(each|both)\b|:\s*$/i.test(sentence) ? after : sentence, candidates, others);
         }
         if (who === null) {
@@ -308,7 +318,8 @@ export function decideYears({adds, posts, bidRequests, teams}) {
                     .map((problem) => `blind bid comment: ${problem}`));
                 if (read.years.has(add.playerId)) {
                     stated.push({years: read.years.get(add.playerId), source: `blind bid comment "${request.comment.trim()}"`});
-                } else if (!read.problems.length) {
+                } else if (!read.problems.some((problem) => problem.includes(add.name))) {
+                    // problems about the bid's other players don't explain this one's missing length
                     problems.push(`blind bid comment "${request.comment.trim()}" gives no length the job can read`);
                 }
             }

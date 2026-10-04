@@ -227,6 +227,29 @@ test("dotted initials, each/both lists, sentence bounds and shared surnames", ()
     assert.deepEqual(decide([add("14", "0003", "FREE_AGENT")], "J. Jones 4 years").contracts[0].source, "no length stated: the default");
 });
 
+test("counts only pair with a name in the same sentence, in plain number formats", () => {
+    const decide = (adds, body) => decideYears({adds, posts: [post("0003", body)], bidRequests: [], teams});
+    let result = decide([add("6", "0003", "FREE_AGENT")], "Got Keenum. Been in this league 5 years");
+    assert.equal(result.contracts.length, 0);
+    assert.equal(result.flags.length, 1);
+    for (const body of ["Keenum 1.5 years", "Keenum 2-3 years"]) {
+        result = decide([add("6", "0003", "FREE_AGENT")], body);
+        assert.equal(result.contracts.length, 0, body);
+        assert.match(result.flags[0], /names the player but gives no length/, body);
+    }
+    // a name in its own sentence just before the count
+    assert.equal(decide([add("6", "0003", "FREE_AGENT")], "Keenum. 3 years.").contracts[0].years, 3);
+    // initials and abbreviations aren't sentence ends
+    assert.equal(decide([add("8", "0003", "FREE_AGENT")], "WR - A. St. Brown 4 yrs").contracts[0].years, 4);
+});
+
+test("a problem with another player in a conditional bid doesn't hide this one's unreadable length", () => {
+    const result = decideYears({adds: [add("3", "0006", "BBID_WAIVER")], posts: [], teams,
+        bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Palmer 6 years; EWil 2 years")]});
+    assert.deepEqual(result.contracts, []);
+    assert.match(result.flags[0], /gives no length the job can read/);
+});
+
 test("a post must name the player: a bare count isn't a valid post", () => {
     const result = decideYears({adds: [add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")],
         posts: [post("0008", "3 years"), post("0008", "1 yr")], bidRequests: [], teams});
