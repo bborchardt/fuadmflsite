@@ -50,8 +50,8 @@ test("only the team's moves within the window are listed", () => {
 });
 
 test("cap totals are rounded to the cent", () => {
-    // 0.1 + 0.2 + 299.7 is 300.00000000000006 in floating point
-    const league = {franchises: new Map([["0001", {franchiseId: "0001", salary: 0.1 + 0.2 + 299.7}]])};
+    // a $299.80 roster and two 10-cent fines add up to 300.00000000000006 in floating point
+    const league = {franchises: new Map([["0001", {franchiseId: "0001", salary: 299.8 + 0.1 + 0.1}]])};
     assert.deepEqual([...capTotals(league, [], [])], [["0001", 300]]);
 });
 
