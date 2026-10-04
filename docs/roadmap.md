@@ -96,9 +96,14 @@ commissioner write:
 - `fcfsWaiver` with `FRANCHISE_ID` for add/drop moves on a team's behalf
 
 Candidates:
-1. **Commish-tab chores queue** for anything needing a decision.
-2. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
+1. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
    after seeing the log.
+
+Dropped: a **Commish-tab chores queue** for flags. Flags are rare (12 contract-year flags in eight
+backtested seasons), the failed-run email links to the run's summary page listing them, and the
+commissioner hopes not to need the tab once the bot runs smoothly. The Commish tab stays as it is,
+the manual fallback for held and flagged cases, rookie and RFA contracts, and outages; whether to
+slim or retire it is decided after a season with the chores on `apply`.
 
 Deferred: the **season rollover** (decrement every contract year by 1; players going from 1 to 0
 years, the new RFAs, get $0.01, since MFL won't allow $0 and $0.01 shows as $0 on the roster report).
