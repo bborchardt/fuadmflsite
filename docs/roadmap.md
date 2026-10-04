@@ -35,6 +35,19 @@ What's live, what comes next, the decisions already made, and the facts that con
   - the job and the violations box share one cap total from the league model
     (`franchise.capTotal`: salary, adjustments and uncharged drop penalties), so they flag the
     same teams
+  - sets contract years for added players (`jobs/contract-years.mjs`), in dry run until the
+    `CONTRACT_YEARS` repository variable is `apply`:
+    - blind bids: from the bid comment, read from the logged-in Previously Processed Waivers page
+      (one page per waiver run; the comments are in no API export). The commissioner decided this
+      reading of their own league's page is within the spirit of MFL's terms
+    - free agent and waiver adds: from the team's message board posts after the add, in any thread
+      (the contract thread's name changes every season, and in 2023 owners used "Waiver Moves")
+    - no length by the first run at least an hour after the add: 1 year, enforced on sight; the
+      commissioner adjusts by hand for leniency
+    - anything unclear is flagged and fails the run; teams over the cap are held
+    - backtested on eight seasons (2019–2026): 294 of 320 adds match the commissioner's years, 12
+      are flagged, and the rest are the rules applied (late or missing posts, bids without comments)
+      plus two one-offs
   - writes a chore log, and re-enables itself (GitHub's 60-day rule)
 - Tier 0 is done:
   - MFL's nav bar is kept visible on phones
@@ -83,14 +96,8 @@ commissioner write:
 - `fcfsWaiver` with `FRANCHISE_ID` for add/drop moves on a team's behalf
 
 Candidates:
-1. **Contract years on adds:**
-   - **Blind bids:** the years are in the bid message, visible only on the logged-in Prior FA Bids page
-     (`/<season>/processed_waivers?L=48571`), not in the API. **Need a saved copy of that page to build
-     the parser.**
-   - **First-come-first-served adds:** members post the years on the message board. **Open:** parse
-     free-text posts, or add a structured "Set contract length" control that posts in a fixed format.
-2. **Commish-tab chores queue** for anything needing a decision.
-3. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
+1. **Commish-tab chores queue** for anything needing a decision.
+2. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
    after seeing the log.
 
 Deferred: the **season rollover** (decrement every contract year by 1; players going from 1 to 0
@@ -133,6 +140,9 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
   the trade deadline (the kickoff of the first game of week 12).
 - **The rookie draft** is held offline on no fixed date. The week 1 kickoff stands in for "after the
   draft", and the contract form pre-fills $0.01 for 0-year players until then.
+- **Contract length on adds:** 1 to 5 years. A blind bid's length goes in its comment (a bare count
+  covers every player in a conditional bid); a free agent add's goes in a message board post right
+  after the add, naming the player. None stated: 1 year.
 
 ## MFL facts learned the hard way
 
@@ -157,6 +167,12 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
   Access).
 - **GitHub:** master is protected (PRs only), so the job writes only to `league-data`. Scheduled
   workflows are disabled after 60 days without activity.
+- **Blind bid comments** appear only on the logged-in Previously Processed Waivers page
+  (`/<season>/processed_waivers?LEAGUE_ID=…&PERIOD=…`), one page per waiver run; the period id is
+  the `BBID_WAIVER` transaction's timestamp. Players without an NFL team show as "FA*".
+- **Message boards:** the API (`messageBoard`, `messageBoardThread`) needs a login and returns
+  nothing for 2024 and earlier. Past seasons' boards are a public archive at
+  `/<season>/options?L=48571&O=28`.
 
 ## Known limits, accepted
 
@@ -168,6 +184,11 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
   Reversing a move is left to the commissioner.
 - The Commish tab's penalty form pre-fills every pending penalty, including ones already charged but
   not yet reset.
+- Contract years: a player added and then traded before the job runs stays at 0 years without a flag,
+  and a length written without a number or "year" ("Hill for two") isn't read. If the commissioner
+  reverses an add for a team under the cap, the player's years must be set to 0 before the drop, or
+  the drop chore charges a penalty. The bids page reader breaks if MFL changes that page; it fails
+  loudly rather than defaulting.
 - A preview that loads but then crashes doesn't fall back. `?fuadPreview=off` recovers.
 - Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
   rows.
