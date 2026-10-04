@@ -11,8 +11,18 @@ What's live, what comes next, the decisions already made, and the facts that con
   mount points.
 - It rebuilds the old jQuery/Handlebars features with no visible change. The additions:
   - a note naming which franchise salaries are shown
-  - the Main tab's violations box counts drop penalties not yet charged toward the cap, and says so
-    ("…counting $8 in drop penalties not yet charged!"). Cap totals are rounded to the cent.
+  - the Main tab's box is **League Alerts** ("All clear." when empty), with its rules in
+    `lib/violations.js`, shared with the daily job:
+    - over the cap, counting drop penalties not yet charged: all year
+    - over or under the roster limit (active players; IR doesn't count): week 1's kickoff until
+      week 17 is over (its last kickoff plus four hours)
+    - on MFL's IR without an NFL IR designation (IR and variants, today's report, only if it
+      loaded), with a second alert when moving him back would break 30: same window
+    - anti-tanking (an injured, out or suspended starter): weeks 1–14's lineups, until week 15's
+      kickoff; shown once that week's results post
+    - a notice while a free agent add's one-hour contract window is open, with its deadline
+    - in the offseason and preseason only the cap is checked; MFL reports week 17 all offseason, so
+      the windows are timed from MFL's NFL schedule (`seasonPhase`)
 - Franchise salaries switch automatically:
   - last season's snapshot before the week 1 kickoff (or while MFL hasn't published the schedule)
   - a live projection until the trade deadline (the first kickoff of week 12)
@@ -32,9 +42,14 @@ What's live, what comes next, the decisions already made, and the facts that con
   - flags every team over the cap, all year (`jobs/over-cap.mjs`): the chore log names the team, its
     total and its moves in the last 7 days, and the run fails so the commissioner gets GitHub's
     email, daily until the team is back under. Flag only: nothing is reversed
-  - the job and the violations box share one cap total from the league model
+  - flags roster limit, IR and anti-tanking alerts too, from the same rules as League Alerts. Going
+    over 30 voids the move like the cap: that flag lists the team's recent moves, and a team over
+    30 or the cap has its drop penalties and contract years held. Under 23 is flag only
+  - the job and League Alerts share one cap total from the league model
     (`franchise.capTotal`: salary, adjustments and uncharged drop penalties), so they flag the
     same teams
+  - spaces its MFL requests a second apart (MFL's guidance), each with a 30-second timeout, and
+    sends the registered client name in `MFL_USER_AGENT`
   - sets contract years for added players (`jobs/contract-years.mjs`), in dry run until the
     `CONTRACT_YEARS` repository variable is `apply`:
     - blind bids: from the bid comment, read from the logged-in Previously Processed Waivers page
@@ -61,8 +76,9 @@ What's live, what comes next, the decisions already made, and the facts that con
 Each one is built in a new `site/vN/` folder, previewed with `?fuadPreview=vN` (or `local:vN`),
 checked with `tools/verify/verify.py`, and activated by editing the header message. The daily job
 loads league logic from the version `RULES_VERSION` names, so a new version's `lib/` must keep what
-the job reads (`capTotal`, `unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`); without
-`capTotal` the over-cap flag would silently never fire. The order isn't decided. A and C change what members see, and the commissioner wants member feedback on those.
+the job reads (`capTotal`, `unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`,
+`numPlayers`, `irPlayers`, `injuryStatus`, `injuryReportKnown`, and the `violations.js` and `adds.js`
+exports); without them the job's flags would silently never fire. The order isn't decided. A and C change what members see, and the commissioner wants member feedback on those.
 
 ### A. "My Team" Contracts
 
@@ -137,8 +153,13 @@ A small public league-history site (records, champions, bylaws), only after A an
 They live in `site/vN/lib/rules.js`; a rule change means a new version.
 
 - **Salary cap:** $300.
-- **Roster:** 23–30 players (checked through week 15). Injured or suspended starters are checked
-  through week 14.
+- **Roster:** 23–30 active players (IR doesn't count), from week 1's kickoff until week 17, the
+  championship, is over. Going over 30 voids the move, as going over the cap does. Under 23 must be
+  fixed but voids nothing.
+- **Injured reserve:** only players the NFL lists on IR (IR, IR-R, IR-PUP, IR-NFI). One who comes off
+  must move back to the active roster.
+- **Anti-tanking:** starting an injured (IR or Out) or suspended player is flagged in the regular
+  season, weeks 1–14; the playoffs start in week 15.
 - **Cap penalty for dropping a player:** `max(ceil(max(1, 0.4 × salary × years)), years)`.
 - **Rookie salaries:** first pick QB $6, RB $10, WR $10, TE $4, PK $1. Each later pick is 80% of the
   one before, never under $1.
@@ -147,10 +168,19 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
 - **The rookie draft** is held offline on no fixed date. The week 1 kickoff stands in for "after the
   draft", and the contract form pre-fills $0.01 for 0-year players until then.
 - **Contract length on adds:** 1 to 5 years. A blind bid's length goes in its comment (a bare count
-  covers every player in a conditional bid); a free agent add's goes in a message board post right
-  after the add, naming the player. None stated: 1 year.
+  covers every player in a conditional bid); a free agent add's goes in a message board post within
+  one hour of the add, naming the player. None stated in time: 1 year.
 
 ## MFL facts learned the hard way
+
+- **Rate limits:** MFL doesn't publish numbers. Unregistered clients get less; a registered client
+  (registered at `/<year>/csetup?C=APICLI`, confirmed by text, then sent as the User-Agent) gets
+  about 2.5 times as much. Bursts are throttled with HTTP 429; MFL asks for about a second between
+  requests and no retries. Heavy testing from one machine gets throttled within hours, so test
+  against saved exports.
+- **Weeks and injuries:** `weeklyResults` reports the last week with results (a week behind the NFL
+  in season, week 17 all offseason). The `injuries` export with `W` is that week's report; without
+  `W` it's today's.
 
 - **Data is same-origin only:** code must run inside an MFL page. Scripts and styles can be loaded
   from GitHub Pages, and the league page sends no CSP.
@@ -195,6 +225,10 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
   reverses an add for a team under the cap, the player's years must be set to 0 before the drop, or
   the drop chore charges a penalty. The bids page reader breaks if MFL changes that page; it fails
   loudly rather than defaulting.
+- IR timing: MFL's injury report doesn't say when a designation changed, so an add made after a
+  player came off NFL IR (effectively going over 30) isn't caught as a void; the "moving him back"
+  alert is a warning only, and the commissioner judges the order of moves.
+- The contract deadline notice shows a time without a date ("by 12:30 AM CT").
 - A preview that loads but then crashes doesn't fall back. `?fuadPreview=off` recovers.
 - Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
   rows.
