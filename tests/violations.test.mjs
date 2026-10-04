@@ -27,7 +27,9 @@ test("drop penalties not yet charged count toward the cap, and the warning says 
         ["Bid And Drop is over the salary cap with a total salary of 304, counting $8 in drop penalties not yet charged!"]);
 });
 
-test("roster limits of 23 to 30, checked through the championship in week 17", () => {
+test("roster limits of 23 to 30, checked from week 1's kickoff through the championship in week 17", () => {
+    // the preseason, after the league is renewed: only the cap
+    assert.deepEqual(ruleViolations({...league("1", franchise("Crowded", 250, 34)), started: false}), []);
     assert.deepEqual(ruleViolations(league("17", franchise("Crowded", 250, 31), franchise("Thin", 250, 22))), [
         "Crowded is over the roster limit with 31 players!",
         "Thin is under the roster limit with 22 players!"

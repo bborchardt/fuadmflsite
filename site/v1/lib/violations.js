@@ -48,7 +48,9 @@ function centralTime(seconds) {
 export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 1000} = {}) {
     const items = [];
     const week = Number(league.week);
-    const rosterSeason = !league.seasonOver && week <= ROSTER_CHECK_LAST_WEEK;
+    // roster limits and IR apply from week 1's kickoff until the championship week is over;
+    // in the preseason only the cap is checked
+    const rosterSeason = league.started !== false && !league.seasonOver && week <= ROSTER_CHECK_LAST_WEEK;
     const push = (kind, franchise, text, warning = true) => items.push({kind, franchiseId: franchise.franchiseId, text, warning});
     for (const franchise of league.franchises.values()) {
         if (franchise.capTotal > SALARY_CAP) {
@@ -64,7 +66,7 @@ export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 100
         }
         // during the season only, and only with today's NFL injury report loaded: it's what makes a
         // player IR-eligible
-        if (league.injuryReportKnown && league.started !== false && rosterSeason && week >= 1) {
+        if (league.injuryReportKnown && rosterSeason && week >= 1) {
             const healthy = (franchise.irPlayers || []).filter((player) => !onNflIR(player));
             for (const player of healthy) {
                 push("ir", franchise, `${franchise.teamName} has ${player.fullName} on injured reserve, but the NFL doesn't list him on IR: move him to the active roster!`);
