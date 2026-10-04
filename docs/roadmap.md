@@ -9,8 +9,10 @@ What's live, what comes next, the decisions already made, and the facts that con
 - Code is served from GitHub Pages (`site/v1/`). An all-pages home page message
   (`mfl/message-header.html`) loads it. The Contracts, Commish and Links messages are one-line
   mount points.
-- It rebuilds the old jQuery/Handlebars features with no visible change. The one addition is a
-  note naming which franchise salaries are shown.
+- It rebuilds the old jQuery/Handlebars features with no visible change. The additions:
+  - a note naming which franchise salaries are shown
+  - the Main tab's violations box counts drop penalties not yet charged toward the cap, and says so
+    ("…counting $8 in drop penalties not yet charged!"). Cap totals are rounded to the cent.
 - Franchise salaries switch automatically:
   - last season's snapshot before the week 1 kickoff (or while MFL hasn't published the schedule)
   - a live projection until the trade deadline (the first kickoff of week 12)
@@ -24,9 +26,15 @@ What's live, what comes next, the decisions already made, and the facts that con
   - charges cap penalties on drops (`jobs/drop-penalties.mjs`): one `salaryAdj` per dropped player
     still carrying a contract, described like "Name (2yrs@10, 10/03)", then resets the player to
     $1 / 0 years. A penalty already charged (an adjustment naming the player since the drop, or a
-    $0 one) is only reset. A team the penalties would put over the cap is held for the commissioner
-    to reverse the move, and the run fails. In dry run (log only) until the `DROP_PENALTIES`
-    repository variable is `apply`
+    $0 one) is only reset. A team over the cap has its penalties held, so the commissioner can
+    reverse the move. In dry run (log only) until the `DROP_PENALTIES` repository variable is
+    `apply`
+  - flags every team over the cap, all year (`jobs/over-cap.mjs`): the chore log names the team, its
+    total and its moves in the last 7 days, and the run fails so the commissioner gets GitHub's
+    email, daily until the team is back under. Flag only: nothing is reversed
+  - the job and the violations box share one cap total from the league model
+    (`franchise.capTotal`: salary, adjustments and uncharged drop penalties), so they flag the
+    same teams
   - writes a chore log, and re-enables itself (GitHub's 60-day rule)
 - Tier 0 is done:
   - MFL's nav bar is kept visible on phones
@@ -37,8 +45,10 @@ What's live, what comes next, the decisions already made, and the facts that con
 ## Next versions
 
 Each one is built in a new `site/vN/` folder, previewed with `?fuadPreview=vN` (or `local:vN`),
-checked with `tools/verify/verify.py`, and activated by editing the header message. The order isn't
-decided. A and C change what members see, and the commissioner wants member feedback on those.
+checked with `tools/verify/verify.py`, and activated by editing the header message. The daily job
+loads league logic from the version `RULES_VERSION` names, so a new version's `lib/` must keep what
+the job reads (`capTotal`, `unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`); without
+`capTotal` the over-cap flag would silently never fire. The order isn't decided. A and C change what members see, and the commissioner wants member feedback on those.
 
 ### A. "My Team" Contracts
 
@@ -79,13 +89,11 @@ Candidates:
      the parser.**
    - **First-come-first-served adds:** members post the years on the message board. **Open:** parse
      free-text posts, or add a structured "Set contract length" control that posts in a fixed format.
-2. **Over-cap moves:** detect transactions that push a team over the cap, counting pending penalties.
-   **Open:** flag with a one-click reverse (`fcfsWaiver` drop/re-add), or flag only.
-3. **Season rollover routine** (manual today): decrement every contract year by 1, and set players who
+2. **Season rollover routine** (manual today): decrement every contract year by 1, and set players who
    go from 1 to 0 years (new RFAs) to $0.01. MFL won't allow $0, and $0.01 shows as $0 on the roster
    report.
-4. **Commish-tab chores queue** for anything needing a decision.
-5. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
+3. **Commish-tab chores queue** for anything needing a decision.
+4. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
    after seeing the log.
 
 Guidance: apply deterministic things automatically, flag anything risky for a person, and log
@@ -154,6 +162,10 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
 - Drop penalties are charged at the next 08:00 UTC run. Commissioner moves aren't in the move
   history the job reads, and a hand-entered charge must spell the player's name as MFL does to be
   recognized.
+- The over-cap flag lists moves from the last 7 days, so a team over the cap for longer shows none.
+  Reversing a move is left to the commissioner.
+- The Commish tab's penalty form pre-fills every pending penalty, including ones already charged but
+  not yet reset.
 - A preview that loads but then crashes doesn't fall back. `?fuadPreview=off` recovers.
 - Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
   rows.
