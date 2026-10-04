@@ -83,6 +83,8 @@ function choreLog(message) {
 
 /** MFL asks clients to space requests out; this is the gap between the starts of two of ours. */
 const MFL_REQUEST_SPACING_MS = 1000;
+/** How long one MFL request may take. */
+const MFL_TIMEOUT_MS = 30000;
 let nextRequestAt = 0;
 
 /**
@@ -95,7 +97,8 @@ async function mflFetch(url, init) {
     if (wait > 0) {
         await new Promise((resolve) => setTimeout(resolve, wait));
     }
-    return fetch(url, init);
+    // a stalled reply mustn't hang the job
+    return fetch(url, {...init, signal: AbortSignal.timeout(MFL_TIMEOUT_MS)});
 }
 
 function setOutput(name, value) {
@@ -343,7 +346,7 @@ async function leagueState() {
     });
     // the results week's report, for the anti-tanking check; without it that check flags nothing
     const injuries = await fetchFrom(API_BASE, "injuries", {W: weeklyResults.week || ""}).catch((error) => {
-        log(`Couldn't load the week ${weeklyResults.week} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
+        log(`Couldn't load the week ${weeklyResults.week || "(unknown)"} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
         return null;
     });
     const playerMap = playersFromExport(players);
@@ -354,7 +357,8 @@ async function leagueState() {
     try {
         Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}));
     } catch (error) {
-        log(`Couldn't tell where the ${season} season is (${error.message}); the league rules are skipped.`);
+        choreLog(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
+        process.exitCode = 1;
         built.seasonOver = null;
     }
     return {
