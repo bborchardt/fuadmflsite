@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 3 Oct 2026
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 4 Oct 2026
 
 What's live, what comes next, the decisions already made, and the facts that constrain them.
 
@@ -70,6 +70,36 @@ What's live, what comes next, the decisions already made, and the facts that con
   - the redundant Live Scoring tab was removed
   - Power Rankings, League Chat, Poll and Trade Bait stay by choice
   - no skin change; members choose their own apps
+
+## Next: contract length feedback (v1, in place)
+
+Approved; low risk, so it changes v1 rather than starting a new version.
+
+- **League Alerts confirms what it read.** While an add's hour is open, the notice reads the message
+  board with the job's own reader (moved from `jobs/contract-years.mjs` into `lib/`, so the two
+  agree) and shows one of: nothing read yet (with the recommended format), the length it read, or
+  that it couldn't read one, so the owner can edit or post again within the hour.
+- **The job takes corrections.** The latest post within the hour that gives a length for the player
+  wins; an earlier unreadable one no longer flags the add.
+- **A last name is ambiguous only among the team's pending adds.** Today any rostered player sharing
+  it flags the post; a player already under contract isn't getting a length, so he no longer counts.
+  A full name naming him still rules the post out. Rerun the backtest before merging.
+- **The recommended format,** in League Alerts and the commissioner's topic:
+  - message board post: the player's name and length, one player per line (`Hill: 3 years`); a last
+    name is enough unless two players you just added share it
+  - blind bid comment: one length per line, in the order of the players in the bid (`1 year`,
+    `2 years`, `3 years`); update the comment if you change the bid
+  - the reader stays more forgiving than this; the rest isn't advertised
+- **Edits after the hour are accepted, not caught.** MFL's API returns a post's edited text with its
+  original time and no edit time (the board's page shows "Edited …"), so a length edited after the
+  hour but before the job's run counts. The job's log quotes the text it used. Running the check
+  hourly would close this; it's not planned.
+
+### Commissioner to-do
+
+- Before switching `CONTRACT_YEARS` to `apply`: post a message board topic telling the league what
+  the bot does and how to work with it, with good examples for free agent posts and for blind bid
+  comments, simple and conditional.
 
 ## Next versions
 
