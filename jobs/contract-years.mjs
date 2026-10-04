@@ -7,80 +7,10 @@ export const MIN_YEARS = 1;
 export const MAX_YEARS = 5;
 /** Years for an add whose owner stated none. */
 export const DEFAULT_YEARS = 1;
-/** An add younger than this waits for the next run, so a late-night add has time to be posted about. */
-export const MIN_AGE_HOURS = 1;
-
-/** Whether an add is old enough to decide at a run at `now` (Unix seconds). */
-export function readyToDecide(add, now) {
-    return now - add.added >= MIN_AGE_HOURS * 3600;
-}
 /** More contracts than this in one run looks like a bug rather than a busy day, so none are set. */
 export const MAX_CONTRACTS_PER_RUN = 15;
 
-const ADD_TYPES = new Set(["FREE_AGENT", "WAIVER", "BBID_WAIVER"]);
-const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
 const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
-
-/** The player ids a transaction adds and drops, for the types that move players. */
-function moves(transaction) {
-    switch (transaction.type) {
-    case "FREE_AGENT":
-    case "LOAD_ROSTERS": {
-        const [added, dropped] = String(transaction.transaction || "").split("|");
-        return {added: ids(added), dropped: ids(dropped)};
-    }
-    case "WAIVER":
-        return {added: ids(transaction.added), dropped: ids(transaction.dropped)};
-    case "BBID_WAIVER": {
-        const [added, , dropped] = String(transaction.transaction || "").split("|");
-        return {added: ids(added), dropped: ids(dropped)};
-    }
-    case "TRADE":
-        return {added: [...ids(transaction.franchise1_gave_up), ...ids(transaction.franchise2_gave_up)], dropped: []};
-    default:
-        return {added: [], dropped: []};
-    }
-}
-
-/**
- * The rostered players waiting for contract years: 0 years, and last moved by an add (free
- * agent, waiver or blind bid) by the team that has them. That leaves out RFAs after the
- * rollover, drafted rookies and players the commissioner loaded, which aren't adds.
- * `rosters` is the rosters export, `transactions` the transactions export's list and `players`
- * a Map of id -> {name} from the players export ("Last, First").
- */
-export function pendingAdds({rosters, transactions, players}) {
-    const latest = new Map();
-    for (const transaction of transactions) {
-        const {added, dropped} = moves(transaction);
-        for (const id of [...added, ...dropped]) {
-            const seen = latest.get(id);
-            if (!seen || Number(transaction.timestamp) >= Number(seen.timestamp)) {
-                latest.set(id, transaction);
-            }
-        }
-    }
-    const pending = [];
-    for (const franchise of asList(rosters.franchise)) {
-        for (const entry of asList(franchise.player)) {
-            const transaction = latest.get(entry.id);
-            if (parseFloat(entry.contractYear) !== 0 || !transaction || !ADD_TYPES.has(transaction.type)
-                || transaction.franchise !== franchise.id || !moves(transaction).added.includes(entry.id)) {
-                continue;
-            }
-            pending.push({
-                playerId: entry.id,
-                name: (players.get(entry.id) || {name: `Player ${entry.id}`}).name,
-                franchiseId: franchise.id,
-                // the salary exactly as MFL has it, so writing the years leaves it unchanged
-                salary: entry.salary,
-                type: transaction.type,
-                added: Number(transaction.timestamp)
-            });
-        }
-    }
-    return pending;
-}
 
 const SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 
@@ -294,17 +224,18 @@ export function teamPlayers({rosters, players}) {
  * matched by team, time and player name. `bidRequests` are the readProcessedWaivers entries
  * for the periods of pending blind bids (each with its `period`, the bid's timestamp), and
  * `teams` the teamPlayers map. League rules: a blind bid's length must be in its comment, and a
- * free agent or waiver add's in a post made after the add, naming the player (a bare "1 yr"
- * post isn't valid, so it's ignored). A bare count in a bid comment covers every player in the
+ * free agent or waiver add's in a post within the posting window after the add (the league's
+ * `contractDeadline(add)`, passed in), naming the player (a bare "1 yr" post isn't valid, so
+ * it's ignored). A bare count in a bid comment covers every player in the
  * bid. Agreeing posts set the years; disagreeing or unreadable ones flag the add. An add with
- * no length stated by the job's next run gets DEFAULT_YEARS (the commissioner adjusts by hand
+ * no length stated in time gets DEFAULT_YEARS (the commissioner adjusts by hand
  * for leniency).
  * A comment, or a post naming the add, that gives no length the reader understands is flagged
  * too, as is a post after the add giving a length but naming no player on the team (a typo or
  * nickname), so a stated length is never replaced by the default.
  * Returns {contracts: [{...add, years, source}], flags: [text]}.
  */
-export function decideYears({adds, posts, bidRequests, teams}) {
+export function decideYears({adds, posts, bidRequests, teams, contractDeadline}) {
     const contracts = [];
     const flags = [];
     for (const add of adds) {
@@ -335,7 +266,8 @@ export function decideYears({adds, posts, bidRequests, teams}) {
         }
         // a blind bid's length must be in its comment; posts are for free agent and waiver adds
         const ownPosts = add.type === "BBID_WAIVER" ? []
-            : posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) >= add.added);
+            : posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) >= add.added
+                && Number(entry.postTime) <= contractDeadline(add));
         for (const post of ownPosts) {
             const body = postText(post.body);
             const postTime = Number(post.postTime);

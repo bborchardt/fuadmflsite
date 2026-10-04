@@ -9,6 +9,8 @@ function newPlayer(id, fullName, nflPosition, team) {
         playerId: id, fullName, nflPosition, team,
         franchise: null, status: null, salary: 0, years: 0, capPenalty: 0, netCapSpace: 0,
         contractStatus: null, injured: false,
+        // the NFL injury report's status, e.g. "IR", "IR-R", "Out"
+        injuryStatus: null,
         // for a dropped player owed a cap penalty: whether it's already charged
         penaltyCharged: false,
         // newest first, once the model is built
@@ -23,7 +25,9 @@ function newFranchise(id, teamName) {
         // pending penalties not yet charged, and the total against the cap counting them
         unchargedPenalty: 0, capTotal: 0,
         // rostered players with no contract years yet
-        signedPlayers: []
+        signedPlayers: [],
+        // players on MFL's injured reserve
+        irPlayers: []
     };
 }
 
@@ -52,10 +56,10 @@ function setContract(player, salary, contractYear) {
 /**
  * Build the league from export sections. Each argument is the top-level section of
  * that export (e.g. the `rosters` object). `players` is a Map from playersFromExport.
- * `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments` and `injuries`
+ * `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments`, `injuries` and `currentInjuries`
  * may be omitted when a caller doesn't need what they feed.
  */
-export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries}) {
+export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries}) {
     const franchises = new Map();
     for (const franchise of asArray(league.franchises && league.franchises.franchise)) {
         franchises.set(franchise.id, newFranchise(franchise.id, franchise.name));
@@ -88,6 +92,8 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
             rosteredPlayers.push(player);
             if (entry.status === "ROSTER") {
                 franchise.numPlayers++;
+            } else if (entry.status === "INJURED_RESERVE") {
+                franchise.irPlayers.push(player);
             }
             if (player.years === 0) {
                 franchise.signedPlayers.push(player);
@@ -185,6 +191,17 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
                 if (player) {
                     player.injured = true;
                 }
+            }
+        }
+    }
+
+    // today's NFL injury report, for injured reserve eligibility (`injuries` is the report for the
+    // league's results week, for the injured-starter check)
+    if (currentInjuries) {
+        for (const injury of asArray(currentInjuries.injury)) {
+            const player = players.get(injury.id);
+            if (player) {
+                player.injuryStatus = injury.status || "";
             }
         }
     }

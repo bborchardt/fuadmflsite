@@ -5,9 +5,10 @@ export const SALARY_CAP = 300;
 export const ROSTER_MIN = 23;
 export const ROSTER_MAX = 30;
 
-// The roster-limit checks stop in week 16, the injured-starter check in week 15.
-export const ROSTER_CHECK_LAST_WEEK = 15;
-export const INJURY_CHECK_LAST_WEEK = 14;
+// The roster-limit, injured reserve and injured-starter (anti-tanking) checks run through the
+// championship, week 17.
+export const ROSTER_CHECK_LAST_WEEK = 17;
+export const INJURY_CHECK_LAST_WEEK = 17;
 
 // Franchise salary next year is the average of the top salaries at each position.
 export const FRANCHISE_PLAYER_COUNT = 5;

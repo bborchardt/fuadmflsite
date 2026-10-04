@@ -1,6 +1,7 @@
 // Daily league chores, run by .github/workflows/daily.yml (Node 24+).
 //
 // Chores:
+// - flag roster limit and injured reserve violations, as the Main tab's box shows them.
 // - flag every team over the cap, counting drop penalties still owed, and fail the run so the
 //   commissioner hears about it.
 // - charge the cap penalty for each dropped player still carrying a contract, then reset the
@@ -45,7 +46,9 @@ const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} =
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
-const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, readyToDecide, teamPlayers} =
+const {contractDeadline, pendingAdds, windowClosed} = await lib("adds.js");
+const {ruleViolations} = await lib("violations.js");
+const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, readProcessedWaivers, teamPlayers} =
     await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
@@ -246,9 +249,10 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         choreLog(`Contract years: ${add.name} held, since the team is over the cap. Left for the commissioner.`);
     }
     const waiting = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
-    const adds = waiting.filter((add) => readyToDecide(add, now.getTime() / 1000));
+    // decided once the owner's posting window has closed
+    const adds = waiting.filter((add) => windowClosed(add, now.getTime() / 1000));
     if (waiting.length > adds.length) {
-        log(`${waiting.length - adds.length} add(s) made in the last hour will be decided at the next run.`);
+        log(`${waiting.length - adds.length} add(s) still in their posting window will be decided at the next run.`);
     }
     if (!adds.length) {
         log("No added players are waiting for contract years.");
@@ -273,7 +277,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         bidRequests.push(...(await processedWaivers(period)).map((request) => ({...request, period})));
     }
     const {contracts, flags} = decideYears({
-        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames})
+        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), contractDeadline
     });
     for (const flag of flags) {
         choreLog(`Contract years: ${flag}. Left for the commissioner.`);
@@ -300,16 +304,19 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
 
 /** The league as the league chores need it: built with adjustments, transactions and free agents. */
 async function leagueState() {
-    const [players, league, salaryAdjustments, rosters, transactions, freeAgents] = await Promise.all([
+    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
         fetchFrom(host, "salaryAdjustments", {L: leagueId}),
         fetchFrom(host, "rosters", {L: leagueId}),
         fetchFrom(host, "transactions", {L: leagueId}),
-        fetchFrom(host, "freeAgents", {L: leagueId})
+        fetchFrom(host, "freeAgents", {L: leagueId}),
+        fetchFrom(host, "weeklyResults", {L: leagueId})
     ]);
+    // today's NFL injury report, for injured reserve eligibility
+    const currentInjuries = await fetchFrom(API_BASE, "injuries");
     const playerMap = playersFromExport(players);
-    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents});
+    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, currentInjuries});
     return {
         players: playerMap,
         built,
@@ -319,6 +326,24 @@ async function leagueState() {
         // players as MFL names them ("Last, First"), which the waivers page uses too
         playerNames: new Map(asArray(players.player).map((player) => [player.id, player]))
     };
+}
+
+/** The roster rules the job flags, as the Main tab's box shows them; the cap has its own flag. */
+const ROSTER_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster"]);
+
+/**
+ * Flag roster limit and injured reserve violations, from the same rules as the Main tab's box.
+ * The run fails so the commissioner hears about it, every day until it's fixed.
+ */
+function rosterRules({built}) {
+    const violations = ruleViolations(built).filter((item) => ROSTER_KINDS.has(item.kind));
+    for (const violation of violations) {
+        choreLog(`Roster rules: ${violation.text}`);
+        process.exitCode = 1;
+    }
+    if (!violations.length) {
+        log("No roster or injured reserve violations.");
+    }
 }
 
 /**
@@ -493,6 +518,12 @@ try {
         process.exitCode = 1;
     }
     if (state) {
+        try {
+            rosterRules(state);
+        } catch (error) {
+            choreLog(`Roster rules: ${error.message}`);
+            process.exitCode = 1;
+        }
         let over = null;
         try {
             over = overCap(state);

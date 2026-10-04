@@ -89,21 +89,23 @@ the drop counts as already charged, so a penalty entered by hand isn't charged t
 than a busy day would bring are left for the commissioner rather than charged.
 
 It flags every team over the cap, all year, counting drop penalties still owed: the same total the
-Main tab's violations box uses. The chore log names
-the team, its total and its moves in the last week, and the run fails so the commissioner hears about
-it, every day until the team is back under. It doesn't reverse anything. A team over the cap has its
-drop penalties held, with the dropped players' contracts intact, so the move can be reversed.
+Main tab's violations box uses. The chore log names the team, its total and its moves in the last
+week, and the run fails so the commissioner hears about it, every day until the team is back under.
+It doesn't reverse anything. A team over the cap has its drop penalties held, with the dropped
+players' contracts intact, so the move can be reversed. It also flags roster limit and injured
+reserve violations, from the same rules as the Main tab's violations box.
 
 It sets contract years for added players, which MFL adds with 0 years. By league rule a blind bid's
 length (1 to 5 years) goes in the bid's comment, and a free agent or waiver add's in a message board
-post made right after the add and naming the player. Owners have used threads of every name, so the
-job reads all of them. The job reads bid comments from MFL's Previously Processed Waivers page, the
-only place they appear, and posts through MFL's API. A bare count in a bid comment covers every
-player in that conditional bid. An add with no length stated by the job's first run at least an hour
-after the add gets 1 year; the commissioner adjusts by hand for any leniency. Anything unclear
-(different lengths, a length it can't tie to one player or can't read, a bid it can't find) is left
-for the commissioner and fails the run, so a stated length is never replaced by the default. Unless
-the `CONTRACT_YEARS` repository variable is `apply`, it only logs what it would do.
+post within an hour of the add, naming the player. The Main tab's violations box shows the deadline
+while the hour is open. Owners have used threads of every name, so the job reads all of them. The
+job reads bid comments from MFL's Previously Processed Waivers page, the only place they appear, and
+posts through MFL's API. A bare count in a bid comment covers every player in that conditional bid.
+An add with no length stated in time gets 1 year at the job's next run; the commissioner adjusts by
+hand for any leniency. Anything unclear (different lengths, a length it can't tie to one player or
+can't read, a bid it can't find) is left for the commissioner and fails the run, so a stated length
+is never replaced by the default. Unless the `CONTRACT_YEARS` repository variable is `apply`, it
+only logs what it would do.
 
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
 least once a month. Each run's entries also appear on the run's summary page in GitHub Actions,

@@ -3,7 +3,10 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {contractsXml, decideYears, pendingAdds, readProcessedWaivers, readYears, readyToDecide, yearMentions} from "../jobs/contract-years.mjs";
+import {contractsXml, decideYears as decide_, readProcessedWaivers, readYears, yearMentions} from "../jobs/contract-years.mjs";
+import {contractDeadline, pendingAdds, windowClosed} from "../site/v1/lib/adds.js";
+
+const decideYears = (options) => decide_({contractDeadline, ...options});
 
 const T = 1790000000;
 const players = new Map([
@@ -278,9 +281,14 @@ test("posts about other players on the team don't touch an add", () => {
     assert.equal(result.contracts[0].years, 1);
 });
 
-test("an add under an hour old waits for the next run", () => {
-    assert.equal(readyToDecide({added: T}, T + 3599), false);
-    assert.equal(readyToDecide({added: T}, T + 3600), true);
+test("an add is decided once its one-hour posting window closes, and later posts don't count", () => {
+    assert.equal(windowClosed({added: T}, T + 3599), false);
+    assert.equal(windowClosed({added: T}, T + 3600), true);
+    const result = decideYears({adds: [add("6", "0008", "FREE_AGENT")], bidRequests: [], teams,
+        posts: [post("0008", "Keenum 3 years", T + 3601)]});
+    assert.equal(result.contracts[0].source, "no length stated: the default");
+    assert.equal(decideYears({adds: [add("6", "0008", "FREE_AGENT")], bidRequests: [], teams,
+        posts: [post("0008", "Keenum 3 years", T + 3600)]}).contracts[0].years, 3);
 });
 
 test("the import keeps each salary exactly as MFL has it", () => {
