@@ -43,7 +43,7 @@ const version = process.env.RULES_VERSION || "v1";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
-const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
+const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
@@ -312,7 +312,11 @@ async function leagueState() {
         fetchFrom(host, "rosters", {L: leagueId}),
         fetchFrom(host, "transactions", {L: leagueId}),
         fetchFrom(host, "freeAgents", {L: leagueId}),
-        fetchFrom(host, "weeklyResults", {L: leagueId})
+        // only the anti-tanking check needs the week's results; without them it flags nothing
+        fetchFrom(host, "weeklyResults", {L: leagueId}).catch((error) => {
+            log(`Couldn't load the league's weekly results (${error.message}); the anti-tanking check is skipped.`);
+            return {};
+        })
     ]);
     // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
     const currentInjuries = await fetchFrom(API_BASE, "injuries").catch((error) => {
@@ -555,12 +559,16 @@ try {
     if (state) {
         // teams over the roster limit or the cap: their moves may be reversed, so drop penalties
         // and contract years are held
-        let overRoster = new Set();
+        // if the league rules can't run, any team over 30 is still held, to be safe
+        const overThirty = () => new Set([...state.built.franchises.values()]
+            .filter((franchise) => franchise.numPlayers > ROSTER_MAX).map((franchise) => franchise.franchiseId));
+        let overRoster;
         try {
-            overRoster = leagueRules(state);
+            overRoster = state.built.seasonOver === null ? overThirty() : leagueRules(state);
         } catch (error) {
             choreLog(`League rules: ${error.message}`);
             process.exitCode = 1;
+            overRoster = overThirty();
         }
         let over = null;
         try {

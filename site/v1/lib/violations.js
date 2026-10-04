@@ -6,16 +6,23 @@ import {contractDeadline, windowClosed} from "./adds.js";
 import {weekEnd, weekKickoff} from "./mfl.js";
 
 /**
- * Where a season is, from MFL's NFL schedule: {tankingOver} once the playoffs' first kickoff has
- * passed, {seasonOver} once the championship week is over. A schedule MFL hasn't published
+ * Where a season is, from MFL's NFL schedule: {started} once week 1 has kicked off,
+ * {tankingOver} once the playoffs' first kickoff has passed, {seasonOver} once the championship
+ * week is over. A schedule MFL hasn't published
  * counts as not yet. `now` is a Date; `options` go to the fetches.
  */
 export async function seasonPhase(season, now, options) {
-    const [playoffs, end] = await Promise.all([
+    const [start, playoffs, end] = await Promise.all([
+        weekKickoff(season, 1, options),
         weekKickoff(season, PLAYOFFS_START_WEEK, options),
         weekEnd(season, ROSTER_CHECK_LAST_WEEK, options)
     ]);
-    return {tankingOver: Boolean(playoffs) && now >= playoffs, seasonOver: Boolean(end) && now >= end};
+    return {
+        // the injured reserve check starts with week 1's kickoff, whatever week MFL reports before it
+        started: Boolean(start) && now >= start,
+        tankingOver: Boolean(playoffs) && now >= playoffs,
+        seasonOver: Boolean(end) && now >= end
+    };
 }
 
 /** "Last, First" as "First Last". */
@@ -57,7 +64,7 @@ export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 100
         }
         // during the season only, and only with today's NFL injury report loaded: it's what makes a
         // player IR-eligible
-        if (league.injuryReportKnown && rosterSeason && week >= 1) {
+        if (league.injuryReportKnown && league.started !== false && rosterSeason && week >= 1) {
             const healthy = (franchise.irPlayers || []).filter((player) => !onNflIR(player));
             for (const player of healthy) {
                 push("ir", franchise, `${franchise.teamName} has ${player.fullName} on injured reserve, but the NFL doesn't list him on IR: move him to the active roster!`);

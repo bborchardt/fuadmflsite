@@ -153,8 +153,9 @@ async function loadLeague({season, leagueId}) {
         fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries")).catch(() => null);
     // today's report, for injured reserve eligibility; without it that check is skipped
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries").catch(() => null);
-    // where the season is, for when the in-season checks stop; unknown counts as not yet
-    const phasePromise = seasonPhase(season, new Date()).catch(() => ({tankingOver: false, seasonOver: false}));
+    // where the season is, for when the in-season checks run; if it can't be told, they're
+    // hidden for this load rather than risk showing members false alerts
+    const phasePromise = seasonPhase(season, new Date()).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
     const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
         league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise

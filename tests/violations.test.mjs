@@ -65,9 +65,10 @@ test("a player on injured reserve the NFL doesn't list on IR must come back, dur
         "Stash has Recovered on injured reserve, but the NFL doesn't list him on IR: move him to the active roster!",
         "Moving him back would put Stash at 31 players, over the roster limit!"
     ]);
-    // after the championship, and in the offseason before week 1, IR isn't checked
+    // after the championship, and before week 1 (whatever week MFL reports), IR isn't checked
     assert.deepEqual(ruleViolations(league("18", withIR(28, [onIR("Recovered", null)]))), []);
     assert.deepEqual(ruleViolations(league("", withIR(28, [onIR("Recovered", null)]))), []);
+    assert.deepEqual(ruleViolations({...league("1", withIR(28, [onIR("Recovered", null)])), started: false}), []);
 });
 
 test("an add in its posting window shows when its contract length is due, as a notice", () => {
@@ -129,19 +130,21 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
     const at = (iso) => String(Date.parse(iso) / 1000);
     const schedule = {
         15: [at("2026-12-17T01:15:00Z"), at("2026-12-20T18:00:00Z")],
-        17: [at("2026-12-31T21:30:00Z"), at("2027-01-05T01:15:00Z")]
+        17: [at("2026-12-31T21:30:00Z"), at("2027-01-05T01:15:00Z")],
+        1: [at("2026-09-11T00:20:00Z")]
     };
     const fetchImpl = async (url) => {
         const week = new URL(url).searchParams.get("W");
         return {ok: true, json: async () => ({nflSchedule: {matchup: (schedule[week] || []).map((kickoff) => ({kickoff}))}})};
     };
     const phase = (iso) => seasonPhase(2026, new Date(iso), {fetchImpl});
-    assert.deepEqual(await phase("2026-12-16T12:00:00Z"), {tankingOver: false, seasonOver: false});
-    assert.deepEqual(await phase("2026-12-17T01:15:00Z"), {tankingOver: true, seasonOver: false});
+    assert.deepEqual(await phase("2026-09-01T12:00:00Z"), {started: false, tankingOver: false, seasonOver: false});
+    assert.deepEqual(await phase("2026-12-16T12:00:00Z"), {started: true, tankingOver: false, seasonOver: false});
+    assert.deepEqual(await phase("2026-12-17T01:15:00Z"), {started: true, tankingOver: true, seasonOver: false});
     // week 17's last game kicks off at 01:15; it's taken to be over four hours later
-    assert.deepEqual(await phase("2027-01-05T05:14:00Z"), {tankingOver: true, seasonOver: false});
-    assert.deepEqual(await phase("2027-01-05T05:15:00Z"), {tankingOver: true, seasonOver: true});
+    assert.deepEqual(await phase("2027-01-05T05:14:00Z"), {started: true, tankingOver: true, seasonOver: false});
+    assert.deepEqual(await phase("2027-01-05T05:15:00Z"), {started: true, tankingOver: true, seasonOver: true});
     // a schedule MFL hasn't published counts as not yet
     const unpublished = async () => ({ok: false, status: 404});
-    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}), {tankingOver: false, seasonOver: false});
+    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}), {started: false, tankingOver: false, seasonOver: false});
 });
