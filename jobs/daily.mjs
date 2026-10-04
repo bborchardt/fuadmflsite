@@ -4,7 +4,10 @@
 // - charge the cap penalty for each dropped player still carrying a contract, then reset the
 //   player to $1 / 0 years, unless that puts the team over the cap. Only logged unless
 //   DROP_PENALTIES=apply.
-// - after the trade deadline, snapshot the season's franchise salaries.
+// - after the trade deadline, snapshot the season's franchise salaries. Last season's is
+//   checked too, so a missing one is still taken after the league is renewed.
+// The season is the newest league site: this year's once the league is renewed for it, last
+// year's until then.
 // Everything the job writes goes to a checkout of the league-data branch (DATA_DIR):
 // snapshots in data/, and chore-log.md.
 //
@@ -14,7 +17,7 @@
 //   MFL_LEAGUE_ID               default 48571
 //   MFL_HOST                    league host, default https://www44.myfantasyleague.com
 //   MFL_USER_AGENT              optional; set it if the client is registered with MFL
-//   SEASON                      default: the NFL season that started most recently
+//   SEASON                      default: the newest season the league has a site for
 //   RULES_VERSION               which site version's league logic to use, default v1
 //   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
@@ -31,7 +34,7 @@ const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", na
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
-const {latestSeason, makeSnapshot, snapshotFileName} = await lib("franchise.js");
+const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, capHolds, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
 
@@ -42,7 +45,8 @@ const dataDir = resolve(process.env.DATA_DIR);
 const leagueId = process.env.MFL_LEAGUE_ID || "48571";
 const host = process.env.MFL_HOST || "https://www44.myfantasyleague.com";
 const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
-const season = Number(process.env.SEASON || latestSeason(now));
+// set at the start of the run, by leagueSeason()
+let season;
 const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (github.com/bborchardt/fuadmflsite)";
 // Headers for MFL requests only: after login they carry the commissioner's session cookie,
 // so never send them anywhere else.
@@ -108,9 +112,35 @@ async function login() {
 }
 
 /**
+ * The season of the newest league site: this calendar year's once the commissioner has renewed
+ * the league for it (in spring, on no fixed date), last year's until then. MFL answers 404, or
+ * an error document, for a league with no site that year. Any other failure throws rather than
+ * guessing.
+ */
+async function leagueSeason() {
+    if (process.env.SEASON) {
+        return Number(process.env.SEASON);
+    }
+    const year = now.getUTCFullYear();
+    let response, body;
+    try {
+        response = await fetch(exportUrl(host, year, "league", {L: leagueId}), {headers: mflHeaders});
+        body = response.status === 404 ? null : await response.json();
+    } catch (error) {
+        throw new Error(`Couldn't tell whether the league has a ${year} site: ${error.message}`);
+    }
+    if (response.status === 404 || (response.ok && body && body.error)) {
+        return year - 1;
+    }
+    if (response.ok && body && body.league) {
+        return year;
+    }
+    throw new Error(`Couldn't tell whether the league has a ${year} site: HTTP ${response.status}`);
+}
+
+/**
  * Whether a session cookie works: logged in, MFL lists the account's leagues; logged out, it
- * lists none. Last season is checked too, because the job moves to a new season on September 1
- * and the league may not be renewed for it yet.
+ * lists none. Last season is checked too, in case MFL doesn't list a newly renewed league yet.
  */
 async function loginWorks(cookie) {
     for (const year of [season, season - 1]) {
@@ -127,8 +157,8 @@ async function loginWorks(cookie) {
     return false;
 }
 
-const fetchFrom = (base, type, params, section = type) =>
-    fetchExport(exportUrl(base, season, type, params), section, {init: {headers: mflHeaders}});
+const fetchFrom = (base, type, params, section = type, year = season) =>
+    fetchExport(exportUrl(base, year, type, params), section, {init: {headers: mflHeaders}});
 
 /**
  * Send one of MFL's commissioner imports. MFL answers <status>OK</status>, or <error>...</error>
@@ -215,26 +245,26 @@ async function dropPenalties(loggedIn) {
     }
 }
 
-/** After the deadline, write the season's franchise snapshot if it doesn't exist yet. */
-async function franchiseSnapshot() {
-    const file = join(dataDir, "data", snapshotFileName(season));
+/** After a season's deadline, write its franchise snapshot if it doesn't exist yet. */
+async function franchiseSnapshot(year) {
+    const file = join(dataDir, "data", snapshotFileName(year));
     if (existsSync(file)) {
-        log(`The ${season} franchise snapshot already exists.`);
+        log(`The ${year} franchise snapshot already exists.`);
         return false;
     }
-    const deadline = await weekKickoff(season, TRADE_DEADLINE_WEEK, {init: {headers: mflHeaders}});
+    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, {init: {headers: mflHeaders}});
     if (!deadline) {
-        log(`MFL hasn't published the ${season} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
+        log(`MFL hasn't published the ${year} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
         return false;
     }
     if (now < deadline) {
-        log(`The ${season} trade deadline is ${deadline.toISOString()}; nothing to snapshot yet.`);
+        log(`The ${year} trade deadline is ${deadline.toISOString()}; nothing to snapshot yet.`);
         return false;
     }
     const [players, league, rosters] = await Promise.all([
-        fetchFrom(API_BASE, "players"),
-        fetchFrom(host, "league", {L: leagueId}),
-        fetchFrom(host, "rosters", {L: leagueId})
+        fetchFrom(API_BASE, "players", {}, "players", year),
+        fetchFrom(host, "league", {L: leagueId}, "league", year),
+        fetchFrom(host, "rosters", {L: leagueId}, "rosters", year)
     ]);
     const built = buildLeague({players: playersFromExport(players), league, rosters});
     const top = franchiseTopSalaries(built.rosteredPlayers);
@@ -243,13 +273,13 @@ async function franchiseSnapshot() {
     const source = late
         ? `Daily job, ${daysLate} days after the trade deadline: rosters may have changed since, so check it`
         : "Daily job, after the trade deadline";
-    const snapshot = makeSnapshot(season, top, {takenAt: now.toISOString(), source});
+    const snapshot = makeSnapshot(year, top, {takenAt: now.toISOString(), source});
     mkdirSync(dirname(file), {recursive: true});
     writeFileSync(file, JSON.stringify(snapshot, null, 2) + "\n");
     const summary = Object.entries(top).map(([position, list]) => `${position} $${franchiseSalary(list)}`).join(", ");
     choreLog(late
-        ? `Took the ${season} franchise salary snapshot ${daysLate} days late (${summary}). Rosters may have changed since the deadline; check it.`
-        : `Took the ${season} franchise salary snapshot (${summary}).`);
+        ? `Took the ${year} franchise salary snapshot ${daysLate} days late (${summary}). Rosters may have changed since the deadline; check it.`
+        : `Took the ${year} franchise salary snapshot (${summary}).`);
     return true;
 }
 
@@ -297,6 +327,8 @@ function updateChoreLog() {
 let snapshotWritten = false;
 let publish = false;
 try {
+    season = await leagueSeason();
+    log(`Working on the ${season} league site.`);
     // Snapshots only need public league data, so a broken login is reported but doesn't stop them.
     const loginProblem = await login();
     if (loginProblem) {
@@ -310,7 +342,9 @@ try {
         choreLog(`Drop penalties: ${error.message}`);
         process.exitCode = 1;
     }
-    snapshotWritten = await franchiseSnapshot();
+    for (const year of [season - 1, season]) {
+        snapshotWritten = (await franchiseSnapshot(year)) || snapshotWritten;
+    }
     const stale = snapshotWritten ? [] : await snapshotsToPublish();
     if (stale.length) {
         choreLog(`Publishing snapshots that are new or changed since the site was last published: ${stale.join(", ")}.`);

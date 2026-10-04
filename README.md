@@ -74,8 +74,10 @@ a player cut later reads $1.
 ## The daily job
 
 `.github/workflows/daily.yml` runs `jobs/daily.mjs` every morning, logged in to MFL as commissioner.
-It works on the NFL season that started most recently. After that season's trade deadline it takes
-the franchise salary snapshot, commits it to `league-data` and publishes the site. A snapshot taken
+It works on the newest league site: this year's once the league has been renewed for it, last
+year's until then. After a season's trade deadline it takes the franchise salary snapshot, commits it
+to `league-data` and publishes the site. It checks last season's snapshot too, so one that's missing
+is still taken after renewal. A snapshot taken
 more than a week late is marked for checking. Snapshots only need public league data, so a failed
 login is logged and fails the run, but doesn't stop the snapshot.
 
