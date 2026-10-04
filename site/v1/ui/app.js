@@ -197,7 +197,11 @@ async function contractReadings({season, leagueId}, league) {
     return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
 }
 
-export async function start({dataBase}) {
+/**
+ * Draw the league's features on this page. `beta` is the version the header offers this viewer
+ * (loader.js's betaOffer), which League Alerts invites them to try; null when this is the beta.
+ */
+export async function start({dataBase, beta = null}) {
     const context = pageContext();
     const found = mounts();
     const onHome = document.getElementById("tabcontent0") || found.contracts || found.commish || found.links;
@@ -229,13 +233,13 @@ export async function start({dataBase}) {
     };
     let alertsShown = false;
     render("violations", null, () => {
-        alertsShown = renderViolations(league);
+        alertsShown = renderViolations(league, {beta});
     });
     if (alertsShown) {
         // redraw with what the board says, without holding up the rest; if it can't be read,
         // the notice just keeps its deadline
         contractReadings(context, league)
-            .then((readings) => readings && render("violations", null, () => renderViolations(league, readings)))
+            .then((readings) => readings && render("violations", null, () => renderViolations(league, {readings, beta})))
             .catch((error) => console.warn("[fuad] couldn't read the message board for contract lengths:", error));
     }
 

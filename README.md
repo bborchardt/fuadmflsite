@@ -13,7 +13,7 @@ viewing the page.
 | Path | What it is |
 |---|---|
 | `site/v<N>/` | One folder per version: what MFL loads |
-| `site/v<N>/fuad.js`, `fuad.css` | The entry point and the league-wide styles |
+| `site/v<N>/fuad.js`, `loader.js`, `fuad.css` | The entry point, which version runs (header, preview or beta), and the league-wide styles |
 | `site/v<N>/lib/` | League rules and logic, shared with the daily job |
 | `site/v<N>/ui/` | The Main, Contracts, Commish and Links features |
 | `mfl/` | What gets pasted into MFL's home page messages |
@@ -57,6 +57,24 @@ A `?fuadPreview=` parameter on any league page loads another version in that bro
 
 An orange badge shows while previewing. A preview that fails to load is turned off. For local
 previews, Chrome asks once whether the MFL site may access the local network.
+
+## Beta
+
+The header message can offer members a version to try, with a line before the script that loads
+the code:
+
+```html
+<script>window.fuadBeta = {version: "v2", feedback: "<link to a feedback thread>", teams: ["0001"]};</script>
+```
+
+`teams` limits the offer to those franchise ids; without it everyone gets it. League Alerts then
+invites the viewer to try it (`?fuadBeta=on`), and the beta shows a bar on every page with the
+feedback link and a way back (`?fuadBeta=off`). The choice is kept in that browser only, and only
+while the header offers that version: removing the line ends the beta, and switching the header to
+that version promotes it, for everyone at their next page load. The bar is drawn before the beta's
+features start, so the way back stays even if they break. A developer preview wins over the beta.
+The daily job follows `RULES_VERSION`, not what members see, so a beta changes how things look,
+not the rules.
 
 ## Franchise salaries
 
