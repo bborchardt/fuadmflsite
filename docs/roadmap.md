@@ -89,12 +89,14 @@ Candidates:
      the parser.**
    - **First-come-first-served adds:** members post the years on the message board. **Open:** parse
      free-text posts, or add a structured "Set contract length" control that posts in a fixed format.
-2. **Season rollover routine** (manual today): decrement every contract year by 1, and set players who
-   go from 1 to 0 years (new RFAs) to $0.01. MFL won't allow $0, and $0.01 shows as $0 on the roster
-   report.
-3. **Commish-tab chores queue** for anything needing a decision.
-4. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
+2. **Commish-tab chores queue** for anything needing a decision.
+3. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
    after seeing the log.
+
+Deferred: the **season rollover** (decrement every contract year by 1; players going from 1 to 0
+years, the new RFAs, get $0.01, since MFL won't allow $0 and $0.01 shows as $0 on the roster report).
+It's once a year and part of the commissioner's routine when creating the new site, so automating it
+saves little.
 
 Guidance: apply deterministic things automatically, flag anything risky for a person, and log
 everything.
