@@ -141,7 +141,8 @@ async function leagueSeason() {
     let response, body;
     try {
         response = await fetch(exportUrl(host, year, "league", {L: leagueId}), {headers: mflHeaders});
-        body = response.status === 404 ? null : await response.json();
+        // only read the body of a reply that can say: a 404, or a 200 with JSON
+        body = response.ok ? await response.json() : null;
     } catch (error) {
         throw new Error(`Couldn't tell whether the league has a ${year} site: ${error.message}`);
     }
