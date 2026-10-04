@@ -135,8 +135,7 @@ test("years come from the bid comment, or posts after a free agent add, else the
         ],
         bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Wilson 2yrs, Palmer 1yr"), bid("0008", ["Keenum, Case"], ""),
             bid("0009", ["Palmer, Joshua"], "")],
-        teams,
-        threadFound: true
+        teams
     });
     assert.deepEqual(flags, []);
     assert.deepEqual(contracts.map(({playerId, years, source}) => ({playerId, years, source})), [
@@ -148,21 +147,19 @@ test("years come from the bid comment, or posts after a free agent add, else the
     ]);
 });
 
-test("conflicts, a missing bid and a missing thread are flagged, not guessed", () => {
-    const decide = (adds, posts, bidRequests, threadFound = true) => decideYears({adds, posts, bidRequests, teams, threadFound});
+test("conflicts and a missing bid are flagged, not guessed", () => {
+    const decide = (adds, posts, bidRequests) => decideYears({adds, posts, bidRequests, teams});
     let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 3yrs"), post("0008", "Keenum 2 years", T + 120)], []);
     assert.deepEqual(result.contracts, []);
     assert.match(result.flags[0], /^Case Keenum: the owner gave different lengths \(3 in post "Keenum 3yrs"; 2 in post "Keenum 2 years"\)$/);
     result = decide([add("6", "0008", "BBID_WAIVER")], [], []);
     assert.match(result.flags[0], /blind bid isn't on MFL's processed waivers page/);
-    result = decide([add("5", "0007", "FREE_AGENT")], [], [], false);
-    assert.match(result.flags[0], /contract thread wasn't found, so it wasn't defaulted/);
     result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 7 years")], []);
     assert.match(result.flags[0], /7 years for Keenum, Case is outside 1-5/);
 });
 
 test("a stated length that can't be placed is flagged, never defaulted", () => {
-    const decide = (adds, posts, bidRequests, teamMap = teams) => decideYears({adds, posts, bidRequests, teams: teamMap, threadFound: true});
+    const decide = (adds, posts, bidRequests, teamMap = teams) => decideYears({adds, posts, bidRequests, teams: teamMap});
     // a length in a form the reader doesn't know
     let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 2y")], []);
     assert.match(result.flags[0], /post "Keenum 2y" names the player but gives no length the job can read/);
@@ -175,7 +172,7 @@ test("a stated length that can't be placed is flagged, never defaulted", () => {
 
 test("a bare count in a conditional blind bid covers whichever player is won", () => {
     const result = decideYears({
-        adds: [add("3", "0006", "BBID_WAIVER")], posts: [], teams, threadFound: true,
+        adds: [add("3", "0006", "BBID_WAIVER")], posts: [], teams,
         bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "3 years")]
     });
     assert.deepEqual(result.flags, []);
@@ -183,7 +180,7 @@ test("a bare count in a conditional blind bid covers whichever player is won", (
 });
 
 test("every length in a post is accounted for", () => {
-    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams, threadFound: true});
+    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams});
     // one name right, one misspelt
     let result = decide([add("6", "0003", "FREE_AGENT"), add("11", "0003", "FREE_AGENT")], [post("0003", "Cameron 5 years, Keenam 3 years")]);
     assert.deepEqual(result.contracts.map(({playerId, years}) => ({playerId, years})), [{playerId: "11", years: 5}]);
@@ -200,7 +197,7 @@ test("every length in a post is accounted for", () => {
 });
 
 test("naming a teammate in full doesn't hide the add's length", () => {
-    const decide = (body) => decideYears({adds: [add("13", "0003", "FREE_AGENT")], posts: [post("0003", body)], bidRequests: [], teams, threadFound: true});
+    const decide = (body) => decideYears({adds: [add("13", "0003", "FREE_AGENT")], posts: [post("0003", body)], bidRequests: [], teams});
     for (const body of ["Backup for Geno Smith: Lock 2 years", "2 years for Lock, backup to Geno Smith", "Geno Smith hurt so Lock 2 years",
         "Lock 2 years, backup to Geno Smith", "Drew Lock 2 years (Geno Smith backup)"]) {
         const result = decide(body);
@@ -210,7 +207,7 @@ test("naming a teammate in full doesn't hide the add's length", () => {
 });
 
 test("dotted initials, each/both lists, sentence bounds and shared surnames", () => {
-    const decide = (adds, body) => decideYears({adds, posts: [post("0003", body)], bidRequests: [], teams, threadFound: true});
+    const decide = (adds, body) => decideYears({adds, posts: [post("0003", body)], bidRequests: [], teams});
     assert.equal(decide([add("6", "0003", "FREE_AGENT")], "C.Keenum - 1 year").contracts[0].years, 1);
     assert.equal(decide([add("6", "0003", "FREE_AGENT")], "QB - C. Keenum 3yrs").contracts[0].years, 3);
     let result = decide([add("6", "0003", "FREE_AGENT"), add("5", "0003", "FREE_AGENT"), add("1", "0003", "FREE_AGENT")],
@@ -232,7 +229,7 @@ test("dotted initials, each/both lists, sentence bounds and shared surnames", ()
 
 test("a post must name the player: a bare count isn't a valid post", () => {
     const result = decideYears({adds: [add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")],
-        posts: [post("0008", "3 years"), post("0008", "1 yr")], bidRequests: [], teams, threadFound: true});
+        posts: [post("0008", "3 years"), post("0008", "1 yr")], bidRequests: [], teams});
     assert.deepEqual(result.flags, []);
     assert.deepEqual(result.contracts.map(({playerId, years, source}) => ({playerId, years, source})), [
         {playerId: "6", years: 1, source: "no length stated: the default"},
@@ -241,7 +238,9 @@ test("a post must name the player: a bare count isn't a valid post", () => {
 });
 
 test("posts about other players on the team don't touch an add", () => {
-    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams, threadFound: true});
+    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams});
+    // chat naming the player without a length, in another thread
+    assert.deepEqual(decide([add("6", "0008", "FREE_AGENT")], [post("0008", "if Rush doesnt play, play Keenum")]).flags, []);
     // a post after the add about another player on the team
     const result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Cooper Rush 4 years")]);
     assert.deepEqual(result.flags, []);

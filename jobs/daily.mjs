@@ -43,7 +43,7 @@ const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} =
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
-const {CONTRACT_THREAD, MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, teamPlayers} =
+const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, teamPlayers} =
     await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
@@ -237,8 +237,11 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         throw new Error(`${adds.length} added player(s) are waiting for contract years, but reading the bids `
             + "and the message board needs the commissioner login, so none were set.");
     }
+    // owners post lengths in threads of any name, so read every thread with a post since the
+    // earliest pending add
+    const earliest = Math.min(...adds.map((add) => add.added));
     const board = await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100});
-    const threads = asArray(board.thread).filter((thread) => CONTRACT_THREAD.test(thread.subject || ""));
+    const threads = asArray(board.thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
     const posts = [];
     for (const thread of threads) {
         posts.push(...asArray((await fetchFrom(host, "messageBoardThread", {L: leagueId, THREAD: thread.id})).post));
@@ -248,7 +251,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         bidRequests.push(...await processedWaivers(period));
     }
     const {contracts, flags} = decideYears({
-        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), threadFound: threads.length > 0
+        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames})
     });
     for (const flag of flags) {
         choreLog(`Contract years: ${flag}. Left for the commissioner.`);

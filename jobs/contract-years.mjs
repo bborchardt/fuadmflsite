@@ -9,12 +9,6 @@ export const MAX_YEARS = 5;
 export const DEFAULT_YEARS = 1;
 /** More contracts than this in one run looks like a bug rather than a busy day, so none are set. */
 export const MAX_CONTRACTS_PER_RUN = 15;
-/**
- * The message board threads owners post contract lengths in, by subject. The name changes
- * from season to season ("Free Agent Contracts", "Contracts", "Add/Drop Contracts..."), and
- * posts are matched by team, time and player name, so any thread about contracts is read.
- */
-export const CONTRACT_THREAD = /contract/i;
 
 const ADD_TYPES = new Set(["FREE_AGENT", "WAIVER", "BBID_WAIVER"]);
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
@@ -278,21 +272,21 @@ export function teamPlayers({rosters, players}) {
 }
 
 /**
- * Decide each pending add's years. `posts` are the contract thread's posts
- * ({franchise, postTime, body}), `bidRequests` the readProcessedWaivers entries for the
- * periods of pending blind bids, `teams` the teamPlayers map, and `threadFound` whether the
- * contract thread exists. League rules: a blind bid's length must be in its comment, and a
+ * Decide each pending add's years. `posts` are the message board's posts, from any thread
+ * ({franchise, postTime, body}): owners have posted lengths in threads of every name. They're
+ * matched by team, time and player name. `bidRequests` are the readProcessedWaivers entries
+ * for the periods of pending blind bids, and `teams` the teamPlayers map. League rules: a blind bid's length must be in its comment, and a
  * free agent or waiver add's in a post made after the add, naming the player (a bare "1 yr"
  * post isn't valid, so it's ignored). A bare count in a bid comment covers every player in the
  * bid. Agreeing posts set the years; disagreeing or unreadable ones flag the add. An add with
  * no length stated by the job's next run gets DEFAULT_YEARS (the commissioner adjusts by hand
- * for leniency), unless the thread it would be posted in is missing, which flags it instead.
+ * for leniency).
  * A comment, or a post naming the add, that gives no length the reader understands is flagged
  * too, as is a post after the add giving a length but naming no player on the team (a typo or
  * nickname), so a stated length is never replaced by the default.
  * Returns {contracts: [{...add, years, source}], flags: [text]}.
  */
-export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
+export function decideYears({adds, posts, bidRequests, teams}) {
     const contracts = [];
     const flags = [];
     for (const add of adds) {
@@ -335,7 +329,8 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
             const namesAdd = (named(body, [add], team.filter((player) => player.playerId !== add.playerId)) || []).length > 0;
             if (read.years.has(add.playerId)) {
                 stated.push({years: read.years.get(add.playerId), source: `post "${body.trim()}"`});
-            } else if (!own.length && namesAdd) {
+            } else if (!own.length && namesAdd && /\d|\b(yrs?|years?|seasons?)\b/i.test(body)) {
+                // it names the player and looks like it gives a length, in a form the job can't read
                 problems.push(`post "${body.trim()}" names the player but gives no length the job can read`);
             } else if (!own.length && read.unplaced.length) {
                 problems.push(`post "${body.trim()}" gives ${read.unplaced.join(" and ")} years without naming a player on the team the job recognizes`);
@@ -350,8 +345,6 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
             flags.push(`${label}: the owner gave different lengths (${stated.map((entry) => `${entry.years} in ${entry.source}`).join("; ")})`);
         } else if (counts.length === 1) {
             contracts.push({...add, years: counts[0], source: stated[0].source});
-        } else if (!threadFound && add.type !== "BBID_WAIVER") {
-            flags.push(`${label}: no length stated, and the message board's contract thread wasn't found, so it wasn't defaulted`);
         } else {
             contracts.push({...add, years: DEFAULT_YEARS, source: "no length stated: the default"});
         }

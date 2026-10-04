@@ -96,7 +96,8 @@ drop penalties held, with the dropped players' contracts intact, so the move can
 
 It sets contract years for added players, which MFL adds with 0 years. By league rule a blind bid's
 length (1 to 5 years) goes in the bid's comment, and a free agent or waiver add's in a message board
-post about contracts, made right after the add and naming the player. The job reads bid comments from
+post made right after the add and naming the player. Owners have used threads of every name, so the
+job reads all of them. The job reads bid comments from
 MFL's Previously Processed Waivers page, the only place they appear, and posts through MFL's API. A
 bare count in a bid comment covers every player in that conditional bid. An add with no length stated
 by the job's next run gets 1 year; the commissioner adjusts by hand for any leniency. Anything unclear
