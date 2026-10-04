@@ -13,14 +13,15 @@ const MAX_NAMES = 5;
 /**
  * Every franchise's total against the cap, as a Map of franchise id -> total: its salary
  * (rosters plus adjustments, so `league` must be built with salary adjustments) plus the drop
- * penalties still to be charged.
+ * penalties still to be charged. Rounded to the cent, so amounts with cents can't add up to a
+ * hair over the cap.
  */
 export function capTotals(league, penalties, adjustments) {
     const totals = new Map([...league.franchises.values()].map((franchise) => [franchise.franchiseId, franchise.salary]));
     for (const penalty of penalties.filter((penalty) => needsCharge(penalty, adjustments))) {
         totals.set(penalty.franchiseId, totals.get(penalty.franchiseId) + penalty.amount);
     }
-    return totals;
+    return new Map([...totals].map(([franchiseId, total]) => [franchiseId, Math.round(total * 100) / 100]));
 }
 
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");

@@ -258,8 +258,9 @@ async function dropPenalties(loggedIn, {penalties, adjustments}, over) {
         }
         return;
     }
-    if (penalties.length > MAX_PENALTIES_PER_RUN) {
-        throw new Error(`${penalties.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
+    // held penalties don't count: they can wait for weeks on a team over the cap
+    if (toApply.length > MAX_PENALTIES_PER_RUN) {
+        throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
             + `expected in a day, so none were charged. Check the Commish tab and charge them by hand.`);
     }
     if (toApply.length && !loggedIn) {
