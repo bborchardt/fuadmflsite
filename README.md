@@ -18,7 +18,6 @@ viewing the page.
 | `site/v<N>/ui/` | The Main, Contracts, Commish and Links features |
 | `mfl/` | What gets pasted into MFL's home page messages |
 | `jobs/daily.mjs` | The daily job |
-| `legacy/` | The code from before versions, kept as a paste-able fallback |
 | `tests/` | Unit tests for the shared league logic (`npm test`) |
 | `tools/dev-server.py` | Serves `site/` locally for previews |
 
@@ -32,7 +31,7 @@ one version's `fuad.js` and `fuad.css` from GitHub Pages. The other files in `mf
 mount points that go in the home page messages wired into the matching custom tabs.
 
 If GitHub Pages can't be reached, the tabs say "League tools are temporarily unavailable" and MFL's
-own pages keep working. For a long outage, `legacy/` can be pasted in instead, as before versions.
+own pages keep working.
 
 ## Versions
 
