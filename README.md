@@ -79,6 +79,15 @@ the franchise salary snapshot, commits it to `league-data` and publishes the sit
 more than a week late is marked for checking. Snapshots only need public league data, so a failed
 login is logged and fails the run, but doesn't stop the snapshot.
 
+It also charges cap penalties for drops. A dropped player still carrying a contract gets a salary
+adjustment for the penalty, described like "Name (2yrs@10, 10/03)" with the drop date, and is reset
+to $1 / 0 years, which clears them from the Commish tab. An adjustment naming the player made since
+the drop counts as already charged, so a penalty entered by hand isn't charged twice. A team the
+penalties would put over the cap is left alone, with the dropped player's contract intact, so the
+commissioner can reverse the move; the run fails so they hear about it. Unless the
+`DROP_PENALTIES` repository variable is `apply`, it only logs what it would do. More drops in one run
+than a busy day would bring are left for the commissioner rather than charged.
+
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
 least once a month. It re-enables itself on every run, because GitHub turns off scheduled workflows
 after 60 days without repository activity.
