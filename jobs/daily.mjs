@@ -313,13 +313,22 @@ async function leagueState() {
         fetchFrom(host, "freeAgents", {L: leagueId}),
         fetchFrom(host, "weeklyResults", {L: leagueId})
     ]);
-    // today's NFL injury report, for injured reserve eligibility
-    const currentInjuries = await fetchFrom(API_BASE, "injuries");
+    // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
+    const currentInjuries = await fetchFrom(API_BASE, "injuries").catch((error) => {
+        log(`Couldn't load today's NFL injury report (${error.message}); the injured reserve check is skipped.`);
+        return null;
+    });
     const playerMap = playersFromExport(players);
     const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, currentInjuries});
-    // as the Main tab's box: once the season is over, only the cap is checked
-    const seasonOver = await weekKickoff(season, SEASON_OVER_WEEK, {init: {headers: mflHeaders}});
-    built.seasonOver = Boolean(seasonOver) && now >= seasonOver;
+    // as the Main tab's box: once the season is over, only the cap is checked. If it can't be
+    // told, the roster rules are skipped rather than risk flagging the offseason.
+    try {
+        const kickoff = await weekKickoff(season, SEASON_OVER_WEEK, {init: {headers: mflHeaders}});
+        built.seasonOver = Boolean(kickoff) && now >= kickoff;
+    } catch (error) {
+        log(`Couldn't tell whether the ${season} season is over (${error.message}); the roster rules are skipped.`);
+        built.seasonOver = null;
+    }
     return {
         players: playerMap,
         built,
@@ -339,6 +348,9 @@ const ROSTER_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster"])
  * The run fails so the commissioner hears about it, every day until it's fixed.
  */
 function rosterRules({built}) {
+    if (built.seasonOver === null) {
+        return;
+    }
     const violations = ruleViolations(built).filter((item) => ROSTER_KINDS.has(item.kind));
     for (const violation of violations) {
         choreLog(`Roster rules: ${violation.text}`);
