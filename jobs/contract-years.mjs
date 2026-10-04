@@ -285,7 +285,8 @@ export function teamPlayers({rosters, players}) {
  * Decide each pending add's years. `posts` are the message board's posts, from any thread
  * ({franchise, postTime, body}): owners have posted lengths in threads of every name. They're
  * matched by team, time and player name. `bidRequests` are the readProcessedWaivers entries
- * for the periods of pending blind bids, and `teams` the teamPlayers map. League rules: a blind bid's length must be in its comment, and a
+ * for the periods of pending blind bids (each with its `period`, the bid's timestamp), and
+ * `teams` the teamPlayers map. League rules: a blind bid's length must be in its comment, and a
  * free agent or waiver add's in a post made after the add, naming the player (a bare "1 yr"
  * post isn't valid, so it's ignored). A bare count in a bid comment covers every player in the
  * bid. Agreeing posts set the years; disagreeing or unreadable ones flag the add. An add with
@@ -303,7 +304,8 @@ export function decideYears({adds, posts, bidRequests, teams}) {
         const stated = [];
         const problems = [];
         if (add.type === "BBID_WAIVER") {
-            const ours = bidRequests.filter((entry) => entry.franchiseId === add.franchiseId && entry.adds.includes(add.name));
+            const ours = bidRequests.filter((entry) => entry.franchiseId === add.franchiseId && entry.adds.includes(add.name)
+                && (entry.period === undefined || entry.period === add.added));
             const request = ours.find((entry) => entry.granted === add.name) || ours[0];
             if (!request) {
                 // never default a bid whose comment couldn't be checked

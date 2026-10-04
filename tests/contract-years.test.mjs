@@ -243,6 +243,14 @@ test("counts only pair with a name in the same sentence, in plain number formats
     assert.equal(decide([add("8", "0003", "FREE_AGENT")], "WR - A. St. Brown 4 yrs").contracts[0].years, 4);
 });
 
+test("a bid is only matched on its own period's page", () => {
+    const result = decideYears({adds: [add("6", "0008", "BBID_WAIVER")], posts: [], teams,
+        bidRequests: [{...bid("0008", ["Keenum, Case"], "4 years"), granted: null, period: T - 7 * 86400},
+            {...bid("0008", ["Keenum, Case"], ""), period: T}]});
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].source, "no length stated: the default");
+});
+
 test("a problem with another player in a conditional bid doesn't hide this one's unreadable length", () => {
     const result = decideYears({adds: [add("3", "0006", "BBID_WAIVER")], posts: [], teams,
         bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Palmer 6 years; EWil 2 years")]});

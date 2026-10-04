@@ -248,7 +248,8 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
     }
     const bidRequests = [];
     for (const period of new Set(adds.filter((add) => add.type === "BBID_WAIVER").map((add) => add.added))) {
-        bidRequests.push(...await processedWaivers(period));
+        // each request tagged with its period, so a bid is only matched on its own week's page
+        bidRequests.push(...(await processedWaivers(period)).map((request) => ({...request, period})));
     }
     const {contracts, flags} = decideYears({
         adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames})
