@@ -1,5 +1,4 @@
-// Builds the league model from MFL export sections. No DOM and no fetching, so it
-// runs the same in the page and in the daily job, and can be tested on saved data.
+// The league model from MFL exports, with no DOM or fetching, so the page and the daily job share it.
 
 import {asArray, displayName} from "./mfl.js";
 import {capPenalty, netCapSpace} from "./rules.js";
@@ -34,7 +33,6 @@ function newFranchise(id, teamName) {
     };
 }
 
-/** Players from the `players` export: Map of id -> player. */
 export function playersFromExport(players) {
     const byId = new Map();
     for (const player of asArray(players.player)) {
@@ -43,7 +41,7 @@ export function playersFromExport(players) {
     return byId;
 }
 
-/** Salary as the site counts it: anything under $1 counts as $0. */
+// anything under $1 counts as $0
 function salaryOf(value) {
     const salary = parseFloat(value);
     return salary < 1 ? 0 : salary;
@@ -56,12 +54,8 @@ function setContract(player, salary, contractYear) {
     player.netCapSpace = netCapSpace(player.years, player.salary);
 }
 
-/**
- * Build the league from export sections. Each argument is the top-level section of
- * that export (e.g. the `rosters` object). `players` is a Map from playersFromExport.
- * `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments`, `injuries` and `currentInjuries`
- * may be omitted when a caller doesn't need what they feed.
- */
+// `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments`, `injuries` and
+// `currentInjuries` may be left out when a caller doesn't need them.
 export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries}) {
     const franchises = new Map();
     for (const franchise of asArray(league.franchises && league.franchises.franchise)) {
@@ -198,10 +192,9 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
         }
     }
 
-    // today's NFL injury report, for injured reserve eligibility (`injuries` is the report for the
-    // league's results week, for the injured-starter check)
-    // a missing or thin report would make every injured reserve player look healthy, so the IR
-    // check only runs on a report with a realistic number of entries (about 400 in season)
+    // `injuries` is the results week's report, for anti-tanking; `currentInjuries` today's, for IR. A
+    // thin report would make every IR player look healthy, so the IR check needs a realistic one (about
+    // 400 entries in season).
     const report = currentInjuries ? asArray(currentInjuries.injury) : [];
     const injuryReportKnown = report.length >= MIN_INJURY_REPORT;
     if (injuryReportKnown) {

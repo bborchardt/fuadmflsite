@@ -1,5 +1,4 @@
-// Loads the league's data on the home page and renders the league's own features.
-// On other league pages it does nothing; only the stylesheet applies there.
+// On pages other than the home page this does nothing; only the stylesheet applies.
 
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
@@ -14,7 +13,7 @@ import {renderLinks} from "./links.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
-/** localStorage that never throws (private windows and blocked storage just don't remember). */
+// private windows and blocked storage just don't remember
 const storage = {
     get(key) {
         try {
@@ -27,12 +26,10 @@ const storage = {
         try {
             window.localStorage.setItem(key, value);
         } catch (error) {
-            // nothing to do: the setting just isn't remembered
         }
     }
 };
 
-/** Cache JSON in localStorage for up to `maxAge` ms. */
 async function cached(key, maxAge, load) {
     try {
         const saved = JSON.parse(storage.get(key));
@@ -47,7 +44,6 @@ async function cached(key, maxAge, load) {
     return value;
 }
 
-/** Season, league and host for this page, or null if it isn't a league page. */
 export function pageContext(location = window.location) {
     const season = (location.pathname.match(/^\/(\d{4})\//) || [])[1] || (window.year && String(window.year));
     const leagueId = (location.pathname.match(/\/home\/(\d+)/) || [])[1]
@@ -81,7 +77,7 @@ function showInMounts(found, className, message) {
     }
 }
 
-/** Kickoff times for the start of the season and the trade deadline; null until MFL publishes the schedule (cached a day). */
+// null until MFL publishes the schedule
 async function kickoffs(season) {
     const times = await cached(`fuad.kickoffs.${season}`, DAY, async () => {
         const [start, deadline] = await Promise.all([PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK].map((week) =>
@@ -91,7 +87,6 @@ async function kickoffs(season) {
     return {start: times.start && new Date(times.start), deadline: times.deadline && new Date(times.deadline)};
 }
 
-/** A season's snapshot file, or null if there isn't one yet. */
 async function loadSnapshot(season, dataBase) {
     const response = await fetch(new URL(snapshotFileName(season), dataBase), {cache: "no-cache"});
     if (response.status === 404) {
@@ -107,7 +102,6 @@ const deadlineText = (date) => date
     ? date.toLocaleString("en-US", {weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago", timeZoneName: "short"})
     : "the trade deadline";
 
-/** Which franchise salaries to show this season right now, and how to describe them. */
 async function franchiseView(season, league, dataBase) {
     const live = franchiseTopSalaries(league.rosteredPlayers);
     const times = await kickoffs(season);
@@ -139,7 +133,6 @@ function snapshotStatus(view, season) {
     return `The daily job takes the ${season} snapshot after the trade deadline. The button shows what it would contain right now.`;
 }
 
-/** Load everything the home page needs. Requests run in parallel; injuries wait for the week. */
 async function loadLeague({season, leagueId}) {
     const host = window.location.origin;
     const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
@@ -153,8 +146,7 @@ async function loadLeague({season, leagueId}) {
         fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries")).catch(() => null);
     // today's report, for injured reserve eligibility; without it that check is skipped
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries").catch(() => null);
-    // where the season is, for when the in-season checks run; if it can't be told, they're
-    // hidden for this load rather than risk showing members false alerts
+    // if the season's phase can't be told, in-season checks are hidden rather than risk false alerts
     const phasePromise = seasonPhase(season, new Date()).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
     const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
@@ -165,21 +157,15 @@ async function loadLeague({season, leagueId}) {
         transactions, weeklyResults, freeAgents, injuries, currentInjuries
     });
     Object.assign(built, phase);
-    // adds waiting for a contract length, for the violations box
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});
-    // for reading contract lengths from the message board
     built.boardContext = {rosters, playerNames};
     return built;
 }
 
-/**
- * What the message board says so far about free agent and waiver adds still in their hour, so
- * League Alerts can show the owner what was read; null when no add's hour is open. Only threads
- * with a post since the earliest such add are read, one at a time. The board needs a logged-in
- * member. The reader is loaded only here: its regular expressions need Safari 16.4 or later, and
- * on an older browser a failed load just leaves the notice as it is rather than the whole page.
- */
+// Only threads with a post since the earliest open add are read, one at a time; the board needs a
+// logged-in member. The reader is loaded only here: its regular expressions need Safari 16.4+, and
+// a failed load just leaves the notice as it is.
 async function contractReadings({season, leagueId}, league) {
     const open = league.pendingAdds.filter((add) => add.type !== "BBID_WAIVER" && !windowClosed(add, Date.now() / 1000));
     if (!open.length) {
@@ -197,10 +183,7 @@ async function contractReadings({season, leagueId}, league) {
     return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
 }
 
-/**
- * Draw the league's features on this page. `beta` is the version the header offers this viewer
- * (loader.js's betaOffer), which League Alerts invites them to try; null when this is the beta.
- */
+// `beta` is the offer League Alerts invites the viewer to; null when this is the beta.
 export async function start({dataBase, beta = null}) {
     const context = pageContext();
     const found = mounts();
@@ -236,8 +219,7 @@ export async function start({dataBase, beta = null}) {
         alertsShown = renderViolations(league, undefined, beta);
     });
     if (alertsShown) {
-        // redraw with what the board says, without holding up the rest; if it can't be read,
-        // the notice just keeps its deadline
+        // without holding up the rest; if the board can't be read, the notice keeps its deadline
         contractReadings(context, league)
             .then((readings) => readings && render("violations", null, () => renderViolations(league, readings, beta)))
             .catch((error) => console.warn("[fuad] couldn't read the message board for contract lengths:", error));

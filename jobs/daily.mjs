@@ -1,22 +1,4 @@
-// Daily league chores, run by .github/workflows/daily.yml (Node 24+).
-//
-// Chores:
-// - flag roster limit, injured reserve and anti-tanking violations, as the Main tab's League
-//   Alerts box shows them; a team over the roster limit is held like one over the cap.
-// - flag every team over the cap, counting drop penalties still owed, and fail the run so the
-//   commissioner hears about it.
-// - charge the cap penalty for each dropped player still carrying a contract, then reset the
-//   player to $1 / 0 years, except on a team over the cap. Only logged unless
-//   DROP_PENALTIES=apply.
-// - set contract years for added players from the blind bid comment or a message board post
-//   (1 year if none is stated), flagging anything unclear. Only logged unless
-//   CONTRACT_YEARS=apply.
-// - after the trade deadline, snapshot the season's franchise salaries. Last season's is
-//   checked too, so a missing one is still taken after the league is renewed.
-// The season is the newest league site: this year's once the league is renewed for it, last
-// year's until then.
-// Everything the job writes goes to a checkout of the league-data branch (DATA_DIR):
-// snapshots in data/, and chore-log.md.
+// The daily job. What it does: README.md; why: docs/design.md.
 //
 // Environment:
 //   DATA_DIR                    checkout of the league-data branch (required)
@@ -60,11 +42,9 @@ const dataDir = resolve(process.env.DATA_DIR);
 const leagueId = process.env.MFL_LEAGUE_ID || "48571";
 const host = process.env.MFL_HOST || "https://www44.myfantasyleague.com";
 const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
-// set at the start of the run, by leagueSeason()
 let season;
 const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (github.com/bborchardt/fuadmflsite)";
-// Headers for MFL requests only: after login they carry the commissioner's session cookie,
-// so never send them anywhere else.
+// after login these carry the commissioner's session cookie: never send them anywhere else
 const mflHeaders = {"User-Agent": userAgent};
 const pagesData = process.env.PAGES_DATA_URL || "https://bborchardt.github.io/fuadmflsite/data/";
 const LATE_AFTER_DAYS = 7;
@@ -81,16 +61,12 @@ function choreLog(message) {
     entries.push(message);
 }
 
-/** MFL asks clients to space requests out; this is the gap between the starts of two of ours. */
+// MFL asks for about a second between requests
 const MFL_REQUEST_SPACING_MS = 1000;
-/** How long one MFL request may take. */
 const MFL_TIMEOUT_MS = 30000;
 let nextRequestAt = 0;
 
-/**
- * fetch for every MFL request, started at least MFL_REQUEST_SPACING_MS apart even when several
- * are made at once, so the job never bursts. (MFL throttles bursts with HTTP 429.)
- */
+// spaced even when several start at once: MFL throttles bursts with HTTP 429
 async function mflFetch(url, init) {
     const wait = nextRequestAt - Date.now();
     nextRequestAt = Math.max(Date.now(), nextRequestAt) + MFL_REQUEST_SPACING_MS;
@@ -107,13 +83,8 @@ function setOutput(name, value) {
     }
 }
 
-/**
- * Log in as commissioner and keep the session cookie for later requests. MFL answers with
- * <status MFL_USER_ID="...">OK</status>, or <error>...</error> on bad credentials. The value
- * is Base64; MFL's docs say it may need +, / and = escaped, so both forms are tried against a
- * request that needs a login. Returns a problem description, or null if logged in (or no
- * login is configured). Never throws: snapshots only need public data.
- */
+// MFL_USER_ID is Base64 and MFL's docs say it may need +, / and = escaped, so both forms are tried.
+// Never throws: snapshots only need public data.
 async function login() {
     const username = process.env.MFL_USERNAME;
     const password = process.env.MFL_PASSWORD;
@@ -147,12 +118,7 @@ async function login() {
     return "MFL login succeeded but MFL didn't accept the session cookie";
 }
 
-/**
- * The season of the newest league site: this calendar year's once the commissioner has renewed
- * the league for it (in spring, on no fixed date), last year's until then. MFL answers 404, or
- * an error document, for a league with no site that year. Any other failure throws rather than
- * guessing.
- */
+// the league renews on no fixed date; a season with no site answers 404 or an error document
 async function leagueSeason() {
     if (process.env.SEASON) {
         return Number(process.env.SEASON);
@@ -175,10 +141,7 @@ async function leagueSeason() {
     throw new Error(`Couldn't tell whether the league has a ${year} site: HTTP ${response.status}`);
 }
 
-/**
- * Whether a session cookie works: logged in, MFL lists the account's leagues; logged out, it
- * lists none. Last season is checked too, in case MFL doesn't list a newly renewed league yet.
- */
+// last season too, in case MFL doesn't list a newly renewed league yet
 async function loginWorks(cookie) {
     for (const year of [season, season - 1]) {
         try {
@@ -197,7 +160,6 @@ async function loginWorks(cookie) {
 const fetchFrom = (base, type, params, section = type, year = season) =>
     fetchExport(exportUrl(base, year, type, params), section, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
 
-/** Put this run's chore log entries on the run's summary page, where the failure email leads. */
 function writeSummary() {
     if (!process.env.GITHUB_STEP_SUMMARY) {
         return;
@@ -212,10 +174,7 @@ function writeSummary() {
     }
 }
 
-/**
- * Send one of MFL's commissioner imports. MFL answers <status>OK</status>, or <error>...</error>
- * with HTTP 200; anything but OK throws, so a surprise stops the chore rather than being guessed at.
- */
+// MFL reports errors with HTTP 200, so anything but <status>OK</status> throws
 async function mflImport(type, data, params = {}) {
     let response, body;
     try {
@@ -234,10 +193,7 @@ async function mflImport(type, data, params = {}) {
     }
 }
 
-/**
- * MFL's Previously Processed Waivers page for one blind bid period, as the commissioner sees
- * it. Blind bid comments are only on this page, not in the API.
- */
+// bid comments appear only on this page, not in the API
 async function processedWaivers(period) {
     const url = `${host}/${season}/processed_waivers?LEAGUE_ID=${leagueId}&PERIOD=${period}`;
     let response;
@@ -257,14 +213,8 @@ async function processedWaivers(period) {
     return readProcessedWaivers(html);
 }
 
-/**
- * Set contract years for players added with none: from the blind bid comment, or the team's
- * posts on the message board, or 1 year if neither states one. Anything
- * unclear is flagged and left for the commissioner, and the run fails so they hear about it.
- * Teams over the cap are skipped, like their drop penalties: the add may be reversed, and a
- * dropped player with contract years would owe a penalty. Without CONTRACT_YEARS=apply it only
- * logs what it would do.
- */
+// teams over the cap or 30 players are held: the add may be reversed, and a dropped player with
+// contract years would owe a penalty
 async function contractYears(loggedIn, {rosters, transactions, playerNames}, over) {
     const pending = pendingAdds({rosters, transactions, players: playerNames});
     const held = pending.filter((add) => over.has(add.franchiseId));
@@ -272,7 +222,6 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         choreLog(`Contract years: ${add.name} held, since the team is over the cap or the roster limit. Left for the commissioner.`);
     }
     const waiting = pending.filter((add) => !over.has(add.franchiseId));
-    // decided once the owner's posting window has closed
     const adds = waiting.filter((add) => windowClosed(add, now.getTime() / 1000));
     if (waiting.length > adds.length) {
         log(`${waiting.length - adds.length} add(s) still in their posting window will be decided at the next run.`);
@@ -285,8 +234,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         throw new Error(`${adds.length} added player(s) are waiting for contract years, but reading the bids `
             + "and the message board needs the commissioner login, so none were set.");
     }
-    // owners post lengths in threads of any name, so read every thread with a post since the
-    // earliest pending add
+    // owners post lengths in threads of any name
     const earliest = Math.min(...adds.map((add) => add.added));
     const board = await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100});
     const threads = asArray(board.thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
@@ -325,7 +273,6 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
     contracts.forEach((contract) => choreLog(`Set ${describe(contract)}.`));
 }
 
-/** The league as the league chores need it: built with adjustments, transactions and free agents. */
 async function leagueState() {
     const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults] = await Promise.all([
         fetchFrom(API_BASE, "players"),
@@ -352,9 +299,7 @@ async function leagueState() {
     });
     const playerMap = playersFromExport(players);
     const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries});
-    // as the Main tab's box: the anti-tanking check stops when the playoffs start, the roster
-    // and IR checks when the championship week is over. If that can't be told, the league
-    // rules are skipped rather than risk flagging the offseason.
+    // if the season's phase can't be told, skip the league rules rather than flag the offseason
     try {
         Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}));
     } catch (error) {
@@ -373,16 +318,10 @@ async function leagueState() {
     };
 }
 
-/** The League Alerts the job flags, as the Main tab's box shows them; the cap has its own flag. */
 const RULE_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster", "injured-starter"]);
 
-/**
- * Flag roster limit, injured reserve and anti-tanking violations, from the same rules as the
- * Main tab's box. Going over the roster limit voids the move, like going over the cap, so that
- * flag lists the team's recent moves and any drop penalties held. The run fails so the
- * commissioner hears about it, every day until it's fixed. Returns the teams over the roster
- * limit, whose drop penalties and contract years are held.
- */
+// going over 30 voids the move like the cap, so the flag lists recent moves. Returns the teams over
+// 30, whose chores are held.
 function leagueRules({players, built, penalties, transactions}) {
     const overRoster = new Set();
     if (built.seasonOver === null) {
@@ -408,11 +347,7 @@ function leagueRules({players, built, penalties, transactions}) {
     return overRoster;
 }
 
-/**
- * Flag every team over the cap, counting drop penalties still owed, with its recent moves. The
- * run fails so the commissioner hears about it, every day until the team is back under. Returns
- * the over-cap franchise ids, whose drop penalties are held.
- */
+// returns the over-cap franchise ids, whose chores are held
 function overCap({players, built, penalties, transactions}) {
     const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
     const over = new Set();
@@ -436,14 +371,8 @@ function overCap({players, built, penalties, transactions}) {
     return over;
 }
 
-/**
- * Charge the cap penalty for each dropped player still carrying a contract, then reset the
- * player to $1 / 0 years, which clears them from the Commish tab. A penalty already charged
- * (by an earlier run that failed before the reset, or by hand), or a $0 one, is skipped, and
- * only the reset is done. Teams over the cap are skipped: their flag names the held penalties,
- * since charging them would reset a contract the commissioner may restore by reversing the
- * move. Without DROP_PENALTIES=apply it only logs what it would do.
- */
+// a penalty already charged (by a run that failed before the reset, or by hand), or a $0 one,
+// only gets the reset
 async function dropPenalties(loggedIn, {penalties}, over) {
     if (!penalties.length) {
         log("No dropped players owe a cap penalty.");
@@ -480,7 +409,6 @@ async function dropPenalties(loggedIn, {penalties}, over) {
     }
 }
 
-/** After a season's deadline, write its franchise snapshot if it doesn't exist yet. */
 async function franchiseSnapshot(year) {
     const file = join(dataDir, "data", snapshotFileName(year));
     if (existsSync(file)) {
@@ -518,10 +446,7 @@ async function franchiseSnapshot(year) {
     return true;
 }
 
-/**
- * Snapshots on league-data that the published site doesn't have, or has an older copy of
- * (e.g. one committed or corrected by hand). Any of these means the site needs publishing.
- */
+// including ones committed or corrected by hand on league-data
 async function snapshotsToPublish() {
     const dir = join(dataDir, "data");
     const files = existsSync(dir) ? readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
@@ -540,7 +465,7 @@ async function snapshotsToPublish() {
     return stale;
 }
 
-/** Append this run's entries to the chore log, or a monthly heartbeat if nothing happened. */
+// a monthly heartbeat when nothing happened
 function updateChoreLog() {
     const file = join(dataDir, "chore-log.md");
     const stamp = now.toISOString().slice(0, 16).replace("T", " ") + " UTC";
@@ -564,7 +489,7 @@ let publish = false;
 try {
     season = await leagueSeason();
     log(`Working on the ${season} league site.`);
-    // Snapshots only need public league data, so a broken login is reported but doesn't stop them.
+    // snapshots only need public data, so a failed login doesn't stop them
     const loginProblem = await login();
     if (loginProblem) {
         choreLog(`${loginProblem}. Continuing with public league data.`);
@@ -580,9 +505,8 @@ try {
         process.exitCode = 1;
     }
     if (state) {
-        // teams over the roster limit or the cap: their moves may be reversed, so drop penalties
-        // and contract years are held
-        // if the league rules can't run, any team over 30 is still held, to be safe
+        // their moves may be reversed, so their chores are held; if the league rules can't run, any
+        // team over 30 is still held
         const overThirty = () => new Set([...state.built.franchises.values()]
             .filter((franchise) => franchise.numPlayers > ROSTER_MAX).map((franchise) => franchise.franchiseId));
         let overRoster;

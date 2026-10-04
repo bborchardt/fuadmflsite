@@ -1,16 +1,11 @@
-// The league's roster and salary cap rules, checked against a built league. Shared by the Main
-// tab's violations box and the daily job, so the two report the same things. No DOM.
+// League Alerts' rules, shared with the daily job so the two flag the same things.
 
 import {INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_CHECK_LAST_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
 import {contractDeadline, windowClosed} from "./adds.js";
 import {weekEnd, weekKickoff} from "./mfl.js";
 
-/**
- * Where a season is, from MFL's NFL schedule: {started} once week 1 has kicked off,
- * {tankingOver} once the playoffs' first kickoff has passed, {seasonOver} once the championship
- * week is over. A schedule MFL hasn't published
- * counts as not yet. `now` is a Date; `options` go to the fetches.
- */
+// MFL reports week 17 all offseason, so the season's phase comes from its NFL schedule. A schedule
+// MFL hasn't published counts as not yet.
 export async function seasonPhase(season, now, options) {
     const [start, playoffs, end] = await Promise.all([
         weekKickoff(season, 1, options),
@@ -25,22 +20,17 @@ export async function seasonPhase(season, now, options) {
     };
 }
 
-/** "Last, First" as "First Last". */
 const displayName = (name) => String(name).split(",").reverse().map((part) => part.trim()).join(" ");
 
-/** Whether the NFL lists a player on injured reserve: IR, or a variant such as IR-R or IR-PUP. */
+// the NFL's IR and its variants (IR-R, IR-PUP, IR-NFI)
 export const onNflIR = (player) => /^IR/.test(player.injuryStatus || "");
 
-/** A Unix time as members see it on MFL: "9:42 PM CT". */
+// as members see times on MFL: "9:42 PM CT"
 function centralTime(seconds) {
     return new Date(seconds * 1000).toLocaleTimeString("en-US", {timeZone: "America/Chicago", hour: "numeric", minute: "2-digit"}) + " CT";
 }
 
-/**
- * The notice for an add whose hour is open, from what the message board says so far (a
- * contract-years.js postReading; none when the board couldn't be read). It shows the
- * recommended format, "Hill: 3 years".
- */
+// `reading` is contract-years.js's postReading, or none when the board couldn't be read
 function contractNotice(teamName, add, reading) {
     const by = centralTime(contractDeadline(add));
     const example = `"${String(add.name).split(",")[0].trim()}: 3 years"`;
@@ -55,20 +45,11 @@ function contractNotice(teamName, add, reading) {
     return `${added}: post his contract length on the message board by ${by}, like ${example}, or it will be 1 year.`;
 }
 
-/**
- * Everything the box shows, as [{kind, franchiseId, text, warning}]. `warning` items are rule
- * violations; the others are notices. Kinds: "cap", "roster-over", "roster-under", "ir" (on
- * MFL's IR without an NFL IR designation), "ir-roster" (moving those back would break the
- * roster limit), "injured-starter", and "contract" (an add whose posting window is still open).
- * `pendingAdds` comes from adds.js and `readings` from contract-years.js's postReadings; `now`
- * is Unix seconds. `league.tankingOver` and
- * `league.seasonOver` come from seasonPhase: after them the anti-tanking and the roster and IR
- * checks stop (MFL keeps reporting week 17 all offseason).
- */
+// Returns [{kind, franchiseId, text, warning}]; `warning` items are rule violations, the others
+// notices.
 export function ruleViolations(league, {pendingAdds = [], readings = new Map(), now = Date.now() / 1000} = {}) {
     const items = [];
     const week = Number(league.week);
-    // roster limits and IR apply from week 1's kickoff until the championship week is over;
     // in the preseason only the cap is checked
     const rosterSeason = league.started !== false && !league.seasonOver && week <= ROSTER_CHECK_LAST_WEEK;
     const push = (kind, franchise, text, warning = true) => items.push({kind, franchiseId: franchise.franchiseId, text, warning});
@@ -84,8 +65,7 @@ export function ruleViolations(league, {pendingAdds = [], readings = new Map(), 
         if (rosterSeason && franchise.numPlayers < ROSTER_MIN) {
             push("roster-under", franchise, `${franchise.teamName} is under the roster limit with ${franchise.numPlayers} players!`);
         }
-        // during the season only, and only with today's NFL injury report loaded: it's what makes a
-        // player IR-eligible
+        // today's NFL injury report is what makes a player IR-eligible
         if (league.injuryReportKnown && rosterSeason && week >= 1) {
             const healthy = (franchise.irPlayers || []).filter((player) => !onNflIR(player));
             for (const player of healthy) {

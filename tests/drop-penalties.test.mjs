@@ -1,6 +1,3 @@
-// Tests for the daily job's cap penalty chore, and the league's view of penalties owed, which
-// the Main tab's violations box shares.
-
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";

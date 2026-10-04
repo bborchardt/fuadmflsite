@@ -1,13 +1,10 @@
-// The Contracts tab: every rostered player's contract, the cap penalty calculator,
-// rookie salaries and franchise salaries.
-
 import {esc, rowStriper} from "./html.js";
 import {POSITIONS, ROOKIE_PICKS_SHOWN, FRANCHISE_PLAYER_COUNT, capPenalty, franchiseSalary, positionOrder, rookieSalary} from "../lib/rules.js";
 
-// Same key the old site used, so members keep their "Group Players By Year" choice.
+// the old site's key, so members keep their "Group Players By Year" choice
 const groupByYearKey = (season) => "playersByContractYearChecked" + season;
 
-// Plain < and > comparison, as the old site sorted names.
+// plain < and >, as the old site sorted names
 function compareText(a, b) {
     return a < b ? -1 : a > b ? 1 : 0;
 }
@@ -117,10 +114,7 @@ function franchiseTables(topSalaries) {
     }).join("");
 }
 
-/**
- * Render the tab into its mount point.
- * `franchise` is {topSalaries, note}: which salaries to show and the line describing them.
- */
+// `franchise` is {topSalaries, note}: which salaries to show and the line describing them.
 export function renderContracts(mount, {league, season, franchise, storage}) {
     mount.innerHTML = `
     <table align="center" cellPadding="0" cellSpacing="0" id="homepagecolumns">

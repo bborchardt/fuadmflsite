@@ -1,16 +1,12 @@
-// Players a team added that are waiting for a contract length, and the window owners have to
-// post one. Shared by the Main tab's violations box and the daily job's contract years chore,
-// so the two follow the same rule. No DOM and no fetching.
+// Adds waiting for a contract length. Shared by League Alerts and the daily job.
 
-/** League rule: a free agent or waiver add's length must be posted within this long of the add. */
+// league rule: a free agent or waiver add's length must be posted within this long of the add
 export const CONTRACT_WINDOW_HOURS = 1;
 
-/** When an add's posting window closes, as Unix seconds. */
 export function contractDeadline(add) {
     return add.added + CONTRACT_WINDOW_HOURS * 3600;
 }
 
-/** Whether an add's posting window has closed at `now` (Unix seconds), so its years can be decided. */
 export function windowClosed(add, now) {
     return now >= contractDeadline(add);
 }
@@ -19,7 +15,6 @@ const ADD_TYPES = new Set(["FREE_AGENT", "WAIVER", "BBID_WAIVER"]);
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
 const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
 
-/** The player ids a transaction adds and drops, for the types that move players. */
 function moves(transaction) {
     switch (transaction.type) {
     case "FREE_AGENT":
@@ -40,13 +35,8 @@ function moves(transaction) {
     }
 }
 
-/**
- * The rostered players waiting for contract years: 0 years, and last moved by an add (free
- * agent, waiver or blind bid) by the team that has them. That leaves out RFAs after the
- * rollover, drafted rookies and players the commissioner loaded, which aren't adds.
- * `rosters` is the rosters export, `transactions` the transactions export's list and `players`
- * a Map of id -> {name} from the players export ("Last, First").
- */
+// 0 years and last moved by the team's own add: that leaves out RFAs after the rollover, drafted
+// rookies and players the commissioner loaded.
 export function pendingAdds({rosters, transactions, players}) {
     const latest = new Map();
     for (const transaction of transactions) {

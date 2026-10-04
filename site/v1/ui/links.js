@@ -1,5 +1,3 @@
-// The Links tab.
-
 import {esc} from "./html.js";
 
 export function renderLinks(mount, {homeUrl, leagueId, isCommish}) {

@@ -1,5 +1,3 @@
-// Tests for League Alerts' rules (lib/violations.js), which the daily job flags too.
-
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {ruleViolations as items} from "../site/v1/lib/violations.js";
