@@ -54,6 +54,10 @@ function link(text, href) {
 
 /** The bar at the bottom of the page while another version than the header's runs, or when one failed to load. */
 function showBar({mode, base, feedback, failed}) {
+    const drawn = document.getElementById("fuad-preview");
+    if (drawn) {
+        drawn.remove();
+    }
     const bar = document.createElement("div");
     bar.id = "fuad-preview";
     const label = isLocal(base) ? `local ${versionOf(base)}` : versionOf(base);
@@ -89,9 +93,14 @@ function boot(beta) {
     start({dataBase: DATA_BASE, beta}).catch((error) => console.error("[fuad]", error));
 }
 
-/** Hand the page to another version: its stylesheet replaces ours, its script runs instead. */
+/**
+ * Hand the page to another version: its stylesheet replaces ours, its script runs instead. This
+ * version draws the bar, so the way back is there even if the other one's code doesn't run.
+ */
 function handOver(target, offer) {
-    window.fuadLoader = {mode: target.mode, feedback: offer && offer.feedback};
+    const feedback = offer && offer.feedback;
+    window.fuadLoader = {mode: target.mode, feedback, barShown: true};
+    showBar({mode: target.mode, base: target.load, feedback});
     const ours = [...document.querySelectorAll("link[rel=stylesheet]")].filter((sheet) => sheet.href === `${here}fuad.css`);
     ours.forEach((sheet) => {
         sheet.disabled = true;
@@ -103,10 +112,10 @@ function handOver(target, offer) {
     const script = document.createElement("script");
     script.type = "module";
     script.src = `${target.load}fuad.js`;
-    script.onerror = () => {
-        // a developer preview that can't load is forgotten, so a shared ?fuadPreview= link can't
-        // leave someone stuck; a beta is kept, since the failure may pass. Either way this page
-        // falls back to the header's version
+    const fallBack = () => {
+        // a developer preview that can't load or run is forgotten, so a shared ?fuadPreview= link
+        // can't leave someone stuck; a beta is kept, since the failure may pass. Either way this
+        // page falls back to the header's version
         if (target.mode === "preview") {
             storage.set(PREVIEW_KEY, null);
         }
@@ -117,12 +126,23 @@ function handOver(target, offer) {
         showBar({mode: target.mode, base: target.load, failed: true});
         boot(null);
     };
+    // onerror: it couldn't be fetched. onload with no start: it was fetched, but a syntax error
+    // or a failing import stopped it before it ran
+    script.onerror = fallBack;
+    script.onload = () => {
+        if (!window.fuadLoader.started) {
+            fallBack();
+        }
+    };
     document.head.append(script);
 }
 
 if (window.fuadLoader) {
-    // the header's version handed the page to this one
-    showBar({mode: window.fuadLoader.mode, base: here, feedback: window.fuadLoader.feedback});
+    // the header's version handed the page to this one, and drew the bar (unless it's older code)
+    window.fuadLoader.started = true;
+    if (!window.fuadLoader.barShown) {
+        showBar({mode: window.fuadLoader.mode, base: here, feedback: window.fuadLoader.feedback});
+    }
     boot(null);
 } else {
     window.fuadLoader = {};

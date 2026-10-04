@@ -233,13 +233,13 @@ export async function start({dataBase, beta = null}) {
     };
     let alertsShown = false;
     render("violations", null, () => {
-        alertsShown = renderViolations(league, {beta});
+        alertsShown = renderViolations(league, undefined, beta);
     });
     if (alertsShown) {
         // redraw with what the board says, without holding up the rest; if it can't be read,
         // the notice just keeps its deadline
         contractReadings(context, league)
-            .then((readings) => readings && render("violations", null, () => renderViolations(league, {readings, beta})))
+            .then((readings) => readings && render("violations", null, () => renderViolations(league, readings, beta)))
             .catch((error) => console.warn("[fuad] couldn't read the message board for contract lengths:", error));
     }
 

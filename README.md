@@ -71,8 +71,9 @@ the code:
 invites the viewer to try it (`?fuadBeta=on`), and the beta shows a bar on every page with the
 feedback link and a way back (`?fuadBeta=off`). The choice is kept in that browser only, and only
 while the header offers that version: removing the line ends the beta, and switching the header to
-that version promotes it, for everyone at their next page load. The bar is drawn before the beta's
-features start, so the way back stays even if they break. A developer preview wins over the beta.
+that version promotes it, for everyone at their next page load. The header's version draws the bar
+before handing the page over, so the way back stays even if the beta's code breaks, and a beta that
+can't load or start falls back to the current site. A developer preview wins over the beta.
 The daily job follows `RULES_VERSION`, not what members see, so a beta changes how things look,
 not the rules.
 

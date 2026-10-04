@@ -11,7 +11,7 @@ import {withParam} from "../loader.js";
  * (contract-years.js's postReadings), once loaded, and `beta` the beta the header offers this
  * viewer, invited to on the first line. Returns whether the box is on this page.
  */
-export function renderViolations(league, {readings, beta} = {}) {
+export function renderViolations(league, readings, beta) {
     const column = document.querySelector("#tabcontent0 #homepagecolumn1");
     if (!column) {
         return false;

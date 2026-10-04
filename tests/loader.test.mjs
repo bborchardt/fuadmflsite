@@ -18,6 +18,7 @@ test("the header's beta offer: a version other than the header's, for the teams 
     assert.equal(betaOffer("v2", {versionHere: "v1", teamId: "0001"}), null);
     assert.equal(offer("v2", {teams: ["0003"]}), null);
     assert.equal(offer("v2", {teams: ["0003", "0001"]}).version, "v2");
+    assert.equal(offer("v2", {teams: [1]}).version, "v2");
     // a visitor who isn't logged in has no team
     assert.equal(betaOffer({version: "v2", teams: ["0001"]}, {versionHere: "v1", teamId: undefined}), null);
     assert.equal(offer("v2", {feedback: "javascript:alert(1)"}).feedback, null);
