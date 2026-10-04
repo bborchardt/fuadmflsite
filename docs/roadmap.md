@@ -15,9 +15,11 @@ What's live, what comes next, the decisions already made, and the facts that con
   - last season's snapshot before the week 1 kickoff (or while MFL hasn't published the schedule)
   - a live projection until the trade deadline (the first kickoff of week 12)
   - this season's snapshot after it
-- **Daily job** (08:00 UTC):
+- **Daily job** (08:00 UTC), on the newest league site (this year's once renewed, which happens in
+  mid-March or later; last year's until then):
   - logs in as commissioner
-  - snapshots franchise salaries after the deadline to the `league-data` branch
+  - snapshots franchise salaries after the deadline to the `league-data` branch, checking last
+    season's too
   - publishes any new or changed snapshot
   - charges cap penalties on drops (`jobs/drop-penalties.mjs`): one `salaryAdj` per dropped player
     still carrying a contract, described like "Name (2yrs@10, 10/03)", then resets the player to
@@ -152,8 +154,6 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
 - Drop penalties are charged at the next 08:00 UTC run. Commissioner moves aren't in the move
   history the job reads, and a hand-entered charge must spell the player's name as MFL does to be
   recognized.
-- The job moves to a new season on September 1, though the league is renewed in mid-March (sometimes
-  later), so drops on a renewed site wait until September.
 - A preview that loads but then crashes doesn't fall back. `?fuadPreview=off` recovers.
 - Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
   rows.
