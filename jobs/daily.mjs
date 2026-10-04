@@ -179,7 +179,12 @@ function writeSummary() {
     }
     const outcome = process.exitCode ? "Needs attention" : "OK";
     const lines = entries.length ? entries.map((entry) => `- ${entry}`).join("\n") : "Nothing to do.";
-    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores: ${outcome}\n\n${lines}\n`);
+    try {
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores: ${outcome}\n\n${lines}\n`);
+    } catch (error) {
+        // the summary is a convenience; the chore log already has everything
+        log(`Couldn't write the run summary: ${error.message}`);
+    }
 }
 
 /**
