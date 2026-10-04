@@ -298,7 +298,13 @@ export function decideYears({adds, posts, bidRequests, teams, contractDeadline})
         } else if (counts.length === 1) {
             contracts.push({...add, years: counts[0], source: stated[0].source});
         } else {
-            contracts.push({...add, years: DEFAULT_YEARS, source: "no length stated: the default"});
+            // a length posted after the window doesn't count, but say so, for any leniency by hand
+            const late = add.type === "BBID_WAIVER" ? null : posts.find((entry) => entry.franchise === add.franchiseId
+                && Number(entry.postTime) > contractDeadline(add)
+                && readYears(postText(entry.body), [add], {allowBare: false}).years.has(add.playerId));
+            contracts.push({...add, years: DEFAULT_YEARS, source: late
+                ? `no length stated in time: the default; a post "${postText(late.body).trim()}" came after the hour`
+                : "no length stated: the default"});
         }
     }
     return {contracts, flags};

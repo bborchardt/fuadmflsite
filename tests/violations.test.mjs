@@ -79,6 +79,12 @@ test("an add in its posting window shows when its contract length is due, as a n
     assert.deepEqual(items(teams, {pendingAdds: [{...added, type: "BBID_WAIVER"}], now: T}), []);
 });
 
+test("once the season is over (MFL still says week 17), only the cap is checked", () => {
+    const over = {...league("17", franchise("Offseason", 301, 34, [injured])), seasonOver: true};
+    over.franchises.get("0").irPlayers = [onIR("Recovered", null)];
+    assert.deepEqual(ruleViolations(over), ["Offseason is over the salary cap with a total salary of 301!"]);
+});
+
 test("warnings follow franchise order", () => {
     assert.deepEqual(ruleViolations(league("3", franchise("First", 301, 25), franchise("Second", 302, 25))), [
         "First is over the salary cap with a total salary of 301!",

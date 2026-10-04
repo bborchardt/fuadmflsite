@@ -7,7 +7,10 @@ export const ROSTER_MAX = 30;
 
 // The roster-limit, injured reserve and injured-starter (anti-tanking) checks run through the
 // championship, week 17.
+// MFL keeps reporting week 17 all offseason, so these checks also end at the kickoff of the
+// next NFL week (SEASON_OVER_WEEK); the cap is checked all year.
 export const ROSTER_CHECK_LAST_WEEK = 17;
+export const SEASON_OVER_WEEK = 18;
 export const INJURY_CHECK_LAST_WEEK = 17;
 
 // Franchise salary next year is the average of the top salaries at each position.

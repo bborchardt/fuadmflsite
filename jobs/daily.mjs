@@ -42,7 +42,7 @@ const version = process.env.RULES_VERSION || "v1";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
-const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
+const {SALARY_CAP, SEASON_OVER_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
@@ -317,6 +317,9 @@ async function leagueState() {
     const currentInjuries = await fetchFrom(API_BASE, "injuries");
     const playerMap = playersFromExport(players);
     const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, currentInjuries});
+    // as the Main tab's box: once the season is over, only the cap is checked
+    const seasonOver = await weekKickoff(season, SEASON_OVER_WEEK, {init: {headers: mflHeaders}});
+    built.seasonOver = Boolean(seasonOver) && now >= seasonOver;
     return {
         players: playerMap,
         built,

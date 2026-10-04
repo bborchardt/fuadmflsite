@@ -286,7 +286,8 @@ test("an add is decided once its one-hour posting window closes, and later posts
     assert.equal(windowClosed({added: T}, T + 3600), true);
     const result = decideYears({adds: [add("6", "0008", "FREE_AGENT")], bidRequests: [], teams,
         posts: [post("0008", "Keenum 3 years", T + 3601)]});
-    assert.equal(result.contracts[0].source, "no length stated: the default");
+    assert.equal(result.contracts[0].years, 1);
+    assert.equal(result.contracts[0].source, `no length stated in time: the default; a post "Keenum 3 years" came after the hour`);
     assert.equal(decideYears({adds: [add("6", "0008", "FREE_AGENT")], bidRequests: [], teams,
         posts: [post("0008", "Keenum 3 years", T + 3600)]}).contracts[0].years, 3);
 });

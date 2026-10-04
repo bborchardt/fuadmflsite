@@ -20,11 +20,14 @@ function centralTime(seconds) {
  * violations; the others are notices. Kinds: "cap", "roster-over", "roster-under", "ir" (on
  * MFL's IR without an NFL IR designation), "ir-roster" (moving those back would break the
  * roster limit), "injured-starter", and "contract" (an add whose posting window is still open).
- * `pendingAdds` comes from adds.js; `now` is Unix seconds.
+ * `pendingAdds` comes from adds.js; `now` is Unix seconds. Once `league.seasonOver` (the kickoff
+ * of NFL week SEASON_OVER_WEEK has passed), only the cap is checked: MFL keeps reporting the
+ * last week all offseason.
  */
 export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 1000} = {}) {
     const items = [];
-    const week = Number(league.week);
+    // past every week limit once the season is over
+    const week = league.seasonOver ? Infinity : Number(league.week);
     const push = (kind, franchise, text, warning = true) => items.push({kind, franchiseId: franchise.franchiseId, text, warning});
     for (const franchise of league.franchises.values()) {
         if (franchise.capTotal > SALARY_CAP) {
