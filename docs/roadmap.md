@@ -2,92 +2,8 @@
 
 **League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 4 Oct 2026
 
-What's live, what comes next, the decisions already made, and the facts that constrain them.
-
-## Live: v1
-
-- Code is served from GitHub Pages (`site/v1/`). An all-pages home page message
-  (`mfl/message-header.html`) loads it. The Contracts, Commish and Links messages are one-line
-  mount points.
-- It rebuilds the old jQuery/Handlebars features with no visible change. The additions:
-  - a note naming which franchise salaries are shown
-  - the Main tab's box is **League Alerts** ("All clear." when empty), with its rules in
-    `lib/violations.js`, shared with the daily job:
-    - over the cap, counting drop penalties not yet charged: all year
-    - over or under the roster limit (active players; IR doesn't count): week 1's kickoff until
-      week 17 is over (its last kickoff plus four hours)
-    - on MFL's IR without an NFL IR designation (IR and variants, today's report, only if it
-      loaded), with a second alert when moving him back would break 30: same window
-    - anti-tanking (an injured, out or suspended starter): weeks 1–14's lineups, until week 15's
-      kickoff; shown once that week's results post
-    - a notice while a free agent add's one-hour contract window is open: it reads the message
-      board with the job's own reader (`lib/contract-years.js`, loaded only then, since its regexes
-      need Safari 16.4+) and shows the deadline with the recommended format, the length it read, or
-      that it couldn't read one (a warning), so the owner can edit their latest post or post again
-    - in the offseason and preseason only the cap is checked; MFL reports week 17 all offseason, so
-      the windows are timed from MFL's NFL schedule (`seasonPhase`)
-- Franchise salaries switch automatically:
-  - last season's snapshot before the week 1 kickoff (or while MFL hasn't published the schedule)
-  - a live projection until the trade deadline (the first kickoff of week 12)
-  - this season's snapshot after it
-- **Daily job** (08:00 UTC), on the newest league site (this year's once renewed, which happens in
-  mid-March or later; last year's until then):
-  - logs in as commissioner
-  - snapshots franchise salaries after the deadline to the `league-data` branch, checking last
-    season's too
-  - publishes any new or changed snapshot
-  - charges cap penalties on drops (`jobs/drop-penalties.mjs`): one `salaryAdj` per dropped player
-    still carrying a contract, described like "Name (2yrs@10, 10/03)", then resets the player to
-    $1 / 0 years. A penalty already charged (an adjustment naming the player since the drop, or a
-    $0 one) is only reset. A team over the cap has its penalties held, so the commissioner can
-    reverse the move. In dry run (log only) until the `DROP_PENALTIES` repository variable is
-    `apply`
-  - flags every team over the cap, all year (`jobs/over-cap.mjs`): the chore log names the team, its
-    total and its moves in the last 7 days, and the run fails so the commissioner gets GitHub's
-    email, daily until the team is back under. Flag only: nothing is reversed
-  - flags roster limit, IR and anti-tanking alerts too, from the same rules as League Alerts. Going
-    over 30 voids the move like the cap: that flag lists the team's recent moves, and a team over
-    30 or the cap has its drop penalties and contract years held. Under 23 is flag only
-  - the job and League Alerts share one cap total from the league model
-    (`franchise.capTotal`: salary, adjustments and uncharged drop penalties), so they flag the
-    same teams
-  - spaces its MFL requests a second apart (MFL's guidance), each with a 30-second timeout, and
-    sends the registered client name in `MFL_USER_AGENT`
-  - sets contract years for added players (`lib/contract-years.js`, shared with League Alerts;
-    `jobs/contract-years.mjs` builds the import), in dry run until the `CONTRACT_YEARS` repository
-    variable is `apply`:
-    - blind bids: from the bid comment, read from the logged-in Previously Processed Waivers page
-      (one page per waiver run; the comments are in no API export). The commissioner decided this
-      reading of their own league's page is within the spirit of MFL's terms
-    - free agent and waiver adds: from the team's message board posts after the add, in any thread
-      (the contract thread's name changes every season, and in 2023 owners used "Waiver Moves").
-      The latest post within the hour about the player decides, so owners can correct a length by
-      editing or posting again; a later unreadable one flags. A last name is ambiguous only when
-      another add waiting for years shares it
-    - no length by the first run at least an hour after the add: 1 year, enforced on sight; the
-      commissioner adjusts by hand for leniency
-    - anything unclear is flagged and fails the run; teams over the cap are held
-    - backtested on eight seasons (2019–2026): 299 of 320 adds match the commissioner's years, 5
-      are flagged, and the rest are the rules applied (late or missing posts, bids without comments)
-      plus two one-offs
-  - writes a chore log, also shown on each run's summary page (where a failed run's email links), and
-    re-enables itself (GitHub's 60-day rule)
-- **Beta toggle:** the header message can offer a version to try, with
-  `<script>window.fuadBeta = {version: "v2", feedback: "<thread link>", teams: ["0000", "0001"]};</script>`
-  before the code's script (`teams` limits it to those franchise ids: `0000` is the commissioner
-  logged in as such, `0001` the commissioner's team; leave it out for everyone):
-  - League Alerts' first line invites the viewer ("Try it", `?fuadBeta=on`); the beta shows a bar
-    on every page with the feedback link and "Back to the current site" (`?fuadBeta=off`)
-  - the choice is kept per browser, only while the header offers that version: removing the line
-    ends the beta, and switching the header to that version promotes it, with no member action
-  - the header's version draws the bar before handing over, and a beta that can't load or start
-    falls back to the current site; decisions are in `loader.js`
-  - a developer preview (`?fuadPreview=`) wins over the beta
-- Tier 0 is done:
-  - MFL's nav bar is kept visible on phones
-  - the redundant Live Scoring tab was removed
-  - Power Rankings, League Chat, Poll and Trade Bait stay by choice
-  - no skin change; members choose their own apps
+What comes next and what's waiting on the commissioner. What's live, why it works that way, the
+league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
 
 ## Commissioner to-do
 
@@ -98,18 +14,20 @@ What's live, what comes next, the decisions already made, and the facts that con
     name is enough unless two players you just added share it
   - blind bid comment: one length per line, in the order of the players in the bid (`1 year`,
     `2 years`, `3 years`); update the comment if you change the bid
+- Watch the dry-run lines, clear any 0-year backlog, then set `DROP_PENALTIES` and `CONTRACT_YEARS`
+  to `apply`. The first apply runs are the first real MFL writes: check the chore log.
+- At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
+  Alerts once for preseason noise.
 
 ## Next versions
 
-Each one is built in a new `site/vN/` folder (a copy of the current one, so it keeps the loader and
-the beta bar), previewed with `?fuadPreview=vN` (or `local:vN`), checked with
-`tools/verify/verify.py`, offered as a beta (the commissioner first, then everyone), and activated by
-editing the header message. The daily job
-loads league logic from the version `RULES_VERSION` names, so a new version's `lib/` must keep what
-the job reads (`capTotal`, `unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`,
-`numPlayers`, `irPlayers`, `injuryStatus`, `injuryReportKnown`, and the `violations.js`, `adds.js`
-and `contract-years.js` exports); without them the job's flags would silently never fire. The order isn't decided. A and C change what members see; the commissioner wants member feedback on
-those, gathered through the beta and its feedback thread.
+Each is built in a new `site/vN/` (a copy of the current one), checked with master's
+`tools/verify/verify.py`, offered as a beta (the commissioner first, then everyone) and activated by
+editing the header message. A new version's `lib/` must keep what the daily job reads: `capTotal`,
+`unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`, `numPlayers`, `irPlayers`,
+`injuryStatus`, `injuryReportKnown`, and the `violations.js`, `adds.js` and `contract-years.js`
+exports. The order isn't decided; A and C change what members see, so their feedback comes through
+the beta's feedback thread.
 
 ### A. "My Team" Contracts
 
@@ -123,6 +41,7 @@ those, gathered through the beta and its feedback thread.
 - The full league roster one tap away. Reference tables (rookie salaries, franchise salaries,
   calculator) below the member's own view.
 - Fixes the Contracts tab's length: about 18 phone screens today.
+- Shipped as a beta for member feedback.
 
 ### C. League-wide look
 
@@ -131,7 +50,7 @@ those, gathered through the beta and its feedback thread.
   color, spacing, tables and module headers.
 - Calmer desktop navigation: MFL's dropdown recedes, the nav bar reads as the main menu, and our tabs
   read as the league's own section. **Nothing gets hidden.**
-- Best after A, so A sets the visual language.
+- Best after A, so A sets the visual language. Until then, desktop shows three navigation rows.
 - **Risk:** this styles MFL's markup (`#hsubmenu`, `.homepagemodule`, `.report`). If MFL changes it,
   the look degrades but nothing breaks.
 
@@ -158,119 +77,6 @@ years, the new RFAs, get $0.01, since MFL won't allow $0 and $0.01 shows as $0 o
 It's once a year and part of the commissioner's routine when creating the new site, so automating it
 saves little.
 
-Guidance: apply deterministic things automatically, flag anything risky for a person, and log
-everything.
-
 ### Optional, later
 
 A small public league-history site (records, champions, bylaws), only after A and C.
-
-### Ruled out
-
-- **A separate companion site:** a second destination is a new navigation layer, and it can't tell
-  who's viewing.
-- **A proxy for MFL's API:** against MFL's terms.
-- **Leaving MFL:** would give up the custom rules.
-
-## Requirements
-
-- Works well in a **phone browser**; members can't be assumed to use an app (MFL Modern fell short).
-- **No new navigation layer**; the custom tabs stay as members know them.
-- Within **MFL's rules**.
-- **As few chores to remember as possible**, and stable year to year.
-
-## League rules the code depends on
-
-They live in `site/vN/lib/rules.js`; a rule change means a new version.
-
-- **Salary cap:** $300.
-- **Roster:** 23–30 active players (IR doesn't count), from week 1's kickoff until week 17, the
-  championship, is over. Going over 30 voids the move, as going over the cap does. Under 23 must be
-  fixed but voids nothing.
-- **Injured reserve:** only players the NFL lists on IR (IR, IR-R, IR-PUP, IR-NFI). One who comes off
-  must move back to the active roster.
-- **Anti-tanking:** starting an injured (IR or Out) or suspended player is flagged in the regular
-  season, weeks 1–14; the playoffs start in week 15.
-- **Cap penalty for dropping a player:** `max(ceil(max(1, 0.4 × salary × years)), years)`.
-- **Rookie salaries:** first pick QB $6, RB $10, WR $10, TE $4, PK $1. Each later pick is 80% of the
-  one before, never under $1.
-- **Franchise salary next year:** the average of the top 5 salaries at the position, snapshotted at
-  the trade deadline (the kickoff of the first game of week 12).
-- **The rookie draft** is held offline on no fixed date. The week 1 kickoff stands in for "after the
-  draft", and the contract form pre-fills $0.01 for 0-year players until then.
-- **Contract length on adds:** 1 to 5 years. A blind bid's length goes in its comment (a bare count
-  covers every player in a conditional bid); a free agent add's goes in a message board post within
-  one hour of the add, naming the player. None stated in time: 1 year.
-
-## MFL facts learned the hard way
-
-- **Rate limits:** MFL doesn't publish numbers. Unregistered clients get less; a registered client
-  (registered at `/<year>/csetup?C=APICLI`, confirmed by text, then sent as the User-Agent) gets
-  about 2.5 times as much. Bursts are throttled with HTTP 429; MFL asks for about a second between
-  requests and no retries. Heavy testing from one machine gets throttled within hours, so test
-  against saved exports.
-- **Weeks and injuries:** `weeklyResults` reports the last week with results (a week behind the NFL
-  in season, week 17 all offseason). The `injuries` export with `W` is that week's report; without
-  `W` it's today's.
-
-- **Data is same-origin only:** code must run inside an MFL page. Scripts and styles can be loaded
-  from GitHub Pages, and the league page sends no CSP.
-- **Hosts:** league exports go to `www44.myfantasyleague.com`. League-independent ones (`players`,
-  `injuries`, `nflSchedule`, `myleagues`, `login`) go to `api.myfantasyleague.com`.
-- **JSON quirks:** one-item lists come back as bare objects (use `asArray`). An unpublished season's
-  `nflSchedule` returns 404.
-- **Login:** `POST api…/<year>/login` returns `<status MFL_USER_ID="…">`, sent back as
-  `Cookie: MFL_USER_ID=…`. Bad credentials return `<error>…</error>` with HTTP 200. The per-user
-  `APIKEY` can't do commissioner actions.
-- **Rosters by week** keep membership but always report today's salary: a player cut later reads $1.
-  That's why snapshots are taken at the deadline.
-- **Renewal:** MFL keeps past seasons' sites and copies home page messages forward, so each season
-  pins the version its header names.
-- **Nav bar on phones:** the BlueMesh skin hides MFL's nav bar below 54.25em; `fuad.css` overrides
-  that. Wide MFL modules already scroll sideways on phones.
-- **Tabs:** the commissioner can configure up to 10 custom tabs ("Main" is fixed). MFL's nav bar and
-  dropdown menu can't be changed.
-- **Local previews:** Chrome asks once before a public site may load from `localhost` (Local Network
-  Access).
-- **GitHub:** master is protected (PRs only), so the job writes only to `league-data`. Scheduled
-  workflows are disabled after 60 days without activity.
-- **Blind bid comments** appear only on the logged-in Previously Processed Waivers page
-  (`/<season>/processed_waivers?LEAGUE_ID=…&PERIOD=…`), one page per waiver run; the period id is
-  the `BBID_WAIVER` transaction's timestamp. Players without an NFL team show as "FA*".
-- **Message boards:** the API (`messageBoard`, `messageBoardThread`) needs a login and returns
-  nothing for 2024 and earlier. Past seasons' boards are a public archive at
-  `/<season>/options?L=48571&O=28`.
-
-## Known limits, accepted
-
-- Snapshots reflect rosters at the next 08:00 UTC run, up to about a day after the deadline.
-- Drop penalties are charged at the next 08:00 UTC run. Commissioner moves aren't in the move
-  history the job reads, and a hand-entered charge must spell the player's name as MFL does to be
-  recognized.
-- The over-cap flag lists moves from the last 7 days, so a team over the cap for longer shows none.
-  Reversing a move is left to the commissioner.
-- The Commish tab's penalty form pre-fills every pending penalty, including ones already charged but
-  not yet reset.
-- Contract years: a player added and then traded before the job runs stays at 0 years without a flag,
-  and a length written without a number or "year" ("Hill for two") isn't read. If the commissioner
-  reverses an add for a team under the cap, the player's years must be set to 0 before the drop, or
-  the drop chore charges a penalty. The bids page reader breaks if MFL changes that page; it fails
-  loudly rather than defaulting.
-- Contract length edits: MFL's API returns an edited post's new text with its original time and no
-  edit time (only the board's page shows "Edited …"), so a length edited after the hour but before
-  the job's run counts. The job's log quotes the text it used. Running the check hourly would close
-  this; it's not planned.
-- While an add's hour is open, every Main tab view reads the message board once, uncached. A
-  blind bid's reading isn't shown: League Alerts confirms posts only.
-- IR timing: MFL's injury report doesn't say when a designation changed, so an add made after a
-  player came off NFL IR (effectively going over 30) isn't caught as a void; the "moving him back"
-  alert is a warning only, and the commissioner judges the order of moves.
-- The contract deadline notice shows a time without a date ("by 12:30 AM CT").
-- A preview or beta that starts but whose features then fail shows their error messages, with its
-  bar still there to leave. The bar can show unstyled for a moment while the version's stylesheet
-  loads.
-- The beta is per browser: trying it on a phone doesn't switch a laptop, a private window forgets
-  it, and MFL's app runs none of this code. Nothing reports who's on it; the feedback thread is the
-  only signal.
-- Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
-  rows.
