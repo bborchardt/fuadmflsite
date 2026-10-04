@@ -41,8 +41,9 @@ export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 100
         if (week <= ROSTER_CHECK_LAST_WEEK && franchise.numPlayers < ROSTER_MIN) {
             push("roster-under", franchise, `${franchise.teamName} is under the roster limit with ${franchise.numPlayers} players!`);
         }
-        // during the season only: the NFL's injury report is what makes a player IR-eligible
-        if (week >= 1 && week <= ROSTER_CHECK_LAST_WEEK) {
+        // during the season only, and only with today's NFL injury report loaded: it's what makes a
+        // player IR-eligible
+        if (league.injuryReportKnown && week >= 1 && week <= ROSTER_CHECK_LAST_WEEK) {
             const healthy = (franchise.irPlayers || []).filter((player) => !onNflIR(player));
             for (const player of healthy) {
                 push("ir", franchise, `${franchise.teamName} has ${player.fullName} on injured reserve, but the NFL doesn't list him on IR: move him to the active roster!`);

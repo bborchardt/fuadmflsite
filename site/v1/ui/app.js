@@ -147,9 +147,10 @@ async function loadLeague({season, leagueId}) {
         return {player: players.player};
     });
     const weeklyResultsPromise = league("weeklyResults");
+    // the results week's report, for the injured-starter check; without it that check flags nothing
     const injuriesPromise = weeklyResultsPromise.then((weeklyResults) =>
-        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries"));
-    // today's report, for injured reserve eligibility; without it only that check is skipped
+        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries")).catch(() => null);
+    // today's report, for injured reserve eligibility; without it that check is skipped
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries").catch(() => null);
     // whether the season is over, after which only the cap is checked; unknown counts as not over
     const seasonOverPromise = weekKickoff(season, SEASON_OVER_WEEK).then((kickoff) => Boolean(kickoff) && Date.now() >= kickoff.getTime(), () => false);

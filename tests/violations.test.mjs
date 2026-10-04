@@ -12,7 +12,7 @@ const franchise = (teamName, capTotal, numPlayers, lineup = [], unchargedPenalty
     ({teamName, capTotal, unchargedPenalty, numPlayers, lineup});
 const injured = {fullName: "Hurt Player", injured: true};
 const healthy = {fullName: "Fine Player", injured: false};
-const league = (week, ...franchises) => ({week, franchises: new Map(franchises.map((f, i) => [String(i), f]))});
+const league = (week, ...franchises) => ({week, injuryReportKnown: true, franchises: new Map(franchises.map((f, i) => [String(i), f]))});
 
 test("over the salary cap, at any week", () => {
     for (const week of ["3", "17"]) {
@@ -101,8 +101,23 @@ test("injured reserve eligibility reads today's injury report, not the results w
         weeklyResults: {week: "5"},
         // last week's report had him on IR; today's doesn't
         injuries: {injury: {id: "1", status: "IR"}},
-        currentInjuries: {injury: []}
+        // today's report: a realistic one, without him
+        currentInjuries: {injury: Array.from({length: 60}, (_, i) => ({id: String(100 + i), status: "Out"}))}
     });
     assert.deepEqual(items(model).filter((item) => item.kind === "ir").map((item) => item.text),
         ["Alpha has Healthy Back on injured reserve, but the NFL doesn't list him on IR: move him to the active roster!"]);
+});
+
+test("without today's injury report, or with a thin one, the IR check is skipped rather than flagging everyone", async () => {
+    const {buildLeague, playersFromExport} = await import("../site/v1/lib/league.js");
+    const build = (currentInjuries) => buildLeague({
+        players: playersFromExport({player: [{id: "1", name: "Hurt, Still", position: "RB"}]}),
+        league: {franchises: {franchise: {id: "0001", name: "Alpha"}}},
+        rosters: {franchise: {id: "0001", player: {id: "1", status: "INJURED_RESERVE", salary: "1", contractYear: "1"}}},
+        weeklyResults: {week: "5"},
+        currentInjuries
+    });
+    for (const report of [null, {injury: [{id: "1", status: "IR"}]}]) {
+        assert.deepEqual(items(build(report)).filter((item) => item.kind.startsWith("ir")), []);
+    }
 });

@@ -4,6 +4,9 @@
 import {asArray, displayName} from "./mfl.js";
 import {capPenalty, netCapSpace} from "./rules.js";
 
+/** Fewer entries than this on today's NFL injury report means it didn't load properly. */
+export const MIN_INJURY_REPORT = 50;
+
 function newPlayer(id, fullName, nflPosition, team) {
     return {
         playerId: id, fullName, nflPosition, team,
@@ -197,8 +200,12 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
 
     // today's NFL injury report, for injured reserve eligibility (`injuries` is the report for the
     // league's results week, for the injured-starter check)
-    if (currentInjuries) {
-        for (const injury of asArray(currentInjuries.injury)) {
+    // a missing or thin report would make every injured reserve player look healthy, so the IR
+    // check only runs on a report with a realistic number of entries (about 400 in season)
+    const report = currentInjuries ? asArray(currentInjuries.injury) : [];
+    const injuryReportKnown = report.length >= MIN_INJURY_REPORT;
+    if (injuryReportKnown) {
+        for (const injury of report) {
             const player = players.get(injury.id);
             if (player) {
                 player.injuryStatus = injury.status || "";
@@ -211,5 +218,5 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
         franchise.capTotal = Math.round((franchise.salary + franchise.unchargedPenalty) * 100) / 100;
     }
 
-    return {players, franchises, rosteredPlayers, week};
+    return {players, franchises, rosteredPlayers, week, injuryReportKnown};
 }
