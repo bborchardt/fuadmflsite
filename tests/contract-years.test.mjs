@@ -112,6 +112,9 @@ test("pending adds: 0 years and last moved by the team's own add", () => {
 
 const add = (playerId, franchiseId, type, since = T - DAYS_14, added = T) =>
     ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added, since});
+// every team's roster holds all the test players, so names in posts are recognized
+const teams = new Map(["0005", "0006", "0007", "0008", "0009"].map((franchiseId) =>
+    [franchiseId, [...players].map(([playerId, {name}]) => ({playerId, name}))]));
 const post = (franchise, body, postTime = T + 60) => ({franchise, body, postTime: String(postTime)});
 const bid = (franchiseId, names, comment) => ({franchiseId, granted: names[0], adds: names, comment});
 
@@ -129,6 +132,7 @@ test("years come from the bid comment or the team's later posts, else the defaul
         ],
         bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Wilson 2yrs, Palmer 1yr"), bid("0008", ["Keenum, Case"], ""),
             bid("0009", ["Palmer, Joshua"], "")],
+        teams,
         threadFound: true
     });
     assert.deepEqual(flags, []);
@@ -142,7 +146,7 @@ test("years come from the bid comment or the team's later posts, else the defaul
 });
 
 test("conflicts, a missing bid and a missing thread are flagged, not guessed", () => {
-    const decide = (adds, posts, bidRequests, threadFound = true) => decideYears({adds, posts, bidRequests, threadFound});
+    const decide = (adds, posts, bidRequests, threadFound = true) => decideYears({adds, posts, bidRequests, teams, threadFound});
     let result = decide([add("6", "0008", "BBID_WAIVER")], [post("0008", "Keenum 2 years")], [bid("0008", ["Keenum, Case"], "3yrs")]);
     assert.deepEqual(result.contracts, []);
     assert.match(result.flags[0], /^Case Keenum: the owner gave different lengths \(3 in blind bid comment "3yrs"; 2 in post "Keenum 2 years"\)$/);
@@ -155,7 +159,7 @@ test("conflicts, a missing bid and a missing thread are flagged, not guessed", (
 });
 
 test("a stated length that can't be placed is flagged, never defaulted", () => {
-    const decide = (adds, posts, bidRequests) => decideYears({adds, posts, bidRequests, threadFound: true});
+    const decide = (adds, posts, bidRequests, teamMap = teams) => decideYears({adds, posts, bidRequests, teams: teamMap, threadFound: true});
     // a bare count in a conditional bid for two players
     let result = decide([add("3", "0006", "BBID_WAIVER")], [], [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "3 years")]);
     assert.deepEqual(result.contracts, []);
@@ -169,6 +173,21 @@ test("a stated length that can't be placed is flagged, never defaulted", () => {
     assert.match(result.flags[0], /post "Keenum 2y" names the player but gives no length the job can read/);
     result = decide([add("6", "0008", "BBID_WAIVER")], [], [bid("0008", ["Keenum, Case"], "two seasons")]);
     assert.match(result.flags[0], /blind bid comment "two seasons" gives no length the job can read/);
+    // a misspelt name after the add
+    result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenam 3 years")], []);
+    assert.match(result.flags[0], /post "Keenam 3 years" gives a length but names no player on the team the job recognizes/);
+});
+
+test("old bare posts and posts about other players don't touch a later add", () => {
+    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams, threadFound: true});
+    // "3 years" posted a day before this add was for an earlier one
+    let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "3 years", T - 86400)]);
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].years, 1);
+    // a post after the add about another player on the team
+    result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Cooper Rush 4 years")]);
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].years, 1);
 });
 
 test("the import keeps each salary exactly as MFL has it", () => {

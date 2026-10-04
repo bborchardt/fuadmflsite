@@ -43,7 +43,7 @@ const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} =
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
-const {CONTRACT_THREAD, MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers} =
+const {CONTRACT_THREAD, MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, teamPlayers} =
     await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
@@ -236,7 +236,9 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}) {
     for (const period of new Set(adds.filter((add) => add.type === "BBID_WAIVER").map((add) => add.added))) {
         bidRequests.push(...await processedWaivers(period));
     }
-    const {contracts, flags} = decideYears({adds, posts, bidRequests, threadFound: threads.length > 0});
+    const {contracts, flags} = decideYears({
+        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), threadFound: threads.length > 0
+    });
     for (const flag of flags) {
         choreLog(`Contract years: ${flag}. Left for the commissioner.`);
         process.exitCode = 1;

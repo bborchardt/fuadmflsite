@@ -141,11 +141,12 @@ function bare(text, mention) {
  * Read contract years for `candidates` out of one comment or post. Each year count belongs to
  * the player named just before it ("Wilson 2yrs"), or just after it ("3 years for Wilson").
  * A bare count ("1yr", "5 years please") belongs to the only candidate, if
- * there's exactly one and the text names nobody else. Returns
+ * there's exactly one and the text names nobody else; with `allowBare` false, bare counts
+ * are ignored. Returns
  * {years: Map of playerId -> years, problems: [text]}; a problem means the text couldn't be
  * read with confidence.
  */
-export function readYears(text, candidates) {
+export function readYears(text, candidates, {allowBare = true} = {}) {
     const years = new Map();
     const problems = [];
     const mentions = yearMentions(text);
@@ -165,12 +166,12 @@ export function readYears(text, candidates) {
         if (!who.length) {
             who = named(after, candidates);
         }
-        if (!who.length && mentions.length === 1 && candidates.length === 1 && bare(text, mention)) {
+        if (!who.length && allowBare && mentions.length === 1 && candidates.length === 1 && bare(text, mention)) {
             who = candidates;
         }
         if (who.length === 1) {
             set(who[0], mention.years);
-        } else if (!who.length && candidates.length > 1 && bare(text, mention)) {
+        } else if (!who.length && allowBare && candidates.length > 1 && bare(text, mention)) {
             problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
         } else if (who.length > 1) {
             problems.push(`"${text.trim()}" doesn't say which of ${who.map((candidate) => candidate.name).join(" and ")} gets ${mention.years} years`);
@@ -222,18 +223,27 @@ export function readProcessedWaivers(html) {
     return requests;
 }
 
+/** Each team's rostered players, as Map of franchise id -> [{playerId, name}], for telling which posts name someone. */
+export function teamPlayers({rosters, players}) {
+    return new Map(asList(rosters.franchise).map((franchise) => [franchise.id, asList(franchise.player).map((entry) =>
+        ({playerId: entry.id, name: (players.get(entry.id) || {name: ""}).name}))]));
+}
+
 /**
  * Decide each pending add's years. `posts` are the contract thread's posts
  * ({franchise, postTime, body}), `bidRequests` the readProcessedWaivers entries for the
- * periods of pending blind bids, and `threadFound` whether the contract thread exists. An
- * add's sources are its blind bid comment (if any) and its team's posts made after the add.
+ * periods of pending blind bids, `teams` the teamPlayers map, and `threadFound` whether the
+ * contract thread exists. An add's sources are its blind bid comment (if any) and its team's
+ * posts since the player's previous move. A post made before the add counts only if it names
+ * the player: a bare "3 years" from then is about an earlier add.
  * Agreeing sources set the years; disagreeing or unreadable ones flag the add. An add with
  * no years stated gets DEFAULT_YEARS, unless the thread is missing, which flags it instead.
  * A comment, or a post naming the add, that gives no length the reader understands is flagged
- * too, so a stated length is never replaced by the default.
+ * too, as is a post after the add giving a length but naming no player on the team (a typo or
+ * nickname), so a stated length is never replaced by the default.
  * Returns {contracts: [{...add, years, source}], flags: [text]}.
  */
-export function decideYears({adds, posts, bidRequests, threadFound}) {
+export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
     const contracts = [];
     const flags = [];
     for (const add of adds) {
@@ -262,11 +272,16 @@ export function decideYears({adds, posts, bidRequests, threadFound}) {
         for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) > add.since)) {
             const body = postText(post.body);
             const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add && other.since < Number(post.postTime));
-            const read = readYears(body, [add, ...others]);
+            const afterAdd = Number(post.postTime) >= add.added;
+            const read = readYears(body, [add, ...others], {allowBare: afterAdd});
+            const ownProblem = read.problems.some((problem) => problem.includes(add.name));
             if (read.years.has(add.playerId)) {
                 stated.push({years: read.years.get(add.playerId), source: `post "${body.trim()}"`});
-            } else if (named(body, [add]).length && !read.problems.some((problem) => problem.includes(add.name))) {
+            } else if (named(body, [add]).length && !ownProblem) {
                 problems.push(`post "${body.trim()}" names the player but gives no length the job can read`);
+            } else if (afterAdd && !ownProblem && read.years.size === 0 && yearMentions(body).length
+                && !named(body, [...(teams.get(add.franchiseId) || []), ...others]).length) {
+                problems.push(`post "${body.trim()}" gives a length but names no player on the team the job recognizes`);
             }
             problems.push(...read.problems.filter((problem) => problem.includes(add.name)).map((problem) => `post: ${problem}`));
         }
