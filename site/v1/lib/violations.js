@@ -50,7 +50,7 @@ function contractNotice(teamName, add, reading) {
 export function ruleViolations(league, {pendingAdds = [], readings = new Map(), now = Date.now() / 1000} = {}) {
     const items = [];
     const week = Number(league.week);
-    // in the preseason only the cap is checked
+    // roster and IR checks run from week 1's kickoff until week 17 is over; otherwise only the cap
     const rosterSeason = league.started !== false && !league.seasonOver && week <= ROSTER_CHECK_LAST_WEEK;
     const push = (kind, franchise, text, warning = true) => items.push({kind, franchiseId: franchise.franchiseId, text, warning});
     for (const franchise of league.franchises.values()) {

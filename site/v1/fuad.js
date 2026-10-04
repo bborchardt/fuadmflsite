@@ -1,5 +1,5 @@
 // Entry point: the header message loads one version's fuad.js on every league page, and it decides
-// which version runs (README.md: previews and the beta). A version it hands the page to only runs.
+// which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
 import {start} from "./ui/app.js";
 import {betaOffer, decide, withParam} from "./loader.js";
