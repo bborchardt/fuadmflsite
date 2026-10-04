@@ -32,7 +32,7 @@ const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {latestSeason, makeSnapshot, snapshotFileName} = await lib("franchise.js");
-const {MAX_PENALTIES_PER_RUN, alreadyCharged, capHolds, pendingPenalties, resetSalaryXml, salaryAdjXml} =
+const {MAX_PENALTIES_PER_RUN, capHolds, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
 
 if (!process.env.DATA_DIR) {
@@ -155,8 +155,8 @@ async function mflImport(type, data, params = {}) {
 /**
  * Charge the cap penalty for each dropped player still carrying a contract, then reset the
  * player to $1 / 0 years, which clears them from the Commish tab. A penalty already charged
- * (by an earlier run that failed before the reset, or by hand) is skipped, and only the reset
- * is done. A team the penalties would put over the cap is left alone for the commissioner to
+ * (by an earlier run that failed before the reset, or by hand), or a $0 one, is skipped, and
+ * only the reset is done. A team the penalties would put over the cap is left alone for the commissioner to
  * reverse the move, and the run fails so they hear about it. Without DROP_PENALTIES=apply it
  * only logs what it would do.
  */
@@ -177,6 +177,7 @@ async function dropPenalties(loggedIn) {
     }
     const adjustments = asArray(salaryAdjustments.salaryAdjustment);
     const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
+    const noCharge = (penalty) => penalty.amount > 0 ? "penalty already charged" : "no penalty owed";
     const holds = capHolds(built, penalties, adjustments, SALARY_CAP);
     const held = [...holds].map(([franchiseId, total]) => {
         const team = penalties.filter((penalty) => penalty.franchiseId === franchiseId);
@@ -186,9 +187,9 @@ async function dropPenalties(loggedIn) {
     if (!applyDropPenalties) {
         held.forEach((message) => choreLog(`Dry run: ${message}`));
         for (const penalty of penalties.filter((penalty) => !holds.has(penalty.franchiseId))) {
-            choreLog(alreadyCharged(penalty, adjustments)
-                ? `Dry run: would reset ${penalty.fullName} to $1 / 0 years (penalty already charged).`
-                : `Dry run: would charge ${describe(penalty)}, then reset the player to $1 / 0 years.`);
+            choreLog(needsCharge(penalty, adjustments)
+                ? `Dry run: would charge ${describe(penalty)}, then reset the player to $1 / 0 years.`
+                : `Dry run: would reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
         }
         return;
     }
@@ -200,13 +201,13 @@ async function dropPenalties(loggedIn) {
         throw new Error(`${penalties.length} dropped player(s) owe a cap penalty, but the job isn't logged in, so none were charged.`);
     }
     for (const penalty of penalties.filter((penalty) => !holds.has(penalty.franchiseId))) {
-        if (alreadyCharged(penalty, adjustments)) {
-            await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
-            choreLog(`Reset ${penalty.fullName} to $1 / 0 years; the cap penalty was already charged.`);
-        } else {
+        if (needsCharge(penalty, adjustments)) {
             await mflImport("salaryAdj", salaryAdjXml(penalty));
             await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
             choreLog(`Charged ${describe(penalty)}, and reset the player to $1 / 0 years.`);
+        } else {
+            await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
+            choreLog(`Reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
         }
     }
     if (held.length) {

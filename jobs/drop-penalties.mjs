@@ -57,9 +57,17 @@ export function capHolds(league, penalties, adjustments, cap) {
         const total = totals.has(penalty.franchiseId)
             ? totals.get(penalty.franchiseId)
             : league.franchises.get(penalty.franchiseId).salary;
-        totals.set(penalty.franchiseId, total + (alreadyCharged(penalty, adjustments) ? 0 : penalty.amount));
+        totals.set(penalty.franchiseId, total + (needsCharge(penalty, adjustments) ? penalty.amount : 0));
     }
     return new Map([...totals].filter(([, total]) => total > cap));
+}
+
+/**
+ * Whether a penalty still has to be charged. A dropped player with no years left owes nothing,
+ * so they're only reset; MFL would reject or keep a $0 adjustment.
+ */
+export function needsCharge(penalty, adjustments) {
+    return penalty.amount > 0 && !alreadyCharged(penalty, adjustments);
 }
 
 const xmlAttr = (value) => String(value)

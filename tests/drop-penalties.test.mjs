@@ -3,7 +3,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";
-import {alreadyCharged, capHolds, dropDate, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
+import {alreadyCharged, capHolds, dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
 const DROPPED = Date.UTC(2026, 9, 3, 16) / 1000;
@@ -76,6 +76,15 @@ test("a team the uncharged penalties would put over the cap is held", () => {
     assert.deepEqual(holds([{franchise_id: "0002", amount: "3", description: "Late lineup", timestamp: String(DROPPED)}]), [["0002", 301]]);
     // Gordon's penalty charged by hand before the reset isn't counted twice: 290 + 8 = 298
     assert.deepEqual(holds([{franchise_id: "0002", amount: "8", description: "Ollie Gordon (2yrs@10)", timestamp: String(DROPPED)}]), []);
+});
+
+test("a penalty needs charging unless it's $0 or already charged", () => {
+    const penalty = {franchiseId: "0002", fullName: "Ollie Gordon", amount: 8, dropped: DROPPED};
+    const charged = {franchise_id: "0002", description: "Ollie Gordon (2yrs@10)", timestamp: String(DROPPED), amount: "8"};
+    assert.equal(needsCharge(penalty, []), true);
+    assert.equal(needsCharge(penalty, [charged]), false);
+    // salary over $1 with no years left: capPenalty(0, 10) is $0
+    assert.equal(needsCharge({...penalty, amount: 0}, []), false);
 });
 
 test("import data escapes text and resets to $1 / 0 years", () => {
