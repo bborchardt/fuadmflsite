@@ -102,14 +102,23 @@ function nameForms(name) {
 
 const hasWords = (text, words) => words && ` ${text} `.includes(` ${words} `);
 
-/** The candidates a stretch of text names, by full name, or by surname if that's unambiguous. */
-function named(text, candidates) {
+/**
+ * The candidates a stretch of text names: by full name first, then by surname. Returns null if
+ * it names one of `others` (players who aren't candidates) instead: "Josh Allen 3 years" is
+ * about a rostered Josh Allen, not a pending Keenan Allen.
+ */
+function named(text, candidates, others = []) {
     const normalized = normalize(text);
-    const byFull = candidates.filter((candidate) => hasWords(normalized, nameForms(candidate.name).full));
-    if (byFull.length) {
-        return byFull;
+    const by = (form) => (list) => list.filter((player) => hasWords(normalized, nameForms(player.name)[form]));
+    for (const form of [by("full"), by("surname")]) {
+        if (form(candidates).length) {
+            return form(candidates);
+        }
+        if (form(others).length) {
+            return null;
+        }
     }
-    return candidates.filter((candidate) => hasWords(normalized, nameForms(candidate.name).surname));
+    return [];
 }
 
 const NUMBER_WORDS = {one: 1, two: 2, three: 3, four: 4, five: 5};
@@ -140,16 +149,19 @@ function bare(text, mention) {
 /**
  * Read contract years for `candidates` out of one comment or post. Each year count belongs to
  * the player named just before it ("Wilson 2yrs"), or just after it ("3 years for Wilson").
- * A bare count ("1yr", "5 years please") belongs to the only candidate, if
- * there's exactly one and the text names nobody else; with `allowBare` false, bare counts
- * are ignored, and with `bareForAll` it belongs to every candidate (a conditional blind bid,
- * where only one player can be won). Returns
- * {years: Map of playerId -> years, problems: [text]}; a problem means the text couldn't be
- * read with confidence.
+ * A count naming one of `known` that isn't a candidate (the team's other players) is about
+ * them. A bare count ("1yr", "5 years please") belongs to the only candidate, if there's
+ * exactly one and the text names nobody else; with `allowBare` false, bare counts are ignored,
+ * and with `bareForAll` it belongs to every candidate (a conditional blind bid, where only one
+ * player can be won). Returns {years: Map of playerId -> years, problems: [text], unplaced:
+ * [years]}: a problem means the text couldn't be read with confidence, and an unplaced count
+ * names nobody the job recognizes (a typo or a nickname).
  */
-export function readYears(text, candidates, {allowBare = true, bareForAll = false} = {}) {
+export function readYears(text, candidates, {allowBare = true, bareForAll = false, known = []} = {}) {
     const years = new Map();
     const problems = [];
+    const unplaced = [];
+    const others = known.filter((player) => !candidates.some((candidate) => candidate.playerId === player.playerId));
     const mentions = yearMentions(text);
     const set = (candidate, count) => {
         if (count < MIN_YEARS || count > MAX_YEARS) {
@@ -163,25 +175,30 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
     mentions.forEach((mention, i) => {
         const before = text.slice(i ? mentions[i - 1].end : 0, mention.start);
         const after = text.slice(mention.end, i + 1 < mentions.length ? mentions[i + 1].start : text.length);
-        let who = named(before, candidates);
-        if (!who.length) {
-            who = named(after, candidates);
+        let who = named(before, candidates, others);
+        if (who && !who.length) {
+            who = named(after, candidates, others);
         }
-        if (!who.length && allowBare && mentions.length === 1 && candidates.length === 1 && bare(text, mention)) {
-            who = candidates;
+        if (who === null) {
+            // about another of the team's players
+            return;
         }
-        if (!who.length && bareForAll && mentions.length === 1 && bare(text, mention)) {
+        const isBare = mentions.length === 1 && bare(text, mention);
+        if (!who.length && isBare && bareForAll) {
             candidates.forEach((candidate) => set(candidate, mention.years));
+        } else if (!who.length && isBare && allowBare && candidates.length === 1) {
+            set(candidates[0], mention.years);
+        } else if (!who.length && isBare && allowBare) {
+            problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
+        } else if (!who.length && !isBare) {
+            unplaced.push(mention.years);
         } else if (who.length === 1) {
             set(who[0], mention.years);
-        } else if (!who.length && allowBare && candidates.length > 1 && bare(text, mention)) {
-            problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
         } else if (who.length > 1) {
             problems.push(`"${text.trim()}" doesn't say which of ${who.map((candidate) => candidate.name).join(" and ")} gets ${mention.years} years`);
         }
-        // a count naming none of the candidates is about some other player
     });
-    return {years, problems};
+    return {years, problems, unplaced};
 }
 
 const decode = (text) => String(text)
@@ -275,19 +292,23 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
         }
         for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) > add.since)) {
             const body = postText(post.body);
-            const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add && other.since < Number(post.postTime));
-            const afterAdd = Number(post.postTime) >= add.added;
-            const read = readYears(body, [add, ...others], {allowBare: afterAdd});
-            const ownProblem = read.problems.some((problem) => problem.includes(add.name));
+            const postTime = Number(post.postTime);
+            const afterAdd = postTime >= add.added;
+            const team = teams.get(add.franchiseId) || [];
+            // the team's other pending adds this post can be about: made by then, or named in it
+            const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add
+                && other.since < postTime && (other.added <= postTime || (named(body, [other]) || []).length));
+            const read = readYears(body, [add, ...others], {allowBare: afterAdd, known: team});
+            const own = read.problems.filter((problem) => problem.includes(add.name));
+            const namesAdd = (named(body, [add], team.filter((player) => player.playerId !== add.playerId)) || []).length > 0;
             if (read.years.has(add.playerId)) {
                 stated.push({years: read.years.get(add.playerId), source: `post "${body.trim()}"`});
-            } else if (named(body, [add]).length && !ownProblem) {
+            } else if (!own.length && namesAdd) {
                 problems.push(`post "${body.trim()}" names the player but gives no length the job can read`);
-            } else if (afterAdd && !ownProblem && read.years.size === 0 && yearMentions(body).length
-                && !named(body, [...(teams.get(add.franchiseId) || []), ...others]).length) {
-                problems.push(`post "${body.trim()}" gives a length but names no player on the team the job recognizes`);
+            } else if (!own.length && afterAdd && read.unplaced.length) {
+                problems.push(`post "${body.trim()}" gives ${read.unplaced.join(" and ")} years without naming a player on the team the job recognizes`);
             }
-            problems.push(...read.problems.filter((problem) => problem.includes(add.name)).map((problem) => `post: ${problem}`));
+            problems.push(...own.map((problem) => `post: ${problem}`));
         }
         const counts = [...new Set(stated.map((entry) => entry.years))];
         const label = add.name.split(",").reverse().map((part) => part.trim()).join(" ");

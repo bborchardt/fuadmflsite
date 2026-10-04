@@ -10,7 +10,8 @@ const DAYS_14 = 14 * 86400;
 const players = new Map([
     ["1", {name: "Brazzell II, Chris"}], ["2", {name: "All, Erick"}], ["3", {name: "Wilson, Emanuel"}],
     ["4", {name: "Palmer, Joshua"}], ["5", {name: "Rush, Cooper"}], ["6", {name: "Keenum, Case"}],
-    ["7", {name: "Wilson, Garrett"}], ["8", {name: "St. Brown, Amon-Ra"}]
+    ["7", {name: "Wilson, Garrett"}], ["8", {name: "St. Brown, Amon-Ra"}], ["9", {name: "Allen, Josh"}],
+    ["10", {name: "Allen, Keenan"}], ["11", {name: "Cameron, Josh"}]
 ]);
 const candidate = (playerId) => ({playerId, name: players.get(playerId).name});
 
@@ -113,7 +114,7 @@ test("pending adds: 0 years and last moved by the team's own add", () => {
 const add = (playerId, franchiseId, type, since = T - DAYS_14, added = T) =>
     ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added, since});
 // every team's roster holds all the test players, so names in posts are recognized
-const teams = new Map(["0005", "0006", "0007", "0008", "0009"].map((franchiseId) =>
+const teams = new Map(["0003", "0005", "0006", "0007", "0008", "0009"].map((franchiseId) =>
     [franchiseId, [...players].map(([playerId, {name}]) => ({playerId, name}))]));
 const post = (franchise, body, postTime = T + 60) => ({franchise, body, postTime: String(postTime)});
 const bid = (franchiseId, names, comment) => ({franchiseId, granted: names[0], adds: names, comment});
@@ -171,7 +172,7 @@ test("a stated length that can't be placed is flagged, never defaulted", () => {
     assert.match(result.flags[0], /blind bid comment "two seasons" gives no length the job can read/);
     // a misspelt name after the add
     result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenam 3 years")], []);
-    assert.match(result.flags[0], /post "Keenam 3 years" gives a length but names no player on the team the job recognizes/);
+    assert.match(result.flags[0], /post "Keenam 3 years" gives 3 years without naming a player on the team the job recognizes/);
 });
 
 test("a bare count in a conditional blind bid covers whichever player is won", () => {
@@ -181,6 +182,27 @@ test("a bare count in a conditional blind bid covers whichever player is won", (
     });
     assert.deepEqual(result.flags, []);
     assert.deepEqual(result.contracts.map(({playerId, years}) => ({playerId, years})), [{playerId: "3", years: 3}]);
+});
+
+test("every length in a post is accounted for", () => {
+    const decide = (adds, posts) => decideYears({adds, posts, bidRequests: [], teams, threadFound: true});
+    // one name right, one misspelt
+    let result = decide([add("6", "0003", "FREE_AGENT"), add("11", "0003", "FREE_AGENT")], [post("0003", "Cameron 5 years, Keenam 3 years")]);
+    assert.deepEqual(result.contracts.map(({playerId, years}) => ({playerId, years})), [{playerId: "11", years: 5}]);
+    assert.match(result.flags[0], /^Case Keenum: post "Cameron 5 years, Keenam 3 years" gives 3 years without naming/);
+    // a rostered player named correctly beside the misspelt one
+    result = decide([add("6", "0003", "FREE_AGENT")], [post("0003", "Brazzell 5 years, Keenam 3 years")]);
+    assert.deepEqual(result.contracts, []);
+    assert.equal(result.flags.length, 1);
+    // a full name of a rostered player isn't a pending add sharing the surname
+    result = decide([add("10", "0003", "FREE_AGENT")], [post("0003", "Josh Allen 3 years")]);
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].years, 1);
+    assert.equal(decide([add("10", "0003", "FREE_AGENT")], [post("0003", "Keenan Allen 3 years")]).contracts[0].years, 3);
+    // a bare post for the first add, before the second was made
+    result = decide([add("6", "0003", "FREE_AGENT"), add("11", "0003", "FREE_AGENT", T - DAYS_14, T + 3600)], [post("0003", "3 years")]);
+    assert.deepEqual(result.flags, []);
+    assert.deepEqual(result.contracts.map(({playerId, years}) => ({playerId, years})), [{playerId: "6", years: 3}, {playerId: "11", years: 1}]);
 });
 
 test("old bare posts and posts about other players don't touch a later add", () => {
