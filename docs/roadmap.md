@@ -19,6 +19,12 @@ What's live, what comes next, the decisions already made, and the facts that con
   - logs in as commissioner
   - snapshots franchise salaries after the deadline to the `league-data` branch
   - publishes any new or changed snapshot
+  - charges cap penalties on drops (`jobs/drop-penalties.mjs`): one `salaryAdj` per dropped player
+    still carrying a contract, described like "Name (2yrs@10, 10/03)", then resets the player to
+    $1 / 0 years. A penalty already charged (an adjustment naming the player since the drop, or a
+    $0 one) is only reset. A team the penalties would put over the cap is held for the commissioner
+    to reverse the move, and the run fails. In dry run (log only) until the `DROP_PENALTIES`
+    repository variable is `apply`
   - writes a chore log, and re-enables itself (GitHub's 60-day rule)
 - Tier 0 is done:
   - MFL's nav bar is kept visible on phones
@@ -65,28 +71,19 @@ commissioner write:
 - `fcfsWaiver` with `FRANCHISE_ID` for add/drop moves on a team's behalf
 
 Candidates:
-1. **Cap penalties on drops** (next). Today's Commish tab already detects these: a free agent still
-   carrying a contract, last moved by a drop. Decided:
-   - one `salaryAdj` per player, then reset the player to $1 / 0 years
-   - the description carries the drop date, e.g. "Name (2yrs@10, 10/03)", so a second drop on the
-     same contract isn't mistaken for one already applied; matching it avoids double-applying
-   - a team the uncharged penalties would put over the cap is held: nothing is charged or reset,
-     so the commissioner can reverse the move (e.g. a blind bid with a drop), and the run fails
-   - the logic lives in `jobs/`, so the live version is untouched
-   - a dry run that only logs comes first; a workflow variable turns the writes on
-2. **Contract years on adds:**
+1. **Contract years on adds:**
    - **Blind bids:** the years are in the bid message, visible only on the logged-in Prior FA Bids page
      (`/<season>/processed_waivers?L=48571`), not in the API. **Need a saved copy of that page to build
      the parser.**
    - **First-come-first-served adds:** members post the years on the message board. **Open:** parse
      free-text posts, or add a structured "Set contract length" control that posts in a fixed format.
-3. **Over-cap moves:** detect transactions that push a team over the cap, counting pending penalties.
+2. **Over-cap moves:** detect transactions that push a team over the cap, counting pending penalties.
    **Open:** flag with a one-click reverse (`fcfsWaiver` drop/re-add), or flag only.
-4. **Season rollover routine** (manual today): decrement every contract year by 1, and set players who
+3. **Season rollover routine** (manual today): decrement every contract year by 1, and set players who
    go from 1 to 0 years (new RFAs) to $0.01. MFL won't allow $0, and $0.01 shows as $0 on the roster
    report.
-5. **Commish-tab chores queue** for anything needing a decision.
-6. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
+4. **Commish-tab chores queue** for anything needing a decision.
+5. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
    after seeing the log.
 
 Guidance: apply deterministic things automatically, flag anything risky for a person, and log
@@ -152,6 +149,11 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
 ## Known limits, accepted
 
 - Snapshots reflect rosters at the next 08:00 UTC run, up to about a day after the deadline.
+- Drop penalties are charged at the next 08:00 UTC run. Commissioner moves aren't in the move
+  history the job reads, and a hand-entered charge must spell the player's name as MFL does to be
+  recognized.
+- The job moves to a new season on September 1, though the league is renewed in mid-March (sometimes
+  later), so drops on a renewed site wait until September.
 - A preview that loads but then crashes doesn't fall back. `?fuadPreview=off` recovers.
 - Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
   rows.
