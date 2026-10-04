@@ -20,7 +20,10 @@ What's live, what comes next, the decisions already made, and the facts that con
       loaded), with a second alert when moving him back would break 30: same window
     - anti-tanking (an injured, out or suspended starter): weeks 1–14's lineups, until week 15's
       kickoff; shown once that week's results post
-    - a notice while a free agent add's one-hour contract window is open, with its deadline
+    - a notice while a free agent add's one-hour contract window is open: it reads the message
+      board with the job's own reader (`lib/contract-years.js`, loaded only then, since its regexes
+      need Safari 16.4+) and shows the deadline with the recommended format, the length it read, or
+      that it couldn't read one (a warning), so the owner can edit their latest post or post again
     - in the offseason and preseason only the cap is checked; MFL reports week 17 all offseason, so
       the windows are timed from MFL's NFL schedule (`seasonPhase`)
 - Franchise salaries switch automatically:
@@ -50,17 +53,21 @@ What's live, what comes next, the decisions already made, and the facts that con
     same teams
   - spaces its MFL requests a second apart (MFL's guidance), each with a 30-second timeout, and
     sends the registered client name in `MFL_USER_AGENT`
-  - sets contract years for added players (`jobs/contract-years.mjs`), in dry run until the
-    `CONTRACT_YEARS` repository variable is `apply`:
+  - sets contract years for added players (`lib/contract-years.js`, shared with League Alerts;
+    `jobs/contract-years.mjs` builds the import), in dry run until the `CONTRACT_YEARS` repository
+    variable is `apply`:
     - blind bids: from the bid comment, read from the logged-in Previously Processed Waivers page
       (one page per waiver run; the comments are in no API export). The commissioner decided this
       reading of their own league's page is within the spirit of MFL's terms
     - free agent and waiver adds: from the team's message board posts after the add, in any thread
-      (the contract thread's name changes every season, and in 2023 owners used "Waiver Moves")
+      (the contract thread's name changes every season, and in 2023 owners used "Waiver Moves").
+      The latest post within the hour about the player decides, so owners can correct a length by
+      editing or posting again; a later unreadable one flags. A last name is ambiguous only when
+      another add waiting for years shares it
     - no length by the first run at least an hour after the add: 1 year, enforced on sight; the
       commissioner adjusts by hand for leniency
     - anything unclear is flagged and fails the run; teams over the cap are held
-    - backtested on eight seasons (2019–2026): 294 of 320 adds match the commissioner's years, 12
+    - backtested on eight seasons (2019–2026): 299 of 320 adds match the commissioner's years, 5
       are flagged, and the rest are the rules applied (late or missing posts, bids without comments)
       plus two one-offs
   - writes a chore log, also shown on each run's summary page (where a failed run's email links), and
@@ -71,35 +78,15 @@ What's live, what comes next, the decisions already made, and the facts that con
   - Power Rankings, League Chat, Poll and Trade Bait stay by choice
   - no skin change; members choose their own apps
 
-## Next: contract length feedback (v1, in place)
+## Commissioner to-do
 
-Approved; low risk, so it changes v1 rather than starting a new version.
-
-- **League Alerts confirms what it read.** While an add's hour is open, the notice reads the message
-  board with the job's own reader (moved from `jobs/contract-years.mjs` into `lib/`, so the two
-  agree) and shows one of: nothing read yet (with the recommended format), the length it read, or
-  that it couldn't read one, so the owner can edit or post again within the hour.
-- **The job takes corrections.** The latest post within the hour that gives a length for the player
-  wins; an earlier unreadable one no longer flags the add.
-- **A last name is ambiguous only among the team's pending adds.** Today any rostered player sharing
-  it flags the post; a player already under contract isn't getting a length, so he no longer counts.
-  A full name naming him still rules the post out. Rerun the backtest before merging.
-- **The recommended format,** in League Alerts and the commissioner's topic:
+- Before switching `CONTRACT_YEARS` to `apply`: post a message board topic telling the league what
+  the bot does and how to work with it, with the recommended formats (also shown in League Alerts;
+  the reader understands more, but only these are advertised):
   - message board post: the player's name and length, one player per line (`Hill: 3 years`); a last
     name is enough unless two players you just added share it
   - blind bid comment: one length per line, in the order of the players in the bid (`1 year`,
     `2 years`, `3 years`); update the comment if you change the bid
-  - the reader stays more forgiving than this; the rest isn't advertised
-- **Edits after the hour are accepted, not caught.** MFL's API returns a post's edited text with its
-  original time and no edit time (the board's page shows "Edited …"), so a length edited after the
-  hour but before the job's run counts. The job's log quotes the text it used. Running the check
-  hourly would close this; it's not planned.
-
-### Commissioner to-do
-
-- Before switching `CONTRACT_YEARS` to `apply`: post a message board topic telling the league what
-  the bot does and how to work with it, with good examples for free agent posts and for blind bid
-  comments, simple and conditional.
 
 ## Next versions
 
@@ -107,8 +94,8 @@ Each one is built in a new `site/vN/` folder, previewed with `?fuadPreview=vN` (
 checked with `tools/verify/verify.py`, and activated by editing the header message. The daily job
 loads league logic from the version `RULES_VERSION` names, so a new version's `lib/` must keep what
 the job reads (`capTotal`, `unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`,
-`numPlayers`, `irPlayers`, `injuryStatus`, `injuryReportKnown`, and the `violations.js` and `adds.js`
-exports); without them the job's flags would silently never fire. The order isn't decided. A and C change what members see, and the commissioner wants member feedback on those.
+`numPlayers`, `irPlayers`, `injuryStatus`, `injuryReportKnown`, and the `violations.js`, `adds.js`
+and `contract-years.js` exports); without them the job's flags would silently never fire. The order isn't decided. A and C change what members see, and the commissioner wants member feedback on those.
 
 ### A. "My Team" Contracts
 
@@ -255,6 +242,12 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
   reverses an add for a team under the cap, the player's years must be set to 0 before the drop, or
   the drop chore charges a penalty. The bids page reader breaks if MFL changes that page; it fails
   loudly rather than defaulting.
+- Contract length edits: MFL's API returns an edited post's new text with its original time and no
+  edit time (only the board's page shows "Edited …"), so a length edited after the hour but before
+  the job's run counts. The job's log quotes the text it used. Running the check hourly would close
+  this; it's not planned.
+- While an add's hour is open, every Main tab view reads the message board once, uncached. A
+  blind bid's reading isn't shown: League Alerts confirms posts only.
 - IR timing: MFL's injury report doesn't say when a designation changed, so an add made after a
   player came off NFL IR (effectively going over 30) isn't caught as a void; the "moving him back"
   alert is a warning only, and the commissioner judges the order of moves.
