@@ -36,10 +36,12 @@ test("roster limits of 23 to 30, checked through the championship in week 17", (
     assert.deepEqual(ruleViolations(league("18", franchise("Crowded", 250, 31), franchise("Thin", 250, 22))), []);
 });
 
-test("injured or suspended starters (anti-tanking), checked through the championship in week 17", () => {
-    assert.deepEqual(ruleViolations(league("17", franchise("Risky", 250, 25, [injured, healthy]))),
-        ["Risky started injured/suspended player Hurt Player in week 17!"]);
-    assert.deepEqual(ruleViolations(league("18", franchise("Risky", 250, 25, [injured]))), []);
+test("injured or suspended starters (anti-tanking): regular season lineups, until the playoffs start", () => {
+    assert.deepEqual(ruleViolations(league("14", franchise("Risky", 250, 25, [injured, healthy]))),
+        ["Risky started injured/suspended player Hurt Player in week 14!"]);
+    assert.deepEqual(ruleViolations(league("15", franchise("Risky", 250, 25, [injured]))), []);
+    // week 14's lineup once week 15 has kicked off
+    assert.deepEqual(ruleViolations({...league("14", franchise("Risky", 250, 25, [injured])), tankingOver: true}), []);
 });
 
 test("before any results (no week yet) every check applies", () => {
@@ -79,7 +81,7 @@ test("an add in its posting window shows when its contract length is due, as a n
     assert.deepEqual(items(teams, {pendingAdds: [{...added, type: "BBID_WAIVER"}], now: T}), []);
 });
 
-test("once the season is over (MFL still says week 17), only the cap is checked", () => {
+test("once the championship week is over (MFL still says week 17), only the cap is checked", () => {
     const over = {...league("17", franchise("Offseason", 301, 34, [injured])), seasonOver: true};
     over.franchises.get("0").irPlayers = [onIR("Recovered", null)];
     assert.deepEqual(ruleViolations(over), ["Offseason is over the salary cap with a total salary of 301!"]);
@@ -120,4 +122,26 @@ test("without today's injury report, or with a thin one, the IR check is skipped
     for (const report of [null, {injury: [{id: "1", status: "IR"}]}]) {
         assert.deepEqual(items(build(report)).filter((item) => item.kind.startsWith("ir")), []);
     }
+});
+
+test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and the end of week 17", async () => {
+    const {seasonPhase} = await import("../site/v1/lib/violations.js");
+    const at = (iso) => String(Date.parse(iso) / 1000);
+    const schedule = {
+        15: [at("2026-12-17T01:15:00Z"), at("2026-12-20T18:00:00Z")],
+        17: [at("2026-12-31T21:30:00Z"), at("2027-01-05T01:15:00Z")]
+    };
+    const fetchImpl = async (url) => {
+        const week = new URL(url).searchParams.get("W");
+        return {ok: true, json: async () => ({nflSchedule: {matchup: (schedule[week] || []).map((kickoff) => ({kickoff}))}})};
+    };
+    const phase = (iso) => seasonPhase(2026, new Date(iso), {fetchImpl});
+    assert.deepEqual(await phase("2026-12-16T12:00:00Z"), {tankingOver: false, seasonOver: false});
+    assert.deepEqual(await phase("2026-12-17T01:15:00Z"), {tankingOver: true, seasonOver: false});
+    // week 17's last game kicks off at 01:15; it's taken to be over four hours later
+    assert.deepEqual(await phase("2027-01-05T05:14:00Z"), {tankingOver: true, seasonOver: false});
+    assert.deepEqual(await phase("2027-01-05T05:15:00Z"), {tankingOver: true, seasonOver: true});
+    // a schedule MFL hasn't published counts as not yet
+    const unpublished = async () => ({ok: false, status: 404});
+    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}), {tankingOver: false, seasonOver: false});
 });

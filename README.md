@@ -1,7 +1,7 @@
 # FUAD league site
 
 Custom features for the Fuad Reveiz Fan Club Dynasty League on MyFantasyLeague: the Contracts,
-Commish and Links tabs, and the roster and salary cap violations box on the Main tab.
+Commish and Links tabs, and the League Alerts box on the Main tab (roster, salary cap and injured reserve rules).
 
 The code lives in this repo and is published to GitHub Pages. A home page message that appears
 on every league page loads it, so it runs inside MFL and reads league data as the member
@@ -93,7 +93,7 @@ Main tab's violations box uses. The chore log names the team, its total and its 
 week, and the run fails so the commissioner hears about it, every day until the team is back under.
 It doesn't reverse anything. A team over the cap has its drop penalties held, with the dropped
 players' contracts intact, so the move can be reversed. It also flags roster limit and injured
-reserve violations, from the same rules as the Main tab's violations box.
+reserve violations, from the same rules as the Main tab's League Alerts box.
 
 It sets contract years for added players, which MFL adds with 0 years. By league rule a blind bid's
 length (1 to 5 years) goes in the bid's comment, and a free agent or waiver add's in a message board

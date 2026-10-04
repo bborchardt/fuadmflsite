@@ -4,7 +4,8 @@
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {pendingAdds} from "../lib/adds.js";
-import {PREVIOUS_FRANCHISE_UNTIL_WEEK, SEASON_OVER_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
+import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
+import {seasonPhase} from "../lib/violations.js";
 import {franchisePhase, makeSnapshot, readSnapshot, snapshotFileName} from "../lib/franchise.js";
 import {renderViolations} from "./violations.js";
 import {renderContracts} from "./contracts.js";
@@ -152,17 +153,17 @@ async function loadLeague({season, leagueId}) {
         fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries")).catch(() => null);
     // today's report, for injured reserve eligibility; without it that check is skipped
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries").catch(() => null);
-    // whether the season is over, after which only the cap is checked; unknown counts as not over
-    const seasonOverPromise = weekKickoff(season, SEASON_OVER_WEEK).then((kickoff) => Boolean(kickoff) && Date.now() >= kickoff.getTime(), () => false);
-    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, seasonOver] = await Promise.all([
+    // where the season is, for when the in-season checks stop; unknown counts as not yet
+    const phasePromise = seasonPhase(season, new Date()).catch(() => ({tankingOver: false, seasonOver: false}));
+    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
-        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, seasonOverPromise
+        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise
     ]);
     const built = buildLeague({
         players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters,
         transactions, weeklyResults, freeAgents, injuries, currentInjuries
     });
-    built.seasonOver = seasonOver;
+    Object.assign(built, phase);
     // adds waiting for a contract length, for the violations box
     built.pendingAdds = pendingAdds({
         rosters, transactions: asArray(transactions.transaction), players: new Map(asArray(players.player).map((player) => [player.id, player]))
