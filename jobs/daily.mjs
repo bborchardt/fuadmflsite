@@ -81,6 +81,23 @@ function choreLog(message) {
     entries.push(message);
 }
 
+/** MFL asks clients to space requests out; this is the gap between the starts of two of ours. */
+const MFL_REQUEST_SPACING_MS = 1000;
+let nextRequestAt = 0;
+
+/**
+ * fetch for every MFL request, started at least MFL_REQUEST_SPACING_MS apart even when several
+ * are made at once, so the job never bursts. (MFL throttles bursts with HTTP 429.)
+ */
+async function mflFetch(url, init) {
+    const wait = nextRequestAt - Date.now();
+    nextRequestAt = Math.max(Date.now(), nextRequestAt) + MFL_REQUEST_SPACING_MS;
+    if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+    return fetch(url, init);
+}
+
 function setOutput(name, value) {
     if (process.env.GITHUB_OUTPUT) {
         appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
@@ -103,7 +120,7 @@ async function login() {
     }
     let response, body;
     try {
-        response = await fetch(`${API_BASE}/${season}/login`, {
+        response = await mflFetch(`${API_BASE}/${season}/login`, {
             method: "POST",
             headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
             body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
@@ -140,7 +157,7 @@ async function leagueSeason() {
     const year = now.getUTCFullYear();
     let response, body;
     try {
-        response = await fetch(exportUrl(host, year, "league", {L: leagueId}), {headers: mflHeaders});
+        response = await mflFetch(exportUrl(host, year, "league", {L: leagueId}), {headers: mflHeaders});
         // only read the body of a reply that can say: a 404, or a 200 with JSON
         body = response.ok ? await response.json() : null;
     } catch (error) {
@@ -163,7 +180,7 @@ async function loginWorks(cookie) {
     for (const year of [season, season - 1]) {
         try {
             const leagues = await fetchExport(exportUrl(API_BASE, year, "myleagues", {YEAR: year}), "leagues",
-                {init: {headers: {...mflHeaders, Cookie: cookie}}});
+                {fetchImpl: mflFetch, init: {headers: {...mflHeaders, Cookie: cookie}}});
             if (asArray(leagues.league).length > 0) {
                 return true;
             }
@@ -175,7 +192,7 @@ async function loginWorks(cookie) {
 }
 
 const fetchFrom = (base, type, params, section = type, year = season) =>
-    fetchExport(exportUrl(base, year, type, params), section, {init: {headers: mflHeaders}});
+    fetchExport(exportUrl(base, year, type, params), section, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
 
 /** Put this run's chore log entries on the run's summary page, where the failure email leads. */
 function writeSummary() {
@@ -199,7 +216,7 @@ function writeSummary() {
 async function mflImport(type, data, params = {}) {
     let response, body;
     try {
-        response = await fetch(`${host}/${season}/import`, {
+        response = await mflFetch(`${host}/${season}/import`, {
             method: "POST",
             headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
             body: new URLSearchParams({TYPE: type, L: leagueId, DATA: data, ...params})
@@ -222,7 +239,7 @@ async function processedWaivers(period) {
     const url = `${host}/${season}/processed_waivers?LEAGUE_ID=${leagueId}&PERIOD=${period}`;
     let response;
     try {
-        response = await fetch(url, {headers: mflHeaders});
+        response = await mflFetch(url, {headers: mflHeaders});
     } catch (error) {
         throw new Error(`Couldn't load MFL's processed waivers for period ${period}: network error (${error.message})`);
     }
@@ -335,7 +352,7 @@ async function leagueState() {
     // and IR checks when the championship week is over. If that can't be told, the league
     // rules are skipped rather than risk flagging the offseason.
     try {
-        Object.assign(built, await seasonPhase(season, now, {init: {headers: mflHeaders}}));
+        Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}));
     } catch (error) {
         log(`Couldn't tell where the ${season} season is (${error.message}); the league rules are skipped.`);
         built.seasonOver = null;
@@ -465,7 +482,7 @@ async function franchiseSnapshot(year) {
         log(`The ${year} franchise snapshot already exists.`);
         return false;
     }
-    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, {init: {headers: mflHeaders}});
+    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
     if (!deadline) {
         log(`MFL hasn't published the ${year} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
         return false;
