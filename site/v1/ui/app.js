@@ -4,7 +4,6 @@
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
-import {postReadings, teamPlayers} from "../lib/contract-years.js";
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
 import {seasonPhase} from "../lib/violations.js";
 import {franchisePhase, makeSnapshot, readSnapshot, snapshotFileName} from "../lib/franchise.js";
@@ -169,14 +168,17 @@ async function loadLeague({season, leagueId}) {
     // adds waiting for a contract length, for the violations box
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});
-    built.teamPlayers = teamPlayers({rosters, players: playerNames});
+    // for reading contract lengths from the message board
+    built.boardContext = {rosters, playerNames};
     return built;
 }
 
 /**
  * What the message board says so far about free agent and waiver adds still in their hour, so
  * League Alerts can show the owner what was read; null when no add's hour is open. Only threads
- * with a post since the earliest such add are read. The board needs a logged-in member.
+ * with a post since the earliest such add are read, one at a time. The board needs a logged-in
+ * member. The reader is loaded only here: its regular expressions need Safari 16.4 or later, and
+ * on an older browser a failed load just leaves the notice as it is rather than the whole page.
  */
 async function contractReadings({season, leagueId}, league) {
     const open = league.pendingAdds.filter((add) => add.type !== "BBID_WAIVER" && !windowClosed(add, Date.now() / 1000));
@@ -184,11 +186,15 @@ async function contractReadings({season, leagueId}, league) {
         return null;
     }
     const board = (type, params) => fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
+    const {postReadings, teamPlayers} = await import("../lib/contract-years.js");
     const earliest = Math.min(...open.map((add) => add.added));
     const threads = asArray((await board("messageBoard", {COUNT: 100})).thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
-    const posts = (await Promise.all(threads.map((thread) => board("messageBoardThread", {THREAD: thread.id}))))
-        .flatMap((thread) => asArray(thread.post));
-    return postReadings({adds: open, pending: league.pendingAdds, posts, teams: league.teamPlayers});
+    const posts = [];
+    for (const thread of threads) {
+        posts.push(...asArray((await board("messageBoardThread", {THREAD: thread.id})).post));
+    }
+    const {rosters, playerNames} = league.boardContext;
+    return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
 }
 
 export async function start({dataBase}) {

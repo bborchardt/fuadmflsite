@@ -47,10 +47,10 @@ function contractNotice(teamName, add, reading) {
     const added = `${teamName} added ${displayName(add.name)}`;
     if (reading && reading.state === "read") {
         return `${added}: read ${reading.years} year${reading.years === 1 ? "" : "s"} from the message board. `
-            + `To change it, edit the post or post again by ${by}.`;
+            + `To change it, edit your latest post or post again by ${by}.`;
     }
     if (reading && reading.state === "problem") {
-        return `${added}: couldn't read his contract length from the message board. Edit the post or post again by ${by}, like ${example}.`;
+        return `${added}: couldn't read his contract length from the message board. Edit your latest post or post again by ${by}, like ${example}.`;
     }
     return `${added}: post his contract length on the message board by ${by}, like ${example}, or it will be 1 year.`;
 }

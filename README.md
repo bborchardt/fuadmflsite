@@ -102,7 +102,7 @@ post within an hour of the add, naming the player. The recommended forms are `Hi
 post, and one length per line in a bid comment, in the order of the players in the bid; the reader
 also understands other common phrasings. While the hour is open, the Main tab's League Alerts box
 reads the board with the job's own reader (`lib/contract-years.js`) and shows the deadline, the
-length it read, or that it couldn't read one, so the owner can edit the post or post again. Owners
+length it read, or that it couldn't read one, so the owner can edit their latest post or post again. Owners
 have used threads of every name, so all of them are read. The job reads bid comments from MFL's
 Previously Processed Waivers page, the only place they appear, and posts through MFL's API. The
 latest post within the hour about a player decides; MFL's API keeps an edited post's original time,

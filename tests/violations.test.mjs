@@ -82,10 +82,10 @@ test("an add in its posting window shows when its contract length is due, as a n
     // what the board says so far: a length read, or one that couldn't be, as a warning
     const reading = (state, years) => new Map([["1", years ? {state, years} : {state}]]);
     assert.deepEqual(items(teams, {pendingAdds: [added], readings: reading("read", 2), now: T}), [{kind: "contract", franchiseId: "0003", warning: false,
-        text: "Cool Runnings added Case Keenum: read 2 years from the message board. To change it, edit the post or post again by 10:32 PM CT."}]);
+        text: "Cool Runnings added Case Keenum: read 2 years from the message board. To change it, edit your latest post or post again by 10:32 PM CT."}]);
     assert.match(items(teams, {pendingAdds: [added], readings: reading("read", 1), now: T})[0].text, /read 1 year from/);
     assert.deepEqual(items(teams, {pendingAdds: [added], readings: reading("problem"), now: T}), [{kind: "contract", franchiseId: "0003", warning: true,
-        text: "Cool Runnings added Case Keenum: couldn't read his contract length from the message board. Edit the post or post again by 10:32 PM CT, like \"Keenum: 3 years\"."}]);
+        text: "Cool Runnings added Case Keenum: couldn't read his contract length from the message board. Edit your latest post or post again by 10:32 PM CT, like \"Keenum: 3 years\"."}]);
     // once the hour is up, or for a blind bid (its length is in the bid comment), nothing shows
     assert.deepEqual(items(teams, {pendingAdds: [added], now: T + 3000}), []);
     assert.deepEqual(items(teams, {pendingAdds: [{...added, type: "BBID_WAIVER"}], now: T}), []);
