@@ -1,5 +1,3 @@
-// Helpers for MFL's JSON exports, shared by the page and the daily job.
-
 export const API_BASE = "https://api.myfantasyleague.com";
 
 /** MFL's JSON turns a one-item list into a bare object and leaves out an empty one. */
@@ -10,13 +8,12 @@ export function asArray(value) {
     return Array.isArray(value) ? value : [value];
 }
 
-/** MFL names players "Last, First"; the site shows "First Last". */
 export function displayName(mflName) {
     const parts = String(mflName).split(",");
     return parts.length < 2 ? parts[0] : parts[1].trim() + " " + parts[0];
 }
 
-/** URL of an MFL export. League exports live on the league's host; league-independent ones (players, injuries, nflSchedule) on the api host. */
+// league-independent exports (players, injuries, nflSchedule) live on the api host
 export function exportUrl(base, season, type, params = {}) {
     const query = new URLSearchParams({TYPE: type, ...params, JSON: "1"});
     return `${base}/${season}/export?${query}`;
@@ -27,16 +24,10 @@ export class MflError extends Error {
         super(`Couldn't load ${what}: ${why}`);
         this.name = "MflError";
         this.what = what;
-        // the HTTP status, when the failure was one
         this.status = status;
     }
 }
 
-/**
- * Fetch an export and return its top-level section, failing loudly on anything else:
- * a network error, a non-200 status, a non-JSON body, an MFL error document, or a
- * response without the expected section.
- */
 export async function fetchExport(url, section, {fetchImpl = fetch, init} = {}) {
     let response;
     try {
@@ -63,10 +54,8 @@ export async function fetchExport(url, section, {fetchImpl = fetch, init} = {}) 
     return body[section];
 }
 
-/**
- * The first kickoff of an NFL week, or null if MFL hasn't published that season's schedule
- * yet (it answers 404 for an unknown season and lists no games for an empty week).
- */
+// null until MFL publishes the season's schedule: it answers 404 for an unknown season and lists
+// no games for an empty week
 export async function weekKickoff(season, week, options) {
     try {
         return firstKickoff(await fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule", options));
@@ -81,10 +70,7 @@ export async function weekKickoff(season, week, options) {
 /** How long after its kickoff a game is taken to be over. */
 export const GAME_HOURS = 4;
 
-/**
- * When an NFL week is over: its last kickoff plus GAME_HOURS, or null if MFL hasn't published
- * that season's schedule yet.
- */
+// null until MFL publishes the season's schedule
 export async function weekEnd(season, week, options) {
     try {
         const kickoffs = asArray((await fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule", options)).matchup)
@@ -98,7 +84,6 @@ export async function weekEnd(season, week, options) {
     }
 }
 
-/** The first kickoff (a Date) in an nflSchedule export, or null if it lists no games. */
 export function firstKickoff(nflSchedule) {
     const kickoffs = asArray(nflSchedule.matchup)
         .map((matchup) => Number(matchup.kickoff))

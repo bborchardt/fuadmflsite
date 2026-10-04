@@ -1,16 +1,8 @@
-// The "League Alerts" box at the top of the Main tab. The rules themselves
-// are in lib/violations.js, shared with the daily job.
-
 import {esc, fragment} from "./html.js";
 import {ruleViolations} from "../lib/violations.js";
 import {withParam} from "../loader.js";
 
-/**
- * Put the violations box at the top of the Main tab's first column (MFL's #tabcontent0), or
- * redraw it in place. `readings` are what the message board says about adds in their hour
- * (contract-years.js's postReadings), once loaded, and `beta` the beta the header offers this
- * viewer, invited to on the first line. Returns whether the box is on this page.
- */
+// Draws the box, or redraws it in place once `readings` load. Returns whether this page has it.
 export function renderViolations(league, readings, beta) {
     const column = document.querySelector("#tabcontent0 #homepagecolumn1");
     if (!column) {

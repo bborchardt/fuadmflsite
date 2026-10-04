@@ -1,6 +1,3 @@
-// Tests for the league logic shared by the page and the daily job.
-// Run with: node --test tests/
-
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {capPenalty, netCapSpace, rookieSalary, franchiseTopSalaries, franchiseSalary, positionOrder} from "../site/v1/lib/rules.js";

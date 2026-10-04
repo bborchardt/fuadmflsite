@@ -1,21 +1,14 @@
-// The cap penalty chore: find dropped players still carrying a contract, and build the MFL
-// imports that charge the penalty and reset the player. No fetching, so it can be tested on
-// saved data; jobs/daily.mjs does the I/O. It takes a league built by the version's lib, so it
-// imports none itself.
+// Takes a league built by the version's lib, so it imports none itself.
 
-/** More drops than this in one run looks like a bug rather than a busy day, so nothing is applied. */
+// more drops than this in one run looks like a bug rather than a busy day, so nothing is applied
 export const MAX_PENALTIES_PER_RUN = 6;
 
-/** A drop's date as members see it, in US Eastern time: "10/03". */
+// as members see dates, in US Eastern time: "10/03"
 export function dropDate(timestamp) {
     return new Intl.DateTimeFormat("en-US", {timeZone: "America/New_York", month: "2-digit", day: "2-digit"})
         .format(new Date(timestamp * 1000));
 }
 
-/**
- * The penalties owed, one per dropped player, from a league built with transactions and free
- * agents. The description names the contract and the drop date, e.g. "Name (2yrs@10, 10/03)".
- */
 export function pendingPenalties(league) {
     return [...league.franchises.values()].flatMap((franchise) => franchise.pendingDroppedPlayers.map((player) => {
         const dropped = player.transactions[0].timestamp;
@@ -32,11 +25,7 @@ export function pendingPenalties(league) {
     }));
 }
 
-/**
- * Whether a penalty still has to be charged: not already charged (the league marks that), and
- * not $0. A dropped player with no years left owes nothing, so they're only reset; MFL would
- * reject or keep a $0 adjustment.
- */
+// a $0 penalty (no years left) is only reset: MFL would reject or keep a $0 adjustment
 export function needsCharge(penalty) {
     return penalty.amount > 0 && !penalty.charged;
 }
@@ -44,13 +33,12 @@ export function needsCharge(penalty) {
 const xmlAttr = (value) => String(value)
     .replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** DATA for MFL's salaryAdj import. */
 export function salaryAdjXml(penalty) {
     return `<salary_adjustments><salary_adjustment franchise_id="${xmlAttr(penalty.franchiseId)}"`
         + ` amount="${xmlAttr(penalty.amount)}" explanation="${xmlAttr(penalty.explanation)}"/></salary_adjustments>`;
 }
 
-/** DATA for MFL's salaries import, resetting a player to $1 / 0 years. Only send it with APPEND=1. */
+// only send it with APPEND=1, or MFL replaces every salary
 export function resetSalaryXml(penalty) {
     return `<salaries><leagueUnit unit="LEAGUE"><player id="${xmlAttr(penalty.playerId)}" salary="1" contractYear="0"/>`
         + `</leagueUnit></salaries>`;

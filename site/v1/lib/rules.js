@@ -1,36 +1,27 @@
-// League rules for this version. Plain functions with no DOM, so the page and the
-// daily job (Node) share them and can't disagree. A rule change means a new version.
+// A rule change means a new version, so past seasons keep the rules they were played under.
 
 export const SALARY_CAP = 300;
 export const ROSTER_MIN = 23;
 export const ROSTER_MAX = 30;
 
-// The roster-limit and injured reserve checks run from week 1's kickoff until the championship,
-// week 17, is over
-// (MFL keeps reporting week 17 all offseason, so the end is timed from the NFL schedule). The
-// anti-tanking check (an injured or suspended starter) covers the regular season's lineups,
-// weeks 1-14, and stops when the playoffs start. The cap is checked all year.
+// MFL reports week 17 all offseason, so the roster and IR checks' end is timed from the NFL
+// schedule. Anti-tanking covers the regular season, weeks 1-14.
 export const ROSTER_CHECK_LAST_WEEK = 17;
 export const INJURY_CHECK_LAST_WEEK = 14;
 export const PLAYOFFS_START_WEEK = 15;
 
-// Franchise salary next year is the average of the top salaries at each position.
 export const FRANCHISE_PLAYER_COUNT = 5;
 
-// The trade deadline is the first kickoff of this NFL week; that's when the
-// franchise salaries are snapshotted.
+// the trade deadline, when franchise salaries are snapshotted, is this week's first kickoff
 export const TRADE_DEADLINE_WEEK = 12;
 
-// Last season's franchise salaries apply until the first kickoff of this NFL week,
-// a stand-in for the rookie draft, which is held offline on no fixed date.
+// last season's franchise salaries apply until this week's first kickoff: a stand-in for the rookie
+// draft, held offline on no fixed date
 export const PREVIOUS_FRANCHISE_UNTIL_WEEK = 1;
 
-// Rookie salaries: the first pick at each position earns the baseline, and each
-// later pick earns 80% of the one before, never less than $1.
 export const ROOKIE_PICKS_SHOWN = 15;
 export const ROOKIE_DECAY = 0.8;
 
-// Positions in display order, with each one's first-pick rookie salary.
 export const POSITIONS = [
     {code: "QB", rookieBaseline: 6},
     {code: "RB", rookieBaseline: 10},
@@ -41,12 +32,10 @@ export const POSITIONS = [
 
 const positionRank = new Map(POSITIONS.map((position, index) => [position.code, index]));
 
-/** Sort order for a position; anything the league doesn't use sorts last. */
 export function positionOrder(code) {
     return positionRank.has(code) ? positionRank.get(code) : POSITIONS.length;
 }
 
-/** What it costs against the cap to drop a player: 40% of salary per remaining year, at least $1 and at least one dollar per year. */
 export function capPenalty(years, salary) {
     years = Number(years);
     salary = Number(salary);
@@ -56,21 +45,16 @@ export function capPenalty(years, salary) {
     return Math.max(Math.ceil(Math.max(1, 0.4 * salary * years)), years);
 }
 
-/** Cap space freed by dropping a player: salary less the penalty. Nothing for an expiring contract. */
 export function netCapSpace(years, salary) {
     return years === 0 ? 0 : salary - capPenalty(years, salary);
 }
 
-/** Salary for a rookie taken at this pick (1-based) at a position with this baseline. */
+// `pick` is 1-based
 export function rookieSalary(baseline, pick) {
     return Math.round(Math.max(1, baseline * Math.pow(ROOKIE_DECAY, pick - 1)));
 }
 
-/**
- * The top salaries at each position, from a list of rostered players
- * ({fullName, nflPosition, salary}). Ties keep the order they arrive in.
- * Returns {QB: [{fullName, salary}, ...], ...}.
- */
+// ties keep the order they arrive in
 export function franchiseTopSalaries(rosteredPlayers) {
     const sorted = rosteredPlayers.slice().sort((a, b) =>
         positionOrder(a.nflPosition) - positionOrder(b.nflPosition) || b.salary - a.salary);
@@ -87,7 +71,6 @@ export function franchiseTopSalaries(rosteredPlayers) {
     return top;
 }
 
-/** Next year's franchise salary at a position: the average of its top salaries, rounded. */
 export function franchiseSalary(topPlayers) {
     const total = (topPlayers || []).reduce((sum, player) => sum + player.salary, 0);
     return Math.round(total / FRANCHISE_PLAYER_COUNT);

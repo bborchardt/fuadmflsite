@@ -1,5 +1,3 @@
-// Tests for the daily job's over-cap flag.
-
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {overCapMessage, recentMoves} from "../jobs/over-cap.mjs";

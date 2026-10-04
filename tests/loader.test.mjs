@@ -1,5 +1,3 @@
-// Tests for which version a page runs: the header's, a developer preview, or the beta.
-
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {betaOffer, decide, previewBase, withParam} from "../site/v1/loader.js";

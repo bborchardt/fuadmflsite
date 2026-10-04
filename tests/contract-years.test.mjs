@@ -1,5 +1,4 @@
-// Tests for the daily job's contract years chore. Names and posts are made up, in the styles
-// owners actually use.
+// names and posts are made up, in the styles owners actually use
 
 import {test} from "node:test";
 import assert from "node:assert/strict";

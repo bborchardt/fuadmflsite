@@ -1,7 +1,3 @@
-// Tests for the roster and salary cap violations box on the Main tab.
-// The expected messages and week cut-offs are the ones the pre-v1 code produced
-// (legacy/fuadCommish.hbs), so members see the same warnings.
-
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {ruleViolations as items} from "../site/v1/lib/violations.js";

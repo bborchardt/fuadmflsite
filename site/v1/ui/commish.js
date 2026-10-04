@@ -1,5 +1,4 @@
-// The Commish tab: pre-filled MFL forms for cap penalties and contracts, and the
-// franchise snapshot backup. Members see a one-line notice instead.
+// Members see a one-line notice instead of the forms.
 
 import {esc, rowStriper} from "./html.js";
 
@@ -73,7 +72,7 @@ function contractForm({homeUrl, leagueId, league, beforeDraft}) {
     </div>`;
 }
 
-// Backup for the daily job: shows the snapshot as it would be taken now, to commit by hand.
+// a backup for the daily job: the snapshot as it would be taken now, to commit by hand
 function snapshotBackup(snapshotStatus) {
     return `
     <div style="border: 1px solid black; padding: 1em;" align="left" class="fuad-snapshot">
