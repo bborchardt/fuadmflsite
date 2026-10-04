@@ -7,15 +7,8 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 
 ## Commissioner to-do
 
-- Before switching `CONTRACT_YEARS` to `apply`: post a message board topic telling the league what
-  the bot does and how to work with it, with the recommended formats (also shown in League Alerts;
-  the reader understands more, but only these are advertised):
-  - message board post: the player's name and length, one player per line (`Hill: 3 years`); a last
-    name is enough unless two players you just added share it
-  - blind bid comment: one length per line, in the order of the players in the bid (`1 year`,
-    `2 years`, `3 years`); update the comment if you change the bid
 - Watch the dry-run lines, clear any 0-year backlog, then set `DROP_PENALTIES` and `CONTRACT_YEARS`
-  to `apply`. The first apply runs are the first real MFL writes: check the chore log.
+  to `apply` (the league was told the formats on the message board, 4 Oct 2026). The first apply runs are the first real MFL writes: check the chore log.
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 
