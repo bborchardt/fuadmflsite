@@ -97,9 +97,10 @@ drop penalties held, with the dropped players' contracts intact, so the move can
 It sets contract years for added players, which MFL adds with 0 years. Owners state the length
 (1 to 5 years) in the blind bid's comment or in the message board's "Free Agent Contracts" thread, and
 the job reads both: bid comments from MFL's Previously Processed Waivers page, which is the only place
-they appear, and posts through MFL's API. A post counts for the team's adds made before it, matched by
-the player's name. An add with no length stated gets 1 year. Anything unclear (different lengths, a
-name it can't match, a bid it can't find) is left for the commissioner and fails the run. Unless the
+they appear, and posts through MFL's API. A post counts for a player the team added if it comes after
+the player's previous move, matched by name. An add with no length stated gets 1 year. Anything
+unclear (different lengths, a length it can't tie to one player or can't read, a bid it can't find)
+is left for the commissioner and fails the run, so a stated length is never replaced by the default. Unless the
 `CONTRACT_YEARS` repository variable is `apply`, it only logs what it would do.
 
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at

@@ -9,6 +9,8 @@ export const MAX_YEARS = 5;
 export const DEFAULT_YEARS = 1;
 /** More contracts than this in one run looks like a bug rather than a busy day, so none are set. */
 export const MAX_CONTRACTS_PER_RUN = 15;
+/** How far back a post can come before an add, when the player has no earlier move. */
+export const POST_LOOKBACK_DAYS = 14;
 /** The message board thread owners post contract lengths in, by subject. */
 export const CONTRACT_THREAD = /free agent contracts?/i;
 
@@ -46,6 +48,7 @@ function moves(transaction) {
  */
 export function pendingAdds({rosters, transactions, players}) {
     const latest = new Map();
+    const history = new Map();
     for (const transaction of transactions) {
         const {added, dropped} = moves(transaction);
         for (const id of [...added, ...dropped]) {
@@ -53,6 +56,7 @@ export function pendingAdds({rosters, transactions, players}) {
             if (!seen || Number(transaction.timestamp) >= Number(seen.timestamp)) {
                 latest.set(id, transaction);
             }
+            history.set(id, [...(history.get(id) || []), Number(transaction.timestamp)]);
         }
     }
     const pending = [];
@@ -70,7 +74,11 @@ export function pendingAdds({rosters, transactions, players}) {
                 // the salary exactly as MFL has it, so writing the years leaves it unchanged
                 salary: entry.salary,
                 type: transaction.type,
-                added: Number(transaction.timestamp)
+                added: Number(transaction.timestamp),
+                // posts after the player's previous move can state the length: an owner may post
+                // before a blind bid is processed, and an earlier stint's posts come before it
+                since: Math.max(Number(transaction.timestamp) - POST_LOOKBACK_DAYS * 86400,
+                    ...history.get(entry.id).filter((time) => time < Number(transaction.timestamp)))
             });
         }
     }
@@ -162,6 +170,8 @@ export function readYears(text, candidates) {
         }
         if (who.length === 1) {
             set(who[0], mention.years);
+        } else if (!who.length && candidates.length > 1 && bare(text, mention)) {
+            problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
         } else if (who.length > 1) {
             problems.push(`"${text.trim()}" doesn't say which of ${who.map((candidate) => candidate.name).join(" and ")} gets ${mention.years} years`);
         }
@@ -219,6 +229,8 @@ export function readProcessedWaivers(html) {
  * add's sources are its blind bid comment (if any) and its team's posts made after the add.
  * Agreeing sources set the years; disagreeing or unreadable ones flag the add. An add with
  * no years stated gets DEFAULT_YEARS, unless the thread is missing, which flags it instead.
+ * A comment, or a post naming the add, that gives no length the reader understands is flagged
+ * too, so a stated length is never replaced by the default.
  * Returns {contracts: [{...add, years, source}], flags: [text]}.
  */
 export function decideYears({adds, posts, bidRequests, threadFound}) {
@@ -242,15 +254,19 @@ export function decideYears({adds, posts, bidRequests, threadFound}) {
                     .map((problem) => `blind bid comment: ${problem}`));
                 if (read.years.has(add.playerId)) {
                     stated.push({years: read.years.get(add.playerId), source: `blind bid comment "${request.comment.trim()}"`});
+                } else if (!read.problems.length) {
+                    problems.push(`blind bid comment "${request.comment.trim()}" gives no length the job can read`);
                 }
             }
         }
-        for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) >= add.added)) {
+        for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) > add.since)) {
             const body = postText(post.body);
-            const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add && other.added <= Number(post.postTime));
+            const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add && other.since < Number(post.postTime));
             const read = readYears(body, [add, ...others]);
             if (read.years.has(add.playerId)) {
                 stated.push({years: read.years.get(add.playerId), source: `post "${body.trim()}"`});
+            } else if (named(body, [add]).length && !read.problems.some((problem) => problem.includes(add.name))) {
+                problems.push(`post "${body.trim()}" names the player but gives no length the job can read`);
             }
             problems.push(...read.problems.filter((problem) => problem.includes(add.name)).map((problem) => `post: ${problem}`));
         }

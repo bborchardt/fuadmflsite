@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {contractsXml, decideYears, pendingAdds, readProcessedWaivers, readYears, yearMentions} from "../jobs/contract-years.mjs";
 
 const T = 1790000000;
+const DAYS_14 = 14 * 86400;
 const players = new Map([
     ["1", {name: "Brazzell II, Chris"}], ["2", {name: "All, Erick"}], ["3", {name: "Wilson, Emanuel"}],
     ["4", {name: "Palmer, Joshua"}], ["5", {name: "Rush, Cooper"}], ["6", {name: "Keenum, Case"}],
@@ -77,6 +78,8 @@ test("pending adds: 0 years and last moved by the team's own add", () => {
     const rosters = {franchise: [
         {id: "0005", player: [
             {id: "1", salary: "1", contractYear: "0"},
+            // dropped by another team first
+            {id: "4", salary: "1", contractYear: "0"},
             // already has years
             {id: "2", salary: "1", contractYear: "5"},
             // an RFA after the rollover: no add this season
@@ -93,31 +96,39 @@ test("pending adds: 0 years and last moved by the team's own add", () => {
     ]};
     const transactions = [
         {type: "FREE_AGENT", franchise: "0005", transaction: "1,|", timestamp: String(T)},
+        {type: "FREE_AGENT", franchise: "0007", transaction: "|4,", timestamp: String(T - 100)},
+        {type: "FREE_AGENT", franchise: "0005", transaction: "4,|", timestamp: String(T)},
         {type: "FREE_AGENT", franchise: "0005", transaction: "5,|", timestamp: String(T)},
         {type: "TRADE", franchise: "0005", franchise2: "0006", franchise1_gave_up: "5,", franchise2_gave_up: ",", timestamp: String(T + 60)},
         {type: "LOAD_ROSTERS", franchise: "0006", transaction: "7,|", timestamp: String(T)},
         {type: "BBID_WAIVER", franchise: "0006", transaction: "3,|2|", timestamp: String(T + 120)}
     ];
     assert.deepEqual(pendingAdds({rosters, transactions, players}), [
-        {playerId: "1", name: "Brazzell II, Chris", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T},
-        {playerId: "3", name: "Wilson, Emanuel", franchiseId: "0006", salary: "2.00", type: "BBID_WAIVER", added: T + 120}
+        {playerId: "1", name: "Brazzell II, Chris", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - DAYS_14},
+        {playerId: "4", name: "Palmer, Joshua", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - 100},
+        {playerId: "3", name: "Wilson, Emanuel", franchiseId: "0006", salary: "2.00", type: "BBID_WAIVER", added: T + 120, since: T + 120 - DAYS_14}
     ]);
 });
 
-const add = (playerId, franchiseId, type, added = T) => ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added});
+const add = (playerId, franchiseId, type, since = T - DAYS_14, added = T) =>
+    ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added, since});
 const post = (franchise, body, postTime = T + 60) => ({franchise, body, postTime: String(postTime)});
 const bid = (franchiseId, names, comment) => ({franchiseId, granted: names[0], adds: names, comment});
 
 test("years come from the bid comment or the team's later posts, else the default", () => {
     const {contracts, flags} = decideYears({
-        adds: [add("1", "0005", "FREE_AGENT"), add("3", "0006", "BBID_WAIVER"), add("6", "0008", "BBID_WAIVER"), add("5", "0007", "FREE_AGENT")],
+        adds: [add("1", "0005", "FREE_AGENT"), add("3", "0006", "BBID_WAIVER"), add("6", "0008", "BBID_WAIVER"),
+            add("5", "0007", "FREE_AGENT", T - 30), add("4", "0009", "BBID_WAIVER")],
         posts: [
             post("0005", "Brazzell 5 years"),
             post("0008", "Keenum 3 yrs (in case it wasn&#39;t in the bid)"),
-            // posted before the add: about an earlier stint
-            post("0007", "Cooper Rush 4 years", T - 60)
+            // before Rush's previous move: about an earlier stint
+            post("0007", "Cooper Rush 4 years", T - 60),
+            // before the blind bid was processed
+            post("0009", "Palmer 4 years", T - 3600)
         ],
-        bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Wilson 2yrs, Palmer 1yr"), bid("0008", ["Keenum, Case"], "")],
+        bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Wilson 2yrs, Palmer 1yr"), bid("0008", ["Keenum, Case"], ""),
+            bid("0009", ["Palmer, Joshua"], "")],
         threadFound: true
     });
     assert.deepEqual(flags, []);
@@ -125,7 +136,8 @@ test("years come from the bid comment or the team's later posts, else the defaul
         {playerId: "1", years: 5, source: `post "Brazzell 5 years"`},
         {playerId: "3", years: 2, source: `blind bid comment "Wilson 2yrs, Palmer 1yr"`},
         {playerId: "6", years: 3, source: `post "Keenum 3 yrs (in case it wasn't in the bid)"`},
-        {playerId: "5", years: 1, source: "no length stated: the default"}
+        {playerId: "5", years: 1, source: "no length stated: the default"},
+        {playerId: "4", years: 4, source: `post "Palmer 4 years"`}
     ]);
 });
 
@@ -140,6 +152,23 @@ test("conflicts, a missing bid and a missing thread are flagged, not guessed", (
     assert.match(result.flags[0], /contract thread wasn't found, so it wasn't defaulted/);
     result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 7 years")], []);
     assert.match(result.flags[0], /7 years for Keenum, Case is outside 1-5/);
+});
+
+test("a stated length that can't be placed is flagged, never defaulted", () => {
+    const decide = (adds, posts, bidRequests) => decideYears({adds, posts, bidRequests, threadFound: true});
+    // a bare count in a conditional bid for two players
+    let result = decide([add("3", "0006", "BBID_WAIVER")], [], [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "3 years")]);
+    assert.deepEqual(result.contracts, []);
+    assert.match(result.flags[0], /"3 years" gives 3 years without saying which of Wilson, Emanuel and Palmer, Joshua/);
+    // a bare count from a team with two pending adds
+    result = decide([add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")], [post("0008", "3 years")], []);
+    assert.deepEqual(result.contracts, []);
+    assert.equal(result.flags.length, 2);
+    // a length in a form the reader doesn't know
+    result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 2y")], []);
+    assert.match(result.flags[0], /post "Keenum 2y" names the player but gives no length the job can read/);
+    result = decide([add("6", "0008", "BBID_WAIVER")], [], [bid("0008", ["Keenum, Case"], "two seasons")]);
+    assert.match(result.flags[0], /blind bid comment "two seasons" gives no length the job can read/);
 });
 
 test("the import keeps each salary exactly as MFL has it", () => {
