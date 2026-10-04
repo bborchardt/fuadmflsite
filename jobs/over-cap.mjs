@@ -1,28 +1,15 @@
-// The over-cap chore: find teams over the salary cap, counting drop penalties still owed, and
-// describe their recent moves for the commissioner. It only flags; reversing a move is left to
+// The over-cap chore: describe the recent moves of teams over the salary cap for the
+// commissioner. The league works out each team's total (franchise.capTotal), counting drop
+// penalties still owed, the same way the Main tab's violations box does. It only flags; reversing a move is left to
 // a person. No fetching, so it can be tested on saved data; jobs/daily.mjs does the I/O.
 
-import {dropDate, needsCharge} from "./drop-penalties.mjs";
+import {dropDate} from "./drop-penalties.mjs";
 
 /** How far back the flag lists a team's moves. */
 export const RECENT_MOVE_DAYS = 7;
 
 /** Longer lists, like the commissioner loading a whole roster, are summed up as a count. */
 const MAX_NAMES = 5;
-
-/**
- * Every franchise's total against the cap, as a Map of franchise id -> total: its salary
- * (rosters plus adjustments, so `league` must be built with salary adjustments) plus the drop
- * penalties still to be charged. Rounded to the cent, so amounts with cents can't add up to a
- * hair over the cap.
- */
-export function capTotals(league, penalties, adjustments) {
-    const totals = new Map([...league.franchises.values()].map((franchise) => [franchise.franchiseId, franchise.salary]));
-    for (const penalty of penalties.filter((penalty) => needsCharge(penalty, adjustments))) {
-        totals.set(penalty.franchiseId, totals.get(penalty.franchiseId) + penalty.amount);
-    }
-    return new Map([...totals].map(([franchiseId, total]) => [franchiseId, Math.round(total * 100) / 100]));
-}
 
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
 

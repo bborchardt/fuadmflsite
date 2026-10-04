@@ -25,6 +25,7 @@ export function pendingPenalties(league) {
             playerId: player.playerId,
             fullName: player.fullName,
             amount: player.capPenalty,
+            charged: player.penaltyCharged,
             dropped,
             explanation: `${player.fullName} (${player.years}yrs@${player.salary}, ${dropDate(dropped)})`
         };
@@ -32,24 +33,12 @@ export function pendingPenalties(league) {
 }
 
 /**
- * Whether a penalty is already charged: the franchise has an adjustment naming the player,
- * made at or after the drop. This also recognizes ones entered by hand in the older
- * "Name (2yrs@10)" format, including several players in one adjustment. `adjustments` is the
- * salaryAdjustments export's list of salaryAdjustment entries.
+ * Whether a penalty still has to be charged: not already charged (the league marks that), and
+ * not $0. A dropped player with no years left owes nothing, so they're only reset; MFL would
+ * reject or keep a $0 adjustment.
  */
-export function alreadyCharged(penalty, adjustments) {
-    return adjustments.some((adjustment) =>
-        adjustment.franchise_id === penalty.franchiseId
-        && Number(adjustment.timestamp) >= penalty.dropped
-        && String(adjustment.description || "").includes(penalty.fullName));
-}
-
-/**
- * Whether a penalty still has to be charged. A dropped player with no years left owes nothing,
- * so they're only reset; MFL would reject or keep a $0 adjustment.
- */
-export function needsCharge(penalty, adjustments) {
-    return penalty.amount > 0 && !alreadyCharged(penalty, adjustments);
+export function needsCharge(penalty) {
+    return penalty.amount > 0 && !penalty.charged;
 }
 
 const xmlAttr = (value) => String(value)

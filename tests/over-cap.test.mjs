@@ -2,7 +2,7 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {capTotals, overCapMessage, recentMoves} from "../jobs/over-cap.mjs";
+import {overCapMessage, recentMoves} from "../jobs/over-cap.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
 const DAY = Date.UTC(2026, 9, 3, 16) / 1000;
@@ -47,12 +47,6 @@ test("only the team's moves within the window are listed", () => {
         {type: "FREE_AGENT", franchise: "0002", transaction: "2,|", timestamp: String(DAY - 2 * 86400)}
     ];
     assert.deepEqual(moves(transactions, "0002"), []);
-});
-
-test("cap totals are rounded to the cent", () => {
-    // a $299.80 roster and two 10-cent fines add up to 300.00000000000006 in floating point
-    const league = {franchises: new Map([["0001", {franchiseId: "0001", salary: 299.8 + 0.1 + 0.1}]])};
-    assert.deepEqual([...capTotals(league, [], [])], [["0001", 300]]);
 });
 
 test("the flag names the total, the moves and any held drop penalties", () => {

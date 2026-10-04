@@ -88,7 +88,8 @@ the drop counts as already charged, so a penalty entered by hand isn't charged t
 `DROP_PENALTIES` repository variable is `apply`, it only logs what it would do. More drops in one run
 than a busy day would bring are left for the commissioner rather than charged.
 
-It flags every team over the cap, all year, counting drop penalties still owed. The chore log names
+It flags every team over the cap, all year, counting drop penalties still owed: the same total the
+Main tab's violations box uses. The chore log names
 the team, its total and its moves in the last week, and the run fails so the commissioner hears about
 it, every day until the team is back under. It doesn't reverse anything. A team over the cap has its
 drop penalties held, with the dropped players' contracts intact, so the move can be reversed.
