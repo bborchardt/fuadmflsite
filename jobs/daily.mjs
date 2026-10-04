@@ -207,17 +207,28 @@ async function processedWaivers(period) {
     if (!response.ok) {
         throw new Error(`Couldn't load MFL's processed waivers for period ${period}: HTTP ${response.status}`);
     }
-    return readProcessedWaivers(await response.text());
+    const html = await response.text();
+    // comments only show to a logged-in member; a logged-out page would look like bids without any
+    if (!/>\s*Logout\s*</i.test(html)) {
+        throw new Error(`MFL's processed waivers for period ${period} came back logged out, so bid comments couldn't be read`);
+    }
+    return readProcessedWaivers(html);
 }
 
 /**
  * Set contract years for players added with none: from the blind bid comment, or the team's
  * posts in the message board's contract thread, or 1 year if neither states one. Anything
  * unclear is flagged and left for the commissioner, and the run fails so they hear about it.
- * Without CONTRACT_YEARS=apply it only logs what it would do.
+ * Teams over the cap are skipped, like their drop penalties: the add may be reversed, and a
+ * dropped player with contract years would owe a penalty. Without CONTRACT_YEARS=apply it only
+ * logs what it would do.
  */
-async function contractYears(loggedIn, {rosters, transactions, playerNames}) {
-    const adds = pendingAdds({rosters, transactions, players: playerNames});
+async function contractYears(loggedIn, {rosters, transactions, playerNames}, over) {
+    const held = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => over.has(add.franchiseId));
+    for (const add of held) {
+        choreLog(`Contract years: ${add.name} held, since the team is over the cap. Left for the commissioner.`);
+    }
+    const adds = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
     if (!adds.length) {
         log("No added players are waiting for contract years.");
         return;
@@ -457,14 +468,19 @@ try {
         process.exitCode = 1;
     }
     if (state) {
+        let over = null;
         try {
-            await dropPenalties(loggedIn, state, overCap(state));
+            over = overCap(state);
+            await dropPenalties(loggedIn, state, over);
         } catch (error) {
             choreLog(`Cap chores: ${error.message}`);
             process.exitCode = 1;
         }
         try {
-            await contractYears(loggedIn, state);
+            if (!over) {
+                throw new Error("skipped: the cap check didn't finish, so it isn't known which teams are over the cap");
+            }
+            await contractYears(loggedIn, state, over);
         } catch (error) {
             choreLog(`Contract years: ${error.message}`);
             process.exitCode = 1;

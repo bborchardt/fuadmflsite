@@ -83,18 +83,22 @@ export function pendingAdds({rosters, transactions, players}) {
 
 const SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 
-/** Lower case, no accents or punctuation, single spaces. */
+/** Lower case, no accents or apostrophes, other punctuation as spaces ("D.Booker" is "d booker"). */
 function normalize(text) {
     return String(text).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-        .replace(/['’.]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+        .replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-/** The ways a post might name a player: "Last, First" gives "first last" and "last". */
+/** The ways a post might name a player: "Last, First" gives "first last", "f last" and "last". */
 function nameForms(name) {
     const [last, first = ""] = String(name).split(",").map((part) => part.trim());
     const surname = normalize(last).split(" ").filter((word) => !SUFFIXES.has(word)).join(" ");
-    return {full: normalize(`${first} ${surname}`), surname};
+    const given = normalize(first);
+    return {full: normalize(`${first} ${surname}`), initial: given ? `${given[0]} ${surname}` : surname, surname};
 }
+
+/** Whether text names a player in full or by initial and surname ("D. Jones"). */
+const inFull = (normalized, player) => hasWords(normalized, nameForms(player.name).full) || hasWords(normalized, nameForms(player.name).initial);
 
 const hasWords = (text, words) => words && ` ${text} `.includes(` ${words} `);
 
@@ -107,17 +111,20 @@ const hasWords = (text, words) => words && ` ${text} `.includes(` ${words} `);
  */
 function named(text, candidates, others = []) {
     const normalized = normalize(text);
-    const byFull = candidates.filter((candidate) => hasWords(normalized, nameForms(candidate.name).full));
+    const byFull = candidates.filter((candidate) => inFull(normalized, candidate));
     if (byFull.length) {
         return byFull;
     }
-    const othersInFull = others.filter((other) => hasWords(normalized, nameForms(other.name).full));
+    const othersInFull = others.filter((other) => inFull(normalized, other));
     const bySurname = candidates.filter((candidate) => {
         const surname = nameForms(candidate.name).surname;
         return hasWords(normalized, surname) && !othersInFull.some((other) => hasWords(nameForms(other.name).full, surname));
     });
     if (bySurname.length) {
-        return bySurname;
+        // a surname another of the team's players shares is ambiguous: "Williams 2 years"
+        const sharing = others.filter((other) => bySurname.some((candidate) =>
+            nameForms(other.name).surname === nameForms(candidate.name).surname));
+        return [...bySurname, ...sharing];
     }
     return othersInFull.length || others.some((other) => hasWords(normalized, nameForms(other.name).surname)) ? null : [];
 }
@@ -192,7 +199,10 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
         const after = text.slice(mention.end, i + 1 < mentions.length ? mentions[i + 1].start : text.length);
         let who = named(before, candidates, others);
         if (who && !who.length) {
-            who = named(after, candidates, others);
+            // "3 years for Wilson": a name in the same sentence, or a list the count introduces
+            // ("2 years each:" or "2 years:" followed by names)
+            const sentence = after.split(/\.\s|[\n;!?]/)[0];
+            who = named(/\b(each|both)\b|:\s*$/i.test(sentence) ? after : sentence, candidates, others);
         }
         if (who === null) {
             // about another of the team's players
@@ -207,6 +217,10 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
             unplaced.push(mention.years);
         } else if (who.length === 1) {
             set(who[0], mention.years);
+        } else if (who.length > 1 && who.every((player) => candidates.includes(player))
+            && /\b(each|both)\b/i.test(before + " " + after)) {
+            // "2 years each: Ginn, Dissly, Edwards"
+            who.forEach((candidate) => set(candidate, mention.years));
         } else if (who.length > 1) {
             problems.push(`"${text.trim()}" doesn't say which of ${who.map((candidate) => candidate.name).join(" and ")} gets ${mention.years} years`);
         }

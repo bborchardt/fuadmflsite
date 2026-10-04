@@ -10,7 +10,8 @@ const players = new Map([
     ["1", {name: "Brazzell II, Chris"}], ["2", {name: "All, Erick"}], ["3", {name: "Wilson, Emanuel"}],
     ["4", {name: "Palmer, Joshua"}], ["5", {name: "Rush, Cooper"}], ["6", {name: "Keenum, Case"}],
     ["7", {name: "Wilson, Garrett"}], ["8", {name: "St. Brown, Amon-Ra"}], ["9", {name: "Allen, Josh"}],
-    ["10", {name: "Allen, Keenan"}], ["11", {name: "Cameron, Josh"}], ["12", {name: "Smith, Geno"}], ["13", {name: "Lock, Drew"}]
+    ["10", {name: "Allen, Keenan"}], ["11", {name: "Cameron, Josh"}], ["12", {name: "Smith, Geno"}], ["13", {name: "Lock, Drew"}],
+    ["14", {name: "Jones, Daniel"}], ["15", {name: "Jones, Julio"}]
 ]);
 const candidate = (playerId) => ({playerId, name: players.get(playerId).name});
 
@@ -206,6 +207,27 @@ test("naming a teammate in full doesn't hide the add's length", () => {
         assert.deepEqual(result.flags, [], body);
         assert.equal(result.contracts[0].years, 2, body);
     }
+});
+
+test("dotted initials, each/both lists, sentence bounds and shared surnames", () => {
+    const decide = (adds, body) => decideYears({adds, posts: [post("0003", body)], bidRequests: [], teams, threadFound: true});
+    assert.equal(decide([add("6", "0003", "FREE_AGENT")], "C.Keenum - 1 year").contracts[0].years, 1);
+    assert.equal(decide([add("6", "0003", "FREE_AGENT")], "QB - C. Keenum 3yrs").contracts[0].years, 3);
+    let result = decide([add("6", "0003", "FREE_AGENT"), add("5", "0003", "FREE_AGENT"), add("1", "0003", "FREE_AGENT")],
+        "2 years, each:<br/><br/>Keenum<br/>Rush<br/>Brazzell");
+    assert.deepEqual(result.flags, []);
+    assert.deepEqual(result.contracts.map((contract) => contract.years), [2, 2, 2]);
+    // the next sentence's name isn't what a count is for
+    result = decide([add("13", "0003", "FREE_AGENT")], "I had 3 years on his contract. Lock for 5 years.");
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].years, 5);
+    // a rostered Garrett Wilson makes "Wilson" ambiguous for a pending Emanuel Wilson
+    result = decide([add("3", "0003", "FREE_AGENT")], "Wilson 2 years");
+    assert.deepEqual(result.contracts, []);
+    assert.match(result.flags[0], /doesn't say which of Wilson, Emanuel and Wilson, Garrett/);
+    // an initial tells two players with the same surname apart
+    assert.equal(decide([add("14", "0003", "FREE_AGENT")], "D. Jones 1 year").contracts[0].years, 1);
+    assert.deepEqual(decide([add("14", "0003", "FREE_AGENT")], "J. Jones 4 years").contracts[0].source, "no length stated: the default");
 });
 
 test("a post must name the player: a bare count isn't a valid post", () => {
