@@ -6,7 +6,8 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {ruleViolations} from "../site/v1/ui/violations.js";
 
-const franchise = (teamName, salary, numPlayers, lineup = []) => ({teamName, salary, numPlayers, lineup});
+const franchise = (teamName, capTotal, numPlayers, lineup = [], unchargedPenalty = 0) =>
+    ({teamName, capTotal, unchargedPenalty, numPlayers, lineup});
 const injured = {fullName: "Hurt Player", injured: true};
 const healthy = {fullName: "Fine Player", injured: false};
 const league = (week, ...franchises) => ({week, franchises: new Map(franchises.map((f, i) => [String(i), f]))});
@@ -17,6 +18,11 @@ test("over the salary cap, at any week", () => {
             ["Big Spenders is over the salary cap with a total salary of 300.5!"]);
     }
     assert.deepEqual(ruleViolations(league("3", franchise("Right At It", 300, 25))), []);
+});
+
+test("drop penalties not yet charged count toward the cap, and the warning says so", () => {
+    assert.deepEqual(ruleViolations(league("3", franchise("Bid And Drop", 304, 25, [], 8))),
+        ["Bid And Drop is over the salary cap with a total salary of 304, counting $8 in drop penalties not yet charged!"]);
 });
 
 test("roster limits of 23 to 30, checked through week 15", () => {

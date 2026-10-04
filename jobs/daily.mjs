@@ -39,7 +39,7 @@ const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} =
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
-const {RECENT_MOVE_DAYS, capTotals, overCapMessage, recentMoves} = await import("./over-cap.mjs");
+const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -201,7 +201,6 @@ async function leagueState() {
         players: playerMap,
         built,
         penalties: pendingPenalties(built),
-        adjustments: asArray(salaryAdjustments.salaryAdjustment),
         transactions: asArray(transactions.transaction)
     };
 }
@@ -211,10 +210,10 @@ async function leagueState() {
  * run fails so the commissioner hears about it, every day until the team is back under. Returns
  * the over-cap franchise ids, whose drop penalties are held.
  */
-function overCap({players, built, penalties, adjustments, transactions}) {
+function overCap({players, built, penalties, transactions}) {
     const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
     const over = new Set();
-    for (const [franchiseId, total] of capTotals(built, penalties, adjustments)) {
+    for (const {franchiseId, capTotal: total} of built.franchises.values()) {
         if (total <= SALARY_CAP) {
             continue;
         }
@@ -242,7 +241,7 @@ function overCap({players, built, penalties, adjustments, transactions}) {
  * since charging them would reset a contract the commissioner may restore by reversing the
  * move. Without DROP_PENALTIES=apply it only logs what it would do.
  */
-async function dropPenalties(loggedIn, {penalties, adjustments}, over) {
+async function dropPenalties(loggedIn, {penalties}, over) {
     if (!penalties.length) {
         log("No dropped players owe a cap penalty.");
         return;
@@ -252,7 +251,7 @@ async function dropPenalties(loggedIn, {penalties, adjustments}, over) {
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId));
     if (!applyDropPenalties) {
         for (const penalty of toApply) {
-            choreLog(needsCharge(penalty, adjustments)
+            choreLog(needsCharge(penalty)
                 ? `Dry run: would charge ${describe(penalty)}, then reset the player to $1 / 0 years.`
                 : `Dry run: would reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
         }
@@ -267,7 +266,7 @@ async function dropPenalties(loggedIn, {penalties, adjustments}, over) {
         throw new Error(`${toApply.length} dropped player(s) owe a cap penalty, but the job isn't logged in, so none were charged.`);
     }
     for (const penalty of toApply) {
-        if (needsCharge(penalty, adjustments)) {
+        if (needsCharge(penalty)) {
             await mflImport("salaryAdj", salaryAdjXml(penalty));
             await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
             choreLog(`Charged ${describe(penalty)}, and reset the player to $1 / 0 years.`);

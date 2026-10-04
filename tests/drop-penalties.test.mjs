@@ -1,10 +1,10 @@
-// Tests for the daily job's cap penalty chore.
+// Tests for the daily job's cap penalty chore, and the league's view of penalties owed, which
+// the Main tab's violations box shares.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";
-import {capTotals} from "../jobs/over-cap.mjs";
-import {alreadyCharged, dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
+import {dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
 const DROPPED = Date.UTC(2026, 9, 3, 16) / 1000;
@@ -51,41 +51,52 @@ test("one penalty per dropped player, described with the contract and drop date"
 });
 
 test("a penalty counts as charged only for the same franchise, naming the player, at or after the drop", () => {
-    const [mixon, gordon] = pendingPenalties(league());
     const adjustment = (franchise_id, description, timestamp) => ({franchise_id, description, timestamp: String(timestamp), amount: "1"});
-    assert.equal(alreadyCharged(gordon, []), false);
-    assert.equal(alreadyCharged(gordon, [adjustment("0002", "Ollie Gordon (2yrs@10, 10/03)", DROPPED)]), true);
+    const charged = (...adjustments) => pendingPenalties(league({salaryAdjustments: {salaryAdjustment: adjustments}}))
+        .map((penalty) => penalty.charged);
+    // [Mixon (Alpha), Gordon (Beta)]
+    assert.deepEqual(charged(), [false, false]);
+    assert.deepEqual(charged(adjustment("0002", "Ollie Gordon (2yrs@10, 10/03)", DROPPED)), [false, true]);
     // entered by hand in the older format, alongside another player
-    assert.equal(alreadyCharged(mixon, [adjustment("0001", "Pat Freiermuth (1yr@1), Joe Mixon (1yr@1)", DROPPED)]), true);
-    // an earlier drop of the same player
-    assert.equal(alreadyCharged(gordon, [adjustment("0002", "Ollie Gordon (2yrs@10)", DROPPED - 1)]), false);
-    assert.equal(alreadyCharged(gordon, [adjustment("0001", "Ollie Gordon (2yrs@10)", DROPPED)]), false);
+    assert.deepEqual(charged(adjustment("0001", "Pat Freiermuth (1yr@1), Joe Mixon (1yr@1)", DROPPED)), [true, false]);
+    // an earlier drop of the same player, or another team's adjustment
+    assert.deepEqual(charged(adjustment("0002", "Ollie Gordon (2yrs@10)", DROPPED - 1)), [false, false]);
+    assert.deepEqual(charged(adjustment("0001", "Ollie Gordon (2yrs@10)", DROPPED)), [false, false]);
 });
 
-test("cap totals count drop penalties still to be charged", () => {
+test("cap totals count drop penalties not yet charged", () => {
     const rosters = {franchise: [
         {id: "0001", player: {id: "7", status: "ROSTER", salary: "299", contractYear: "1"}},
         {id: "0002", player: {id: "8", status: "ROSTER", salary: "290", contractYear: "1"}}
     ]};
-    const totals = (adjustments) => {
-        const model = league({rosters, salaryAdjustments: {salaryAdjustment: adjustments}});
-        return [...capTotals(model, pendingPenalties(model), adjustments)];
-    };
+    const totals = (...adjustments) => [...league({rosters, salaryAdjustments: {salaryAdjustment: adjustments}}).franchises.values()]
+        .map((franchise) => [franchise.capTotal, franchise.unchargedPenalty]);
+    const adjustment = (franchise_id, amount, description) => ({franchise_id, amount, description, timestamp: String(DROPPED)});
     // Alpha: 299 + Mixon's $1. Beta: 290 + Gordon's $8.
-    assert.deepEqual(totals([]), [["0001", 300], ["0002", 298]]);
+    assert.deepEqual(totals(), [[300, 1], [298, 8]]);
     // a $3 fine pushes Beta to 301
-    assert.deepEqual(totals([{franchise_id: "0002", amount: "3", description: "Late lineup", timestamp: String(DROPPED)}]), [["0001", 300], ["0002", 301]]);
+    assert.deepEqual(totals(adjustment("0002", "3", "Late lineup")), [[300, 1], [301, 8]]);
     // Gordon's penalty charged by hand before the reset isn't counted twice: 290 + 8
-    assert.deepEqual(totals([{franchise_id: "0002", amount: "8", description: "Ollie Gordon (2yrs@10)", timestamp: String(DROPPED)}]), [["0001", 300], ["0002", 298]]);
+    assert.deepEqual(totals(adjustment("0002", "8", "Ollie Gordon (2yrs@10)")), [[300, 1], [298, 0]]);
+});
+
+test("cap totals are rounded to the cent", () => {
+    // $297.80 + $1.10 + $1.10 adds up to 300.00000000000006 in floating point
+    const salaries = ["297.8", "1.1", "1.1"];
+    const model = buildLeague({
+        players: playersFromExport({player: salaries.map((salary, i) => ({id: String(i), name: `Player, ${i}`, position: "WR"}))}),
+        league: {franchises: {franchise: {id: "0001", name: "Alpha"}}},
+        rosters: {franchise: {id: "0001", player: salaries.map((salary, i) => ({id: String(i), status: "ROSTER", salary, contractYear: "1"}))}}
+    });
+    assert.equal(model.franchises.get("0001").capTotal, 300);
 });
 
 test("a penalty needs charging unless it's $0 or already charged", () => {
-    const penalty = {franchiseId: "0002", fullName: "Ollie Gordon", amount: 8, dropped: DROPPED};
-    const charged = {franchise_id: "0002", description: "Ollie Gordon (2yrs@10)", timestamp: String(DROPPED), amount: "8"};
-    assert.equal(needsCharge(penalty, []), true);
-    assert.equal(needsCharge(penalty, [charged]), false);
+    const penalty = {franchiseId: "0002", fullName: "Ollie Gordon", amount: 8, charged: false};
+    assert.equal(needsCharge(penalty), true);
+    assert.equal(needsCharge({...penalty, charged: true}), false);
     // salary over $1 with no years left: capPenalty(0, 10) is $0
-    assert.equal(needsCharge({...penalty, amount: 0}, []), false);
+    assert.equal(needsCharge({...penalty, amount: 0}), false);
 });
 
 test("import data escapes text and resets to $1 / 0 years", () => {

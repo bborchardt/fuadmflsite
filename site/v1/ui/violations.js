@@ -7,8 +7,10 @@ export function ruleViolations(league) {
     const warnings = [];
     const week = Number(league.week);
     for (const franchise of league.franchises.values()) {
-        if (franchise.salary > SALARY_CAP) {
-            warnings.push(`${franchise.teamName} is over the salary cap with a total salary of ${franchise.salary}!`);
+        if (franchise.capTotal > SALARY_CAP) {
+            warnings.push(franchise.unchargedPenalty
+                ? `${franchise.teamName} is over the salary cap with a total salary of ${franchise.capTotal}, counting $${franchise.unchargedPenalty} in drop penalties not yet charged!`
+                : `${franchise.teamName} is over the salary cap with a total salary of ${franchise.capTotal}!`);
         }
         if (week <= ROSTER_CHECK_LAST_WEEK && franchise.numPlayers > ROSTER_MAX) {
             warnings.push(`${franchise.teamName} is over the roster limit with ${franchise.numPlayers} players!`);

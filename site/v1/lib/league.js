@@ -9,6 +9,8 @@ function newPlayer(id, fullName, nflPosition, team) {
         playerId: id, fullName, nflPosition, team,
         franchise: null, status: null, salary: 0, years: 0, capPenalty: 0, netCapSpace: 0,
         contractStatus: null, injured: false,
+        // for a dropped player owed a cap penalty: whether it's already charged
+        penaltyCharged: false,
         // newest first, once the model is built
         transactions: []
     };
@@ -18,6 +20,8 @@ function newFranchise(id, teamName) {
     return {
         franchiseId: id, teamName, salary: 0, numPlayers: 0, lineup: [],
         pendingDroppedPlayers: [], pendingPenalty: 0, penaltyReason: "",
+        // pending penalties not yet charged, and the total against the cap counting them
+        unchargedPenalty: 0, capTotal: 0,
         // rostered players with no contract years yet
         signedPlayers: []
     };
@@ -58,9 +62,10 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
     }
     const rosteredPlayers = [];
     let week = "";
+    const adjustments = salaryAdjustments ? asArray(salaryAdjustments.salaryAdjustment) : [];
 
     if (salaryAdjustments) {
-        for (const adjustment of asArray(salaryAdjustments.salaryAdjustment)) {
+        for (const adjustment of adjustments) {
             const franchise = franchises.get(adjustment.franchise_id);
             if (franchise) {
                 franchise.salary = franchise.salary + parseFloat(adjustment.amount);
@@ -152,10 +157,19 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
             const latest = player.transactions[0];
             if ((player.salary > 1 || player.years > 0) && latest && !latest.added && latest.franchise) {
                 latest.franchise.pendingDroppedPlayers.push(player);
+                // Charged already if the team has an adjustment naming the player since the drop,
+                // including ones entered by hand like "Name (2yrs@10)", alone or with others.
+                player.penaltyCharged = adjustments.some((adjustment) =>
+                    adjustment.franchise_id === latest.franchise.franchiseId
+                    && Number(adjustment.timestamp) >= latest.timestamp
+                    && String(adjustment.description || "").includes(player.fullName));
             }
         }
         for (const franchise of franchises.values()) {
             franchise.pendingPenalty = franchise.pendingDroppedPlayers.reduce((total, player) => total + player.capPenalty, 0);
+            franchise.unchargedPenalty = franchise.pendingDroppedPlayers
+                .filter((player) => !player.penaltyCharged)
+                .reduce((total, player) => total + player.capPenalty, 0);
             franchise.penaltyReason = franchise.pendingDroppedPlayers
                 .map((player) => `${player.fullName} (${player.years}yrs@${player.salary})`)
                 .join(" : ");
@@ -173,6 +187,11 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
                 }
             }
         }
+    }
+
+    // rounded to the cent, so amounts with cents can't add up to a hair over the cap
+    for (const franchise of franchises.values()) {
+        franchise.capTotal = Math.round((franchise.salary + franchise.unchargedPenalty) * 100) / 100;
     }
 
     return {players, franchises, rosteredPlayers, week};
