@@ -6,7 +6,7 @@
 
 compare  Renders the live league home page twice: as published, and with the version the
          header message loads replaced by files from this working copy (site/<local>/,
-         default: the same version folder). Compares every area (violations box, both
+         default: the same version folder). Compares every area (League Alerts box, both
          Contracts views, calculator, rookie and franchise tables, Commish forms as guest and
          as commissioner, Links) and reports differences, JavaScript errors and load times.
          Before a release that should look the same, expect "no differences". For a version
@@ -43,7 +43,7 @@ AREAS = """() => {
   const commish = document.getElementById('commishdiv');
   const links = document.getElementById('fuadlinksdiv');
   return {
-    violations: text(tables(col1).find(t => /violations/i.test(t.textContent))),
+    violations: text(tables(col1).find(t => /violations|league alerts/i.test(t.textContent))),
     players: text(document.getElementById('contractscolumn1')),
     calculator: text(tables(document.getElementById('tabcontent3')).find(t => /calculator/i.test(t.textContent))),
     rookie: text(tables(col2).find(t => /rookie/i.test(t.textContent))),
