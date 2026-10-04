@@ -48,7 +48,8 @@ What's live, what comes next, the decisions already made, and the facts that con
     - backtested on eight seasons (2019–2026): 294 of 320 adds match the commissioner's years, 12
       are flagged, and the rest are the rules applied (late or missing posts, bids without comments)
       plus two one-offs
-  - writes a chore log, and re-enables itself (GitHub's 60-day rule)
+  - writes a chore log, also shown on each run's summary page (where a failed run's email links), and
+    re-enables itself (GitHub's 60-day rule)
 - Tier 0 is done:
   - MFL's nav bar is kept visible on phones
   - the redundant Live Scoring tab was removed
