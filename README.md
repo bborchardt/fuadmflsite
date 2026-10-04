@@ -94,6 +94,14 @@ the team, its total and its moves in the last week, and the run fails so the com
 it, every day until the team is back under. It doesn't reverse anything. A team over the cap has its
 drop penalties held, with the dropped players' contracts intact, so the move can be reversed.
 
+It sets contract years for added players, which MFL adds with 0 years. Owners state the length
+(1 to 5 years) in the blind bid's comment or in the message board's "Free Agent Contracts" thread, and
+the job reads both: bid comments from MFL's Previously Processed Waivers page, which is the only place
+they appear, and posts through MFL's API. A post counts for the team's adds made before it, matched by
+the player's name. An add with no length stated gets 1 year. Anything unclear (different lengths, a
+name it can't match, a bid it can't find) is left for the commissioner and fails the run. Unless the
+`CONTRACT_YEARS` repository variable is `apply`, it only logs what it would do.
+
 It keeps a chore log on `league-data`, with an entry whenever it does something and a heartbeat at
 least once a month. It re-enables itself on every run, because GitHub turns off scheduled workflows
 after 60 days without repository activity.
