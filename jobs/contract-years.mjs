@@ -142,11 +142,12 @@ function bare(text, mention) {
  * the player named just before it ("Wilson 2yrs"), or just after it ("3 years for Wilson").
  * A bare count ("1yr", "5 years please") belongs to the only candidate, if
  * there's exactly one and the text names nobody else; with `allowBare` false, bare counts
- * are ignored. Returns
+ * are ignored, and with `bareForAll` it belongs to every candidate (a conditional blind bid,
+ * where only one player can be won). Returns
  * {years: Map of playerId -> years, problems: [text]}; a problem means the text couldn't be
  * read with confidence.
  */
-export function readYears(text, candidates, {allowBare = true} = {}) {
+export function readYears(text, candidates, {allowBare = true, bareForAll = false} = {}) {
     const years = new Map();
     const problems = [];
     const mentions = yearMentions(text);
@@ -169,7 +170,9 @@ export function readYears(text, candidates, {allowBare = true} = {}) {
         if (!who.length && allowBare && mentions.length === 1 && candidates.length === 1 && bare(text, mention)) {
             who = candidates;
         }
-        if (who.length === 1) {
+        if (!who.length && bareForAll && mentions.length === 1 && bare(text, mention)) {
+            candidates.forEach((candidate) => set(candidate, mention.years));
+        } else if (who.length === 1) {
             set(who[0], mention.years);
         } else if (!who.length && allowBare && candidates.length > 1 && bare(text, mention)) {
             problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
@@ -259,7 +262,8 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
                 // the other players in a conditional bid are candidates too, so a comment
                 // giving each its own length is read correctly
                 const candidates = request.adds.map((name) => ({playerId: name === add.name ? add.playerId : name, name}));
-                const read = readYears(request.comment, candidates);
+                // a bare count covers every player in the bid: only one can be won
+                const read = readYears(request.comment, candidates, {bareForAll: true});
                 problems.push(...read.problems.filter((problem) => problem.includes(add.name))
                     .map((problem) => `blind bid comment: ${problem}`));
                 if (read.years.has(add.playerId)) {

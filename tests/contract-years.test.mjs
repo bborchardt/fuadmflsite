@@ -160,12 +160,8 @@ test("conflicts, a missing bid and a missing thread are flagged, not guessed", (
 
 test("a stated length that can't be placed is flagged, never defaulted", () => {
     const decide = (adds, posts, bidRequests, teamMap = teams) => decideYears({adds, posts, bidRequests, teams: teamMap, threadFound: true});
-    // a bare count in a conditional bid for two players
-    let result = decide([add("3", "0006", "BBID_WAIVER")], [], [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "3 years")]);
-    assert.deepEqual(result.contracts, []);
-    assert.match(result.flags[0], /"3 years" gives 3 years without saying which of Wilson, Emanuel and Palmer, Joshua/);
     // a bare count from a team with two pending adds
-    result = decide([add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")], [post("0008", "3 years")], []);
+    let result = decide([add("6", "0008", "FREE_AGENT"), add("5", "0008", "FREE_AGENT")], [post("0008", "3 years")], []);
     assert.deepEqual(result.contracts, []);
     assert.equal(result.flags.length, 2);
     // a length in a form the reader doesn't know
@@ -176,6 +172,15 @@ test("a stated length that can't be placed is flagged, never defaulted", () => {
     // a misspelt name after the add
     result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenam 3 years")], []);
     assert.match(result.flags[0], /post "Keenam 3 years" gives a length but names no player on the team the job recognizes/);
+});
+
+test("a bare count in a conditional blind bid covers whichever player is won", () => {
+    const result = decideYears({
+        adds: [add("3", "0006", "BBID_WAIVER")], posts: [], teams, threadFound: true,
+        bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "3 years")]
+    });
+    assert.deepEqual(result.flags, []);
+    assert.deepEqual(result.contracts.map(({playerId, years}) => ({playerId, years})), [{playerId: "3", years: 3}]);
 });
 
 test("old bare posts and posts about other players don't touch a later add", () => {
