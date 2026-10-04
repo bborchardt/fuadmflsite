@@ -6,7 +6,6 @@ import assert from "node:assert/strict";
 import {contractsXml, decideYears, pendingAdds, readProcessedWaivers, readYears, yearMentions} from "../jobs/contract-years.mjs";
 
 const T = 1790000000;
-const LOOKBACK = 7 * 86400;
 const players = new Map([
     ["1", {name: "Brazzell II, Chris"}], ["2", {name: "All, Erick"}], ["3", {name: "Wilson, Emanuel"}],
     ["4", {name: "Palmer, Joshua"}], ["5", {name: "Rush, Cooper"}], ["6", {name: "Keenum, Case"}],
@@ -65,11 +64,14 @@ test("blind bids are read from the processed waivers page, with their comments",
             "Add Wilson, Emanuel SEA RB for $2.00 and drop None<br>\nAdd Palmer, Joshua BUF WR for $1.00 and drop None<br>\n"
             + "Submitted Tue Sep 22 3:15:29 p.m. CT 2026<br>Comments: Wilson 2yrs,<br>\nPalmer 1 yr<br>")
         + row("0008", "None", "Add Keenum, Case DEN QB for $2.00 and drop None<br>\nSubmitted Wed Sep 23 7:43:30 p.m. CT 2026<br>")
+        // a player with no NFL team
+        + row("0009", "Gronkowski, Rob FA* TE ($1.00)", "Add Gronkowski, Rob FA* TE for $1.00 and drop None<br />\nSubmitted Wed<br />Comments: 2yrs<br />")
         + row("0002", "St. Brown, Amon-Ra DET WR ($9.00)",
             "Add St. Brown, Amon-Ra DET WR for $9.00 and drop None<br>\nSubmitted Wed<br>Comments: it&#39;s 4 years<br>")));
     assert.deepEqual(requests, [
         {franchiseId: "0006", granted: "Wilson, Emanuel", adds: ["Wilson, Emanuel", "Palmer, Joshua"], comment: "Wilson 2yrs,\n\nPalmer 1 yr"},
         {franchiseId: "0008", granted: null, adds: ["Keenum, Case"], comment: ""},
+        {franchiseId: "0009", granted: "Gronkowski, Rob", adds: ["Gronkowski, Rob"], comment: "2yrs"},
         {franchiseId: "0002", granted: "St. Brown, Amon-Ra", adds: ["St. Brown, Amon-Ra"], comment: "it's 4 years"}
     ]);
     assert.throws(() => readProcessedWaivers("<html>Please log in</html>"), /no waiver table/);
@@ -105,31 +107,30 @@ test("pending adds: 0 years and last moved by the team's own add", () => {
         {type: "BBID_WAIVER", franchise: "0006", transaction: "3,|2|", timestamp: String(T + 120)}
     ];
     assert.deepEqual(pendingAdds({rosters, transactions, players}), [
-        {playerId: "1", name: "Brazzell II, Chris", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - LOOKBACK},
-        {playerId: "4", name: "Palmer, Joshua", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T, since: T - 100},
-        {playerId: "3", name: "Wilson, Emanuel", franchiseId: "0006", salary: "2.00", type: "BBID_WAIVER", added: T + 120, since: T + 120 - LOOKBACK}
+        {playerId: "1", name: "Brazzell II, Chris", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T},
+        {playerId: "4", name: "Palmer, Joshua", franchiseId: "0005", salary: "1", type: "FREE_AGENT", added: T},
+        {playerId: "3", name: "Wilson, Emanuel", franchiseId: "0006", salary: "2.00", type: "BBID_WAIVER", added: T + 120}
     ]);
 });
 
-const add = (playerId, franchiseId, type, since = T - LOOKBACK, added = T) =>
-    ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added, since});
+const add = (playerId, franchiseId, type, added = T) => ({playerId, name: players.get(playerId).name, franchiseId, salary: "1", type, added});
 // every team's roster holds all the test players, so names in posts are recognized
 const teams = new Map(["0003", "0005", "0006", "0007", "0008", "0009"].map((franchiseId) =>
     [franchiseId, [...players].map(([playerId, {name}]) => ({playerId, name}))]));
 const post = (franchise, body, postTime = T + 60) => ({franchise, body, postTime: String(postTime)});
 const bid = (franchiseId, names, comment) => ({franchiseId, granted: names[0], adds: names, comment});
 
-test("years come from the bid comment or the team's later posts, else the default", () => {
+test("years come from the bid comment, or posts after a free agent add, else the default", () => {
     const {contracts, flags} = decideYears({
         adds: [add("1", "0005", "FREE_AGENT"), add("3", "0006", "BBID_WAIVER"), add("6", "0008", "BBID_WAIVER"),
-            add("5", "0007", "FREE_AGENT", T - 30), add("4", "0009", "BBID_WAIVER")],
+            add("5", "0007", "FREE_AGENT"), add("4", "0009", "BBID_WAIVER")],
         posts: [
             post("0005", "Brazzell 5 years"),
+            // a blind bid's length must be in its comment
             post("0008", "Keenum 3 yrs (in case it wasn&#39;t in the bid)"),
-            // before Rush's previous move: about an earlier stint
-            post("0007", "Cooper Rush 4 years", T - 60),
-            // before the blind bid was processed
-            post("0009", "Palmer 4 years", T - 3600)
+            post("0009", "Palmer 4 years", T - 3600),
+            // before the add: about an earlier stint
+            post("0007", "Cooper Rush 4 years", T - 60)
         ],
         bidRequests: [bid("0006", ["Wilson, Emanuel", "Palmer, Joshua"], "Wilson 2yrs, Palmer 1yr"), bid("0008", ["Keenum, Case"], ""),
             bid("0009", ["Palmer, Joshua"], "")],
@@ -140,17 +141,17 @@ test("years come from the bid comment or the team's later posts, else the defaul
     assert.deepEqual(contracts.map(({playerId, years, source}) => ({playerId, years, source})), [
         {playerId: "1", years: 5, source: `post "Brazzell 5 years"`},
         {playerId: "3", years: 2, source: `blind bid comment "Wilson 2yrs, Palmer 1yr"`},
-        {playerId: "6", years: 3, source: `post "Keenum 3 yrs (in case it wasn't in the bid)"`},
+        {playerId: "6", years: 1, source: "no length stated: the default"},
         {playerId: "5", years: 1, source: "no length stated: the default"},
-        {playerId: "4", years: 4, source: `post "Palmer 4 years"`}
+        {playerId: "4", years: 1, source: "no length stated: the default"}
     ]);
 });
 
 test("conflicts, a missing bid and a missing thread are flagged, not guessed", () => {
     const decide = (adds, posts, bidRequests, threadFound = true) => decideYears({adds, posts, bidRequests, teams, threadFound});
-    let result = decide([add("6", "0008", "BBID_WAIVER")], [post("0008", "Keenum 2 years")], [bid("0008", ["Keenum, Case"], "3yrs")]);
+    let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 3yrs"), post("0008", "Keenum 2 years", T + 120)], []);
     assert.deepEqual(result.contracts, []);
-    assert.match(result.flags[0], /^Case Keenum: the owner gave different lengths \(3 in blind bid comment "3yrs"; 2 in post "Keenum 2 years"\)$/);
+    assert.match(result.flags[0], /^Case Keenum: the owner gave different lengths \(3 in post "Keenum 3yrs"; 2 in post "Keenum 2 years"\)$/);
     result = decide([add("6", "0008", "BBID_WAIVER")], [], []);
     assert.match(result.flags[0], /blind bid isn't on MFL's processed waivers page/);
     result = decide([add("5", "0007", "FREE_AGENT")], [], [], false);

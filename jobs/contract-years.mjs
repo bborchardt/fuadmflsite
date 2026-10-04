@@ -9,8 +9,6 @@ export const MAX_YEARS = 5;
 export const DEFAULT_YEARS = 1;
 /** More contracts than this in one run looks like a bug rather than a busy day, so none are set. */
 export const MAX_CONTRACTS_PER_RUN = 15;
-/** How far back a post can come before a blind bid is processed, when the player has no earlier move. */
-export const POST_LOOKBACK_DAYS = 7;
 /**
  * The message board threads owners post contract lengths in, by subject. The name changes
  * from season to season ("Free Agent Contracts", "Contracts", "Add/Drop Contracts..."), and
@@ -52,7 +50,6 @@ function moves(transaction) {
  */
 export function pendingAdds({rosters, transactions, players}) {
     const latest = new Map();
-    const history = new Map();
     for (const transaction of transactions) {
         const {added, dropped} = moves(transaction);
         for (const id of [...added, ...dropped]) {
@@ -60,7 +57,6 @@ export function pendingAdds({rosters, transactions, players}) {
             if (!seen || Number(transaction.timestamp) >= Number(seen.timestamp)) {
                 latest.set(id, transaction);
             }
-            history.set(id, [...(history.get(id) || []), Number(transaction.timestamp)]);
         }
     }
     const pending = [];
@@ -78,11 +74,7 @@ export function pendingAdds({rosters, transactions, players}) {
                 // the salary exactly as MFL has it, so writing the years leaves it unchanged
                 salary: entry.salary,
                 type: transaction.type,
-                added: Number(transaction.timestamp),
-                // posts after the player's previous move can state the length: an owner may post
-                // before a blind bid is processed, and an earlier stint's posts come before it
-                since: Math.max(Number(transaction.timestamp) - POST_LOOKBACK_DAYS * 86400,
-                    ...history.get(entry.id).filter((time) => time < Number(transaction.timestamp)))
+                added: Number(transaction.timestamp)
             });
         }
     }
@@ -256,8 +248,8 @@ export function readProcessedWaivers(html) {
         requests.push({
             franchiseId: franchise[1],
             // the player the request won, or null
-            granted: (/^(.+?) [A-Z]{2,3} [A-Za-z]{1,4} \(\$/.exec(decode(cells[2]).trim()) || [])[1] || null,
-            adds: [...request.matchAll(/^Add (.+?) [A-Z]{2,3} [A-Za-z]{1,4} for \$/gm)].map((match) => match[1]),
+            granted: (/^(.+?) \S+ [A-Za-z]{1,4} \(\$/.exec(decode(cells[2]).trim()) || [])[1] || null,
+            adds: [...request.matchAll(/^Add (.+?) \S+ [A-Za-z]{1,4} for \$/gm)].map((match) => match[1]),
             // the comment runs to the end of the cell, over several lines if the owner wrote them
             comment: ((/^Comments:\s*([\s\S]*)$/m.exec(request) || [])[1] || "").trim()
         });
@@ -275,11 +267,12 @@ export function teamPlayers({rosters, players}) {
  * Decide each pending add's years. `posts` are the contract thread's posts
  * ({franchise, postTime, body}), `bidRequests` the readProcessedWaivers entries for the
  * periods of pending blind bids, `teams` the teamPlayers map, and `threadFound` whether the
- * contract thread exists. An add's sources are its blind bid comment (if any) and its team's
- * posts since the player's previous move. A post must name the player (a bare "1 yr" post
- * isn't valid, so it's ignored); a bare count in a bid comment covers every player in the bid.
- * Agreeing sources set the years; disagreeing or unreadable ones flag the add. An add with
- * no years stated gets DEFAULT_YEARS, unless the thread is missing, which flags it instead.
+ * contract thread exists. League rules: a blind bid's length must be in its comment, and a
+ * free agent or waiver add's in a post made after the add, naming the player (a bare "1 yr"
+ * post isn't valid, so it's ignored). A bare count in a bid comment covers every player in the
+ * bid. Agreeing posts set the years; disagreeing or unreadable ones flag the add. An add with
+ * no length stated by the job's next run gets DEFAULT_YEARS (the commissioner adjusts by hand
+ * for leniency), unless the thread it would be posted in is missing, which flags it instead.
  * A comment, or a post naming the add, that gives no length the reader understands is flagged
  * too, as is a post after the add giving a length but naming no player on the team (a typo or
  * nickname), so a stated length is never replaced by the default.
@@ -312,16 +305,16 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
                 }
             }
         }
-        // a free agent add can't be posted about before it's made; a blind bid can, before it's processed
-        const from = add.type === "BBID_WAIVER" ? add.since : add.added;
-        for (const post of posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) >= from)) {
+        // a blind bid's length must be in its comment; posts are for free agent and waiver adds
+        const ownPosts = add.type === "BBID_WAIVER" ? []
+            : posts.filter((entry) => entry.franchise === add.franchiseId && Number(entry.postTime) >= add.added);
+        for (const post of ownPosts) {
             const body = postText(post.body);
             const postTime = Number(post.postTime);
-            const afterAdd = postTime >= add.added;
             const team = teams.get(add.franchiseId) || [];
-            // the team's other pending adds this post can be about: made by then, or named in it
+            // the team's other free agent and waiver adds made by then can be what the post is about
             const others = adds.filter((other) => other.franchiseId === add.franchiseId && other !== add
-                && other.since < postTime && (other.added <= postTime || (named(body, [other]) || []).length));
+                && other.type !== "BBID_WAIVER" && other.added <= postTime);
             // a post must name the player: a bare "1 yr" isn't a valid post
             const read = readYears(body, [add, ...others], {allowBare: false, known: team});
             const own = read.problems.filter((problem) => problem.includes(add.name));
@@ -330,7 +323,7 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
                 stated.push({years: read.years.get(add.playerId), source: `post "${body.trim()}"`});
             } else if (!own.length && namesAdd) {
                 problems.push(`post "${body.trim()}" names the player but gives no length the job can read`);
-            } else if (!own.length && afterAdd && read.unplaced.length) {
+            } else if (!own.length && read.unplaced.length) {
                 problems.push(`post "${body.trim()}" gives ${read.unplaced.join(" and ")} years without naming a player on the team the job recognizes`);
             }
             problems.push(...own.map((problem) => `post: ${problem}`));
@@ -343,7 +336,7 @@ export function decideYears({adds, posts, bidRequests, teams, threadFound}) {
             flags.push(`${label}: the owner gave different lengths (${stated.map((entry) => `${entry.years} in ${entry.source}`).join("; ")})`);
         } else if (counts.length === 1) {
             contracts.push({...add, years: counts[0], source: stated[0].source});
-        } else if (!threadFound) {
+        } else if (!threadFound && add.type !== "BBID_WAIVER") {
             flags.push(`${label}: no length stated, and the message board's contract thread wasn't found, so it wasn't defaulted`);
         } else {
             contracts.push({...add, years: DEFAULT_YEARS, source: "no length stated: the default"});
