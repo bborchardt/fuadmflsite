@@ -1,9 +1,11 @@
 // Loads the league's data on the home page and renders the league's own features.
 // On other league pages it does nothing; only the stylesheet applies there.
 
-import {API_BASE, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
+import {pendingAdds} from "../lib/adds.js";
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
+import {seasonPhase} from "../lib/violations.js";
 import {franchisePhase, makeSnapshot, readSnapshot, snapshotFileName} from "../lib/franchise.js";
 import {renderViolations} from "./violations.js";
 import {renderContracts} from "./contracts.js";
@@ -146,16 +148,28 @@ async function loadLeague({season, leagueId}) {
         return {player: players.player};
     });
     const weeklyResultsPromise = league("weeklyResults");
+    // the results week's report, for the injured-starter check; without it that check flags nothing
     const injuriesPromise = weeklyResultsPromise.then((weeklyResults) =>
-        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries"));
-    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries] = await Promise.all([
+        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries")).catch(() => null);
+    // today's report, for injured reserve eligibility; without it that check is skipped
+    const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries").catch(() => null);
+    // where the season is, for when the in-season checks run; if it can't be told, they're
+    // hidden for this load rather than risk showing members false alerts
+    const phasePromise = seasonPhase(season, new Date()).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
+    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
-        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise
+        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise
     ]);
-    return buildLeague({
+    const built = buildLeague({
         players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters,
-        transactions, weeklyResults, freeAgents, injuries
+        transactions, weeklyResults, freeAgents, injuries, currentInjuries
     });
+    Object.assign(built, phase);
+    // adds waiting for a contract length, for the violations box
+    built.pendingAdds = pendingAdds({
+        rosters, transactions: asArray(transactions.transaction), players: new Map(asArray(players.player).map((player) => [player.id, player]))
+    });
+    return built;
 }
 
 export async function start({dataBase}) {

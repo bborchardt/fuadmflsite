@@ -1,6 +1,8 @@
 // Daily league chores, run by .github/workflows/daily.yml (Node 24+).
 //
 // Chores:
+// - flag roster limit, injured reserve and anti-tanking violations, as the Main tab's League
+//   Alerts box shows them; a team over the roster limit is held like one over the cap.
 // - flag every team over the cap, counting drop penalties still owed, and fail the run so the
 //   commissioner hears about it.
 // - charge the cap penalty for each dropped player still carrying a contract, then reset the
@@ -41,11 +43,13 @@ const version = process.env.RULES_VERSION || "v1";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
-const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
+const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
-const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, readyToDecide, teamPlayers} =
+const {contractDeadline, pendingAdds, windowClosed} = await lib("adds.js");
+const {ruleViolations, seasonPhase} = await lib("violations.js");
+const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, readProcessedWaivers, teamPlayers} =
     await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
@@ -77,6 +81,26 @@ function choreLog(message) {
     entries.push(message);
 }
 
+/** MFL asks clients to space requests out; this is the gap between the starts of two of ours. */
+const MFL_REQUEST_SPACING_MS = 1000;
+/** How long one MFL request may take. */
+const MFL_TIMEOUT_MS = 30000;
+let nextRequestAt = 0;
+
+/**
+ * fetch for every MFL request, started at least MFL_REQUEST_SPACING_MS apart even when several
+ * are made at once, so the job never bursts. (MFL throttles bursts with HTTP 429.)
+ */
+async function mflFetch(url, init) {
+    const wait = nextRequestAt - Date.now();
+    nextRequestAt = Math.max(Date.now(), nextRequestAt) + MFL_REQUEST_SPACING_MS;
+    if (wait > 0) {
+        await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+    // a stalled reply mustn't hang the job
+    return fetch(url, {...init, signal: AbortSignal.timeout(MFL_TIMEOUT_MS)});
+}
+
 function setOutput(name, value) {
     if (process.env.GITHUB_OUTPUT) {
         appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
@@ -99,7 +123,7 @@ async function login() {
     }
     let response, body;
     try {
-        response = await fetch(`${API_BASE}/${season}/login`, {
+        response = await mflFetch(`${API_BASE}/${season}/login`, {
             method: "POST",
             headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
             body: new URLSearchParams({USERNAME: username, PASSWORD: password, XML: "1"})
@@ -136,8 +160,9 @@ async function leagueSeason() {
     const year = now.getUTCFullYear();
     let response, body;
     try {
-        response = await fetch(exportUrl(host, year, "league", {L: leagueId}), {headers: mflHeaders});
-        body = response.status === 404 ? null : await response.json();
+        response = await mflFetch(exportUrl(host, year, "league", {L: leagueId}), {headers: mflHeaders});
+        // only read the body of a reply that can say: a 404, or a 200 with JSON
+        body = response.ok ? await response.json() : null;
     } catch (error) {
         throw new Error(`Couldn't tell whether the league has a ${year} site: ${error.message}`);
     }
@@ -158,7 +183,7 @@ async function loginWorks(cookie) {
     for (const year of [season, season - 1]) {
         try {
             const leagues = await fetchExport(exportUrl(API_BASE, year, "myleagues", {YEAR: year}), "leagues",
-                {init: {headers: {...mflHeaders, Cookie: cookie}}});
+                {fetchImpl: mflFetch, init: {headers: {...mflHeaders, Cookie: cookie}}});
             if (asArray(leagues.league).length > 0) {
                 return true;
             }
@@ -170,7 +195,7 @@ async function loginWorks(cookie) {
 }
 
 const fetchFrom = (base, type, params, section = type, year = season) =>
-    fetchExport(exportUrl(base, year, type, params), section, {init: {headers: mflHeaders}});
+    fetchExport(exportUrl(base, year, type, params), section, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
 
 /** Put this run's chore log entries on the run's summary page, where the failure email leads. */
 function writeSummary() {
@@ -194,7 +219,7 @@ function writeSummary() {
 async function mflImport(type, data, params = {}) {
     let response, body;
     try {
-        response = await fetch(`${host}/${season}/import`, {
+        response = await mflFetch(`${host}/${season}/import`, {
             method: "POST",
             headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
             body: new URLSearchParams({TYPE: type, L: leagueId, DATA: data, ...params})
@@ -217,7 +242,7 @@ async function processedWaivers(period) {
     const url = `${host}/${season}/processed_waivers?LEAGUE_ID=${leagueId}&PERIOD=${period}`;
     let response;
     try {
-        response = await fetch(url, {headers: mflHeaders});
+        response = await mflFetch(url, {headers: mflHeaders});
     } catch (error) {
         throw new Error(`Couldn't load MFL's processed waivers for period ${period}: network error (${error.message})`);
     }
@@ -243,12 +268,13 @@ async function processedWaivers(period) {
 async function contractYears(loggedIn, {rosters, transactions, playerNames}, over) {
     const held = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => over.has(add.franchiseId));
     for (const add of held) {
-        choreLog(`Contract years: ${add.name} held, since the team is over the cap. Left for the commissioner.`);
+        choreLog(`Contract years: ${add.name} held, since the team is over the cap or the roster limit. Left for the commissioner.`);
     }
     const waiting = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
-    const adds = waiting.filter((add) => readyToDecide(add, now.getTime() / 1000));
+    // decided once the owner's posting window has closed
+    const adds = waiting.filter((add) => windowClosed(add, now.getTime() / 1000));
     if (waiting.length > adds.length) {
-        log(`${waiting.length - adds.length} add(s) made in the last hour will be decided at the next run.`);
+        log(`${waiting.length - adds.length} add(s) still in their posting window will be decided at the next run.`);
     }
     if (!adds.length) {
         log("No added players are waiting for contract years.");
@@ -273,7 +299,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         bidRequests.push(...(await processedWaivers(period)).map((request) => ({...request, period})));
     }
     const {contracts, flags} = decideYears({
-        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames})
+        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), contractDeadline
     });
     for (const flag of flags) {
         choreLog(`Contract years: ${flag}. Left for the commissioner.`);
@@ -300,16 +326,41 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
 
 /** The league as the league chores need it: built with adjustments, transactions and free agents. */
 async function leagueState() {
-    const [players, league, salaryAdjustments, rosters, transactions, freeAgents] = await Promise.all([
+    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
         fetchFrom(host, "salaryAdjustments", {L: leagueId}),
         fetchFrom(host, "rosters", {L: leagueId}),
         fetchFrom(host, "transactions", {L: leagueId}),
-        fetchFrom(host, "freeAgents", {L: leagueId})
+        fetchFrom(host, "freeAgents", {L: leagueId}),
+        // only the anti-tanking check needs the week's results; without them it flags nothing
+        fetchFrom(host, "weeklyResults", {L: leagueId}).catch((error) => {
+            log(`Couldn't load the league's weekly results (${error.message}); the anti-tanking check is skipped.`);
+            return {};
+        })
     ]);
+    // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
+    const currentInjuries = await fetchFrom(API_BASE, "injuries").catch((error) => {
+        log(`Couldn't load today's NFL injury report (${error.message}); the injured reserve check is skipped.`);
+        return null;
+    });
+    // the results week's report, for the anti-tanking check; without it that check flags nothing
+    const injuries = await fetchFrom(API_BASE, "injuries", {W: weeklyResults.week || ""}).catch((error) => {
+        log(`Couldn't load the week ${weeklyResults.week || "(unknown)"} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
+        return null;
+    });
     const playerMap = playersFromExport(players);
-    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents});
+    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries});
+    // as the Main tab's box: the anti-tanking check stops when the playoffs start, the roster
+    // and IR checks when the championship week is over. If that can't be told, the league
+    // rules are skipped rather than risk flagging the offseason.
+    try {
+        Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}));
+    } catch (error) {
+        choreLog(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
+        process.exitCode = 1;
+        built.seasonOver = null;
+    }
     return {
         players: playerMap,
         built,
@@ -319,6 +370,41 @@ async function leagueState() {
         // players as MFL names them ("Last, First"), which the waivers page uses too
         playerNames: new Map(asArray(players.player).map((player) => [player.id, player]))
     };
+}
+
+/** The League Alerts the job flags, as the Main tab's box shows them; the cap has its own flag. */
+const RULE_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster", "injured-starter"]);
+
+/**
+ * Flag roster limit, injured reserve and anti-tanking violations, from the same rules as the
+ * Main tab's box. Going over the roster limit voids the move, like going over the cap, so that
+ * flag lists the team's recent moves and any drop penalties held. The run fails so the
+ * commissioner hears about it, every day until it's fixed. Returns the teams over the roster
+ * limit, whose drop penalties and contract years are held.
+ */
+function leagueRules({players, built, penalties, transactions}) {
+    const overRoster = new Set();
+    if (built.seasonOver === null) {
+        return overRoster;
+    }
+    const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
+    const violations = ruleViolations(built).filter((item) => RULE_KINDS.has(item.kind));
+    for (const violation of violations) {
+        let text = violation.text;
+        if (violation.kind === "roster-over") {
+            overRoster.add(violation.franchiseId);
+            const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since});
+            const held = penalties.filter((penalty) => penalty.franchiseId === violation.franchiseId).map((penalty) => penalty.explanation);
+            text += ` Moves in the last ${RECENT_MOVE_DAYS} days: ${moves.length ? moves.join("; ") : "none"}.`
+                + (held.length ? ` Drop penalties held so the move can be reversed: ${held.join(", ")}.` : "");
+        }
+        choreLog(`League rules: ${text}`);
+        process.exitCode = 1;
+    }
+    if (!violations.length) {
+        log("No roster, injured reserve or anti-tanking violations.");
+    }
+    return overRoster;
 }
 
 /**
@@ -400,7 +486,7 @@ async function franchiseSnapshot(year) {
         log(`The ${year} franchise snapshot already exists.`);
         return false;
     }
-    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, {init: {headers: mflHeaders}});
+    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
     if (!deadline) {
         log(`MFL hasn't published the ${year} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
         return false;
@@ -493,9 +579,22 @@ try {
         process.exitCode = 1;
     }
     if (state) {
+        // teams over the roster limit or the cap: their moves may be reversed, so drop penalties
+        // and contract years are held
+        // if the league rules can't run, any team over 30 is still held, to be safe
+        const overThirty = () => new Set([...state.built.franchises.values()]
+            .filter((franchise) => franchise.numPlayers > ROSTER_MAX).map((franchise) => franchise.franchiseId));
+        let overRoster;
+        try {
+            overRoster = state.built.seasonOver === null ? overThirty() : leagueRules(state);
+        } catch (error) {
+            choreLog(`League rules: ${error.message}`);
+            process.exitCode = 1;
+            overRoster = overThirty();
+        }
         let over = null;
         try {
-            over = overCap(state);
+            over = new Set([...overCap(state), ...overRoster]);
             await dropPenalties(loggedIn, state, over);
         } catch (error) {
             choreLog(`Cap chores: ${error.message}`);
@@ -503,7 +602,7 @@ try {
         }
         try {
             if (!over) {
-                throw new Error("skipped: the cap check didn't finish, so it isn't known which teams are over the cap");
+                throw new Error("skipped: the cap check didn't finish, so it isn't known which teams are held");
             }
             await contractYears(loggedIn, state, over);
         } catch (error) {

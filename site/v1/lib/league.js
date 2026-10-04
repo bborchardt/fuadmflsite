@@ -4,11 +4,16 @@
 import {asArray, displayName} from "./mfl.js";
 import {capPenalty, netCapSpace} from "./rules.js";
 
+/** Fewer entries than this on today's NFL injury report means it didn't load properly. */
+export const MIN_INJURY_REPORT = 50;
+
 function newPlayer(id, fullName, nflPosition, team) {
     return {
         playerId: id, fullName, nflPosition, team,
         franchise: null, status: null, salary: 0, years: 0, capPenalty: 0, netCapSpace: 0,
         contractStatus: null, injured: false,
+        // the NFL injury report's status, e.g. "IR", "IR-R", "Out"
+        injuryStatus: null,
         // for a dropped player owed a cap penalty: whether it's already charged
         penaltyCharged: false,
         // newest first, once the model is built
@@ -23,7 +28,9 @@ function newFranchise(id, teamName) {
         // pending penalties not yet charged, and the total against the cap counting them
         unchargedPenalty: 0, capTotal: 0,
         // rostered players with no contract years yet
-        signedPlayers: []
+        signedPlayers: [],
+        // players on MFL's injured reserve
+        irPlayers: []
     };
 }
 
@@ -52,10 +59,10 @@ function setContract(player, salary, contractYear) {
 /**
  * Build the league from export sections. Each argument is the top-level section of
  * that export (e.g. the `rosters` object). `players` is a Map from playersFromExport.
- * `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments` and `injuries`
+ * `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments`, `injuries` and `currentInjuries`
  * may be omitted when a caller doesn't need what they feed.
  */
-export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries}) {
+export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries}) {
     const franchises = new Map();
     for (const franchise of asArray(league.franchises && league.franchises.franchise)) {
         franchises.set(franchise.id, newFranchise(franchise.id, franchise.name));
@@ -88,6 +95,8 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
             rosteredPlayers.push(player);
             if (entry.status === "ROSTER") {
                 franchise.numPlayers++;
+            } else if (entry.status === "INJURED_RESERVE") {
+                franchise.irPlayers.push(player);
             }
             if (player.years === 0) {
                 franchise.signedPlayers.push(player);
@@ -189,10 +198,25 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
         }
     }
 
+    // today's NFL injury report, for injured reserve eligibility (`injuries` is the report for the
+    // league's results week, for the injured-starter check)
+    // a missing or thin report would make every injured reserve player look healthy, so the IR
+    // check only runs on a report with a realistic number of entries (about 400 in season)
+    const report = currentInjuries ? asArray(currentInjuries.injury) : [];
+    const injuryReportKnown = report.length >= MIN_INJURY_REPORT;
+    if (injuryReportKnown) {
+        for (const injury of report) {
+            const player = players.get(injury.id);
+            if (player) {
+                player.injuryStatus = injury.status || "";
+            }
+        }
+    }
+
     // rounded to the cent, so amounts with cents can't add up to a hair over the cap
     for (const franchise of franchises.values()) {
         franchise.capTotal = Math.round((franchise.salary + franchise.unchargedPenalty) * 100) / 100;
     }
 
-    return {players, franchises, rosteredPlayers, week};
+    return {players, franchises, rosteredPlayers, week, injuryReportKnown};
 }

@@ -78,6 +78,26 @@ export async function weekKickoff(season, week, options) {
     }
 }
 
+/** How long after its kickoff a game is taken to be over. */
+export const GAME_HOURS = 4;
+
+/**
+ * When an NFL week is over: its last kickoff plus GAME_HOURS, or null if MFL hasn't published
+ * that season's schedule yet.
+ */
+export async function weekEnd(season, week, options) {
+    try {
+        const kickoffs = asArray((await fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule", options)).matchup)
+            .map((matchup) => Number(matchup.kickoff)).filter((seconds) => seconds > 0);
+        return kickoffs.length ? new Date((Math.max(...kickoffs) + GAME_HOURS * 3600) * 1000) : null;
+    } catch (error) {
+        if (error instanceof MflError && error.status === 404) {
+            return null;
+        }
+        throw error;
+    }
+}
+
 /** The first kickoff (a Date) in an nflSchedule export, or null if it lists no games. */
 export function firstKickoff(nflSchedule) {
     const kickoffs = asArray(nflSchedule.matchup)
