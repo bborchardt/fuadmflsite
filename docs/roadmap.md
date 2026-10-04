@@ -72,6 +72,17 @@ What's live, what comes next, the decisions already made, and the facts that con
       plus two one-offs
   - writes a chore log, also shown on each run's summary page (where a failed run's email links), and
     re-enables itself (GitHub's 60-day rule)
+- **Beta toggle:** the header message can offer a version to try, with
+  `<script>window.fuadBeta = {version: "v2", feedback: "<thread link>", teams: ["0000", "0001"]};</script>`
+  before the code's script (`teams` limits it to those franchise ids: `0000` is the commissioner
+  logged in as such, `0001` the commissioner's team; leave it out for everyone):
+  - League Alerts' first line invites the viewer ("Try it", `?fuadBeta=on`); the beta shows a bar
+    on every page with the feedback link and "Back to the current site" (`?fuadBeta=off`)
+  - the choice is kept per browser, only while the header offers that version: removing the line
+    ends the beta, and switching the header to that version promotes it, with no member action
+  - the header's version draws the bar before handing over, and a beta that can't load or start
+    falls back to the current site; decisions are in `loader.js`
+  - a developer preview (`?fuadPreview=`) wins over the beta
 - Tier 0 is done:
   - MFL's nav bar is kept visible on phones
   - the redundant Live Scoring tab was removed
@@ -90,12 +101,15 @@ What's live, what comes next, the decisions already made, and the facts that con
 
 ## Next versions
 
-Each one is built in a new `site/vN/` folder, previewed with `?fuadPreview=vN` (or `local:vN`),
-checked with `tools/verify/verify.py`, and activated by editing the header message. The daily job
+Each one is built in a new `site/vN/` folder (a copy of the current one, so it keeps the loader and
+the beta bar), previewed with `?fuadPreview=vN` (or `local:vN`), checked with
+`tools/verify/verify.py`, offered as a beta (the commissioner first, then everyone), and activated by
+editing the header message. The daily job
 loads league logic from the version `RULES_VERSION` names, so a new version's `lib/` must keep what
 the job reads (`capTotal`, `unchargedPenalty`, `penaltyCharged`, `pendingDroppedPlayers`,
 `numPlayers`, `irPlayers`, `injuryStatus`, `injuryReportKnown`, and the `violations.js`, `adds.js`
-and `contract-years.js` exports); without them the job's flags would silently never fire. The order isn't decided. A and C change what members see, and the commissioner wants member feedback on those.
+and `contract-years.js` exports); without them the job's flags would silently never fire. The order isn't decided. A and C change what members see; the commissioner wants member feedback on
+those, gathered through the beta and its feedback thread.
 
 ### A. "My Team" Contracts
 
@@ -252,6 +266,11 @@ They live in `site/vN/lib/rules.js`; a rule change means a new version.
   player came off NFL IR (effectively going over 30) isn't caught as a void; the "moving him back"
   alert is a warning only, and the commissioner judges the order of moves.
 - The contract deadline notice shows a time without a date ("by 12:30 AM CT").
-- A preview that loads but then crashes doesn't fall back. `?fuadPreview=off` recovers.
+- A preview or beta that starts but whose features then fail shows their error messages, with its
+  bar still there to leave. The bar can show unstyled for a moment while the version's stylesheet
+  loads.
+- The beta is per browser: trying it on a phone doesn't switch a laptop, a private window forgets
+  it, and MFL's app runs none of this code. Nothing reports who's on it; the feedback thread is the
+  only signal.
 - Until A ships, the Contracts tab is long on phones. Until C ships, desktop shows three navigation
   rows.
