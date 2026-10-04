@@ -37,15 +37,35 @@ function centralTime(seconds) {
 }
 
 /**
+ * The notice for an add whose hour is open, from what the message board says so far (a
+ * contract-years.js postReading; none when the board couldn't be read). It shows the
+ * recommended format, "Hill: 3 years".
+ */
+function contractNotice(teamName, add, reading) {
+    const by = centralTime(contractDeadline(add));
+    const example = `"${String(add.name).split(",")[0].trim()}: 3 years"`;
+    const added = `${teamName} added ${displayName(add.name)}`;
+    if (reading && reading.state === "read") {
+        return `${added}: read ${reading.years} year${reading.years === 1 ? "" : "s"} from the message board. `
+            + `To change it, edit the post or post again by ${by}.`;
+    }
+    if (reading && reading.state === "problem") {
+        return `${added}: couldn't read his contract length from the message board. Edit the post or post again by ${by}, like ${example}.`;
+    }
+    return `${added}: post his contract length on the message board by ${by}, like ${example}, or it will be 1 year.`;
+}
+
+/**
  * Everything the box shows, as [{kind, franchiseId, text, warning}]. `warning` items are rule
  * violations; the others are notices. Kinds: "cap", "roster-over", "roster-under", "ir" (on
  * MFL's IR without an NFL IR designation), "ir-roster" (moving those back would break the
  * roster limit), "injured-starter", and "contract" (an add whose posting window is still open).
- * `pendingAdds` comes from adds.js; `now` is Unix seconds. `league.tankingOver` and
+ * `pendingAdds` comes from adds.js and `readings` from contract-years.js's postReadings; `now`
+ * is Unix seconds. `league.tankingOver` and
  * `league.seasonOver` come from seasonPhase: after them the anti-tanking and the roster and IR
  * checks stop (MFL keeps reporting week 17 all offseason).
  */
-export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 1000} = {}) {
+export function ruleViolations(league, {pendingAdds = [], readings = new Map(), now = Date.now() / 1000} = {}) {
     const items = [];
     const week = Number(league.week);
     // roster limits and IR apply from week 1's kickoff until the championship week is over;
@@ -85,8 +105,8 @@ export function ruleViolations(league, {pendingAdds = [], now = Date.now() / 100
     for (const add of pendingAdds.filter((entry) => entry.type !== "BBID_WAIVER" && !windowClosed(entry, now))) {
         const franchise = league.franchises.get(add.franchiseId);
         if (franchise) {
-            push("contract", franchise, `${franchise.teamName} added ${displayName(add.name)}: post his contract length on the message board by `
-                + `${centralTime(contractDeadline(add))}, or it will be 1 year.`, false);
+            push("contract", franchise, contractNotice(franchise.teamName, add, readings.get(add.playerId)),
+                Boolean(readings.get(add.playerId) && readings.get(add.playerId).state === "problem"));
         }
     }
     return items;

@@ -3,7 +3,8 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {contractsXml, decideYears as decide_, readProcessedWaivers, readYears, yearMentions} from "../jobs/contract-years.mjs";
+import {contractsXml} from "../jobs/contract-years.mjs";
+import {decideYears as decide_, postReadings, readProcessedWaivers, readYears, yearMentions} from "../site/v1/lib/contract-years.js";
 import {contractDeadline, pendingAdds, windowClosed} from "../site/v1/lib/adds.js";
 
 const decideYears = (options) => decide_({contractDeadline, ...options});
@@ -150,12 +151,31 @@ test("years come from the bid comment, or posts after a free agent add, else the
     ]);
 });
 
-test("conflicts and a missing bid are flagged, not guessed", () => {
-    const decide = (adds, posts, bidRequests) => decideYears({adds, posts, bidRequests, teams});
-    let result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 3yrs"), post("0008", "Keenum 2 years", T + 120)], []);
+test("the latest post in the window about an add decides, so owners can correct a length", () => {
+    const decide = (posts) => decideYears({adds: [add("6", "0008", "FREE_AGENT")], posts, bidRequests: [], teams});
+    // a new length, posted in any order MFL lists them
+    let result = decide([post("0008", "Keenum 2 years", T + 120), post("0008", "Keenum 3yrs")]);
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].source, `post "Keenum 2 years"`);
+    // a typo, then the corrected post
+    result = decide([post("0008", "Keenam 3 years"), post("0008", "Keenum: 3 years", T + 120)]);
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].years, 3);
+    // a later unreadable post may be a correction, so it flags rather than keep the earlier length
+    result = decide([post("0008", "Keenum: 3 years"), post("0008", "Keenam: 2 years", T + 120)]);
     assert.deepEqual(result.contracts, []);
-    assert.match(result.flags[0], /^Case Keenum: the owner gave different lengths \(3 in post "Keenum 3yrs"; 2 in post "Keenum 2 years"\)$/);
-    result = decide([add("6", "0008", "BBID_WAIVER")], [], []);
+    assert.match(result.flags[0], /post "Keenam: 2 years" gives 2 years without naming/);
+    // a later post about something else leaves the length alone
+    result = decide([post("0008", "Keenum: 3 years"), post("0008", "if Rush doesnt play, play Keenum", T + 120)]);
+    assert.equal(result.contracts[0].years, 3);
+    // two lengths in one post are still a conflict
+    result = decide([post("0008", "Keenum 3 years. Keenum 2 years")]);
+    assert.match(result.flags[0], /gives Keenum, Case both 3 and 2 years/);
+});
+
+test("a missing bid and an impossible length are flagged, not guessed", () => {
+    const decide = (adds, posts, bidRequests) => decideYears({adds, posts, bidRequests, teams});
+    let result = decide([add("6", "0008", "BBID_WAIVER")], [], []);
     assert.match(result.flags[0], /blind bid isn't on MFL's processed waivers page/);
     result = decide([add("6", "0008", "FREE_AGENT")], [post("0008", "Keenum 7 years")], []);
     assert.match(result.flags[0], /7 years for Keenum, Case is outside 1-5/);
@@ -221,10 +241,19 @@ test("dotted initials, each/both lists, sentence bounds and shared surnames", ()
     result = decide([add("13", "0003", "FREE_AGENT")], "I had 3 years on his contract. Lock for 5 years.");
     assert.deepEqual(result.flags, []);
     assert.equal(result.contracts[0].years, 5);
-    // a rostered Garrett Wilson makes "Wilson" ambiguous for a pending Emanuel Wilson
+    // a rostered Garrett Wilson under contract isn't getting a length, so "Wilson" is the pending Emanuel
     result = decide([add("3", "0003", "FREE_AGENT")], "Wilson 2 years");
-    assert.deepEqual(result.contracts, []);
-    assert.match(result.flags[0], /doesn't say which of Wilson, Emanuel and Wilson, Garrett/);
+    assert.deepEqual(result.flags, []);
+    assert.equal(result.contracts[0].years, 2);
+    // ...unless Garrett is waiting for years too, even with his hour still open or as a blind bid
+    for (const type of ["FREE_AGENT", "BBID_WAIVER"]) {
+        result = decideYears({adds: [add("3", "0003", "FREE_AGENT")], pending: [add("3", "0003", "FREE_AGENT"), add("7", "0003", type, T + 30)],
+            posts: [post("0003", "Wilson 2 years")], bidRequests: [], teams});
+        assert.deepEqual(result.contracts, [], type);
+        assert.match(result.flags[0], /doesn't say which of Wilson, Emanuel and Wilson, Garrett/, type);
+    }
+    // a full name still rules out the contracted player
+    assert.equal(decide([add("3", "0003", "FREE_AGENT")], "Garrett Wilson 4 years").contracts[0].source, "no length stated: the default");
     // an initial tells two players with the same surname apart
     assert.equal(decide([add("14", "0003", "FREE_AGENT")], "D. Jones 1 year").contracts[0].years, 1);
     assert.deepEqual(decide([add("14", "0003", "FREE_AGENT")], "J. Jones 4 years").contracts[0].source, "no length stated: the default");
@@ -290,6 +319,19 @@ test("an add is decided once its one-hour posting window closes, and later posts
     assert.equal(result.contracts[0].source, `no length stated in time: the default; a post "Keenum 3 years" came after the hour`);
     assert.equal(decideYears({adds: [add("6", "0008", "FREE_AGENT")], bidRequests: [], teams,
         posts: [post("0008", "Keenum 3 years", T + 3600)]}).contracts[0].years, 3);
+});
+
+test("League Alerts reads the posts so far the way the job will", () => {
+    const keenum = add("6", "0008", "FREE_AGENT");
+    const read = (posts, adds = [keenum]) => postReadings({adds, posts, teams});
+    assert.deepEqual(read([]).get("6"), {state: "none"});
+    assert.deepEqual(read([post("0008", "Keenum: 3 years")]).get("6"), {state: "read", years: 3});
+    assert.deepEqual(read([post("0008", "Keenam: 3 years")]).get("6"), {state: "problem"});
+    assert.deepEqual(read([post("0008", "Keenam: 3 years"), post("0008", "Keenum: 2 years", T + 120)]).get("6"), {state: "read", years: 2});
+    // another team's post, and a bare count, read nothing
+    assert.deepEqual(read([post("0007", "Keenum: 3 years"), post("0008", "3 years")]).get("6"), {state: "none"});
+    // blind bids are read from their comment, not posts
+    assert.equal(read([], [add("5", "0008", "BBID_WAIVER")]).size, 0);
 });
 
 test("the import keeps each salary exactly as MFL has it", () => {
