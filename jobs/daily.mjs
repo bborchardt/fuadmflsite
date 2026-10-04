@@ -6,6 +6,9 @@
 // - charge the cap penalty for each dropped player still carrying a contract, then reset the
 //   player to $1 / 0 years, except on a team over the cap. Only logged unless
 //   DROP_PENALTIES=apply.
+// - set contract years for added players from the blind bid comment or the message board's
+//   contract thread (1 year if none is stated), flagging anything unclear. Only logged unless
+//   CONTRACT_YEARS=apply.
 // - after the trade deadline, snapshot the season's franchise salaries. Last season's is
 //   checked too, so a missing one is still taken after the league is renewed.
 // The season is the newest league site: this year's once the league is renewed for it, last
@@ -24,6 +27,7 @@
 //   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
 //   DROP_PENALTIES              "apply" to charge drop penalties; anything else only logs them
+//   CONTRACT_YEARS              "apply" to set contract years for adds; anything else only logs them
 //   NOW                         optional ISO time, for testing
 
 import {existsSync, readFileSync, readdirSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
@@ -39,6 +43,8 @@ const {SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} =
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
+const {MAX_CONTRACTS_PER_RUN, contractsXml, decideYears, pendingAdds, readProcessedWaivers, readyToDecide, teamPlayers} =
+    await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 
 if (!process.env.DATA_DIR) {
@@ -57,6 +63,7 @@ const mflHeaders = {"User-Agent": userAgent};
 const pagesData = process.env.PAGES_DATA_URL || "https://bborchardt.github.io/fuadmflsite/data/";
 const LATE_AFTER_DAYS = 7;
 const applyDropPenalties = process.env.DROP_PENALTIES === "apply";
+const applyContractYears = process.env.CONTRACT_YEARS === "apply";
 const entries = [];
 
 function log(message) {
@@ -185,7 +192,96 @@ async function mflImport(type, data, params = {}) {
     }
 }
 
-/** The league as both cap chores need it: built with adjustments, transactions and free agents. */
+/**
+ * MFL's Previously Processed Waivers page for one blind bid period, as the commissioner sees
+ * it. Blind bid comments are only on this page, not in the API.
+ */
+async function processedWaivers(period) {
+    const url = `${host}/${season}/processed_waivers?LEAGUE_ID=${leagueId}&PERIOD=${period}`;
+    let response;
+    try {
+        response = await fetch(url, {headers: mflHeaders});
+    } catch (error) {
+        throw new Error(`Couldn't load MFL's processed waivers for period ${period}: network error (${error.message})`);
+    }
+    if (!response.ok) {
+        throw new Error(`Couldn't load MFL's processed waivers for period ${period}: HTTP ${response.status}`);
+    }
+    const html = await response.text();
+    // comments only show to a logged-in member; a logged-out page would look like bids without any
+    if (!/>\s*Logout\s*</i.test(html)) {
+        throw new Error(`MFL's processed waivers for period ${period} came back logged out, so bid comments couldn't be read`);
+    }
+    return readProcessedWaivers(html);
+}
+
+/**
+ * Set contract years for players added with none: from the blind bid comment, or the team's
+ * posts in the message board's contract thread, or 1 year if neither states one. Anything
+ * unclear is flagged and left for the commissioner, and the run fails so they hear about it.
+ * Teams over the cap are skipped, like their drop penalties: the add may be reversed, and a
+ * dropped player with contract years would owe a penalty. Without CONTRACT_YEARS=apply it only
+ * logs what it would do.
+ */
+async function contractYears(loggedIn, {rosters, transactions, playerNames}, over) {
+    const held = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => over.has(add.franchiseId));
+    for (const add of held) {
+        choreLog(`Contract years: ${add.name} held, since the team is over the cap. Left for the commissioner.`);
+    }
+    const waiting = pendingAdds({rosters, transactions, players: playerNames}).filter((add) => !over.has(add.franchiseId));
+    const adds = waiting.filter((add) => readyToDecide(add, now.getTime() / 1000));
+    if (waiting.length > adds.length) {
+        log(`${waiting.length - adds.length} add(s) made in the last hour will be decided at the next run.`);
+    }
+    if (!adds.length) {
+        log("No added players are waiting for contract years.");
+        return;
+    }
+    if (!loggedIn) {
+        throw new Error(`${adds.length} added player(s) are waiting for contract years, but reading the bids `
+            + "and the message board needs the commissioner login, so none were set.");
+    }
+    // owners post lengths in threads of any name, so read every thread with a post since the
+    // earliest pending add
+    const earliest = Math.min(...adds.map((add) => add.added));
+    const board = await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100});
+    const threads = asArray(board.thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
+    const posts = [];
+    for (const thread of threads) {
+        posts.push(...asArray((await fetchFrom(host, "messageBoardThread", {L: leagueId, THREAD: thread.id})).post));
+    }
+    const bidRequests = [];
+    for (const period of new Set(adds.filter((add) => add.type === "BBID_WAIVER").map((add) => add.added))) {
+        // each request tagged with its period, so a bid is only matched on its own week's page
+        bidRequests.push(...(await processedWaivers(period)).map((request) => ({...request, period})));
+    }
+    const {contracts, flags} = decideYears({
+        adds, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames})
+    });
+    for (const flag of flags) {
+        choreLog(`Contract years: ${flag}. Left for the commissioner.`);
+        process.exitCode = 1;
+    }
+    const describe = (contract) => {
+        const name = contract.name.split(",").reverse().map((part) => part.trim()).join(" ");
+        return `${name} to ${contract.years} year${contract.years === 1 ? "" : "s"} (${contract.source})`;
+    };
+    if (!contracts.length) {
+        return;
+    }
+    if (!applyContractYears) {
+        contracts.forEach((contract) => choreLog(`Dry run: would set ${describe(contract)}.`));
+        return;
+    }
+    if (contracts.length > MAX_CONTRACTS_PER_RUN) {
+        throw new Error(`${contracts.length} added players are waiting for contract years, more than the `
+            + `${MAX_CONTRACTS_PER_RUN} expected in a day, so none were set. Check the Commish tab and set them by hand.`);
+    }
+    await mflImport("salaries", contractsXml(contracts), {APPEND: "1"});
+    contracts.forEach((contract) => choreLog(`Set ${describe(contract)}.`));
+}
+
+/** The league as the league chores need it: built with adjustments, transactions and free agents. */
 async function leagueState() {
     const [players, league, salaryAdjustments, rosters, transactions, freeAgents] = await Promise.all([
         fetchFrom(API_BASE, "players"),
@@ -201,7 +297,10 @@ async function leagueState() {
         players: playerMap,
         built,
         penalties: pendingPenalties(built),
-        transactions: asArray(transactions.transaction)
+        transactions: asArray(transactions.transaction),
+        rosters,
+        // players as MFL names them ("Last, First"), which the waivers page uses too
+        playerNames: new Map(asArray(players.player).map((player) => [player.id, player]))
     };
 }
 
@@ -367,14 +466,33 @@ try {
         choreLog(`${loginProblem}. Continuing with public league data.`);
         process.exitCode = 1;
     }
+    const loggedIn = !loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD);
+    // each chore fails on its own; the snapshot doesn't depend on any of them
+    let state = null;
     try {
-        const state = await leagueState();
-        const over = overCap(state);
-        await dropPenalties(!loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD), state, over);
+        state = await leagueState();
     } catch (error) {
-        // the snapshot doesn't depend on these, so carry on
-        choreLog(`Cap chores: ${error.message}`);
+        choreLog(`League chores: ${error.message}`);
         process.exitCode = 1;
+    }
+    if (state) {
+        let over = null;
+        try {
+            over = overCap(state);
+            await dropPenalties(loggedIn, state, over);
+        } catch (error) {
+            choreLog(`Cap chores: ${error.message}`);
+            process.exitCode = 1;
+        }
+        try {
+            if (!over) {
+                throw new Error("skipped: the cap check didn't finish, so it isn't known which teams are over the cap");
+            }
+            await contractYears(loggedIn, state, over);
+        } catch (error) {
+            choreLog(`Contract years: ${error.message}`);
+            process.exitCode = 1;
+        }
     }
     for (const year of [season - 1, season]) {
         snapshotWritten = (await franchiseSnapshot(year)) || snapshotWritten;

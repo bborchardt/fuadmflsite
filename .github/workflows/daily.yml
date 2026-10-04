@@ -1,7 +1,8 @@
 # Daily league chores. See jobs/daily.mjs for what it does.
 #
 # The job writes only to the league-data branch (franchise snapshots and the chore log), and,
-# when the DROP_PENALTIES variable is "apply", to MFL: cap penalties for dropped players.
+# to MFL when the DROP_PENALTIES or CONTRACT_YEARS variable is "apply": cap penalties for dropped
+# players, and contract years for added ones.
 # master is protected and takes changes through pull requests, so nothing here pushes to it.
 #
 # GitHub turns off scheduled workflows after 60 days without repository activity, so the
@@ -61,6 +62,7 @@ jobs:
           MFL_USER_AGENT: ${{ vars.MFL_USER_AGENT }}
           RULES_VERSION: ${{ vars.RULES_VERSION || 'v1' }}
           DROP_PENALTIES: ${{ vars.DROP_PENALTIES }}
+          CONTRACT_YEARS: ${{ vars.CONTRACT_YEARS }}
         run: node jobs/daily.mjs
 
       - name: Commit to league-data
