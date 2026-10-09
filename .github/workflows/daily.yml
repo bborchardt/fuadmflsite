@@ -11,7 +11,8 @@ name: Daily chores
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    # off the top of the hour, when GitHub delays scheduled runs the most
+    - cron: "37 7 * * *"
   workflow_dispatch:
 
 permissions:
