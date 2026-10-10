@@ -121,8 +121,16 @@ The design (settled for now; the canvas's row 5 is the reference):
 - **Managing claims:** reorder with arrows; tap a claim to edit its bid or drop (the player added is
   fixed: MFL's edit page can't change it), remove it, or copy it to another group. Every action is
   checked against both limits first. Back returns to where the member came from.
-- **Pending bids can go bad later** (a free agent add, a trade, a penalty charged): Moves re-checks
-  them on every visit.
+- **One page in both periods.** A banner says which (free agent window open until Sunday noon CT,
+  blind bids only until Wednesday 11 p.m. CT), and pending bids always show. During the window a
+  locked player is marked "bid only" and goes through the bid flow, where the member picks a group;
+  MFL's "submit as a waiver claim" box isn't offered.
+- **Prevent, don't warn.** League rule: a blind bid that could put a team over a limit is invalid and
+  voided. So the controls block any move that would make pending bids able to break a limit: a bid
+  over its max, an edit or copy, and an immediate free agent add, whose cap and roster checks include
+  every pending group ("Blocked: with your pending bids, this add could exceed the salary cap").
+- **Pending bids can still go bad outside our controls** (a trade, a penalty charged, a move on
+  MFL's own pages): Moves re-checks them on every visit and shows "Current bids invalid".
 
 Wording members see (no "worst case"):
 - **Projected cap**, "If all high bids win": cap used out of $300, now → projected ($297 → $302), red
@@ -138,6 +146,14 @@ Enforcement, in layers: the controls stop a bad bid at the moment it's made; Lea
 the member's own pending bids before Wednesday night (for bids made anywhere, including MFL's own
 pages, the classic site and MFL's app, which our controls can't reach); the daily job and the
 commissioner void over-cap moves after waivers run, as today.
+
+### Trades (to design)
+
+Same principle as Moves: MFL's trade pages, restyled, with v2 controls that block a proposal or an
+acceptance that would put a team over the cap or 30 active, counting the member's own pending bids.
+A member can see only their own pending bids (`pendingWaivers` is per owner), so the proposer's side
+is checked when proposing and the other team's side when they respond. Needs saved trade pages
+(propose, respond) to see MFL's forms.
 
 ### Home
 
