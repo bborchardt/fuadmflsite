@@ -29,7 +29,11 @@ evolving there before they're built.
 
 1. **v1 stays the default.** v2 is built in `site/v2/` (starting as a copy of v1) and offered with
    the beta toggle; a member who turns it on keeps it until they leave the beta. Feedback comes
-   through the beta's feedback thread.
+   through the beta's feedback thread. At first the offer is limited to the commissioner's own
+   team (`teams: ["0001"]`), so v2 is tried as a member; logged in as commissioner (0000) the site
+   stays v1. The offer widens to the league once v2 is ready for members.
+   **The commissioner's experience in v2 is designed later:** Moves and the rest are designed for
+   members.
 2. **v2 changes in place while it's the beta,** an exception to "visible redesigns get a new
    version", added to `design.md` when v2 starts.
 3. **Once v2 is stable,** it becomes the default for everyone, with a way back to v1. How is decided
