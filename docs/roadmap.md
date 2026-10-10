@@ -114,7 +114,7 @@ The design (settled for now; the canvas's row 5 is the reference):
   so the job sets them, and the post is the league's public record.
 - **Blind bid groups (conditional bidding):** each group wins at most one claim, independently of the
   others. A claim's cap impact is what its drop frees less its bid; a group's max cap impact is its
-  most negative claim (never above $0 as a cost: a group that frees room counts as $0). The bid is
+  most negative claim, or $0 if all its claims free room. The bid is
   capped so that, with the other groups' max bids, the cap holds.
 - **Roster:** at 30 active a claim needs a drop. Below 30, a no-drop claim is allowed while active
   players plus the groups holding a no-drop claim stay at 30 or under.
