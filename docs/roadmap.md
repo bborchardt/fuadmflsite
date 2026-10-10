@@ -8,13 +8,14 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 ## Commissioner to-do
 
 - Drop penalties and contract years have been on `apply` since 8 Oct: keep an eye on the chore log.
-- Save three MFL pages for the v2 design (view source, logged in), when the chance comes up:
-  - Add/Drop with two or more blind bids in one group: what the claims table's Action column offers
-    (remove, reorder)
-  - Add/Drop when only blind bids are allowed: whether the page behaves as it does while the free
-    agent window is open
+- Save two MFL pages for the v2 design (view source, logged in), when the chance comes up:
+  - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
+    the page behaves as it does while the free agent window is open
   - the chat page (`chat?L=48571&COUNT=40`): its layout at phone width, and that it hides other
     teams' private messages
+- Consider telling the league: in v1 today, reordering blind bids (MFL's Move Up/Down) doesn't
+  reorder the group's comment, so bare lengths ("1 year", one per line) end up on the wrong players.
+  Naming the player ("Akins: 1 year") is safe.
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 
@@ -66,28 +67,77 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 ### Moves
 
-v2's own controls on MFL's Add/Drop page (`add_drop`), filling in MFL's real form:
-- They read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker rows, and fill
-  `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still apply.
-- Submit stays off until MFL's hidden `add_pid`/`drop_pid` and its "To Add"/"To Drop" lines match the
-  choice; afterwards the claims are read back from the `pendingWaivers` export.
+The menu's Moves is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
+forms:
+- **Adding:** they read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker
+  rows, and fill `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still
+  apply. Submit stays off until MFL's hidden `add_pid`/`drop_pid` and its "To Add"/"To Drop" lines
+  match the choice.
+- **Confirming:** MFL shows no success message, only Add/Drop again with the claim in its table. The
+  controls read the claims back from the `pendingWaivers` export: one entry per group, the claims in
+  priority order (`add_bid_drop`, ...) and the group's comment.
+- **Reordering, removing, copying:** MFL's own links in the claims table's Action column
+  (`MOVE_UP`, `MOVE_DOWN`, `DELETE`, `COPY_ROUND`); each reloads the page.
+- **Editing a group:** MFL's edit page (`options`, `O=255`, `ROUND`) changes each claim's bid and
+  drop and the group's comment.
 - If anything they need is missing, they stand aside and the page is MFL's own, restyled.
 - Not MFL's `blindBidWaiverRequest` import: it has no comment field, so contract lengths would be
   lost.
 
-The design:
+How MFL runs it (league settings):
+- Blind bids process Wednesdays at 11 p.m. CT. From then until Sunday noon CT, players are first come
+  first served, except locked ones (dropped within the last two days), which take a blind bid; from
+  Sunday noon every free agent is on waivers. MFL decides per player, and the controls follow it.
+- No adds or drops for a player between the kickoff of that player's game and the end of the week's
+  games.
+- Conditional bidding, up to 8 groups; bids from $1 in $1 steps; no bid budget beyond the cap; IR
+  salaries count fully against the cap.
+- Processing (MFL's blind bidding help): bids league-wide from the highest dollar amount down; within
+  a group, the first valid claim from the top wins; groups have no priority. A claim whose drop is
+  already gone (won by another group) is invalid, so a shared drop can't add a player.
+- **The cap is soft:** MFL awards winning bids even over $300, and its own roster check uses its
+  settings (80 players), not the league's 30 active. Both limits are ours to enforce.
+- **One comment per group:** each claim's comment is added as a new line. Moving a claim doesn't move
+  its line, so each claim writes a named line ("Akins: 1 year"), which the job's reader pairs by
+  name; after a reorder, removal or copy, the controls rewrite the group's comment through the edit
+  page.
+
+The design (settled for now; the canvas's row 5 is the reference):
 - **Free agents** sorted by this week's projection (MFL's WProj), with team, opponent and bye week.
-- **Drops** grouped by position with the cut penalty and cap freed; drops that would break the cap
-  are greyed out.
-- **A contract length picker (1–5 years)** on every add. A bid writes it as the comment; a free agent
-  add offers a one-tap post ("Higbee: 2 years") to the board through MFL's `messageBoard` import. A
-  member can't set contract years directly: MFL's `salaries` import is commissioner-only, so the job
-  sets them, and the post is the league's public record.
+- **Drops** grouped by position with the cut penalty and cap freed, and a **No drop** row first, which
+  says why it's off when it is ("roster full (30)", "could make 31 active", "over cap"). Drops that
+  would break the cap are greyed out ("over cap"); one already used in another group is allowed and
+  noted.
+- **A contract length picker (1–5 years)** on every add. A bid writes it as a named comment line; a
+  free agent add offers a one-tap post ("Higbee: 2 years") to the board through MFL's `messageBoard`
+  import. A member can't set contract years directly: MFL's `salaries` import is commissioner-only,
+  so the job sets them, and the post is the league's public record.
 - **Blind bid groups (conditional bidding):** each group wins at most one claim, independently of the
-  others. A group's worst-case impact is its costliest claim (the bid less what its drop frees; never
-  below $0); worst-case room is the room less every group's impact. The bid is capped so the
-  worst case stays under the cap. Claims can be reordered and removed within a group, through MFL's
-  own controls (to be confirmed: see the to-do).
+  others. A claim's cap impact is what its drop frees less its bid; a group's max cap impact is its
+  most negative claim (never above $0 as a cost: a group that frees room counts as $0). The bid is
+  capped so that, with the other groups' max bids, the cap holds.
+- **Roster:** at 30 active a claim needs a drop. Below 30, a no-drop claim is allowed while active
+  players plus the groups holding a no-drop claim stay at 30 or under.
+- **Managing claims:** reorder with arrows; tap a claim to edit its bid or drop (the player added is
+  fixed: MFL's edit page can't change it), remove it, or copy it to another group. Every action is
+  checked against both limits first. Back returns to where the member came from.
+- **Pending bids can go bad later** (a free agent add, a trade, a penalty charged): Moves re-checks
+  them on every visit.
+
+Wording members see (no "worst case"):
+- **Projected cap**, "If all high bids win": cap used out of $300, now → projected ($297 → $302), red
+  past $300. Moves talks in cap used, so its totals can't be mistaken for the +/− changes beside them
+  (Contracts talks in room).
+- **Projected roster** (30 → 31), only when a claim has no drop; red past 30.
+- **Max cap impact** on each group, and each claim's impact under its bid: −$2 red, +$1 green, $0
+  white.
+- **Current bids invalid** as the warning when either limit could break; the red number says which.
+- **Over the max:** "with your other groups' max bids, $9 would exceed the cap", beside "max $8".
+
+Enforcement, in layers: the controls stop a bad bid at the moment it's made; League Alerts warns about
+the member's own pending bids before Wednesday night (for bids made anywhere, including MFL's own
+pages, the classic site and MFL's app, which our controls can't reach); the daily job and the
+commissioner void over-cap moves after waivers run, as today.
 
 ### Home
 
