@@ -188,3 +188,53 @@ saves little.
 ## Optional, later
 
 A small public league-history site (records, champions, bylaws), only after v2 is the default.
+
+## Reference: MFL details gathered for v2
+
+From pages the commissioner saved on 10 Oct 2026 (2026 site, logged in). Moves into master's
+`docs/mfl.md` when v2 starts; the saved pages themselves aren't kept.
+
+**Add/Drop (`add_drop?L=48571`)**, one form posted to `add_drop`:
+- Fields: `L`, `add_pid` and `drop_pid` (hidden, `#add_pid_field_id`, `#drop_pid_field_id`),
+  `FORCE_WAIVER` (checkbox), `BBID_AMT`, `ROUND` (a select of existing groups plus the next),
+  `COMMENTS` (textarea), `SUBMIT` (`#add_drop_submit`; its label is "Perform Add/Drop" or "Submit
+  Request"), plus `add_settings` and `PROJSRC`.
+- Player lists are JavaScript data: `playerDatabaseObj["add"]` and `["drop"]`, arrays of `Player2`
+  (`id, name, nfl_team, pos, bye_week, sal, inj, roster, pts, opp, pwpts, sort_sal`). `pts` is points
+  scored so far, `pwpts` this week's projection. Names carry flags: `*` dropped recently, `!` game
+  started, `(R)` rookie.
+- MFL's `picker.js` draws the rows (`tr#add_<id>`, `tr#drop_<id>`); a click fills the hidden id and the
+  "To Add"/"To Drop" cells (`#add_name_field_id`, `#drop_name_field_id`), then
+  `picker_locked_check(...)` shows or hides the bid, group and comment rows (`#amt_field_id`,
+  `#round_field_id`, `#comments_field_id`) and the `FORCE_WAIVER` row.
+- After a submit MFL shows Add/Drop again, with no message; the claim appears in
+  `#waiver_request_list`.
+- Claims table (`#waiver_request_list`): Group, Add, Drop, Bid Amount, Action, Time Entered, Comments
+  (one cell per group). Action links, with a claim written `ROUND_ADDID_BID_DROPID`:
+  `add_drop?L=48571&F=0001&MOVE_UP=1_13308_1_16152`, `MOVE_DOWN=...`, `DELETE=...`,
+  `COPY_ROUND=1_13753_1_16619_2` (the last part is the target group), and Edit:
+  `options?L=48571&O=255&F=0001&ROUND=1`.
+
+**Edit a group (`options?O=255&ROUND=n`)**, one form posted to `options`: `form_name=editwr`,
+`LEAGUE_ID`, `O=255`, `ROUND`; per claim `amount_<i>` and `drop_<i>` (a select of the roster plus
+"None"); `applyall` (checkbox); `comment` (the group's one comment); `SAVE` / `CANCEL`.
+
+**`export?TYPE=pendingWaivers&L=48571&JSON=1`** (the logged-in owner's own claims):
+`{"pendingWaivers":{"blindBidWaiverRequest":{"round":"1","addsDrops":"13753_1_16619,13308_1_16152",
+"comments":"1 yearbr/2 years","timestamp":"..."}}}`: one entry per group (an object when there's
+one, presumably an array when more), claims in priority order as `ADD_BID_DROP`, and the comment
+with line breaks mangled to `br/`.
+
+**Chat:** the Main tab module `#league_chat` is drawn by `mfl_common.js`, which polls
+`fflnetdynamic2026/48571_chat.xml` every 5 seconds (it stops after about 2 hours without posting)
+and keeps `displayMessages + 1` rows (`displayMessages = 9` on the page). The feed holds only recent
+messages, private ones included (MFL hides them in the browser). The chat page
+`chat?L=48571&COUNT=40` holds about a season.
+
+**API (api_info):** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, ...) and `ROUND` but no
+comment; `messageBoard` (import) lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`);
+`salaries` (import) needs the commissioner's cookie.
+
+**League settings (`export?TYPE=league`):** `bbidConditional=Yes`, `maxWaiverRounds=8`,
+`bbidMinimum=1`, `bbidIncrement=1`, `bbidSeasonLimit=999999`, `currentWaiverType=BBID_FCFS`,
+`includeIRWithSalary=100`, `salaryCapAmount=300` (soft), `rosterSize=80`.
