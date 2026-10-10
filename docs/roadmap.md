@@ -56,7 +56,47 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 - **MFL's pages are restyled, not rebuilt,** by v2's stylesheet. Lineup, trades and IR stay MFL's
   pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's controls
   still work.
-- **Rebuilt:** Contracts, Moves, and Home.
+- **Rebuilt:** Home, League, Contracts and Moves. Home, League and Contracts are tabs of MFL's home
+  page (`home/48571`, the tab picked by the URL's `#`, found by its name), so moving between them
+  doesn't reload. Lineup goes to `lineup`, Moves to `add_drop`.
+- **Still open:** where More goes on phones (the bottom bar holds five tabs; a sixth tab or a top
+  button, not a swiping bar).
+
+### Performance
+
+Measured 10 Oct 2026 on v1, as a guest, on an emulated mid-range phone (slow 4G, 4× slower CPU):
+
+| | First paint | League Alerts and Contracts drawn |
+|---|---|---|
+| Home, first visit | 4.0 s | 7.6–8.0 s |
+| Home, returning visit | 0.5 s | 1.0 s |
+| Standings page, first visit / returning | 1.5 s / 0.3 s | – |
+
+- MFL builds its home page fast (14 KB in 0.3 s): its modules cost about 0.2 s over a bare page, so
+  rebuilding on the home page is cheap. First visits are slow because of MFL's own ~1 MB of scripts
+  and styles, which are cached after. The time that's ours is the data wait after MFL's page paints:
+  about 0.5 s on a returning visit.
+- Not yet measured logged in (chat and member modules) or on Add/Drop. The emulation likely left out
+  the first response's latency: real 4G adds roughly 0.3–0.5 s.
+
+Rules for v2:
+- **Readable within 1.5 s** for a returning member on a mid-range phone, checked against this
+  baseline.
+- **Each page fetches only what it shows,** in parallel.
+- **Cached for as long as it stays true:** players and the season calendar for a day, standings and
+  power rankings until the next results, rosters and transactions for a minute or two. Pages that
+  only display draw from the cache at once, then refresh.
+- **Checks always use fresh data:** Moves' cap and roster blocks never rely on cached rosters,
+  penalties or pending bids.
+- **No flash of MFL's page.** v2 draws its own frame (menu, title, placeholders) as soon as its code
+  starts, and from then on shows its own loading and error states. Until then, MFL's content stays
+  hidden for at most about 10 s (v2's files arrived by 4.6 s on a first visit); past that, MFL's page
+  shows, so a hung download never leaves a blank screen. Failures that come quickly fall back at once
+  through the version loader. During the beta, the handover hides the page behind a dark background
+  until v2's stylesheet applies; once v2 is in the header its stylesheet loads with the page.
+- **What v2 still pays for v1:** only what MFL builds (the home page modules v1 members use) and
+  v1's code download before the handover; none of v1's own code runs. The modules go when v1 is
+  retired.
 
 ### Contracts
 
@@ -165,6 +205,13 @@ is checked when proposing and the other team's side when they respond. Needs sav
   panel; the fallback is MFL's chat module, which holds only the latest few, restyled.
 - **Still to design:** the rest of Home: the member's cap and roster status, League Alerts, the
   week's matchup, recent league moves.
+
+### League
+
+Rebuilt, replacing the home page's Standings tab for v2 (the tab stays while v1 members use it):
+standings (MFL's `leagueStandings` export), this week's matchups (schedule and live scoring), and
+power rankings, which no export has: read from MFL's Power Rank page (`options?O=101`), so they match
+MFL's, cached until the next results. **Still to design.**
 
 ## Chores: automating commissioner work
 
