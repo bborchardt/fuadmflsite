@@ -13,9 +13,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
     the page behaves as it does while the free agent window is open
   - the chat page (`chat?L=48571&COUNT=40`): its layout at phone width, and that it hides other
     teams' private messages
-  - the trade pages (propose, respond) and the IR page, for Moves › Trades and Moves › IR
-  - the address of MFL's member ↔ commissioner switch (upper right when logged in), for the team
-    sheet's toggle
 - Consider telling the league: in v1 today, reordering blind bids (MFL's Move Up/Down) doesn't
   reorder the group's comment, so bare lengths ("1 year", one per line) end up on the wrong players.
   Naming the player ("Akins: 1 year") is safe.
@@ -338,7 +335,7 @@ A small public league-history site (records, champions, bylaws), only after v2 i
 
 ## Reference: MFL details gathered for v2
 
-From pages the commissioner saved on 10 Oct 2026 (2026 site, logged in). Moves into master's
+From pages the commissioner saved on 10 Oct 2026 (2026 site, logged in as 0001). Moves into master's
 `docs/mfl.md` when v2 starts; the saved pages themselves aren't kept.
 
 **Add/Drop (`add_drop?L=48571`)**, one form posted to `add_drop`:
@@ -381,6 +378,28 @@ messages, private ones included (MFL hides them in the browser). The chat page
 **API (api_info):** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, ...) and `ROUND` but no
 comment; `messageBoard` (import) lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`);
 `salaries` (import) needs the commissioner's cookie.
+
+**IR (`options?L=48571&O=18`)**, one form posted to `ir`: `LEAGUE_ID`, `FRANCHISE_ID`; per player
+checkboxes `deactivate<franchise>` (to IR), `activate<franchise>` (from IR) and `drop<franchise>`
+(value: player id), all in one submit ("Perform Injured Reserve"), so an activation and a drop go
+together. Two tables: "Select Players To Deactivate/Drop" (active players, with Starter?) and
+"Select Players To Activate" (IR players). MFL itself refuses ineligible players ("Can not be
+deactivated" instead of a checkbox) and marks players whose game has started "Locked".
+
+**Trades (`options?L=48571&O=05`):** "Trades Offered By You", "Trades Offered To You", and a
+"Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
+proposal page.
+- Propose: one form posted to `trade_offer`: `LEAGUE_ID`, `FRANCHISE_ID` (`0001,0002`: both teams),
+  `input_expires`, checkboxes `drop<franchise>` per side whose value is a player id or a future pick
+  (`FP_<owner>_<year>_<round>`, "Year 2027 Round 1 Draft Pick from …"), `TRADE_EXPIRES_MONTH`, `_DAY`,
+  `_TIME`, `_YEAR`, `msg`, and `Propose` ("Propose Trade").
+- Respond: per offer, a form posted to `trade_response`: `LEAGUE_ID`, `TRADE_ID`, radio `ACTION`
+  (`accept`, `counter_proposal`, `reject`), `COMMENTS`, submit "Respond To Trade Offer" (off until a
+  choice is made; accept asks to confirm). The offer row shows date, each side's players and picks,
+  expiry, and "Compare Players".
+
+**Commissioner switch:** MFL's menu has "Become Commissioner", `logout?L=48571&BECOME=0000`, when the
+commissioner is logged in as a team; presumably `BECOME=<team>` the other way, not yet seen.
 
 **League settings (`export?TYPE=league`):** `bbidConditional=Yes`, `maxWaiverRounds=8`,
 `bbidMinimum=1`, `bbidIncrement=1`, `bbidSeasonLimit=999999`, `currentWaiverType=BBID_FCFS`,
