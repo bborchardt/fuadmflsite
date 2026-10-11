@@ -339,7 +339,10 @@ My alerts and where they go:
 ### League
 
 Rebuilt, replacing the home page's Standings tab for v2 (the tab stays while v1 members use it).
-Views: **Scores · Standings · Power.** Designed (phone): the canvas's row 7.
+Views: **Scores · Standings · Power.** Designed (phone and desktop): the canvas's row 7. On desktop
+the cards sit in a two-column grid with the open game across both, its lineups as two halves (points
+beside each name); Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
+PA, Strk) beside the Playoff picture; Power puts the rankings beside the position chart.
 - **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
   the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
   both lineups side by side (each starter's points and game state: Final, "Playing · Q3" in lime, or
@@ -355,7 +358,9 @@ Views: **Scores · Standings · Power.** Designed (phone): the canvas's row 7.
   why ("West winner", "24-11-1 all-play"); "In the hunt" lists the rest with all-play games back of
   seed 6. Links to MFL's bracket.
 - **Power:** MFL's power rankings (score, bar, all-play record), read from MFL's Power Rank page
-  (`options?O=101`) since no export has them, cached until the next results; then **Starter points
+  (`options?O=101`) since no export has them, cached until the next results; clicking a team shows
+  what that page lists for it (points for and possible, efficiency, bench points, high and low score,
+  all-play, coulda won / woulda lost, alternate rank), not a formula, which MFL doesn't show; then **Starter points
   by position**, a stacked bar per team (QB, RB, WR, TE, PK; its points for), open by default
   (collapsible). The data is in the home page's module as FusionCharts XML (`positionXML`); an export
   source is to find (`playerScores` by starter, summed, is the fallback). Position colors are the
