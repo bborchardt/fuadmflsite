@@ -167,6 +167,22 @@ canvas's row 8; Teams is the cap ledger (row 4).
   original team in orange, from `futureDraftPicks` ("Round 1 → Not 100% A Dick"). Not accounted for, since
   they haven't happened in a decade: losses that don't count (13.2) and unpaid teams' wins (14.2).
   The same order breaks offseason blind-bid ties (5.3).
+  **Over one league site's life** (the 2027 site as the example; headings put the year first; the
+  rookie scale is static, shown in every phase without a year or explanation; tag prices only,
+  never who is tagged, since tags are made on draft day and show up in the rosters after):
+  1. **Site opens → the draft** (mid-March → August): 2027 franchise tags (fixed prices), the 2027
+     draft board (picks by round, owners, "from …" for traded picks, all empty, from this site's
+     `draftResults`), the rookie scale.
+  2. **After the draft → week 1 final:** the 2027 rookie draft (results). The draft is offline; the
+     commissioner enters the picks and contracts the next day, so drafted players appearing in
+     `draftResults` is the switch from board to results. No tags.
+  3. **Week 1 → trade deadline:** 2028 franchise tags (live), 2028 draft order ("If the season ended
+     today"), the scale, the 2027 rookie draft.
+  4. **Deadline → end of the regular season:** the same, with tag prices fixed.
+  5. **Playoffs:** picks 5–10 get their numbers as games end.
+  6. **After the season → the 2028 site opens:** the order final, its label gone.
+  Open: where phase 1's tag prices come from (they're from the previous year's deadline salaries,
+  on the old site): a copy the daily job saves at the deadline, or the old site's final rosters.
 
 From the Contracts design (canvas row 4):
 - **The cap ledger:** every team's cap room for this season and the next four, sorted by room now.
