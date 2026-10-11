@@ -141,12 +141,15 @@ Rules for v2:
 
 Views: **My team · Teams · Players · Draft.** My team, Players and Draft are designed (phone): the
 canvas's row 8; Teams is the cap ledger (row 4).
-**Desktop (draft, row 8, under review):** My team is the roster as one table grouped by position
-(Player, NFL, Bye, Pts, Salary, Years, then each later season's salary), a row opening in place to
-the cut penalty, room now → after, Player details and Drop; beside it a rail with cap room, active
-count, room by season, this season's penalties (listed, no tap) and draft picks. Teams is the
-ledger as a table (room now with a bar, penalties, room each later season, roster count); a team
-opens its roster in the same table with "Propose a trade". Players is one table (Player, Pos, NFL,
+**Desktop (row 8, under review):** My team, top to bottom, all full width: the cap panel (cap
+room now, active and IR, room by season, then this season's penalties, listed in columns that fill
+across before they grow down); the roster table grouped by position ("QB · 6 · $150" on each group's
+line), with Player, NFL, Bye, Pts, Salary, Years, Cut penalty and Room after cut, no clicks: the
+name opens MFL's player details in one click, and dropping is done in Moves; then two panels, one
+per draft year, listing each round's pick (2027 numbered where today's order decides it, "from …"
+in orange, "Traded to …" greyed). Teams is the ledger as a table (room now with a bar, penalties,
+room each later season, roster count); a team opens in My team's layout with "Propose a trade".
+Players is one table (Player, Pos, NFL,
 Team, Pts, Salary, Years) under the filter chips. Draft is two columns: tags and the order (or your
 picks), then last draft's results (or the board) and the rookie scale, open.
 - **My team** (the default): cap room now (orange under $10; salaries plus penalties of $300), active
