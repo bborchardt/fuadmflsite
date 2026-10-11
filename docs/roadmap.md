@@ -55,6 +55,9 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 - **Five sections on every page:** Home · Lineup · Moves · League · Rosters. Bottom tabs on phones, a
   top bar on desktop. A section's views sit in a row across the top (a segmented control; a row of
   chips that scrolls sideways if more than about four), on rebuilt and MFL pages alike.
+- **No page titles:** the lit section already says where you are. Phones show the FUAD wordmark with a
+  context line ("Week 5") and the team button; desktop shows only the top bar. (The live frame's phone
+  title, `.fuad-title`, goes when v2 is built.)
 - **The team button** (top right, the team's initials) opens a sheet with everything else, so
   "nothing gets hidden" becomes "nothing becomes unreachable" (below).
 - **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR, Recent and the
@@ -298,7 +301,7 @@ MFL's lock clearly.
 ### Home
 
 Rebuilt, one page, top to bottom (on desktop, the canvas's row 6: My alerts, League alerts and the
-Message board on the left; Chat, Coming up and Recent moves on the right, so a quiet alerts week
+Message board on the left; Chat, Recent moves and Coming up on the right, so a quiet alerts week
 doesn't leave the left column short):
 1. **My alerts:** the member's own, each one tappable to the page that fixes it; a quiet "All clear"
    when empty.
