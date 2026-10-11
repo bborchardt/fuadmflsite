@@ -159,10 +159,10 @@ canvas's row 8; Teams is the cap ledger (row 4).
   round 1 open: each pick's team, player and salary today (— once released), from `draftResults`.
   The 2026 rookies signed under the old rules; the scale applies from the 2027 draft.
   **Next year's draft order** (bylaws 8.1–8.2: worst to first, the same order every round): picks
-  1–6 the non-playoff teams, worst first by the league-wide standings sort (the playoff picture's);
-  picks 7–12 by playoff finish: the two first-round losers by seed (the lower seed first), then the
+  1–4 the non-playoff teams, worst first by the league-wide standings sort (the playoff picture's);
+  picks 5–10 by playoff finish: the two first-round losers by seed (the lower seed first), then the
   3rd-place game's loser and winner, the runner-up, the champion. In season it reads "if the season
-  ended today", with the current seeds standing in for picks 7–12, marked as decided by the
+  ended today", with the current seeds standing in for picks 5–10, marked as decided by the
   playoffs; each playoff pick fills in as its game ends. Each pick shows its owner from
   `futureDraftPicks` ("from …" when traded) and its rookie-scale salary. Not accounted for, since
   they haven't happened in a decade: losses that don't count (13.2) and unpaid teams' wins (14.2).
