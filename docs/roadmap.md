@@ -297,7 +297,9 @@ MFL's lock clearly.
 
 ### Home
 
-Rebuilt, one page, top to bottom (on desktop, alerts on the left; chat and the board on the right):
+Rebuilt, one page, top to bottom (on desktop, the canvas's row 6: My alerts, League alerts and the
+Message board on the left; Chat, Coming up and Recent moves on the right, so a quiet alerts week
+doesn't leave the left column short):
 1. **My alerts:** the member's own, each one tappable to the page that fixes it; a quiet "All clear"
    when empty.
 2. **League alerts:** every other team's (tap: that team in Rosters › Teams).
@@ -329,7 +331,7 @@ My alerts and where they go:
 | A trade offer waiting for an answer | Moves › Trades |
 | Over the cap or 30 active from an add or trade: "the commissioner will reverse it" | not tappable |
 
-**Designed (phone):** the canvas's row 6, "Home · phone". **Still to design:** Home on desktop.
+**Designed:** phone and desktop, the canvas's row 6.
 
 ### League
 
