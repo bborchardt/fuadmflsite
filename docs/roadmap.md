@@ -156,8 +156,9 @@ From the Contracts design (canvas row 4):
 
 Views: **Add/Drop · Trades · IR · Recent.**
 - **Trades:** below.
-- **IR:** MFL's IR page, restyled, with checks: activating a player at 30 active needs a drop, offered
-  with it and its penalty shown; only players the NFL lists on IR can go on.
+- **IR:** MFL's IR page, restyled, with a check: activating a player at 30 active needs a drop, offered
+  with it and its penalty shown (MFL takes both in one submit). MFL already refuses players the NFL
+  doesn't list on IR.
 - **Recent:** MFL's transactions page (`options?O=03`), restyled, with the processed blind bids
   (`processed_waivers`: who won and lost, and for how much).
 
