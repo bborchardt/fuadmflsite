@@ -37,6 +37,7 @@ body,
 body.full-width {
     background: var(--ng-bg) none;
     color: var(--ng-text);
+    box-shadow: none;
 }
 
 /* the page column, sized here so the frame lines up with it whatever the skin */
@@ -46,8 +47,10 @@ body .pagebody {
     max-width: 1240px;
     margin: 0 auto;
     padding: 0 16px 16px;
-    background: transparent none;
+    /* about half of MFL's skins set it with !important */
+    background: transparent none !important;
     border: 0;
+    border-radius: 0;
     box-shadow: none;
 }
 
@@ -196,6 +199,7 @@ body #monthly_calendar {
     border-spacing: 0;
     padding: 0;
     box-shadow: none;
+    color: var(--ng-text);
 }
 
 body div.mobile-wrap .report { border-radius: 0; }
@@ -215,6 +219,9 @@ body .homepagecolumn .homepagemodule caption {
     padding: 14px 16px 10px;
     margin-bottom: 0;
     box-shadow: none;
+    text-align: left;
+    text-transform: uppercase;
+    font-style: normal;
 }
 
 /* some skins put a logo in each heading */
@@ -238,6 +245,8 @@ body .eventablerow th {
     border-bottom: 1px solid var(--ng-line);
     font-size: 12px;
     font-weight: 600;
+    font-style: normal;
+    text-transform: uppercase;
     letter-spacing: 0.04em;
     padding: 8px 10px;
 }
@@ -270,7 +279,9 @@ body .eventablerow:last-child td { border-bottom: 0; }
 body .oddtablerow a:link,
 body .oddtablerow a:visited,
 body .eventablerow a:link,
-body .eventablerow a:visited { color: var(--ng-text); }
+body .eventablerow a:visited { color: var(--ng-text); background: transparent none; }
+
+body .report td a { background: transparent none; }
 
 body .oddtablerow a,
 body .eventablerow a {
@@ -285,6 +296,10 @@ body .newposition td,
 body .newposition th { border-top: 1px solid var(--ng-line) !important; }
 
 body tr.myfranchise { background: var(--ng-raised); }
+
+/* skins color this list's plain names (the commissioner's) with id rules */
+body #owner_activity td,
+body #owner_activity td.franchisename { color: var(--ng-text); }
 
 body a.myfranchise,
 body a.myfranchise:link,
