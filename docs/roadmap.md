@@ -168,9 +168,14 @@ From the Contracts design (canvas row 4):
 
 Views: **Add/Drop · Trades · IR · Recent.**
 - **Trades:** below.
-- **IR:** MFL's IR page, restyled, with a check: activating a player at 30 active needs a drop, offered
-  with it and its penalty shown (MFL takes both in one submit). MFL already refuses players the NFL
-  doesn't list on IR.
+- **IR** (designed, phone: the canvas's row 10): "Can go on IR" lists the member's active players the
+  NFL lists on IR (injury, expected return; injuries export), "On your IR" the rest, each with a
+  checkbox (Move to IR, Activate). When activating would make 31 active, "Pick a drop" lists all 30
+  active players in a box that scrolls inside itself, lowest penalty first, each with its penalty and
+  net room change. A bar shows active and cap used live and blocks over 30 active or a drop whose
+  penalty breaks the cap; Save is MFL's one submit (`ir`: deactivate, activate and drop together). A
+  player the NFL no longer lists on IR "must come off IR" (bylaw 11.1): a notice, preselected, and
+  saving blocked until he's activated. MFL itself refuses players the NFL doesn't list on IR.
 - **Recent:** MFL's transactions page (`options?O=03`), restyled, with the processed blind bids
   (`processed_waivers`: who won and lost, and for how much).
 
