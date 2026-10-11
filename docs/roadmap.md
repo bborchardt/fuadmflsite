@@ -162,7 +162,7 @@ canvas's row 8; Teams is the cap ledger (row 4).
   1–4 the non-playoff teams, worst first by the league-wide standings sort (the playoff picture's);
   picks 5–10 by playoff finish: the two first-round losers by seed (the lower seed first), then the
   3rd-place game's loser and winner, the runner-up, the champion. In season it reads "if the season
-  ended today", with the current seeds standing in for picks 5–10, marked as decided by the
+  ended today", with the current seeds standing in for picks 5–10, marked as decided in the
   playoffs; each playoff pick fills in as its game ends. Traded picks show under the
   original team in orange, from `futureDraftPicks` ("Round 1 → Not 100% A Dick"). Not accounted for, since
   they haven't happened in a decade: losses that don't count (13.2) and unpaid teams' wins (14.2).
