@@ -287,8 +287,7 @@ their forms.
 MFL's lineup page, restyled, no views. Warnings, not blocks (injury statuses change up to kickoff,
 and MFL's report can lag): a starter who is injured (IR or Out), suspended, or on a bye, named with
 the rule (bylaw 13.2: such a loss doesn't count toward draft order; its exceptions noted), or an empty
-slot. v1's League Alerts doesn't flag bye-week starters yet: a fix in place, when the commissioner
-wants it. Players whose game has started show
+slot. (v1 doesn't flag byes; v1 gets no more fixes, so this comes with v2.) Players whose game has started show
 MFL's lock clearly.
 
 ### Home
