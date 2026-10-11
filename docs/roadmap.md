@@ -83,7 +83,7 @@ The map:
 | **Home** | one page: My alerts, League alerts, Chat, Message board, Recent moves (undecided), Coming up |
 | **Lineup** | one page: MFL's lineup, restyled, with warnings |
 | **Moves** | Add/Drop · Trades · IR · Recent |
-| **League** | Scores · Standings · Power |
+| **League** | Scores · Standings · Power · Winners |
 | **Rosters** | My team · Teams · Players · Draft |
 
 **The team sheet** (slides up on phones, a panel on desktop):
@@ -348,7 +348,7 @@ My alerts and where they go:
 ### League
 
 Rebuilt, replacing the home page's Standings tab for v2 (the tab stays while v1 members use it).
-Views: **Scores · Standings · Power.** Designed (phone and desktop): the canvas's row 7. On desktop
+Views: **Scores · Standings · Power · Winners.** Designed (phone and desktop): the canvas's row 7. On desktop
 the cards sit in a two-column grid, each a "tug of war": the two scores face off (projections under
 them), a split bar across the card shows the win chance, and live, each side has chips for playing,
 to play and minutes left; final weeks say Final instead. An opened game moves to the top, across both
@@ -400,6 +400,17 @@ their reasons and no hunt list, while Scores carries the playoff games.
   (collapsible on phones, always open on desktop). The data is in the home page's module as FusionCharts XML (`positionXML`); an export
   source is to find (`playerScores` by starter, summed, is the fallback). Position colors are the
   validated dark categorical slots (blue, orange, aqua, yellow, magenta).
+- **Winners** (bylaws 1.6–1.8; designed phone and desktop, canvas row 7): **Playoff prizes** "if
+  the season ended today" (1st 55%, 2nd 30%, 3rd 15% of what's left), then **The pot**: the pot
+  (tap for its entries), minus the weekly prizes (all 14 weeks × $15, known up front), minus all-play
+  paid so far, leaving the playoff pot; then **Won so far**, a row per team: weeks won, weekly $,
+  all-play record, all-play $, total, sorted by total. The pot is the league-wide (0000) entries in
+  MFL's `accounting` export (entry fees in; site fee and recruiting bounties out), or 10 × the entry
+  fee when there are none. Weekly winners come from the scores, not the accounting (which may lag);
+  a tie splits the $15. All-play pays $0.75 × (wins − losses), never below $0, and comes out of the
+  pot before the playoff split, so the prizes shrink as the season goes on. The accounting export
+  is readable without logging in. On desktop, the prizes and the pot side by side above a
+  full-width table.
 
 ## Chores: automating commissioner work
 
