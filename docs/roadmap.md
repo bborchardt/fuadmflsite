@@ -155,9 +155,18 @@ canvas's row 8; Teams is the cap ledger (row 4).
   member's own highlighted.
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
   averages; live until the trade deadline, then fixed), the rookie scale for the next draft (picks
-  1–10), and **this year's rookie draft** (each league site shows its own year's), by round with
+  1–10), **next year's draft order** (below), and **this year's rookie draft** (each league site shows its own year's), by round with
   round 1 open: each pick's team, player and salary today (— once released), from `draftResults`.
   The 2026 rookies signed under the old rules; the scale applies from the 2027 draft.
+  **Next year's draft order** (bylaws 8.1–8.2: worst to first, the same order every round): picks
+  1–6 the non-playoff teams, worst first by the league-wide standings sort (the playoff picture's);
+  picks 7–12 by playoff finish: the two first-round losers by seed (the lower seed first), then the
+  3rd-place game's loser and winner, the runner-up, the champion. In season it reads "if the season
+  ended today", with the current seeds standing in for picks 7–12, marked as decided by the
+  playoffs; each playoff pick fills in as its game ends. Each pick shows its owner from
+  `futureDraftPicks` ("from …" when traded) and its rookie-scale salary. Not accounted for, since
+  they haven't happened in a decade: losses that don't count (13.2) and unpaid teams' wins (14.2).
+  The same order breaks offseason blind-bid ties (5.3).
 
 From the Contracts design (canvas row 4):
 - **The cap ledger:** every team's cap room for this season and the next four, sorted by room now.
@@ -500,7 +509,7 @@ kickoff, per MFL's help); trade comments aren't shown to everyone; picks tradabl
 date to season's end, none in the offseason (2.4–2.5); violations voided by the commissioner (2.6,
 with exceptions); bids that could exceed the cap void all that owner's bids (5.5); free agent pickups
 cost $1 (5.7); trades 10.1–10.5 (above); IR doesn't count toward the roster limit (11.2); tanking
-includes byes (13.2); playoff seeding (League, above).
+includes byes (13.2); playoff seeding (League, above); rookie draft order (8.1–8.2, Rosters above).
 
 **League settings (`export?TYPE=league`):** `bbidConditional=Yes`, `maxWaiverRounds=8`,
 `bbidMinimum=1`, `bbidIncrement=1`, `bbidSeasonLimit=999999`, `currentWaiverType=BBID_FCFS`,
