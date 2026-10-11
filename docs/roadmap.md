@@ -11,6 +11,8 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
+- Update bylaw 8.3 to the new rookie salary rule (fixed first-pick baselines, ×0.8 per pick), which
+  applies from the 2027 draft; it still describes the old baselines from last year's salaries.
 - Consider telling the league: in v1 today, reordering blind bids (MFL's Move Up/Down) doesn't
   reorder the group's comment, so bare lengths ("1 year", one per line) end up on the wrong players.
   Naming the player ("Akins: 1 year") is safe.
@@ -253,19 +255,40 @@ the member's own pending bids before Wednesday night (for bids made anywhere, in
 pages, the classic site and MFL's app, which our controls can't reach); the daily job and the
 commissioner void over-cap moves after waivers run, as today.
 
-### Trades (Moves › Trades, to design)
+### Trades (Moves › Trades)
 
-Same principle as Moves: MFL's trade pages, restyled, with v2 controls that block a proposal or an
-acceptance that would put a team over the cap or 30 active, counting the member's own pending bids.
-A member can see only their own pending bids (`pendingWaivers` is per owner), so the proposer's side
-is checked when proposing and the other team's side when they respond. Pending trades (today on
-the home page's Main tab) show here. Needs saved trade pages (propose, respond) to see MFL's forms.
+Designed (phone): the canvas's row 9. MFL's trade pages (Reference) drive it; v2's own screens fill
+their forms.
+- **The Trades view:** offers to the member (each with what moves, its effect on the member's cap and
+  roster, and Accept / Counter / Reject with a comment), the member's own offers, and "Propose a
+  trade" (each team with its cap room) with the trade deadline above it.
+- **Proposing, in three steps, each with complete lists:** You give (the member's whole roster by
+  position, IR tagged, then picks), You get (theirs), Review. A bar on every step shows the live effect
+  on both teams (cap used, active), so a problem shows while picking.
+- **What's blocked and what isn't (bylaws):** a trade that puts either team over the cap is void (10.3),
+  so it's blocked. A trade may take a team over or under the roster limits (10.5): allowed, with a
+  notice that the team must comply within 12 hours, before the next NFL game, or by the next blind-bid
+  deadline, whichever comes first, and that MFL won't take its lineup until then (league setting). A
+  trade that would let the member's pending bids exceed the cap gets a warning: those bids would be
+  voided (5.5); lower them first. Only an owner sees their own pending bids, so the proposer's are
+  checked when proposing and the other team's when answering.
+- **Expiry:** MFL's date and hour, defaulting to the league's 7 days, with quick choices that fill it
+  in (before Sunday's games, before Thursday's game, in 7 days); a note when it stays open through
+  game time.
+- **Near kickoff:** MFL refuses accepting a trade with a player whose game has started, until 4 hours
+  after the week's last kickoff (league setting on); the offer card says so and when it reopens.
+  Accepting shortly before a traded player's kickoff isn't against the rules, so v2 warns ("games
+  start in 40 minutes; both lineups need fixing"); a block would need a new bylaw.
+- **Deadline (10.1):** the kickoff of week 12's first game (2026: Wed Nov 25, 7:00 p.m. CT); proposing
+  closes after it until the offseason. Picks tradable for the next two drafts, rounds 1–5.
 
 ### Lineup
 
 MFL's lineup page, restyled, no views. Warnings, not blocks (injury statuses change up to kickoff,
-and MFL's report can lag): a starter who is injured (IR or Out) or suspended in weeks 1–14, named with
-the rule; a starter on a bye or with no game, or an empty slot. Players whose game has started show
+and MFL's report can lag): a starter who is injured (IR or Out), suspended, or on a bye, named with
+the rule (bylaw 13.2: such a loss doesn't count toward draft order; its exceptions noted), or an empty
+slot. v1's League Alerts doesn't flag bye-week starters yet: a fix in place, when the commissioner
+wants it. Players whose game has started show
 MFL's lock clearly.
 
 ### Home
@@ -426,6 +449,18 @@ proposal page.
 
 **Commissioner switch:** MFL's menu has "Become Commissioner", `logout?L=48571&BECOME=0000`, when the
 commissioner is logged in as a team; presumably `BECOME=<team>` the other way, not yet seen.
+
+**Trades setup** (commissioner page, 2026): accepted trades process immediately; trades that create
+invalid rosters go through, and that team can't submit a lineup until fixed; owners can't accept a
+trade with a player whose game has kicked off until the week's games end (4 hours after the last
+kickoff, per MFL's help); trade comments aren't shown to everyone; picks tradable 2 years out, rounds
+1–5; no trading of blind-bid dollars; proposals expire after 7 days by default.
+
+**Bylaws** (`options?L=48571&O=26`) the redesign relies on: roster 23–30 from the final cut-down
+date to season's end, none in the offseason (2.4–2.5); violations voided by the commissioner (2.6,
+with exceptions); bids that could exceed the cap void all that owner's bids (5.5); free agent pickups
+cost $1 (5.7); trades 10.1–10.5 (above); IR doesn't count toward the roster limit (11.2); tanking
+includes byes (13.2); playoff seeding (League, above).
 
 **League settings (`export?TYPE=league`):** `bbidConditional=Yes`, `maxWaiverRounds=8`,
 `bbidMinimum=1`, `bbidIncrement=1`, `bbidSeasonLimit=999999`, `currentWaiverType=BBID_FCFS`,
