@@ -60,8 +60,8 @@ export function decide({here, versionHere, params, preview, beta, offer, offered
         preview = null;
     }
     // a beta that's over, promoted or replaced by another is forgotten; one offered only to other
-    // teams is kept, so the commissioner can switch to 0000 and back without opting in again
-    // undefined from an older fuad.js still cached: judge by this viewer's offer, as before
+    // teams is kept, so the commissioner can switch to 0000 and back without opting in again.
+    // `offered` is undefined from an older fuad.js still cached: judge by this viewer's offer.
     const kept = offered === undefined ? offer && offer.version : offered;
     if (beta && beta !== kept) {
         beta = null;

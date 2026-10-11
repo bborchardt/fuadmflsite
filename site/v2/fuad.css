@@ -645,7 +645,10 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 /* the team sheet: slides up on phones, a panel at the right on desktop */
 .fuad-sheet {
     position: fixed;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 10001;
     background: rgba(0, 0, 0, 0.6);
     display: flex;
