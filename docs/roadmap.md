@@ -343,7 +343,10 @@ Views: **Scores · Standings · Power.** Designed (phone and desktop): the canva
 the cards sit in a two-column grid, each a "tug of war": the two scores face off (projections under
 them), a split bar across the card shows the win chance, and live, each side has chips for playing,
 to play and minutes left; final weeks say Final instead. An opened game moves to the top, across both
-columns, its lineups as two halves (points beside each name). On phones a card opens in place; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
+columns, its lineups as two halves (points beside each name), then "Show bench · 22 players, 41.3
+pts" (off by default on both, the bench listed highest-scoring first; the export includes
+non-starters). No link to MFL's live scoring page; it stays reachable from the team sheet. On phones
+a card opens in place; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
 PA, Strk) beside the Playoff picture; Power puts the rankings beside the position chart.
 - **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
   the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
