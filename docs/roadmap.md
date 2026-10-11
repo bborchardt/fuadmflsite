@@ -346,11 +346,12 @@ to play and minutes left; final weeks say Final instead. An opened game moves to
 columns, its lineups as two halves (points beside each name), then "Show bench" (off by default on both, the bench listed highest-scoring first; the export includes
 non-starters). No link to MFL's live scoring page; it stays reachable from the team sheet. Phones
 use the same tug of war, smaller (names cut short, scores at 30 px, the bar across, and playing / to
-play / minutes as one small line per side), and a card opens in place; its lineups stay side by side,
-slot by slot: your player, his points, the position in a narrow center column, theirs mirrored
-(players as "R. Stevenson", first initial and last name; the stat line wrapping under each name; the
-projection as a bare small number under the points). No team labels over the lineups: the face-off
-above names both teams.
+play / minutes as one small line per side), and a card opens in place; its lineups stay side by side:
+ten starters a side (QB 1–2, RB 1–3, WR 2–5, TE 1–3, PK 1; league `starters`), each side in position
+order and paired by order, since flex spots let the two teams' shapes differ. Players as
+"R. Stevenson" (first initial, last name; full names on desktop), with a grey line under each that
+leads with the position ("QB · Final · 21/30, 248 yds, 2 TD") and wraps; the projection as a bare
+small number under the points. No team labels over the lineups: the face-off above names both teams.
 **Names on phones:** designed for 360 px, checked at 320, 360, 390 and 430 before shipping; team and
 player names wrap (up to two lines) where they identify something, and are cut with "…" only in
 dense tables whose row opens the full name; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
