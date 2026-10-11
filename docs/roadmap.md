@@ -170,9 +170,11 @@ canvas's row 8; Teams is the cap ledger (row 4).
   **Over one league site's life** (the 2027 site as the example; headings put the year first; the
   rookie scale is static, shown in every phase without a year or explanation; tag prices only,
   never who is tagged, since tags are made on draft day and show up in the rosters after):
-  1. **Site opens → the draft** (mid-March → August): 2027 franchise tags (fixed prices), the 2027
-     draft board (picks by round, owners, "from …" for traded picks, all empty, from this site's
-     `draftResults`), the rookie scale.
+  1. **Site opens → the draft** (mid-March → August): 2027 franchise tags (fixed prices), **Your
+     2027 picks** (each with what the scale pays at that overall pick, "QB $5 · RB $8 · WR $8 ·
+     TE $3 · PK $1", or "$1 at every position" from pick 11 on; "from …" for traded ones), then the
+     whole 2027 draft board (picks by round, owners, "from …", all empty, from this site's
+     `draftResults`, rounds closed), the rookie scale.
   2. **After the draft → week 1 final:** the 2027 rookie draft (results). The draft is offline; the
      commissioner enters the picks and contracts the next day, so drafted players appearing in
      `draftResults` is the switch from board to results. No tags.
@@ -183,10 +185,10 @@ canvas's row 8; Teams is the cap ledger (row 4).
   6. **After the season → the 2028 site opens:** the order final, its label gone.
   **On phones, short by phase:** franchise tags are one row of five prices (tap one for its top 5);
   the rookie scale closes to "Pick 1: QB $6 · RB $10 · WR $10 · TE $4 · PK $1" (tap for the table),
-  open only in phase 1; last summer's draft results have every round closed in season; the order or
+  in every phase; last summer's draft results have every round closed in season; the order or
   board stays open. Canvas row 8 has both: in season (Rosters › Draft) and phase 1 (beside it).
-  Open: where phase 1's tag prices come from (they're from the previous year's deadline salaries,
-  on the old site): a copy the daily job saves at the deadline, or the old site's final rosters.
+  Phase 1's tag prices come from the previous year's deadline salaries, on the old site: the daily
+  job saves the five prices when the trade deadline passes, and the new site reads that copy.
 
 From the Contracts design (canvas row 4):
 - **The cap ledger:** every team's cap room for this season and the next four, sorted by room now.
