@@ -347,8 +347,10 @@ columns, its lineups as two halves (points beside each name), then "Show bench" 
 non-starters). No link to MFL's live scoring page; it stays reachable from the team sheet. Phones
 use the same tug of war, smaller (names cut short, scores at 30 px, the bar across, and playing / to
 play / minutes as one small line per side), and a card opens in place; its lineups stay side by side,
-slot by slot, with players as "R. Stevenson" (first initial, last name) behind a small position tag,
-the stat line wrapping under each name, and the projection as a bare small number under the points.
+slot by slot: your player, his points, the position in a narrow center column, theirs mirrored
+(players as "R. Stevenson", first initial and last name; the stat line wrapping under each name; the
+projection as a bare small number under the points). No team labels over the lineups: the face-off
+above names both teams.
 **Names on phones:** designed for 360 px, checked at 320, 360, 390 and 430 before shipping; team and
 player names wrap (up to two lines) where they identify something, and are cut with "…" only in
 dense tables whose row opens the full name; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
