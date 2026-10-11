@@ -137,7 +137,8 @@ Rules for v2:
 Views: **My team · Teams · Players · Draft.** My team, Players and Draft are designed (phone): the
 canvas's row 8; Teams is the cap ledger (row 4).
 - **My team** (the default): cap room now (orange under $10; salaries plus penalties of $300), active
-  of 30 and IR, and room for this season and the next four; the roster by position, each player with
+  of 30 and IR, "Penalties this season" expanding to where each came from (`salaryAdjustments`:
+  the player cut, his contract then, the amount and date), and room for this season and the next four; the roster by position, each player with
   salary, years left (orange "expiring" at 1), NFL team, bye (`nflByeWeeks`) and YTD points
   (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the cut panel: penalty, room now,
   room after (green if higher, red if lower), "Player details" (MFL's popup) and "Drop" (to Moves ›
@@ -149,9 +150,9 @@ canvas's row 8; Teams is the cap ledger (row 4).
   member's own highlighted.
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
   averages; live until the trade deadline, then fixed), the rookie scale for the next draft (picks
-  1–10; $1 from pick 11), and **one rookie draft panel: this year's draft**, its order with players
-  filled in once picked (`draftResults`), switching to next year's after the season. The 2026
-  rookies signed under the old rules; the scale applies from the 2027 draft.
+  1–10), and **this year's rookie draft** (each league site shows its own year's), by round with
+  round 1 open: each pick's team, player and salary today (— once released), from `draftResults`.
+  The 2026 rookies signed under the old rules; the scale applies from the 2027 draft.
 
 From the Contracts design (canvas row 4):
 - **The cap ledger:** every team's cap room for this season and the next four, sorted by room now.
