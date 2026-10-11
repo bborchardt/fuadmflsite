@@ -183,6 +183,8 @@ canvas's row 8; Teams is the cap ledger (row 4).
   4. **Deadline → end of the regular season:** the same, with tag prices fixed.
   5. **Playoffs:** picks 5–10 get their numbers as games end.
   6. **After the season → the 2028 site opens:** the order final, its label gone.
+  **Same layout in every phase:** franchise tags, then your picks (before the draft) or next year's
+  order (in season), then the board or last draft's results, the rookie scale always last.
   **On phones, short by phase:** franchise tags are one row of five prices (tap one for its top 5);
   the rookie scale closes to "Pick 1: QB $6 · RB $10 · WR $10 · TE $4 · PK $1" (tap for the table),
   in every phase; last summer's draft results have every round closed in season; the order or
