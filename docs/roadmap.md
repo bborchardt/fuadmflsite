@@ -344,8 +344,9 @@ the cards sit in a two-column grid, each a "tug of war": the two scores face off
 them), a split bar across the card shows the win chance, and live, each side has chips for playing,
 to play and minutes left; final weeks say Final instead. An opened game moves to the top, across both
 columns, its lineups as two halves (points beside each name), then "Show bench" (off by default on both, the bench listed highest-scoring first; the export includes
-non-starters). No link to MFL's live scoring page; it stays reachable from the team sheet. On phones
-a card opens in place; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
+non-starters). No link to MFL's live scoring page; it stays reachable from the team sheet. Phones
+use the same tug of war, smaller (names cut short, scores at 30 px, the bar across, and playing / to
+play / minutes as one small line per side), and a card opens in place; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
 PA, Strk) beside the Playoff picture; Power puts the rankings beside the position chart.
 - **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
   the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
