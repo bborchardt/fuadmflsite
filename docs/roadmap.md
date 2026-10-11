@@ -79,7 +79,7 @@ The map:
 | **Lineup** | one page: MFL's lineup, restyled, with warnings |
 | **Moves** | Add/Drop · Trades · IR · Recent |
 | **League** | Scores · Standings · Power |
-| **Rosters** | My team · Teams · All players · Draft |
+| **Rosters** | My team · Teams · Players · Draft |
 
 **The team sheet** (slides up on phones, a panel on desktop):
 - **Header:** the team's name, My team, Log in / Log out, and for the commissioner a "Viewing as:
@@ -134,17 +134,24 @@ Rules for v2:
 
 ### Rosters
 
-Views: **My team · Teams · All players · Draft.**
-- **My team** (the default): the member's roster by position (salary, years, YTD points from
-  `playerScores` `W=YTD`, bye from `nflByeWeeks`), cap room this season and the next four, this
-  season's penalties, the team's future draft picks, and the cut panel.
+Views: **My team · Teams · Players · Draft.** My team, Players and Draft are designed (phone): the
+canvas's row 8; Teams is the cap ledger (row 4).
+- **My team** (the default): cap room now (orange under $10; salaries plus penalties of $300), active
+  of 30 and IR, and room for this season and the next four; the roster by position, each player with
+  salary, years left (orange "expiring" at 1), NFL team, bye (`nflByeWeeks`) and YTD points
+  (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the cut panel: penalty, room now,
+  room after (green if higher, red if lower), "Player details" (MFL's popup) and "Drop" (to Moves ›
+  Add/Drop). Then the team's future draft picks (`futureDraftPicks`).
 - **Teams:** the cap ledger, the member's team highlighted; tap a team for its roster in the My team
   layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
-- **All players:** every rostered player, sortable and filterable by position and years left (one
-  tap shows the expiring contracts).
-- **Draft:** franchise tags and the rookie scale first (short), then the rookie draft order with each
-  pick's salary by position, and the picks once made (`draftResults`; check that it holds the order
-  before the draft), then every team's future picks.
+- **Players:** every rostered player, sorted by salary, filtered by position chips (All, QB, RB, WR,
+  TE, PK) and years left (All, Expiring, 2, 3, 4–5), with the owning team and YTD points; the
+  member's own highlighted.
+- **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
+  averages; live until the trade deadline, then fixed), the rookie scale for the next draft (picks
+  1–10; $1 from pick 11), and **one rookie draft panel: this year's draft**, its order with players
+  filled in once picked (`draftResults`), switching to next year's after the season. The 2026
+  rookies signed under the old rules; the scale applies from the 2027 draft.
 
 From the Contracts design (canvas row 4):
 - **The cap ledger:** every team's cap room for this season and the next four, sorted by room now.
@@ -153,8 +160,6 @@ From the Contracts design (canvas row 4):
   left), each salary across the seasons it covers, and the team's penalties this season.
 - **Cutting a player:** the penalty, then cap room now → after (green if higher, red if lower). On a
   phone, tapping a player opens it as a panel.
-- **Still to design:** My team, All players and Draft, and the roster columns added to the team
-  view.
 
 ### Moves
 
