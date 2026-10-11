@@ -30,11 +30,29 @@
 
 /* ---- Page ---- */
 
+/* Each member can pick their own MFL skin (the league's is only the default), so these set every
+   background, border and shadow outright rather than override one skin's choices. */
 html,
-body {
+body,
+body.full-width {
     background: var(--ng-bg) none;
     color: var(--ng-text);
 }
+
+/* the page column, sized here so the frame lines up with it whatever the skin */
+body .pagebody {
+    box-sizing: border-box;
+    width: auto;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 16px 16px;
+    background: transparent none;
+    border: 0;
+    box-shadow: none;
+}
+
+body #withmenus,
+body #contentframe { background: transparent none; }
 
 body {
     font-family: var(--ng-body);
@@ -172,10 +190,12 @@ body .report,
 body div.mobile-wrap,
 body .playoffbracket,
 body #monthly_calendar {
-    background: var(--ng-surface) !important;
+    background: var(--ng-surface) none !important;
     border: 0;
     border-radius: var(--ng-radius);
     border-spacing: 0;
+    padding: 0;
+    box-shadow: none;
 }
 
 body div.mobile-wrap .report { border-radius: 0; }
@@ -194,6 +214,13 @@ body .homepagecolumn .homepagemodule caption {
     line-height: 1.2;
     padding: 14px 16px 10px;
     margin-bottom: 0;
+    box-shadow: none;
+}
+
+/* some skins put a logo in each heading */
+body caption span {
+    background: none !important;
+    padding-left: 0;
 }
 
 body caption a:link,
@@ -204,7 +231,8 @@ body caption > span.module_expand { color: var(--ng-muted); }
 body th,
 body .oddtablerow th,
 body .eventablerow th {
-    background: transparent;
+    background: transparent none;
+    box-shadow: none;
     color: var(--ng-muted);
     border: 0;
     border-bottom: 1px solid var(--ng-line);
@@ -221,14 +249,20 @@ body .report td { padding: 8px 10px; }
 
 body .oddtablerow,
 body .eventablerow {
-    background: transparent;
+    background: transparent none;
     color: var(--ng-text) !important;
 }
+
+body .report td { border: 0; box-shadow: none; color: inherit; }
 
 /* lines under rows, not over them: a line over the first row doubled the header row's, or sat
    under the heading of a table without one */
 body .oddtablerow td,
-body .eventablerow td { border-bottom: 1px solid var(--ng-line-soft); }
+body .eventablerow td {
+    border: 0;
+    border-bottom: 1px solid var(--ng-line-soft);
+    box-shadow: none;
+}
 
 body .oddtablerow:last-child td,
 body .eventablerow:last-child td { border-bottom: 0; }
@@ -355,12 +389,14 @@ body tr.players_currently_playing td,
 body tr.players_currently_playing th,
 body tr.player_minutes_remaining td,
 body tr.player_minutes_remaining th {
-    background: transparent;
+    background: transparent none;
+    box-shadow: none;
     border: 0;
     border-top: 1px solid var(--ng-line-soft);
 }
 
 body #body_live_scoring .grand_total td {
+    background: transparent;
     color: var(--ng-accent);
     border-top: 2px solid var(--ng-accent);
 }
@@ -520,10 +556,10 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
     display: flex;
     align-items: center;
     gap: 8px 24px;
-    width: 90%;
+    max-width: 1240px;
     min-height: 64px;
     margin: 0 auto;
-    padding: 8px 0;
+    padding: 8px 16px;
     box-sizing: border-box;
 }
 
@@ -576,7 +612,8 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 .fuad-views {
     display: flex;
     gap: 4px;
-    width: 90%;
+    width: calc(100% - 32px);
+    max-width: calc(1240px - 32px);
     margin: 0 auto 12px;
     padding: 4px;
     box-sizing: border-box;
