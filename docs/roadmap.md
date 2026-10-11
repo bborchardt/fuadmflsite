@@ -349,8 +349,13 @@ PA, Strk) beside the Playoff picture; Power puts the rankings beside the positio
   kickoff), with "Full live scoring" to MFL's `ajax_ls`. Before kickoff a card shows the spread; live,
   the scores (leader bright, trailer dimmed) and "3 to play · proj 112–98". **Season** swaps the
   cards for the member's schedule (results, then opponents; weeks 15–17 playoffs) and hides the
-  week picker. From `liveScoring` (refreshed every 30–60 s during games only), `schedule`
-  (scores, spreads) and projections.
+  week picker. Each team on a card shows its projection and win probability ("proj 112.3 · 74% to
+  win") before and during games; the footer, players playing / to play and minutes left per side;
+  the open lineups, each starter's live stat line and projection. From `liveScoring` with DETAILS
+  (team and player scores, game seconds left, playing / to play, stat lines; refreshed every 30–60 s
+  during games only), `projectedScores` (FantasySharks-based) and `schedule`; win probability from
+  MFL's own `mfl_win_prob.js` (400 simulations of the remaining games from projected stats), run on
+  the same data so it matches MFL's page.
 - **Standings:** West and East (W-L-T, PF, games back, streak) from `leagueStandings`, the member's
   row highlighted; then the **Playoff picture**, "if the season ended today": 6 teams (MFL's bracket:
   starting week 15, two first-round games). **League rule: the division winners are seeds 1–2, with
@@ -362,7 +367,7 @@ PA, Strk) beside the Playoff picture; Power puts the rankings beside the positio
   what that page lists for it (points for and possible, efficiency, bench points, high and low score,
   all-play, coulda won / woulda lost, alternate rank), not a formula, which MFL doesn't show; then **Starter points
   by position**, a stacked bar per team (QB, RB, WR, TE, PK; its points for), open by default
-  (collapsible). The data is in the home page's module as FusionCharts XML (`positionXML`); an export
+  (collapsible on phones, always open on desktop). The data is in the home page's module as FusionCharts XML (`positionXML`); an export
   source is to find (`playerScores` by starter, summed, is the fallback). Position colors are the
   validated dark categorical slots (blue, orange, aqua, yellow, magenta).
 
