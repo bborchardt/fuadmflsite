@@ -319,7 +319,8 @@ doesn't leave the left column short):
    draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
    the last few days before one, it shows in My alerts instead.
 
-During the playoffs only, a **playoff bracket** panel (`playoffBrackets` export).
+During the playoffs only, a **playoff bracket** panel (`playoffBrackets` export), the same bracket
+as League › Standings shows then.
 
 My alerts and where they go:
 
@@ -380,7 +381,11 @@ PA, Strk) beside the Playoff picture; Power puts the rankings beside the positio
 order by the league's standings sort (`standingsSort`: win %, points for, head-to-head, division
 win %, points against, power rank, …), even across divisions.** Seeds show
   why ("West winner", "24-11-1 all-play"); "In the hunt" lists the rest with all-play games back of
-  seed 6. Links to MFL's bracket.
+  seed 6. No link to MFL's bracket page (before the playoffs it can't know the league's seeding
+rule). Once the playoffs start the panel becomes "Playoffs", the bracket itself, from MFL's
+`playoffBrackets` export: week 15's first round (3 v 6, 4 v 5), week 16's semifinals with seeds 1–2,
+week 17's championship and 3rd-place game, each game's scores filling in (live highlighted, winners
+bright).
 - **Power:** MFL's power rankings (score, bar, all-play record), read from MFL's Power Rank page
   (`options?O=101`) since no export has them, cached until the next results; clicking a team shows
   what that page lists for it (points for and possible, efficiency, bench points, high and low score,
