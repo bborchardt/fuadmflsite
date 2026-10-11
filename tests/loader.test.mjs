@@ -1,12 +1,13 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {betaOffer, decide, previewBase, withParam} from "../site/v1/loader.js";
+import {betaOffer, decide, offeredVersion, previewBase, withParam} from "../site/v1/loader.js";
 
 const PAGES = "https://bborchardt.github.io/fuadmflsite/";
 const here = `${PAGES}v1/`;
 const offer = (version = "v2", extra = {}) => betaOffer({version, feedback: "https://www44.myfantasyleague.com/2026/options?L=48571&O=28", ...extra}, {versionHere: "v1", teamId: "0001"});
-const run = ({query = "", preview = null, beta = null, offered = offer()} = {}) =>
-    decide({here, versionHere: "v1", params: new URLSearchParams(query), preview, beta, offer: offered});
+// `version` is what the header offers to anyone; by default, whatever this viewer is offered
+const run = ({query = "", preview = null, beta = null, offered = offer(), version = offered && offered.version} = {}) =>
+    decide({here, versionHere: "v1", params: new URLSearchParams(query), preview, beta, offer: offered, offered: version});
 
 test("the header's beta offer: a version other than the header's, for the teams named", () => {
     assert.deepEqual(offer(), {version: "v2", base: `${PAGES}v2/`, feedback: "https://www44.myfantasyleague.com/2026/options?L=48571&O=28"});
@@ -29,6 +30,28 @@ test("members opt in and out of the beta, and stay in while it's offered", () =>
     assert.deepEqual(run({query: "fuadBeta=off", beta: "v2"}), {preview: null, beta: null, load: null});
     // no beta offered to this viewer: the link does nothing
     assert.deepEqual(run({query: "fuadBeta=on", offered: null}), {preview: null, beta: null, load: null});
+});
+
+test("the version offered to anyone, whichever teams are named", () => {
+    assert.equal(offeredVersion({version: "v2", teams: ["0001"]}, "v1"), "v2");
+    assert.equal(offeredVersion({version: "v1"}, "v1"), null);
+    assert.equal(offeredVersion({version: "../evil"}, "v1"), null);
+    assert.equal(offeredVersion(undefined, "v1"), null);
+});
+
+test("a beta offered only to other teams is kept but not loaded", () => {
+    // the commissioner, opted in as 0001, views as 0000
+    assert.deepEqual(run({beta: "v2", offered: null, version: "v2"}), {preview: null, beta: "v2", load: null});
+    // and back as 0001: in the beta again, with nothing to accept
+    assert.deepEqual(run({beta: "v2"}), {preview: null, beta: "v2", load: `${PAGES}v2/`, mode: "beta"});
+    // leaving still works from either side
+    assert.deepEqual(run({query: "fuadBeta=off", beta: "v2", offered: null, version: "v2"}), {preview: null, beta: null, load: null});
+});
+
+test("an older fuad.js that doesn't pass the offered version judges by the viewer's offer", () => {
+    const old = (offered, beta = "v2") => decide({here, versionHere: "v1", params: new URLSearchParams(), preview: null, beta, offer: offered});
+    assert.deepEqual(old(offer()), {preview: null, beta: "v2", load: `${PAGES}v2/`, mode: "beta"});
+    assert.deepEqual(old(null), {preview: null, beta: null, load: null});
 });
 
 test("a beta that's over, promoted or replaced is forgotten", () => {

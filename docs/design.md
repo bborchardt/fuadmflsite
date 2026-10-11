@@ -55,7 +55,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 - The header's version draws the beta's bar before handing over, so the way back never depends on
   the beta's code; a beta that can't load or start falls back to the current site.
 - A beta choice holds only while the header offers that version, so ending or promoting it needs no
-  member action.
+  member action. Viewing as a team the offer leaves out (the commissioner as 0000) keeps the choice
+  without loading the beta, so switching back needs no new opt-in.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`.
 
 ## League rules the code relies on
