@@ -2,7 +2,446 @@
  * FUAD league styles, loaded by the MFL league header on every league page.
  * Selectors start with "body" where they need to outrank the skin's own rules,
  * whichever order MFL loads the stylesheets in.
+ *
+ * Night Game: v2's look laid over MFL's own pages. It restyles the markup of MFL's skin
+ * (BlueMesh: MFLBaseCSS.css, BlueMesh.css, responsive.css); if MFL changes that markup, the
+ * look degrades but MFL's controls keep working.
  */
+
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap");
+
+:root {
+    --ng-bg: #0D1117;
+    --ng-surface: #161B22;
+    --ng-raised: #1C232D;
+    --ng-line: #262D37;
+    --ng-line-soft: #222934;
+    --ng-field: #2F3743;
+    --ng-text: #E9EDF2;
+    --ng-muted: #9AA4B2;
+    --ng-accent: #C8F43C;
+    --ng-accent-hover: #E2FF8A;
+    --ng-orange: #FF9F43;
+    --ng-red: #FF6B6B;
+    --ng-body: Barlow, system-ui, sans-serif;
+    --ng-display: "Barlow Condensed", Barlow, system-ui, sans-serif;
+    --ng-radius: 14px;
+}
+
+/* ---- Page ---- */
+
+html,
+body {
+    background: var(--ng-bg) none;
+    color: var(--ng-text);
+}
+
+body {
+    font-family: var(--ng-body);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* MFLBaseCSS sets Roboto Condensed on links and headers, and BlueMesh a fixed mesh image */
+body a,
+body a:link,
+body a:visited,
+body a:active,
+body th,
+body td,
+body input,
+body select,
+body textarea,
+body button {
+    font-family: var(--ng-body);
+}
+
+body h1,
+body h2,
+body h3,
+body .pagetitle h1 {
+    font-family: var(--ng-display);
+    font-weight: 700;
+    color: var(--ng-text);
+    background: none;
+    border: 0;
+}
+
+body .pagetitle h1 { letter-spacing: 0.02em; }
+
+body a:link,
+body a:visited,
+body a:active { color: var(--ng-accent); }
+
+body a:hover,
+body a:link:hover,
+body a:visited:hover { color: var(--ng-accent-hover); }
+
+body .warning,
+body th.warning { color: var(--ng-red); }
+
+/* ---- MFL's menus (until v2's own frame replaces them) ---- */
+
+body .myfantasyleague_menu,
+body .myfantasyleague_menu ul,
+body .myfantasyleague_menu ul li ul,
+body .myfantasyleague_menu ul ul li {
+    background: var(--ng-bg);
+    border-color: var(--ng-line);
+}
+
+body .myfantasyleague_menu { border-bottom: 1px solid var(--ng-line); }
+
+body .myfantasyleague_menu ul li:hover a { color: var(--ng-text); }
+
+body .myfantasyleague_menu li:hover > a,
+body .myfantasyleague_menu ul li ul li:hover > a {
+    background: var(--ng-raised);
+    color: var(--ng-text);
+}
+
+body .myfantasyleague_menu ul ul li a,
+body .myfantasyleague_menu ul ul li.has-sub a { border-color: var(--ng-line-soft); }
+
+body .pageheader,
+body .pageheader a:link,
+body .pageheader a:visited { color: var(--ng-muted); }
+
+body #hsubmenu,
+body .myfantasyleague_tabmenu {
+    background: var(--ng-surface);
+    border: 0;
+    border-radius: 12px;
+}
+
+body .myfantasyleague_tabmenu ul#homepagetabs { border-bottom: 0; }
+
+body #hsubmenu ul li,
+body .myfantasyleague_tabmenu #homepagetabs li { border-color: var(--ng-line); }
+
+body #hsubmenu a,
+body .myfantasyleague_tabmenu #homepagetabs li a,
+body .myfantasyleague_menu ul li a {
+    color: var(--ng-muted);
+    font-family: var(--ng-display);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* the phone toggles that open MFL's menus: white squares in the skin */
+body .myfantasyleague_menu > label span,
+body .myfantasyleague_menu ul li label span,
+body .myfantasyleague_tabmenu > label span {
+    background: var(--ng-raised);
+    border-radius: 10px;
+}
+
+body .myfantasyleague_menu > label span:before,
+body .myfantasyleague_menu > label span:after,
+body .myfantasyleague_menu ul li label span:before,
+body .myfantasyleague_menu ul li label span:after,
+body .myfantasyleague_tabmenu > label span:before,
+body .myfantasyleague_tabmenu > label span:after { background: var(--ng-accent); }
+
+body #hsubmenu ul li:hover,
+body .myfantasyleague_tabmenu #homepagetabs li:hover { background: var(--ng-raised); }
+
+body #hsubmenu ul li:hover a,
+body .myfantasyleague_tabmenu #homepagetabs li:hover a { color: var(--ng-text); }
+
+body .myfantasyleague_tabmenu #homepagetabs li.currenttab,
+body .myfantasyleague_tabmenu #homepagetabs li.currenttab:hover {
+    background: var(--ng-raised);
+    box-shadow: none;
+}
+
+body .myfantasyleague_tabmenu #homepagetabs li.currenttab a { color: var(--ng-accent); }
+
+body .pagefooter {
+    background: var(--ng-bg);
+    border-top: 1px solid var(--ng-line);
+    color: var(--ng-muted);
+}
+
+body .pagefooter a:link,
+body .pagefooter a:visited { color: var(--ng-muted); }
+
+/* ---- Panels: MFL's reports and home page modules ---- */
+
+body .report,
+body div.mobile-wrap,
+body .playoffbracket,
+body #monthly_calendar {
+    background: var(--ng-surface) !important;
+    border: 0;
+    border-radius: var(--ng-radius);
+    border-spacing: 0;
+}
+
+body div.mobile-wrap .report { border-radius: 0; }
+
+body caption,
+body .homepagemodule caption,
+body .homepagecolumn .homepagemodule caption {
+    background: var(--ng-surface) none;
+    color: var(--ng-text);
+    border: 0;
+    border-radius: var(--ng-radius) var(--ng-radius) 0 0;
+    font-family: var(--ng-display);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    padding: 14px 16px 10px;
+    margin-bottom: 0;
+}
+
+body caption a:link,
+body caption a:visited { color: var(--ng-text) !important; }
+
+body caption > span.module_expand { color: var(--ng-muted); }
+
+body th,
+body .oddtablerow th,
+body .eventablerow th {
+    background: transparent;
+    color: var(--ng-muted);
+    border: 0;
+    border-bottom: 1px solid var(--ng-line);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 8px 10px;
+}
+
+body th a:link,
+body th a:visited { color: var(--ng-muted); }
+
+body .report td { padding: 8px 10px; }
+
+body .oddtablerow,
+body .eventablerow {
+    background: transparent;
+    color: var(--ng-text) !important;
+}
+
+/* lines under rows, not over them: a line over the first row doubled the header row's, or sat
+   under the heading of a table without one */
+body .oddtablerow td,
+body .eventablerow td { border-bottom: 1px solid var(--ng-line-soft); }
+
+body .oddtablerow:last-child td,
+body .eventablerow:last-child td { border-bottom: 0; }
+
+body .oddtablerow a:link,
+body .oddtablerow a:visited,
+body .eventablerow a:link,
+body .eventablerow a:visited { color: var(--ng-text); }
+
+body .oddtablerow a,
+body .eventablerow a {
+    text-decoration-color: var(--ng-field);
+    text-underline-offset: 3px;
+}
+
+body .oddtablerow a:hover,
+body .eventablerow a:hover { color: var(--ng-accent); text-decoration-color: currentColor; }
+
+body .newposition td,
+body .newposition th { border-top: 1px solid var(--ng-line) !important; }
+
+body tr.myfranchise { background: var(--ng-raised); }
+
+body a.myfranchise,
+body a.myfranchise:link,
+body a.myfranchise:visited { color: var(--ng-accent); }
+
+body td.salary,
+body td.points,
+body td.contractyear,
+body td.pf,
+body td.pa { font-variant-numeric: tabular-nums; }
+
+body .reportfooter {
+    background: transparent;
+    color: var(--ng-muted);
+    border-top: 1px solid var(--ng-line);
+}
+
+body .reportfooter a:link,
+body .reportfooter a:visited { color: var(--ng-accent); }
+
+body span.reportnavigation,
+body span.reportnavigation a { color: var(--ng-muted); }
+
+body .reportnavigation .currentweek,
+body .reportnavigationheader { color: var(--ng-accent); }
+
+body .homepagemessage {
+    background: var(--ng-surface);
+    border: 0;
+    border-radius: var(--ng-radius);
+}
+
+body #standings h3,
+body .homepagecolumn #standings h3,
+body .homepagecolumn #brief_standings h3 {
+    background: var(--ng-raised) none;
+    border: 0;
+    border-radius: 8px;
+    color: var(--ng-text);
+}
+
+/* ---- Forms ---- */
+
+body .pagebody input[type="text"],
+body .pagebody input[type="number"],
+body .pagebody input[type="password"],
+body .pagebody select,
+body .pagebody textarea {
+    background: var(--ng-bg);
+    color: var(--ng-text);
+    border: 1px solid var(--ng-field);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 16px;
+}
+
+body .pagebody input:focus,
+body .pagebody select:focus,
+body .pagebody textarea:focus {
+    outline: 2px solid var(--ng-accent);
+    outline-offset: 1px;
+}
+
+body input[type="button"],
+body input[type="submit"],
+body .pagebody button {
+    background: var(--ng-accent);
+    color: var(--ng-bg);
+    border: 0;
+    border-radius: 10px;
+    min-height: 40px;
+    padding: 0 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body input[type="button"]:hover,
+body input[type="submit"]:hover,
+body .pagebody button:hover {
+    background: var(--ng-accent-hover);
+    color: var(--ng-bg);
+}
+
+body input[type="checkbox"],
+body input[type="radio"] { accent-color: var(--ng-accent); }
+
+/* ---- Live scoring, calendar, brackets ---- */
+
+body tr.total td { color: var(--ng-accent); }
+
+body tr.players_yet_to_play td { color: var(--ng-orange); }
+
+body tr.total td,
+body tr.total th,
+body tr.players_yet_to_play td,
+body tr.players_yet_to_play th,
+body tr.players_currently_playing td,
+body tr.players_currently_playing th,
+body tr.player_minutes_remaining td,
+body tr.player_minutes_remaining th {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--ng-line-soft);
+}
+
+body #body_live_scoring .grand_total td {
+    color: var(--ng-accent);
+    border-top: 2px solid var(--ng-accent);
+}
+
+body #monthly_calendar td { border: 1px solid var(--ng-line-soft); }
+
+body #monthly_calendar td .calendarday {
+    background: var(--ng-raised);
+    border: 0;
+    color: var(--ng-text);
+}
+
+body #monthly_calendar td.today { border: 2px solid var(--ng-accent); }
+
+body .playoffbracket td { background: transparent; }
+
+body .playoffbracket td.topteam,
+body .playoffbracket td.bottomteam { border-bottom: 2px solid var(--ng-line); }
+
+body .playoffbracket td.bracket,
+body .playoffbracket td.bottomteam { border-right: 2px solid var(--ng-line); }
+
+body .playoffbracket td b { color: var(--ng-accent); }
+
+/* ---- MFL's player popup ---- */
+
+body .mflModal-content {
+    box-sizing: border-box;
+    width: calc(100vw - 24px);
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: auto;
+}
+
+/* its stats table has 15 columns and is wider than a phone even in v1: compact sizing, and what
+   doesn't fit scrolls sideways inside the popup */
+body .mflModal-content table { font-size: 13px; }
+
+body .mflModal-content th,
+body .mflModal-content .report td { padding: 4px 6px; }
+
+body .mflModal-content th { text-align: left; }
+
+body .mflModal-content,
+body #MFLPlayerPopupContainer .report {
+    background: var(--ng-surface) !important;
+    color: var(--ng-text);
+    border-radius: var(--ng-radius);
+}
+
+body .mflModal-content button,
+body #MFLPlayerPopupClose {
+    background: var(--ng-raised);
+    color: var(--ng-text);
+    border: 0;
+    border-radius: 8px;
+    min-height: 32px;
+}
+
+body ul.MFLPlayerPopupTab {
+    background: var(--ng-surface);
+    border-bottom: 1px solid var(--ng-line);
+}
+
+body ul.MFLPlayerPopupTab li { border-color: var(--ng-line); }
+
+body ul.MFLPlayerPopupTab li a { color: var(--ng-muted); }
+
+body ul.MFLPlayerPopupTab li a:hover,
+body ul.MFLPlayerPopupTab li a.active {
+    background: var(--ng-raised);
+    color: var(--ng-accent);
+}
+
+body #tooltip {
+    background: var(--ng-raised) !important;
+    color: var(--ng-text) !important;
+    border-radius: 8px;
+}
+
+body #tooltip:after,
+body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
+
+/* ---- From v1, still needed until v2's frame replaces MFL's menus ---- */
 
 /* Keep MFL's nav bar (Home, Rosters, Submit Lineup...) on phones. The skin hides it
    below 54.25em; show it instead as one row that swipes sideways, with full-size tap targets. */
@@ -20,11 +459,13 @@
     tr:has(> td > #contractscolumn1) > td { width: 100% !important; box-sizing: border-box; }
 }
 
+/* ---- v2's own pieces ---- */
+
 /* A line of explanation above a group of tables, e.g. which franchise salaries are shown. */
 .fuad-note {
     margin: 0.75em 0.25em 0.25em;
     font-size: 0.85em;
-    opacity: 0.8;
+    color: var(--ng-muted);
 }
 
 .fuad-loading,
@@ -33,13 +474,14 @@
     margin: 1em 0.25em;
 }
 
-.fuad-loading { opacity: 0.7; }
+.fuad-loading { color: var(--ng-muted); }
 
 .fuad-error,
 .fuad-unavailable {
     padding: 0.75em 1em;
-    border-left: 4px solid #d9534f;
-    background: rgba(217, 83, 79, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 107, 107, 0.12);
+    color: var(--ng-text);
 }
 
 /* Shown only in this browser while previewing another version. */
@@ -49,11 +491,11 @@
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     z-index: 10000;
     padding: 8px 12px;
-    border-radius: 4px;
-    background: #f0ad4e;
-    color: #1a1a1a;
-    font: 600 13px/1.3 system-ui, sans-serif;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    background: var(--ng-accent);
+    color: var(--ng-bg);
+    font: 600 13px/1.3 var(--ng-body);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
-#fuad-preview a { color: #1a1a1a; text-decoration: underline; }
+#fuad-preview a { color: var(--ng-bg); text-decoration: underline; }
