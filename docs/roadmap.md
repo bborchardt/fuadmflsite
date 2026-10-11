@@ -11,8 +11,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
-  - the chat page (`chat?L=48571&COUNT=40`): its layout at phone width, and that it hides other
-    teams' private messages
 - Consider telling the league: in v1 today, reordering blind bids (MFL's Move Up/Down) doesn't
   reorder the group's comment, so bare lengths ("1 year", one per line) end up on the wrong players.
   Naming the player ("Akins: 1 year") is safe.
@@ -270,9 +268,13 @@ Rebuilt, one page, top to bottom (on desktop, alerts on the left; chat and the b
 1. **My alerts:** the member's own, each one tappable to the page that fixes it; a quiet "All clear"
    when empty.
 2. **League alerts:** every other team's (tap: that team in Rosters › Teams).
-3. **Chat:** from MFL's chat page (about 40 messages, the whole season, live), in a scrolling panel;
-   the fallback is MFL's chat module, which holds only the latest few, restyled.
-4. **Message board:** the newest topics, linking to MFL's board.
+3. **Chat:** compact: grows to about four messages, then scrolls inside itself, newest at the bottom
+   by the box, opened scrolled to the newest; one line when empty ("No messages yet. Say something to
+   the league."). A "To" picker sends to everyone or privately to one team; private messages carry a
+   lock tag ("to you", "to The Obliterators"). Reads MFL's chat feed and posts through `chat_save`
+   (Reference). The league barely uses chat (3 messages this season, all private).
+4. **Message board:** the newest topics, linking to MFL's board, and "New topic" (subject and
+   message, posted with MFL's `messageBoard` import); replies on the topic's own page.
 5. **Recent moves:** the last five, linking to Moves › Recent. **Undecided:** the commissioner
    decides after seeing a mockup.
 6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
@@ -294,7 +296,7 @@ My alerts and where they go:
 | A trade offer waiting for an answer | Moves › Trades |
 | Over the cap or 30 active from an add or trade: "the commissioner will reverse it" | not tappable |
 
-**Still to design:** all of it, on the canvas, phone first.
+**Designed (phone):** the canvas's row 6, "Home · phone". **Still to design:** Home on desktop.
 
 ### League
 
@@ -376,11 +378,14 @@ From pages the commissioner saved on 10 Oct 2026 (2026 site, logged in as 0001).
 one, presumably an array when more), claims in priority order as `ADD_BID_DROP`, and the comment
 with line breaks mangled to `br/`.
 
-**Chat:** the Main tab module `#league_chat` is drawn by `mfl_common.js`, which polls
-`fflnetdynamic2026/48571_chat.xml` every 5 seconds (it stops after about 2 hours without posting)
-and keeps `displayMessages + 1` rows (`displayMessages = 9` on the page). The feed holds only recent
-messages, private ones included (MFL hides them in the browser). The chat page
-`chat?L=48571&COUNT=40` holds about a season.
+**Chat:** the Main tab module `#league_chat` and the chat page (`chat?L=48571&COUNT=40`) are both
+drawn by `mfl_common.js` from one feed, `fflnetdynamic2026/48571_chat.xml`, polled every 5 seconds
+(stopping after about 2 hours without posting); they differ only in `displayMessages` (9 or 40).
+The feed's `<message>` elements carry `id`, `franchise_id` (sender), `to` (a team, for a private
+message), `message` and `posted`; it holds the season's messages until someone posts `:clear:`.
+**Private messages are in the public feed**: MFL's script just skips those not to or from the
+viewer, so v2 must apply the same filter. Posting is a GET from the logged-in browser:
+`chat_save?L=48571&MESSAGE=<escaped text>&TO_FID=<team, or empty for everyone>`.
 
 **API (api_info):** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, ...) and `ROUND` but no
 comment; `messageBoard` (import) lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`);
