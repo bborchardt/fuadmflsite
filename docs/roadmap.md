@@ -154,8 +154,8 @@ canvas's row 8; Teams is the cap ledger (row 4).
   TE, PK) and years left (All, Expiring, 2, 3, 4–5), with the owning team and YTD points; the
   member's own highlighted.
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
-  averages; live until the trade deadline, then fixed), the rookie scale for the next draft (picks
-  1–10), **next year's draft order** (below), and **this year's rookie draft** (each league site shows its own year's), by round with
+  averages; live until the trade deadline, then fixed), **next year's draft order** (below), the
+  rookie scale for the next draft (picks 1–10), and **this year's rookie draft** (each league site shows its own year's), by round with
   round 1 open: each pick's team, player and salary today (— once released), from `draftResults`.
   The 2026 rookies signed under the old rules; the scale applies from the 2027 draft.
   **Next year's draft order** (bylaws 8.1–8.2: worst to first, the same order every round): picks
@@ -163,8 +163,8 @@ canvas's row 8; Teams is the cap ledger (row 4).
   picks 5–10 by playoff finish: the two first-round losers by seed (the lower seed first), then the
   3rd-place game's loser and winner, the runner-up, the champion. In season it reads "if the season
   ended today", with the current seeds standing in for picks 5–10, marked as decided by the
-  playoffs; each playoff pick fills in as its game ends. Each pick shows its owner from
-  `futureDraftPicks` ("from …" when traded) and its rookie-scale salary. Not accounted for, since
+  playoffs; each playoff pick fills in as its game ends. Traded picks show under the
+  original team in orange, from `futureDraftPicks` ("Round 1 → Not 100% A Dick"). Not accounted for, since
   they haven't happened in a decade: losses that don't count (13.2) and unpaid teams' wins (14.2).
   The same order breaks offseason blind-bid ties (5.3).
 
