@@ -141,6 +141,14 @@ Rules for v2:
 
 Views: **My team · Teams · Players · Draft.** My team, Players and Draft are designed (phone): the
 canvas's row 8; Teams is the cap ledger (row 4).
+**Desktop (draft, row 8, under review):** My team is the roster as one table grouped by position
+(Player, NFL, Bye, Pts, Salary, Years, then each later season's salary), a row opening in place to
+the cut penalty, room now → after, Player details and Drop; beside it a rail with cap room, active
+count, room by season, this season's penalties (listed, no tap) and draft picks. Teams is the
+ledger as a table (room now with a bar, penalties, room each later season, roster count); a team
+opens its roster in the same table with "Propose a trade". Players is one table (Player, Pos, NFL,
+Team, Pts, Salary, Years) under the filter chips. Draft is two columns: tags and the order (or your
+picks), then last draft's results (or the board) and the rookie scale, open.
 - **My team** (the default): cap room now (orange under $10; salaries plus penalties of $300), active
   of 30 and IR, "Penalties this season" expanding to where each came from (`salaryAdjustments`:
   the player cut, his contract then, the amount and date), and room for this season and the next four; the roster by position, each player with
