@@ -376,7 +376,9 @@ PA, Strk) beside the Playoff picture; Power puts the rankings beside the positio
 - **Standings:** West and East (W-L-T, PF, games back, streak) from `leagueStandings`, the member's
   row highlighted; then the **Playoff picture**, "if the season ended today": 6 teams (MFL's bracket:
   starting week 15, two first-round games). **League rule: the division winners are seeds 1–2, with
-  byes; the other four are the best all-play records, ties broken by standings order.** Seeds show
+  byes; the other four are the best all-play records, ties broken by standings order: one league-wide
+order by the league's standings sort (`standingsSort`: win %, points for, head-to-head, division
+win %, points against, power rank, …), even across divisions.** Seeds show
   why ("West winner", "24-11-1 all-play"); "In the hunt" lists the rest with all-play games back of
   seed 6. Links to MFL's bracket.
 - **Power:** MFL's power rankings (score, bar, all-play record), read from MFL's Power Rank page
