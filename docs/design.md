@@ -17,7 +17,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   does.
 - **One folder per version, pinned per season.** MFL keeps each season's site and copies the
   messages forward at renewal, so a past season keeps the version, and the rules, it was played
-  under. Rule changes and visible redesigns get a new version; small fixes go in place.
+  under. Rule changes and visible redesigns get a new version; small fixes go in place. A version
+  offered only as the beta changes in place, redesigns included: only its testers run it.
 - **League rules live once, in `lib/`,** shared by the page and the daily job, so League Alerts and
   the job's flags can't disagree. The job loads them from the version `RULES_VERSION` names, so a
   new version's `lib/` must keep the exports the job reads.
@@ -54,7 +55,10 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 - The header's version draws the beta's bar before handing over, so the way back never depends on
   the beta's code; a beta that can't load or start falls back to the current site.
 - A beta choice holds only while the header offers that version, so ending or promoting it needs no
-  member action.
+  member action. Viewing as a team the offer leaves out (the commissioner as 0000) keeps the choice
+  without loading the beta, so switching back needs no new opt-in.
+- The header hides the page while a stored beta or preview loads, for at most 10 seconds, so MFL's
+  page doesn't flash before the other version draws; whichever version runs shows it again.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`.
 
 ## League rules the code relies on

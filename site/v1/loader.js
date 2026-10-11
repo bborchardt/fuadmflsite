@@ -21,9 +21,18 @@ export function allowed(base) {
         || /^http:\/\/(localhost|127\.0\.0\.1):\d+\/v\d+\/$/.test(base);
 }
 
-// null for no offer, a malformed one, the header's own version, or a viewer `teams` leaves out
-export function betaOffer(config, {versionHere, teamId}) {
+// the version the header offers as the beta, to anyone: null for no offer, a malformed one, or the
+// header's own version
+export function offeredVersion(config, versionHere) {
     if (!config || typeof config !== "object" || !/^v\d+$/.test(String(config.version)) || config.version === versionHere) {
+        return null;
+    }
+    return config.version;
+}
+
+// the offer to this viewer: null as for offeredVersion, or for a viewer `teams` leaves out
+export function betaOffer(config, {versionHere, teamId}) {
+    if (!offeredVersion(config, versionHere)) {
         return null;
     }
     // MFL's franchise ids are four digits ("0001"); a team written as 1 means the same
@@ -36,8 +45,9 @@ export function betaOffer(config, {versionHere, teamId}) {
 }
 
 // Returns what to remember ({preview, beta}, null to forget) and `load`: the base to hand the page
-// to, or null to run this one. A developer preview wins over the beta.
-export function decide({here, versionHere, params, preview, beta, offer}) {
+// to, or null to run this one. A developer preview wins over the beta. `offered` is the version
+// offered to anyone, `offer` the offer to this viewer.
+export function decide({here, versionHere, params, preview, beta, offer, offered}) {
     if (params.has("fuadPreview")) {
         const choice = params.get("fuadPreview");
         preview = choice === "off" ? null : previewBase(choice, versionHere);
@@ -49,14 +59,17 @@ export function decide({here, versionHere, params, preview, beta, offer}) {
     if (preview && (!allowed(preview) || preview === here)) {
         preview = null;
     }
-    // a beta that's over, promoted or replaced by another is forgotten
-    if (beta && (!offer || offer.version !== beta)) {
+    // a beta that's over, promoted or replaced by another is forgotten; one offered only to other
+    // teams is kept, so the commissioner can switch to 0000 and back without opting in again.
+    // `offered` is undefined from an older fuad.js still cached: judge by this viewer's offer.
+    const kept = offered === undefined ? offer && offer.version : offered;
+    if (beta && beta !== kept) {
         beta = null;
     }
     if (preview) {
         return {preview, beta, load: preview, mode: "preview"};
     }
-    if (beta) {
+    if (beta && offer) {
         return {preview, beta, load: offer.base, mode: "beta"};
     }
     return {preview, beta, load: null};

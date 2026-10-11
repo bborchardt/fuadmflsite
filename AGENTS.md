@@ -4,7 +4,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 
 ## Easy to trip over
 - `site/vN/` runs live in members' browsers as soon as master deploys. Visible or rule changes go in
-  a new version; ask the maintainer before changing a live one in place.
+  a new version; ask the maintainer before changing a live one in place. A version offered only as
+  the beta (not loaded by the header) changes in place.
 - The daily job loads `lib/` from the version `RULES_VERSION` names: a new version must keep the
   exports it reads, or its flags silently stop.
 - Members include older iPhones: a syntax error (e.g. regex lookbehind, Safari 16.4+) in a module

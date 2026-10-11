@@ -2,7 +2,7 @@
 // which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
 import {start} from "./ui/app.js";
-import {betaOffer, decide, withParam} from "./loader.js";
+import {betaOffer, decide, offeredVersion, withParam} from "./loader.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
@@ -77,8 +77,15 @@ function showBar({mode, base, feedback, failed}) {
     }
 }
 
+// The header hides the page while a beta or preview loads (at most a few seconds); whichever
+// version runs shows it again.
+function reveal() {
+    document.documentElement.classList.remove("fuad-cloak");
+}
+
 function boot(beta) {
     window.fuadVersion = versionHere;
+    reveal();
     start({dataBase: DATA_BASE, beta}).catch((error) => console.error("[fuad]", error));
 }
 
@@ -132,7 +139,10 @@ if (window.fuadLoader) {
     window.fuadLoader = {};
     const offer = betaOffer(window.fuadBeta, {versionHere, teamId: window.franchise_id});
     const params = new URLSearchParams(window.location.search);
-    const target = decide({here, versionHere, params, preview: storage.get(PREVIEW_KEY), beta: storage.get(BETA_KEY), offer});
+    const target = decide({
+        here, versionHere, params, preview: storage.get(PREVIEW_KEY), beta: storage.get(BETA_KEY), offer,
+        offered: offeredVersion(window.fuadBeta, versionHere)
+    });
     storage.set(PREVIEW_KEY, target.preview);
     storage.set(BETA_KEY, target.beta);
     if (params.has("fuadPreview") || params.has("fuadBeta")) {

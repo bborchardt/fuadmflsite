@@ -1,6 +1,16 @@
 <!-- FUAD league code, served from GitHub Pages. Goes in a home page message set to appear on all league pages. -->
+<style>html.fuad-cloak { background: #0D1117; } html.fuad-cloak body { visibility: hidden; }</style>
 <script>
+    // A beta or preview starts after MFL's page has painted: hide the page until that version has
+    // drawn (it shows it again), for at most 10 seconds.
+    try {
+        if (localStorage.getItem("fuad.beta") || localStorage.getItem("fuad.preview")) {
+            document.documentElement.classList.add("fuad-cloak");
+            setTimeout(function () { document.documentElement.classList.remove("fuad-cloak"); }, 10000);
+        }
+    } catch (e) {}
     function fuadUnavailable() {
+        document.documentElement.classList.remove("fuad-cloak");
         var show = function () {
             ["fuad-contracts", "commishdiv", "fuadlinksdiv"].forEach(function (id) {
                 var mount = document.getElementById(id);
