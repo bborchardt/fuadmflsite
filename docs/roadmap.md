@@ -172,7 +172,7 @@ canvas's row 8; Teams is the cap ledger (row 4).
   never who is tagged, since tags are made on draft day and show up in the rosters after):
   1. **Site opens → the draft** (mid-March → August): 2027 franchise tags (fixed prices), **Your
      2027 picks** (each with what the scale pays at that overall pick, "QB $5 · RB $8 · WR $8 ·
-     TE $3 · PK $1", or "$1 at every position" from pick 11 on; "from …" for traded ones), then the
+     TE $3 · PK $1", or "$1 at every position" from pick 11 on; the scale counts overall picks across the whole draft, not per round; "from …" for traded ones), then the
      whole 2027 draft board (picks by round, owners, "from …", all empty, from this site's
      `draftResults`, rounds closed), the rookie scale.
   2. **After the draft → week 1 final:** the 2027 rookie draft (results). The draft is offline; the
