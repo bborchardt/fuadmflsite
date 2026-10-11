@@ -8,11 +8,14 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 ## Commissioner to-do
 
 - Drop penalties and contract years have been on `apply` since 8 Oct: keep an eye on the chore log.
-- Save two MFL pages for the v2 design (view source, logged in), when the chance comes up:
+- Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
   - the chat page (`chat?L=48571&COUNT=40`): its layout at phone width, and that it hides other
     teams' private messages
+  - the trade pages (propose, respond) and the IR page, for Moves › Trades and Moves › IR
+  - the address of MFL's member ↔ commissioner switch (upper right when logged in), for the team
+    sheet's toggle
 - Consider telling the league: in v1 today, reordering blind bids (MFL's Move Up/Down) doesn't
   reorder the group's comment, so bare lengths ("1 year", one per line) end up on the wrong players.
   Naming the player ("Akins: 1 year") is safe.
@@ -34,6 +37,8 @@ evolving there before they're built.
    stays v1. The offer widens to the league once v2 is ready for members.
    **The commissioner's experience in v2 is designed later:** Moves and the rest are designed for
    members.
+   **Loader change first (v1, in place, approved):** a beta that's still offered, but not to the
+   team viewing, is kept and not loaded, so switching to commissioner and back doesn't forget it.
 2. **v2 changes in place while it's the beta,** an exception to "visible redesigns get a new
    version", added to `design.md` when v2 starts.
 3. **Once v2 is stable,** it becomes the default for everyone, with a way back to v1. How is decided
@@ -50,17 +55,45 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 - **Night Game:** dark, app-like. Barlow and Barlow Condensed, a lime accent, orange for tight cap,
   green and red for cap room gained and lost.
-- **One menu on every page:** Home · Lineup · Moves · League · Contracts. Bottom tabs on phones, a top
-  bar on desktop. MFL's menus move under More, so every MFL page stays reachable: "nothing gets
-  hidden" becomes "nothing becomes unreachable".
-- **MFL's pages are restyled, not rebuilt,** by v2's stylesheet. Lineup, trades and IR stay MFL's
-  pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's controls
-  still work.
-- **Rebuilt:** Home, League, Contracts and Moves. Home, League and Contracts are tabs of MFL's home
-  page (`home/48571`, the tab picked by the URL's `#`, found by its name), so moving between them
-  doesn't reload. Lineup goes to `lineup`, Moves to `add_drop`.
-- **Still open:** where More goes on phones (the bottom bar holds five tabs; a sixth tab or a top
-  button, not a swiping bar).
+- **Five sections on every page:** Home · Lineup · Moves · League · Rosters. Bottom tabs on phones, a
+  top bar on desktop. A section's views sit in a row across the top (a segmented control; a row of
+  chips that scrolls sideways if more than about four), on rebuilt and MFL pages alike.
+- **The team button** (top right, the team's initials) opens a sheet with everything else, so
+  "nothing gets hidden" becomes "nothing becomes unreachable" (below).
+- **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR, Recent and the
+  fallback pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
+  controls still work.
+- **MFL's player popup everywhere:** every player name calls MFL's own `launch_player_modal(league,
+  player)` (bio, status, contract, news), restyled, so a member can research a player where they're
+  deciding on him.
+- **Rebuilt:** Home, League, Rosters and Moves › Add/Drop. Home, League and Rosters are tabs of MFL's
+  home page (`home/48571`, the tab picked by the URL's `#`, found by its name), so moving between
+  them doesn't reload.
+
+The map:
+
+| Section | Views |
+|---|---|
+| **Home** | one page: My alerts, League alerts, Chat, Message board, Recent moves (undecided), Coming up |
+| **Lineup** | one page: MFL's lineup, restyled, with warnings |
+| **Moves** | Add/Drop · Trades · IR · Recent |
+| **League** | Scores · Standings · Power |
+| **Rosters** | My team · Teams · All players · Draft |
+
+**The team sheet** (slides up on phones, a panel on desktop):
+- **Header:** the team's name, My team, Log in / Log out, and for the commissioner a "Viewing as:
+  Member | Commissioner" switch that uses MFL's own switch link, found in MFL's header.
+- **League:** pages no section covers: League bylaws, Scoring system, League history, Player stats,
+  Playoff bracket, Calendar, Accounting, Owner activity, Polls.
+- **Commish** (0000 only): today's tools (Commish tab, Cap penalties, Set contracts) until the
+  commissioner's v2 is designed.
+- **All MFL pages:** MFL's own league menu, read live from the page in its groups, with a filter box.
+- **Use the classic site:** the way back to v1.
+
+Left to the sheet or dropped from the home page: the Transactions tab (Trade Bait, Top 10 Free
+Agents, Starter Points By Position; the last moves to Power), the Calendar tab, League Poll, Franchise
+Owner Activity, MFL's Rosters, Starting Lineups, Fantasy Schedule, Weekly Results, Draft and NFL
+Injury Report pages, and the cut calculator.
 
 ### Performance
 
@@ -98,20 +131,40 @@ Rules for v2:
   v1's code download before the handover; none of v1's own code runs. The modules go when v1 is
   retired.
 
-### Contracts
+### Rosters
 
+Views: **My team · Teams · All players · Draft.**
+- **My team** (the default): the member's roster by position (salary, years, YTD points from
+  `playerScores` `W=YTD`, bye from `nflByeWeeks`), cap room this season and the next four, this
+  season's penalties, the team's future draft picks, and the cut panel.
+- **Teams:** the cap ledger, the member's team highlighted; tap a team for its roster in the My team
+  layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
+- **All players:** every rostered player, sortable and filterable by position and years left (one
+  tap shows the expiring contracts).
+- **Draft:** franchise tags and the rookie scale first (short), then the rookie draft order with each
+  pick's salary by position, and the picks once made (`draftResults`; check that it holds the order
+  before the draft), then every team's future picks.
+
+From the Contracts design (canvas row 4):
 - **The cap ledger:** every team's cap room for this season and the next four, sorted by room now.
   Room is $300 less salaries and cap penalties; penalties count this season only. Orange under $10.
 - **Open a team** to see its players grouped by position (QB, RB, WR, TE, PK; then salary, then years
   left), each salary across the seasons it covers, and the team's penalties this season.
 - **Cutting a player:** the penalty, then cap room now → after (green if higher, red if lower). On a
   phone, tapping a player opens it as a panel.
-- **Still to design:** the Expiring, All players and Draft views. Draft holds the rookie scale,
-  franchise tags and the cut calculator.
+- **Still to design:** My team, All players and Draft, and the roster columns added to the team
+  view.
 
 ### Moves
 
-The menu's Moves is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
+Views: **Add/Drop · Trades · IR · Recent.**
+- **Trades:** below.
+- **IR:** MFL's IR page, restyled, with checks: activating a player at 30 active needs a drop, offered
+  with it and its penalty shown; only players the NFL lists on IR can go on.
+- **Recent:** MFL's transactions page (`options?O=03`), restyled, with the processed blind bids
+  (`processed_waivers`: who won and lost, and for how much).
+
+**Add/Drop** is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
 forms:
 - **Adding:** they read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker
   rows, and fill `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still
@@ -154,7 +207,8 @@ The design (settled for now; the canvas's row 5 is the reference):
   noted.
 - **A contract length picker (1–5 years)** on every add. A bid writes it as a named comment line; a
   free agent add offers a one-tap post ("Higbee: 2 years") to the board through MFL's `messageBoard`
-  import. A member can't set contract years directly: MFL's `salaries` import is commissioner-only,
+  import. Each length shows its cut penalty ("Cut later: $10"). A member can't set contract years
+  directly: MFL's `salaries` import is commissioner-only,
   so the job sets them, and the post is the league's public record.
 - **Blind bid groups (conditional bidding):** each group wins at most one claim, independently of the
   others. A claim's cap impact is what its drop frees less its bid; a group's max cap impact is its
@@ -179,7 +233,7 @@ The design (settled for now; the canvas's row 5 is the reference):
 Wording members see (no "worst case"):
 - **Projected cap**, "If all high bids win": cap used out of $300, now → projected ($297 → $302), red
   past $300. Moves talks in cap used, so its totals can't be mistaken for the +/− changes beside them
-  (Contracts talks in room).
+  (Rosters talks in room).
 - **Projected roster** (30 → 31), only when a claim has no drop; red past 30.
 - **Max cap impact** on each group, and each claim's impact under its bid: −$2 red, +$1 green, $0
   white.
@@ -191,27 +245,69 @@ the member's own pending bids before Wednesday night (for bids made anywhere, in
 pages, the classic site and MFL's app, which our controls can't reach); the daily job and the
 commissioner void over-cap moves after waivers run, as today.
 
-### Trades (to design)
+### Trades (Moves › Trades, to design)
 
 Same principle as Moves: MFL's trade pages, restyled, with v2 controls that block a proposal or an
 acceptance that would put a team over the cap or 30 active, counting the member's own pending bids.
 A member can see only their own pending bids (`pendingWaivers` is per owner), so the proposer's side
-is checked when proposing and the other team's side when they respond. Needs saved trade pages
-(propose, respond) to see MFL's forms.
+is checked when proposing and the other team's side when they respond. Pending trades (today on
+the home page's Main tab) show here. Needs saved trade pages (propose, respond) to see MFL's forms.
+
+### Lineup
+
+MFL's lineup page, restyled, no views. Warnings, not blocks (injury statuses change up to kickoff,
+and MFL's report can lag): a starter who is injured (IR or Out) or suspended in weeks 1–14, named with
+the rule; a starter on a bye or with no game, or an empty slot. Players whose game has started show
+MFL's lock clearly.
 
 ### Home
 
-- **League chat** from MFL's chat page (about 40 messages, the whole season, live), in a scrolling
-  panel; the fallback is MFL's chat module, which holds only the latest few, restyled.
-- **Still to design:** the rest of Home: the member's cap and roster status, League Alerts, the
-  week's matchup, recent league moves.
+Rebuilt, one page, top to bottom (on desktop, alerts on the left; chat and the board on the right):
+1. **My alerts:** the member's own, each one tappable to the page that fixes it; a quiet "All clear"
+   when empty.
+2. **League alerts:** every other team's (tap: that team in Rosters › Teams).
+3. **Chat:** from MFL's chat page (about 40 messages, the whole season, live), in a scrolling panel;
+   the fallback is MFL's chat module, which holds only the latest few, restyled.
+4. **Message board:** the newest topics, linking to MFL's board.
+5. **Recent moves:** the last five, linking to Moves › Recent. **Undecided:** the commissioner
+   decides after seeing a mockup.
+6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
+   draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
+   the last few days before one, it shows in My alerts instead.
+
+During the playoffs only, a **playoff bracket** panel (`playoffBrackets` export).
+
+My alerts and where they go:
+
+| Alert | Tap |
+|---|---|
+| Starter injured (IR or Out), suspended, on a bye or with no game; empty slot | Lineup |
+| Under 23 active | Moves › Add/Drop |
+| Current bids invalid (a pending bid could break a limit) | Moves › Add/Drop |
+| Bid deadline, when the member has pending bids (Wed 11 p.m. CT) | Moves › Add/Drop |
+| Contract length still to post for a free agent add | Moves › Add/Drop (the one-tap post) |
+| A player on IR the NFL no longer lists, and the drop it may need at 30 | Moves › IR |
+| A trade offer waiting for an answer | Moves › Trades |
+| Over the cap or 30 active from an add or trade: "the commissioner will reverse it" | not tappable |
+
+**Still to design:** all of it, on the canvas, phone first.
 
 ### League
 
-Rebuilt, replacing the home page's Standings tab for v2 (the tab stays while v1 members use it):
-standings (MFL's `leagueStandings` export), this week's matchups (schedule and live scoring), and
-power rankings, which no export has: read from MFL's Power Rank page (`options?O=101`), so they match
-MFL's, cached until the next results. **Still to design.**
+Rebuilt, replacing the home page's Standings tab for v2 (the tab stays while v1 members use it).
+Views: **Scores · Standings · Power.**
+- **Scores** (first: the most used page in season): a card per matchup, the member's first; a week
+  picker (past weeks show results, this week live scores, future weeks the schedule) and a **Season**
+  toggle for the member's whole schedule. Tap a card for both lineups, each starter's points and
+  game state. From `liveScoring` (refreshed every 30–60 s during games only), the schedule and
+  projections; links to MFL's live scoring page (`ajax_ls`) for play-by-play.
+- **Standings:** division standings from `leagueStandings`; late in the season the playoff picture
+  and a link to the bracket.
+- **Power:** MFL's power rankings, which no export has: read from MFL's Power Rank page
+  (`options?O=101`), so they match MFL's, cached until the next results; with Starter Points By
+  Position.
+
+**Still to design.**
 
 ## Chores: automating commissioner work
 
