@@ -444,9 +444,18 @@ commissioner write:
 - `salaryAdj` for salary adjustments
 - `salaries` for salaries and contract years (`APPEND=1`)
 - `fcfsWaiver` with `FRANCHISE_ID` for add/drop moves on a team's behalf
+- `accounting` (`FRANCHISE`, `AMOUNT`, `DESCRIPTION`) for money records
 
 Candidates:
-1. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
+1. **Prize accounting records** (noted 2026-10-11): the job adds an `accounting` record to a
+   team when it wins something, using the same rules as League › Winners (bylaws 1.6–1.8):
+   "Most Points Week N" ($15, split on a tie) once a week's scores are final; the all-play payout
+   ($0.75 × (wins − losses), never below $0) once the regular season ends; 1st/2nd/3rd (55/30/15%
+   of the pot left after both) once the playoffs end. The commissioner's own format is the model
+   (league-wide 0000 entries for the pot, "Most Points Week 1" on the team). It checks the
+   existing entries first so a record is never added twice, and leaves alone weeks the
+   commissioner already entered by hand.
+2. **Message board posts** of what the bot did: off for now, and the commissioner may turn them on
    after seeing the log.
 
 Dropped: a **Commish-tab chores queue** for flags. Flags are rare (12 contract-year flags in eight
