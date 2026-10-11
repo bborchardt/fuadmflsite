@@ -301,19 +301,27 @@ My alerts and where they go:
 ### League
 
 Rebuilt, replacing the home page's Standings tab for v2 (the tab stays while v1 members use it).
-Views: **Scores · Standings · Power.**
-- **Scores** (first: the most used page in season): a card per matchup, the member's first; a week
-  picker (past weeks show results, this week live scores, future weeks the schedule) and a **Season**
-  toggle for the member's whole schedule. Tap a card for both lineups, each starter's points and
-  game state. From `liveScoring` (refreshed every 30–60 s during games only), the schedule and
-  projections; links to MFL's live scoring page (`ajax_ls`) for play-by-play.
-- **Standings:** division standings from `leagueStandings`; late in the season the playoff picture
-  and a link to the bracket.
-- **Power:** MFL's power rankings, which no export has: read from MFL's Power Rank page
-  (`options?O=101`), so they match MFL's, cached until the next results; with Starter Points By
-  Position.
-
-**Still to design.**
+Views: **Scores · Standings · Power.** Designed (phone): the canvas's row 7.
+- **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
+  the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
+  both lineups side by side (each starter's points and game state: Final, "Playing · Q3" in lime, or
+  kickoff), with "Full live scoring" to MFL's `ajax_ls`. Before kickoff a card shows the spread; live,
+  the scores (leader bright, trailer dimmed) and "3 to play · proj 112–98". **Season** swaps the
+  cards for the member's schedule (results, then opponents; weeks 15–17 playoffs) and hides the
+  week picker. From `liveScoring` (refreshed every 30–60 s during games only), `schedule`
+  (scores, spreads) and projections.
+- **Standings:** West and East (W-L-T, PF, games back, streak) from `leagueStandings`, the member's
+  row highlighted; then the **Playoff picture**, "if the season ended today": 6 teams (MFL's bracket:
+  starting week 15, two first-round games). **League rule: the division winners are seeds 1–2, with
+  byes; the other four are the best all-play records, ties broken by standings order.** Seeds show
+  why ("West winner", "24-11-1 all-play"); "In the hunt" lists the rest with all-play games back of
+  seed 6. Links to MFL's bracket.
+- **Power:** MFL's power rankings (score, bar, all-play record), read from MFL's Power Rank page
+  (`options?O=101`) since no export has them, cached until the next results; then **Starter points
+  by position**, a stacked bar per team (QB, RB, WR, TE, PK; its points for), open by default
+  (collapsible). The data is in the home page's module as FusionCharts XML (`positionXML`); an export
+  source is to find (`playerScores` by starter, summed, is the fallback). Position colors are the
+  validated dark categorical slots (blue, orange, aqua, yellow, magenta).
 
 ## Chores: automating commissioner work
 
