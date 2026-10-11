@@ -31,7 +31,7 @@ evolving there before they're built.
    the beta toggle; a member who turns it on keeps it until they leave the beta. Feedback comes
    through the beta's feedback thread. At first the offer is limited to the commissioner's own
    team (`teams: ["0001"]`), so v2 is tried as a member; logged in as commissioner (0000) the site
-   stays v1. The offer widens to the league once v2 is ready for members.
+   stays v1. The offer widens to the league only once v2 is fully built.
    **The commissioner's experience in v2 is designed later:** Moves and the rest are designed for
    members.
    **Loader change first (v1, in place, approved):** a beta that's still offered, but not to the
@@ -63,9 +63,15 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 - **MFL's player popup everywhere:** every player name calls MFL's own `launch_player_modal(league,
   player)` (bio, status, contract, news), restyled, so a member can research a player where they're
   deciding on him.
-- **Rebuilt:** Home, League, Rosters and Moves › Add/Drop. Home, League and Rosters are tabs of MFL's
-  home page (`home/48571`, the tab picked by the URL's `#`, found by its name), so moving between
-  them doesn't reload.
+- **Rebuilt:** Home, League, Rosters and Moves › Add/Drop. Home, League and Rosters live on MFL's home
+  page (`home/48571`), so moving between them doesn't reload.
+- **Owners' customizations don't reach v2.** Each owner can choose their own MFL skin (63 of them;
+  the league's is only the default) and their own home page tabs and the modules in them. v2's
+  stylesheet sets every background, border and shadow outright (checked against all 63 skins), and
+  the rebuilt pages draw into v2's own area on the home page, hide MFL's tab contents, take their
+  data from exports, and mark their views in the URL themselves (e.g. `#league-standings`), not by
+  MFL's tab positions. Until then the frame's Home, League › Standings and Rosters › All players
+  links open home page tabs by position, which can be wrong for an owner whose tabs differ.
 
 The map:
 
