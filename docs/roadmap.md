@@ -368,7 +368,7 @@ small number under the points. No team labels over the lineups: the face-off abo
 **Names on phones:** designed for 360 px, checked at 320, 360, 390 and 430 before shipping; team and
 player names wrap (up to two lines) where they identify something, and are cut with "…" only in
 dense tables whose row opens the full name; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
-PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list side by side; Power puts the rankings beside the position chart.
+PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list side by side; Power is one full-width table (rank, team, power with its bar, then every Power Rank figure as a column, no click) with the position chart below it, each segment labelled with its points.
 - **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
   the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
   both lineups side by side (each starter's points and game state: Final, "Playing · Q3" in lime, or
@@ -393,7 +393,7 @@ win %, points against, power rank, …), even across divisions.** Seeds show
 rule), and no bracket: once the playoffs start the panel becomes "Playoff seeds", the final six with
 their reasons and no hunt list, while Scores carries the playoff games.
 - **Power:** MFL's power rankings (score, bar, all-play record), read from MFL's Power Rank page
-  (`options?O=101`) since no export has them, cached until the next results; clicking a team shows
+  (`options?O=101`) since no export has them, cached until the next results; on phones, tapping a team shows
   what that page lists for it (points for and possible, efficiency, bench points, high and low score,
   all-play, coulda won / woulda lost, alternate rank), not a formula, which MFL doesn't show; then **Starter points
   by position**, a stacked bar per team (QB, RB, WR, TE, PK; its points for), open by default
