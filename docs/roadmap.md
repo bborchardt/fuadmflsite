@@ -368,7 +368,7 @@ small number under the points. No team labels over the lineups: the face-off abo
 **Names on phones:** designed for 360 px, checked at 320, 360, 390 and 430 before shipping; team and
 player names wrap (up to two lines) where they identify something, and are cut with "…" only in
 dense tables whose row opens the full name; Standings puts the full table (W-L-T, Pct, GB, Div, All-play, PF, Avg PF, PA, Avg
-PA, Strk) beside the Playoff picture; Power puts the rankings beside the position chart.
+PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list side by side; Power puts the rankings beside the position chart.
 - **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
   the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
   both lineups side by side (each starter's points and game state: Final, "Playing · Q3" in lime, or
