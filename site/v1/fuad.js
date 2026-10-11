@@ -77,8 +77,15 @@ function showBar({mode, base, feedback, failed}) {
     }
 }
 
+// The header hides the page while a beta or preview loads (at most a few seconds); whichever
+// version runs shows it again.
+function reveal() {
+    document.documentElement.classList.remove("fuad-cloak");
+}
+
 function boot(beta) {
     window.fuadVersion = versionHere;
+    reveal();
     start({dataBase: DATA_BASE, beta}).catch((error) => console.error("[fuad]", error));
 }
 

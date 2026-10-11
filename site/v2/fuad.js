@@ -1,7 +1,7 @@
 // Entry point: the header message loads one version's fuad.js on every league page, and it decides
 // which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
-import {start} from "./ui/app.js";
+import {pageContext, start} from "./ui/app.js";
 import {betaOffer, decide, offeredVersion, withParam} from "./loader.js";
 
 const PREVIEW_KEY = "fuad.preview";
@@ -77,8 +77,19 @@ function showBar({mode, base, feedback, failed}) {
     }
 }
 
+// The header hides the page while a beta or preview loads (at most a few seconds); whichever
+// version runs shows it again.
+function reveal() {
+    document.documentElement.classList.remove("fuad-cloak");
+}
+
 function boot(beta) {
     window.fuadVersion = versionHere;
+    const context = pageContext();
+    // loaded on its own, so a failure here leaves MFL's menus and the rest of the page working
+    (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context, storage})) : Promise.resolve())
+        .catch((error) => console.error("[fuad] couldn't draw the frame:", error))
+        .then(reveal);
     start({dataBase: DATA_BASE, beta}).catch((error) => console.error("[fuad]", error));
 }
 

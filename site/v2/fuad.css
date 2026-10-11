@@ -337,7 +337,11 @@ body .pagebody button:hover {
 body input[type="checkbox"],
 body input[type="radio"] { accent-color: var(--ng-accent); }
 
-/* ---- Live scoring, calendar, brackets ---- */
+/* ---- Chat, live scoring, calendar, brackets ---- */
+
+body #league_chat b { color: var(--ng-text); }
+
+body #league_chat td:first-child b { color: var(--ng-accent); }
 
 body tr.total td { color: var(--ng-accent); }
 
@@ -499,3 +503,289 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 }
 
 #fuad-preview a { color: var(--ng-bg); text-decoration: underline; }
+
+/* ---- The frame: sections, views and the team sheet (ui/frame.js) ---- */
+
+/* MFL's own navigation goes only once the frame is drawn */
+.fuad-framed body .myfantasyleague_menu,
+.fuad-framed body .pageheader,
+.fuad-framed body #hsubmenu,
+.fuad-framed body .myfantasyleague_tabmenu { display: none !important; }
+
+#fuad-frame { font-family: var(--ng-body); color: var(--ng-text); }
+
+#fuad-frame a { text-decoration: none; }
+
+.fuad-top {
+    display: flex;
+    align-items: center;
+    gap: 8px 24px;
+    width: 90%;
+    min-height: 64px;
+    margin: 0 auto;
+    padding: 8px 0;
+    box-sizing: border-box;
+}
+
+.fuad-brand {
+    font: 700 26px/1 var(--ng-display);
+    letter-spacing: 0.04em;
+    color: var(--ng-text) !important;
+}
+
+.fuad-title { display: none; }
+
+.fuad-sections-top { display: flex; flex: 1; flex-wrap: wrap; gap: 4px; }
+
+.fuad-sections-top a {
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: var(--ng-muted) !important;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.fuad-sections-top a svg { display: none; }
+
+.fuad-sections-top a:hover { color: var(--ng-text) !important; }
+
+.fuad-sections-top a[aria-current="page"] {
+    background: var(--ng-raised);
+    color: var(--ng-accent) !important;
+}
+
+.fuad-team {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    background: var(--ng-accent);
+    color: var(--ng-bg);
+    font: 700 17px/1 var(--ng-display);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fuad-team img { width: 100%; height: 100%; object-fit: cover; }
+
+.fuad-views {
+    display: flex;
+    gap: 4px;
+    width: 90%;
+    margin: 0 auto 12px;
+    padding: 4px;
+    box-sizing: border-box;
+    background: var(--ng-surface);
+    border-radius: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.fuad-views a {
+    flex: 1 0 auto;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ng-muted) !important;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.fuad-views a[aria-current="page"] { background: var(--ng-line); color: var(--ng-text) !important; }
+
+.fuad-sections-bottom { display: none; }
+
+@media (max-width: 48em) {
+    .fuad-top { gap: 8px; width: auto; min-height: 56px; padding: 8px 16px 4px; }
+    .fuad-brand, .fuad-sections-top { display: none; }
+    .fuad-title { display: block; flex: 1; font: 700 30px/1 var(--ng-display); }
+    .fuad-views { margin: 4px 16px 12px; width: auto; }
+
+    .fuad-sections-bottom {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9000;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+        background: var(--ng-bg);
+        border-top: 1px solid var(--ng-line);
+    }
+
+    .fuad-sections-bottom a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        min-height: 48px;
+        color: var(--ng-muted) !important;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .fuad-sections-bottom a[aria-current="page"] { color: var(--ng-accent) !important; }
+
+    .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+
+    .fuad-framed #fuad-preview { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* the team sheet: slides up on phones, a panel at the right on desktop */
+.fuad-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.fuad-sheet[hidden] { display: none; }
+
+.fuad-sheet-open body { overflow: hidden; }
+
+.fuad-sheet-panel {
+    width: min(420px, 100%);
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 16px 20px 32px;
+    background: var(--ng-surface);
+}
+
+.fuad-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.fuad-sheet-head h2 { margin: 0; font: 700 26px/1.1 var(--ng-display); }
+
+.fuad-sheet-close {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--ng-raised);
+    color: var(--ng-text);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.fuad-sheet-actions { display: flex; gap: 8px; margin: 14px 0 6px; }
+
+#fuad-frame .fuad-button {
+    flex: 1;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--ng-accent);
+    color: var(--ng-bg) !important;
+    font-weight: 600;
+}
+
+#fuad-frame .fuad-button-quiet { background: var(--ng-raised); color: var(--ng-text) !important; }
+
+.fuad-switch {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 10px 0;
+    padding: 4px;
+    background: var(--ng-bg);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.fuad-switch > span:first-child { padding: 0 10px; color: var(--ng-muted); font-weight: 500; }
+
+.fuad-switch a,
+.fuad-switch [aria-current] {
+    flex: 1;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    color: var(--ng-muted) !important;
+}
+
+.fuad-switch [aria-current] { background: var(--ng-line); color: var(--ng-text); }
+
+#fuad-frame .fuad-sheet h3 {
+    margin: 22px 0 6px;
+    font: 600 12px/1.2 var(--ng-body);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--ng-muted);
+}
+
+.fuad-sheet .fuad-sheet-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+}
+
+.fuad-sheet .fuad-sheet-links li { margin: 0; padding: 0; }
+
+.fuad-sheet-links a {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ng-line-soft);
+    color: var(--ng-text) !important;
+    font-size: 15px;
+}
+
+.fuad-sheet-links li[hidden] { display: none; }
+
+.fuad-sheet-filter {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--ng-field);
+    border-radius: 10px;
+    background: var(--ng-bg);
+    color: var(--ng-text);
+    font: 16px var(--ng-body);
+}
+
+.fuad-sheet-menu details { border-bottom: 1px solid var(--ng-line-soft); }
+
+.fuad-sheet-menu details[hidden] { display: none; }
+
+.fuad-sheet-menu summary {
+    padding: 12px 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fuad-sheet-menu .fuad-sheet-links { padding-bottom: 8px; }
+
+#fuad-frame .fuad-sheet-classic {
+    display: block;
+    margin-top: 24px;
+    color: var(--ng-muted) !important;
+    text-decoration: underline;
+}
+
+@media (max-width: 48em) {
+    .fuad-sheet { align-items: flex-end; }
+    .fuad-sheet-panel { width: 100%; height: auto; max-height: 88vh; border-radius: 18px 18px 0 0; padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
+}

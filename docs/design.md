@@ -57,6 +57,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 - A beta choice holds only while the header offers that version, so ending or promoting it needs no
   member action. Viewing as a team the offer leaves out (the commissioner as 0000) keeps the choice
   without loading the beta, so switching back needs no new opt-in.
+- The header hides the page while a stored beta or preview loads, for at most 10 seconds, so MFL's
+  page doesn't flash before the other version draws; whichever version runs shows it again.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`.
 
 ## League rules the code relies on
