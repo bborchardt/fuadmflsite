@@ -69,7 +69,10 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
   so v2 draws its own from exports (designed, canvas row 11): name, position, NFL team and number;
   injury status and expected return (`injuries`); owner, salary, years, bye; the actions that fit
   (yours: drop, with its penalty, and IR; another team's: propose a trade; a free agent: add); the
-  latest news headlines (`playerProfile`, linking to MFL's news); this season by week with opponent
+  latest news headlines (`playerProfile`, which gives each article's ID), each opening in place
+  to its source and time, update and analysis, read from MFL's article page
+  (`view_news_article?L=…&ID=…`) when opened, the newest open at first; "More news on MFL" links
+  to his 7-day news (`news_articles?L=…&PLAYERS=…&DAYS=7`); this season by week with opponent
   and points (`playerScores` per week, `nflSchedule`); the biography last (`players` DETAILS=1).
   A bottom sheet on phones, a two-column dialog on desktop.
 - **Rebuilt:** Home, League, Rosters and Moves › Add/Drop. Home, League and Rosters live on MFL's home
