@@ -184,8 +184,11 @@ desktop panels that would otherwise sit side by side at different heights.
   (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the cut panel: penalty, room now,
   room after (green if higher, red if lower), "Player details" (MFL's popup) and "Drop" (to Moves ›
   Add/Drop). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
-- **Teams:** the cap ledger, the member's team highlighted; tap a team for its roster in the My team
-  layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
+- **Teams** (designed, phone and desktop): every team by cap used, least first, the member's
+  highlighted; on phones a row per team with cap used, a bar, next year's picks ("8 · 3 1sts") and
+  roster count. Tapping a team opens its page in the My team layout (cap used, active and IR, used
+  by season, the roster by position with NFL team, bye and points, its penalties, its draft picks)
+  with "Propose a trade" (to Moves › Trades) on top and no cut columns.
 - **Players** (under review): rostered players and the free-agent pool (`freeAgents`, 682 players
   at our positions, 501 on an NFL team; only those on a team are shown), so scouting works all
   year, including before the draft when nothing can be added. A **Find a player** box above the chips matches names
