@@ -153,15 +153,15 @@ canvas's row 8; Teams is the cap ledger (row 4).
 **Desktop (row 8, under review):** My team, top to bottom, all full width: the cap panel (cap
 used, "$293 of $300" over "$291 salaries + $2 penalties"; active and IR; used by season in boxes
 as tall as the other two parts, so their tops and bottoms line up); the roster table grouped by position
-("QB · 6 · $150" on each group's line), with Player, NFL, Bye, Pts, Salary, Years, Cut penalty and
-Room after cut, and this season's penalties as the last group (who, when cut, terms, the amount
-under Salary); no clicks: the
+("QB · 6 · $150" on each group's line), with Player, then the money (Salary, Years, Cut penalty,
+Room after cut), then NFL, Bye, Pts, and this season's penalties as the last group (who, the amount
+under Salary, then when cut and the terms); no clicks: the
 name opens MFL's player details in one click, and dropping is done in Moves; then two panels, one
 per draft year, listing each round's pick (2027 numbered where today's order decides it, "from …"
 in orange, "Traded to …" greyed). Teams is the ledger as a table, in cap used like My team (used now
 with a bar; next year's picks held, "8 · 3 1sts", "4 · no 1st", plain 5 greyed; used each later
 season; roster count; least used first). A team opens in My team's layout with "Propose a trade",
-its table built for spotting trade targets: Player, NFL, Bye, Pts, Salary, Years (no cut columns).
+its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts (no cut columns). Every Rosters table puts the contract beside the name.
 Players is every rostered player in one table (Player, then the
 contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last, in
 plain grey so it doesn't read as a second name column) under the filter chips, in a scroll box, salary first; clicking Player,
