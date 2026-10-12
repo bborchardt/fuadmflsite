@@ -167,8 +167,9 @@ contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the ow
 plain grey so it doesn't read as a second name column) under the filter chips, in a scroll box, salary first; clicking Player,
 Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: every panel full width, so none sits beside one of a different height: franchise
 tags (five tiles across; clicking one shows its top 5 as five cells across, name over salary); the 2027 draft order as ten tiles across (number, team, record, traded
-picks; undecided picks unnumbered), or before the draft Your 2027 picks as tiles with each pick's
-salary range; then the
+picks; undecided picks unnumbered), or before the draft Your 2027 picks as one tile per round,
+always five across whatever the team holds (several picks stack in a round's tile, each with its
+salary range and "from …"; a round traded away shows greyed, "Traded to …"); then the
 whole draft as one grid, rounds across and picks down, all 50 picks with no taps. In season, last
 summer's results: each cell the pick, player and position, team, and salary today ("—" once
 released). Before the draft, the board: each cell the pick, owner ("from …" in orange for traded
