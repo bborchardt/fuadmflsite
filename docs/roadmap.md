@@ -150,7 +150,9 @@ under Salary); no clicks: the
 name opens MFL's player details in one click, and dropping is done in Moves; then two panels, one
 per draft year, listing each round's pick (2027 numbered where today's order decides it, "from …"
 in orange, "Traded to …" greyed). Teams is the ledger as a table, in cap used like My team (used now
-with a bar, penalties, used each later season, roster count; least used first); a team opens in My team's layout with "Propose a trade".
+with a bar; next year's picks held, "8 · 3 1sts", "4 · no 1st", plain 5 greyed; used each later
+season; roster count; least used first). A team opens in My team's layout with "Propose a trade",
+its table built for spotting trade targets: Player, NFL, Bye, Pts, Salary, Years (no cut columns).
 Players is one table (Player, Pos, NFL,
 Team, Pts, Salary, Years) under the filter chips. Draft is two columns: tags and the order (or your
 picks), then last draft's results (or the board) and the rookie scale, open.
