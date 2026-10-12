@@ -142,9 +142,11 @@ Rules for v2:
 Views: **My team · Teams · Players · Draft.** My team, Players and Draft are designed (phone): the
 canvas's row 8; Teams is the cap ledger (row 4).
 **Desktop (row 8, under review):** My team, top to bottom, all full width: the cap panel (cap
-room now, active and IR, room by season, then this season's penalties, listed in columns that fill
-across before they grow down); the roster table grouped by position ("QB · 6 · $150" on each group's
-line), with Player, NFL, Bye, Pts, Salary, Years, Cut penalty and Room after cut, no clicks: the
+used, "$293 of $300" over "$291 salaries + $2 penalties"; active and IR; room by season), its
+parts on one label / value / note grid so they line up; the roster table grouped by position
+("QB · 6 · $150" on each group's line), with Player, NFL, Bye, Pts, Salary, Years, Cut penalty and
+Room after cut, and this season's penalties as the last group (who, when cut, terms, the amount
+under Salary); no clicks: the
 name opens MFL's player details in one click, and dropping is done in Moves; then two panels, one
 per draft year, listing each round's pick (2027 numbered where today's order decides it, "from …"
 in orange, "Traded to …" greyed). Teams is the ledger as a table (room now with a bar, penalties,
