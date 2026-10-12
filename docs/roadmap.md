@@ -142,8 +142,8 @@ Rules for v2:
 Views: **My team · Teams · Players · Draft.** My team, Players and Draft are designed (phone): the
 canvas's row 8; Teams is the cap ledger (row 4).
 **Desktop (row 8, under review):** My team, top to bottom, all full width: the cap panel (cap
-used, "$293 of $300" over "$291 salaries + $2 penalties"; active and IR; room by season), its
-parts on one label / value / note grid so they line up; the roster table grouped by position
+used, "$293 of $300" over "$291 salaries + $2 penalties"; active and IR; used by season in boxes
+as tall as the other two parts, so their tops and bottoms line up); the roster table grouped by position
 ("QB · 6 · $150" on each group's line), with Player, NFL, Bye, Pts, Salary, Years, Cut penalty and
 Room after cut, and this season's penalties as the last group (who, when cut, terms, the amount
 under Salary); no clicks: the
@@ -154,9 +154,10 @@ room each later season, roster count); a team opens in My team's layout with "Pr
 Players is one table (Player, Pos, NFL,
 Team, Pts, Salary, Years) under the filter chips. Draft is two columns: tags and the order (or your
 picks), then last draft's results (or the board) and the rookie scale, open.
-- **My team** (the default): cap room now (orange under $10; salaries plus penalties of $300), active
-  of 30 and IR, "Penalties this season" expanding to where each came from (`salaryAdjustments`:
-  the player cut, his contract then, the amount and date), and room for this season and the next four; the roster by position, each player with
+- **My team** (the default): cap used ("$293 of $300", orange within $10 of the cap; "$291
+  salaries + $2 penalties" under it), active of 30 and IR, and cap used for this season and the next
+  four (boxes); the roster by position, ending with this season's penalties as its last group (from
+  `salaryAdjustments`: the player cut, when, his contract then, the amount), each player with
   salary, years left (orange "expiring" at 1), NFL team, bye (`nflByeWeeks`) and YTD points
   (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the cut panel: penalty, room now,
   room after (green if higher, red if lower), "Player details" (MFL's popup) and "Drop" (to Moves ›
