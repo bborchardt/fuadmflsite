@@ -68,7 +68,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
   doesn't fit a phone (values cut off, the stats table far too wide) and leads with the biography,
   so v2 draws its own from exports (designed, canvas row 11): name, position, NFL team and number;
   injury status and expected return (`injuries`); owner, salary, years, bye; the actions that fit
-  (yours: drop, with its penalty, and IR; another team's: propose a trade; a free agent: add); the
+  (yours: drop and IR, with the cut's effect above them, "Cut now: $28 penalty · cap used $293 → $253"; another team's: propose a trade; a free agent: add); the
   latest news headlines (`playerProfile`, which gives each article's ID), each opening in place
   to its source and time, update and analysis, read from MFL's article page
   (`view_news_article?L=…&ID=…`) when opened, the newest open at first; "More news on MFL" links
@@ -181,9 +181,9 @@ desktop panels that would otherwise sit side by side at different heights.
   four (boxes); the roster by position, ending with this season's penalties as its last group (from
   `salaryAdjustments`: the player cut, when, his contract then, the amount), each player with
   salary, years left (orange "expiring" at 1), NFL team, bye (`nflByeWeeks`) and YTD points
-  (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the cut panel: penalty, room now,
-  room after (green if higher, red if lower), "Player details" (MFL's popup) and "Drop" (to Moves ›
-  Add/Drop). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
+  (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the player popup, as on
+  desktop (no cut panel); for the member's own players the popup shows what cutting costs ("Cut
+  now: $28 penalty · cap used $293 → $253") beside Drop (to Moves › Add/Drop) and IR. Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
 - **Teams** (designed, phone and desktop): every team by cap used, least first, the member's
   highlighted; on phones a row per team with cap used, a bar, next year's picks ("8 · 3 1sts") and
   roster count. Tapping a team opens its page in the My team layout (cap used, active and IR, used
