@@ -149,8 +149,8 @@ Room after cut, and this season's penalties as the last group (who, when cut, te
 under Salary); no clicks: the
 name opens MFL's player details in one click, and dropping is done in Moves; then two panels, one
 per draft year, listing each round's pick (2027 numbered where today's order decides it, "from …"
-in orange, "Traded to …" greyed). Teams is the ledger as a table (room now with a bar, penalties,
-room each later season, roster count); a team opens in My team's layout with "Propose a trade".
+in orange, "Traded to …" greyed). Teams is the ledger as a table, in cap used like My team (used now
+with a bar, penalties, used each later season, roster count; least used first); a team opens in My team's layout with "Propose a trade".
 Players is one table (Player, Pos, NFL,
 Team, Pts, Salary, Years) under the filter chips. Draft is two columns: tags and the order (or your
 picks), then last draft's results (or the board) and the rookie scale, open.
@@ -161,7 +161,7 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   salary, years left (orange "expiring" at 1), NFL team, bye (`nflByeWeeks`) and YTD points
   (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the cut panel: penalty, room now,
   room after (green if higher, red if lower), "Player details" (MFL's popup) and "Drop" (to Moves ›
-  Add/Drop). Then the team's future draft picks (`futureDraftPicks`).
+  Add/Drop). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
 - **Teams:** the cap ledger, the member's team highlighted; tap a team for its roster in the My team
   layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
 - **Players:** every rostered player, sorted by salary, filtered by position chips (All, QB, RB, WR,
