@@ -162,8 +162,9 @@ in orange, "Traded to …" greyed). Teams is the ledger as a table, in cap used 
 with a bar; next year's picks held, "8 · 3 1sts", "4 · no 1st", plain 5 greyed; used each later
 season; roster count; least used first). A team opens in My team's layout with "Propose a trade",
 its table built for spotting trade targets: Player, NFL, Bye, Pts, Salary, Years (no cut columns).
-Players is one table (Player, Pos, NFL,
-Team, Pts, Salary, Years) under the filter chips. Draft is two columns: tags and the order (or your
+Players is every rostered player in one table (Player, Pos, NFL, Bye,
+Team, Pts, Salary, Years) under the filter chips, in a scroll box, salary first; clicking Player,
+Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft is two columns: tags and the order (or your
 picks), then last draft's results (or the board) and the rookie scale, open.
 - **My team** (the default): cap used ("$293 of $300", orange within $10 of the cap; "$291
   salaries + $2 penalties" under it), active of 30 and IR, and cap used for this season and the next
