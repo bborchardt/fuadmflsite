@@ -180,9 +180,9 @@ picks), then last draft's results (or the board) and the rookie scale, open.
 - **Players** (under review): rostered players and the free-agent pool (`freeAgents`, 682 players
   at our positions, 501 on an NFL team; only those on a team are shown), so scouting works all
   year, including before the draft when nothing can be added. Three multi-select chip rows: position
-  (All, QB, RB, WR, TE, PK), years left (All, FA, 1–5; in the offseason All, FA, 1–4) and owner (All,
-  Mine, Other teams, Free agents). A tap turns a chip on or off, All clears the row. **FA** in the
-  years row is anyone without a contract; the owner row then decides which: FA + Free agents is the
+  (All, QB, RB, WR, TE, PK), years left (All, 1–5; in the offseason All, FA, 1–4) and owner (All,
+  Mine, Other teams, Free agents). A tap turns a chip on or off, All clears the row. **FA** (offseason
+  only, in the years row) is anyone without a contract; the owner row then decides which: FA + Free agents is the
   UFAs, FA + Mine or Other teams is the RFAs (in the offseason; they stay with their old team, which
   can match), FA + All is everyone biddable. Mine + Free agents is the in-season scouting view.
   Free agents show "—" for salary and "—" for years in season ("UFA" in the offseason) and "Free
@@ -190,7 +190,7 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   RFAs: "—" for salary, "RFA" for years, their old team as the team; points are last season's. In
   season a Proj column (this week's projection, `projectedScores`) appears; the default sort is Proj
   with free agents shown (Pts in the offseason), Salary without. On phones, when free agents are in
-  the list, a row's two numbers are projection and points and the contract moves to the grey line.
+  the list, a row's two numbers are projection and points and the contract moves to the grey line; the list's headings (Proj, Pts or Salary, Years) sit over their columns.
   No team filter (Teams and My team cover one team).
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
   averages; live until the trade deadline, then fixed), **next year's draft order** (below), the
