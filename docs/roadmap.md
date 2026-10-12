@@ -25,6 +25,15 @@ A new look and simpler navigation for the whole league site, not incremental fix
 designs are on the canvas (claude.ai artifact "FUAD League Redesign", rows 4 and 5), and keep
 evolving there before they're built.
 
+### Open design to-dos (noted 2026-10-11)
+
+1. **Leaving the beta the way you joined.** The beta toggle opts a member in from League alerts,
+   but going back means opening the team sheet (the username button) and finding "Use the classic
+   site". Leaving should work the same way as joining: a toggle in the same place.
+2. **Where MFL's full menu lives.** Today "All MFL pages" sits in the team sheet behind the
+   username/team button; a site menu behind a person's name isn't where members expect it from
+   other apps. Revisit its home (and what else belongs in the team sheet) before building.
+
 ### Rollout
 
 1. **v1 stays the default.** v2 is built in `site/v2/` (starting as a copy of v1) and offered with
