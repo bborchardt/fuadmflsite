@@ -188,12 +188,13 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   Free agents show "—" for salary and "—" for years in season ("UFA" in the offseason) and "Free
   agent" as the team. In the offseason every contract is a year shorter and the expiring players are
   RFAs: "—" for salary, "RFA" for years, their old team as the team; points are last season's. In
-  season a Proj column (this week's projection, `projectedScores`) appears; the default sort is Proj
-  with free agents shown (Pts in the offseason), Salary without. On phones a row has one shape whatever
-  the filters: performance on the right (Proj and Pts in season, last season's Pts in the offseason,
-  with the headings over them) and the grey line carries position, NFL team, the contract ("$55 ·
-  2 yrs", "RFA") and the owner, or "Free agent", wrapping rather than cut. The phone list shows
-  everything by default; the chips narrow it.
+  season a Proj column (this week's projection, `projectedScores`) appears. The member picks the
+  sort (column headings, tap again to reverse); the default follows the phase only, never the chips:
+  Proj in season, last season's Pts before the draft. On phones a row has one shape whatever the
+  filters, its two numbers set by the phase: Proj and Pts in season; Pts and Salary before the draft
+  (production beside pay, for pricing RFAs at the auction); both headings sort. The grey line carries
+  position, NFL team, the contract (salary in season, years; "RFA") and the owner, or "Free agent",
+  wrapping rather than cut. The phone list shows everything by default; the chips narrow it.
   No team filter (Teams and My team cover one team).
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
   averages; live until the trade deadline, then fixed), **next year's draft order** (below), the
