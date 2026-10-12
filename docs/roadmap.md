@@ -179,7 +179,9 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
 - **Players** (under review): rostered players and the free-agent pool (`freeAgents`, 682 players
   at our positions, 501 on an NFL team; only those on a team are shown), so scouting works all
-  year, including before the draft when nothing can be added. Three multi-select chip rows: position
+  year, including before the draft when nothing can be added. A **Find a player** box above the chips matches names
+  as you type, together with the chips; when the chips hide a match, the empty list offers **Show
+  all** (clears the chips, keeps the text). Three multi-select chip rows: position
   (All, QB, RB, WR, TE, PK), years left (All, 1–5; in the offseason All, FA, 1–4) and owner (All,
   Mine, Other teams, Free agents). A tap turns a chip on or off, All clears the row. **FA** (offseason
   only, in the years row) is anyone without a contract; the owner row then decides which: FA + Free agents is the
