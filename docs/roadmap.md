@@ -177,11 +177,17 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   Add/Drop). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
 - **Teams:** the cap ledger, the member's team highlighted; tap a team for its roster in the My team
   layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
-- **Players:** every rostered player (rostered only: free agents are scouted on Moves › Add/Drop),
-  sorted by salary, filtered by position chips (All, QB, RB, WR, TE, PK) and years left (All,
-  Expiring, 2, 3, 4, 5), with the owning team and YTD points; the member's own highlighted. Both chip
-  rows are multi-select (RB + WR, 4 + 5 years): a tap turns a chip on or off, All clears the row,
-  none on means All. No team filter (Teams and My team cover one team).
+- **Players** (under review): rostered players and the free-agent pool (`freeAgents`, 682 players
+  at our positions, 501 on an NFL team; only those on a team are shown), so scouting works all
+  year, including before the draft when nothing can be added. Three multi-select chip rows: position
+  (All, QB, RB, WR, TE, PK), years left (All, 1–5; in the offseason All, RFA, 1–4) and owner (All,
+  Mine, Other teams, Free agents; Mine + Free agents is the scouting view). A tap turns a chip on or
+  off, All clears the row. Free agents show "—" for salary and years and "Free agent" as the team.
+  In the offseason every contract is a year shorter and the expiring players are RFAs: "—" for
+  salary, "RFA" for years, their old team (which can match) as the team, and points are last
+  season's. In season a Proj column (this week's projection, `projectedScores`) appears; the
+  default sort is Proj with free agents shown (Pts in the offseason), Salary without. No team
+  filter (Teams and My team cover one team).
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
   averages; live until the trade deadline, then fixed), **next year's draft order** (below), the
   rookie scale for the next draft (picks 1–10), and **this year's rookie draft** (each league site shows its own year's), by round with
@@ -245,11 +251,8 @@ Views: **Add/Drop · Trades · IR · Recent.**
   (`processed_waivers`: who won and lost, and for how much).
 
 **Add/Drop** is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
-forms. It's also where free agents are scouted (decided 2026-10-11, to design with Moves on
-desktop): all of a position's free agents in a scroll box, sorted by this week's projection, with
-points so far (MFL's `pts`, `pwpts`), "Hide players with no team" on by default, and a **Compare
-with my team** switch that puts the member's own players at that position in the same table,
-marked as theirs.
+forms. Free agents are scouted on Rosters › Players (with the Mine + Free agents
+chips), which works before the draft too; Add/Drop is where the move is made.
 - **Adding:** they read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker
   rows, and fill `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still
   apply. Submit stays off until MFL's hidden `add_pid`/`drop_pid` and its "To Add"/"To Drop" lines
