@@ -165,12 +165,16 @@ its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts
 Players is every rostered player in one table (Player, then the
 contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last, in
 plain grey so it doesn't read as a second name column) under the filter chips, in a scroll box, salary first; clicking Player,
-Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: franchise tags beside the order (or your picks), then the whole draft as one
-grid, rounds across and picks down, all 50 picks with no taps. In season, last summer's results:
-each cell the pick, player and position, team, and salary today ("—" once released). Before the
-draft, the board: each cell the pick, owner ("from …" in orange for traded picks) and what the
-scale pays at that overall pick, lowest to highest across positions ("$1–8"; the full breakdown on
-hover). The member's picks are highlighted. No separate rookie scale table on desktop.
+Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: every panel full width, so none sits beside one of a different height: franchise
+tags (five tiles across); the 2027 draft order as ten tiles across (number, team, record, traded
+picks; undecided picks unnumbered), or before the draft Your 2027 picks as tiles with each pick's
+salary range; the rookie scale turned on its side (positions down, picks 1–10 across); then the
+whole draft as one grid, rounds across and picks down, all 50 picks with no taps. In season, last
+summer's results: each cell the pick, player and position, team, and salary today ("—" once
+released). Before the draft, the board: each cell the pick, owner ("from …" in orange for traded
+picks) and what the scale pays at that overall pick, lowest to highest across positions ("$1–8"; the
+breakdown on hover). The member's picks are highlighted. Full-width bands are the default fix for
+desktop panels that would otherwise sit side by side at different heights.
 - **My team** (the default): cap used ("$293 of $300", orange within $10 of the cap; "$291
   salaries + $2 penalties" under it), active of 30 and IR, and cap used for this season and the next
   four (boxes); the roster by position, ending with this season's penalties as its last group (from
