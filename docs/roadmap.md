@@ -63,9 +63,15 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 - **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR, Recent and the
   fallback pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
   controls still work.
-- **MFL's player popup everywhere:** every player name calls MFL's own `launch_player_modal(league,
-  player)` (bio, status, contract, news), restyled, so a member can research a player where they're
-  deciding on him.
+- **A player popup everywhere:** every player name opens it in one click, so a member can research
+  a player where they're deciding on him. MFL's own (`launch_player_modal`) is desktop markup that
+  doesn't fit a phone (values cut off, the stats table far too wide) and leads with the biography,
+  so v2 draws its own from exports (designed, canvas row 11): name, position, NFL team and number;
+  injury status and expected return (`injuries`); owner, salary, years, bye; the actions that fit
+  (yours: drop, with its penalty, and IR; another team's: propose a trade; a free agent: add); the
+  latest news headlines (`playerProfile`, linking to MFL's news); this season by week with opponent
+  and points (`playerScores` per week, `nflSchedule`); the biography last (`players` DETAILS=1).
+  A bottom sheet on phones, a two-column dialog on desktop.
 - **Rebuilt:** Home, League, Rosters and Moves › Add/Drop. Home, League and Rosters live on MFL's home
   page (`home/48571`), so moving between them doesn't reload.
 - **Owners' customizations don't reach v2.** Each owner can choose their own MFL skin (63 of them;
