@@ -185,7 +185,8 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   off, All clears the row. Free agents show "—" for salary and years and "Free agent" as the team.
   In the offseason every contract is a year shorter and the expiring players are RFAs: "—" for
   salary, "RFA" for years, their old team (which can match) as the team, and points are last
-  season's. In season a Proj column (this week's projection, `projectedScores`) appears; the
+  season's. Since RFAs are bid on at the auction with the UFAs (6.1), the owner chip Free agents
+  becomes **Up for auction** and covers both: QB + Up for auction is every biddable QB. In season a Proj column (this week's projection, `projectedScores`) appears; the
   default sort is Proj with free agents shown (Pts in the offseason), Salary without. No team
   filter (Teams and My team cover one team).
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
