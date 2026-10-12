@@ -176,9 +176,11 @@ picks), then last draft's results (or the board) and the rookie scale, open.
   Add/Drop). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
 - **Teams:** the cap ledger, the member's team highlighted; tap a team for its roster in the My team
   layout, with "Propose a trade" (to Moves › Trades) instead of the cut panel.
-- **Players:** every rostered player, sorted by salary, filtered by position chips (All, QB, RB, WR,
-  TE, PK) and years left (All, Expiring, 2, 3, 4–5), with the owning team and YTD points; the
-  member's own highlighted.
+- **Players:** every rostered player (rostered only: free agents are scouted on Moves › Add/Drop),
+  sorted by salary, filtered by position chips (All, QB, RB, WR, TE, PK) and years left (All,
+  Expiring, 2, 3, 4, 5), with the owning team and YTD points; the member's own highlighted. Both chip
+  rows are multi-select (RB + WR, 4 + 5 years): a tap turns a chip on or off, All clears the row,
+  none on means All. No team filter (Teams and My team cover one team).
 - **Draft:** franchise tags for next season (each position's tag, expanding to the top 5 salaries it
   averages; live until the trade deadline, then fixed), **next year's draft order** (below), the
   rookie scale for the next draft (picks 1–10), and **this year's rookie draft** (each league site shows its own year's), by round with
@@ -242,7 +244,11 @@ Views: **Add/Drop · Trades · IR · Recent.**
   (`processed_waivers`: who won and lost, and for how much).
 
 **Add/Drop** is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
-forms:
+forms. It's also where free agents are scouted (decided 2026-10-11, to design with Moves on
+desktop): all of a position's free agents in a scroll box, sorted by this week's projection, with
+points so far (MFL's `pts`, `pwpts`), "Hide players with no team" on by default, and a **Compare
+with my team** switch that puts the member's own players at that position in the same table,
+marked as theirs.
 - **Adding:** they read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker
   rows, and fill `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still
   apply. Submit stays off until MFL's hidden `add_pid`/`drop_pid` and its "To Add"/"To Drop" lines
