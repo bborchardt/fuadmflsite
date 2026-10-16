@@ -12,3 +12,6 @@ What the daily job did, newest last.
 - 2026-10-11 14:19 UTC: Set Odell Beckham to 1 year (post "Beckham: 1 years").
 - 2026-10-15 12:48 UTC: Set Demario Douglas to 1 year (no length stated: the default).
 - 2026-10-15 12:48 UTC: Set Tyler Huntley to 1 year (no length stated: the default).
+- 2026-10-16 12:40 UTC: Charged $2 to The Obliterators  for Harrison Mevis (2yrs@1, 10/15), and reset the player to $1 / 0 years.
+- 2026-10-16 12:40 UTC: Set Wil Lutz to 1 year (no length stated: the default).
+- 2026-10-16 12:40 UTC: Set Tyquan Thornton to 2 years (post "Thornton: 2 years").
