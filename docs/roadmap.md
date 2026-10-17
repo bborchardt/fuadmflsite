@@ -16,8 +16,59 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 ## v2: the redesign
 
 A new look and simpler navigation for the whole league site, not incremental fixes to v1. The
-designs are on the canvas (claude.ai artifact "FUAD League Redesign", rows 4 and 5), and keep
-evolving there before they're built.
+designs are on the canvas (claude.ai artifact "FUAD League Redesign",
+https://claude.ai/artifact/QAr8Vy6ieYJdSixPvfDBwV), and keep evolving there before they're built.
+Every current board is an interactive prototype (press Play; its row title names its Tweaks).
+
+| Row | Boards | Status |
+|---|---|---|
+| 1–3 | Night Game, Front Office, Broadcast (phone, desktop) | style explorations; Night Game's look was chosen |
+| 4 | Front Office ledger in the Night Game look | history; its cap ledger and contract ideas live on in Rosters (row 8) |
+| 5 | Moves › Add/Drop, phone | current |
+| 6 | Home, phone and desktop | current |
+| 7 | League (Scores, Standings, Power, Winners), phone and desktop | current |
+| 8 | Rosters (My team, Teams, Players, Draft), phone, phone before the draft, desktop | current |
+| 9 | Moves › Trades, phone and desktop | current |
+| 10 | Moves › IR, phone and desktop | current |
+| 11 | Player popup, phone and desktop | current |
+| 12 | Moves › Add/Drop, desktop | current |
+| 13 | Site menu (☰) and the team sheet, phone and desktop | current |
+
+### For a design review
+
+What a reviewer needs beyond the sections below:
+- **Scope:** the member's view, phone and desktop. The commissioner's view stays v1 for now.
+- **Settled, not to relitigate:** the Night Game look; five sections with views; MFL's own forms
+  doing the work underneath (v2 fills them, so MFL's rules still apply); Add/Drop on desktop as a
+  table and a dialog; the site menu at top left.
+- **Principles the boards follow** (check them against each other):
+  - Phone first: designed at 360 px, checked at 320–430; names wrap rather than truncate.
+  - Block only what the bylaws void (bids that could break the cap, 5.5; trades that break it,
+    10.3; 30 active in bids; an IR violation), warn otherwise (a trade over the roster limits,
+    10.5; lineup problems).
+  - A blocked choice names its limit: "over cap", "over roster limit".
+  - Moves talks in cap used ("$293 → $298"); Rosters in room.
+  - No partial lists or "show all" links; long lists scroll in their own box.
+  - Minimal labels: no helper sentences or page titles; the UI speaks for itself.
+  - No confirmation steps after an action: the result shows in place, in one line; only a failure
+    asks for a click.
+  - Back returns to the screen just left; a detour (Edit, Change) closes back to where it opened.
+  - Desktop: full-width bands; no side-by-side panels of different heights; tables fill their width.
+  - MFL's mechanics stay out of sight: members see results, not the forms behind them.
+- **Prototype limits, not design:** sample data from around week 5 (Oct 10), so some dates are past;
+  only two other teams' rosters exist (Trades opens The Obliterators for any team but the one that
+  sent the offer); claims, offers and saves are seeded or kept only until reload.
+- **Deliberately not drawn:** Lineup and Moves › Recent (MFL's pages, restyled, described below);
+  Home's Recent moves (undecided); the offseason auction and franchise tags in Moves.
+- **Sources:** the bylaws and MFL's league settings (`docs/bylaws.md`, this branch); on master,
+  `docs/design.md` (why the site works as it does) and `docs/mfl.md` (MFL's behavior); the Reference
+  section at the end of this file (MFL's forms and settings for v2).
+- **Most worth challenging:** flows end to end across sections; consistency between boards (the
+  earlier rows 6–8 predate some principles above); missing states (empty, loading, errors,
+  offseason); accessibility; fit with the bylaws, e.g. the Lineup warnings against MFL's own
+  settings (MFL already refuses bye-week starters), and bylaws v2 doesn't yet reflect (9.4–9.5 on
+  re-adding a dropped player, 10.5's no adds or drops while over the roster limit, 16.5's backup
+  starters posted to the board).
 
 ### Rollout
 
