@@ -269,8 +269,8 @@ Views: **Add/Drop · Trades · IR · Recent.**
   NFL lists on IR (injury, expected return; injuries export), "On your IR" the rest, each with a
   checkbox (Move to IR, Activate). When activating would make 31 active, "Pick a drop" lists all 30
   active players in a box that scrolls inside itself, lowest penalty first, each with its penalty and
-  net room change, under a No drop row: off ("over roster limit") while activating needs a drop, and
-  the way to take back a drop that's no longer needed. Desktop: the alert, then the bar (sticky, Save
+  net room change. It shows only while activating needs a drop: when the IR checkboxes stop needing
+  one, it goes and a drop picked earlier is let go. Desktop: the alert, then the bar (sticky, Save
   on its right), one IR table in the two groups (position, NFL team, salary, NFL status, expected
   back), and Pick a drop as a table (salary, years, cut penalty, room change). A bar shows active and cap used live and blocks over 30 active or a drop whose
   penalty breaks the cap; Save is MFL's one submit (`ir`: deactivate, activate and drop together),
