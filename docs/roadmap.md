@@ -275,8 +275,9 @@ Views: **Add/Drop · Trades · IR · Recent.**
   back), and Pick a drop as a table (salary, years, cut penalty, room change). A bar shows active and cap used live and blocks over 30 active or a drop whose
   penalty breaks the cap; Save is MFL's one submit (`ir`: deactivate, activate and drop together),
   with no confirmation step: the lists update and one line says what was saved. A
-  player the NFL no longer lists on IR "must come off IR" (bylaw 11.1): a notice, preselected, and
-  saving blocked until he's activated. MFL itself refuses players the NFL doesn't list on IR.
+  player the NFL no longer lists on IR "must come off IR" (bylaw 11.1): a notice, and his Activate
+  box locked on ("Must activate"), so every IR save includes it: the bylaw sets no deadline, and MFL
+  takes no lineup while it's unmet (league setting). MFL itself refuses players the NFL doesn't list on IR.
 - **Recent:** MFL's transactions page (`options?O=03`), restyled, with the processed blind bids
   (`processed_waivers`: who won and lost, and for how much).
 
@@ -304,6 +305,8 @@ How MFL runs it (league settings):
   Sunday noon every free agent is on waivers. MFL decides per player, and the controls follow it.
 - No adds or drops for a player between the kickoff of that player's game and the end of the week's
   games.
+- An IR violation (a player on IR the NFL no longer lists there) stops the owner's lineup: "In case
+  of an IR violation, prevent owner from submitting lineup? Yes".
 - Conditional bidding, up to 8 groups; bids from $1 in $1 steps; no bid budget beyond the cap; IR
   salaries count fully against the cap.
 - Processing (MFL's blind bidding help): bids league-wide from the highest dollar amount down; within
