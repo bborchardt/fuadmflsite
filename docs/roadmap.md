@@ -475,7 +475,7 @@ scores at 52 px beside a center column with the win bar and the projected final.
 head-to-head table, one line per player: position · player · game (state and stat line) · projection ·
 points, then a dividing line, then the other team reversed (points · projection · game · player ·
 position), so the points meet at the center; then "Show bench" (off by default on both, the bench listed highest-scoring first; the export includes
-non-starters). No link to MFL's live scoring page; it stays reachable from the team sheet. Phones
+non-starters). No link to MFL's live scoring page; it stays reachable from the site menu. Phones
 use the same tug of war, smaller (names cut short, scores at 30 px, the bar across, and playing / to
 play / minutes as one small line per side), and a card opens in place; its lineups stay side by side:
 ten starters a side (QB 1–2, RB 1–3, WR 2–5, TE 1–3, PK 1; league `starters`), each side in position
