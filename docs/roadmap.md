@@ -312,7 +312,7 @@ How MFL runs it (league settings):
 The design (settled for now; the canvas's row 5 is the phone reference, row 12 the desktop one):
 - **Free agents** sorted by this week's projection (MFL's WProj), with team, opponent and bye week.
 - **Drops** grouped by position with the cut penalty and cap freed, and a **No drop** row first, which
-  says why it's off when it is ("roster full (30)", "could make 31 active", "over cap"). Drops that
+  says why it's off when it is ("over roster limit", "over cap"). Drops that
   would break the cap are greyed out ("over cap"); one already used in another group is allowed and
   noted.
 - **A contract length picker (1–5 years)** on every add. A bid writes it as a named comment line; a
@@ -361,8 +361,8 @@ Wording members see (no "worst case"):
 - **Max cap impact** on each group, and each claim's impact under its bid: −$2 red, +$1 green, $0
   white.
 - **Current bids invalid** as the warning when either limit could break; the red number says which.
-- **A blocked choice names its limit:** "over cap" (a drop, or a group to copy a claim to), "could make
-  31 active" (No drop, or copying a claim without a drop).
+- **A blocked choice names its limit:** "over cap" (a drop, or a group to copy a claim to), "over roster
+  limit" (No drop, or copying a claim without a drop).
 - **Over the max:** "with your other groups' max bids, $9 would exceed the cap", beside "max $8".
 
 Enforcement, in layers: the controls stop a bad bid at the moment it's made; League Alerts warns about
