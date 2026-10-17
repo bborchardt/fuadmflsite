@@ -10,11 +10,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
-- Update bylaw 8.3 to the new rookie salary rule (fixed first-pick baselines, ×0.8 per pick), which
-  applies from the 2027 draft; it still describes the old baselines from last year's salaries.
-- Consider telling the league: in v1 today, reordering blind bids (MFL's Move Up/Down) doesn't
-  reorder the group's comment, so bare lengths ("1 year", one per line) end up on the wrong players.
-  Naming the player ("Akins: 1 year") is safe.
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 
@@ -237,7 +232,7 @@ desktop panels that would otherwise sit side by side at different heights.
   never who is tagged, since tags are made on draft day and show up in the rosters after):
   1. **Site opens → the draft** (mid-March → August): 2027 franchise tags (fixed prices), **Your
      2027 picks** (each with what the scale pays at that overall pick, "QB $5 · RB $8 · WR $8 ·
-     TE $3 · PK $1", or "$1 at every position" from pick 11 on; the scale counts overall picks across the whole draft, not per round; "from …" for traded ones), then the
+     TE $3 · PK $1", or "$1 at every position" from pick 10 on; the scale counts overall picks across the whole draft, not per round; "from …" for traded ones), then the
      whole 2027 draft board (picks by round, owners, "from …", all empty, from this site's
      `draftResults`, rounds closed), the rookie scale.
   2. **After the draft → week 1 final:** the 2027 rookie draft (results). The draft is offline; the
