@@ -86,11 +86,33 @@ function reveal() {
 function boot(beta) {
     window.fuadVersion = versionHere;
     const context = pageContext();
+    const loader = window.fuadLoader;
+    // `started` only when the header's version handed this page over: after a beta fails to load,
+    // the header's own version runs with the mode still "beta"
+    const inBeta = loader.started && loader.mode === "beta" ? {feedback: loader.feedback} : null;
+    // in the beta, the bar that leads back is hidden until something fails (docs/design.md)
+    const onTrouble = () => document.documentElement.classList.add("fuad-trouble");
+    if (inBeta) {
+        document.documentElement.classList.add("fuad-beta");
+    }
     // loaded on its own, so a failure here leaves MFL's menus and the rest of the page working
     (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context, storage})) : Promise.resolve())
-        .catch((error) => console.error("[fuad] couldn't draw the frame:", error))
+        .catch((error) => {
+            console.error("[fuad] couldn't draw the frame:", error);
+            onTrouble();
+        })
         .then(reveal);
-    start({dataBase: DATA_BASE, beta}).catch((error) => console.error("[fuad]", error));
+    start({dataBase: DATA_BASE, beta, inBeta, onTrouble})
+        .then((alertsShown) => {
+            // the home page without League Alerts would leave no way back
+            if (!alertsShown && document.getElementById("tabcontent0")) {
+                onTrouble();
+            }
+        })
+        .catch((error) => {
+            console.error("[fuad]", error);
+            onTrouble();
+        });
 }
 
 // drawn here, so the way back is there even if the other version's code doesn't run

@@ -54,6 +54,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   try a version on the real site before it's switched in the header.
 - The header's version draws the beta's bar before handing over, so the way back never depends on
   the beta's code; a beta that can't load or start falls back to the current site.
+- League Alerts is the toggle both ways: it invites members to the beta, and in the beta it leads
+  back to the classic site. A beta can hide the bar while it runs well, so v2 does, and shows it once
+  anything fails, including a home page whose League Alerts couldn't be drawn.
 - A beta choice holds only while the header offers that version, so ending or promoting it needs no
   member action. Viewing as a team the offer leaves out (the commissioner as 0000) keeps the choice
   without loading the beta, so switching back needs no new opt-in.
@@ -105,5 +108,5 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 - IR: MFL doesn't say when a designation changed, so an add made after a player came off NFL IR
   isn't caught as a void.
 - While an add's hour is open, each Main tab view reads the message board once.
-- A preview or beta whose features fail after starting shows their errors, with its bar still there
-  to leave. The beta is per browser, isn't in MFL's app, and nothing reports who's using it.
+- A preview or beta whose features fail after starting shows their errors, with its bar there to
+  leave. The beta is per browser, isn't in MFL's app, and nothing reports who's using it.

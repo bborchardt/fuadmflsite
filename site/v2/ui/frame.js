@@ -145,8 +145,6 @@ function sheet({base, leagueId, franchiseId, team, all, homeUrl}) {
     ] : [];
     const login = mflLink((a) => /^log\s*(in|out)$/i.test(a.textContent.replace(/\s+/g, " ").trim()));
     const become = mflLink((a) => /[?&]BECOME=/.test(a.getAttribute("href")));
-    const loader = window.fuadLoader || {};
-    const classic = loader.mode === "beta" ? "fuadBeta" : loader.mode === "preview" ? "fuadPreview" : null;
     const links = (items) => `<ul class="fuad-sheet-links">${items.map(([text, href]) => `<li><a href="${esc(href)}">${esc(text)}</a></li>`).join("")}</ul>`;
     const myTeam = all[4].views[0].href;
     return `
@@ -178,14 +176,7 @@ function sheet({base, leagueId, franchiseId, team, all, homeUrl}) {
                 ${links(group.links.map((link) => [link.text, link.href]))}
             </details>`).join("")}
         </div>
-        ${classic ? `<a class="fuad-sheet-classic" href="${esc(withParam(window.location.href, classic, "off"))}">Use the classic site</a>` : ""}
     </div>`;
-}
-
-function withParam(href, name, value) {
-    const url = new URL(href);
-    url.searchParams.set(name, value);
-    return url.href;
 }
 
 function wireSheet(root) {

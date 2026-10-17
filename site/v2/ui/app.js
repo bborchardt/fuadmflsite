@@ -183,13 +183,15 @@ async function contractReadings({season, leagueId}, league) {
     return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
 }
 
-// `beta` is the offer League Alerts invites the viewer to; null when this is the beta.
-export async function start({dataBase, beta = null}) {
+// `beta` is the offer League Alerts invites the viewer to; null when this is the beta, whose
+// `inBeta` ({feedback}) gives League Alerts the way back. `onTrouble` is called when anything fails.
+// Resolves to whether League Alerts was drawn.
+export async function start({dataBase, beta = null, inBeta = null, onTrouble = () => {}}) {
     const context = pageContext();
     const found = mounts();
     const onHome = document.getElementById("tabcontent0") || found.contracts || found.commish || found.links;
     if (!context || !onHome) {
-        return;
+        return false;
     }
     if (found.links) {
         renderLinks(found.links, context);
@@ -201,6 +203,7 @@ export async function start({dataBase, beta = null}) {
         league = await loadLeague(context);
     } catch (error) {
         showInMounts(found, "fuad-error", `${error.message}. Try reloading the page.`);
+        onTrouble();
         throw error;
     }
     const render = (what, mount, draw) => {
@@ -208,6 +211,7 @@ export async function start({dataBase, beta = null}) {
             draw();
         } catch (error) {
             console.error("[fuad]", error);
+            onTrouble();
             if (mount) {
                 mount.innerHTML = `<div class="fuad-error"></div>`;
                 mount.firstChild.textContent = `Couldn't show the ${what}: ${error.message}. Try reloading the page.`;
@@ -216,12 +220,12 @@ export async function start({dataBase, beta = null}) {
     };
     let alertsShown = false;
     render("violations", null, () => {
-        alertsShown = renderViolations(league, undefined, beta);
+        alertsShown = renderViolations(league, undefined, {beta, inBeta});
     });
     if (alertsShown) {
         // without holding up the rest; if the board can't be read, the notice keeps its deadline
         contractReadings(context, league)
-            .then((readings) => readings && render("violations", null, () => renderViolations(league, readings, beta)))
+            .then((readings) => readings && render("violations", null, () => renderViolations(league, readings, {beta, inBeta})))
             .catch((error) => console.warn("[fuad] couldn't read the message board for contract lengths:", error));
     }
 
@@ -248,4 +252,5 @@ export async function start({dataBase, beta = null}) {
             }), null, 2)
         }));
     }
+    return alertsShown;
 }
