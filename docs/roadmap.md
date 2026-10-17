@@ -309,15 +309,18 @@ How MFL runs it (league settings):
   name; after a reorder, removal or copy, the controls rewrite the group's comment through the edit
   page.
 
-The design (settled for now; the canvas's row 5 is the reference):
+The design (settled for now; the canvas's row 5 is the phone reference, row 12 B the desktop one):
 - **Free agents** sorted by this week's projection (MFL's WProj), with team, opponent and bye week.
 - **Drops** grouped by position with the cut penalty and cap freed, and a **No drop** row first, which
   says why it's off when it is ("roster full (30)", "could make 31 active", "over cap"). Drops that
   would break the cap are greyed out ("over cap"); one already used in another group is allowed and
   noted.
 - **A contract length picker (1–5 years)** on every add. A bid writes it as a named comment line; a
-  free agent add offers a one-tap post ("Higbee: 2 years") to the board through MFL's `messageBoard`
-  import. Each length shows its cut penalty ("Cut later: $10"). A member can't set contract years
+  free agent add posts it to the board ("Higbee: 2 years") through MFL's `messageBoard` import,
+  behind the scenes: the submit button says so ("Add Higbee now · posts 'Higbee: 2 years'"), and the
+  post goes only once the transactions confirm MFL made the add, since MFL can refuse it (a game
+  kicked off) and a length posted for a player the member doesn't have would stand on the board. Each
+  length shows its cut penalty ("Cut later: $10"). A member can't set contract years
   directly: MFL's `salaries` import is commissioner-only,
   so the job sets them, and the post is the league's public record.
 - **Blind bid groups (conditional bidding):** each group wins at most one claim, independently of the
@@ -329,6 +332,15 @@ The design (settled for now; the canvas's row 5 is the reference):
 - **Managing claims:** reorder with arrows; tap a claim to edit its bid or drop (the player added is
   fixed: MFL's edit page can't change it), remove it, or copy it to another group. Every action is
   checked against both limits first. Back returns to where the member came from.
+- **No confirmation step.** A bid lands back on Add/Drop with its new claim highlighted in Pending
+  bids, comment line shown. A free agent add lands back with one line: "Higbee added, Waller dropped.
+  Posted 'Higbee: 2 years'." Only a failed post asks for a click ("Couldn't post the length …; it's
+  due within the hour", Post it now); League Alerts flags a length still unposted either way.
+- **Desktop (canvas row 12, option B):** Pending bids as one full-width table (#, Add, Drop, Comment,
+  Bid, Cap impact, order arrows, Edit · Copy · Remove), Projected cap and roster in its header; then
+  the full free agent table (search, position chips, sortable by Player, Pts, Proj; a Bid or Add
+  button per row). That button opens a two-column dialog like the player popup: the drop list on the
+  left, group, bid, contract length and projected cap on the right.
 - **One page in both periods.** A banner says which (free agent window open until Sunday noon CT,
   blind bids only until Wednesday 11 p.m. CT), and pending bids always show. During the window a
   locked player is marked "bid only" and goes through the bid flow, where the member picks a group;
@@ -421,7 +433,7 @@ My alerts and where they go:
 | Under 23 active | Moves › Add/Drop |
 | Current bids invalid (a pending bid could break a limit) | Moves › Add/Drop |
 | Bid deadline, when the member has pending bids (Wed 11 p.m. CT) | Moves › Add/Drop |
-| Contract length still to post for a free agent add | Moves › Add/Drop (the one-tap post) |
+| Contract length still to post for a free agent add (the automatic post failed) | Moves › Add/Drop (Post it now) |
 | A player on IR the NFL no longer lists, and the drop it may need at 30 | Moves › IR |
 | A trade offer waiting for an answer | Moves › Trades |
 | Over the cap or 30 active from an add or trade: "the commissioner will reverse it" | not tappable |
