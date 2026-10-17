@@ -279,7 +279,7 @@ chips), which works before the draft too; Add/Drop is where the move is made.
 - **Adding:** they read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker
   rows, and fill `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still
   apply. Submit stays off until MFL's hidden `add_pid`/`drop_pid` and its "To Add"/"To Drop" lines
-  match the choice.
+  match the choice; members aren't shown that check.
 - **Confirming:** MFL shows no success message, only Add/Drop again with the claim in its table. The
   controls read the claims back from the `pendingWaivers` export: one entry per group, the claims in
   priority order (`add_bid_drop`, ...) and the group's comment.
@@ -309,7 +309,7 @@ How MFL runs it (league settings):
   name; after a reorder, removal or copy, the controls rewrite the group's comment through the edit
   page.
 
-The design (settled for now; the canvas's row 5 is the phone reference, row 12 B the desktop one):
+The design (settled for now; the canvas's row 5 is the phone reference, row 12 the desktop one):
 - **Free agents** sorted by this week's projection (MFL's WProj), with team, opponent and bye week.
 - **Drops** grouped by position with the cut penalty and cap freed, and a **No drop** row first, which
   says why it's off when it is ("roster full (30)", "could make 31 active", "over cap"). Drops that
@@ -336,7 +336,7 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 B
   bids, comment line shown. A free agent add lands back with one line: "Higbee added, Waller dropped.
   Posted 'Higbee: 2 years'." Only a failed post asks for a click ("Couldn't post the length …; it's
   due within the hour", Post it now); League Alerts flags a length still unposted either way.
-- **Desktop (canvas row 12, option B):** Pending bids as one full-width table (#, Add, Drop, Comment,
+- **Desktop (canvas row 12):** Pending bids as one full-width table (#, Add, Drop, Comment,
   Bid, Cap impact, order arrows, Edit · Copy · Remove), Projected cap and roster in its header; then
   the full free agent table (search, position chips, sortable by Player, Pts, Proj; a Bid or Add
   button per row). That button opens a two-column dialog like the player popup: the drop list on the
@@ -344,7 +344,8 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 B
 - **One page in both periods.** A banner says which (free agent window open until Sunday noon CT,
   blind bids only until Wednesday 11 p.m. CT), and pending bids always show. During the window a
   locked player is marked "bid only" and goes through the bid flow, where the member picks a group;
-  MFL's "submit as a waiver claim" box isn't offered.
+  MFL's "submit as a waiver claim" box (a bid on an unlocked player while he could be added now)
+  isn't offered: members don't use it.
 - **Prevent, don't warn.** League rule: a blind bid that could put a team over a limit is invalid and
   voided. So the controls block any move that would make pending bids able to break a limit: a bid
   over its max, an edit or copy, and an immediate free agent add, whose cap and roster checks include
