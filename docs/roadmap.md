@@ -60,6 +60,9 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 - **No page titles:** the lit section already says where you are. Phones show the FUAD wordmark with a
   context line ("Week 5") and the team button; desktop shows only the top bar. (The live frame's phone
   title, `.fuad-title`, goes when v2 is built.)
+- **Back returns to the screen the member was just on,** like the browser's back (each screen a
+  history entry). A detour opened from a screen (Edit or Change from a review, a picker) closes back
+  to it, by Done, by picking, or by Back.
 - **The team button** (top right, the team's initials) opens a sheet with everything else, so
   "nothing gets hidden" becomes "nothing becomes unreachable" (below).
 - **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR, Recent and the
