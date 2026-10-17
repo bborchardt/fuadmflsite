@@ -399,8 +399,9 @@ their forms.
   trade that would let the member's pending bids exceed the cap gets a warning: those bids would be
   voided (5.5); lower them first. Only an owner sees their own pending bids, so the proposer's are
   checked when proposing and the other team's when answering.
-- **Expiry:** MFL's date and hour, defaulting to the league's 7 days, with quick choices that fill it
-  in (before Sunday's games, before Thursday's game, in 7 days); when it stays open through game
+- **Expiry:** MFL's date and hour, defaulting to before Sunday's games (the safer choice; MFL's own
+  default is the league's 7 days), with quick choices that fill it in (before Sunday's games, before
+  Thursday's game, in 7 days); when it stays open through game
   time: "Heads up: it can be accepted close to game time, which may leave little time to fix starting
   lineups."
 - **Near kickoff:** MFL refuses accepting a trade with a player whose game has started, until 4 hours
