@@ -361,6 +361,8 @@ Wording members see (no "worst case"):
 - **Max cap impact** on each group, and each claim's impact under its bid: −$2 red, +$1 green, $0
   white.
 - **Current bids invalid** as the warning when either limit could break; the red number says which.
+- **A blocked choice names its limit:** "over cap" (a drop, or a group to copy a claim to), "could make
+  31 active" (No drop, or copying a claim without a drop).
 - **Over the max:** "with your other groups' max bids, $9 would exceed the cap", beside "max $8".
 
 Enforcement, in layers: the controls stop a bad bid at the moment it's made; League Alerts warns about
