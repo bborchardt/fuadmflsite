@@ -70,6 +70,56 @@ What a reviewer needs beyond the sections below:
   re-adding a dropped player, 10.5's no adds or drops while over the roster limit, 16.5's backup
   starters posted to the board).
 
+**The review prompt** (for a fresh session in this folder):
+
+```text
+Design review of the v2 league site redesign, before we start building it. You are an expert
+product designer: use that judgment beyond the checklist below, and look up design principles
+and current best practice where it helps.
+
+Read first:
+- CLAUDE.md, then docs/roadmap.md on this branch, starting with the v2 section's canvas map and
+  "For a design review".
+- docs/bylaws.md (the league's bylaws and MFL settings).
+- On master (worktree ../fuadmflsite-master, or `git show origin/master:<path>`): docs/design.md
+  and docs/mfl.md.
+- The canvas: https://claude.ai/artifact/QAr8Vy6ieYJdSixPvfDBwV. Review rows 5-13 only (1-4 are
+  history); read each board's file (project/<name>.dc.html): the markup and script are the
+  design, Tweaks included.
+
+Scope: the member's view, phone and desktop. The commissioner's view is out of scope. Don't
+relitigate what the roadmap lists as settled.
+
+Work in two passes, reported separately.
+
+Pass 1, flows and rules:
+- Flows end to end across sections (e.g. a free agent from Rosters › Players through Add/Drop; a
+  trade offer through to its cap and roster effects elsewhere).
+- Inconsistencies between boards: numbers, components, behavior, and the listed principles
+  (rows 6-8 predate some of them).
+- Missing states: empty, loading, errors, offseason and pre-draft, over-cap and over-roster teams.
+- Fit with the bylaws and MFL's settings: what v2 blocks, warns or ignores versus what the rules
+  say; cite the bylaw.
+
+Pass 2, language and visual design:
+- Language: no implementation details shown to members (MFL's forms, exports, how a move is
+  carried out); short labels; plain, consistent words for the same thing on every board.
+- Color: measure contrast for every text/background pair the boards use (WCAG 2.2: 4.5:1 body
+  text, 3:1 large text and UI components) and list the ones that fail; check that color isn't
+  the only signal (red/green, orange); judge whether the palette looks good and works as a system.
+- Type, spacing, hierarchy and touch targets (44 px) at phone widths 320-430 px; desktop layout.
+- Accessibility beyond color: labels, focus, semantics.
+
+How to work:
+- Read only: don't edit the canvas, the roadmap or any code during the review, and don't fetch
+  from MFL (rate limits; everything needed is saved).
+- Before reporting, skip anything that's a prototype limit listed in the roadmap.
+- Report each pass's findings ranked by impact, each with: board and row, what's wrong or
+  missing, the principle, guideline or bylaw it touches, and a suggested fix.
+- Then walk me through them one at a time and wait for my call on each. Once I approve a change,
+  update the roadmap (and the canvas if needed) as we go.
+```
+
 ### Rollout
 
 1. **v1 stays the default.** v2 is built in `site/v2/` (starting as a copy of v1) and offered with
