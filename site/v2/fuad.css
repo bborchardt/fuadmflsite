@@ -555,6 +555,9 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 
 #fuad-preview a { color: var(--ng-bg); text-decoration: underline; }
 
+/* In the beta, League Alerts is the way back; the bar shows only once something has failed. */
+.fuad-beta:not(.fuad-trouble) #fuad-preview { display: none; }
+
 /* ---- The frame: sections, views and the team sheet (ui/frame.js) ---- */
 
 /* MFL's own navigation goes only once the frame is drawn */
@@ -832,13 +835,6 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 }
 
 .fuad-sheet-menu .fuad-sheet-links { padding-bottom: 8px; }
-
-#fuad-frame .fuad-sheet-classic {
-    display: block;
-    margin-top: 24px;
-    color: var(--ng-muted) !important;
-    text-decoration: underline;
-}
 
 @media (max-width: 48em) {
     .fuad-sheet { align-items: flex-end; }
