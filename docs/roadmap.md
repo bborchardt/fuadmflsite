@@ -332,7 +332,7 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 B
 - **Managing claims:** reorder with arrows; tap a claim to edit its bid or drop (the player added is
   fixed: MFL's edit page can't change it), remove it, or copy it to another group. Every action is
   checked against both limits first. Back returns to where the member came from.
-- **No confirmation step.** A bid lands back on Add/Drop with its new claim highlighted in Pending
+- **No confirmation step** (phone and desktop). A bid lands back on Add/Drop with its new claim highlighted in Pending
   bids, comment line shown. A free agent add lands back with one line: "Higbee added, Waller dropped.
   Posted 'Higbee: 2 years'." Only a failed post asks for a click ("Couldn't post the length …; it's
   due within the hour", Post it now); League Alerts flags a length still unposted either way.
