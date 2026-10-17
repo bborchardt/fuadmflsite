@@ -7,7 +7,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 
 ## Commissioner to-do
 
-- Drop penalties and contract years have been on `apply` since 8 Oct: keep an eye on the chore log.
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
