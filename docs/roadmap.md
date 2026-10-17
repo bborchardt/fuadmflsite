@@ -28,8 +28,9 @@ evolving there before they're built.
    through the beta's feedback thread. At first the offer is limited to the commissioner's own
    team (`teams: ["0001"]`), so v2 is tried as a member; logged in as commissioner (0000) the site
    stays v1. The offer widens to the league only once v2 is fully built.
-   **The commissioner's experience in v2 is designed later:** Moves and the rest are designed for
-   members.
+   **The commissioner's experience in v2 is designed later, and is low priority:** with most chores
+   automated it's little used, so it stays v1 (the team sheet's Viewing as switch reaches it) while
+   the member's view is iterated on.
    **Loader change first (v1, in place, approved):** a beta that's still offered, but not to the
    team viewing, is kept and not loaded, so switching to commissioner and back doesn't forget it.
 2. **v2 changes in place while it's the beta,** an exception to "visible redesigns get a new
@@ -101,11 +102,11 @@ Log in / Log out, and for the commissioner a "Viewing as: Member | Commissioner"
 MFL's own switch link, found in MFL's header.
 
 **The site menu:**
-- **League:** pages no section covers: League bylaws, Scoring system, League history, Player stats,
-  Playoff bracket, Calendar, Accounting, Owner activity, Polls.
-- **Commish** (0000 only): today's tools (Commish tab, Cap penalties, Set contracts) until the
-  commissioner's v2 is designed.
-- **All MFL pages:** MFL's own league menu, read live from the page in its groups, with a filter box.
+- **League bylaws** (`options?O=26`), one link at the top: MFL's own menu has none ("League Rules"
+  is the scoring and settings page, `O=09`), and v1 reached them from its Links box.
+- **MFL's own league menu** in full, read live from the page in its groups, collapsible, with a
+  filter box that opens every group with a match. Anything important is already a section.
+- No Commish group: the commissioner's view stays v1 (below).
 
 Left to the menu or dropped from the home page: the Transactions tab (Trade Bait, Top 10 Free
 Agents, Starter Points By Position; the last moves to Power), the Calendar tab, League Poll, Franchise
