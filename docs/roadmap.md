@@ -377,8 +377,8 @@ their forms.
 - **The Trades view:** offers to the member (each with what moves, its effect on the member's cap and
   roster, and Accept / Counter / Reject with a comment), the member's own offers, and "Propose a
   trade" (each team with its cap room) with the trade deadline above it.
-- **Countering:** Counter opens the proposal pre-filled with the offer, seen from the member's side,
-  and its button reads "Reject and counter"; the offer stays open until that's pressed. Sending posts
+- **Countering:** Counter opens the proposal pre-filled with the offer, seen from the member's side
+  (on phones at Review, where each side has Edit), and its button reads "Reject and counter"; the offer stays open until that's pressed. Sending posts
   the new offer, then answers the original with MFL's counter (which rejects it), in that order, so a
   failure can only leave the original open: then the offer card says "Your counter was sent, but this
   offer is still open" with Reject it. MFL's own counter rejects first and opens a blank proposal.
@@ -397,8 +397,9 @@ their forms.
   voided (5.5); lower them first. Only an owner sees their own pending bids, so the proposer's are
   checked when proposing and the other team's when answering.
 - **Expiry:** MFL's date and hour, defaulting to the league's 7 days, with quick choices that fill it
-  in (before Sunday's games, before Thursday's game, in 7 days); a note when it stays open through
-  game time.
+  in (before Sunday's games, before Thursday's game, in 7 days); when it stays open through game
+  time: "Heads up: it can be accepted close to game time, which may leave little time to fix starting
+  lineups."
 - **Near kickoff:** MFL refuses accepting a trade with a player whose game has started, until 4 hours
   after the week's last kickoff (league setting on); the offer card says so and when it reopens.
   Accepting shortly before a traded player's kickoff isn't against the rules, so v2 warns ("games
