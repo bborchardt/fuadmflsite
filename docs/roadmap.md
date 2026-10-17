@@ -102,9 +102,8 @@ Log in / Log out, and for the commissioner a "Viewing as: Member | Commissioner"
 MFL's own switch link, found in MFL's header.
 
 **The site menu:**
-- **League bylaws** (`options?O=26`), one link at the top: MFL's own menu has none ("League Rules"
-  is the scoring and settings page, `O=09`), and v1 reached them from its Links box.
-- **MFL's own league menu** in full, read live from the page in its groups, collapsible, with a
+- **MFL's own league menu** in full (nothing of ours: the bylaws, `options?O=26`, are reached from
+  League › League Rules, MFL's scoring page, which links to them), read live from the page in its groups, collapsible, with a
   filter box that opens every group with a match. Anything important is already a section.
 - No Commish group: the commissioner's view stays v1 (below).
 
