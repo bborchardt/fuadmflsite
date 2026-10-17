@@ -19,12 +19,6 @@ A new look and simpler navigation for the whole league site, not incremental fix
 designs are on the canvas (claude.ai artifact "FUAD League Redesign", rows 4 and 5), and keep
 evolving there before they're built.
 
-### Open design to-dos (noted 2026-10-11)
-
-1. **Where MFL's full menu lives.** Today "All MFL pages" sits in the team sheet behind the
-   username/team button; a site menu behind a person's name isn't where members expect it from
-   other apps. Revisit its home (and what else belongs in the team sheet) before building.
-
 ### Rollout
 
 1. **v1 stays the default.** v2 is built in `site/v2/` (starting as a copy of v1) and offered with
@@ -63,8 +57,10 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 - **Back returns to the screen the member was just on,** like the browser's back (each screen a
   history entry). A detour opened from a screen (Edit or Change from a review, a picker) closes back
   to it, by Done, by picking, or by Back.
-- **The team button** (top right, the team's initials) opens a sheet with everything else, so
-  "nothing gets hidden" becomes "nothing becomes unreachable" (below).
+- **The site menu (☰)**, top left (beside the FUAD wordmark on phones, before it on desktop), holds
+  everything the sections don't, so "nothing gets hidden" becomes "nothing becomes unreachable"
+  (below; canvas row 13). A drawer from the left on both.
+- **The team button** (top right, the team's initials) holds only the member's own things (below).
 - **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR, Recent and the
   fallback pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
   controls still work.
@@ -100,16 +96,18 @@ The map:
 | **League** | Scores · Standings · Power · Winners |
 | **Rosters** | My team · Teams · Players · Draft |
 
-**The team sheet** (slides up on phones, a panel on desktop):
-- **Header:** the team's name, My team, Log in / Log out, and for the commissioner a "Viewing as:
-  Member | Commissioner" switch that uses MFL's own switch link, found in MFL's header.
+**The team sheet** (slides up on phones, drops from the button on desktop): the team's name, My team,
+Log in / Log out, and for the commissioner a "Viewing as: Member | Commissioner" switch that uses
+MFL's own switch link, found in MFL's header.
+
+**The site menu:**
 - **League:** pages no section covers: League bylaws, Scoring system, League history, Player stats,
   Playoff bracket, Calendar, Accounting, Owner activity, Polls.
 - **Commish** (0000 only): today's tools (Commish tab, Cap penalties, Set contracts) until the
   commissioner's v2 is designed.
 - **All MFL pages:** MFL's own league menu, read live from the page in its groups, with a filter box.
 
-Left to the sheet or dropped from the home page: the Transactions tab (Trade Bait, Top 10 Free
+Left to the menu or dropped from the home page: the Transactions tab (Trade Bait, Top 10 Free
 Agents, Starter Points By Position; the last moves to Power), the Calendar tab, League Poll, Franchise
 Owner Activity, MFL's Rosters, Starting Lineups, Fantasy Schedule, Weekly Results, Draft and NFL
 Injury Report pages, and the cut calculator.
