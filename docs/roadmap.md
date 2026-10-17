@@ -10,8 +10,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
-  - Trades with an offer of your own pending (the league clone works): how MFL withdraws it, from
-    the Action column of "Trades Offered By You"
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 
@@ -632,7 +630,11 @@ proposal page.
   choice is made; accept asks to confirm). Counter ("No, I'd like to reject this trade and offer a
   counter-proposal") rejects the offer at once, then opens the ordinary proposal page for the two
   teams (`options?O=05&FRANCHISE=<mine>,<theirs>`) with nothing ticked, an empty message and the
-  default 7-day expiry (seen on a league clone, 17 Oct 2026). The offer row shows date, each side's players and picks,
+  default 7-day expiry (seen on a league clone, 17 Oct 2026).
+- Withdraw: "Trades Offered By You" lists the member's offers, each with a Comments row; its Action
+  column links "I'd like to revoke this trade offer": a plain GET,
+  `trade_response?L=<league>&TRADE_ID=<id>&ACTION=revoke`, with no confirmation (league clone, 17 Oct
+  2026). v2 asks once first. The offer row shows date, each side's players and picks,
   expiry, and "Compare Players".
 
 **Commissioner switch:** MFL's menu has "Become Commissioner", `logout?L=48571&BECOME=0000`, when the
