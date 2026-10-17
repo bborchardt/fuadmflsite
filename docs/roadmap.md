@@ -381,7 +381,7 @@ their forms.
   roster, and Accept / Counter / Reject with a comment), the member's own offers, and "Propose a
   trade" (each team with its cap room) with the trade deadline above it.
 - **Countering:** Counter opens the proposal pre-filled with the offer, seen from the member's side
-  (on phones at Review, where each side has Edit), and its button reads "Reject and counter"; the offer stays open until that's pressed. Sending posts
+  (on phones the usual steps, starting at You give with the offer ticked), and its button reads "Reject and counter"; the offer stays open until that's pressed. Sending posts
   the new offer, then answers the original with MFL's counter (which rejects it), in that order, so a
   failure can only leave the original open: then the offer card says "Your counter was sent, but this
   offer is still open" with Reject it. MFL's own counter rejects first and opens a blank proposal.
