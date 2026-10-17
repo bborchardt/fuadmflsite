@@ -10,6 +10,8 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
+  - Trades with an offer of your own pending (the league clone works): how MFL withdraws it, from
+    the Action column of "Trades Offered By You"
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 
@@ -378,7 +380,8 @@ commissioner void over-cap moves after waivers run, as today.
 Designed (phone and desktop): the canvas's row 9. MFL's trade pages (Reference) drive it; v2's own screens fill
 their forms.
 - **The Trades view:** offers to the member (each with what moves, its effect on the member's cap and
-  roster, and Accept / Counter / Reject with a comment), the member's own offers, and "Propose a
+  roster, and Accept / Counter / Reject with a comment), the member's own offers (each with Withdraw,
+  then "Withdraw this offer?" Keep / Withdraw), and "Propose a
   trade" (each team with its cap room) with the trade deadline above it.
 - **Countering:** Counter opens the proposal pre-filled with the offer, seen from the member's side
   (on phones the usual steps, starting at You give with the offer ticked), and its button reads "Reject and counter"; the offer stays open until that's pressed. Sending posts
