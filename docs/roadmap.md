@@ -21,17 +21,16 @@ evolving there before they're built.
 
 ### Open design to-dos (noted 2026-10-11)
 
-1. **Leaving the beta the way you joined.** The beta toggle opts a member in from League alerts,
-   but going back means opening the team sheet (the username button) and finding "Use the classic
-   site". Leaving should work the same way as joining: a toggle in the same place.
-2. **Where MFL's full menu lives.** Today "All MFL pages" sits in the team sheet behind the
+1. **Where MFL's full menu lives.** Today "All MFL pages" sits in the team sheet behind the
    username/team button; a site menu behind a person's name isn't where members expect it from
    other apps. Revisit its home (and what else belongs in the team sheet) before building.
 
 ### Rollout
 
 1. **v1 stays the default.** v2 is built in `site/v2/` (starting as a copy of v1) and offered with
-   the beta toggle; a member who turns it on keeps it until they leave the beta. Feedback comes
+   the beta toggle in League Alerts, which works both ways ("Try it"; in the beta, "Back to the
+   classic site"); a member who turns it on keeps it until they leave the beta. The beta's floating
+   bar shows only when something fails (live since PR #19). Feedback comes
    through the beta's feedback thread. At first the offer is limited to the commissioner's own
    team (`teams: ["0001"]`), so v2 is tried as a member; logged in as commissioner (0000) the site
    stays v1. The offer widens to the league only once v2 is fully built.
@@ -106,7 +105,6 @@ The map:
 - **Commish** (0000 only): today's tools (Commish tab, Cap penalties, Set contracts) until the
   commissioner's v2 is designed.
 - **All MFL pages:** MFL's own league menu, read live from the page in its groups, with a filter box.
-- **Use the classic site:** the way back to v1.
 
 Left to the sheet or dropped from the home page: the Transactions tab (Trade Bait, Top 10 Free
 Agents, Starter Points By Position; the last moves to Power), the Calendar tab, League Poll, Franchise
