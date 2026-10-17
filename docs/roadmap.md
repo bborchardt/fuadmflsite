@@ -372,11 +372,20 @@ commissioner void over-cap moves after waivers run, as today.
 
 ### Trades (Moves › Trades)
 
-Designed (phone): the canvas's row 9. MFL's trade pages (Reference) drive it; v2's own screens fill
+Designed (phone and desktop): the canvas's row 9. MFL's trade pages (Reference) drive it; v2's own screens fill
 their forms.
 - **The Trades view:** offers to the member (each with what moves, its effect on the member's cap and
   roster, and Accept / Counter / Reject with a comment), the member's own offers, and "Propose a
   trade" (each team with its cap room) with the trade deadline above it.
+- **Countering:** Counter opens the proposal pre-filled with the offer, seen from the member's side,
+  and its button reads "Reject and counter"; the offer stays open until that's pressed. Sending posts
+  the new offer, then answers the original with MFL's counter (which rejects it), in that order, so a
+  failure can only leave the original open: then the offer card says "Your counter was sent, but this
+  offer is still open" with Reject it. MFL's own counter rejects first and opens a blank proposal.
+- **Desktop:** the Trades view in full-width bands (each offer as You get | You give | effect, the
+  answer below; Your offers; teams as tiles with cap room). Proposing is one screen, not three steps:
+  the effect on both teams in a bar that stays on screen, You give and You get side by side (both full
+  rosters by position, then picks), then expiry, message and the button.
 - **Proposing, in three steps, each with complete lists:** You give (the member's whole roster by
   position, IR tagged, then picks), You get (theirs), Review. A bar on every step shows the live effect
   on both teams (cap used, active), so a problem shows while picking.
@@ -612,7 +621,10 @@ proposal page.
   `_TIME`, `_YEAR`, `msg`, and `Propose` ("Propose Trade").
 - Respond: per offer, a form posted to `trade_response`: `LEAGUE_ID`, `TRADE_ID`, radio `ACTION`
   (`accept`, `counter_proposal`, `reject`), `COMMENTS`, submit "Respond To Trade Offer" (off until a
-  choice is made; accept asks to confirm). The offer row shows date, each side's players and picks,
+  choice is made; accept asks to confirm). Counter ("No, I'd like to reject this trade and offer a
+  counter-proposal") rejects the offer at once, then opens the ordinary proposal page for the two
+  teams (`options?O=05&FRANCHISE=<mine>,<theirs>`) with nothing ticked, an empty message and the
+  default 7-day expiry (seen on a league clone, 17 Oct 2026). The offer row shows date, each side's players and picks,
   expiry, and "Compare Players".
 
 **Commissioner switch:** MFL's menu has "Become Commissioner", `logout?L=48571&BECOME=0000`, when the
