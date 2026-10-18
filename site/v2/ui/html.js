@@ -18,3 +18,8 @@ export function fragment(markup) {
     template.innerHTML = markup;
     return template.content;
 }
+
+// "All Hands on Beck" → "AH"
+export function initials(name) {
+    return String(name || "").split(/\s+/).filter((word) => /^[A-Za-z0-9]/.test(word)).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}

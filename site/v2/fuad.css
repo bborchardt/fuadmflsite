@@ -1567,6 +1567,23 @@ body [tabindex]:focus-visible {
 
 #fuad-home select { flex: 1; min-width: 0; width: 100%; padding: 0 10px; font-size: 15px; }
 
+/* skins pad their own fields and can load after this sheet, so the side padding is set outright: the
+   text off the edges, and room for the dropdown's arrow */
+body #fuad-home input:not([type="checkbox"]),
+body #fuad-home textarea { padding-left: 12px !important; padding-right: 12px !important; }
+
+/* the browser's own arrow ignores padding and hugs the edge, so the dropdown draws its own */
+body #fuad-home select {
+    padding-left: 12px !important;
+    padding-right: 36px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--fuad-muted) 50%), linear-gradient(135deg, var(--fuad-muted) 50%, transparent 50%);
+    background-position: calc(100% - 19px) 50%, calc(100% - 14px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+}
+
 #fuad-home .fuad-chat-form input { flex: 1; min-width: 0; }
 
 #fuad-home textarea { padding: 10px 12px; line-height: 1.4; resize: vertical; }
@@ -2829,7 +2846,9 @@ body [tabindex]:focus-visible {
 
     #fuad-lineup .fuad-lineup-line {
         display: grid;
-        grid-template-columns: 40px minmax(200px, 300px) 64px minmax(170px, 1.4fr) 84px 72px 72px 72px;
+        /* the name capped, the rest spread evenly across the panel (the opponent twice as wide); each
+           row is its own grid, so no track may grow past its share or the rows stop lining up */
+        grid-template-columns: 40px minmax(200px, 300px) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
         gap: 0 12px;
         align-items: center;
         min-height: 46px;
@@ -2865,4 +2884,220 @@ body [tabindex]:focus-visible {
     /* sideways only: the checks' tap areas reach past the last row and would scroll it up and down */
     #fuad-lineup .fuad-table-scroll { overflow-x: auto; overflow-y: hidden; }
     #fuad-lineup .fuad-lineup-ir { padding: 4px; }
+}
+
+/* ---- A message board topic (ui/topic.js): MFL's posts as cards ---- */
+
+/* MFL's topic bars and icon navigation; the script draws its own heading */
+.fuad-topic body span.nav,
+.fuad-topic body .fuad-topic-bar,
+.fuad-topic body #withmenus > br,
+.fuad-reply body span.nav,
+.fuad-reply body .fuad-topic-bar,
+.fuad-reply body #withmenus > br { display: none !important; }
+
+.fuad-topic body #withmenus,
+.fuad-reply body #withmenus {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 860px;
+    padding: 16px 0 24px;
+    text-align: left;
+}
+
+.fuad-topic-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 4px 24px;
+    margin-bottom: 4px;
+}
+
+.fuad-topic-title { display: flex; flex-direction: column; gap: 2px; }
+
+body .fuad-topic-title h2 {
+    margin: 0;
+    padding: 0;
+    font-size: 34px;
+    line-height: 1.1;
+    text-transform: none;
+    text-align: left;
+}
+
+.fuad-topic-nav { display: flex; gap: 20px; font-size: 15px; font-weight: 600; }
+
+.fuad-topic-nav a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
+
+/* MFL's branch wrappers only nest the posts; the depth is the indent */
+.fuad-topic body div[id^="brn"] { display: contents !important; }
+
+.fuad-topic body div.frm.pst {
+    margin: 0 0 0 calc(var(--fuad-depth, 0) * 32px) !important;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+/* one grid: avatar, team and date, Reply and Quote, then the text under the name; on phones Reply
+   and Quote go under the text */
+.fuad-post {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas: "avatar who actions" ". text text";
+    align-items: center;
+    gap: 6px 12px;
+    padding: 12px 16px 14px;
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    background: var(--fuad-panel);
+}
+
+.fuad-post-head { display: contents; }
+
+.fuad-post-avatar {
+    grid-area: avatar;
+    width: 36px;
+    height: 36px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-soft);
+    font: 700 14px var(--fuad-display);
+}
+
+.fuad-post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.fuad-post-who { grid-area: who; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+
+body .fuad-post-team a { color: var(--fuad-text); font-weight: 700; font-size: 15px; text-decoration: none; }
+
+.fuad-post-when { font-size: 13px; color: var(--fuad-muted); }
+
+.fuad-post-new { padding: 0 6px; border-radius: 5px; background: var(--fuad-lime-tint); color: var(--fuad-lime); font-size: 12px; font-weight: 700; }
+
+.fuad-post-actions { grid-area: actions; display: flex; justify-content: flex-end; }
+
+.fuad-post-actions a { display: flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 14px; font-weight: 600; text-decoration: none; }
+
+.fuad-post-text {
+    grid-area: text;
+    font-size: var(--fuad-read-size);
+    line-height: var(--fuad-read-leading);
+    color: var(--fuad-text);
+    overflow-wrap: anywhere;
+}
+
+.fuad-post-text img { max-width: 100%; height: auto; }
+
+@media (max-width: 48em) {
+    .fuad-topic body #withmenus { padding-top: 6px; }
+    .fuad-topic-head { flex-direction: column-reverse; align-items: stretch; }
+    .fuad-topic-nav { justify-content: space-between; font-size: 14px; }
+    body .fuad-topic-title h2 { font-size: 28px; }
+    .fuad-topic body div.frm.pst { margin-left: calc(var(--fuad-depth, 0) * 12px) !important; }
+    .fuad-post {
+        grid-template-columns: 32px minmax(0, 1fr);
+        grid-template-areas: "avatar who" "text text" "actions actions";
+        gap: 8px 10px;
+        padding: 12px 14px 4px;
+    }
+    .fuad-post-avatar { width: 32px; height: 32px; font-size: 13px; }
+    .fuad-post-who { flex-direction: column; gap: 0; }
+}
+
+/* ---- The board's reply page (ui/topic.js): the post being answered, then the form ---- */
+
+.fuad-reply-head { display: flex; flex-direction: column; }
+
+.fuad-reply-head a { display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
+
+body .fuad-reply-head h2 { margin: 0; padding: 0; font-size: 34px; line-height: 1.1; text-transform: none; text-align: left; }
+
+.fuad-reply-to,
+.fuad-reply body form.rpl {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 14px 16px;
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    background: var(--fuad-panel);
+}
+
+.fuad-reply-form { display: flex; flex-direction: column; gap: 12px; }
+
+.fuad-reply-formats { display: flex; flex-wrap: wrap; gap: 6px; }
+
+body .fuad-reply-formats button.tbt {
+    min-width: 44px;
+    min-height: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fuad-text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body .fuad-reply-formats button.tbt:hover { background: var(--fuad-raised); color: var(--fuad-text); }
+
+body .fuad-reply-formats button[data-format="B"] { font-weight: 800; }
+
+body .fuad-reply-formats button[data-format="I"] { font-style: italic; }
+
+body .fuad-reply-formats button[data-format="tt"] { font-family: ui-monospace, monospace; font-size: 13px; }
+
+.fuad-reply-text { display: flex; flex-direction: column; gap: 4px; }
+
+body .fuad-reply-text textarea {
+    box-sizing: border-box;
+    width: 100%;
+    /* MFL asks for 13 rows; about 7 leaves Post in view */
+    height: 200px;
+    padding: 10px 12px;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: var(--fuad-page);
+    color: var(--fuad-text);
+    font: 400 var(--fuad-read-size) / var(--fuad-read-leading) var(--fuad-body);
+    resize: vertical;
+}
+
+body .fuad-reply-text textarea:focus { border-color: var(--fuad-lime); }
+
+.fuad-reply-buttons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 16px; }
+
+.fuad-reply-notify { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; color: var(--fuad-soft); }
+
+.fuad-reply-notify input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-lime); }
+
+body .fuad-reply-buttons input[type="submit"] {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+body .fuad-reply-buttons input.fuad-reply-preview { background: var(--fuad-quiet); color: var(--fuad-text); font-weight: 600; }
+
+body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); color: var(--fuad-on-lime); font-weight: 700; }
+
+@media (max-width: 48em) {
+    body .fuad-reply-head h2 { font-size: 28px; }
+    .fuad-reply-to,
+    .fuad-reply body form.rpl { padding: 12px 14px; }
+    .fuad-reply-notify { flex-basis: 100%; }
+    /* the six chips share one row */
+    body .fuad-reply-formats button.tbt { flex: 1 1 auto; min-width: 0; padding: 0 8px; }
+    body .fuad-reply-text textarea { height: 170px; }
 }
