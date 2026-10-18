@@ -409,7 +409,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             <thead><tr>${columns.map(([key, label, sortable = true]) => {
                                 const phone = key === "name" || phoneKeys.includes(key) ? "" : " fuad-wide";
                                 const numeric = ["bye", "projected", "points", "salary", "years"].includes(key) ? " fuad-num" : "";
-                                return `<th scope="col" class="${phone}${numeric}">${sortable ? `<button type="button" class="fuad-sort" data-sort="${key}">${esc(label)}<span class="fuad-sort-mark" aria-hidden="true"></span></button>` : esc(label)}</th>`;
+                                return `<th scope="col" class="fuad-col-${key}${phone}${numeric}">${sortable ? `<button type="button" class="fuad-sort" data-sort="${key}">${esc(label)}<span class="fuad-sort-mark" aria-hidden="true"></span></button>` : esc(label)}</th>`;
                             }).join("")}</tr></thead>
                             <tbody></tbody>
                         </table></div>
