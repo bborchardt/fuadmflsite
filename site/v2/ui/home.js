@@ -8,6 +8,7 @@ import {TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
+import {pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, cutDownDate, dayText, homePhase, leagueAlerts,
@@ -30,28 +31,24 @@ function mflPage(pattern) {
     return link ? link.href : null;
 }
 
-// Each export is fetched once per page, however many panels use it.
-function fetcher({season, leagueId}) {
+// Each export is fetched once per page, however many panels use it (page-fetch.js); `fresh` reads
+// it again, after a post. An optional one resolves to null when it can't be had.
+function fetcher({season, leagueId}, {fresh = false} = {}) {
     const host = window.location.origin;
-    const memo = new Map();
     return (type, params = {}, {base = host, optional = false} = {}) => {
-        const key = `${base} ${type} ${JSON.stringify(params)}`;
-        if (!memo.has(key)) {
-            const leagueParams = base === host ? {L: leagueId, ...params} : params;
-            const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {init: {cache: "no-store"}});
-            memo.set(key, optional ? request.catch((error) => {
-                console.warn(`[fuad] couldn't load ${type}:`, error);
-                return null;
-            }) : request);
-        }
-        return memo.get(key);
+        const leagueParams = base === host ? {L: leagueId, ...params} : params;
+        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? fetch : pageFetch, init: {cache: "no-store"}});
+        return optional ? request.catch((error) => {
+            console.warn(`[fuad] couldn't load ${type}:`, error);
+            return null;
+        }) : request;
     };
 }
 
 // the weeks' first kickoffs, in seconds, cached for a day; a week MFL hasn't scheduled is left out
 async function kickoffs(season, weeks) {
     const found = await Promise.all(weeks.map((week) => cached(`fuad.kickoff.${season}.${week}`, DAY, async () => {
-        const date = await weekKickoff(season, week);
+        const date = await weekKickoff(season, week, {fetchImpl: pageFetch});
         return date ? date.getTime() / 1000 : null;
     }).catch(() => null)));
     return new Map(weeks.map((week, i) => [week, found[i]]).filter(([, at]) => at));
@@ -98,7 +95,7 @@ function betaLine({inBeta, beta}) {
 
 function drawChat(mount, {context, franchiseId, teams}) {
     const feedUrl = `${window.location.origin}/fflnetdynamic${context.season}/${context.leagueId}_chat.xml`;
-    const others = [...[...teams].filter(([id]) => id !== franchiseId), ["0000", "Commissioner"]];
+    const others = [...teams].filter(([id]) => id !== franchiseId).concat(franchiseId === "0000" ? [] : [["0000", "Commissioner"]]);
     let lastPost = Date.now();
     let timer = null;
     let drawnIds = "";
@@ -132,6 +129,8 @@ function drawChat(mount, {context, franchiseId, teams}) {
     };
     const render = (messages, body) => {
         drawnIds = "";
+        const typed = mount.querySelector("#fuad-chat-input");
+        const draft = typed ? {text: typed.value, to: mount.querySelector("#fuad-chat-to").value} : null;
         body.innerHTML = `
         <div class="fuad-chat-scroll"></div>
         <div class="fuad-chat-to"><label for="fuad-chat-to" class="fuad-meta">To</label>
@@ -146,9 +145,15 @@ function drawChat(mount, {context, franchiseId, teams}) {
         const input = body.querySelector("input");
         const to = body.querySelector("select");
         const result = body.querySelector(".fuad-result");
-        to.addEventListener("change", () => {
+        const placeholder = () => {
             input.placeholder = to.value ? `Message ${teams.get(to.value) || "the commissioner"}` : "Message the league";
-        });
+        };
+        to.addEventListener("change", placeholder);
+        if (draft) {
+            input.value = draft.text;
+            to.value = draft.to;
+            placeholder();
+        }
         showMessages(messages, list);
         const refresh = () => load().then((fresh) => showMessages(fresh, list)).catch((error) => console.warn("[fuad] couldn't refresh chat:", error));
         body.querySelector("form").addEventListener("submit", async (event) => {
@@ -180,7 +185,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
         const schedule = () => {
             clearTimeout(timer);
             timer = setTimeout(function poll() {
-                if (Date.now() - lastPost > CHAT_IDLE || !document.getElementById("fuad-home") || document.getElementById("fuad-home").hidden) {
+                if (Date.now() - lastPost > CHAT_IDLE || !document.documentElement.classList.contains("fuad-home-on")) {
                     timer = null;
                     return;
                 }
@@ -255,6 +260,12 @@ function wireNewTopic(mount, body, {context}) {
         event.preventDefault();
         const result = form.querySelector(".fuad-result");
         const button = form.querySelector("button[type=submit]");
+        const subject = form.querySelector("input").value.trim();
+        const message = form.querySelector("textarea").value.trim();
+        if (!subject || !message) {
+            result.textContent = subject ? "Write a message." : "Write a subject.";
+            return;
+        }
         button.disabled = true;
         result.textContent = "";
         try {
@@ -262,11 +273,12 @@ function wireNewTopic(mount, body, {context}) {
             const response = await fetch(`${window.location.origin}/${context.season}/import`, {
                 method: "POST",
                 credentials: "same-origin",
-                body: new URLSearchParams({TYPE: "messageBoard", L: context.leagueId, SUBJECT: form.querySelector("input").value.trim(), BODY: form.querySelector("textarea").value.trim()})
+                body: new URLSearchParams({TYPE: "messageBoard", L: context.leagueId, SUBJECT: subject, BODY: message})
             });
             const text = await response.text();
-            if (!response.ok || /<error/i.test(text)) {
-                throw new Error((text.match(/<error[^>]*>([^<]*)/i) || [])[1] || `HTTP ${response.status}`);
+            // MFL answers <status>OK</status>; anything else, a login page included, didn't post
+            if (!response.ok || !/<status>\s*OK\s*<\/status>/i.test(text)) {
+                throw new Error((text.match(/<error[^>]*>([^<]*)/i) || [])[1] || (response.ok ? "MFL didn't confirm it" : `HTTP ${response.status}`));
             }
             form.reset();
             show(false);
@@ -396,7 +408,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     drawBoard(panels.board, {context, loggedIn, loginHref, exp, boardHref, threadHref});
     // after a new topic, the list again, with focus back on New topic
     panels.board.addEventListener("fuad-refresh", () => {
-        drawBoard(panels.board, {context, loggedIn, loginHref, exp: fetcher(context), boardHref, threadHref});
+        drawBoard(panels.board, {context, loggedIn, loginHref, exp: fetcher(context, {fresh: true}), boardHref, threadHref});
         panels.board.querySelector(".fuad-panel-actions button").focus();
     });
 

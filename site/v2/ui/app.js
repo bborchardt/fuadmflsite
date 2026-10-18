@@ -10,6 +10,7 @@ import {renderContracts} from "./contracts.js";
 import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
 import {cached, storage} from "./store.js";
+import {pageFetch} from "./page-fetch.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -51,7 +52,7 @@ function showInMounts(found, className, message) {
 async function kickoffs(season) {
     const times = await cached(`fuad.kickoffs.${season}`, DAY, async () => {
         const [start, deadline] = await Promise.all([PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK].map((week) =>
-            weekKickoff(season, week)));
+            weekKickoff(season, week, {fetchImpl: pageFetch})));
         return {start: start && start.getTime(), deadline: deadline && deadline.getTime()};
     });
     return {start: times.start && new Date(times.start), deadline: times.deadline && new Date(times.deadline)};
@@ -105,7 +106,7 @@ function snapshotStatus(view, season) {
 
 async function loadLeague({season, leagueId}) {
     const host = window.location.origin;
-    const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
+    const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
     const playersPromise = cached(`fuad.players.${season}`, DAY, async () => {
         const players = await fetchExport(exportUrl(API_BASE, season, "players"), "players");
         return {player: players.player};
@@ -113,11 +114,11 @@ async function loadLeague({season, leagueId}) {
     const weeklyResultsPromise = league("weeklyResults");
     // the results week's report, for the injured-starter check; without it that check flags nothing
     const injuriesPromise = weeklyResultsPromise.then((weeklyResults) =>
-        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries")).catch(() => null);
+        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries", {fetchImpl: pageFetch})).catch(() => null);
     // today's report, for injured reserve eligibility; without it that check is skipped
-    const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries").catch(() => null);
+    const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries", {fetchImpl: pageFetch}).catch(() => null);
     // if the season's phase can't be told, in-season checks are hidden rather than risk false alerts
-    const phasePromise = seasonPhase(season, new Date()).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
+    const phasePromise = seasonPhase(season, new Date(), {fetchImpl: pageFetch}).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
     const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
         league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise
@@ -152,6 +153,25 @@ async function contractReadings({season, leagueId}, league) {
     }
     const {rosters, playerNames} = league.boardContext;
     return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
+}
+
+// Home's requests wait until it's the view (the frame sets `fuad-home-on`), so landing on another
+// home page tab doesn't fetch them
+function whenHomeShows() {
+    const root = document.documentElement;
+    return new Promise((resolve) => {
+        if (root.classList.contains("fuad-home-on")) {
+            resolve();
+            return;
+        }
+        const watch = new MutationObserver(() => {
+            if (root.classList.contains("fuad-home-on")) {
+                watch.disconnect();
+                resolve();
+            }
+        });
+        watch.observe(root, {attributes: true, attributeFilter: ["class"]});
+    });
 }
 
 // v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
@@ -212,7 +232,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         return loading;
     };
     const homeShown = document.getElementById("tabcontent0")
-        ? startHome(context, league, {beta, inBeta}).catch((error) => {
+        ? whenHomeShows().then(() => startHome(context, league, {beta, inBeta})).catch((error) => {
             console.error("[fuad] couldn't draw Home:", error);
             return false;
         })

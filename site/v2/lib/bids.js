@@ -25,13 +25,14 @@ export function claimCapChange(claim, players) {
 // an IR player's drop frees no active spot
 const addsActive = (claim, players) => !claim.drop || (players.get(claim.drop) || {}).status === "INJURED_RESERVE";
 
-// If every group's costliest claim wins: groups have no priority and each awards one claim, so the
-// most any group can add is its largest cap change, and an active player if any claim adds one.
+// If every group's costliest claim wins: groups have no priority and each awards one claim or none,
+// so the most any group can add is its largest cap change, never less than nothing (a group whose
+// claims all lower cap used may still lose), and an active player if any claim adds one.
 export function projectBids(franchise, groups, players) {
     let capChange = 0;
     let rosterChange = 0;
     for (const group of groups) {
-        capChange += Math.max(...group.claims.map((claim) => claimCapChange(claim, players)));
+        capChange += Math.max(0, ...group.claims.map((claim) => claimCapChange(claim, players)));
         rosterChange += group.claims.some((claim) => addsActive(claim, players)) ? 1 : 0;
     }
     const cap = Math.round((franchise.capTotal + capChange) * 100) / 100;

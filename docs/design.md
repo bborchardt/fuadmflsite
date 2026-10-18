@@ -47,8 +47,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   - a last name is ambiguous only with another add waiting for years, not a player under contract
   - nothing stated in time: 1 year, applied on sight; the commissioner adjusts by hand for leniency
   - anything unclear is flagged, never defaulted
-- **League Alerts confirms a free agent add's length** with the job's own reader while the hour is
-  open, so owners see what will be set.
+- **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
+  own reader while the hour is open, so owners see what will be set.
 
 ## Previews and the beta
 

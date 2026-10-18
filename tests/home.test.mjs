@@ -230,3 +230,12 @@ test("trade offers waiting for the viewer, from pending trades", () => {
     // none pending: MFL leaves the list out
     assert.deepEqual(tradeOffers({}, {franchiseId: "0001", players, teams}), []);
 });
+
+test("a group that could only lower cap used still counts as winning nothing", () => {
+    // $295 used; group 1 adds $8 with no drop; group 2 would save $9, but may lose
+    const players = new Map([["9", player("9", "Pricey Guy", {salary: 10, years: 0})]]);
+    const groups = pendingGroups({blindBidWaiverRequest: [{round: "1", addsDrops: "1_8_"}, {round: "2", addsDrops: "2_1_9"}]});
+    const projected = projectBids(team("0001", "Me", {capTotal: 295, numPlayers: 25}), groups, players);
+    assert.equal(projected.cap, 303);
+    assert.equal(projected.overCap, true);
+});
