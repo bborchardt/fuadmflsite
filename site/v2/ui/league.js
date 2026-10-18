@@ -122,7 +122,7 @@ function cardMarkup(card, i, {names, viewer, open, benchOpen, preview}) {
     </article>`;
 }
 
-function seasonMarkup({rows, names, current, live, title, line}) {
+function seasonMarkup({lastRegular, rows, names, current, live, title, line}) {
     const tone = (result) => (/^Live/.test(result) ? "fuad-live" : /^W/.test(result) ? "fuad-good" : /^L/.test(result) ? "fuad-bad-text" : "fuad-muted");
     return `<section class="fuad-panel" aria-label="Your season">
         <div class="fuad-panel-head"><h2 class="fuad-panel-heading">${esc(title)}</h2><span class="fuad-meta">${esc(line)}</span></div>
@@ -130,7 +130,7 @@ function seasonMarkup({rows, names, current, live, title, line}) {
             const result = row.week === current && live ? live : row.result || (row.week === current ? "This week" : "");
             return `<li class="fuad-season-row${row.week === current ? " fuad-row-mine" : ""}"><span class="fuad-meta">W${row.week}</span><span>${esc(names.get(row.opponent) || "")}</span><span class="${tone(result)}">${esc(result)}</span></li>`;
         }).join("")}
-            <li class="fuad-season-row fuad-season-end"><span class="fuad-meta"></span><span class="fuad-muted">Weeks 15–17</span><span class="fuad-muted">Playoffs</span></li>
+            <li class="fuad-season-row fuad-season-end"><span class="fuad-meta"></span><span class="fuad-muted">Weeks ${lastRegular + 1}–${Number(window.endWeek) || 17}</span><span class="fuad-muted">Playoffs</span></li>
         </ul>
     </section>`;
 }
@@ -140,8 +140,8 @@ function drawScores(mount, data) {
     const currentWeek = before ? 1 : Number(window.liveScoringWeek) || 1;
     const state = {week: currentWeek, season: false, open: null, bench: false};
     let timer = null;
-    let lineupAt = 0;
-    let live = null;
+    // who starts, per week, and when MFL was last asked
+    const lineups = new Map();
     mount.innerHTML = `
         <div class="fuad-scores-bar">
             <div class="fuad-weekpicker">
@@ -174,11 +174,19 @@ function drawScores(mount, data) {
             const first = asArray(nflSchedule && nflSchedule.matchup).map((game) => Number(game.kickoff)).filter(Boolean);
             return {cards, names, state: {text: first.length ? dayText(Math.min(...first)) : "", live: false}, games, preview: true};
         }
-        if (fresh || !live || live.week !== week || Date.now() - lineupAt > LINEUP_POLL) {
-            live = {week, scoring: await exp("liveScoring", {W: week}, {fresh})};
-            lineupAt = Date.now();
+        let lineup = lineups.get(week);
+        if (!lineup || Date.now() - lineup.at > LINEUP_POLL) {
+            // the page's own copy first (Home asks for the same), MFL again once it's old
+            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week}, {fresh: Boolean(lineup)})};
+            lineups.set(week, lineup);
         }
-        const stats = readStats(await feed(`live_stats_${two(week)}.txt`));
+        // a week MFL hasn't started a feed for yet reads as no stats, as MFL's page treats it
+        const stats = readStats(await feed(`live_stats_${two(week)}.txt`).catch((error) => {
+            if (error.status === 404) {
+                return "";
+            }
+            throw error;
+        }));
         const games = gameStates(nflSchedule, stats);
         const anyLeft = !stats.updated || asArray(nflSchedule && nflSchedule.matchup).some((game) => games.of(asArray(game.team)[0] && asArray(game.team)[0].id).state !== "over");
         const [projections, rosters] = await Promise.all([
@@ -186,7 +194,7 @@ function drawScores(mount, data) {
             week === currentWeek ? exp("rosters", {}, {optional: true}) : null
         ]);
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
-        const cards = scoreCards({live: live.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || []});
+        const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || []});
         return {cards, names, games, state: weekState(cards, games, weekday)};
     };
 
@@ -263,6 +271,8 @@ function drawScores(mount, data) {
 
     // the panel pattern (ui/panel.js) for a week: placeholders, then the cards, or Retry
     const showWeek = () => {
+        clearTimeout(timer);
+        timer = null;
         label(null);
         const week = state.week;
         body.setAttribute("aria-busy", "true");
@@ -310,7 +320,7 @@ function drawScores(mount, data) {
                 const rows = standings(standing, settings, names).flatMap((division) => division.rows.map((row) => ({...row, divisionName: division.name})));
                 const me = rows.find((row) => row.id === viewer);
                 return {
-                    rows: teamSeason(schedule, viewer).filter((row) => row.week < 15),
+                    rows: teamSeason(schedule, viewer).filter((row) => row.week <= data.lastRegular),
                     names: [...names],
                     live: liveResult,
                     line: me ? `${me.h2h.w}-${me.h2h.l}-${me.h2h.t} · ${me.divisionName} ${ordinal(me.rank)}` : ""
@@ -318,7 +328,7 @@ function drawScores(mount, data) {
             },
             render: (value, inner) => {
                 panelMount.classList.remove("fuad-panel");
-                inner.innerHTML = seasonMarkup({rows: value.rows, names: new Map(value.names), current: currentWeek, live: value.live, title: `${context.season} season`, line: value.line});
+                inner.innerHTML = seasonMarkup({lastRegular: data.lastRegular, rows: value.rows, names: new Map(value.names), current: currentWeek, live: value.live, title: `${context.season} season`, line: value.line});
             }
         });
     };
@@ -536,7 +546,7 @@ export function drawLeague({context, franchiseId}) {
     const feed = async (name) => {
         const response = await fetch(`${host}/fflnetdynamic${season}/${name}?RANDOM=${Date.now()}`, {cache: "no-store"});
         if (!response.ok) {
-            throw new Error(`${name} returned HTTP ${response.status}`);
+            throw Object.assign(new Error(`${name} returned HTTP ${response.status}`), {status: response.status});
         }
         return response.text();
     };
@@ -553,17 +563,35 @@ export function drawLeague({context, franchiseId}) {
         };
     };
 
-    // before week 1's kickoff the new site has no games: last season's final stands in
+    // before week 1's kickoff the new site has no games: last season's final stands in. MFL's page
+    // says so once a week is done; otherwise week 1's kickoff, and if that can't be had, in season.
     const beforeSeason = once(async () => {
-        const kickoff = await cached(`fuad.kickoff.${season}.1`, DAY, async () => {
-            const date = await weekKickoff(season, 1, {fetchImpl: pageFetch});
-            return date ? date.getTime() / 1000 : null;
-        }).catch(() => null);
-        return !kickoff || Date.now() / 1000 < kickoff;
+        if (Number(window.completedWeek) > 0 || Number(window.liveScoringWeek) > 1) {
+            return false;
+        }
+        try {
+            const kickoff = await cached(`fuad.kickoff.${season}.1`, DAY, async () => {
+                const date = await weekKickoff(season, 1, {fetchImpl: pageFetch});
+                return date ? date.getTime() / 1000 : null;
+            });
+            return !kickoff || Date.now() / 1000 < kickoff;
+        } catch (error) {
+            return false;
+        }
     });
     const players = once(async () => playersMap(await cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player}))));
     const rules = once(async () => readRules(await cached(`fuad.rules.${season}`, DAY, () => exp("rules"))));
-    const projections = (week) => feed(`live_proj_${two(week)}.txt`).then(readProjections);
+    // the projections don't change during a week: read once, as MFL's page does
+    const projected = new Map();
+    const projections = (week) => {
+        if (!projected.has(week)) {
+            projected.set(week, feed(`live_proj_${two(week)}.txt`).then(readProjections).catch((error) => {
+                projected.delete(week);
+                throw error;
+            }));
+        }
+        return projected.get(week);
+    };
     const leagueOf = (year) => exp("league", {}, {year});
     const namesFor = (year = season) => leagueOf(year).catch(() => null).then(namesOf);
     // the season shown in Standings, Power and Winners: this one, or last one's final before week 1
@@ -584,7 +612,7 @@ export function drawLeague({context, franchiseId}) {
             const lastScheduled = await schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0);
             return drawScores(mount, {
-                context, viewer, exp, feed, before, lastScheduled,
+                context, viewer, exp, feed, before, lastScheduled, lastRegular: Number(window.standingsEndWeek) || 14,
                 names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season)
             });
         },
@@ -658,7 +686,7 @@ export function drawLeague({context, franchiseId}) {
                 what: "winnings", key: `fuad.league.winners.${year}`, maxAge: 10 * MINUTE, rows: 10,
                 load: async () => {
                     const [settings, accounting, ytd, standing, brackets] = await Promise.all([
-                        leagueOf(year), exp("accounting", {}, {year}), exp("weeklyResults", {W: "YTD"}, {year}),
+                        leagueOf(year), exp("accounting", {}, {year, optional: true}), exp("weeklyResults", {W: "YTD"}, {year}),
                         exp("leagueStandings", {}, {year}), exp("playoffBrackets", {}, {year, optional: true})
                     ]);
                     const lastRegular = Number(settings.lastRegularSeasonWeek) || 14;
