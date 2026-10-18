@@ -32,6 +32,33 @@ MFL documents little of this.
 - **Renewal:** MFL keeps past seasons' sites and copies home page messages forward. The league renews
   in mid-March or later, never on a fixed date.
 
+## Scores and standings
+
+- **MFL's live scoring page** (`ajax_ls`) computes in the browser, from two feeds on the league's
+  host, `fflnetdynamic<season>/live_stats_<WW>.txt` and `live_proj_<WW>.txt` (`WW` the week, two
+  digits): the scoring rules compiled into the page (the same rules as `export?TYPE=rules`), then
+  `mfl_win_prob.js`, 400 simulations of what's left to play, seeded by player and week. One random
+  value carries from player to player, so the result depends on the order it walks the lineups
+  (position, then name).
+- **The stats feed** is a line per player (`12860|EA 1|EP 1`) and per NFL team (`HOU|QUARTER 2|
+  REMAINING 15:00|POSSESSION 2|…`), then `DATE|<seconds>|…` and `REFRESH|40000`. A team's game is
+  over when `QUARTER` is empty or `F`; `H` is halftime, `O` overtime. Lines carry stray carriage
+  returns inside them (`DIF 7\r|EA 1\r`). It answers 403 without a referrer from MFL's pages. A
+  past week's file stays readable.
+- **The projections feed** is a line per player: `16619,WR,RA=0.18,CC=1.92,ARY=3.44,…`, stats only.
+- **`liveScoring`** needs `DETAILS=1` to list the bench (without it, only the starters). It lists each team's `playersCurrentlyPlaying`, `playersYetToPlay` and
+  `gameSecondsRemaining`, and each player's `score` and `gameSecondsRemaining`, but no stats
+  (`updatedStats` is a counter), and leaves out injured reserve.
+- **`weeklyResults` with `W=YTD`** comes back as `allWeeklyResults`, a `weeklyResults` per week, each
+  team's `player` list with `status` and `score`. Weeks not yet played have matchups without scores.
+- **`leagueStandings`** lists the teams in the league's standings order; its `all_play_wlt` keeps
+  counting through the playoff weeks (2025's champion: 128-25, paid on the regular season's 102-24).
+- **The Power Rank page** (`options?O=101`, no export) is a `table.report`, a row per team with the
+  team in `a.franchise_<id>` and each figure in a classed cell (`power_rank`, `all_play_w`, …).
+- **`playoffBracket` with `BRACKET_ID`** has `playoffRound`s of `playoffGame`s, each side's
+  `franchise_id`, `points` and `seed` (or `winner_of_game` / `loser_of_game`); `playoffBrackets`
+  names them (Championship, 3rd Place Game). `schedule` covers the regular season only.
+
 ## Login and limits
 
 - **Login:** `POST api…/<year>/login` returns `<status MFL_USER_ID="…">`, sent back as the
