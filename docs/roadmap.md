@@ -166,9 +166,76 @@ v2's `lib/` keeps what the daily job reads (`capTotal`, `unchargedPenalty`, `pen
 `violations.js`, `adds.js` and `contract-years.js` exports); the rules don't change, and the job
 keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
+### Build
+
+**Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
+over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
+(Rollout 1) is in. Everything below is new work in `site/v2/`: one branch and PR per step, each
+tried in the beta (the commissioner's team only) before the next.
+
+**For every step:**
+- The spec is this roadmap's sections; the picture is the canvas (the row map at the top of v2).
+  Where they disagree, the roadmap wins and the canvas gets fixed.
+- Master's `AGENTS.md` rules apply: test against saved MFL exports and pages, one live run at the
+  end of a step, never the job's User-Agent from a dev machine, no syntax newer than Safari 16 in
+  statically imported modules, a reviewer pass before merging.
+- `lib/` keeps the exports the daily job reads (Rollout, above).
+- Colors are named tokens with one meaning each (Look and navigation), never values scattered
+  through the code, so a light theme stays a swap of values.
+- The build rules in Look and navigation hold on every page: tap areas, focus rings, hidden h1s,
+  type sizes, names that wrap.
+
+**Steps:**
+0. **Docs on master:** the Reference section below moves into `docs/mfl.md`; `docs/design.md` gets
+   v2's changes to its goals (five sections replace the custom tabs: "no new navigation layer" no
+   longer holds) and the beta-in-place exception (Rollout 2).
+1. **The frame** (canvas rows 13, 16): header (☰ site menu with MFL's menu, the wordmark and
+   context line, the team sheet with Log in / Log out and Viewing as), the five sections (bottom
+   tabs, top bar), view segments as URL views, the tokens and type, the loading and error pattern,
+   the logged-out header, and the player popup as information only (row 11).
+2. **Home** (row 6, with its phase states; row 16).
+3. **League** (row 7): Scores with live scoring, Standings, Power, Winners.
+4. **Rosters** (row 8): My team, Teams, Players, Draft; the popup's Rosters actions.
+5. **Lineup** (row 14): MFL's Submit Lineup restyled, with the warnings and the save bar.
+6. **Moves › Add** (rows 5, 12): v2's controls over MFL's `add_drop` forms, comment lines, the
+   board post. The riskiest step; it wants the commissioner to-do's saved Add/Drop page from the
+   blind-bid period.
+7. **Moves › Drop** (row 15).
+8. **Moves › Trades** (row 9).
+9. **Moves › IR** (row 10).
+10. **Before the season:** every phase checked against saved exports with simulated dates, since
+    none of it shows live until March.
+11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
+
+**Open, to settle while building:** the full list of transactions and processed bids (Home's Recent
+moves follow-up); whether MFL accepts bids on a player whose game has started, and whether it
+carries a lineup over unchecked (the to-do's saved page, and the beta); what MFL's `I` injury code
+means (presumably IR).
+
+**The build prompt** (for a fresh session on master, one per step):
+
+```text
+Build step N of the v2 redesign (the roadmap's Build section) for the FUAD league site.
+
+Read first:
+- AGENTS.md, docs/design.md and docs/mfl.md on master.
+- docs/roadmap.md on the claude/fantasy-football-tier0-setup branch (git show
+  origin/claude/fantasy-football-tier0-setup:docs/roadmap.md): the Build section, then the sections
+  for this step; they are the spec.
+- The canvas, https://claude.ai/artifact/QAr8Vy6ieYJdSixPvfDBwV: the boards for this step's rows
+  (project/<name>.dc.html). They are the picture; the roadmap wins where they differ.
+
+Work on a branch from master, in site/v2/. Test against saved exports and pages; make one live run
+at the end. Present choices to me one at a time and wait for my call. When the step is done, update
+the roadmap on its branch with what changed and what's next.
+```
+
 ### Look and navigation
 
-- **Night Game:** dark, app-like. Barlow and Barlow Condensed, a lime accent, orange for tight cap,
+- **Night Game:** dark only for now (review, 17 Oct 2026: dark suits evening phone use, the beta's
+  way back to the classic site covers anyone who dislikes it, and a light theme would double the
+  visual checks over MFL's restyled pages and skins; colors are built as tokens so one can follow
+  the phone's system setting later, if members ask when the beta widens). Dark, app-like. Barlow and Barlow Condensed, a lime accent, orange for tight cap,
   green and red for cap used going down and up. One meaning per color (review, 17 Oct 2026): **lime**
   yours, interactive, selected, live (buttons, links, the lit tab, your row, "Playing", seeds);
   **green** a good change (a "−$40" cap change, W, saved); **red** over a limit, blocked, a bad
