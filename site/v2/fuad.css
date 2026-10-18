@@ -1567,6 +1567,23 @@ body [tabindex]:focus-visible {
 
 #fuad-home select { flex: 1; min-width: 0; width: 100%; padding: 0 10px; font-size: 15px; }
 
+/* skins pad their own fields and can load after this sheet, so the side padding is set outright: the
+   text off the edges, and room for the dropdown's arrow */
+body #fuad-home input:not([type="checkbox"]),
+body #fuad-home textarea { padding-left: 12px !important; padding-right: 12px !important; }
+
+/* the browser's own arrow ignores padding and hugs the edge, so the dropdown draws its own */
+body #fuad-home select {
+    padding-left: 12px !important;
+    padding-right: 36px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--fuad-muted) 50%), linear-gradient(135deg, var(--fuad-muted) 50%, transparent 50%);
+    background-position: calc(100% - 19px) 50%, calc(100% - 14px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+}
+
 #fuad-home .fuad-chat-form input { flex: 1; min-width: 0; }
 
 #fuad-home textarea { padding: 10px 12px; line-height: 1.4; resize: vertical; }
