@@ -187,6 +187,14 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
+    // a message board topic: MFL's page, restyled
+    if (context && here.path === "mb" && document.querySelector("div.frm.pst")) {
+        await import("./topic.js").then(({restyleTopic}) => restyleTopic()).catch((error) => {
+            console.error("[fuad] couldn't restyle the topic:", error);
+            onTrouble();
+        });
+        return false;
+    }
     const found = mounts();
     const onHome = document.getElementById("tabcontent0") || found.contracts || found.commish || found.links;
     if (!context || !onHome) {
