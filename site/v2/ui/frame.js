@@ -3,7 +3,7 @@
 // menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
 
 import {esc} from "./html.js";
-import {locate, pageOf, sections, storedTabs} from "./nav.js";
+import {REBUILT, locate, pageOf, sections, storedTabs} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
@@ -126,7 +126,7 @@ export function drawFrame({context, storage}) {
     const franchiseId = window.franchise_id || null;
     const member = Boolean(franchiseId && franchiseId !== "0000");
     const tabs = storedTabs(storage);
-    const all = sections({base, leagueId, franchiseId, tabs});
+    const all = sections({base, leagueId, franchiseId, tabs, rebuilt: REBUILT});
     const database = window.franchiseDatabase || {};
     const team = franchiseId && database[`fid_${franchiseId}`] ? database[`fid_${franchiseId}`] : null;
     const logout = mflLink((a) => /^log\s*out$/i.test(clean(a.textContent)));
@@ -155,8 +155,11 @@ export function drawFrame({context, storage}) {
     ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, myTeam, logout, become, franchiseId})}</div>` : ""}`;
 
     const render = () => {
-        const here = locate(all, pageOf(window.location, tabs), franchiseId);
+        const page = pageOf(window.location, tabs);
+        const here = locate(all, page, franchiseId);
         const current = here && here.section.name;
+        // v2's Home replaces the home page's Main tab; its other tabs are still MFL's
+        document.documentElement.classList.toggle("fuad-home-on", page.path === "home" && current === "Home");
         const sectionLinks = all.map((section) => `<a href="${esc(section.href)}"${section.name === current ? ' aria-current="page"' : ""}>${icon(section.name)}<span>${esc(section.name)}</span></a>`).join("");
         root.querySelectorAll(".fuad-sections").forEach((nav) => {
             nav.innerHTML = sectionLinks;

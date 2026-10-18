@@ -7,6 +7,9 @@ const TABS_KEY = "fuad.homeTabs";
 // page and remembered, these until then
 export const DEFAULT_TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
 
+// the views v2 draws itself, on the home page
+export const REBUILT = ["Home"];
+
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 export function viewHash(section, view) {

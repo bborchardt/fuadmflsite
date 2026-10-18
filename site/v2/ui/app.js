@@ -6,11 +6,11 @@ import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
 import {seasonPhase} from "../lib/violations.js";
 import {franchisePhase, makeSnapshot, readSnapshot, snapshotFileName} from "../lib/franchise.js";
-import {renderViolations} from "./violations.js";
 import {renderContracts} from "./contracts.js";
 import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
 import {cached, storage} from "./store.js";
+import {REBUILT, sections, storedTabs} from "./nav.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -128,6 +128,7 @@ async function loadLeague({season, leagueId}) {
     });
     Object.assign(built, phase);
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
+    built.raw = {transactions, league: leagueInfo};
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});
     built.boardContext = {rosters, playerNames};
     return built;
@@ -153,6 +154,37 @@ async function contractReadings({season, leagueId}, league) {
     return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
 }
 
+// v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
+// Home is the current view (`fuad-home-on`); MFL's tabs stay underneath for the other home page tabs.
+function startHome(context, league, {beta, inBeta}) {
+    const base = `${window.location.origin}/${context.season}`;
+    const franchiseId = window.franchise_id || null;
+    const all = sections({base, leagueId: context.leagueId, franchiseId, tabs: storedTabs(storage), rebuilt: REBUILT});
+    const view = (section, name) => {
+        const found = all.find((entry) => entry.name === section);
+        return name ? found.views.find((entry) => entry.name === name).href : found.href;
+    };
+    const teams = view("Rosters", "Teams");
+    const login = [...document.querySelectorAll(".myfantasyleague_menu a[href], .pageheader a[href]")].find((a) => /^log\s*in$/i.test(a.textContent.trim()));
+    return import("./home.js").then(({drawHome}) => drawHome({
+        context,
+        franchiseId,
+        league,
+        readings: (built) => contractReadings(context, built),
+        links: {
+            lineup: view("Lineup"),
+            add: view("Moves", "Add"),
+            drop: view("Moves", "Drop"),
+            ir: view("Moves", "IR"),
+            trades: view("Moves", "Trades"),
+            team: (id) => `${teams}&F=${encodeURIComponent(id)}`
+        },
+        loginHref: login ? login.href : `${base}/login?L=${context.leagueId}`,
+        inBeta,
+        beta
+    }).shown);
+}
+
 // `beta` is the offer League Alerts invites the viewer to; null when this is the beta, whose
 // `inBeta` ({feedback}) gives League Alerts the way back. `onTrouble` is called when anything fails.
 // Resolves to whether League Alerts was drawn.
@@ -168,9 +200,27 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     }
     showInMounts(found, "fuad-loading", "Loading league data…");
 
-    let league;
+    // one load shared by every panel; a failed one is tried again by the next Retry
+    let loading = null;
+    const league = () => {
+        if (!loading) {
+            loading = loadLeague(context).catch((error) => {
+                loading = null;
+                throw error;
+            });
+        }
+        return loading;
+    };
+    const homeShown = document.getElementById("tabcontent0")
+        ? startHome(context, league, {beta, inBeta}).catch((error) => {
+            console.error("[fuad] couldn't draw Home:", error);
+            return false;
+        })
+        : Promise.resolve(false);
+
+    let built;
     try {
-        league = await loadLeague(context);
+        built = await league();
     } catch (error) {
         showInMounts(found, "fuad-error", `${error.message}. Try reloading the page.`);
         onTrouble();
@@ -188,39 +238,29 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             }
         }
     };
-    let alertsShown = false;
-    render("violations", null, () => {
-        alertsShown = renderViolations(league, undefined, {beta, inBeta});
-    });
-    if (alertsShown) {
-        // without holding up the rest; if the board can't be read, the notice keeps its deadline
-        contractReadings(context, league)
-            .then((readings) => readings && render("violations", null, () => renderViolations(league, readings, {beta, inBeta})))
-            .catch((error) => console.warn("[fuad] couldn't read the message board for contract lengths:", error));
-    }
 
     let view;
     try {
-        view = await franchiseView(context.season, league, dataBase);
+        view = await franchiseView(context.season, built, dataBase);
     } catch (error) {
-        view = {topSalaries: franchiseTopSalaries(league.rosteredPlayers), phase: "live", note: `Projected franchise salaries (couldn't check the season calendar: ${error.message}).`};
+        view = {topSalaries: franchiseTopSalaries(built.rosteredPlayers), phase: "live", note: `Projected franchise salaries (couldn't check the season calendar: ${error.message}).`};
     }
     if (found.contracts) {
         render("Contracts tab", found.contracts, () =>
-            renderContracts(found.contracts, {league, season: context.season, franchise: view, storage}));
+            renderContracts(found.contracts, {league: built, season: context.season, franchise: view, storage}));
     }
     if (found.commish) {
         render("Commish tab", found.commish, () => renderCommish(found.commish, {
             ...context,
-            league,
+            league: built,
             // the rookie draft is held offline before week 1, so "previous" stands in for "before the draft"
             beforeDraft: view.phase === "previous",
             snapshotStatus: snapshotStatus(view, context.season),
-            snapshotJson: () => JSON.stringify(makeSnapshot(context.season, franchiseTopSalaries(league.rosteredPlayers), {
+            snapshotJson: () => JSON.stringify(makeSnapshot(context.season, franchiseTopSalaries(built.rosteredPlayers), {
                 takenAt: new Date().toISOString(),
                 source: "Commish tab backup"
             }), null, 2)
         }));
     }
-    return alertsShown;
+    return homeShown;
 }

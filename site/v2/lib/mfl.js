@@ -13,6 +13,10 @@ export function displayName(mflName) {
     return parts.length < 2 ? parts[0] : parts[1].trim() + " " + parts[0];
 }
 
+// MFL's team codes where they differ from the usual ones ("KCC" for "KC")
+const NFL_CODES = {GBP: "GB", JAC: "JAX", KCC: "KC", LVR: "LV", NEP: "NE", NOS: "NO", SFO: "SF", TBB: "TB"};
+export const nflCode = (team) => NFL_CODES[team] || team;
+
 // league-independent exports (players, injuries, nflSchedule) live on the api host
 export function exportUrl(base, season, type, params = {}) {
     const query = new URLSearchParams({TYPE: type, ...params, JSON: "1"});

@@ -83,6 +83,9 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 - **Franchise salary:** the average of the position's top 5 salaries at the trade deadline (the first
   kickoff of week 12).
 - **Rookie draft:** offline, on no fixed date; the week 1 kickoff stands in for "after the draft".
+- **Pending blind bids** that could take a team over the cap, or past 30 active, void that owner's
+  bids (5.5). "Could" counts each claim group's costliest claim winning: groups have no priority
+  and each awards one claim.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
 
