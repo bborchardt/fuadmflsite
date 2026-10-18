@@ -5,6 +5,14 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
 
 let current = null;
 
+// a link inside a dialog that only changes the # (My team on the home page), or Back, leaves the
+// screen the dialog was over: close it, focus going to the new view rather than the opener
+window.addEventListener("hashchange", () => {
+    if (current) {
+        current.close({restore: false});
+    }
+});
+
 // `layer` is the full-screen backdrop holding `panel`; `opener` gets focus back (Safari doesn't
 // focus a tapped link, so a caller may know better than document.activeElement). Returns close().
 export function openDialog(layer, {panel = layer.firstElementChild, opener = document.activeElement, onClose = () => {}} = {}) {

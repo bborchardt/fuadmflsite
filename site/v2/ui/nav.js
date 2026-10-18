@@ -8,7 +8,7 @@ const TABS_KEY = "fuad.homeTabs";
 export const DEFAULT_TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
 
 // the views v2 draws itself, on the home page
-export const REBUILT = ["Home", "League/Scores", "League/Standings", "League/Power", "League/Winners"];
+export const REBUILT = ["Home", "League/Scores", "League/Standings", "League/Power", "League/Winners", "Rosters/My team", "Rosters/Teams", "Rosters/Players", "Rosters/Draft"];
 
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -83,8 +83,9 @@ export function pageOf(location, tabs = DEFAULT_TABS) {
 
 function matches(item, page, franchiseId) {
     const {match} = item;
+    // a view's own page under it (`#rosters-teams/0004`, one team) belongs to the view
     if (page.hash) {
-        return item.href.endsWith(page.hash) && item.href.includes("/home/");
+        return item.href.endsWith(page.hash.split("/")[0]) && item.href.includes("/home/");
     }
     if (match.tabs && page.tab && match.tabs.includes(page.tab)) {
         return true;

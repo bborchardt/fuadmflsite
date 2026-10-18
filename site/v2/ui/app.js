@@ -1,11 +1,12 @@
 // On pages other than the home page this does nothing; only the stylesheet applies.
 
-import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
-import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
+import {franchiseTopSalaries} from "../lib/rules.js";
 import {seasonPhase} from "../lib/violations.js";
-import {franchisePhase, makeSnapshot, readSnapshot, snapshotFileName} from "../lib/franchise.js";
+import {makeSnapshot, snapshotFileName} from "../lib/franchise.js";
+import {franchiseView} from "./franchise-view.js";
 import {renderContracts} from "./contracts.js";
 import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
@@ -48,52 +49,6 @@ function showInMounts(found, className, message) {
     }
 }
 
-// null until MFL publishes the schedule
-async function kickoffs(season) {
-    const times = await cached(`fuad.kickoffs.${season}`, DAY, async () => {
-        const [start, deadline] = await Promise.all([PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK].map((week) =>
-            weekKickoff(season, week, {fetchImpl: pageFetch})));
-        return {start: start && start.getTime(), deadline: deadline && deadline.getTime()};
-    });
-    return {start: times.start && new Date(times.start), deadline: times.deadline && new Date(times.deadline)};
-}
-
-async function loadSnapshot(season, dataBase) {
-    const response = await fetch(new URL(snapshotFileName(season), dataBase), {cache: "no-cache"});
-    if (response.status === 404) {
-        return null;
-    }
-    if (!response.ok) {
-        throw new Error(`the ${season} franchise snapshot returned HTTP ${response.status}`);
-    }
-    return readSnapshot(await response.json(), season);
-}
-
-const deadlineText = (date) => date
-    ? date.toLocaleString("en-US", {weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago", timeZoneName: "short"})
-    : "the trade deadline";
-
-async function franchiseView(season, league, dataBase) {
-    const live = franchiseTopSalaries(league.rosteredPlayers);
-    const times = await kickoffs(season);
-    const phase = franchisePhase(new Date(), times.start, times.deadline);
-    if (phase === "previous") {
-        const previous = await loadSnapshot(season - 1, dataBase);
-        if (previous) {
-            return {topSalaries: previous, phase, note: `Franchise salaries for ${season}, set at the ${season - 1} trade deadline.`};
-        }
-        return {topSalaries: live, phase, missing: true, note: `Projected franchise salaries. No snapshot from the ${season - 1} trade deadline was found.`};
-    }
-    if (phase === "final") {
-        const final = await loadSnapshot(season, dataBase);
-        if (final) {
-            return {topSalaries: final, phase, note: `Franchise salaries for ${season + 1}, set at the ${season} trade deadline.`};
-        }
-        return {topSalaries: live, phase, missing: true, note: `Provisional franchise salaries for ${season + 1}: the ${season} trade deadline snapshot hasn't been taken yet.`};
-    }
-    return {topSalaries: live, phase, note: `Projected franchise salaries for ${season + 1}, live until the trade deadline (${deadlineText(times.deadline)}).`};
-}
-
 function snapshotStatus(view, season) {
     if (view.phase === "final" && view.missing) {
         return `The ${season} trade deadline has passed and no snapshot is published yet. The daily job normally takes it; if it hasn't run, commit the JSON below to the league-data branch as data/${snapshotFileName(season)} and the next morning's daily job publishes it.`;
@@ -129,7 +84,7 @@ async function loadLeague({season, leagueId}) {
     });
     Object.assign(built, phase);
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
-    built.raw = {transactions, league: leagueInfo};
+    built.raw = {transactions, league: leagueInfo, salaryAdjustments, freeAgents};
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});
     built.boardContext = {rosters, playerNames};
     return built;
@@ -197,7 +152,8 @@ function startHome(context, league, {beta, inBeta}) {
             drop: view("Moves", "Drop"),
             ir: view("Moves", "IR"),
             trades: view("Moves", "Trades"),
-            team: (id) => `${teams}&F=${encodeURIComponent(id)}`
+            // a team's page under Teams, rebuilt or MFL's
+            team: (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`)
         },
         loginHref: login ? login.href : `${base}/login?L=${context.leagueId}`,
         inBeta,
@@ -238,6 +194,13 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         })
         : Promise.resolve(false);
     if (document.getElementById("tabcontent0")) {
+        whenShown("fuad-rosters-on")
+            .then(() => import("./rosters.js"))
+            .then(({drawRosters}) => drawRosters({context, franchiseId: window.franchise_id || null, dataBase, league}))
+            .catch((error) => {
+                console.error("[fuad] couldn't draw Rosters:", error);
+                onTrouble();
+            });
         whenShown("fuad-league-on")
             .then(() => import("./league.js"))
             .then(({drawLeague}) => drawLeague({context, franchiseId: window.franchise_id || null}))
