@@ -6,7 +6,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 ## Goals
 
 - Works well in a **phone browser**; members can't be assumed to use an app.
-- **No new navigation layer:** the custom tabs stay as members know them.
+- **One navigation layer:** v2's five sections (Home, Lineup, Moves, League, Rosters) replace the
+  custom tabs rather than adding to them; whatever they leave out stays reachable from MFL's own
+  menu, inside v2's site menu (☰). v1 keeps the custom tabs as members know them.
 - Within **MFL's rules**.
 - **As few chores as possible** for the commissioner, stable year to year.
 

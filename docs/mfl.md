@@ -1,7 +1,7 @@
 # MFL facts
 
-How MyFantasyLeague behaves, as the code relies on it. Checked against the live site; MFL documents
-little of this.
+How MyFantasyLeague behaves, as the code relies on it, or v2 will. Checked against the live site;
+MFL documents little of this.
 
 ## Pages and data
 
@@ -26,6 +26,12 @@ little of this.
   then sent as the User-Agent) gets about 2.5 times as much as an unregistered one. Bursts get HTTP
   429; MFL asks for about a second between requests and no retries. Heavy testing from one machine
   is throttled within hours, so test against saved exports.
+- **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
+  comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`); `salaries`
+  needs the commissioner's cookie.
+- **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
+  Commissioner", `logout?L=<league>&BECOME=0000`; presumably `BECOME=<team>` goes the other way (not
+  yet seen).
 
 ## Waivers and the message board
 
@@ -33,10 +39,105 @@ little of this.
   (`/<season>/processed_waivers?LEAGUE_ID=…&PERIOD=…`), one page per waiver run; the period id is the
   `BBID_WAIVER` transaction's timestamp. A conditional bid lists several players, of which MFL awards
   the first it can. Players without an NFL team show as "FA*".
+- **Pending claims** (`export?TYPE=pendingWaivers`) are the logged-in owner's own:
+  `{"pendingWaivers":{"blindBidWaiverRequest":{"round":"1","addsDrops":"13753_1_16619,13308_1_16152",
+  "comments":"1 yearbr/2 years","timestamp":"…"}}}`, one entry per group (presumably a list when
+  there are several), claims in priority order as `ADD_BID_DROP`, and the comment's line breaks
+  mangled to `br/`.
 - **Message board API** (`messageBoard`, `messageBoardThread`) needs a login and returns nothing for
   2024 and earlier; past seasons' boards are a public archive at `/<season>/options?L=<league>&O=28`.
 - **Edited posts** keep their original `postTime` and return the edited text; the API has no edit
   time (the board's page shows "Edited …").
+
+## Forms
+
+Each is an ordinary page form, posted from the logged-in browser.
+
+- **Add/Drop** (`add_drop?L=<league>`), one form posted to `add_drop`:
+  - Fields: `L`, `add_pid` and `drop_pid` (hidden, `#add_pid_field_id`, `#drop_pid_field_id`),
+    `FORCE_WAIVER` (checkbox), `BBID_AMT`, `ROUND` (a select of existing groups plus the next),
+    `COMMENTS` (textarea), `SUBMIT` (`#add_drop_submit`, "Perform Add/Drop" or "Submit Request"),
+    `add_settings` and `PROJSRC`.
+  - The player lists are JavaScript data, `playerDatabaseObj["add"]` and `["drop"]`: arrays of
+    `Player2` (`id, name, nfl_team, pos, bye_week, sal, inj, roster, pts, opp, pwpts, sort_sal`),
+    `pts` the points so far and `pwpts` this week's projection. Names carry flags: `*` dropped
+    recently, `!` game started, `(R)` rookie.
+  - `picker.js` draws the rows (`tr#add_<id>`, `tr#drop_<id>`). A click fills the hidden id and the
+    "To Add"/"To Drop" cells (`#add_name_field_id`, `#drop_name_field_id`), then
+    `picker_locked_check(...)` shows or hides the bid, group and comment rows (`#amt_field_id`,
+    `#round_field_id`, `#comments_field_id`) and the `FORCE_WAIVER` row.
+  - After a submit MFL shows Add/Drop again with no message; the claim appears in
+    `#waiver_request_list`: Group, Add, Drop, Bid Amount, Action, Time Entered, Comments (one cell
+    per group). Its action links write a claim as `ROUND_ADDID_BID_DROPID`:
+    `add_drop?L=<league>&F=<team>&MOVE_UP=1_13308_1_16152`, `MOVE_DOWN=…`, `DELETE=…`,
+    `COPY_ROUND=1_13753_1_16619_2` (the last part is the target group), and Edit,
+    `options?L=<league>&O=255&F=<team>&ROUND=1`.
+- **Edit a claim group** (`options?O=255&ROUND=<n>`), one form posted to `options`:
+  `form_name=editwr`, `LEAGUE_ID`, `O=255`, `ROUND`; per claim `amount_<i>` and `drop_<i>` (a select
+  of the roster plus "None"); `applyall` (checkbox); `comment` (the group's one comment); `SAVE` /
+  `CANCEL`.
+- **Injured reserve** (`options?L=<league>&O=18`), one form posted to `ir`: `LEAGUE_ID`,
+  `FRANCHISE_ID`; per player checkboxes `deactivate<team>` (to IR), `activate<team>` (from IR) and
+  `drop<team>`, each valued with the player id, all in one submit ("Perform Injured Reserve"), so an
+  activation and a drop go together. Two tables: "Select Players To Deactivate/Drop" (active
+  players, with Starter?) and "Select Players To Activate" (IR players). MFL refuses ineligible
+  players itself ("Can not be deactivated" in place of a checkbox) and marks players whose game has
+  started "Locked".
+- **Trades** (`options?L=<league>&O=05`): "Trades Offered By You", "Trades Offered To You", and a
+  "Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
+  proposal page.
+  - Propose: one form posted to `trade_offer`: `LEAGUE_ID`, `FRANCHISE_ID` (both teams,
+    `0001,0002`), `input_expires`, checkboxes `drop<team>` per side, each valued with a player id or
+    a future pick (`FP_<owner>_<year>_<round>`, "Year 2027 Round 1 Draft Pick from …"),
+    `TRADE_EXPIRES_MONTH`, `_DAY`, `_TIME`, `_YEAR`, `msg`, and `Propose` ("Propose Trade").
+  - Respond: per offer, a form posted to `trade_response`: `LEAGUE_ID`, `TRADE_ID`, radio `ACTION`
+    (`accept`, `counter_proposal`, `reject`), `COMMENTS`, and "Respond To Trade Offer" (off until a
+    choice is made; accept asks to confirm). A counter rejects the offer at once, then opens the
+    ordinary proposal page for the two teams (`options?O=05&FRANCHISE=<mine>,<theirs>`) with nothing
+    ticked, an empty message and the default expiry.
+  - Withdraw: each of the member's offers links "I'd like to revoke this trade offer", a plain GET
+    with no confirmation: `trade_response?L=<league>&TRADE_ID=<id>&ACTION=revoke`. The offer row
+    shows the date, each side's players and picks, the expiry, a Comments row and "Compare Players".
+- **Submit Lineup** (`lineup?L=<league>`): a week picker ("Submit Lineup For Week: 6 | 7 | … 17",
+  `lineup?L=…&WEEK=<n>&F=<team>`; this week and later), then one form posted to `lineup`:
+  - Hidden `FRANCHISE`, `LEAGUE_ID`, `WEEK`, `FORM=1`, `lineup_expires`, `INITPROJSRC`; a `PROJSRC`
+    select (the projection source) that submits the form on change.
+  - One `table.report`, a row per active player, grouped by position and alphabetical within it
+    ("Beck, Carson ARI QB"), each group's first row headed "Select 1-2 QB:". Per player a checkbox
+    `QB<team>` (`RB<team>`, …) valued with the player id, `checked` for a starter; columns for the
+    opponent with kickoff, Inj (`O`, `Q`, `I`, presumably IR), Bye, the opponent's average and rank
+    against the position, YTD, Avg and Proj points, position rank, % Start and NFL News; last week's
+    starters in bold.
+  - The checkbox is **disabled** (no name) for a player on a bye or whose game has started, so
+    neither can be submitted. An Out player can stay checked.
+  - Then `MESSAGE<team>` ("Optional Message"), and `SUBMIT` ("Submit Lineup"; with nothing checked
+    it asks to confirm "un-submitting" the lineup). IR players are listed below the table ("you must
+    first activate them on the Injured Reserve page").
+
+## Chat
+
+- The Main tab's `#league_chat` module and the chat page (`chat?L=<league>&COUNT=40`) are both drawn
+  by `mfl_common.js` from one feed, `fflnetdynamic<season>/<league>_chat.xml`, polled every 5
+  seconds (stopping after about 2 hours without posting); they differ only in `displayMessages` (9
+  or 40).
+- The feed's `<message>` elements carry `id`, `franchise_id` (the sender), `to` (a team, for a
+  private message), `message` and `posted`; it holds the season's messages until someone posts
+  `:clear:`.
+- **Private messages are in the public feed:** MFL's script just skips those not to or from the
+  viewer, so v2 must apply the same filter.
+- Posting is a GET from the logged-in browser:
+  `chat_save?L=<league>&MESSAGE=<escaped text>&TO_FID=<team, or empty for everyone>`.
+
+## League settings
+
+- **`export?TYPE=league`:** `bbidConditional=Yes`, `maxWaiverRounds=8`, `bbidMinimum=1`,
+  `bbidIncrement=1`, `bbidSeasonLimit=999999`, `currentWaiverType=BBID_FCFS`,
+  `includeIRWithSalary=100`, `salaryCapAmount=300` (soft), `rosterSize=80`.
+- **Trades** (the commissioner's setup): accepted trades process immediately; trades that create
+  invalid rosters go through, and that team can't submit a lineup until fixed; a trade with a player
+  whose game has kicked off can't be accepted until the week's games end (4 hours after the last
+  kickoff, per MFL's help); trade comments aren't shown to everyone; picks are tradable 2 years out,
+  rounds 1–5; blind-bid dollars can't be traded; proposals expire after 7 days by default.
 
 ## Layout
 
