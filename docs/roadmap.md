@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 17 Oct 2026
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 17 Oct 2026 (step 1 built)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -8,6 +8,8 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 ## Commissioner to-do
 
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
+  - the calendar export, logged in (`/2026/export?TYPE=calendar&L=48571&JSON=1`): v2 reads draft
+    day and the cut-down date from it, so far without seeing its shape (it needs a login)
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
@@ -169,7 +171,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20). Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -188,10 +190,25 @@ tried in the beta (the commissioner's team only) before the next.
 0. **Docs on master** (done, PR #20): MFL's forms, chat feed, pending claims, API imports and league
    settings are in `docs/mfl.md`; `docs/design.md`'s goal is "one navigation layer" (v2's five
    sections replace the custom tabs); the beta-in-place exception was already there. **Next: step 1.**
-1. **The frame** (canvas rows 13, 16): header (☰ site menu with MFL's menu, the wordmark and
-   context line, the team sheet with Log in / Log out and Viewing as), the five sections (bottom
-   tabs, top bar), view segments as URL views, the tokens and type, the loading and error pattern,
-   the logged-out header, and the player popup as information only (row 11).
+1. **The frame** (canvas rows 13, 16; PR #21, to try in the beta, then merge): the header (☰ site
+   menu with MFL's menu in its groups and a filter; the wordmark and context line; the team button,
+   or Log in), the team sheet (My team, Log out, Viewing as), the five sections, the redesign's
+   views, the tokens, focus rings, hidden h1s and tap areas, the loading and error pattern
+   (`ui/panel.js`), and the player popup, information only, in place of MFL's on MFL's own pages.
+   Decided while building (17 Oct 2026):
+   - Views keep linking to the nearest MFL page until their step rebuilds them (Drop is MFL's Drop
+     Players page, `O=257`; Players the Contracts tab); Winners stays hidden until step 3. A rebuilt
+     view lives on the home page under its own # (`#league-standings`), turned on per view
+     (`rebuilt` in `ui/nav.js`).
+   - The context line: "Week N" (MFL's `liveScoringWeek`) from week 1's kickoff; before it "Before
+     the draft" until `draftResults` names a player, "Draft day" on a calendar event named for the
+     draft (logged in only), else "Before week 1"; "Season over" after week 17 until the next site.
+   - The popup reads MFL's player page (`player?L=…&P=…`), one request for the bio, status,
+     contract, headlines and season by week, instead of the exports (`playerScores` takes a week per
+     request); if MFL changes the page, MFL's own popup opens. A free agent shows no contract.
+   - To check in the beta: the popup's name sat indented on the live home page (BlueMesh) and
+     nowhere else; headings were made immune to skin spacing, unconfirmed.
+   **Next: step 2.**
 2. **Home** (row 6, with its phase states; row 16).
 3. **League** (row 7): Scores with live scoring, Standings, Power, Winners.
 4. **Rosters** (row 8): My team, Teams, Players, Draft; the popup's Rosters actions.
@@ -285,19 +302,20 @@ the roadmap on its branch with what changed and what's next.
   checkbox row, a free agent to pick, an alert), the popup is reached another way or not at all,
   as each section says (review, 17 Oct 2026). MFL's own (`launch_player_modal`) is desktop markup that
   doesn't fit a phone (values cut off, the stats table far too wide) and leads with the biography,
-  so v2 draws its own from exports (designed, canvas row 11): name, position, NFL team and number;
-  injury status and expected return (`injuries`); owner, salary, years, bye; for the member's own
+  so v2 draws its own (designed, canvas row 11): name, position, NFL team and number;
+  injury status and expected return; owner, salary, years, bye; for the member's own
   players the cut's effect, "Cut now: $28 penalty · cap used $293 → $253"; **actions only when
   opened from Rosters**, where a member researches and acts on it (yours: Drop and IR; another
   team's: Propose a trade; a free agent: Add), each opening its Moves view with the player chosen,
   Back returning to Rosters. Elsewhere the popup is information only: in Moves the page already
   makes the move, and in League, Home and Lineup an action would pull the member out of what
   they're doing (review, 17 Oct 2026); the
-  latest news headlines (`playerProfile`, which gives each article's ID), each opening in place
+  latest news headlines (from MFL's player page, with each article's ID), each opening in place
   to its source and time, update and analysis, read from MFL's article page
   (`view_news_article?L=…&ID=…`) when opened, the newest open at first; "More news" links
   to his 7-day news (`news_articles?L=…&PLAYERS=…&DAYS=7`); this season by week with opponent
-  and points (`playerScores` per week, `nflSchedule`); the biography last (`players` DETAILS=1).
+  and points; the biography last; all but the articles from MFL's player page (`player?L=…&P=…`)
+  in one request (built in step 1).
   A bottom sheet on phones, a two-column dialog on desktop.
 - **Rebuilt:** Home, League, Rosters and Moves › Add and Drop. Home, League and Rosters live on MFL's home
   page (`home/48571`), so moving between them doesn't reload.
@@ -306,7 +324,7 @@ the roadmap on its branch with what changed and what's next.
   stylesheet sets every background, border and shadow outright (checked against all 63 skins), and
   the rebuilt pages draw into v2's own area on the home page, hide MFL's tab contents, take their
   data from exports, and mark their views in the URL themselves (e.g. `#league-standings`), not by
-  MFL's tab positions. Until then the frame's Home, League › Standings and Rosters › All players
+  MFL's tab positions. Until then the frame's Home, League › Standings and Rosters › Players
   links open home page tabs by position, which can be wrong for an owner whose tabs differ.
 
 The map:
