@@ -24,23 +24,24 @@ Every current board is an interactive prototype (press Play; its row title names
 |---|---|---|
 | 1–3 | Night Game, Front Office, Broadcast (phone, desktop) | style explorations; Night Game's look was chosen |
 | 4 | Front Office ledger in the Night Game look | history; its cap ledger and contract ideas live on in Rosters (row 8) |
-| 5 | Moves › Add/Drop, phone | current |
+| 5 | Moves › Add, phone | current |
 | 6 | Home, phone and desktop | current |
 | 7 | League (Scores, Standings, Power, Winners), phone and desktop | current |
 | 8 | Rosters (My team, Teams, Players, Draft), phone, phone before the draft, desktop | current |
 | 9 | Moves › Trades, phone and desktop | current |
 | 10 | Moves › IR, phone and desktop | current |
 | 11 | Player popup, phone and desktop | current |
-| 12 | Moves › Add/Drop, desktop | current |
+| 12 | Moves › Add, desktop | current |
 | 13 | Site menu (☰) and the team sheet, phone and desktop | current |
 | 14 | Lineup, phone and desktop (MFL's Submit Lineup restyled; week 6 from the saved page) | current |
+| 15 | Moves › Drop, phone and desktop | current |
 
 ### For a design review
 
 What a reviewer needs beyond the sections below:
 - **Scope:** the member's view, phone and desktop. The commissioner's view stays v1 for now.
 - **Settled, not to relitigate:** the Night Game look; five sections with views; MFL's own forms
-  doing the work underneath (v2 fills them, so MFL's rules still apply); Add/Drop on desktop as a
+  doing the work underneath (v2 fills them, so MFL's rules still apply); Add on desktop as a
   table and a dialog; the site menu at top left.
 - **Principles the boards follow** (check them against each other):
   - Phone first: designed at 360 px, checked at 320–430; names wrap rather than truncate.
@@ -65,8 +66,7 @@ What a reviewer needs beyond the sections below:
 - **Prototype limits, not design:** sample data from around week 5 (Oct 10), so some dates are past;
   only two other teams' rosters exist (Trades opens The Obliterators for any team but the one that
   sent the offer); claims, offers and saves are seeded or kept only until reload.
-- **Deliberately not drawn:** Moves › Recent (MFL's page, restyled, described below);
-  Home's Recent moves (undecided); the offseason auction and franchise tags in Moves.
+- **Deliberately not drawn:** the offseason auction and franchise tags in Moves.
 - **Sources:** the bylaws and MFL's league settings (`docs/bylaws.md`, this branch); on master,
   `docs/design.md` (why the site works as it does) and `docs/mfl.md` (MFL's behavior); the Reference
   section at the end of this file (MFL's forms and settings for v2).
@@ -81,8 +81,8 @@ What a reviewer needs beyond the sections below:
 Decisions are recorded in the sections below and applied to the canvas's rows 5–13 (headers,
 wording, cap words, colors, controls, type, wrapping, panels, sample data). Not yet drawn: loading
 and error states, logged out, the offer card's pending-bids notice, the before-the-season states
-(Add/Drop's "Adds open after the draft."), "Game started" and "Dropped by you · bid from …" rows,
-the roster-minimum blocks, and the player popup from Add/Drop's "Adding …" line. The canvas can't
+(drawn since, as phase Tweaks), "Game started" and "Dropped by you · bid from …" rows,
+the roster-minimum blocks, and the player popup from Add's "Adding …" line. The canvas can't
 show the 44 px tap areas, focus rings or the hidden h1s; those are build rules (Look and
 navigation).
 
@@ -109,7 +109,7 @@ relitigate what the roadmap lists as settled.
 Work in two passes, reported separately.
 
 Pass 1, flows and rules:
-- Flows end to end across sections (e.g. a free agent from Rosters › Players through Add/Drop; a
+- Flows end to end across sections (e.g. a free agent from Rosters › Players through Add; a
   trade offer through to its cap and roster effects elsewhere).
 - Inconsistencies between boards: numbers, components, behavior, and the listed principles
   (rows 6-8 predate some of them).
@@ -168,28 +168,28 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
   green and red for cap used going down and up. One meaning per color (review, 17 Oct 2026): **lime**
   yours, interactive, selected, live (buttons, links, the lit tab, your row, "Playing", seeds);
   **green** a good change (a "−$40" cap change, W, saved); **red** over a limit, blocked, a bad
-  change ("$302 of $300", "+$5", L, "Blocked:"); **orange** caution (cap used within $10, expiring,
+  change ("$302 of $300", "+$5", L, "Blocked:"); **orange** caution (cap used within $10,
   Questionable, notices); **plain** white or grey for facts (cut penalty amounts, "from …" and
   "Traded to …" picks, You give and You get). Red and green always come with a sign, letter or word.
   Panels (#161B22) carry a 1 px #262D37 hairline, the header's border color, for a sharper edge
   on the #0D1117 page (1.36:1; compared on canvas row 6). Controls meet 3:1 for state and edges (WCAG 1.4.11): chips, single or multi-select, everywhere as
-  Add/Drop's (selected: white fill, dark text); view segments mark the selected view with lime
+  Add's (selected: white fill, dark text); view segments mark the selected view with lime
   text and a 2 px lime bar under the label, the fill subtle; fields have a #6B7583 border, lime on
   focus. Text meets 4.5:1: reasons, values, placeholders and disabled labels use the muted
   #9AA4B2, and an off row shows it by losing its tap (no hover, no chevron), not by fading;
   #6B7583 (3.4–4.1:1) only for separators, empty dashes and field borders. Every control has a
   44 px tap area, its drawn size free to stay smaller (the extra is invisible, reaching into the
-  gaps around it); Add/Drop's claim order arrows sit side by side at 44 × 44, and text-only
+  gaps around it); Add's claim order arrows sit side by side at 44 × 44, and text-only
   controls (Show bench, sort headings, Show all) become full-height rows or cells. Space grows only
   where controls are packed tight: about half a row above Rosters › Players. Text is 12 px at the
   least (tab labels, uppercase headings at 0.04 em spacing, lineup stat lines, tags), meta lines
   13 px.
 - **Accessibility rules for the build** (review, 17 Oct 2026): a 2 px lime focus ring, offset 2 px,
   on `:focus-visible` for every control (no bare `outline: 0`); a visually hidden h1 per view
-  ("Moves: Add/Drop"); views as links with `aria-current`, matching their URL (`#league-standings`);
+  ("Moves: Add"); views as links with `aria-current`, matching their URL (`#league-standings`);
   a row that opens the popup is a button; nothing only in a hover tooltip (desktop draft cells show
   their salary range, the phone position chart labels its segments or lists the values); dialogs
-  (popup, menu, Add/Drop's) take focus, keep it until closed, return it to what opened them, and
+  (popup, menu, Add's) take focus, keep it until closed, return it to what opened them, and
   close on Esc.
 - **Five sections on every page:** Home · Lineup · Moves · League · Rosters. Bottom tabs on phones, a
   top bar on desktop. A section's views sit in a row across the top (a segmented control; a row of
@@ -207,7 +207,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
   everything the sections don't, so "nothing gets hidden" becomes "nothing becomes unreachable"
   (below; canvas row 13). A drawer from the left on both.
 - **The team button** (top right, the team's initials) holds only the member's own things (below).
-- **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR, Recent and the
+- **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR and the
   fallback pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
   controls still work.
 - **A player popup everywhere:** a player name opens it in one click, so a member can research
@@ -229,7 +229,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
   to his 7-day news (`news_articles?L=…&PLAYERS=…&DAYS=7`); this season by week with opponent
   and points (`playerScores` per week, `nflSchedule`); the biography last (`players` DETAILS=1).
   A bottom sheet on phones, a two-column dialog on desktop.
-- **Rebuilt:** Home, League, Rosters and Moves › Add/Drop. Home, League and Rosters live on MFL's home
+- **Rebuilt:** Home, League, Rosters and Moves › Add and Drop. Home, League and Rosters live on MFL's home
   page (`home/48571`), so moving between them doesn't reload.
 - **Owners' customizations don't reach v2.** Each owner can choose their own MFL skin (63 of them;
   the league's is only the default) and their own home page tabs and the modules in them. v2's
@@ -243,9 +243,9 @@ The map:
 
 | Section | Views |
 |---|---|
-| **Home** | one page: My alerts, League alerts, Chat, Message board, Recent moves (undecided), Coming up |
+| **Home** | one page: My alerts, League alerts, Chat, Message board, Recent moves, Coming up |
 | **Lineup** | one page: MFL's lineup, restyled, with warnings |
-| **Moves** | Add/Drop · Trades · IR · Recent |
+| **Moves** | Add · Drop · Trades · IR |
 | **League** | Scores · Standings · Power · Winners |
 | **Rosters** | My team · Teams · Players · Draft |
 
@@ -253,8 +253,8 @@ The map:
 header shows Log in in place of the team button (MFL's login, then back to the same page). Home:
 My alerts becomes one line, "Log in to see your alerts", with Log in; League alerts, the board's
 topics, Recent moves and Coming up as usual; Chat hidden (private messages are in the public
-feed); New topic asks to log in. Lineup: "Log in to set your lineup". Moves: Add/Drop, Trades and
-IR show "Log in to make moves"; Recent as usual. League as usual, nothing highlighted. Rosters
+feed); New topic asks to log in. Lineup: "Log in to set your lineup". Moves: Add, Drop, Trades and
+IR show "Log in to make moves". League as usual, nothing highlighted. Rosters
 opens on Teams, Players without the Mine chip; the popup has no actions.
 
 **The team sheet** (slides up on phones, drops from the button on desktop): the team's name, My team,
@@ -349,11 +349,10 @@ desktop panels that would otherwise sit side by side at different heights.
   salaries + $2 penalties" under it), active of 30 and IR, and cap used for this season and the next
   four (boxes); the roster by position, ending with this season's penalties as its last group (from
   `salaryAdjustments`: the player cut, when, his contract then, the amount), each player with
-  salary, years left (orange "expiring" at 1), NFL team, bye (`nflByeWeeks`) and YTD points
+  salary, years left ("1 yr", "2 yrs"; never "expiring", which reads like RFA in the offseason), NFL team, bye (`nflByeWeeks`) and YTD points
   (`playerScores` `W=YTD`), and an IR tag. Tapping a player opens the player popup, as on
   desktop (no cut panel); for the member's own players the popup shows what cutting costs ("Cut
-  now: $28 penalty · cap used $293 → $253") beside Drop (to Moves › Add/Drop's drop, the player
-  chosen) and IR (shown only when the NFL lists him on IR). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
+  now: $28 penalty · cap used $293 → $253") beside Drop (to Moves › Drop, his row open) and IR (shown only when the NFL lists him on IR). Then the team's draft picks, a list per year like desktop's (each round's pick, 2027 numbered where today's order decides it, "from …" and "Traded to …"), from `futureDraftPicks`.
 - **Teams** (designed, phone and desktop): every team by cap used, least first, the member's
   highlighted; on phones a row per team with cap used, a bar, next year's picks ("8 · 3 1sts") and
   roster count. Tapping a team opens its page in the My team layout (cap used, active and IR, used
@@ -430,7 +429,18 @@ From the Contracts design (canvas row 4):
 
 ### Moves
 
-Views: **Add/Drop · Trades · IR · Recent.**
+Views: **Add · Drop · Trades · IR** (review, 17 Oct 2026: dropping got its own view, since Add's
+page is built around free agents and bids; Recent's transactions live in Home's Recent moves).
+- **Drop** (canvas row 15, phone and desktop): cap used and active on top, then the roster by
+  position (desktop as a table: Player, NFL, Salary, Years, Cut penalty, Cap change), each row with
+  its penalty and signed cap change. Clicking a row opens its review in place, "Cut now: $28 penalty
+  · cap used $293 → $253" and Drop Jackson; no dialog, no second pick. The result is one line
+  ("Jackson dropped."), the row gone. A row is off, with its reason, when the cut with the pending
+  bids' max would break the cap ("over cap"), in season at 23 active ("under roster minimum"; not
+  for IR players) or once his game has started ("Game started", MFL's mark); a player a pending
+  bid drops is noted. Before the draft it's the useful view (Add says "Adds open after the draft.").
+  Rosters' popup Drop and IR's Drop him instead land here with his row open. MFL's `add_drop` takes
+  a drop with no add (the league allows dropping without adding).
 - **Trades:** below.
 - **IR** (designed, phone and desktop: the canvas's row 10): "Can go on IR" lists the member's active players the
   NFL lists on IR (injury, expected return; injuries export), "On your IR" the rest, each with a
@@ -448,15 +458,13 @@ Views: **Add/Drop · Trades · IR · Recent.**
   player the NFL no longer lists on IR "must come off IR" (bylaw 11.1): a notice, and his Activate
   box locked on ("Must activate"), so every IR save includes it: the bylaw sets no deadline, and MFL
   takes no lineup while it's unmet (league setting). MFL itself refuses players the NFL doesn't list on IR.
-  The notice also offers **Drop him instead** (review, 17 Oct 2026): Add/Drop's Drop a player with
-  him chosen (MFL's IR form drops only active players), Back returning to IR; Pick a drop stays for
+  The notice also offers **Drop him instead** (review, 17 Oct 2026): Moves › Drop with his row
+  open (MFL's IR form drops only active players), Back returning to IR; Pick a drop stays for
   activating him and cutting someone else.
-- **Recent:** MFL's transactions page (`options?O=03`), restyled, with the processed blind bids
-  (`processed_waivers`: who won and lost, and for how much).
 
-**Add/Drop** is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
+**Add** is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
 forms. Free agents are scouted on Rosters › Players (with the Mine + Free agents
-chips), which works before the draft too; Add/Drop is where the move is made.
+chips), which works before the draft too; Add is where the move is made.
 - **Adding:** they read MFL's player lists (`playerDatabaseObj`), select through MFL's own picker
   rows, and fill `BBID_AMT`, `ROUND` and `COMMENTS`; MFL's Submit does the rest, so MFL's rules still
   apply. Submit stays off until MFL's hidden `add_pid`/`drop_pid` and its "To Add"/"To Drop" lines
@@ -501,13 +509,6 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 t
   says why it's off when it is ("over roster limit", "over cap"). Drops that
   would break the cap are greyed out ("over cap"); one already used in another group is allowed and
   noted.
-- **Drop a player** (canvas rows 5 and 12), beside Add a player and available in both periods: the
-  roster by position with each player's cut penalty and cap effect (greyed "over cap" when the
-  penalty, with the pending bids' max, would break the cap; noted when a pending bid drops him),
-  then a review (cut penalty, active, cap used before and after) and one Drop button; on desktop
-  the same in the two-column dialog. The result is one line ("Jackson dropped."). Rosters'
-  player popup lands here with the player chosen. MFL's `add_drop` takes a drop with no add (the
-  league allows dropping without adding). In season a drop below 23 active is blocked (Roster minimum, below).
 - **A contract length picker (1–5 years)** on every add. A bid writes it as a named comment line; a
   free agent add posts it to the board ("Higbee: 2 years") through MFL's `messageBoard` import,
   behind the scenes: the submit button says so ("Add Higbee now · posts 'Higbee: 2 years'"), and the
@@ -541,7 +542,7 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 t
 - **Managing claims:** reorder with arrows; tap a claim to edit its bid or drop (the player added is
   fixed: MFL's edit page can't change it), remove it, or copy it to another group. Every action is
   checked against both limits first. Back returns to where the member came from.
-- **No confirmation step** (phone and desktop). A bid lands back on Add/Drop with its new claim highlighted in Pending
+- **No confirmation step** (phone and desktop). A bid lands back on Add with its new claim highlighted in Pending
   bids, comment line shown. A free agent add lands back with one line: "Higbee added, Waller dropped.
   Posted 'Higbee: 2 years'." Only a failed post asks for a click ("Couldn't post the length …; it's
   due within the hour", Post it now); League Alerts flags a length still unposted either way.
@@ -557,14 +558,14 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 t
   isn't offered: members don't use it.
 - **Before the season** (review, 17 Oct 2026). "The draft" in member text means draft day: the
   free agent auction and the rookie draft together.
-  - **Before the draft:** Drop a player only; the banner says "Adds open after the draft." No
+  - **Before the draft:** Add shows only the banner "Adds open after the draft." (dropping is in Drop). No
     roster limits then (2.5), so no 30-active checks; the cap still applies.
   - **Draft → final cut-down date:** blind bids only, the first round processed Wednesday of week 1
     ("Blind bids only until Wed Sep 9, 11 p.m. CT"); first come, first served starts only after it.
     Those bids are won after the cut-down date, so the in-season checks apply (30 active, counted
     against the roster as it stands: a team still at 34 can bid with drops, not without), and the
     length goes with the bid as in season (5.6). Lengths for players won on draft day are posted
-    on the board by the cut-down date (12.5), outside Add/Drop.
+    on the board by the cut-down date (12.5), outside Add.
   - **IR:** no 30-active check before the cut-down date; the cap check stays.
 - **Prevent, don't warn.** League rule: a blind bid that could put a team over a limit is invalid and
   voided. So the controls block any move that would make pending bids able to break a limit: a bid
@@ -626,7 +627,7 @@ their forms.
   voided (5.5); lower them first. Only an owner sees their own pending bids, so the proposer's are
   checked when proposing and the other team's when answering: the offer card shows the same notice
   above its answer buttons ("Your pending bids: after this trade they could take you over the cap
-  ($302), and would all be voided. Lower them in Add/Drop first.", the link to Add/Drop), and Accept
+  ($302), and would all be voided. Lower them in Add first.", the link to Add), and Accept
   stays allowed (review, 17 Oct 2026; not yet drawn).
 - **Expiry:** MFL's date and hour, defaulting to before Sunday's games (the safer choice; MFL's own
   default is the league's 7 days), with quick choices that fill it in (before Sunday's games, before
@@ -689,8 +690,10 @@ the columns' bottoms meet; review, 17 Oct 2026):
    (Reference). The league barely uses chat (3 messages this season, all private).
 4. **Message board:** the newest topics, linking to MFL's board, and "New topic" (subject and
    message, posted with MFL's `messageBoard` import); replies on the topic's own page.
-5. **Recent moves:** the last five, linking to Moves › Recent. **Undecided:** the commissioner
-   decides after seeing a mockup.
+5. **Recent moves:** the league's latest transactions, the home for them now that Moves has no
+   Recent view (review, 17 Oct 2026). Follow-up: how a member sees the full list (MFL's
+   transactions page through the site menu, or a longer list here), and the processed blind bids
+   (`processed_waivers`: who won and lost, and for how much).
 6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
    draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
    the last few days before one, it shows in My alerts instead.
@@ -702,10 +705,10 @@ My alerts and where they go:
 | Alert | Tap |
 |---|---|
 | Starter injured (IR or Out), suspended, on a bye or with no game; empty slot | Lineup |
-| Under 23 active | Moves › Add/Drop |
-| Current bids invalid (a pending bid could break a limit) | Moves › Add/Drop |
-| Bid deadline, when the member has pending bids (Wed 11 p.m. CT) | Moves › Add/Drop |
-| Contract length still to post for a free agent add (the automatic post failed) | Moves › Add/Drop (Post it now) |
+| Under 23 active | Moves › Add |
+| Current bids invalid (a pending bid could break a limit) | Moves › Add |
+| Bid deadline, when the member has pending bids (Wed 11 p.m. CT) | Moves › Add |
+| Contract length still to post for a free agent add (the automatic post failed) | Moves › Add (Post it now) |
 | A player on IR the NFL no longer lists, and the drop it may need at 30 | Moves › IR |
 | A trade offer waiting for an answer | Moves › Trades |
 | Over the cap or 30 active from an add or trade: "the commissioner will reverse it" | not tappable |
