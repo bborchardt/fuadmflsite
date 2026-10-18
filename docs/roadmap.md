@@ -33,7 +33,7 @@ Every current board is an interactive prototype (press Play; its row title names
 | 11 | Player popup, phone and desktop | current |
 | 12 | Moves › Add/Drop, desktop | current |
 | 13 | Site menu (☰) and the team sheet, phone and desktop | current |
-| 14 | Lineup, phone (MFL's Submit Lineup restyled; week 6 from the saved page) | current |
+| 14 | Lineup, phone and desktop (MFL's Submit Lineup restyled; week 6 from the saved page) | current |
 
 ### For a design review
 
@@ -644,7 +644,7 @@ their forms.
 
 ### Lineup
 
-MFL's Submit Lineup page (`lineup`, Reference), restyled; designed for phones on canvas row 14 from
+MFL's Submit Lineup page (`lineup`, Reference), restyled; designed for phones and desktop on canvas row 14 from
 the page saved 17 Oct 2026 (week 6). Top to bottom: the header, a week picker (‹ Week 6 ›: this
 week and later, MFL's week links), the warnings, the roster by position in MFL's order (QB, RB, WR,
 TE, PK, alphabetical within; each group's heading "QB · start 1–2 · 2 starting"), "On IR: …" with
@@ -666,6 +666,11 @@ a link to Moves › IR, and a save bar above the tabs.
 - **Left out:** MFL's projection source menu (FantasySharks stays), the Optional Message box and
   last week's starters in bold. Backup starters (16.5) stay on the message board as today; a
   Backups panel posting to the designated thread is a later idea, not part of v2.
+- **Desktop:** full-width bands: the week picker, the warnings, the save bar (sticky, Save on its
+  right), then one table by position (Start as its own round button, Player with its tag and the
+  popup link, NFL, Opponent, Opp rank (MFL's vs the position; higher is a weaker defense), YTD, Avg,
+  Proj), starting rows shaded, and "On IR: …" last. % Start, Pos rank, opponent average and News are
+  left out so it fits 1,240 px without scrolling.
 - (v1 doesn't flag byes; v1 gets no more fixes, so this comes with v2.)
 
 ### Home
