@@ -61,6 +61,25 @@ function choreLog(message) {
     entries.push(message);
 }
 
+const attention = [];
+
+function needsAttention(message) {
+    choreLog(message);
+    attention.push(message);
+    process.exitCode = 1;
+}
+
+// the run fails on purpose so GitHub emails the commissioner; the annotation says why
+function explainFailure() {
+    if (!attention.length) {
+        return;
+    }
+    const count = attention.length === 1 ? "1 item needs" : `${attention.length} items need`;
+    const text = `Failing the run so it gets noticed: ${count} the commissioner.\n${attention.map((item) => `- ${item}`).join("\n")}`;
+    // workflow commands end at a newline, so it and % are escaped
+    console.log(`::error title=Daily chores need attention::${text.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A")}`);
+}
+
 // MFL asks for about a second between requests
 const MFL_REQUEST_SPACING_MS = 1000;
 const MFL_TIMEOUT_MS = 30000;
@@ -164,7 +183,7 @@ function writeSummary() {
     if (!process.env.GITHUB_STEP_SUMMARY) {
         return;
     }
-    const outcome = process.exitCode ? "Needs attention" : "OK";
+    const outcome = attention.length ? "Needs attention" : "OK";
     const lines = entries.length ? entries.map((entry) => `- ${entry}`).join("\n") : "Nothing to do.";
     try {
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores: ${outcome}\n\n${lines}\n`);
@@ -251,8 +270,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         adds, pending, posts, bidRequests, teams: teamPlayers({rosters, players: playerNames}), contractDeadline
     });
     for (const flag of flags) {
-        choreLog(`Contract years: ${flag}. Left for the commissioner.`);
-        process.exitCode = 1;
+        needsAttention(`Contract years: ${flag}. Left for the commissioner.`);
     }
     const describe = (contract) => {
         const name = contract.name.split(",").reverse().map((part) => part.trim()).join(" ");
@@ -303,8 +321,7 @@ async function leagueState() {
     try {
         Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}));
     } catch (error) {
-        choreLog(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
-        process.exitCode = 1;
+        needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
         built.seasonOver = null;
     }
     return {
@@ -338,8 +355,7 @@ function leagueRules({players, built, penalties, transactions}) {
             text += ` Moves in the last ${RECENT_MOVE_DAYS} days: ${moves.length ? moves.join("; ") : "none"}.`
                 + (held.length ? ` Drop penalties held so the move can be reversed: ${held.join(", ")}.` : "");
         }
-        choreLog(`League rules: ${text}`);
-        process.exitCode = 1;
+        needsAttention(`League rules: ${text}`);
     }
     if (!violations.length) {
         log("No roster, injured reserve or anti-tanking violations.");
@@ -356,14 +372,13 @@ function overCap({players, built, penalties, transactions}) {
             continue;
         }
         over.add(franchiseId);
-        choreLog(`Over the cap: ${overCapMessage({
+        needsAttention(`Over the cap: ${overCapMessage({
             teamName: built.franchises.get(franchiseId).teamName,
             total,
             cap: SALARY_CAP,
             moves: recentMoves(transactions, franchiseId, {players, franchises: built.franchises, since}),
             held: penalties.filter((penalty) => penalty.franchiseId === franchiseId).map((penalty) => penalty.explanation)
         })}`);
-        process.exitCode = 1;
     }
     if (!over.size) {
         log("No team is over the cap.");
@@ -492,8 +507,7 @@ try {
     // snapshots only need public data, so a failed login doesn't stop them
     const loginProblem = await login();
     if (loginProblem) {
-        choreLog(`${loginProblem}. Continuing with public league data.`);
-        process.exitCode = 1;
+        needsAttention(`${loginProblem}. Continuing with public league data.`);
     }
     const loggedIn = !loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD);
     // each chore fails on its own; the snapshot doesn't depend on any of them
@@ -501,8 +515,7 @@ try {
     try {
         state = await leagueState();
     } catch (error) {
-        choreLog(`League chores: ${error.message}`);
-        process.exitCode = 1;
+        needsAttention(`League chores: ${error.message}`);
     }
     if (state) {
         // their moves may be reversed, so their chores are held; if the league rules can't run, any
@@ -513,8 +526,7 @@ try {
         try {
             overRoster = state.built.seasonOver === null ? overThirty() : leagueRules(state);
         } catch (error) {
-            choreLog(`League rules: ${error.message}`);
-            process.exitCode = 1;
+            needsAttention(`League rules: ${error.message}`);
             overRoster = overThirty();
         }
         let over = null;
@@ -522,8 +534,7 @@ try {
             over = new Set([...overCap(state), ...overRoster]);
             await dropPenalties(loggedIn, state, over);
         } catch (error) {
-            choreLog(`Cap chores: ${error.message}`);
-            process.exitCode = 1;
+            needsAttention(`Cap chores: ${error.message}`);
         }
         try {
             if (!over) {
@@ -531,8 +542,7 @@ try {
             }
             await contractYears(loggedIn, state, over);
         } catch (error) {
-            choreLog(`Contract years: ${error.message}`);
-            process.exitCode = 1;
+            needsAttention(`Contract years: ${error.message}`);
         }
     }
     for (const year of [season - 1, season]) {
@@ -544,9 +554,9 @@ try {
     }
     publish = snapshotWritten || stale.length > 0;
 } catch (error) {
-    choreLog(`Failed: ${error.message}`);
-    process.exitCode = 1;
+    needsAttention(`Failed: ${error.message}`);
 } finally {
+    explainFailure();
     const logChanged = updateChoreLog();
     setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
     setOutput("publish", publish ? "true" : "false");
