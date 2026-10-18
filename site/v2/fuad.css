@@ -2395,13 +2395,17 @@ body [tabindex]:focus-visible {
 
 #fuad-rosters .fuad-filter[aria-pressed="true"] { background: var(--fuad-text); border-color: var(--fuad-text); color: var(--fuad-page); }
 
-#fuad-rosters .fuad-sort { min-height: 44px; margin: -14px 0 -6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+/* a sort heading reads like the others; its 44 px tap area is invisible */
+#fuad-rosters .fuad-sort { position: relative; display: inline; margin: 0; padding: 0; border: 0; background: none; line-height: inherit; vertical-align: baseline; height: auto; min-height: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; white-space: nowrap; cursor: pointer; }
+
+#fuad-rosters .fuad-sort::after { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }
 
 #fuad-rosters .fuad-quiet-link { padding: 0; border: 0; background: none; color: var(--fuad-lime); font: inherit; font-weight: 600; cursor: pointer; }
 
+/* desktop: the chips wrap and the list uses the page's scroll, nothing scrolls inside */
 @media (min-width: 48.01em) {
-    #fuad-rosters .fuad-players-scroll { max-height: 70vh; overflow-y: auto; }
-    #fuad-rosters .fuad-player-table thead th { position: sticky; top: 0; z-index: 1; background: var(--fuad-panel); }
+    #fuad-rosters .fuad-chip-row-group { flex-wrap: wrap; overflow: visible; }
+    #fuad-rosters .fuad-players-scroll { overflow: visible; }
 }
 
 /* Draft */
@@ -2484,4 +2488,22 @@ body [tabindex]:focus-visible {
 @media (min-width: 48.01em) {
     #fuad-rosters .fuad-table tbody th,
     #fuad-rosters .fuad-table tbody td { vertical-align: middle; }
+}
+
+/* Teams on desktop: a row opens its team, the name lime as a link, a chevron at the end */
+#fuad-rosters .fuad-row-link { cursor: pointer; }
+
+#fuad-rosters .fuad-row-link:hover > * { background: var(--fuad-raised); }
+
+#fuad-rosters .fuad-teams .fuad-team a { color: var(--fuad-lime); }
+
+#fuad-rosters .fuad-chevron { width: 16px; color: var(--fuad-muted); font-size: 20px; line-height: 1; text-align: right; }
+
+/* the draft on desktop: the rounds side by side, picks down, every round open */
+@media (min-width: 48.01em) {
+    #fuad-rosters .fuad-rounds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 16px; }
+    #fuad-rosters .fuad-round-toggle { pointer-events: none; }
+    #fuad-rosters .fuad-round-toggle [aria-hidden="true"] { display: none; }
+    #fuad-rosters .fuad-board-picks[hidden] { display: block !important; }
+    #fuad-rosters .fuad-board-picks > li { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 6px; font-size: 14px; }
 }

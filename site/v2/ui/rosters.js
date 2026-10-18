@@ -139,7 +139,7 @@ function orderPanel(order, year, {final}) {
 function boardPanel(board, {year, viewer, before, open}) {
     return `<section class="fuad-panel" aria-labelledby="fuad-board">
         <h2 class="fuad-panel-heading" id="fuad-board">${year} rookie draft</h2>
-        ${board.map((round) => `<div class="fuad-round">
+        <div class="fuad-rounds">${board.map((round) => `<div class="fuad-round">
             <button type="button" class="fuad-round-toggle" aria-expanded="${open(round.round)}" aria-controls="fuad-round-${round.round}"><span>Round ${round.round}</span><span class="fuad-meta" aria-hidden="true">${open(round.round) ? "Hide" : "Show"}</span></button>
             <ul class="fuad-rows fuad-board-picks" id="fuad-round-${round.round}"${open(round.round) ? "" : " hidden"}>${round.picks.map((pick) => `<li class="${pick.team === viewer ? "fuad-row-mine" : ""}">
                 <span class="fuad-meta">${esc(pick.number)}</span>
@@ -147,7 +147,7 @@ function boardPanel(board, {year, viewer, before, open}) {
                     ? `<span class="fuad-row-text"><span class="fuad-row-title">${esc(pick.teamName)}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span><span class="fuad-meta">${esc(scaleRange(pick.overall))}</span>`
                     : `<span class="fuad-row-text"><span class="fuad-row-title">${pick.player ? `<button type="button" class="fuad-name" data-player="${esc(pick.player.id)}">${esc(pick.player.name)}</button> <span class="fuad-meta">${esc(pick.player.position)}</span>` : "—"}</span><span class="fuad-meta">${esc(pick.teamName)}</span></span><span class="fuad-num">${pick.salary === null ? "—" : esc(dollars(pick.salary))}</span>`}
             </li>`).join("")}</ul>
-        </div>`).join("")}
+        </div>`).join("")}</div>
     </section>`;
 }
 
@@ -277,6 +277,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
 
     // names open the popup with the Rosters actions; toggles open and close in place
     root.addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-href]");
+        if (row && !event.target.closest("a, button")) {
+            window.location.hash = row.dataset.href;
+            return;
+        }
         const name = event.target.closest("[data-player]");
         if (name && typeof window.fuadOpenPlayer === "function") {
             window.fuadOpenPlayer(name.dataset.player, {opener: name, actions});
@@ -362,13 +367,14 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             </a></li>`).join("")}</ul>
                         <div class="fuad-table-scroll fuad-desktop-only"><table class="fuad-table fuad-teams">
                             <thead><tr><th scope="col">Team</th><th scope="col">Cap used</th><th scope="col" class="fuad-num">${season + 1} picks</th>
-                                ${later.map((entry) => `<th scope="col" class="fuad-num">’${String(entry.season).slice(2)}</th>`).join("")}<th scope="col" class="fuad-num">Roster</th></tr></thead>
-                            <tbody>${list.map((team) => `<tr class="${team.id === viewer ? "fuad-row-mine" : ""}">
+                                ${later.map((entry) => `<th scope="col" class="fuad-num">’${String(entry.season).slice(2)}</th>`).join("")}<th scope="col" class="fuad-num">Roster</th><th scope="col"><span class="fuad-hidden">Open</span></th></tr></thead>
+                            <tbody>${list.map((team) => `<tr class="fuad-row-link${team.id === viewer ? " fuad-row-mine" : ""}" data-href="#rosters-teams/${esc(team.id)}">
                                 <th scope="row" class="fuad-team"><a href="#rosters-teams/${esc(team.id)}">${esc(team.name)}</a></th>
                                 <td><span class="fuad-power-cell"><span class="fuad-power-bar" aria-hidden="true"><span class="${team.id === viewer ? "fuad-bar-mine" : ""}" style="width: ${Math.min(100, Math.round(team.capUsed / SALARY_CAP * 100))}%"></span></span><span class="${team.tight ? "fuad-caution" : ""}">${esc(dollars(team.capUsed))}</span></span></td>
                                 <td class="fuad-num">${esc(team.picksLine)}</td>
                                 ${team.seasons.slice(1).map((entry) => `<td class="fuad-num ${entry.tight ? "fuad-caution" : "fuad-muted"}">${esc(dollars(entry.used))}</td>`).join("")}
                                 <td class="fuad-num">${team.active} / 30${team.ir ? ` + ${team.ir}` : ""}</td>
+                                <td class="fuad-chevron" aria-hidden="true">›</td>
                             </tr>`).join("")}</tbody>
                         </table></div>
                     </section>`;
