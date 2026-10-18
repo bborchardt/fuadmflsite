@@ -76,50 +76,14 @@ What a reviewer needs beyond the sections below:
   re-adding a dropped player, 10.5's no adds or drops while over the roster limit, 16.5's backup
   starters posted to the board).
 
-**Review of 17 Oct 2026** (both passes done: 17 items on flows and rules, 10 on language and
-visual, all decided). Decisions are recorded in the sections below. Canvas changes
-waiting until both passes are done:
-- Every board's header to row 13's: ☰, the wordmark with the context line, the team button
-  ("…: your team"); row 5's page titles go.
-- Trades: "Your pending FA bids" → "Your pending bids".
-- Names and stat lines wrap on every board, nothing cut with "…" (Add/Drop phone, League phone and
-  desktop, Rosters phone), with the layouts decided for it: score cards' names bottom-aligned
-  (desktop card rows one height), Standings phone numbers on the name's first line, Power phone's
-  record under the name, Rosters › Draft desktop's order in two rows of five. No short team names
-  are needed (MFL's abbreviations, checked 17 Oct 2026, are half unset and inconsistent).
-- League: the whole bench in a scroll box, not "and 16 more each".
-- Rosters phone: Players without its 1,500 px box (the page scrolls); then remove the two
-  comparison boards ("Players scroll A/B") at the end of row 8.
-- Cap words on every board: "Cap used", a signed "Cap change" (frees, room, Room change, cap impact
-  go), "Max cap change", "Cap used after cut", "Cut penalty"; Trades' partners as "$296 used".
-- Colors to their meanings (Night Game, under Look and navigation): IR's lime gains → green,
-  penalties plain everywhere, traded picks and You give plain, wins green.
-- Controls: Rosters' chips to Add/Drop's style; view segments to the lime text and bar; field
-  borders #6B7583.
-- No MFL in member text: "Locked:" (no reopening time), "you can't set a lineup until you do",
-  "posted once the add goes through", "More news", the menu's "More pages" / "Filter" / "No page
-  matches"; IR's "MFL checks" sentence goes.
-- Helper sentences cut: IR's notes beside its headings, its "Only players the NFL lists…", "Activating
-  makes 31 active…" and "All 30 active players…" lines, the must-come-off notice to "Jalen McMillan
-  must come off IR: the NFL no longer lists him." (no bylaw cite); Add/Drop's "Sorted by…", "To add
-  someone else…", "Bid · becomes the salary" → "Bid"; Home's "other teams", "All clear.", "No
-  messages yet."; Trades' "Deadline Wed Nov 25, 7:00 p.m.". Kept: "If all high bids win", "If the
-  season ended today", "Heads up: …", "Blocked: …".
-- Touch targets: 44 px tap areas; claim arrows side by side; Show bench, sort headings and Show
-  all as full-height controls.
-- Panels: a 1 px #262D37 border on every board; then remove the three comparison boards
-  ("Panels A/B/C") at the end of row 6.
-- Type: nothing under 12 px, meta lines 13 px, uppercase headings at 0.04 em.
-- Dim text: "over cap" and other reasons, zero projections, placeholders and disabled labels from
-  #6B7583 to #9AA4B2.
-- Home: the lineup alert's detail "A loss won't count toward draft order (13.2)".
-- Sample data to agree: $293 cap used (row 5's room Tweak defaults to $5), McMillan the one who
-  must come off IR (Home says Achane), Lamar Jackson Out on the bench (Home says in the lineup), and
-  row 8's two phone boards' phase Tweak defaults swapped back.
-- Not yet drawn: loading and error states, logged out, the offer card's pending-bids notice, the
-  before-the-season states (Add/Drop's "Adds open after the draft."), "Game started" and "Dropped
-  by you · bid from …" rows, the roster-minimum blocks, the under-23 trade notice, IR's Drop him
-  instead.
+**Review of 17 Oct 2026** (done: 17 items on flows and rules, 10 on language and visual).
+Decisions are recorded in the sections below and applied to the canvas's rows 5–13 (headers,
+wording, cap words, colors, controls, type, wrapping, panels, sample data). Not yet drawn: loading
+and error states, logged out, the offer card's pending-bids notice, the before-the-season states
+(Add/Drop's "Adds open after the draft."), "Game started" and "Dropped by you · bid from …" rows,
+the roster-minimum blocks, and the player popup from Add/Drop's "Adding …" line. The canvas can't
+show the 44 px tap areas, focus rings or the hidden h1s; those are build rules (Look and
+navigation).
 
 **The review prompt** (for a fresh session in this folder):
 
