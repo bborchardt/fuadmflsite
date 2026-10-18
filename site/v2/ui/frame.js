@@ -2,7 +2,7 @@
 // the five sections, the current section's views, the team sheet and the player popup. MFL's own
 // menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
 
-import {esc} from "./html.js";
+import {esc, initials} from "./html.js";
 import {REBUILT, locate, pageOf, sections, storedTabs} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
@@ -37,10 +37,6 @@ function mflLink(test) {
     return [...document.querySelectorAll(".myfantasyleague_menu a[href], .pageheader a[href]")].find(test) || null;
 }
 
-// "All Hands on Beck" → "AH"
-export function initials(name) {
-    return String(name || "").split(/\s+/).filter((word) => /^[A-Za-z0-9]/.test(word)).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
-}
 
 function siteMenu(groups) {
     return `

@@ -2829,8 +2829,9 @@ body [tabindex]:focus-visible {
 
     #fuad-lineup .fuad-lineup-line {
         display: grid;
-        /* the name capped, the rest spread evenly across the panel (the opponent twice as wide) */
-        grid-template-columns: 40px minmax(200px, 300px) 1fr 2fr 1fr 1fr 1fr 1fr;
+        /* the name capped, the rest spread evenly across the panel (the opponent twice as wide); each
+           row is its own grid, so no track may grow past its share or the rows stop lining up */
+        grid-template-columns: 40px minmax(200px, 300px) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
         gap: 0 12px;
         align-items: center;
         min-height: 46px;

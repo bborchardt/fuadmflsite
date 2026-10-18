@@ -4,7 +4,7 @@
 // the form. MFL's own nodes move into v2's markup, so its links, fields and buttons keep working; the
 // page is marked only once it's done, so a page v2 can't read stays as MFL drew it.
 
-import {esc} from "./html.js";
+import {esc, initials} from "./html.js";
 
 const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
 
@@ -22,8 +22,6 @@ export function topicTitle(text) {
 
 const plural = (count, word) => `${count.toLocaleString("en-US")} ${word}${count === 1 ? "" : "s"}`;
 
-const initials = (name) => clean(name).split(" ").filter((word) => /^[A-Za-z0-9]/.test(word)).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
-
 // MFL indents a reply by 3% a level; capped, so a deep thread stays inside the column
 const depthOf = (post) => Math.min(6, Math.round((parseFloat(post.style.marginLeft) || 0) / 3));
 
@@ -38,12 +36,13 @@ function readPost(post) {
         return null;
     }
     const status = head.querySelector("img.ico[title]");
+    const quote = head.querySelector("a[href*='quote=1']");
     return {
         post,
         team,
         body,
         reply: reply.getAttribute("href"),
-        quote: (head.querySelector("a[href*='quote=1']") || {getAttribute: () => null}).getAttribute("href"),
+        quote: quote ? quote.getAttribute("href") : null,
         unread: Boolean(status && /unread/i.test(status.getAttribute("title"))),
         when: shortDate([...head.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join(" ")),
         avatar: rows[1].querySelector("img.ava[src]")
@@ -125,27 +124,32 @@ export function restyleReply(doc = document) {
     }
     // a field v2 doesn't know (a new topic's subject) would be lost, so such a form stays MFL's
     const known = [body, post, preview, notify].filter(Boolean);
-    if ([...form.querySelectorAll("input:not([type=hidden]), textarea, select")].some((field) => !known.includes(field))) {
+    if ([...form.querySelectorAll("input:not([type=hidden]), textarea, select, button:not(.tbt)")].some((field) => !known.includes(field))) {
         return false;
     }
     const formats = [...form.querySelectorAll("button.tbt")].map((button) => {
         const tag = ((button.getAttribute("onclick") || "").match(/insertTags\("([^"]+)"/) || [])[1];
         return tag && FORMATS[tag] ? {button, label: FORMATS[tag]} : null;
     }).filter(Boolean);
-    const answered = [...doc.querySelectorAll("div.frm")].find((frm) => !form.contains(frm) && /In Response to/i.test((frm.querySelector(".hcl") || {}).textContent || ""));
+    const others = [...doc.querySelectorAll("div.frm")].filter((frm) => !form.contains(frm));
+    const answered = others.find((frm) => /In Response to/i.test((frm.querySelector(".hcl") || {}).textContent || ""));
+    // anything else (Preview's copy of the post) isn't part of the drawn page, so it stays MFL's
+    if (others.some((frm) => frm !== answered)) {
+        return false;
+    }
     const answeredText = answered && answered.querySelector(".ccl");
     const topic = clean([...bars[0].querySelector("th.messageboardbar").childNodes].filter((node) => !(node.classList && node.classList.contains("htt"))).map((node) => node.textContent).join(" "));
 
     const header = doc.createElement("div");
     header.className = "fuad-reply-head";
     header.innerHTML = `<a href="${esc(up.getAttribute("href"))}">‹ ${esc(topic || "Back to the topic")}</a><h2>Reply</h2>`;
-    let card = null;
+    let answeredCard = null;
     if (answered && answeredText) {
-        card = doc.createElement("article");
-        card.className = "fuad-reply-to";
-        card.innerHTML = `<span class="fuad-label"></span><div class="fuad-post-text"></div>`;
-        card.querySelector(".fuad-label").textContent = `In response to ${clean(answered.querySelector(".hcl").textContent.replace(/In Response to/i, ""))}`;
-        card.querySelector(".fuad-post-text").append(...answeredText.childNodes);
+        answeredCard = doc.createElement("article");
+        answeredCard.className = "fuad-reply-to";
+        answeredCard.innerHTML = `<span class="fuad-label"></span><div class="fuad-post-text"></div>`;
+        answeredCard.querySelector(".fuad-label").textContent = `In response to ${clean(answered.querySelector(".hcl").textContent.replace(/In Response to/i, ""))}`;
+        answeredCard.querySelector(".fuad-post-text").append(...answeredText.childNodes);
     }
     const fields = doc.createElement("div");
     fields.className = "fuad-reply-form";
@@ -170,8 +174,8 @@ export function restyleReply(doc = document) {
 
     form.replaceChildren(fields);
     form.before(header);
-    if (card) {
-        form.before(card);
+    if (answeredCard) {
+        form.before(answeredCard);
         answered.remove();
     }
     bars.forEach((table) => table.classList.add("fuad-topic-bar"));
