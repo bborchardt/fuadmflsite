@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {readArticle, readPlayerPage, text} from "../site/v2/ui/player-page.js";
+import {ownerOf, readArticle, readPlayerPage, text} from "../site/v2/ui/player-page.js";
 import {clockText} from "../site/v2/ui/panel.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -48,4 +48,11 @@ test("text: tags out, entities in, spaces collapsed", () => {
 test("times read as the league writes them", () => {
     assert.equal(clockText(new Date("2026-10-17T19:42:00-05:00")), "7:42 p.m.");
     assert.equal(clockText(new Date("2026-10-17T09:05:00-05:00")), "9:05 a.m.");
+});
+
+test("a free agent has no owner, whatever MFL writes for him", () => {
+    const teams = ["All Hands on Beck", "Golden Ratio"];
+    assert.equal(ownerOf("Golden Ratio", teams), "Golden Ratio");
+    assert.equal(ownerOf("FA (Locked)", teams), "");
+    assert.equal(ownerOf("Free Agent", teams), "");
 });

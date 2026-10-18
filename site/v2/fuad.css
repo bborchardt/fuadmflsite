@@ -833,14 +833,22 @@ body [tabindex]:focus-visible {
 
 .fuad-dialog-open body { overflow: hidden; }
 
+/* skins style headings (BlueMesh pads them for an icon) */
 .fuad-layer h2,
 .fuad-layer h3 {
-    margin: 0;
-    padding: 0;
-    background: none;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
     border: 0;
+    text-indent: 0 !important;
+    text-align: left;
     text-transform: none;
 }
+
+.fuad-layer h2::before,
+.fuad-layer h2::after,
+.fuad-layer h3::before,
+.fuad-layer h3::after { content: none !important; }
 
 .fuad-layer h2 { font: 700 26px/1.1 var(--fuad-display); color: var(--fuad-text); }
 

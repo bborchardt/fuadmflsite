@@ -4,7 +4,7 @@
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {capPenalty} from "../lib/rules.js";
-import {NFL_TEAMS, readArticle, readPlayerPage} from "./player-page.js";
+import {NFL_TEAMS, ownerOf, readArticle, readPlayerPage} from "./player-page.js";
 import {openDialog} from "./dialog.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -115,7 +115,7 @@ function newsSection(player, links) {
 }
 
 function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek}) {
-    const ownerName = player.owner;
+    const ownerName = ownerOf(player.owner, [...teamNames.values()]);
     const mine = Boolean(franchiseId && ownerName && teamNames.get(franchiseId) === ownerName);
     const links = {moreNews: `${window.location.origin}/${context.season}/news_articles?L=${context.leagueId}&PLAYERS=${player.id}&DAYS=7`};
     const injured = player.injury

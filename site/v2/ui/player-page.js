@@ -105,6 +105,12 @@ function injury(value) {
     return match && match[1] && !/^(none|healthy|-)$/i.test(match[1]) ? {status: match[1], detail: match[2] || ""} : null;
 }
 
+// the owning team's name, or "" for a free agent, whom MFL lists as "FA (Locked)" or the like with
+// the contract he was dropped with
+export function ownerOf(owner, teamNames) {
+    return teamNames.includes(owner) ? owner : "";
+}
+
 // null when the page isn't a player page MFL still draws the way this expects
 export function readPlayerPage(html) {
     const bio = labelled(table(html, "biography report"));
@@ -136,10 +142,10 @@ export function readPlayerPage(html) {
             size: size(bio["Height/Weight"]),
             college: bio.College || "",
             // "2018 / / Round 1, Pick 32": the year, then the round and pick
-            drafted: drafted.length ? {year: drafted[0], pick: drafted.slice(1).join(" ").replace(/Round (\d+), Pick (\d+)/i, "round $1, pick $2")} : null,
+            drafted: drafted.length ? {year: drafted[0], pick: drafted.slice(1).join(" · ").replace(/Round (\d+), Pick (\d+)/i, "round $1, pick $2")} : null,
             experience: (String(bio.Experience || "").match(/\d+/) || [])[0] || ""
         },
-        owner: /free agent/i.test(owner) ? "" : owner,
+        owner,
         injury: injury(status["Injury Status"]),
         expectedReturn: status["Expected Return"] || "",
         bye: status["Bye Week"] || "",
