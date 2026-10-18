@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 17 Oct 2026 (step 1 built)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 3 built)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -169,7 +169,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -225,8 +225,31 @@ tried in the beta (the commissioner's team only) before the next.
      claims, the edit-group pages, Trades with an offer, Lineup, IR, Drop, the trade proposal page,
      rosters, draft; the real league's scores, standings, brackets and accounting), outside git in
      the backtest repo's `samples/clone-2026-10-17`, `clone-2026-10-18` and `league-2026-10-17`.
-   **Next: step 3.**
-3. **League** (row 7): Scores with live scoring, Standings, Power, Winners.
+3. **League** (done; row 7; PR #25): Scores with live scoring, Standings, Power, Winners, on the
+   home page under `#league-scores` and the rest (`#fuad-league`, shown while the frame's section is
+   League), each view loaded the first time it shows. Decided while building (18 Oct 2026):
+   - Scores runs MFL's own method: the scores from MFL's stats feed scored with the `rules` export
+     (it reproduces every official week 5 score), the projections and win % from a port of
+     `mfl_win_prob.js` on the projections feed (`ui/live-scoring.js`). Its numbers can differ from
+     MFL's page by a point or so (design.md, accepted limits). The feed is read every 40 s while a
+     game is on, as MFL's page does; who starts (`liveScoring`) every 5 minutes. Feeds and exports
+     are in master's `docs/mfl.md` ("Scores and standings").
+   - No spread before kickoff: the projections and win bar say it, from the same simulation.
+   - No link to MFL's live scoring page (the site menu has it).
+   - All-play (seeds, Winners) counts weeks 1–14 from `weeklyResults`, since MFL's standings keep
+     counting it through the playoffs; the computed 2025 seeds and places match MFL's bracket.
+   - Starter points by position sums `weeklyResults` (`W=YTD`) starters by position, not MFL's home
+     page module.
+   - The pot without league-wide accounting entries is $100 × 10 teams (2025 had none, so its
+     prizes read higher than paid; 2026 on has them).
+   - Tested offline with a Playwright harness serving the saved pages and exports (no MFL
+     requests); week 6 samples (live and final), week 5's feed and 2025's final are in the backtest
+     repo's `samples/league-2026-10-18` and `league-2025-final`. Then live in the real league (local
+     preview, the London game on): scores and win % as MFL's page; the bench needed `liveScoring`
+     with `DETAILS=1`, which Home now asks for too.
+   - To revisit: compare a card's win % with MFL's page during a full Sunday; playoff weeks
+     (15–17) through `liveScoring` are untested until December.
+   **Next: step 4.**
 4. **Rosters** (row 8): My team, Teams, Players, Draft; the popup's Rosters actions.
 5. **Lineup** (row 14): MFL's Submit Lineup restyled, with the warnings and the save bar.
 6. **Moves › Add** (rows 5, 12): v2's controls over MFL's `add_drop` forms, comment lines, the
@@ -867,7 +890,7 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
 - **Scores** (first: the most used page in season): a week picker (‹ Week 5 ›, with Final, Live or
   the kickoff under it) and a card per matchup, the member's first, raised and opened by default to
   both lineups side by side (each starter's points and game state: Final, "Playing · Q3" in lime, or
-  kickoff), with "Full live scoring" to MFL's `ajax_ls`. Before kickoff a card shows the spread; live,
+  kickoff). Before kickoff a card shows each side's projection and the win bar; live,
   the scores (leader bright, trailer dimmed) and "3 to play · proj 112–98". **Season** swaps the
   cards for the member's schedule (results, then opponents; weeks 15–17 playoffs) and hides the
   week picker. Each team on a card shows its projection and win probability ("proj 112.3 · 74% to
