@@ -666,6 +666,8 @@ a link to Moves › IR, and a save bar above the tabs.
   remove a warning. MFL disables bye players' boxes, and on the saved page a week 5 starter on a
   week 6 bye wasn't carried over, so the Out warning is the one that clearly fires; the others stay
   in case a carried-over lineup holds one.
+- **Before the season** (review, 17 Oct 2026; not drawn): before the draft one line, "Lineups open
+  for week 1 after the draft."; from the draft, the page as in season for week 1.
 - **Left out:** MFL's projection source menu (FantasySharks stays), the Optional Message box and
   last week's starters in bold. Backup starters (16.5) stay on the message board as today; a
   Backups panel posting to the designated thread is a later idea, not part of v2.
@@ -804,7 +806,16 @@ their reasons and no hunt list, while Scores carries the playoff games.
   entry fee when there are none; the export is readable without logging in. Weekly winners come
   from the scores, not the accounting (which may lag); a tie splits the $15. All-play pays $0.75 ×
   (wins − losses), never below $0, and comes out of the pot before the playoff split, so the
-  prizes shrink as the season goes on. No "still alive" marks in the playoffs.
+  prizes shrink as the season goes on. No "still alive" marks in the playoffs. Once the playoffs
+  are over, each prize names its winner ("1st · 55% · Smooth City Styles! · $329.91") and counts
+  in the team's total, a Playoffs column on desktop and the grey line on phones (review, 17 Oct
+  2026).
+- **Before the season** (a phase Tweak on row 7; review, 17 Oct 2026): the new site has no games
+  until week 1, so Scores shows week 1's matchups and kickoffs once MFL's schedule is set (until
+  then the week picker's "Week 1 · Thu Sep 10"), with no scores, projections or lineups; Standings,
+  Power and Winners show last season's final from the previous season's site (MFL keeps it), headed
+  "West · 2026 final", "Power rankings · 2026 final", "2026 payouts", "2026 playoff prizes", the
+  playoff panel as "2026 playoff seeds" with no hunt list and no "If the season ended today".
 
 ## Chores: automating commissioner work
 
