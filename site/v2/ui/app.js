@@ -12,7 +12,7 @@ import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
 import {cached, storage} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
-import {REBUILT, sections, storedTabs} from "./nav.js";
+import {REBUILT, pageOf, sections, storedTabs} from "./nav.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -129,18 +129,27 @@ function whenShown(className) {
     });
 }
 
-// v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
-// Home is the current view (`fuad-home-on`); MFL's tabs stay underneath for the other home page tabs.
-function startHome(context, league, {beta, inBeta}) {
+// the href of a section, or of one of its views
+function viewLinks(context, franchiseId) {
     const base = `${window.location.origin}/${context.season}`;
-    const franchiseId = window.franchise_id || null;
     const all = sections({base, leagueId: context.leagueId, franchiseId, tabs: storedTabs(storage), rebuilt: REBUILT});
-    const view = (section, name) => {
+    return (section, name) => {
         const found = all.find((entry) => entry.name === section);
         return name ? found.views.find((entry) => entry.name === name).href : found.href;
     };
-    const teams = view("Rosters", "Teams");
+}
+
+function loginLink(context) {
     const login = [...document.querySelectorAll(".myfantasyleague_menu a[href], .pageheader a[href]")].find((a) => /^log\s*in$/i.test(a.textContent.trim()));
+    return login ? login.href : `${window.location.origin}/${context.season}/login?L=${context.leagueId}`;
+}
+
+// v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
+// Home is the current view (`fuad-home-on`); MFL's tabs stay underneath for the other home page tabs.
+function startHome(context, league, {beta, inBeta}) {
+    const franchiseId = window.franchise_id || null;
+    const view = viewLinks(context, franchiseId);
+    const teams = view("Rosters", "Teams");
     return import("./home.js").then(({drawHome}) => drawHome({
         context,
         franchiseId,
@@ -155,7 +164,7 @@ function startHome(context, league, {beta, inBeta}) {
             // a team's page under Teams, rebuilt or MFL's
             team: (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`)
         },
-        loginHref: login ? login.href : `${base}/login?L=${context.leagueId}`,
+        loginHref: loginLink(context),
         inBeta,
         beta
     }).shown);
@@ -166,6 +175,18 @@ function startHome(context, league, {beta, inBeta}) {
 // Resolves to whether League Alerts was drawn.
 export async function start({dataBase, beta = null, inBeta = null, onTrouble = () => {}}) {
     const context = pageContext();
+    const here = pageOf(window.location);
+    // MFL's menu also reaches Submit Lineup as options?O=02
+    if (context && (here.path === "lineup" || (here.path === "options" && here.option === "02"))) {
+        const franchiseId = window.franchise_id || null;
+        await import("./lineup.js").then(({drawLineup}) => drawLineup({
+            context, franchiseId, loginHref: loginLink(context), irHref: viewLinks(context, franchiseId)("Moves", "IR")
+        })).catch((error) => {
+            console.error("[fuad] couldn't draw Lineup:", error);
+            onTrouble();
+        });
+        return false;
+    }
     const found = mounts();
     const onHome = document.getElementById("tabcontent0") || found.contracts || found.commish || found.links;
     if (!context || !onHome) {
