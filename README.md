@@ -58,7 +58,7 @@ would do until they're switched on.
 |---|---|
 | `site/v<N>/` | One version of the site: `fuad.js` (entry point), `loader.js` (which version runs), `fuad.css` |
 | `site/v<N>/lib/` | League rules and logic, shared with the daily job |
-| `site/v<N>/ui/` | The Main, Contracts, Commish and Links features |
+| `site/v<N>/ui/` | The Main, Contracts, Commish and Links features; in v2 also the frame (sections, site menu, team sheet) and the player popup |
 | `mfl/` | What goes in MFL's home page messages |
 | `jobs/` | The daily job (`.github/workflows/daily.yml` runs `jobs/daily.mjs`) |
 | `tests/` | Unit tests |

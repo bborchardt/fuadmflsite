@@ -1,13 +1,14 @@
-// v2's frame on every league page: the five sections, the current section's views, and the team
-// sheet with everything else. MFL's own menus are hidden only once the frame is drawn, so if this
-// fails the page keeps MFL's navigation.
+// v2's frame on every league page: the header (site menu, wordmark and context line, team button),
+// the five sections, the current section's views, the team sheet and the player popup. MFL's own
+// menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
 
 import {esc} from "./html.js";
+import {locate, pageOf, sections, storedTabs} from "./nav.js";
+import {loadContext} from "./context.js";
+import {openDialog} from "./dialog.js";
+import {installPopup} from "./popup.js";
 
-const TABS_KEY = "fuad.homeTabs";
-// MFL picks a home page tab by its position in the URL's #; positions are learned from the home
-// page and remembered, these until then
-const DEFAULT_TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
+export {locate, pageOf, sections};
 
 const ICONS = {
     Home: '<path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path>',
@@ -18,193 +19,92 @@ const ICONS = {
 };
 
 const icon = (name) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+const MENU_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>';
+const CLOSE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
+const SEARCH_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>';
 
-// Where each section and view goes, and which pages belong to it. Until a section is rebuilt, its
-// views are today's MFL pages and home page tabs.
-export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS}) {
-    const page = (path) => `${base}/${path}${path.includes("?") ? "&" : "?"}L=${leagueId}`;
-    const option = (code, extra = "") => `${base}/options?L=${leagueId}&O=${code}${extra}`;
-    const tab = (name) => `${base}/home/${leagueId}#${tabs[name] === undefined ? DEFAULT_TABS[name] : tabs[name]}`;
-    const myTeam = franchiseId && franchiseId !== "0000" ? `&F=${franchiseId}` : "";
-    return [
-        {name: "Home", href: tab("Main"), match: {tabs: ["Main"]}},
-        {name: "Lineup", href: page("lineup"), match: {paths: ["lineup"], options: ["02"]}},
-        {name: "Moves", views: [
-            {name: "Add/Drop", href: page("add_drop"), match: {paths: ["add_drop"], options: ["255"]}},
-            {name: "Trades", href: option("05"), match: {paths: ["trade_offer", "trade_response"], options: ["05"]}},
-            {name: "IR", href: option("18"), match: {paths: ["ir"], options: ["18"]}},
-            {name: "Recent", href: option("03"), match: {paths: ["processed_waivers"], options: ["03"]}}
-        ]},
-        {name: "League", views: [
-            {name: "Scores", href: page("ajax_ls"), match: {paths: ["ajax_ls"], options: ["22", "15"]}},
-            {name: "Standings", href: tab("Standings"), match: {paths: ["standings"], tabs: ["Standings"]}},
-            {name: "Power", href: option("101"), match: {options: ["101"]}}
-        ]},
-        {name: "Rosters", views: [
-            {name: "My team", href: option("07", myTeam), match: {options: ["07"], mine: true}},
-            {name: "Teams", href: option("07"), match: {options: ["07"]}},
-            {name: "All players", href: tab("Contracts"), match: {tabs: ["Contracts"]}},
-            {name: "Draft", href: option("17"), match: {options: ["17", "100"]}}
-        ]}
-    ].map((section) => section.views ? {...section, href: section.views[0].href} : section);
-}
+const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
 
-// {path, option, team, tab} for a page: the MFL page name, its O= report, its F= team, and on the
-// home page the name of the tab the # picks
-export function pageOf(location, tabs = DEFAULT_TABS) {
-    const path = (location.pathname.match(/^\/\d{4}\/([a-z_]+)/) || [])[1] || "";
-    const params = new URLSearchParams(location.search);
-    let tab = null;
-    if (path === "home") {
-        const index = Number((location.hash.match(/^#(\d+)/) || [])[1] || 0);
-        tab = Object.keys(tabs).find((name) => tabs[name] === index) || null;
-    }
-    return {path, option: params.get("O"), team: params.get("F"), tab};
-}
-
-function matches(match, page, franchiseId) {
-    if (match.tabs && page.tab && match.tabs.includes(page.tab)) {
-        return true;
-    }
-    if (match.paths && match.paths.includes(page.path)) {
-        return true;
-    }
-    if (match.options && page.path === "options" && match.options.includes(page.option)) {
-        return match.mine === undefined || match.mine === Boolean(franchiseId && page.team === franchiseId);
-    }
-    return false;
-}
-
-// the section and view a page belongs to; null for pages left to the team sheet
-export function locate(all, page, franchiseId) {
-    for (const section of all) {
-        if (section.match && matches(section.match, page, franchiseId)) {
-            return {section, view: null};
-        }
-        for (const view of section.views || []) {
-            if (matches(view.match, page, franchiseId)) {
-                return {section, view};
-            }
-        }
-    }
-    return null;
-}
-
-function storedTabs(storage) {
-    const names = [...document.querySelectorAll("#homepagetabs > li")].map((li) => li.textContent.trim());
-    if (names.length) {
-        const tabs = {};
-        names.forEach((name, index) => {
-            tabs[name] = index;
-        });
-        storage.set(TABS_KEY, JSON.stringify(tabs));
-        return tabs;
-    }
-    try {
-        return JSON.parse(storage.get(TABS_KEY)) || DEFAULT_TABS;
-    } catch (error) {
-        return DEFAULT_TABS;
-    }
-}
-
-// MFL's own league menu, in its groups, for the sheet's "All MFL pages"
-function mflMenu() {
-    return [...document.querySelectorAll(".myfantasyleague_menu > ul > li.has-sub")].map((li) => ({
-        name: (li.querySelector(":scope > a") || {}).textContent || "",
-        links: [...li.querySelectorAll("ul a[href]")].map((a) => ({text: a.textContent.trim(), href: a.getAttribute("href")}))
-    })).filter((group) => group.links.length);
+// MFL's own league menu, in its groups, for the site menu
+export function mflMenu(doc = document) {
+    return [...doc.querySelectorAll(".myfantasyleague_menu > ul > li.has-sub")].map((li) => ({
+        name: clean((li.querySelector(":scope > a") || {}).textContent),
+        links: [...li.querySelectorAll("ul a[href]")].map((a) => ({text: clean(a.textContent), href: a.getAttribute("href")}))
+    })).filter((group) => group.name && group.links.length);
 }
 
 function mflLink(test) {
-    return [...document.querySelectorAll(".myfantasyleague_menu a[href]")].find(test) || null;
+    return [...document.querySelectorAll(".myfantasyleague_menu a[href], .pageheader a[href]")].find(test) || null;
 }
 
-function teamButton(team) {
-    if (team && team.icon) {
-        return `<img src="${esc(team.icon)}" alt="">`;
-    }
-    const initials = team ? team.name.split(/\s+/).filter((word) => /^[A-Za-z]/.test(word)).slice(0, 2).map((word) => word[0]).join("").toUpperCase() : "";
-    return initials ? esc(initials) : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4.5 4-7 8-7s7 2.5 8 7"></path></svg>';
+// "All Hands on Beck" → "AH"
+export function initials(name) {
+    return String(name || "").split(/\s+/).filter((word) => /^[A-Za-z0-9]/.test(word)).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
 
-function sheet({base, leagueId, franchiseId, team, all, homeUrl}) {
-    const option = (code, extra = "") => `${base}/options?L=${leagueId}&O=${code}${extra}`;
-    const league = [
-        ["League bylaws", option("26")],
-        ["Scoring system", option("09")],
-        ["League history", option("156")],
-        ["Player stats", option("08")],
-        ["Playoff bracket", option("79")],
-        ["Calendar", homeUrl("Calendar")],
-        ["Accounting", `${base}/accounting_report?L=${leagueId}`]
-    ];
-    const commish = franchiseId === "0000" ? [
-        ["Commish tools", homeUrl("Commish")],
-        ["Cap penalties", `${base}/csetup?L=${leagueId}&C=SALADJ`],
-        ["Set contracts", `${base}/csetup?L=${leagueId}&C=SALARIES`]
-    ] : [];
-    const login = mflLink((a) => /^log\s*(in|out)$/i.test(a.textContent.replace(/\s+/g, " ").trim()));
-    const become = mflLink((a) => /[?&]BECOME=/.test(a.getAttribute("href")));
-    const links = (items) => `<ul class="fuad-sheet-links">${items.map(([text, href]) => `<li><a href="${esc(href)}">${esc(text)}</a></li>`).join("")}</ul>`;
-    const myTeam = all[4].views[0].href;
+function siteMenu(groups) {
     return `
-    <div class="fuad-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="fuad-sheet-title">
-        <div class="fuad-sheet-head">
-            <h2 id="fuad-sheet-title">${esc(team ? team.name : "Guest")}</h2>
-            <button type="button" class="fuad-sheet-close" aria-label="Close">&#x2715;</button>
+    <section class="fuad-drawer" role="dialog" aria-modal="true" aria-labelledby="fuad-menu-title">
+        <div class="fuad-dialog-head">
+            <h2 id="fuad-menu-title">Menu</h2>
+            <button type="button" class="fuad-close" data-close aria-label="Close menu">${CLOSE_ICON}</button>
+        </div>
+        <div class="fuad-drawer-body">
+            <h3 class="fuad-label">More pages</h3>
+            <label class="fuad-search">${SEARCH_ICON}<input type="search" placeholder="Filter" aria-label="Filter pages" autocomplete="off"></label>
+            ${groups.map((group, index) => `
+            <div class="fuad-menu-group">
+                <button type="button" class="fuad-menu-toggle" aria-expanded="false" aria-controls="fuad-menu-${index}"><span>${esc(group.name)}</span><span class="fuad-meta"><span class="fuad-menu-count">${group.links.length}</span> <span class="fuad-chev" aria-hidden="true">▾</span></span></button>
+                <ul class="fuad-menu-links" id="fuad-menu-${index}" hidden>
+                    ${group.links.map((link) => `<li><a href="${esc(link.href)}">${esc(link.text)}</a></li>`).join("")}
+                </ul>
+            </div>`).join("")}
+            <p class="fuad-muted fuad-menu-none" hidden>No page matches.</p>
+        </div>
+    </section>`;
+}
+
+function teamSheet({team, member, myTeam, logout, become, franchiseId}) {
+    const switchTo = become && become.getAttribute("href");
+    return `
+    <section class="fuad-sheet" role="dialog" aria-modal="true" aria-labelledby="fuad-sheet-title">
+        <span class="fuad-grabber" aria-hidden="true"></span>
+        <div class="fuad-dialog-head">
+            <h2 id="fuad-sheet-title">${esc(team ? team.name : "Commissioner")}</h2>
+            <button type="button" class="fuad-close" data-close aria-label="Close">${CLOSE_ICON}</button>
         </div>
         <div class="fuad-sheet-actions">
-            ${team && franchiseId !== "0000" ? `<a class="fuad-button" href="${esc(myTeam)}">My team</a>` : ""}
-            ${login ? `<a class="fuad-button fuad-button-quiet" href="${esc(login.getAttribute("href"))}">${esc(login.textContent.trim())}</a>` : ""}
+            ${member && myTeam ? `<a class="fuad-button" href="${esc(myTeam)}">My team</a>` : ""}
+            ${logout ? `<a class="fuad-button fuad-button-quiet" href="${esc(logout.getAttribute("href"))}">Log out</a>` : ""}
         </div>
-        ${become ? `
+        ${switchTo ? `
         <div class="fuad-switch" role="group" aria-label="Viewing as">
-            <span>Viewing as</span>
-            ${franchiseId === "0000"
-                ? `<a href="${esc(become.getAttribute("href"))}">Member</a><span aria-current="true">Commissioner</span>`
-                : `<span aria-current="true">Member</span><a href="${esc(become.getAttribute("href"))}">Commissioner</a>`}
+            <span class="fuad-muted">Viewing as</span>
+            <div class="fuad-switch-options">
+                ${franchiseId === "0000"
+                    ? `<a href="${esc(switchTo)}">Member</a><span aria-current="true">Commissioner</span>`
+                    : `<span aria-current="true">Member</span><a href="${esc(switchTo)}">Commissioner</a>`}
+            </div>
         </div>` : ""}
-        <h3>League</h3>
-        ${links(league)}
-        ${commish.length ? `<h3>Commish</h3>${links(commish)}` : ""}
-        <h3>All MFL pages</h3>
-        <input type="search" class="fuad-sheet-filter" placeholder="Filter" aria-label="Filter MFL pages">
-        <div class="fuad-sheet-menu">
-            ${mflMenu().map((group) => `
-            <details>
-                <summary>${esc(group.name)}</summary>
-                ${links(group.links.map((link) => [link.text, link.href]))}
-            </details>`).join("")}
-        </div>
-    </div>`;
+    </section>`;
 }
 
-function wireSheet(root) {
-    const panel = root.querySelector(".fuad-sheet");
-    const open = () => {
-        panel.hidden = false;
-        document.documentElement.classList.add("fuad-sheet-open");
-        panel.querySelector(".fuad-sheet-close").focus();
+function wireMenu(layer) {
+    const filter = layer.querySelector("input[type=search]");
+    const groups = [...layer.querySelectorAll(".fuad-menu-group")];
+    const show = (group, open) => {
+        const toggle = group.querySelector(".fuad-menu-toggle");
+        toggle.setAttribute("aria-expanded", String(open));
+        toggle.querySelector(".fuad-chev").textContent = open ? "▴" : "▾";
+        group.querySelector("ul").hidden = !open;
     };
-    const close = () => {
-        panel.hidden = true;
-        document.documentElement.classList.remove("fuad-sheet-open");
-    };
-    root.querySelectorAll(".fuad-team").forEach((button) => button.addEventListener("click", open));
-    panel.addEventListener("click", (event) => {
-        if (event.target === panel || event.target.closest(".fuad-sheet-close")) {
-            close();
-        }
-    });
-    panel.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            close();
-        }
-    });
-    const filter = panel.querySelector(".fuad-sheet-filter");
+    groups.forEach((group) => group.querySelector(".fuad-menu-toggle").addEventListener("click", () =>
+        show(group, group.querySelector(".fuad-menu-toggle").getAttribute("aria-expanded") !== "true")));
+    // a filter opens every group with a match
     filter.addEventListener("input", () => {
         const term = filter.value.trim().toLowerCase();
-        panel.querySelectorAll(".fuad-sheet-menu details").forEach((group) => {
+        let any = false;
+        groups.forEach((group) => {
             let shown = 0;
             group.querySelectorAll("li").forEach((item) => {
                 const hit = !term || item.textContent.toLowerCase().includes(term);
@@ -212,8 +112,11 @@ function wireSheet(root) {
                 shown += hit ? 1 : 0;
             });
             group.hidden = !shown;
-            group.open = Boolean(term) && shown > 0;
+            group.querySelector(".fuad-menu-count").textContent = String(shown);
+            show(group, Boolean(term) && shown > 0);
+            any = any || shown > 0;
         });
+        layer.querySelector(".fuad-menu-none").hidden = any;
     });
 }
 
@@ -221,34 +124,71 @@ export function drawFrame({context, storage}) {
     const {season, leagueId} = context;
     const base = `${window.location.origin}/${season}`;
     const franchiseId = window.franchise_id || null;
+    const member = Boolean(franchiseId && franchiseId !== "0000");
     const tabs = storedTabs(storage);
     const all = sections({base, leagueId, franchiseId, tabs});
     const database = window.franchiseDatabase || {};
     const team = franchiseId && database[`fid_${franchiseId}`] ? database[`fid_${franchiseId}`] : null;
-    const homeUrl = (name) => `${base}/home/${leagueId}#${tabs[name] === undefined ? DEFAULT_TABS[name] : tabs[name]}`;
+    const logout = mflLink((a) => /^log\s*out$/i.test(clean(a.textContent)));
+    const login = mflLink((a) => /^log\s*in$/i.test(clean(a.textContent)));
+    const become = mflLink((a) => /[?&]BECOME=/.test(a.getAttribute("href")));
+    const loggedIn = Boolean(franchiseId);
+    const rosters = all.find((section) => section.name === "Rosters");
+    const myTeam = member ? rosters.views[0].href : null;
+    const mflTitle = clean((document.querySelector(".pagetitle h1") || {}).textContent);
 
     const root = document.createElement("div");
     root.id = "fuad-frame";
+    root.innerHTML = `
+    <header class="fuad-top">
+        <button type="button" class="fuad-menu-button" aria-label="Menu" aria-expanded="false" aria-haspopup="dialog">${MENU_ICON}<span class="fuad-menu-word" aria-hidden="true">Menu</span></button>
+        <a class="fuad-brand" href="${esc(all[0].href)}"><span class="fuad-wordmark">FUAD</span><span class="fuad-context"></span></a>
+        <nav class="fuad-sections fuad-sections-top" aria-label="Sections"></nav>
+        ${loggedIn
+            ? `<button type="button" class="fuad-team" aria-label="${esc(team ? `${team.name}: your team` : "Commissioner")}" aria-haspopup="dialog">${esc(initials(team ? team.name : "Commissioner"))}</button>`
+            : `<a class="fuad-login" href="${esc(login ? login.getAttribute("href") : `${base}/login?L=${leagueId}`)}">Log in</a>`}
+    </header>
+    <h1 class="fuad-hidden"></h1>
+    <nav class="fuad-views" hidden></nav>
+    <nav class="fuad-sections fuad-sections-bottom" aria-label="Sections"></nav>
+    <div class="fuad-layer fuad-menu-layer" hidden>${siteMenu(mflMenu())}</div>
+    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, myTeam, logout, become, franchiseId})}</div>` : ""}`;
+
     const render = () => {
         const here = locate(all, pageOf(window.location, tabs), franchiseId);
         const current = here && here.section.name;
         const sectionLinks = all.map((section) => `<a href="${esc(section.href)}"${section.name === current ? ' aria-current="page"' : ""}>${icon(section.name)}<span>${esc(section.name)}</span></a>`).join("");
-        const views = here && here.section.views ? here.section.views : null;
-        root.innerHTML = `
-        <header class="fuad-top">
-            <a class="fuad-brand" href="${esc(all[0].href)}">FUAD</a>
-            <span class="fuad-title">${esc(current || "League site")}</span>
-            <nav class="fuad-sections fuad-sections-top" aria-label="Sections">${sectionLinks}</nav>
-            <button type="button" class="fuad-team" aria-label="${esc(team ? `${team.name}: menu` : "Menu")}">${teamButton(team)}</button>
-        </header>
-        ${views ? `<nav class="fuad-views" aria-label="${esc(current)}">${views.map((view) => `<a href="${esc(view.href)}"${here.view === view ? ' aria-current="page"' : ""}>${esc(view.name)}</a>`).join("")}</nav>` : ""}
-        <nav class="fuad-sections fuad-sections-bottom" aria-label="Sections">${sectionLinks}</nav>
-        <div class="fuad-sheet" hidden>${sheet({base, leagueId, franchiseId, team, all, homeUrl})}</div>`;
-        wireSheet(root);
+        root.querySelectorAll(".fuad-sections").forEach((nav) => {
+            nav.innerHTML = sectionLinks;
+        });
+        root.querySelector("h1").textContent = here ? (here.view ? `${current}: ${here.view.name}` : current) : mflTitle;
+        const views = root.querySelector(".fuad-views");
+        const list = here && here.section.views;
+        views.hidden = !list;
+        if (list) {
+            views.setAttribute("aria-label", `${current} views`);
+            views.innerHTML = list.map((view) => `<a href="${esc(view.href)}"${here.view === view ? ' aria-current="page"' : ""}>${esc(view.name)}</a>`).join("");
+        }
     };
     render();
     document.body.prepend(root);
     document.documentElement.classList.add("fuad-framed");
+
+    const menuButton = root.querySelector(".fuad-menu-button");
+    const menuLayer = root.querySelector(".fuad-menu-layer");
+    wireMenu(menuLayer);
+    menuButton.addEventListener("click", () => {
+        menuButton.setAttribute("aria-expanded", "true");
+        openDialog(menuLayer, {onClose: () => menuButton.setAttribute("aria-expanded", "false")});
+    });
+    const teamButton = root.querySelector(".fuad-team");
+    if (teamButton) {
+        const sheetLayer = root.querySelector(".fuad-sheet-layer");
+        teamButton.addEventListener("click", () => {
+            teamButton.setAttribute("aria-expanded", "true");
+            openDialog(sheetLayer, {onClose: () => teamButton.setAttribute("aria-expanded", "false")});
+        });
+    }
 
     // links to another home page tab only change the #, which MFL doesn't follow on its own
     window.addEventListener("hashchange", () => {
@@ -258,4 +198,12 @@ export function drawFrame({context, storage}) {
         }
         render();
     });
+
+    loadContext(context)
+        .then((line) => {
+            root.querySelector(".fuad-context").textContent = line;
+        })
+        .catch((error) => console.warn("[fuad] couldn't tell the week:", error));
+
+    installPopup({context, franchiseId});
 }

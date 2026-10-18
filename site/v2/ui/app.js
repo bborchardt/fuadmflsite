@@ -10,39 +10,9 @@ import {renderViolations} from "./violations.js";
 import {renderContracts} from "./contracts.js";
 import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
+import {cached, storage} from "./store.js";
 
 const DAY = 24 * 60 * 60 * 1000;
-
-// private windows and blocked storage just don't remember
-const storage = {
-    get(key) {
-        try {
-            return window.localStorage.getItem(key);
-        } catch (error) {
-            return null;
-        }
-    },
-    set(key, value) {
-        try {
-            window.localStorage.setItem(key, value);
-        } catch (error) {
-        }
-    }
-};
-
-async function cached(key, maxAge, load) {
-    try {
-        const saved = JSON.parse(storage.get(key));
-        if (saved && Date.now() - saved.storedAt < maxAge) {
-            return saved.value;
-        }
-    } catch (error) {
-        // a corrupt entry is reloaded below
-    }
-    const value = await load();
-    storage.set(key, JSON.stringify({storedAt: Date.now(), value}));
-    return value;
-}
 
 export function pageContext(location = window.location) {
     const season = (location.pathname.match(/^\/(\d{4})\//) || [])[1] || (window.year && String(window.year));

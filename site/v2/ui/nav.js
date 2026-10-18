@@ -1,0 +1,134 @@
+// The five sections and their views: where each goes, and which pages belong to it. A view that v2
+// has rebuilt lives on the home page under its own # (`#league-standings`); until then it's the
+// nearest MFL page or home page tab.
+
+const TABS_KEY = "fuad.homeTabs";
+// MFL picks a home page tab by its position in the URL's #; positions are learned from the home
+// page and remembered, these until then
+export const DEFAULT_TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
+
+const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+export function viewHash(section, view) {
+    return `#${slug(section)}${view ? `-${slug(view)}` : ""}`;
+}
+
+// `rebuilt` lists the "Section" or "Section/View" names v2 draws itself
+export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebuilt = []}) {
+    const page = (path) => `${base}/${path}${path.includes("?") ? "&" : "?"}L=${leagueId}`;
+    const option = (code, extra = "") => `${base}/options?L=${leagueId}&O=${code}${extra}`;
+    const tab = (name) => `${base}/home/${leagueId}#${tabs[name] === undefined ? DEFAULT_TABS[name] : tabs[name]}`;
+    const member = franchiseId && franchiseId !== "0000";
+    const own = (href, sectionName, viewName) => {
+        const built = rebuilt.includes(viewName ? `${sectionName}/${viewName}` : sectionName);
+        return built ? `${base}/home/${leagueId}${viewHash(sectionName, viewName)}` : href;
+    };
+    const all = [
+        {name: "Home", href: tab("Main"), match: {tabs: ["Main"]}},
+        {name: "Lineup", href: page("lineup"), match: {paths: ["lineup"], options: ["02"]}},
+        {name: "Moves", views: [
+            {name: "Add", href: page("add_drop"), match: {paths: ["add_drop"], options: ["255"]}},
+            {name: "Drop", href: option("257"), match: {options: ["257"]}},
+            {name: "Trades", href: option("05"), match: {paths: ["trade_offer", "trade_response"], options: ["05"]}},
+            {name: "IR", href: option("18"), match: {paths: ["ir"], options: ["18"]}}
+        ]},
+        {name: "League", views: [
+            {name: "Scores", href: page("ajax_ls"), match: {paths: ["ajax_ls"], options: ["22", "15"]}},
+            {name: "Standings", href: tab("Standings"), match: {paths: ["standings"], tabs: ["Standings"]}},
+            {name: "Power", href: option("101"), match: {options: ["101"]}},
+            // MFL has no page for it, so it shows once v2 draws it
+            {name: "Winners", href: null, match: {}}
+        ]},
+        {name: "Rosters", views: [
+            // logged out there's no team of your own, so Rosters opens on Teams
+            ...(member ? [{name: "My team", href: option("07", `&F=${franchiseId}`), match: {options: ["07"], mine: true}}] : []),
+            {name: "Teams", href: option("07"), match: {options: ["07"]}},
+            {name: "Players", href: tab("Contracts"), match: {tabs: ["Contracts"]}},
+            {name: "Draft", href: option("17"), match: {options: ["17", "100"]}}
+        ]}
+    ];
+    return all.map((section) => {
+        if (!section.views) {
+            return {...section, href: own(section.href, section.name), hash: viewHash(section.name)};
+        }
+        const views = section.views
+            .map((view) => ({...view, href: own(view.href, section.name, view.name), hash: viewHash(section.name, view.name)}))
+            .filter((view) => view.href);
+        return {...section, views, href: views[0].href};
+    });
+}
+
+// {path, option, team, tab, hash} for a page: the MFL page name, its O= report, its F= team, and on
+// the home page the name of the tab a numeric # picks, or v2's own view #
+export function pageOf(location, tabs = DEFAULT_TABS) {
+    const path = (location.pathname.match(/^\/\d{4}\/([a-z_]+)/) || [])[1] || "";
+    const params = new URLSearchParams(location.search);
+    let tab = null;
+    let hash = null;
+    if (path === "home") {
+        const number = location.hash.match(/^#(\d+)/);
+        if (number) {
+            tab = Object.keys(tabs).find((name) => tabs[name] === Number(number[1])) || null;
+        } else if (/^#[a-z]/.test(location.hash)) {
+            hash = location.hash;
+        } else {
+            tab = Object.keys(tabs).find((name) => tabs[name] === 0) || null;
+        }
+    }
+    return {path, option: params.get("O"), team: params.get("F"), tab, hash};
+}
+
+function matches(item, page, franchiseId) {
+    const {match} = item;
+    if (page.hash) {
+        return item.href.endsWith(page.hash) && item.href.includes("/home/");
+    }
+    if (match.tabs && page.tab && match.tabs.includes(page.tab)) {
+        return true;
+    }
+    if (match.paths && match.paths.includes(page.path)) {
+        return true;
+    }
+    if (match.options && page.path === "options" && match.options.includes(page.option)) {
+        return match.mine === undefined || match.mine === Boolean(franchiseId && page.team === franchiseId);
+    }
+    return false;
+}
+
+// the section and view a page belongs to; null for pages left to the site menu
+export function locate(all, page, franchiseId) {
+    const found = find(all, page, franchiseId);
+    // a home page # that isn't one of v2's views (MFL's own anchors) is the Main tab
+    return found || !page.hash ? found : find(all, {...page, hash: null, tab: "Main"}, franchiseId);
+}
+
+function find(all, page, franchiseId) {
+    for (const section of all) {
+        if (section.match && matches(section, page, franchiseId)) {
+            return {section, view: null};
+        }
+        for (const view of section.views || []) {
+            if (matches(view, page, franchiseId)) {
+                return {section, view};
+            }
+        }
+    }
+    return null;
+}
+
+export function storedTabs(storage, doc = document) {
+    const names = [...doc.querySelectorAll("#homepagetabs > li")].map((li) => li.textContent.trim());
+    if (names.length) {
+        const tabs = {};
+        names.forEach((name, index) => {
+            tabs[name] = index;
+        });
+        storage.set(TABS_KEY, JSON.stringify(tabs));
+        return tabs;
+    }
+    try {
+        return JSON.parse(storage.get(TABS_KEY)) || DEFAULT_TABS;
+    } catch (error) {
+        return DEFAULT_TABS;
+    }
+}
