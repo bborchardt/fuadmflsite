@@ -88,6 +88,12 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   and each awards one claim.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
+- **Playoff seeds and payouts** (v2's League, `ui/league-model.js`, display only): the division
+  winners are seeds 1–2, the other four the best all-play records, ties by standings order (1.1–1.3);
+  $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),
+  never below $0 (1.6–1.7); what's left of the pot goes 55/30/15 (1.8). All-play counts weeks 1–14
+  only, from the weekly results, since MFL's standings keep counting it through the playoffs. The
+  pot is the accounting's league-wide entries, or $100 × 10 teams before they're recorded.
 
 ## Ruled out
 
@@ -113,5 +119,8 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 - IR: MFL doesn't say when a designation changed, so an add made after a player came off NFL IR
   isn't caught as a void.
 - While an add's hour is open, each Main tab view reads the message board once.
+- League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from
+  MFL's page by a point or so: MFL's simulation carries a random value across every lineup it has
+  shown since the page loaded.
 - A preview or beta whose features fail after starting shows their errors, with its bar there to
   leave. The beta is per browser, isn't in MFL's app, and nothing reports who's using it.
