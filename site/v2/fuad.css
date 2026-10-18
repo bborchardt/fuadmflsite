@@ -2325,13 +2325,9 @@ body [tabindex]:focus-visible {
 
 #fuad-rosters .fuad-season-boxes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; flex: 1; }
 
-#fuad-rosters .fuad-season-boxes li { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--fuad-page); font-weight: 700; font-variant-numeric: tabular-nums; }
+#fuad-rosters .fuad-season-boxes li { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--fuad-page); font-weight: 700; font-variant-numeric: tabular-nums; }
 
-#fuad-rosters .fuad-roster .fuad-group th { padding: 14px 6px 6px; border-top: 0; }
-
-#fuad-rosters .fuad-roster .fuad-group th > span { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-muted); }
-
-#fuad-rosters .fuad-roster .fuad-group th > span + span { float: right; }
+#fuad-rosters .fuad-roster .fuad-group > * { padding-top: 14px; padding-bottom: 6px; border-top: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-muted); vertical-align: bottom; }
 
 #fuad-rosters .fuad-roster .fuad-tag { vertical-align: 1px; }
 
@@ -2347,7 +2343,7 @@ body [tabindex]:focus-visible {
 
 #fuad-rosters .fuad-team-name { flex: 1; margin: 0; font-family: var(--fuad-display); font-size: 26px; font-weight: 700; color: var(--fuad-text); text-transform: none; background: none; border: 0; padding: 0; }
 
-#fuad-rosters .fuad-team-row { display: flex; flex-direction: column; gap: 5px; padding: 10px 6px; margin: 0 -6px; color: var(--fuad-text); }
+#fuad-rosters .fuad-team-row { display: flex; flex-direction: column; gap: 5px; padding: 10px 0; color: var(--fuad-text); }
 
 #fuad-rosters .fuad-team-line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 
@@ -2375,7 +2371,7 @@ body [tabindex]:focus-visible {
 
 #fuad-rosters .fuad-chips-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-#fuad-rosters .fuad-chip-row-group { display: flex; gap: 6px; overflow-x: auto; }
+#fuad-rosters .fuad-chip-row-group { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* a chip: off, a field-bordered outline; on, white with dark text */
 #fuad-rosters .fuad-filter {
@@ -2404,7 +2400,6 @@ body [tabindex]:focus-visible {
 
 /* desktop: the chips wrap and the list uses the page's scroll, nothing scrolls inside */
 @media (min-width: 48.01em) {
-    #fuad-rosters .fuad-chip-row-group { flex-wrap: wrap; overflow: visible; }
     #fuad-rosters .fuad-players-scroll { overflow: visible; }
 }
 
@@ -2421,7 +2416,8 @@ body [tabindex]:focus-visible {
     border-radius: 12px;
     background: var(--fuad-raised);
     color: var(--fuad-text);
-    text-align: left;
+    align-items: center;
+    text-align: center;
     cursor: pointer;
 }
 
@@ -2532,4 +2528,28 @@ body [tabindex]:focus-visible {
     #fuad-rosters .fuad-player-table .fuad-col-projected,
     #fuad-rosters .fuad-player-table .fuad-col-points,
     #fuad-rosters .fuad-player-table .fuad-col-salary { width: 60px; }
+}
+
+/* a highlighted row (yours) gets room around its text; the text stays in line with the other rows */
+#fuad-league .fuad-table tr > :first-child,
+#fuad-rosters .fuad-table tr > :first-child { padding-left: 8px; }
+
+#fuad-league .fuad-table tr > :last-child,
+#fuad-rosters .fuad-table tr > :last-child { padding-right: 8px; }
+
+#fuad-league .fuad-seeds > li,
+#fuad-league .fuad-hunt > li,
+#fuad-league .fuad-power-list > li,
+#fuad-rosters .fuad-order > li,
+#fuad-rosters .fuad-board-picks > li,
+#fuad-rosters .fuad-team-list > li { margin-left: -8px; margin-right: -8px; padding-left: 8px; padding-right: 8px; border-radius: 8px; }
+
+#fuad-league .fuad-power-row { padding-left: 0; padding-right: 0; }
+
+/* the chart's rows: the name and total on one line (phones), or name | bar | total (desktop) */
+@media (min-width: 48.01em) {
+    #fuad-league .fuad-position-rows { grid-auto-flow: row dense; }
+    #fuad-league .fuad-position-name { grid-column: 1; }
+    #fuad-league .fuad-stack { grid-column: 2; }
+    #fuad-league .fuad-position-total { grid-column: 3; }
 }
