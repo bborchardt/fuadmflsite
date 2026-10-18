@@ -98,7 +98,8 @@ function drawChat(mount, {context, franchiseId, teams}) {
     const others = [...teams].filter(([id]) => id !== franchiseId).concat(franchiseId === "0000" ? [] : [["0000", "Commissioner"]]);
     let lastPost = Date.now();
     let timer = null;
-    let drawnIds = "";
+    // null until the first draw, so an empty chat still draws its "No messages yet."
+    let drawnIds = null;
     const load = async () => {
         const response = await fetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
@@ -128,7 +129,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
         list.scrollTop = list.scrollHeight;
     };
     const render = (messages, body) => {
-        drawnIds = "";
+        drawnIds = null;
         const typed = mount.querySelector("#fuad-chat-input");
         const draft = typed ? {text: typed.value, to: mount.querySelector("#fuad-chat-to").value} : null;
         body.innerHTML = `
