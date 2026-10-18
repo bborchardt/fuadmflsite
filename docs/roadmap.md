@@ -38,6 +38,7 @@ Every current board is an interactive prototype (press Play; its row title names
 | 14 | Lineup, phone and desktop (MFL's Submit Lineup restyled; week 6 from the saved page) | current |
 | 15 | Moves › Drop, phone and desktop | current |
 | 16 | Logged out, loading and error states: Home phone and desktop, Moves › Add phone | current |
+| 17 | Message board topic: MFL's page restyled, phone and desktop | current |
 
 ### For a design review
 
