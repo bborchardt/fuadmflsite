@@ -1,38 +1,54 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {locate, pageOf, sections} from "../site/v2/ui/frame.js";
+import {locate, pageOf, sections, viewHash} from "../site/v2/ui/nav.js";
+import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
 const base = "https://www44.myfantasyleague.com/2026";
 const all = sections({base, leagueId: "48571", franchiseId: "0001"});
-const at = (href, franchiseId = "0001") => {
-    const found = locate(all, pageOf(new URL(href)), franchiseId);
+const at = (href, franchiseId = "0001", list = all) => {
+    const found = locate(list, pageOf(new URL(href)), franchiseId);
     return found && [found.section.name, found.view && found.view.name];
 };
 
 test("each MFL page lands in its section and view", () => {
     assert.deepEqual(at(`${base}/home/48571`), ["Home", null]);
     assert.deepEqual(at(`${base}/home/48571#1`), ["League", "Standings"]);
-    assert.deepEqual(at(`${base}/home/48571#3`), ["Rosters", "All players"]);
+    assert.deepEqual(at(`${base}/home/48571#3`), ["Rosters", "Players"]);
     assert.deepEqual(at(`${base}/lineup?L=48571`), ["Lineup", null]);
-    assert.deepEqual(at(`${base}/add_drop?L=48571`), ["Moves", "Add/Drop"]);
-    assert.deepEqual(at(`${base}/options?L=48571&O=255&ROUND=1`), ["Moves", "Add/Drop"]);
+    assert.deepEqual(at(`${base}/add_drop?L=48571`), ["Moves", "Add"]);
+    assert.deepEqual(at(`${base}/options?L=48571&O=255&ROUND=1`), ["Moves", "Add"]);
+    assert.deepEqual(at(`${base}/options?L=48571&O=257`), ["Moves", "Drop"]);
     assert.deepEqual(at(`${base}/options?L=48571&O=05`), ["Moves", "Trades"]);
     assert.deepEqual(at(`${base}/trade_offer`), ["Moves", "Trades"]);
     assert.deepEqual(at(`${base}/options?L=48571&O=18`), ["Moves", "IR"]);
-    assert.deepEqual(at(`${base}/options?L=48571&O=03`), ["Moves", "Recent"]);
     assert.deepEqual(at(`${base}/ajax_ls?L=48571`), ["League", "Scores"]);
     assert.deepEqual(at(`${base}/options?L=48571&O=101`), ["League", "Power"]);
     assert.deepEqual(at(`${base}/options?L=48571&O=17`), ["Rosters", "Draft"]);
+});
+
+test("the views are the redesign's, Winners only once v2 draws it", () => {
+    const names = (name, list = all) => list.find((s) => s.name === name).views.map((v) => v.name);
+    assert.deepEqual(names("Moves"), ["Add", "Drop", "Trades", "IR"]);
+    assert.deepEqual(names("League"), ["Scores", "Standings", "Power"]);
+    assert.deepEqual(names("Rosters"), ["My team", "Teams", "Players", "Draft"]);
+    const built = sections({base, leagueId: "48571", franchiseId: "0001", rebuilt: ["League/Winners"]});
+    assert.deepEqual(names("League", built), ["Scores", "Standings", "Power", "Winners"]);
 });
 
 test("rosters: your own team is My team, any other is Teams", () => {
     assert.deepEqual(at(`${base}/options?L=48571&O=07&F=0001`), ["Rosters", "My team"]);
     assert.deepEqual(at(`${base}/options?L=48571&O=07&F=0002`), ["Rosters", "Teams"]);
     assert.deepEqual(at(`${base}/options?L=48571&O=07`), ["Rosters", "Teams"]);
-    assert.deepEqual(at(`${base}/options?L=48571&O=07`, null), ["Rosters", "Teams"]);
 });
 
-test("pages left to the team sheet belong to no section", () => {
+test("logged out, Rosters opens on Teams and has no My team", () => {
+    const guest = sections({base, leagueId: "48571", franchiseId: null});
+    const rosters = guest.find((s) => s.name === "Rosters");
+    assert.equal(rosters.href, `${base}/options?L=48571&O=07`);
+    assert.ok(!rosters.views.some((v) => v.name === "My team"));
+});
+
+test("pages left to the site menu belong to no section", () => {
     assert.equal(at(`${base}/options?L=48571&O=26`), null);
     assert.equal(at(`${base}/home/48571#4`), null);
 });
@@ -43,4 +59,44 @@ test("a section opens on its first view, and My team is your own roster", () => 
     // MFL's home page tabs are picked by position, learned from the page
     const moved = sections({base, leagueId: "48571", franchiseId: "0001", tabs: {Main: 0, Contracts: 1, Standings: 2}});
     assert.equal(moved.find((s) => s.name === "League").views[1].href, `${base}/home/48571#2`);
+});
+
+test("a rebuilt view lives on the home page under its own #", () => {
+    assert.equal(viewHash("League", "Standings"), "#league-standings");
+    assert.equal(viewHash("Rosters", "My team"), "#rosters-my-team");
+    const built = sections({base, leagueId: "48571", franchiseId: "0001", rebuilt: ["League/Standings", "Home"]});
+    const league = built.find((s) => s.name === "League");
+    assert.equal(league.views[1].href, `${base}/home/48571#league-standings`);
+    assert.equal(built[0].href, `${base}/home/48571#home`);
+    assert.deepEqual(at(`${base}/home/48571#league-standings`, "0001", built), ["League", "Standings"]);
+    assert.deepEqual(at(`${base}/home/48571#home`, "0001", built), ["Home", null]);
+    // the MFL page it replaces still belongs to the view
+    assert.deepEqual(at(`${base}/standings?L=48571`, "0001", built), ["League", "Standings"]);
+    // a # v2 doesn't know is the home page's Main tab
+    assert.deepEqual(at(`${base}/home/48571#top`, "0001", built), ["Home", null]);
+    assert.deepEqual(at(`${base}/home/48571#top`), ["Home", null]);
+});
+
+const at2026 = (text) => new Date(text);
+const week1 = at2026("2026-09-10T19:20:00-05:00");
+const seasonEnd = at2026("2027-01-04T02:00:00-06:00");
+
+test("the context line: the week in season, the phase outside it", () => {
+    const line = (now, extra = {}) => contextLine({now: at2026(now), week: 6, week1, seasonEnd, drafted: true, ...extra});
+    assert.equal(line("2026-10-17T12:00:00-05:00"), "Week 6");
+    assert.equal(line("2026-09-01T12:00:00-05:00"), "Before week 1");
+    assert.equal(line("2026-05-01T12:00:00-05:00", {drafted: false}), "Before the draft");
+    assert.equal(line("2026-08-29T21:00:00-05:00", {drafted: false, draftDays: ["2026-08-29"]}), "Draft day");
+    assert.equal(line("2027-01-10T12:00:00-06:00"), "Season over");
+    // MFL hasn't published the schedule yet
+    assert.equal(contextLine({now: at2026("2027-03-20T12:00:00-05:00"), week: 17, week1: null, seasonEnd: null, drafted: false}), "Before the draft");
+});
+
+test("the draft is in once a pick names a player; draft day comes from the calendar", () => {
+    assert.equal(draftPicked({draftUnit: {draftPick: [{pick: "01", player: ""}]}}), false);
+    assert.equal(draftPicked({draftUnit: {draftPick: [{pick: "01", player: "17497"}, {pick: "02", player: ""}]}}), true);
+    assert.equal(draftPicked(null), false);
+    // 7 p.m. CT on Aug 29 is already Aug 30 in UTC
+    assert.deepEqual(draftDays({event: [{title: "Rookie Draft", start_time: "1788048000"}, {title: "Final cut-down", start_time: "1788500000"}]}), ["2026-08-29"]);
+    assert.deepEqual(draftDays(null), []);
 });

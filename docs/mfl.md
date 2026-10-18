@@ -14,6 +14,16 @@ MFL documents little of this.
 - **Weeks:** `weeklyResults` reports the last week with results: a week behind in season, and week 17
   all offseason. `injuries` with `W` is that week's report; without it, today's.
 - **Rosters by week** keep membership but report today's salary: a player cut later reads $1.
+- **The player page** (`player?L=<league>&P=<id>`, public) has in one request what the exports spread
+  over many (`playerScores` takes one week per request): the biography (height and weight, born and
+  age, college, drafted, experience, jersey), the status (owner as "Team - S" or "- NS", injury as
+  "Out (Ankle)", expected return, bye, salary, contract year), the latest five headlines linking to
+  `view_news_article?L=<league>&ID=<article>`, and the season by week (`#player_stats_table`: points,
+  opponent as "at Colts" or "vs Saints", "Bye", and the week's lineup status with an injury mark such
+  as "( O )"). The article page has the published time, the source, the update and "Analysis:".
+- **MFL's player popup** is `launch_player_modal(league, player)`, called from `javascript:` links on
+  its pages.
+- **The calendar export** needs a logged-in member.
 - **Renewal:** MFL keeps past seasons' sites and copies home page messages forward. The league renews
   in mid-March or later, never on a fixed date.
 

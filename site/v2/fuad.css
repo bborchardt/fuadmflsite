@@ -11,21 +11,33 @@
 @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap");
 
 :root {
-    --ng-bg: #0D1117;
-    --ng-surface: #161B22;
-    --ng-raised: #1C232D;
-    --ng-line: #262D37;
-    --ng-line-soft: #222934;
-    --ng-field: #2F3743;
-    --ng-text: #E9EDF2;
-    --ng-muted: #9AA4B2;
-    --ng-accent: #C8F43C;
-    --ng-accent-hover: #E2FF8A;
-    --ng-orange: #FF9F43;
-    --ng-red: #FF6B6B;
-    --ng-body: Barlow, system-ui, sans-serif;
-    --ng-display: "Barlow Condensed", Barlow, system-ui, sans-serif;
-    --ng-radius: 14px;
+    /* one meaning per color: lime is yours, interactive, selected or live; green a good change;
+       red over a limit, blocked or a bad change; orange caution; white and grey plain facts */
+    --fuad-page: #0D1117;
+    --fuad-panel: #161B22;
+    --fuad-raised: #1C232D;
+    --fuad-quiet: #262D37;
+    --fuad-hairline: #262D37;
+    --fuad-rule: #222934;
+    --fuad-field: #6B7583;
+    --fuad-faint: #6B7583;
+    --fuad-grabber: #3A4352;
+    --fuad-text: #E9EDF2;
+    --fuad-soft: #C9D1DB;
+    --fuad-muted: #9AA4B2;
+    --fuad-lime: #C8F43C;
+    --fuad-lime-hover: #E2FF8A;
+    --fuad-on-lime: #0D1117;
+    --fuad-good: #4ADE80;
+    --fuad-bad: #FF6B6B;
+    --fuad-bad-tint: rgba(255, 107, 107, 0.14);
+    --fuad-caution: #FF9F43;
+    --fuad-caution-tint: rgba(255, 159, 67, 0.14);
+    --fuad-scrim: rgba(0, 0, 0, 0.6);
+    --fuad-shadow: rgba(0, 0, 0, 0.5);
+    --fuad-body: Barlow, system-ui, sans-serif;
+    --fuad-display: "Barlow Condensed", Barlow, system-ui, sans-serif;
+    --fuad-radius: 14px;
 }
 
 /* ---- Page ---- */
@@ -35,8 +47,8 @@
 html,
 body,
 body.full-width {
-    background: var(--ng-bg) none;
-    color: var(--ng-text);
+    background: var(--fuad-page) none;
+    color: var(--fuad-text);
     box-shadow: none;
 }
 
@@ -58,7 +70,7 @@ body #withmenus,
 body #contentframe { background: transparent none; }
 
 body {
-    font-family: var(--ng-body);
+    font-family: var(--fuad-body);
     font-size: 15px;
     -webkit-font-smoothing: antialiased;
 }
@@ -74,16 +86,16 @@ body input,
 body select,
 body textarea,
 body button {
-    font-family: var(--ng-body);
+    font-family: var(--fuad-body);
 }
 
 body h1,
 body h2,
 body h3,
 body .pagetitle h1 {
-    font-family: var(--ng-display);
+    font-family: var(--fuad-display);
     font-weight: 700;
-    color: var(--ng-text);
+    color: var(--fuad-text);
     background: none;
     border: 0;
 }
@@ -92,14 +104,14 @@ body .pagetitle h1 { letter-spacing: 0.02em; }
 
 body a:link,
 body a:visited,
-body a:active { color: var(--ng-accent); }
+body a:active { color: var(--fuad-lime); }
 
 body a:hover,
 body a:link:hover,
-body a:visited:hover { color: var(--ng-accent-hover); }
+body a:visited:hover { color: var(--fuad-lime-hover); }
 
 body .warning,
-body th.warning { color: var(--ng-red); }
+body th.warning { color: var(--fuad-bad); }
 
 /* ---- MFL's menus (until v2's own frame replaces them) ---- */
 
@@ -107,30 +119,30 @@ body .myfantasyleague_menu,
 body .myfantasyleague_menu ul,
 body .myfantasyleague_menu ul li ul,
 body .myfantasyleague_menu ul ul li {
-    background: var(--ng-bg);
-    border-color: var(--ng-line);
+    background: var(--fuad-page);
+    border-color: var(--fuad-hairline);
 }
 
-body .myfantasyleague_menu { border-bottom: 1px solid var(--ng-line); }
+body .myfantasyleague_menu { border-bottom: 1px solid var(--fuad-hairline); }
 
-body .myfantasyleague_menu ul li:hover a { color: var(--ng-text); }
+body .myfantasyleague_menu ul li:hover a { color: var(--fuad-text); }
 
 body .myfantasyleague_menu li:hover > a,
 body .myfantasyleague_menu ul li ul li:hover > a {
-    background: var(--ng-raised);
-    color: var(--ng-text);
+    background: var(--fuad-raised);
+    color: var(--fuad-text);
 }
 
 body .myfantasyleague_menu ul ul li a,
-body .myfantasyleague_menu ul ul li.has-sub a { border-color: var(--ng-line-soft); }
+body .myfantasyleague_menu ul ul li.has-sub a { border-color: var(--fuad-rule); }
 
 body .pageheader,
 body .pageheader a:link,
-body .pageheader a:visited { color: var(--ng-muted); }
+body .pageheader a:visited { color: var(--fuad-muted); }
 
 body #hsubmenu,
 body .myfantasyleague_tabmenu {
-    background: var(--ng-surface);
+    background: var(--fuad-panel);
     border: 0;
     border-radius: 12px;
 }
@@ -138,13 +150,13 @@ body .myfantasyleague_tabmenu {
 body .myfantasyleague_tabmenu ul#homepagetabs { border-bottom: 0; }
 
 body #hsubmenu ul li,
-body .myfantasyleague_tabmenu #homepagetabs li { border-color: var(--ng-line); }
+body .myfantasyleague_tabmenu #homepagetabs li { border-color: var(--fuad-hairline); }
 
 body #hsubmenu a,
 body .myfantasyleague_tabmenu #homepagetabs li a,
 body .myfantasyleague_menu ul li a {
-    color: var(--ng-muted);
-    font-family: var(--ng-display);
+    color: var(--fuad-muted);
+    font-family: var(--fuad-display);
     font-weight: 600;
     letter-spacing: 0.02em;
 }
@@ -153,7 +165,7 @@ body .myfantasyleague_menu ul li a {
 body .myfantasyleague_menu > label span,
 body .myfantasyleague_menu ul li label span,
 body .myfantasyleague_tabmenu > label span {
-    background: var(--ng-raised);
+    background: var(--fuad-raised);
     border-radius: 10px;
 }
 
@@ -162,30 +174,30 @@ body .myfantasyleague_menu > label span:after,
 body .myfantasyleague_menu ul li label span:before,
 body .myfantasyleague_menu ul li label span:after,
 body .myfantasyleague_tabmenu > label span:before,
-body .myfantasyleague_tabmenu > label span:after { background: var(--ng-accent); }
+body .myfantasyleague_tabmenu > label span:after { background: var(--fuad-lime); }
 
 body #hsubmenu ul li:hover,
-body .myfantasyleague_tabmenu #homepagetabs li:hover { background: var(--ng-raised); }
+body .myfantasyleague_tabmenu #homepagetabs li:hover { background: var(--fuad-raised); }
 
 body #hsubmenu ul li:hover a,
-body .myfantasyleague_tabmenu #homepagetabs li:hover a { color: var(--ng-text); }
+body .myfantasyleague_tabmenu #homepagetabs li:hover a { color: var(--fuad-text); }
 
 body .myfantasyleague_tabmenu #homepagetabs li.currenttab,
 body .myfantasyleague_tabmenu #homepagetabs li.currenttab:hover {
-    background: var(--ng-raised);
+    background: var(--fuad-raised);
     box-shadow: none;
 }
 
-body .myfantasyleague_tabmenu #homepagetabs li.currenttab a { color: var(--ng-accent); }
+body .myfantasyleague_tabmenu #homepagetabs li.currenttab a { color: var(--fuad-lime); }
 
 body .pagefooter {
-    background: var(--ng-bg);
-    border-top: 1px solid var(--ng-line);
-    color: var(--ng-muted);
+    background: var(--fuad-page);
+    border-top: 1px solid var(--fuad-hairline);
+    color: var(--fuad-muted);
 }
 
 body .pagefooter a:link,
-body .pagefooter a:visited { color: var(--ng-muted); }
+body .pagefooter a:visited { color: var(--fuad-muted); }
 
 /* ---- Panels: MFL's reports and home page modules ---- */
 
@@ -193,13 +205,13 @@ body .report,
 body div.mobile-wrap,
 body .playoffbracket,
 body #monthly_calendar {
-    background: var(--ng-surface) none !important;
+    background: var(--fuad-panel) none !important;
     border: 0;
-    border-radius: var(--ng-radius);
+    border-radius: var(--fuad-radius);
     border-spacing: 0;
     padding: 0;
     box-shadow: none;
-    color: var(--ng-text);
+    color: var(--fuad-text);
 }
 
 body div.mobile-wrap .report { border-radius: 0; }
@@ -207,11 +219,11 @@ body div.mobile-wrap .report { border-radius: 0; }
 body caption,
 body .homepagemodule caption,
 body .homepagecolumn .homepagemodule caption {
-    background: var(--ng-surface) none;
-    color: var(--ng-text);
+    background: var(--fuad-panel) none;
+    color: var(--fuad-text);
     border: 0;
-    border-radius: var(--ng-radius) var(--ng-radius) 0 0;
-    font-family: var(--ng-display);
+    border-radius: var(--fuad-radius) var(--fuad-radius) 0 0;
+    font-family: var(--fuad-display);
     font-size: 21px;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -231,18 +243,18 @@ body caption span {
 }
 
 body caption a:link,
-body caption a:visited { color: var(--ng-text) !important; }
+body caption a:visited { color: var(--fuad-text) !important; }
 
-body caption > span.module_expand { color: var(--ng-muted); }
+body caption > span.module_expand { color: var(--fuad-muted); }
 
 body th,
 body .oddtablerow th,
 body .eventablerow th {
     background: transparent none;
     box-shadow: none;
-    color: var(--ng-muted);
+    color: var(--fuad-muted);
     border: 0;
-    border-bottom: 1px solid var(--ng-line);
+    border-bottom: 1px solid var(--fuad-hairline);
     font-size: 12px;
     font-weight: 600;
     font-style: normal;
@@ -252,14 +264,14 @@ body .eventablerow th {
 }
 
 body th a:link,
-body th a:visited { color: var(--ng-muted); }
+body th a:visited { color: var(--fuad-muted); }
 
 body .report td { padding: 8px 10px; }
 
 body .oddtablerow,
 body .eventablerow {
     background: transparent none;
-    color: var(--ng-text) !important;
+    color: var(--fuad-text) !important;
 }
 
 body .report td { border: 0; box-shadow: none; color: inherit; }
@@ -269,7 +281,7 @@ body .report td { border: 0; box-shadow: none; color: inherit; }
 body .oddtablerow td,
 body .eventablerow td {
     border: 0;
-    border-bottom: 1px solid var(--ng-line-soft);
+    border-bottom: 1px solid var(--fuad-rule);
     box-shadow: none;
 }
 
@@ -279,31 +291,31 @@ body .eventablerow:last-child td { border-bottom: 0; }
 body .oddtablerow a:link,
 body .oddtablerow a:visited,
 body .eventablerow a:link,
-body .eventablerow a:visited { color: var(--ng-text); background: transparent none; }
+body .eventablerow a:visited { color: var(--fuad-text); background: transparent none; }
 
 body .report td a { background: transparent none; }
 
 body .oddtablerow a,
 body .eventablerow a {
-    text-decoration-color: var(--ng-field);
+    text-decoration-color: var(--fuad-field);
     text-underline-offset: 3px;
 }
 
 body .oddtablerow a:hover,
-body .eventablerow a:hover { color: var(--ng-accent); text-decoration-color: currentColor; }
+body .eventablerow a:hover { color: var(--fuad-lime); text-decoration-color: currentColor; }
 
 body .newposition td,
-body .newposition th { border-top: 1px solid var(--ng-line) !important; }
+body .newposition th { border-top: 1px solid var(--fuad-hairline) !important; }
 
-body tr.myfranchise { background: var(--ng-raised); }
+body tr.myfranchise { background: var(--fuad-raised); }
 
 /* skins color this list's plain names (the commissioner's) with id rules */
 body #owner_activity td,
-body #owner_activity td.franchisename { color: var(--ng-text); }
+body #owner_activity td.franchisename { color: var(--fuad-text); }
 
 body a.myfranchise,
 body a.myfranchise:link,
-body a.myfranchise:visited { color: var(--ng-accent); }
+body a.myfranchise:visited { color: var(--fuad-lime); }
 
 body td.salary,
 body td.points,
@@ -313,32 +325,32 @@ body td.pa { font-variant-numeric: tabular-nums; }
 
 body .reportfooter {
     background: transparent;
-    color: var(--ng-muted);
-    border-top: 1px solid var(--ng-line);
+    color: var(--fuad-muted);
+    border-top: 1px solid var(--fuad-hairline);
 }
 
 body .reportfooter a:link,
-body .reportfooter a:visited { color: var(--ng-accent); }
+body .reportfooter a:visited { color: var(--fuad-lime); }
 
 body span.reportnavigation,
-body span.reportnavigation a { color: var(--ng-muted); }
+body span.reportnavigation a { color: var(--fuad-muted); }
 
 body .reportnavigation .currentweek,
-body .reportnavigationheader { color: var(--ng-accent); }
+body .reportnavigationheader { color: var(--fuad-lime); }
 
 body .homepagemessage {
-    background: var(--ng-surface);
+    background: var(--fuad-panel);
     border: 0;
-    border-radius: var(--ng-radius);
+    border-radius: var(--fuad-radius);
 }
 
 body #standings h3,
 body .homepagecolumn #standings h3,
 body .homepagecolumn #brief_standings h3 {
-    background: var(--ng-raised) none;
+    background: var(--fuad-raised) none;
     border: 0;
     border-radius: 8px;
-    color: var(--ng-text);
+    color: var(--fuad-text);
 }
 
 /* ---- Forms ---- */
@@ -348,9 +360,9 @@ body .pagebody input[type="number"],
 body .pagebody input[type="password"],
 body .pagebody select,
 body .pagebody textarea {
-    background: var(--ng-bg);
-    color: var(--ng-text);
-    border: 1px solid var(--ng-field);
+    background: var(--fuad-page);
+    color: var(--fuad-text);
+    border: 1px solid var(--fuad-field);
     border-radius: 10px;
     padding: 8px 10px;
     font-size: 16px;
@@ -359,15 +371,15 @@ body .pagebody textarea {
 body .pagebody input:focus,
 body .pagebody select:focus,
 body .pagebody textarea:focus {
-    outline: 2px solid var(--ng-accent);
+    outline: 2px solid var(--fuad-lime);
     outline-offset: 1px;
 }
 
 body input[type="button"],
 body input[type="submit"],
 body .pagebody button {
-    background: var(--ng-accent);
-    color: var(--ng-bg);
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
     border: 0;
     border-radius: 10px;
     min-height: 40px;
@@ -379,22 +391,22 @@ body .pagebody button {
 body input[type="button"]:hover,
 body input[type="submit"]:hover,
 body .pagebody button:hover {
-    background: var(--ng-accent-hover);
-    color: var(--ng-bg);
+    background: var(--fuad-lime-hover);
+    color: var(--fuad-on-lime);
 }
 
 body input[type="checkbox"],
-body input[type="radio"] { accent-color: var(--ng-accent); }
+body input[type="radio"] { accent-color: var(--fuad-lime); }
 
 /* ---- Chat, live scoring, calendar, brackets ---- */
 
-body #league_chat b { color: var(--ng-text); }
+body #league_chat b { color: var(--fuad-text); }
 
-body #league_chat td:first-child b { color: var(--ng-accent); }
+body #league_chat td:first-child b { color: var(--fuad-lime); }
 
-body tr.total td { color: var(--ng-accent); }
+body tr.total td { color: var(--fuad-lime); }
 
-body tr.players_yet_to_play td { color: var(--ng-orange); }
+body tr.players_yet_to_play td { color: var(--fuad-caution); }
 
 body tr.total td,
 body tr.total th,
@@ -407,34 +419,34 @@ body tr.player_minutes_remaining th {
     background: transparent none;
     box-shadow: none;
     border: 0;
-    border-top: 1px solid var(--ng-line-soft);
+    border-top: 1px solid var(--fuad-rule);
 }
 
 body #body_live_scoring .grand_total td {
     background: transparent;
-    color: var(--ng-accent);
-    border-top: 2px solid var(--ng-accent);
+    color: var(--fuad-lime);
+    border-top: 2px solid var(--fuad-lime);
 }
 
-body #monthly_calendar td { border: 1px solid var(--ng-line-soft); }
+body #monthly_calendar td { border: 1px solid var(--fuad-rule); }
 
 body #monthly_calendar td .calendarday {
-    background: var(--ng-raised);
+    background: var(--fuad-raised);
     border: 0;
-    color: var(--ng-text);
+    color: var(--fuad-text);
 }
 
-body #monthly_calendar td.today { border: 2px solid var(--ng-accent); }
+body #monthly_calendar td.today { border: 2px solid var(--fuad-lime); }
 
 body .playoffbracket td { background: transparent; }
 
 body .playoffbracket td.topteam,
-body .playoffbracket td.bottomteam { border-bottom: 2px solid var(--ng-line); }
+body .playoffbracket td.bottomteam { border-bottom: 2px solid var(--fuad-hairline); }
 
 body .playoffbracket td.bracket,
-body .playoffbracket td.bottomteam { border-right: 2px solid var(--ng-line); }
+body .playoffbracket td.bottomteam { border-right: 2px solid var(--fuad-hairline); }
 
-body .playoffbracket td b { color: var(--ng-accent); }
+body .playoffbracket td b { color: var(--fuad-lime); }
 
 /* ---- MFL's player popup ---- */
 
@@ -458,43 +470,43 @@ body .mflModal-content th { text-align: left; }
 
 body .mflModal-content,
 body #MFLPlayerPopupContainer .report {
-    background: var(--ng-surface) !important;
-    color: var(--ng-text);
-    border-radius: var(--ng-radius);
+    background: var(--fuad-panel) !important;
+    color: var(--fuad-text);
+    border-radius: var(--fuad-radius);
 }
 
 body .mflModal-content button,
 body #MFLPlayerPopupClose {
-    background: var(--ng-raised);
-    color: var(--ng-text);
+    background: var(--fuad-raised);
+    color: var(--fuad-text);
     border: 0;
     border-radius: 8px;
     min-height: 32px;
 }
 
 body ul.MFLPlayerPopupTab {
-    background: var(--ng-surface);
-    border-bottom: 1px solid var(--ng-line);
+    background: var(--fuad-panel);
+    border-bottom: 1px solid var(--fuad-hairline);
 }
 
-body ul.MFLPlayerPopupTab li { border-color: var(--ng-line); }
+body ul.MFLPlayerPopupTab li { border-color: var(--fuad-hairline); }
 
-body ul.MFLPlayerPopupTab li a { color: var(--ng-muted); }
+body ul.MFLPlayerPopupTab li a { color: var(--fuad-muted); }
 
 body ul.MFLPlayerPopupTab li a:hover,
 body ul.MFLPlayerPopupTab li a.active {
-    background: var(--ng-raised);
-    color: var(--ng-accent);
+    background: var(--fuad-raised);
+    color: var(--fuad-lime);
 }
 
 body #tooltip {
-    background: var(--ng-raised) !important;
-    color: var(--ng-text) !important;
+    background: var(--fuad-raised) !important;
+    color: var(--fuad-text) !important;
     border-radius: 8px;
 }
 
 body #tooltip:after,
-body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
+body #tooltip.top:after { border-top-color: var(--fuad-raised) !important; }
 
 /* ---- From v1, still needed until v2's frame replaces MFL's menus ---- */
 
@@ -520,7 +532,7 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 .fuad-note {
     margin: 0.75em 0.25em 0.25em;
     font-size: 0.85em;
-    color: var(--ng-muted);
+    color: var(--fuad-muted);
 }
 
 .fuad-loading,
@@ -529,14 +541,14 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
     margin: 1em 0.25em;
 }
 
-.fuad-loading { color: var(--ng-muted); }
+.fuad-loading { color: var(--fuad-muted); }
 
 .fuad-error,
 .fuad-unavailable {
     padding: 0.75em 1em;
     border-radius: 10px;
-    background: rgba(255, 107, 107, 0.12);
-    color: var(--ng-text);
+    background: var(--fuad-bad-tint);
+    color: var(--fuad-text);
 }
 
 /* Shown only in this browser while previewing another version. */
@@ -547,18 +559,44 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
     z-index: 10000;
     padding: 8px 12px;
     border-radius: 10px;
-    background: var(--ng-accent);
-    color: var(--ng-bg);
-    font: 600 13px/1.3 var(--ng-body);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
+    font: 600 13px/1.3 var(--fuad-body);
+    box-shadow: 0 2px 12px var(--fuad-shadow);
 }
 
-#fuad-preview a { color: var(--ng-bg); text-decoration: underline; }
+#fuad-preview a { color: var(--fuad-on-lime); text-decoration: underline; }
 
 /* In the beta, League Alerts is the way back; the bar shows only once something has failed. */
 .fuad-beta:not(.fuad-trouble) #fuad-preview { display: none; }
 
-/* ---- The frame: sections, views and the team sheet (ui/frame.js) ---- */
+/* ---- Focus and tap areas, on every page ---- */
+
+/* a lime ring on every control reached by keyboard */
+body a:focus-visible,
+body button:focus-visible,
+body input:focus-visible,
+body select:focus-visible,
+body textarea:focus-visible,
+body summary:focus-visible,
+body [tabindex]:focus-visible {
+    outline: 2px solid var(--fuad-lime);
+    outline-offset: 2px;
+}
+
+.fuad-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---- The frame (ui/frame.js) ---- */
 
 /* MFL's own navigation goes only once the frame is drawn */
 .fuad-framed body .myfantasyleague_menu,
@@ -566,80 +604,145 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
 .fuad-framed body #hsubmenu,
 .fuad-framed body .myfantasyleague_tabmenu { display: none !important; }
 
-#fuad-frame { font-family: var(--ng-body); color: var(--ng-text); }
+#fuad-frame,
+.fuad-layer {
+    font-family: var(--fuad-body);
+    color: var(--fuad-text);
+    text-align: left;
+}
 
-#fuad-frame a { text-decoration: none; }
+#fuad-frame a,
+.fuad-layer a { text-decoration: none; }
 
 .fuad-top {
     display: flex;
     align-items: center;
-    gap: 8px 24px;
+    gap: 8px 20px;
     max-width: 1240px;
     min-height: 64px;
     margin: 0 auto;
-    padding: 8px 16px;
+    padding: 0 16px;
     box-sizing: border-box;
+    border-bottom: 1px solid var(--fuad-hairline);
+}
+
+/* the frame's buttons set every property MFL's button styles touch */
+#fuad-frame button,
+.fuad-layer button {
+    margin: 0;
+    font-family: var(--fuad-body);
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+#fuad-frame .fuad-menu-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 12px 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--fuad-panel);
+    color: var(--fuad-text);
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .fuad-brand {
-    font: 700 26px/1 var(--ng-display);
-    letter-spacing: 0.04em;
-    color: var(--ng-text) !important;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
 }
 
-.fuad-title { display: none; }
+.fuad-wordmark {
+    font: 700 26px/1 var(--fuad-display);
+    letter-spacing: 0.04em;
+    color: var(--fuad-text);
+}
 
-.fuad-sections-top { display: flex; flex: 1; flex-wrap: wrap; gap: 4px; }
+.fuad-context {
+    display: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fuad-muted);
+}
+
+.fuad-context:empty { display: none !important; }
+
+.fuad-sections-top { display: flex; flex: 1; flex-wrap: wrap; gap: 4px; margin-left: 8px; }
 
 .fuad-sections-top a {
-    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    box-sizing: border-box;
     border-radius: 10px;
-    color: var(--ng-muted) !important;
+    color: var(--fuad-muted) !important;
     font-weight: 600;
     font-size: 15px;
 }
 
 .fuad-sections-top a svg { display: none; }
 
-.fuad-sections-top a:hover { color: var(--ng-text) !important; }
+.fuad-sections-top a:hover { color: var(--fuad-text) !important; }
 
 .fuad-sections-top a[aria-current="page"] {
-    background: var(--ng-raised);
-    color: var(--ng-accent) !important;
+    background: var(--fuad-raised);
+    color: var(--fuad-lime) !important;
 }
 
-.fuad-team {
+#fuad-frame .fuad-team {
     flex: none;
     width: 44px;
     height: 44px;
+    min-height: 44px;
     padding: 0;
     border: 0;
     border-radius: 22px;
-    overflow: hidden;
-    background: var(--ng-accent);
-    color: var(--ng-bg);
-    font: 700 17px/1 var(--ng-display);
-    cursor: pointer;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
+    font: 700 18px/1 var(--fuad-display);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.fuad-team img { width: 100%; height: 100%; object-fit: cover; }
+.fuad-login {
+    flex: none;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    border-radius: 22px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font-weight: 700;
+    font-size: 15px;
+}
 
+/* view segments: the selected one lime with a bar under it, the fill subtle */
 .fuad-views {
     display: flex;
     gap: 4px;
     width: calc(100% - 32px);
     max-width: calc(1240px - 32px);
-    margin: 0 auto 12px;
+    margin: 16px auto;
     padding: 4px;
     box-sizing: border-box;
-    background: var(--ng-surface);
+    background: var(--fuad-panel);
     border-radius: 12px;
     overflow-x: auto;
     scrollbar-width: none;
 }
+
+.fuad-views[hidden] { display: none; }
 
 .fuad-views a {
     flex: 1 0 auto;
@@ -649,21 +752,38 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ng-muted) !important;
+    color: var(--fuad-muted) !important;
     font-weight: 600;
     font-size: 14px;
     white-space: nowrap;
+    /* a 44 px tap area around the 36 px segment */
+    position: relative;
 }
 
-.fuad-views a[aria-current="page"] { background: var(--ng-line); color: var(--ng-text) !important; }
+.fuad-views a::after { content: ""; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
+
+.fuad-views a[aria-current="page"] {
+    background: var(--fuad-raised);
+    color: var(--fuad-lime) !important;
+    box-shadow: inset 0 -2px 0 var(--fuad-lime);
+}
+
+/* more than four views would scroll sideways as chips; none has more yet */
+@media (min-width: 48.01em) {
+    .fuad-views { width: auto; max-width: 460px; margin-left: max(16px, calc((100% - 1240px) / 2 + 16px)); }
+}
 
 .fuad-sections-bottom { display: none; }
 
 @media (max-width: 48em) {
-    .fuad-top { gap: 8px; width: auto; min-height: 56px; padding: 8px 16px 4px; }
-    .fuad-brand, .fuad-sections-top { display: none; }
-    .fuad-title { display: block; flex: 1; font: 700 30px/1 var(--ng-display); }
-    .fuad-views { margin: 4px 16px 12px; width: auto; }
+    .fuad-top { gap: 10px; min-height: 0; padding: 14px 16px 6px; border-bottom: 0; }
+    #fuad-frame .fuad-menu-button { width: 44px; padding: 0; justify-content: center; border-radius: 12px; }
+    .fuad-menu-word,
+    .fuad-sections-top { display: none; }
+    .fuad-brand { flex: 1; min-width: 0; }
+    .fuad-wordmark { font-size: 24px; }
+    .fuad-context { display: block; }
+    .fuad-views { margin: 6px 16px 12px; width: auto; }
 
     .fuad-sections-bottom {
         position: fixed;
@@ -674,8 +794,8 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
         padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-        background: var(--ng-bg);
-        border-top: 1px solid var(--ng-line);
+        background: var(--fuad-page);
+        border-top: 1px solid var(--fuad-hairline);
     }
 
     .fuad-sections-bottom a {
@@ -685,158 +805,463 @@ body #tooltip.top:after { border-top-color: var(--ng-raised) !important; }
         justify-content: center;
         gap: 3px;
         min-height: 48px;
-        color: var(--ng-muted) !important;
-        font-size: 11px;
+        color: var(--fuad-muted) !important;
+        font-size: 12px;
         font-weight: 600;
     }
 
-    .fuad-sections-bottom a[aria-current="page"] { color: var(--ng-accent) !important; }
+    .fuad-sections-bottom a[aria-current="page"] { color: var(--fuad-lime) !important; }
 
     .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
     .fuad-framed #fuad-preview { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
 
-/* the team sheet: slides up on phones, a panel at the right on desktop */
-.fuad-sheet {
+/* ---- Dialogs: the site menu, the team sheet, the player popup ---- */
+
+.fuad-layer {
     position: fixed;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     z-index: 10001;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: flex-end;
+    background: var(--fuad-scrim);
 }
 
-.fuad-sheet[hidden] { display: none; }
+.fuad-layer[hidden] { display: none; }
 
-.fuad-sheet-open body { overflow: hidden; }
+.fuad-dialog-open body { overflow: hidden; }
 
-.fuad-sheet-panel {
-    width: min(420px, 100%);
-    height: 100%;
-    overflow-y: auto;
-    box-sizing: border-box;
-    padding: 16px 20px 32px;
-    background: var(--ng-surface);
+.fuad-layer h2,
+.fuad-layer h3 {
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    text-transform: none;
 }
 
-.fuad-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fuad-layer h2 { font: 700 26px/1.1 var(--fuad-display); color: var(--fuad-text); }
 
-.fuad-sheet-head h2 { margin: 0; font: 700 26px/1.1 var(--ng-display); }
+.fuad-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-.fuad-sheet-close {
+.fuad-layer .fuad-close {
+    flex: none;
     width: 44px;
     height: 44px;
+    min-height: 44px;
+    padding: 0;
     border: 0;
     border-radius: 22px;
-    background: var(--ng-raised);
-    color: var(--ng-text);
-    font-size: 18px;
-    cursor: pointer;
-}
-
-.fuad-sheet-actions { display: flex; gap: 8px; margin: 14px 0 6px; }
-
-#fuad-frame .fuad-button {
-    flex: 1;
-    min-height: 44px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-text);
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    background: var(--ng-accent);
-    color: var(--ng-bg) !important;
-    font-weight: 600;
 }
 
-#fuad-frame .fuad-button-quiet { background: var(--ng-raised); color: var(--ng-text) !important; }
+.fuad-grabber {
+    display: none;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--fuad-grabber);
+}
 
-.fuad-switch {
+.fuad-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+.fuad-meta { font-size: 13px; color: var(--fuad-muted); }
+
+.fuad-muted { color: var(--fuad-muted); }
+
+.fuad-faint { color: var(--fuad-faint); }
+
+.fuad-soft { color: var(--fuad-soft); }
+
+.fuad-good { color: var(--fuad-good); }
+
+.fuad-bad { color: var(--fuad-bad); }
+
+/* the site menu: a drawer from the left */
+.fuad-drawer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(380px, calc(100% - 48px));
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: var(--fuad-panel);
+    box-shadow: 8px 0 32px var(--fuad-shadow);
+}
+
+.fuad-drawer .fuad-dialog-head { padding: 16px 16px 8px; }
+
+.fuad-drawer-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fuad-search {
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin: 10px 0;
-    padding: 4px;
-    background: var(--ng-bg);
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--fuad-field);
     border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
+    background: var(--fuad-page);
+    color: var(--fuad-muted);
 }
 
-.fuad-switch > span:first-child { padding: 0 10px; color: var(--ng-muted); font-weight: 500; }
+.fuad-search:focus-within { border-color: var(--fuad-lime); }
 
-.fuad-switch a,
-.fuad-switch [aria-current] {
+.fuad-layer .fuad-search input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    font: 500 16px var(--fuad-body);
+}
+
+.fuad-layer input::placeholder { color: var(--fuad-muted); }
+
+.fuad-layer input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+.fuad-drawer-body > .fuad-label { margin: 4px 0 0; text-align: left; }
+
+.fuad-menu-group { border-top: 1px solid var(--fuad-rule); }
+
+.fuad-menu-group[hidden] { display: none; }
+
+.fuad-layer .fuad-menu-toggle {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.fuad-menu-links { list-style: none; margin: 0; padding: 0 0 8px 12px; }
+
+.fuad-menu-links[hidden],
+.fuad-menu-links li[hidden] { display: none; }
+
+.fuad-menu-links li { margin: 0; padding: 0; }
+
+.fuad-menu-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--fuad-soft) !important;
+    font-size: 15px;
+}
+
+.fuad-menu-links a:hover { color: var(--fuad-text) !important; }
+
+.fuad-menu-none { margin: 6px 0 0; font-size: 14px; }
+
+/* the team sheet: drops from the button on desktop, slides up on phones */
+.fuad-sheet {
+    position: absolute;
+    top: 64px;
+    right: max(16px, calc((100% - 1240px) / 2 + 16px));
+    width: 340px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 18px;
+    box-shadow: 0 16px 40px var(--fuad-shadow);
+}
+
+.fuad-sheet h2 { font-size: 24px; }
+
+.fuad-sheet-actions { display: flex; gap: 8px; }
+
+.fuad-sheet-actions:empty { display: none; }
+
+.fuad-layer .fuad-button {
+    flex: 1;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font-weight: 700;
+}
+
+.fuad-layer .fuad-button-quiet { background: var(--fuad-quiet); color: var(--fuad-text) !important; font-weight: 600; }
+
+.fuad-switch { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+
+.fuad-switch-options {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--fuad-page);
+}
+
+.fuad-switch-options a,
+.fuad-switch-options [aria-current] {
     flex: 1;
     min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 9px;
-    color: var(--ng-muted) !important;
+    font-weight: 600;
+    color: var(--fuad-muted) !important;
+    position: relative;
 }
 
-.fuad-switch [aria-current] { background: var(--ng-line); color: var(--ng-text); }
+.fuad-switch-options a::after { content: ""; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
 
-#fuad-frame .fuad-sheet h3 {
-    margin: 22px 0 6px;
-    font: 600 12px/1.2 var(--ng-body);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    text-align: left;
-    color: var(--ng-muted);
+.fuad-switch-options [aria-current] { background: var(--fuad-quiet); color: var(--fuad-text) !important; }
+
+@media (max-width: 48em) {
+    .fuad-grabber { display: block; }
+    .fuad-sheet {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: auto;
+        padding: 10px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+        border-radius: 22px 22px 0 0;
+        box-shadow: 0 -8px 32px var(--fuad-shadow);
+    }
+    .fuad-sheet h2 { font-size: 26px; }
+    .fuad-drawer { width: min(330px, calc(100% - 48px)); border-radius: 0 22px 22px 0; }
 }
 
-.fuad-sheet .fuad-sheet-links {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 12px;
-}
+/* ---- Panels: the loading and error pattern (ui/panel.js) ---- */
 
-.fuad-sheet .fuad-sheet-links li { margin: 0; padding: 0; }
+.fuad-placeholder { display: flex; flex-direction: column; gap: 12px; padding: 10px 0 12px; }
 
-.fuad-sheet-links a {
-    display: block;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--ng-line-soft);
-    color: var(--ng-text) !important;
+.fuad-placeholder span { display: block; height: 14px; border-radius: 7px; background: var(--fuad-quiet); }
+
+.fuad-as-of { margin: 0 0 6px; font-size: 13px; color: var(--fuad-muted); }
+
+.fuad-as-of[hidden] { display: none; }
+
+.fuad-failed {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0 10px;
     font-size: 15px;
 }
 
-.fuad-sheet-links li[hidden] { display: none; }
-
-.fuad-sheet-filter {
-    width: 100%;
-    box-sizing: border-box;
+.fuad-panel .fuad-quiet,
+.fuad-layer .fuad-quiet {
     min-height: 44px;
-    margin-bottom: 6px;
-    padding: 0 12px;
-    border: 1px solid var(--ng-field);
-    border-radius: 10px;
-    background: var(--ng-bg);
-    color: var(--ng-text);
-    font: 16px var(--ng-body);
-}
-
-.fuad-sheet-menu details { border-bottom: 1px solid var(--ng-line-soft); }
-
-.fuad-sheet-menu details[hidden] { display: none; }
-
-.fuad-sheet-menu summary {
-    padding: 12px 0;
+    padding: 0 16px;
+    border: 1px solid var(--fuad-field);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--fuad-text);
+    font-size: 15px;
     font-weight: 600;
-    cursor: pointer;
 }
 
-.fuad-sheet-menu .fuad-sheet-links { padding-bottom: 8px; }
+/* ---- The player popup (ui/popup.js): a bottom sheet on phones, a dialog on desktop ---- */
+
+.fuad-popup-layer { overflow-y: auto; padding: 64px 24px; box-sizing: border-box; }
+
+.fuad-popup {
+    position: relative;
+    max-width: 860px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 28px 28px;
+    border-radius: 20px;
+    background: var(--fuad-panel);
+    font-size: 15px;
+    line-height: 1.35;
+    outline: 0;
+}
+
+.fuad-popup-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+
+.fuad-popup-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.fuad-popup h2 { font-size: 36px; line-height: 1.05; }
+
+.fuad-popup-meta { font-size: 14px; }
+
+.fuad-popup-body,
+.fuad-popup-body > .fuad-panel-body { display: flex; flex-direction: column; gap: 20px; }
+
+.fuad-popup p { margin: 0; }
+
+.fuad-popup-injury { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -12px !important; }
+
+.fuad-tag { padding: 2px 8px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+
+.fuad-tag-bad { background: var(--fuad-bad-tint); color: var(--fuad-bad); }
+
+.fuad-tag-caution { background: var(--fuad-caution-tint); color: var(--fuad-caution); }
+
+.fuad-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+
+.fuad-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--fuad-page);
+    min-width: 0;
+}
+
+.fuad-tile-value { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.fuad-cut { margin-top: -8px !important; font-size: 14px; color: var(--fuad-muted); font-variant-numeric: tabular-nums; }
+
+.fuad-cut strong { color: var(--fuad-text); }
+
+.fuad-cut strong.fuad-good { color: var(--fuad-good); }
+
+.fuad-cut strong.fuad-bad { color: var(--fuad-bad); }
+
+.fuad-popup-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px 36px; align-items: start; }
+
+.fuad-popup-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.fuad-popup-col > section { width: 100%; box-sizing: border-box; }
+
+.fuad-popup-col:empty { display: none; }
+
+.fuad-popup-subhead { display: flex; justify-content: space-between; margin: 0 0 4px !important; font: 600 12px/1.3 var(--fuad-body) !important; color: var(--fuad-muted) !important; letter-spacing: 0.04em !important; text-transform: uppercase !important; }
+
+.fuad-popup-sum { color: var(--fuad-text); letter-spacing: 0; text-transform: none; }
+
+.fuad-news { border-top: 1px solid var(--fuad-rule); }
+
+.fuad-layer .fuad-news-toggle {
+    width: 100%;
+    min-height: 44px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+.fuad-news-toggle > span:first-child { display: flex; flex-direction: column; gap: 1px; }
+
+.fuad-news-headline { font-weight: 600; font-size: 15px; line-height: 1.3; }
+
+.fuad-news-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--fuad-page);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.fuad-news-body[hidden] { display: none; }
+
+.fuad-news-body .fuad-panel-body { display: flex; flex-direction: column; gap: 8px; }
+
+.fuad-more {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fuad-lime) !important;
+}
+
+.fuad-week {
+    display: grid;
+    grid-template-columns: 44px minmax(64px, auto) minmax(0, 1fr) 44px;
+    gap: 10px;
+    align-items: center;
+    min-height: 34px;
+    border-top: 1px solid var(--fuad-rule);
+    font-size: 14px;
+}
+
+.fuad-bar { height: 6px; border-radius: 3px; background: var(--fuad-quiet); }
+
+.fuad-bar span { display: block; height: 6px; border-radius: 3px; background: var(--fuad-faint); }
+
+.fuad-week-pts { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.fuad-bio {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 16px;
+    margin: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--fuad-rule);
+    font-size: 14px;
+}
+
+.fuad-bio dt { color: var(--fuad-muted); font-weight: 400; }
+
+.fuad-bio dd { margin: 0; }
 
 @media (max-width: 48em) {
-    .fuad-sheet { align-items: flex-end; }
-    .fuad-sheet-panel { width: 100%; height: auto; max-height: 88vh; border-radius: 18px 18px 0 0; padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
+    .fuad-popup-layer { padding: 48px 0 0; }
+    .fuad-popup {
+        min-height: 100%;
+        gap: 18px;
+        padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+        border-radius: 22px 22px 0 0;
+    }
+    .fuad-popup h2 { font-size: 30px; }
+    /* one column: news, then the season, then the bio */
+    .fuad-popup-cols { display: flex; flex-direction: column; gap: 18px; }
+    .fuad-popup-col { display: contents; }
+    .fuad-popup-col section[aria-labelledby="fuad-popup-bio"] { order: 2; }
+    .fuad-popup-weeks { order: 1; }
+    .fuad-popup-body,
+    .fuad-popup-body > .fuad-panel-body { gap: 18px; }
 }
