@@ -187,10 +187,10 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
-    // a message board topic: MFL's page, restyled
-    if (context && here.path === "mb" && document.querySelector("div.frm.pst")) {
-        await import("./topic.js").then(({restyleTopic}) => restyleTopic()).catch((error) => {
-            console.error("[fuad] couldn't restyle the topic:", error);
+    // the message board's topic and reply pages: MFL's, restyled
+    if (context && here.path === "mb" && document.querySelector("div.frm.pst, form.rpl")) {
+        await import("./topic.js").then(({restyleReply, restyleTopic}) => (document.querySelector("form.rpl") ? restyleReply() : restyleTopic())).catch((error) => {
+            console.error("[fuad] couldn't restyle the message board page:", error);
             onTrouble();
         });
         return false;

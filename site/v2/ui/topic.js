@@ -1,7 +1,8 @@
-// A message board topic (MFL's `mb/topic_show.pl`), restyled: each post becomes a card (avatar, team,
-// date, text, Reply and Quote), replies indented under the post they answer, and MFL's icons go.
-// The posts are MFL's own nodes moved into the cards, so its links and anchors keep working; the
-// page is marked `fuad-topic` only once it's done, so a page v2 can't read stays as MFL drew it.
+// The message board's topic and reply pages (MFL's `mb/topic_show.pl` and `mb/post_add.pl`),
+// restyled. A topic's posts become cards (avatar, team, date, text, Reply and Quote), replies indented
+// under the post they answer, MFL's icons gone; the reply page shows the post being answered, then
+// the form. MFL's own nodes move into v2's markup, so its links, fields and buttons keep working; the
+// page is marked only once it's done, so a page v2 can't read stays as MFL drew it.
 
 import {esc} from "./html.js";
 
@@ -104,5 +105,76 @@ export function restyleTopic(doc = document) {
         post.replaceChildren(cards[index]);
     });
     doc.documentElement.classList.add("fuad-topic");
+    return true;
+}
+
+// MFL's formatting buttons by the tag they insert, as v2 labels them; the smileys are left out
+const FORMATS = {b: "B", i: "I", tt: "tt", "url=": "Link", img: "Image", video: "Video"};
+
+// true when the reply page was restyled
+export function restyleReply(doc = document) {
+    const form = doc.querySelector("form.rpl");
+    const up = doc.querySelector("span.nav a[href*='topic_show']");
+    const bars = [...doc.querySelectorAll("th.messageboardbar")].map((th) => th.closest("table"));
+    const body = form && form.querySelector("textarea[name=body]");
+    const post = form && form.querySelector("input[type=submit][name=add]");
+    const preview = form && form.querySelector("input[type=submit][name=preview]");
+    const notify = form && form.querySelector("input[type=checkbox][name=notify]");
+    if (!form || !up || !bars.length || bars.some((table) => !table) || !body || !post || !preview) {
+        return false;
+    }
+    // a field v2 doesn't know (a new topic's subject) would be lost, so such a form stays MFL's
+    const known = [body, post, preview, notify].filter(Boolean);
+    if ([...form.querySelectorAll("input:not([type=hidden]), textarea, select")].some((field) => !known.includes(field))) {
+        return false;
+    }
+    const formats = [...form.querySelectorAll("button.tbt")].map((button) => {
+        const tag = ((button.getAttribute("onclick") || "").match(/insertTags\("([^"]+)"/) || [])[1];
+        return tag && FORMATS[tag] ? {button, label: FORMATS[tag]} : null;
+    }).filter(Boolean);
+    const answered = [...doc.querySelectorAll("div.frm")].find((frm) => !form.contains(frm) && /In Response to/i.test((frm.querySelector(".hcl") || {}).textContent || ""));
+    const answeredText = answered && answered.querySelector(".ccl");
+    const topic = clean([...bars[0].querySelector("th.messageboardbar").childNodes].filter((node) => !(node.classList && node.classList.contains("htt"))).map((node) => node.textContent).join(" "));
+
+    const header = doc.createElement("div");
+    header.className = "fuad-reply-head";
+    header.innerHTML = `<a href="${esc(up.getAttribute("href"))}">‹ ${esc(topic || "Back to the topic")}</a><h2>Reply</h2>`;
+    let card = null;
+    if (answered && answeredText) {
+        card = doc.createElement("article");
+        card.className = "fuad-reply-to";
+        card.innerHTML = `<span class="fuad-label"></span><div class="fuad-post-text"></div>`;
+        card.querySelector(".fuad-label").textContent = `In response to ${clean(answered.querySelector(".hcl").textContent.replace(/In Response to/i, ""))}`;
+        card.querySelector(".fuad-post-text").append(...answeredText.childNodes);
+    }
+    const fields = doc.createElement("div");
+    fields.className = "fuad-reply-form";
+    fields.innerHTML = `<div class="fuad-reply-formats" role="group" aria-label="Formatting"></div><label class="fuad-reply-text"><span class="fuad-label">Your reply</span></label><div class="fuad-reply-buttons"></div>`;
+    formats.forEach(({button, label}) => {
+        button.textContent = label;
+        button.dataset.format = label;
+        fields.querySelector(".fuad-reply-formats").append(button);
+    });
+    fields.querySelector(".fuad-reply-text").append(body);
+    const buttons = fields.querySelector(".fuad-reply-buttons");
+    if (notify) {
+        const label = doc.createElement("label");
+        label.className = "fuad-reply-notify";
+        label.append(notify, " Email me replies");
+        buttons.append(label);
+    }
+    preview.classList.add("fuad-reply-preview");
+    post.classList.add("fuad-reply-post");
+    buttons.append(preview, post);
+    fields.append(...form.querySelectorAll("input[type=hidden]"));
+
+    form.replaceChildren(fields);
+    form.before(header);
+    if (card) {
+        form.before(card);
+        answered.remove();
+    }
+    bars.forEach((table) => table.classList.add("fuad-topic-bar"));
+    doc.documentElement.classList.add("fuad-reply");
     return true;
 }
