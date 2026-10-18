@@ -1042,6 +1042,11 @@ body [tabindex]:focus-visible {
 
 .fuad-layer .fuad-button-quiet { background: var(--fuad-quiet); color: var(--fuad-text) !important; font-weight: 600; }
 
+/* an action that isn't the screen's point (the popup's Rosters actions): lime, but outlined */
+.fuad-layer .fuad-button-outline { background: transparent; border: 1px solid var(--fuad-lime); color: var(--fuad-lime) !important; font-weight: 600; }
+
+.fuad-layer .fuad-button-outline:hover { background: var(--fuad-lime-tint); }
+
 .fuad-switch { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 
 .fuad-switch-options {

@@ -126,7 +126,7 @@ function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
         : ownerId ? [["Propose a trade", actions.trade && actions.trade(ownerId)]]
         : [["Add", actions.add]];
     const shown = links.filter(([, href]) => href);
-    return shown.length ? `<div class="fuad-popup-actions">${shown.map(([label, href]) => `<a class="fuad-button fuad-button-quiet" href="${esc(href)}">${esc(label)}</a>`).join("")}</div>` : "";
+    return shown.length ? `<div class="fuad-popup-actions">${shown.map(([label, href]) => `<a class="fuad-button fuad-button-outline" href="${esc(href)}">${esc(label)}</a>`).join("")}</div>` : "";
 }
 
 function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek, actions = null}) {
