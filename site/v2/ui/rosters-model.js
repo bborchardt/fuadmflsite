@@ -53,7 +53,8 @@ export function penaltiesOf(team, salaryAdjustments) {
     const charged = asArray(salaryAdjustments && salaryAdjustments.salaryAdjustment)
         .filter((adjustment) => adjustment.franchise_id === team.franchiseId)
         .map(readAdjustment);
-    const pending = (team.pendingDroppedPlayers || []).filter((player) => player.capPenalty > 0)
+    // a cut already charged is in MFL's adjustments, not owed again
+    const pending = (team.pendingDroppedPlayers || []).filter((player) => player.capPenalty > 0 && !player.penaltyCharged)
         .map((player) => ({who: player.fullName, when: "", terms: `${yearsText(player.years)} left at ${dollars(player.salary)} · not yet charged`, amount: player.capPenalty}));
     return charged.concat(pending);
 }
@@ -265,7 +266,7 @@ export const pickNumbers = (order) => new Map(order.filter((row) => row.pick).ma
 
 // Playoff teams worst to best once every game is played: the first round's losers (lower seed
 // first), then the 3rd place game's loser and winner, the runner-up and the champion. Null until then.
-export function playoffFinish(brackets) {
+export function playoffFinish(brackets, {completedWeek = Infinity} = {}) {
     const [championship, third] = brackets;
     const rounds = asArray(championship && championship.playoffRound);
     const games = (round) => asArray(round && round.playoffGame);
@@ -275,7 +276,9 @@ export function playoffFinish(brackets) {
     const firstRound = games(rounds[0]);
     const final = games(rounds[rounds.length - 1])[0];
     const thirdGame = games(asArray(third && third.playoffRound)[0])[0];
-    if (!firstRound.every(decided) || !decided(final) || !decided(thirdGame)) {
+    // MFL may show points while a game is on: only a finished week counts
+    const lastWeek = Number((rounds[rounds.length - 1] || {}).week) || 0;
+    if (completedWeek < lastWeek || !firstRound.every(decided) || !decided(final) || !decided(thirdGame)) {
         return null;
     }
     const firstLosers = firstRound.map(loser).sort((a, b) => Number(b.seed || 0) - Number(a.seed || 0)).map((side) => side.franchise_id);
@@ -298,6 +301,8 @@ export function draftBoard(draftResults, {names, players, salaries}) {
             number: `${round}.${pick.pick}`,
             team: pick.franchise,
             teamName: names.get(pick.franchise) || pick.franchise,
+            // MFL notes a traded slot in its comment: "Pick traded from The Kittle Engine That Could."
+            from: (String(pick.comments || "").match(/Pick traded from (.+?)\.(?:\s|$)/) || [])[1] || "",
             player: player ? {id: player.playerId, name: player.fullName, position: player.nflPosition} : null,
             salary: player && salaries.has(player.playerId) ? salaries.get(player.playerId) : null
         });

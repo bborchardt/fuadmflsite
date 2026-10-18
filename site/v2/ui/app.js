@@ -84,7 +84,7 @@ async function loadLeague({season, leagueId}) {
     });
     Object.assign(built, phase);
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
-    built.raw = {transactions, league: leagueInfo};
+    built.raw = {transactions, league: leagueInfo, salaryAdjustments, freeAgents};
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});
     built.boardContext = {rosters, playerNames};
     return built;
@@ -196,7 +196,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     if (document.getElementById("tabcontent0")) {
         whenShown("fuad-rosters-on")
             .then(() => import("./rosters.js"))
-            .then(({drawRosters}) => drawRosters({context, franchiseId: window.franchise_id || null, dataBase}))
+            .then(({drawRosters}) => drawRosters({context, franchiseId: window.franchise_id || null, dataBase, league}))
             .catch((error) => {
                 console.error("[fuad] couldn't draw Rosters:", error);
                 onTrouble();
