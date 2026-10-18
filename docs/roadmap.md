@@ -320,7 +320,9 @@ the roadmap on its branch with what changed and what's next.
   Questionable, notices); **plain** white or grey for facts (cut penalty amounts, "from …" and
   "Traded to …" picks, You give and You get). Red and green always come with a sign, letter or word.
   Panels (#161B22) carry a 1 px #262D37 hairline, the header's border color, for a sharper edge
-  on the #0D1117 page (1.36:1; compared on canvas row 6). Controls meet 3:1 for state and edges (WCAG 1.4.11): chips, single or multi-select, everywhere as
+  on the #0D1117 page (1.36:1; compared on canvas row 6). Buttons: filled lime for a screen's own action (Post, Log in, Propose a trade on a team's page);
+  outlined lime for an action that isn't the screen's point (the popup's Rosters actions; the
+  commissioner, 18 Oct 2026); grey for quiet ones (Log out, Retry). Controls meet 3:1 for state and edges (WCAG 1.4.11): chips, single or multi-select, everywhere as
   Add's (selected: white fill, dark text); view segments mark the selected view with lime
   text and a 2 px lime bar under the label, the fill subtle; fields have a #6B7583 border, lime on
   focus. Text meets 4.5:1: reasons, values, placeholders and disabled labels use the muted
