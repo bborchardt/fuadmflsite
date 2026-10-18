@@ -2867,3 +2867,123 @@ body [tabindex]:focus-visible {
     #fuad-lineup .fuad-table-scroll { overflow-x: auto; overflow-y: hidden; }
     #fuad-lineup .fuad-lineup-ir { padding: 4px; }
 }
+
+/* ---- A message board topic (ui/topic.js): MFL's posts as cards ---- */
+
+/* MFL's topic bars and icon navigation; the script draws its own heading */
+.fuad-topic body span.nav,
+.fuad-topic body .fuad-topic-bar,
+.fuad-topic body #withmenus > br { display: none !important; }
+
+.fuad-topic body #withmenus {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 860px;
+    padding: 16px 0 24px;
+    text-align: left;
+}
+
+.fuad-topic-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 4px 24px;
+    margin-bottom: 4px;
+}
+
+.fuad-topic-title { display: flex; flex-direction: column; gap: 2px; }
+
+body .fuad-topic-title h2 {
+    margin: 0;
+    padding: 0;
+    font-size: 34px;
+    line-height: 1.1;
+    text-transform: none;
+    text-align: left;
+}
+
+.fuad-topic-nav { display: flex; gap: 20px; font-size: 15px; font-weight: 600; }
+
+.fuad-topic-nav a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
+
+/* MFL's branch wrappers only nest the posts; the depth is the indent */
+.fuad-topic body div[id^="brn"] { display: contents !important; }
+
+.fuad-topic body div.frm.pst {
+    margin: 0 0 0 calc(var(--fuad-depth, 0) * 32px) !important;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+/* one grid: avatar, team and date, Reply and Quote, then the text under the name; on phones Reply
+   and Quote go under the text */
+.fuad-post {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas: "avatar who actions" ". text text";
+    align-items: center;
+    gap: 6px 12px;
+    padding: 12px 16px 14px;
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    background: var(--fuad-panel);
+}
+
+.fuad-post-head { display: contents; }
+
+.fuad-post-avatar {
+    grid-area: avatar;
+    width: 36px;
+    height: 36px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-soft);
+    font: 700 14px var(--fuad-display);
+}
+
+.fuad-post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.fuad-post-who { grid-area: who; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+
+body .fuad-post-team a { color: var(--fuad-text); font-weight: 700; font-size: 15px; text-decoration: none; }
+
+.fuad-post-when { font-size: 13px; color: var(--fuad-muted); }
+
+.fuad-post-new { padding: 0 6px; border-radius: 5px; background: var(--fuad-lime-tint); color: var(--fuad-lime); font-size: 12px; font-weight: 700; }
+
+.fuad-post-actions { grid-area: actions; display: flex; justify-content: flex-end; }
+
+.fuad-post-actions a { display: flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 14px; font-weight: 600; text-decoration: none; }
+
+.fuad-post-text {
+    grid-area: text;
+    font-size: var(--fuad-read-size);
+    line-height: var(--fuad-read-leading);
+    color: var(--fuad-text);
+    overflow-wrap: anywhere;
+}
+
+.fuad-post-text img { max-width: 100%; height: auto; }
+
+@media (max-width: 48em) {
+    .fuad-topic body #withmenus { padding-top: 6px; }
+    .fuad-topic-head { flex-direction: column-reverse; align-items: stretch; }
+    .fuad-topic-nav { justify-content: space-between; font-size: 14px; }
+    body .fuad-topic-title h2 { font-size: 28px; }
+    .fuad-topic body div.frm.pst { margin-left: calc(var(--fuad-depth, 0) * 12px) !important; }
+    .fuad-post {
+        grid-template-columns: 32px minmax(0, 1fr);
+        grid-template-areas: "avatar who" "text text" "actions actions";
+        gap: 8px 10px;
+        padding: 12px 14px 4px;
+    }
+    .fuad-post-avatar { width: 32px; height: 32px; font-size: 13px; }
+    .fuad-post-who { flex-direction: column; gap: 0; }
+}
