@@ -37,6 +37,7 @@ Every current board is an interactive prototype (press Play; its row title names
 | 13 | Site menu (☰) and the team sheet, phone and desktop | current |
 | 14 | Lineup, phone and desktop (MFL's Submit Lineup restyled; week 6 from the saved page) | current |
 | 15 | Moves › Drop, phone and desktop | current |
+| 16 | Logged out, loading and error states: Home phone and desktop, Moves › Add phone | current |
 
 ### For a design review
 
@@ -81,10 +82,10 @@ What a reviewer needs beyond the sections below:
 
 **Review of 17 Oct 2026** (done: 17 items on flows and rules, 10 on language and visual).
 Decisions are recorded in the sections below and applied to the canvas's rows 5–13 (headers,
-wording, cap words, colors, controls, type, wrapping, panels, sample data). Not yet drawn: loading
-and error states, logged out, the offer card's pending-bids notice, the before-the-season states
-(drawn since, as phase Tweaks), "Game started" and "Dropped by you · bid from …" rows,
-the roster-minimum blocks, and the player popup from Add's "Adding …" line. The canvas can't
+wording, cap words, colors, controls, type, wrapping, panels, sample data). Drawn since: Lineup (row 14), Drop
+(row 15), logged out, loading and error states (row 16), and the before-the-season states as phase
+Tweaks. Not yet drawn: the offer card's pending-bids notice, Add's "Game started" and "Dropped by
+you · bid from …" rows, and the player popup from Add's "Adding …" line. The canvas can't
 show the 44 px tap areas, focus rings or the hidden h1s; those are build rules (Look and
 navigation).
 
@@ -251,7 +252,7 @@ The map:
 | **League** | Scores · Standings · Power · Winners |
 | **Rosters** | My team · Teams · Players · Draft |
 
-**Logged out** (the home page and reports are public; review, 17 Oct 2026; not yet drawn): the
+**Logged out** (the home page and reports are public; review, 17 Oct 2026; drawn for Home and Add, canvas row 16): the
 header shows Log in in place of the team button (MFL's login, then back to the same page). Home:
 My alerts becomes one line, "Log in to see your alerts", with Log in; League alerts, the board's
 topics, Recent moves and Coming up as usual; Chat hidden (private messages are in the public
@@ -306,7 +307,7 @@ Rules for v2:
   shows, so a hung download never leaves a blank screen. Failures that come quickly fall back at once
   through the version loader. During the beta, the handover hides the page behind a dark background
   until v2's stylesheet applies; once v2 is in the header its stylesheet loads with the page.
-- **Loading and error states, one pattern for every panel** (review, 17 Oct 2026; not yet drawn):
+- **Loading and error states, one pattern for every panel** (review, 17 Oct 2026; drawn for Home and Add, canvas row 16, the other pages following the same pattern):
   a first load shows each panel's heading over placeholder bars at its real size, so nothing
   jumps; a returning visit shows the cache at once and refreshes quietly; a failed refresh keeps
   the cache with "As of 7:42 p.m." under the heading; a failed load with nothing cached shows
