@@ -293,6 +293,15 @@ tried in the beta (the commissioner's team only) before the next.
      in Chrome, the member saving by hand): a swap saved with the started starters kept.
    - To revisit: whether a carried-over starter on a bye gets MFL's hidden input like a started
      game (none seen yet); each tap redraws the whole page (fine at 30 rows).
+   - After the commissioner's look at the beta (PR #30): Lineup's desktop columns spread evenly;
+     Home's Coming up under the message board on desktop; Home's chat fields padded whatever the
+     skin. The message board's topic and reply pages restyled (canvas row 17): posts as cards,
+     replies indented, the post being answered above the reply form, MFL's icons and smileys gone;
+     a page the script can't read (a new topic, Preview) stays MFL's.
+   - To revisit, the message board (the commissioner, 18 Oct 2026): some of its buttons still show
+     red and orange, and moving around it can land on pages in MFL's own, jarringly different style
+     (the topic list, a new topic, Preview). Restyle them the same way, or rebuild the board in v2
+     after the Moves steps.
    **Next: step 6.**
 6. **Moves › Add** (rows 5, 12): v2's controls over MFL's `add_drop` forms, comment lines, the
    board post. The riskiest step; it wants the commissioner to-do's saved Add/Drop page from the
