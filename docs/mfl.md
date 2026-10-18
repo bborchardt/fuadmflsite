@@ -46,7 +46,7 @@ MFL documents little of this.
   returns inside them (`DIF 7\r|EA 1\r`). It answers 403 without a referrer from MFL's pages. A
   past week's file stays readable.
 - **The projections feed** is a line per player: `16619,WR,RA=0.18,CC=1.92,ARY=3.44,…`, stats only.
-- **`liveScoring`** lists each team's `playersCurrentlyPlaying`, `playersYetToPlay` and
+- **`liveScoring`** needs `DETAILS=1` to list the bench (without it, only the starters). It lists each team's `playersCurrentlyPlaying`, `playersYetToPlay` and
   `gameSecondsRemaining`, and each player's `score` and `gameSecondsRemaining`, but no stats
   (`updatedStats` is a counter), and leaves out injured reserve.
 - **`weeklyResults` with `W=YTD`** comes back as `allWeeklyResults`, a `weeklyResults` per week, each

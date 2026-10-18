@@ -177,7 +177,8 @@ function drawScores(mount, data) {
         let lineup = lineups.get(week);
         if (!lineup || Date.now() - lineup.at > LINEUP_POLL) {
             // the page's own copy first (Home asks for the same), MFL again once it's old
-            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week}, {fresh: Boolean(lineup)})};
+            // DETAILS lists the bench too; without it only the starters
+            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week, DETAILS: 1}, {fresh: Boolean(lineup)})};
             lineups.set(week, lineup);
         }
         // a week MFL hasn't started a feed for yet reads as no stats, as MFL's page treats it
