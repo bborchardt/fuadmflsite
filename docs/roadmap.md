@@ -12,6 +12,8 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
     the page behaves as it does while the free agent window is open
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
+- Each season, once it's set: add the final cut-down date to MFL's league calendar as an event
+  whose name contains "cut" (e.g. "Final cut-down"), so v2's Home can show it and date its alerts.
 
 ## v2: the redesign
 
@@ -697,6 +699,20 @@ the columns' bottoms meet; review, 17 Oct 2026):
 6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
    draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
    the last few days before one, it shows in My alerts instead.
+
+**Before the season** (canvas row 6, a phase Tweak; review, 17 Oct 2026):
+- **Before the draft:** My alerts carries trade offers (nothing else needs a reminder then); Coming
+  up shows draft day, the final cut-down and week 1's kickoff.
+- **Draft → cut-down:** My alerts adds contract lengths still to post for draft-day players ("Post
+  contract lengths for 3 players", by the cut-down date, $5 a day late, 12.5–12.6), opening the
+  newest board topic whose subject contains "contract" (else the board; a post in any thread counts,
+  as for the job), getting within 23–30 active by the cut-down date (to Drop or Add), and pending
+  bids (they process Wednesday of week 1). Coming up: the cut-down, the first blind bids, week 1.
+- **The cut-down date** changes yearly: read from MFL's calendar, the event whose name contains
+  "cut" (commissioner's to-do); without one the alerts say "before the season" and Coming up leaves
+  it out.
+- League alerts drop the under-23 alert until the cut-down date (no limits before it, 2.5); chat,
+  the board and Recent moves are as in season.
 
 No playoff bracket panel: League › Scores shows the playoff games.
 
