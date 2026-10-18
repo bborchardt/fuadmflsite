@@ -170,7 +170,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek}
                         mount.innerHTML = `
                         <span class="fuad-meta">${esc([article.source, article.published].filter(Boolean).join(" · "))}</span>
                         <p>${esc(article.update)}</p>
-                        ${article.analysis ? `<span class="fuad-label">Analysis</span><p class="fuad-soft">${esc(article.analysis)}</p>` : ""}`;
+                        ${article.analysis ? `<span class="fuad-label">Analysis</span><p>${esc(article.analysis)}</p>` : ""}`;
                     }
                 });
             }
