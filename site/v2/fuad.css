@@ -1986,7 +1986,7 @@ body [tabindex]:focus-visible {
     #fuad-league .fuad-chips,
     #fuad-rosters .fuad-chips { gap: 0 4px; line-height: 1.35; }
     #fuad-league .fuad-lineup,
-    #fuad-rosters .fuad-lineup { grid-template-columns: minmax(0, 1fr) 40px 40px minmax(0, 1fr); gap: 0 6px; }
+    #fuad-rosters .fuad-lineup { grid-template-columns: minmax(0, 1fr) 48px 48px minmax(0, 1fr); gap: 0 6px; }
     #fuad-league .fuad-ln,
     #fuad-league .fuad-ln-b,
     #fuad-rosters .fuad-ln,
@@ -2009,6 +2009,9 @@ body [tabindex]:focus-visible {
     #fuad-league .fuad-ln-pts-b,
     #fuad-rosters .fuad-ln-pts,
     #fuad-rosters .fuad-ln-pts-b { grid-template-columns: minmax(0, 1fr); grid-auto-rows: min-content; align-content: start; gap: 0; padding: 6px 0; font-size: 14px; border-right: 0; }
+    /* room on each side of the line between the sides, so the two numbers don't run together */
+    #fuad-league .fuad-ln-pts-a { padding-right: 8px; border-right: 1px solid var(--fuad-raised-edge); }
+    #fuad-league .fuad-ln-pts-b { padding-left: 2px; }
     #fuad-league .fuad-ln-pts-a .fuad-ln-proj,
     #fuad-league .fuad-ln-pts-b .fuad-ln-proj,
     #fuad-rosters .fuad-ln-pts-a .fuad-ln-proj,
