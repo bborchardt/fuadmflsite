@@ -33,6 +33,7 @@ Every current board is an interactive prototype (press Play; its row title names
 | 11 | Player popup, phone and desktop | current |
 | 12 | Moves › Add/Drop, desktop | current |
 | 13 | Site menu (☰) and the team sheet, phone and desktop | current |
+| 14 | Lineup, phone (MFL's Submit Lineup restyled; week 6 from the saved page) | current |
 
 ### For a design review
 
@@ -64,7 +65,7 @@ What a reviewer needs beyond the sections below:
 - **Prototype limits, not design:** sample data from around week 5 (Oct 10), so some dates are past;
   only two other teams' rosters exist (Trades opens The Obliterators for any team but the one that
   sent the offer); claims, offers and saves are seeded or kept only until reload.
-- **Deliberately not drawn:** Lineup and Moves › Recent (MFL's pages, restyled, described below);
+- **Deliberately not drawn:** Moves › Recent (MFL's page, restyled, described below);
   Home's Recent moves (undecided); the offseason auction and franchise tags in Moves.
 - **Sources:** the bylaws and MFL's league settings (`docs/bylaws.md`, this branch); on master,
   `docs/design.md` (why the site works as it does) and `docs/mfl.md` (MFL's behavior); the Reference
@@ -643,16 +644,29 @@ their forms.
 
 ### Lineup
 
-MFL's lineup page, restyled, no views. Warnings, not blocks (injury statuses change up to kickoff,
-and MFL's report can lag): a starter who is injured (IR or Out), suspended, or on a bye, named with
-the rule (bylaw 13.2: such a loss doesn't count toward draft order; its exceptions noted), or an empty
-slot. (v1 doesn't flag byes; v1 gets no more fixes, so this comes with v2.) Players whose game has started show
-MFL's lock clearly. All the warnings stay although MFL refuses bye starters and partial lineups on
-submit: a lineup carried over without a submit (presumably unchecked; not confirmed) can still hold
-a bye, out or departed starter. Worded by consequence, not "flagged": "A loss won't count toward
-draft order (13.2)", in weeks 1–14 only; 13.2's exceptions don't remove the warning (review, 17 Oct
-2026). Backup starters (16.5) stay on the message board as today; a Backups panel posting to the
-designated thread is a later idea, not part of v2.
+MFL's Submit Lineup page (`lineup`, Reference), restyled; designed for phones on canvas row 14 from
+the page saved 17 Oct 2026 (week 6). Top to bottom: the header, a week picker (‹ Week 6 ›: this
+week and later, MFL's week links), the warnings, the roster by position in MFL's order (QB, RB, WR,
+TE, PK, alphabetical within; each group's heading "QB · start 1–2 · 2 starting"), "On IR: …" with
+a link to Moves › IR, and a save bar above the tabs.
+- **A row per player:** a round check (lime when starting), the name with a tag (Out or IR red,
+  Questionable orange, Bye or Game started grey), "BAL · @CLE Sun 12:00 p.m.", the projection. A tap
+  starts or benches him; a bye or a game that has started locks the row, as MFL disables its box.
+- **The save bar:** "10 of 10 starting · QB 2 · RB 3 · WR 3 · TE 1 · PK 1" and Save lineup, off
+  until the lineup is full and within the league's starter limits (QB 1–2, RB 1–3, WR 2–5, TE 1–3,
+  PK 1; MFL takes no partial lineup), naming what's wrong instead ("Pick 1 more", "WR 1, start
+  2–5"). Saved: one line, "Lineup saved."
+- **Warnings, not blocks** (injury statuses change up to kickoff, and MFL's report can lag): a red
+  card naming each starter who is out, on the NFL's IR, suspended or on a bye ("Lamar Jackson is
+  out."), one line each, no consequence line on this page (review, 17 Oct 2026); Home's My alerts
+  says "A loss won't count toward draft order (13.2)", in weeks 1–14 only. 13.2's exceptions don't
+  remove a warning. MFL disables bye players' boxes, and on the saved page a week 5 starter on a
+  week 6 bye wasn't carried over, so the Out warning is the one that clearly fires; the others stay
+  in case a carried-over lineup holds one.
+- **Left out:** MFL's projection source menu (FantasySharks stays), the Optional Message box and
+  last week's starters in bold. Backup starters (16.5) stay on the message board as today; a
+  Backups panel posting to the designated thread is a later idea, not part of v2.
+- (v1 doesn't flag byes; v1 gets no more fixes, so this comes with v2.)
 
 ### Home
 
@@ -878,6 +892,21 @@ proposal page.
   `trade_response?L=<league>&TRADE_ID=<id>&ACTION=revoke`, with no confirmation (league clone, 17 Oct
   2026). v2 asks once first. The offer row shows date, each side's players and picks,
   expiry, and "Compare Players".
+
+**Submit Lineup (`lineup?L=48571`, saved 17 Oct 2026, week 6, as 0001):** a week picker ("Submit
+Lineup For Week: 6 | 7 | … 17", `lineup?L=…&WEEK=n&F=0001`; this week and later), then one form posted
+to `lineup`: hidden `FRANCHISE`, `LEAGUE_ID`, `WEEK`, `FORM=1`, `lineup_expires`, `INITPROJSRC`; a
+`PROJSRC` select (projection source, submits the form on change); one table, `table.report`, a row per
+active player grouped by position and alphabetical within it ("Beck, Carson ARI QB"), the group's
+first row headed "Select 1-2 QB:"; per player a checkbox `QB0001` (`RB0001`, …) whose value is the
+player id, `checked` for a starter; columns Week 6 Opp (with kickoff), Inj (`O`, `Q`, `I`, which
+presumably means IR), Bye, opponent average and rank vs the position, YTD, Avg and Proj points, Pos
+rank, % Start, NFL News; last week's starters in bold. MFL **disables the checkbox** (no name) for a
+player on a bye and once his game has started (Thursday's, on the saved page), so neither can be
+submitted. An Out player can stay checked (Lamar Jackson was). Then `MESSAGE0001` ("Optional
+Message", a textarea), Submit (`SUBMIT`, "Submit Lineup"; submitting nothing checked asks to confirm
+"un-submitting" the lineup), and below the table the IR players ("you must first activate them on
+the Injured Reserve page").
 
 **Commissioner switch:** MFL's menu has "Become Commissioner", `logout?L=48571&BECOME=0000`, when the
 commissioner is logged in as a team; presumably `BECOME=<team>` the other way, not yet seen.
