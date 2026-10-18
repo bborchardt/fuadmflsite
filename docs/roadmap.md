@@ -83,9 +83,10 @@ What a reviewer needs beyond the sections below:
 **Review of 17 Oct 2026** (done: 17 items on flows and rules, 10 on language and visual).
 Decisions are recorded in the sections below and applied to the canvas's rows 5–13 (headers,
 wording, cap words, colors, controls, type, wrapping, panels, sample data). Drawn since: Lineup (row 14), Drop
-(row 15), logged out, loading and error states (row 16), and the before-the-season states as phase
-Tweaks. Not yet drawn: the offer card's pending-bids notice, Add's "Game started" and "Dropped by
-you · bid from …" rows, and the player popup from Add's "Adding …" line. The canvas can't
+(row 15), logged out, loading and error states (row 16), the before-the-season states as phase
+Tweaks, the offer card's pending-bids notice (row 9, Tweak "bidsAtRisk"), Add's "Game started" and
+"Dropped by you · bid from …" rows (rows 5 and 12; Game started shows in the free agent window),
+and the player popup from Add's "Adding …" line (row 5, the drop step). The canvas can't
 show the 44 px tap areas, focus rings or the hidden h1s; those are build rules (Look and
 navigation).
 
