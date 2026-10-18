@@ -1,5 +1,7 @@
 // v2's player popup, in place of MFL's (`launch_player_modal`), which is desktop markup that doesn't
-// fit a phone. Information only: the player, his contract, news, this season by week, his bio.
+// fit a phone: the player, his contract, news, this season by week, his bio. Information only,
+// except opened from Rosters (`window.fuadOpenPlayer`), where it offers the move that fits: Drop
+// and IR for the member's own, Propose a trade for another team's, Add for a free agent.
 
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
@@ -114,9 +116,23 @@ function newsSection(player, links) {
     </section>`;
 }
 
-function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek}) {
+// `actions` holds the Moves links: {drop, ir, add, trade(teamId)}
+function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
+    if (!actions || !franchiseId || franchiseId === "0000") {
+        return "";
+    }
+    const links = mine
+        ? [["Drop", actions.drop], ...(player.injury && /^IR/i.test(player.injury.status) ? [["IR", actions.ir]] : [])]
+        : ownerId ? [["Propose a trade", actions.trade && actions.trade(ownerId)]]
+        : [["Add", actions.add]];
+    const shown = links.filter(([, href]) => href);
+    return shown.length ? `<div class="fuad-popup-actions">${shown.map(([label, href]) => `<a class="fuad-button fuad-button-quiet" href="${esc(href)}">${esc(label)}</a>`).join("")}</div>` : "";
+}
+
+function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek, actions = null}) {
     const ownerName = ownerOf(player.owner, [...teamNames.values()]);
     const mine = Boolean(franchiseId && ownerName && teamNames.get(franchiseId) === ownerName);
+    const ownerId = ownerName ? ([...teamNames].find(([, name]) => name === ownerName) || [])[0] || null : null;
     const links = {moreNews: `${window.location.origin}/${context.season}/news_articles?L=${context.leagueId}&PLAYERS=${player.id}&DAYS=7`};
     const injured = player.injury
         ? `<p class="fuad-popup-injury"><span class="fuad-tag fuad-tag-${injuryTone(player.injury.status)}">${esc(player.injury.status)}${player.injury.detail ? ` · ${esc(player.injury.detail)}` : ""}</span>${player.expectedReturn ? `<span class="fuad-meta">Expected back ${esc(player.expectedReturn.replace(/,\s*\d{4}$/, ""))}</span>` : ""}</p>`
@@ -130,6 +146,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek}
     ${injured}
     <section class="fuad-tiles" aria-label="Contract">${contract.join("")}${tile("Bye", player.bye ? `Week ${player.bye}` : "—")}</section>
     ${mine && player.salary !== null && player.years ? `<p class="fuad-cut" aria-live="polite">Cut now: <strong>${money(capPenalty(player.years, player.salary))} penalty</strong><span class="fuad-cut-cap"></span></p>` : ""}
+    ${actionButtons(player, {mine, ownerId, actions, franchiseId})}
     <div class="fuad-popup-cols">
         <div class="fuad-popup-col">${newsSection(player, links)}${bioSection(player)}</div>
         <div class="fuad-popup-col">${weeksSection(player, context.season, currentWeek)}</div>
@@ -193,7 +210,7 @@ export function installPopup({context, franchiseId}) {
     layer.hidden = true;
     document.body.append(layer);
 
-    function open(playerId, opener) {
+    function open(playerId, opener, {actions = null} = {}) {
         const label = opener && opener.textContent;
         layer.innerHTML = `
         <section class="fuad-popup" role="dialog" aria-modal="true" aria-labelledby="fuad-popup-name" tabindex="-1">
@@ -236,7 +253,7 @@ export function installPopup({context, franchiseId}) {
                 }
                 dialog.querySelector("h2").textContent = player.name;
                 dialog.querySelector(".fuad-popup-meta").textContent = [player.position, NFL_TEAMS[player.team] || player.team, player.jersey && `#${player.jersey}`].filter(Boolean).join(" · ");
-                drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek: Number(window.liveScoringWeek) || 0});
+                drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek: Number(window.liveScoringWeek) || 0, actions});
             }
         });
     }
@@ -250,5 +267,6 @@ export function installPopup({context, franchiseId}) {
         open(String(playerId), clicked || document.activeElement);
         clicked = null;
     };
+    window.fuadOpenPlayer = (playerId, {opener = document.activeElement, actions = null} = {}) => open(String(playerId), opener, {actions});
     return {open};
 }
