@@ -70,7 +70,7 @@ function rosterTable(sheet, {cut}) {
         ${cut ? '<th scope="col" class="fuad-num fuad-wide">Cut penalty</th><th scope="col" class="fuad-num fuad-wide">Cap used after cut</th>' : ""}
         <th scope="col" class="fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">Pts</th></tr>`;
     const penalties = sheet.penalties.length ? `<tbody>
-        <tr class="fuad-group"><th scope="rowgroup" colspan="${columns}"><span>Penalties · ${sheet.penalties.length}</span><span>${esc(dollars(sheet.penaltyTotal))}</span></th></tr>
+        <tr class="fuad-group"><th scope="rowgroup">Penalties · ${sheet.penalties.length}</th><td class="fuad-num">${esc(dollars(sheet.penaltyTotal))}</td><td colspan="${columns - 2}"></td></tr>
         ${sheet.penalties.map((penalty) => `<tr>
             <th scope="row" class="fuad-team">${esc(penalty.who)}<span class="fuad-meta">${esc([penalty.when && `Cut ${penalty.when}`, penalty.terms].filter(Boolean).join(" · "))}</span></th>
             <td class="fuad-num">${esc(dollars(penalty.amount))}</td><td colspan="${columns - 2}"></td>
@@ -80,7 +80,7 @@ function rosterTable(sheet, {cut}) {
         <div class="fuad-table-scroll"><table class="fuad-table fuad-roster">
             <thead>${head}</thead>
             ${sheet.groups.map((group) => `<tbody>
-                <tr class="fuad-group"><th scope="rowgroup" colspan="${columns}"><span>${esc(group.position)} · ${group.players.length}</span><span>${esc(dollars(group.salary))}</span></th></tr>
+                <tr class="fuad-group"><th scope="rowgroup">${esc(group.position)} · ${group.players.length}</th><td class="fuad-num">${esc(dollars(group.salary))}</td><td colspan="${columns - 2}"></td></tr>
                 ${group.players.map(player).join("")}
             </tbody>`).join("")}
             ${penalties}
