@@ -37,6 +37,8 @@
     /* a bar or win chance that isn't yours or ahead */
     --fuad-bar-off: #4A5566;
     --fuad-raised-edge: #2F3743;
+    /* a choice that's made and can't be changed (a starter whose game has started) */
+    --fuad-locked: #4A5566;
     /* positions in charts: categorical, validated on the panel color */
     --fuad-pos-qb: #3987E5;
     --fuad-pos-rb: #D95926;
@@ -2557,4 +2559,310 @@ body [tabindex]:focus-visible {
     #fuad-league .fuad-position-name { grid-column: 1; }
     #fuad-league .fuad-stack { grid-column: 2; }
     #fuad-league .fuad-position-total { grid-column: 3; }
+}
+
+/* ---- Lineup (ui/lineup.js): drawn over MFL's Submit Lineup form, which stays underneath ---- */
+
+.fuad-lineup-on body .pagebody > :not(#fuad-lineup) { display: none !important; }
+
+#fuad-lineup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+#fuad-lineup a { color: var(--fuad-lime); text-decoration: none; }
+
+#fuad-lineup a:hover { color: var(--fuad-lime-hover); }
+
+#fuad-lineup button { font-family: var(--fuad-body); }
+
+#fuad-lineup .fuad-panel {
+    margin: 0;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 18px;
+    padding: 4px 12px;
+}
+
+#fuad-lineup .fuad-lineup-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; }
+
+#fuad-lineup .fuad-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font-weight: 700;
+}
+
+#fuad-lineup .fuad-week-picker { display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+#fuad-lineup .fuad-week-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--fuad-panel);
+    color: var(--fuad-text) !important;
+    font-size: 18px;
+}
+
+#fuad-lineup span.fuad-week-step { color: var(--fuad-faint) !important; }
+
+#fuad-lineup .fuad-week-now { min-width: 116px; text-align: center; font-family: var(--fuad-display); font-weight: 700; font-size: 20px; }
+
+#fuad-lineup .fuad-lineup-saved,
+#fuad-lineup .fuad-lineup-problems {
+    display: flex;
+    gap: 6px 24px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--fuad-radius);
+    font-size: 15px;
+}
+
+#fuad-lineup .fuad-lineup-saved { align-items: center; gap: 8px; background: rgba(74, 222, 128, 0.1); font-weight: 600; }
+
+#fuad-lineup .fuad-lineup-saved svg { color: var(--fuad-good); flex: none; }
+
+#fuad-lineup .fuad-lineup-problems { flex-direction: column; background: var(--fuad-bad-tint); }
+
+#fuad-lineup .fuad-lineup-problems strong { color: var(--fuad-bad); }
+
+#fuad-lineup .fuad-bad { color: var(--fuad-bad); }
+
+#fuad-lineup .fuad-tag {
+    padding: 0 6px;
+    border-radius: 5px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#fuad-lineup .fuad-tag-bad { background: var(--fuad-bad-tint); color: var(--fuad-bad); }
+
+#fuad-lineup .fuad-tag-caution { background: var(--fuad-caution-tint); color: var(--fuad-caution); }
+
+/* the round check: lime when starting */
+#fuad-lineup .fuad-check {
+    flex: none;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    min-height: 0;
+    padding: 0;
+    border: 2px solid var(--fuad-field);
+    border-radius: 13px;
+    background: transparent;
+    color: transparent;
+}
+
+#fuad-lineup [aria-pressed="true"] .fuad-check,
+#fuad-lineup .fuad-check[aria-pressed="true"] { border-color: var(--fuad-lime); background: var(--fuad-lime); color: var(--fuad-on-lime); }
+
+/* locked (a bye, or a game that has started): grey, not lime, since it can't be tapped; a starter
+   keeps his check, a bench player shows a dash */
+#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="true"] .fuad-check,
+#fuad-lineup .fuad-check:disabled[aria-pressed="true"] { border-color: var(--fuad-locked); background: var(--fuad-locked); color: var(--fuad-text); }
+
+#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check,
+#fuad-lineup .fuad-check:disabled[aria-pressed="false"] { border-color: transparent; }
+
+#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check::before,
+#fuad-lineup .fuad-check:disabled[aria-pressed="false"]::before { content: ""; width: 10px; height: 2px; border-radius: 1px; background: var(--fuad-faint); }
+
+#fuad-lineup .fuad-lineup-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 4px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+#fuad-lineup .fuad-lineup-head > span[role="cell"] { display: flex; justify-content: space-between; width: 100%; }
+
+#fuad-lineup .fuad-lineup-pos { color: var(--fuad-text); }
+
+/* phones: the whole row starts or benches him */
+#fuad-lineup .fuad-lineup-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    padding: 6px 4px;
+    border: 0;
+    border-top: 1px solid var(--fuad-rule);
+    border-radius: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+#fuad-lineup .fuad-lineup-row:disabled { cursor: default; opacity: 1; }
+
+
+#fuad-lineup .fuad-lineup-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+#fuad-lineup .fuad-lineup-name { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-weight: 600; overflow-wrap: anywhere; }
+
+#fuad-lineup .fuad-lineup-proj { display: flex; flex-direction: column; align-items: flex-end; }
+
+#fuad-lineup .fuad-lineup-proj > span:first-child { font: 700 20px var(--fuad-display); font-variant-numeric: tabular-nums; }
+
+#fuad-lineup .fuad-meta { font-size: 13px; color: var(--fuad-muted); }
+
+#fuad-lineup .fuad-lineup-proj .fuad-meta { font-size: 12px; }
+
+#fuad-lineup .fuad-lineup-ir { margin: 0; padding: 0 4px; }
+
+#fuad-lineup .fuad-lineup-ir a { font-weight: 600; }
+
+/* the save bar: above the tabs on phones */
+#fuad-lineup .fuad-save-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    z-index: 8999;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    align-items: center;
+    padding: 10px 16px;
+    border-top: 1px solid var(--fuad-hairline);
+    background: var(--fuad-panel);
+}
+
+#fuad-lineup .fuad-save-count { font-size: 15px; font-weight: 700; }
+
+#fuad-lineup .fuad-save-line { grid-row: 2; font-size: 13px; }
+
+#fuad-lineup .fuad-save {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-height: 48px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#fuad-lineup .fuad-save:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); cursor: default; }
+
+.fuad-lineup-on.fuad-framed body { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+
+#fuad-lineup .fuad-lineup-table { display: none; }
+
+#fuad-lineup .fuad-name {
+    position: relative;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--fuad-text);
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+#fuad-lineup .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
+
+#fuad-lineup .fuad-name:hover { color: var(--fuad-lime); }
+
+/* desktop: full-width bands, the save bar sticky, then one table by position */
+@media (min-width: 48.01em) {
+    #fuad-lineup { gap: 16px; padding-top: 24px; }
+    #fuad-lineup .fuad-week-picker { justify-content: flex-start; }
+    #fuad-lineup .fuad-week-now { font-size: 22px; }
+    #fuad-lineup .fuad-lineup-problems { flex-direction: row; flex-wrap: wrap; padding: 12px 16px; }
+    #fuad-lineup .fuad-lineup-list { display: none; }
+    #fuad-lineup .fuad-lineup-table { display: block; padding: 14px 16px 8px; }
+
+    #fuad-lineup .fuad-save-bar {
+        position: sticky;
+        top: 0;
+        bottom: auto;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 28px;
+        padding: 12px 16px;
+        border: 1px solid var(--fuad-raised-edge);
+        border-radius: 16px;
+        background: var(--fuad-raised);
+        box-shadow: 0 8px 24px var(--fuad-shadow);
+    }
+
+    #fuad-lineup .fuad-save-count { font: 700 24px var(--fuad-display); }
+    #fuad-lineup .fuad-save-line { flex: 1; min-width: 220px; font-size: 14px; }
+    #fuad-lineup .fuad-save { min-height: 44px; padding: 0 22px; font-weight: 600; }
+    .fuad-lineup-on.fuad-framed body { padding-bottom: 0; }
+
+    #fuad-lineup .fuad-lineup-grid { min-width: 900px; }
+
+    #fuad-lineup .fuad-lineup-line {
+        display: grid;
+        grid-template-columns: 40px minmax(200px, 300px) 64px minmax(170px, 1.4fr) 84px 72px 72px 72px;
+        gap: 0 12px;
+        align-items: center;
+        min-height: 46px;
+        padding: 0 4px;
+        border-top: 1px solid var(--fuad-rule);
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    #fuad-lineup .fuad-lineup-line.fuad-lineup-starting { background: var(--fuad-raised); }
+
+    #fuad-lineup .fuad-lineup-columns {
+        min-height: 0;
+        padding-bottom: 6px;
+        border-top: 0;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--fuad-muted);
+    }
+
+    #fuad-lineup .fuad-lineup-table .fuad-lineup-head { padding: 12px 4px 6px; border-top: 1px solid var(--fuad-hairline); }
+    #fuad-lineup .fuad-lineup-table .fuad-lineup-pos { font: 700 20px var(--fuad-display); letter-spacing: 0; }
+    #fuad-lineup .fuad-lineup-line .fuad-check { width: 28px; height: 28px; border-radius: 14px; cursor: pointer; }
+    #fuad-lineup .fuad-lineup-line .fuad-check:disabled { cursor: default; }
+    /* the drawn check stays small; its tap area fills the cell */
+    #fuad-lineup .fuad-lineup-line .fuad-check { position: relative; }
+    #fuad-lineup .fuad-lineup-line .fuad-check::after { content: ""; position: absolute; inset: -9px; }
+    #fuad-lineup .fuad-num { text-align: right; font-variant-numeric: tabular-nums; }
+    #fuad-lineup .fuad-lineup-projected { font: 700 18px var(--fuad-display); }
+    #fuad-lineup .fuad-muted { color: var(--fuad-muted); }
+    /* sideways only: the checks' tap areas reach past the last row and would scroll it up and down */
+    #fuad-lineup .fuad-table-scroll { overflow-x: auto; overflow-y: hidden; }
+    #fuad-lineup .fuad-lineup-ir { padding: 4px; }
 }

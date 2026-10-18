@@ -40,10 +40,10 @@ export function draftDays(calendar) {
 }
 
 // cached for a day; a part that can't be read is left out rather than hold up the line
-export async function loadContext({season, leagueId}) {
+export function seasonFacts({season, leagueId}) {
     const host = window.location.origin;
     const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch}).catch(() => null);
-    const facts = await cached(`fuad.context.${season}`, DAY, async () => {
+    return cached(`fuad.context.${season}`, DAY, async () => {
         const [week1, seasonEnd, draftResults, calendar] = await Promise.all([
             weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null),
             weekEnd(season, ROSTER_CHECK_LAST_WEEK, {fetchImpl: pageFetch}).catch(() => null),
@@ -54,9 +54,15 @@ export async function loadContext({season, leagueId}) {
             week1: week1 && week1.getTime(),
             seasonEnd: seasonEnd && seasonEnd.getTime(),
             drafted: draftPicked(draftResults),
+            // whether `drafted` was read, rather than assumed from a failed request
+            draftKnown: Boolean(draftResults),
             draftDays: draftDays(calendar)
         };
     });
+}
+
+export async function loadContext(context) {
+    const facts = await seasonFacts(context);
     return contextLine({
         now: new Date(),
         week: window.liveScoringWeek,
