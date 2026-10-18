@@ -169,7 +169,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -205,8 +205,27 @@ tried in the beta (the commissioner's team only) before the next.
      contract, headlines and season by week, instead of the exports (`playerScores` takes a week per
      request); if MFL changes the page, MFL's own popup opens. A free agent shows no contract.
    - The popup's news at 16 px (PR #22), after trying it on a phone.
-   **Next: step 2.**
-2. **Home** (row 6, with its phase states; row 16).
+2. **Home** (done; rows 6, 16; PR #23): every panel of Home below, on the home page under
+   MFL's own Home (`#fuad-home`, shown while the frame's section is Home; MFL's other home tabs stay
+   as they were). Decided while building (17–18 Oct 2026):
+   - The beta's way back ("A new version… Try it", or leaving the beta) sits under League alerts,
+     replacing v1's violations panel, which v2 no longer has.
+   - Recent moves keeps the current home page's last 10, a steadier size than a span of days, with
+     "All moves" to MFL's transactions page; won blind bids read "won X for $N, dropped Y". This
+     settles its follow-up; who lost a bid stays on MFL's processed waivers page.
+   - Contract-length reminders are the member's own only; until step 6 their tap opens the
+     contract topic (else the board), not Moves › Add.
+   - Alerts link to MFL's own pages (Lineup, Add/Drop, Trades, IR) until their steps rebuild them.
+   - Home asks MFL for nothing until it's shown, and each export is fetched once per page
+     (`ui/page-fetch.js`); chat polls every 15 s only while Home shows.
+   - Pending bids are invalid if every group's costliest claim could break the cap or 30 active
+     (`lib/bids.js`, design.md 5.5).
+   - Tested live in the clone league (50965): bid and trade-offer alerts, a chat post and a new
+     topic. Pages and exports for the later steps were saved then (clone Add/Drop with pending
+     claims, the edit-group pages, Trades with an offer, Lineup, IR, Drop, the trade proposal page,
+     rosters, draft; the real league's scores, standings, brackets and accounting), outside git in
+     the backtest repo's `samples/clone-2026-10-17`, `clone-2026-10-18` and `league-2026-10-17`.
+   **Next: step 3.**
 3. **League** (row 7): Scores with live scoring, Standings, Power, Winners.
 4. **Rosters** (row 8): My team, Teams, Players, Draft; the popup's Rosters actions.
 5. **Lineup** (row 14): MFL's Submit Lineup restyled, with the warnings and the save bar.
@@ -220,8 +239,7 @@ tried in the beta (the commissioner's team only) before the next.
     none of it shows live until March.
 11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
 
-**Open, to settle while building:** the full list of transactions and processed bids (Home's Recent
-moves follow-up); whether MFL accepts bids on a player whose game has started, and whether it
+**Open, to settle while building:** whether MFL accepts bids on a player whose game has started, and whether it
 carries a lineup over unchecked (the to-do's saved page, and the beta); what MFL's `I` injury code
 means (presumably IR).
 
@@ -780,9 +798,8 @@ the columns' bottoms meet; review, 17 Oct 2026):
 4. **Message board:** the newest topics, linking to MFL's board, and "New topic" (subject and
    message, posted with MFL's `messageBoard` import); replies on the topic's own page.
 5. **Recent moves:** the league's latest transactions, the home for them now that Moves has no
-   Recent view (review, 17 Oct 2026). Follow-up: how a member sees the full list (MFL's
-   transactions page through the site menu, or a longer list here), and the processed blind bids
-   (`processed_waivers`: who won and lost, and for how much).
+   Recent view (review, 17 Oct 2026): the last 10, won blind bids with their amounts, and "All
+   moves" to MFL's transactions page (18 Oct 2026).
 6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
    draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
    the last few days before one, it shows in My alerts instead.
@@ -811,7 +828,7 @@ My alerts and where they go:
 | Under 23 active | Moves › Add |
 | Current bids invalid (a pending bid could break a limit) | Moves › Add |
 | Bid deadline, when the member has pending bids (Wed 11 p.m. CT) | Moves › Add |
-| Contract length still to post for a free agent add (the automatic post failed) | Moves › Add (Post it now) |
+| Contract length still to post for a free agent add (the automatic post failed) | Moves › Add (Post it now); until step 6, the contract topic |
 | A player on IR the NFL no longer lists, and the drop it may need at 30 | Moves › IR |
 | A trade offer waiting for an answer | Moves › Trades |
 | Over the cap or 30 active from an add or trade: "the commissioner will reverse it" | not tappable |
