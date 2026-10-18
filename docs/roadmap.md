@@ -188,7 +188,7 @@ tried in the beta (the commissioner's team only) before the next.
 0. **Docs on master** (done, PR #20): MFL's forms, chat feed, pending claims, API imports and league
    settings are in `docs/mfl.md`; `docs/design.md`'s goal is "one navigation layer" (v2's five
    sections replace the custom tabs); the beta-in-place exception was already there. **Next: step 1.**
-1. **The frame** (canvas rows 13, 16; PR #21, to try in the beta, then merge): the header (☰ site
+1. **The frame** (done; canvas rows 13, 16; PRs #21, #22): the header (☰ site
    menu with MFL's menu in its groups and a filter; the wordmark and context line; the team button,
    or Log in), the team sheet (My team, Log out, Viewing as), the five sections, the redesign's
    views, the tokens, focus rings, hidden h1s and tap areas, the loading and error pattern
@@ -205,8 +205,6 @@ tried in the beta (the commissioner's team only) before the next.
      contract, headlines and season by week, instead of the exports (`playerScores` takes a week per
      request); if MFL changes the page, MFL's own popup opens. A free agent shows no contract.
    - The popup's news at 16 px (PR #22), after trying it on a phone.
-   - To check in the beta: the popup's name sat indented on the live home page (BlueMesh) and
-     nowhere else; headings were made immune to skin spacing, unconfirmed.
    **Next: step 2.**
 2. **Home** (row 6, with its phase states; row 16).
 3. **League** (row 7): Scores with live scoring, Standings, Power, Winners.
