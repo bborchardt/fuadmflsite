@@ -61,11 +61,11 @@ function layout(root, {loggedIn}) {
             <section class="fuad-home-alerts" aria-label="My alerts"></section>
             <section class="fuad-home-league" aria-label="League alerts"></section>
             <section class="fuad-home-board" aria-label="Message board"></section>
+            <section class="fuad-home-coming" aria-label="Coming up"></section>
         </div>
         <div class="fuad-home-column">
             ${loggedIn ? '<section class="fuad-home-chat" aria-label="Chat"></section>' : ""}
             <section class="fuad-home-recent" aria-label="Recent moves"></section>
-            <section class="fuad-home-coming" aria-label="Coming up"></section>
         </div>
     </div>`;
     const find = (name) => root.querySelector(`.fuad-home-${name}`);
