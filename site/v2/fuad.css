@@ -1042,6 +1042,11 @@ body [tabindex]:focus-visible {
 
 .fuad-layer .fuad-button-quiet { background: var(--fuad-quiet); color: var(--fuad-text) !important; font-weight: 600; }
 
+/* an action that isn't the screen's point (the popup's Rosters actions): lime, but outlined */
+.fuad-layer .fuad-button-outline { background: transparent; border: 1px solid var(--fuad-lime); color: var(--fuad-lime) !important; font-weight: 600; }
+
+.fuad-layer .fuad-button-outline:hover { background: var(--fuad-lime-tint); }
+
 .fuad-switch { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 
 .fuad-switch-options {
@@ -2250,7 +2255,7 @@ body [tabindex]:focus-visible {
 #fuad-rosters .fuad-prizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
 #fuad-league .fuad-prize,
-#fuad-rosters .fuad-prize { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--fuad-raised); min-width: 0; }
+#fuad-rosters .fuad-prize { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--fuad-raised); min-width: 0; text-align: center; }
 
 #fuad-league .fuad-prize-place,
 #fuad-rosters .fuad-prize-place { font-size: 13px; font-weight: 600; }
