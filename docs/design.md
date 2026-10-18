@@ -47,8 +47,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   - a last name is ambiguous only with another add waiting for years, not a player under contract
   - nothing stated in time: 1 year, applied on sight; the commissioner adjusts by hand for leniency
   - anything unclear is flagged, never defaulted
-- **League Alerts confirms a free agent add's length** with the job's own reader while the hour is
-  open, so owners see what will be set.
+- **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
+  own reader while the hour is open, so owners see what will be set.
 
 ## Previews and the beta
 
@@ -83,6 +83,9 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 - **Franchise salary:** the average of the position's top 5 salaries at the trade deadline (the first
   kickoff of week 12).
 - **Rookie draft:** offline, on no fixed date; the week 1 kickoff stands in for "after the draft".
+- **Pending blind bids** that could take a team over the cap, or past 30 active, void that owner's
+  bids (5.5). "Could" counts each claim group's costliest claim winning: groups have no priority
+  and each awards one claim.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
 

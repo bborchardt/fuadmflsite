@@ -33,6 +33,7 @@
     --fuad-bad-tint: rgba(255, 107, 107, 0.14);
     --fuad-caution: #FF9F43;
     --fuad-caution-tint: rgba(255, 159, 67, 0.14);
+    --fuad-lime-tint: rgba(200, 244, 60, 0.14);
     --fuad-scrim: rgba(0, 0, 0, 0.6);
     --fuad-shadow: rgba(0, 0, 0, 0.5);
     --fuad-body: Barlow, system-ui, sans-serif;
@@ -1276,3 +1277,281 @@ body [tabindex]:focus-visible {
     .fuad-popup-body,
     .fuad-popup-body > .fuad-panel-body { gap: 18px; }
 }
+
+/* ---- Home (ui/home.js): rebuilt on the home page in place of its Main tab ---- */
+
+/* MFL's page stays underneath for the home page's other tabs */
+#fuad-home { display: none; }
+
+.fuad-home-on #fuad-home { display: block; }
+
+.fuad-home-on body .pagebody > :not(#fuad-home) { display: none !important; }
+
+#fuad-home {
+    padding: 8px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+#fuad-home a { color: var(--fuad-lime); text-decoration: none; }
+
+#fuad-home a:hover { color: var(--fuad-lime-hover); }
+
+/* two columns of variable panels on desktop, the same gap in both, bottoms left to fall where they
+   may; on phones one column in the reading order: alerts, league, chat, board, moves, dates */
+.fuad-home-columns { display: flex; gap: 20px; align-items: flex-start; }
+
+.fuad-home-column { flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+
+.fuad-home-column + .fuad-home-column { flex-basis: 420px; }
+
+@media (max-width: 48em) {
+    #fuad-home { padding-top: 0; }
+    .fuad-home-columns { flex-direction: column; align-items: stretch; gap: 14px; }
+    .fuad-home-column { display: contents; }
+    .fuad-home-alerts { order: 1; }
+    .fuad-home-league { order: 2; }
+    .fuad-home-chat { order: 3; }
+    .fuad-home-board { order: 4; }
+    .fuad-home-recent { order: 5; }
+    .fuad-home-coming { order: 6; }
+}
+
+#fuad-home .fuad-panel {
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 18px;
+    padding: 16px 16px 6px;
+}
+
+#fuad-home .fuad-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+#fuad-home .fuad-panel-heading {
+    margin: 0 0 6px;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--fuad-text);
+    font-family: var(--fuad-display);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+#fuad-home .fuad-panel-head .fuad-panel-heading { margin-bottom: 0; }
+
+#fuad-home .fuad-panel-actions { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+
+/* a text link in a heading: a 44 px tall tap area around it */
+#fuad-home .fuad-panel-actions a { display: inline-flex; align-items: center; min-height: 44px; margin: -12px 0; }
+
+#fuad-home .fuad-chip {
+    position: relative;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-text);
+    font: 600 13px var(--fuad-body);
+    cursor: pointer;
+}
+
+#fuad-home .fuad-chip::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+
+#fuad-home .fuad-rows { list-style: none; margin: 0; padding: 0; }
+
+.fuad-rows > li { margin: 0; border-top: 1px solid var(--fuad-rule); }
+
+#fuad-home .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+
+#fuad-home .fuad-row-title { font-weight: 600; font-size: 15px; }
+
+#fuad-home .fuad-meta { line-height: 1.3; }
+
+#fuad-home .fuad-empty { margin: 0; padding: 8px 0 12px; }
+
+#fuad-home .fuad-alert {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 16px;
+    gap: 12px;
+    align-items: center;
+    min-height: 56px;
+    padding: 10px 0;
+    box-sizing: border-box;
+    color: var(--fuad-text);
+}
+
+#fuad-home .fuad-alert svg { color: var(--fuad-muted); }
+
+#fuad-home .fuad-alert-still { grid-template-columns: 32px minmax(0, 1fr); }
+
+#fuad-home .fuad-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--fuad-display);
+    font-weight: 700;
+    font-size: 17px;
+}
+
+.fuad-tone-red { background: var(--fuad-bad-tint); color: var(--fuad-bad); }
+
+.fuad-tone-orange { background: var(--fuad-caution-tint); color: var(--fuad-caution); }
+
+.fuad-tone-lime { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+
+.fuad-text-red { color: var(--fuad-bad); }
+
+.fuad-text-orange { color: var(--fuad-caution); }
+
+#fuad-home .fuad-all-clear,
+#fuad-home .fuad-login-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0 14px;
+    border-top: 1px solid var(--fuad-rule);
+}
+
+#fuad-home .fuad-login-line { justify-content: space-between; }
+
+#fuad-home .fuad-league-alert {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 8px 0;
+    box-sizing: border-box;
+    color: var(--fuad-text);
+}
+
+#fuad-home .fuad-figure { flex: none; font-family: var(--fuad-display); font-weight: 700; font-size: 18px; }
+
+#fuad-home .fuad-beta-line { margin: 0; padding: 10px 0 10px; border-top: 1px solid var(--fuad-rule); font-size: 13px; color: var(--fuad-muted); }
+
+/* the link's own line, so its tap area can be tall */
+#fuad-home .fuad-beta-line a { display: inline-block; padding: 12px 0; margin: -12px 0; }
+
+#fuad-home .fuad-topic {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 6px 0;
+    box-sizing: border-box;
+    color: var(--fuad-text);
+}
+
+#fuad-home .fuad-topic .fuad-meta { white-space: nowrap; }
+
+#fuad-home .fuad-move { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; }
+
+#fuad-home .fuad-move .fuad-label { padding-top: 2px; }
+
+#fuad-home .fuad-move strong { font-weight: 600; }
+
+#fuad-home .fuad-date { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; }
+
+#fuad-home .fuad-date .fuad-meta { font-size: 14px; text-align: right; }
+
+/* chat: grows to about four messages, then scrolls inside itself, newest at the bottom */
+#fuad-home .fuad-home-chat.fuad-panel { padding-bottom: 16px; }
+
+#fuad-home .fuad-chat-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+
+#fuad-home .fuad-chat-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+
+#fuad-home .fuad-chat-who { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; font-weight: 700; }
+
+#fuad-home .fuad-chat-mine { color: var(--fuad-lime); }
+
+#fuad-home .fuad-chat-head .fuad-meta { white-space: nowrap; }
+
+#fuad-home .fuad-chat-message { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+
+#fuad-home .fuad-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#fuad-home .fuad-chat-to { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+
+#fuad-home .fuad-chat-form { display: flex; gap: 8px; margin: 8px 0 0; }
+
+#fuad-home input,
+#fuad-home select,
+#fuad-home textarea {
+    box-sizing: border-box;
+    min-height: 44px;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: var(--fuad-page);
+    color: var(--fuad-text);
+    padding: 0 12px;
+    /* 16 px, so iPhones don't zoom in on focus */
+    font: 16px var(--fuad-body);
+}
+
+#fuad-home select { flex: 1; min-width: 0; width: 100%; padding: 0 10px; font-size: 15px; }
+
+#fuad-home .fuad-chat-form input { flex: 1; min-width: 0; }
+
+#fuad-home textarea { padding: 10px 12px; line-height: 1.4; resize: vertical; }
+
+#fuad-home input:focus,
+#fuad-home select:focus,
+#fuad-home textarea:focus { border-color: var(--fuad-lime); }
+
+#fuad-home input::placeholder,
+#fuad-home textarea::placeholder { color: var(--fuad-muted); }
+
+#fuad-home .fuad-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font: 600 15px var(--fuad-body);
+    cursor: pointer;
+}
+
+#fuad-home .fuad-cta:disabled { opacity: 0.6; cursor: default; }
+
+#fuad-home .fuad-topic-form { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--fuad-rule); }
+
+#fuad-home .fuad-topic-form[hidden] { display: none; }
+
+#fuad-home .fuad-form-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+
+#fuad-home .fuad-result { margin: 6px 0 0; font-size: 13px; color: var(--fuad-bad); }
+
+#fuad-home .fuad-result:empty { display: none; }

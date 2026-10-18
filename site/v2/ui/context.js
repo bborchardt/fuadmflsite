@@ -3,6 +3,7 @@
 import {asArray, exportUrl, fetchExport, weekEnd, weekKickoff} from "../lib/mfl.js";
 import {ROSTER_CHECK_LAST_WEEK} from "../lib/rules.js";
 import {cached} from "./store.js";
+import {pageFetch} from "./page-fetch.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -41,11 +42,11 @@ export function draftDays(calendar) {
 // cached for a day; a part that can't be read is left out rather than hold up the line
 export async function loadContext({season, leagueId}) {
     const host = window.location.origin;
-    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type).catch(() => null);
+    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch}).catch(() => null);
     const facts = await cached(`fuad.context.${season}`, DAY, async () => {
         const [week1, seasonEnd, draftResults, calendar] = await Promise.all([
-            weekKickoff(season, 1).catch(() => null),
-            weekEnd(season, ROSTER_CHECK_LAST_WEEK).catch(() => null),
+            weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null),
+            weekEnd(season, ROSTER_CHECK_LAST_WEEK, {fetchImpl: pageFetch}).catch(() => null),
             league("draftResults"),
             league("calendar")
         ]);

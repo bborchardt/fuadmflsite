@@ -13,6 +13,8 @@ MFL documents little of this.
   season's `nflSchedule` returns 404.
 - **Weeks:** `weeklyResults` reports the last week with results: a week behind in season, and week 17
   all offseason. `injuries` with `W` is that week's report; without it, today's.
+- **This week's lineups:** `liveScoring` with `W` lists each matchup's `franchise` entries, their
+  `players.player` marked `starter` or `nonstarter`, before kickoff too.
 - **Rosters by week** keep membership but report today's salary: a player cut later reads $1.
 - **The player page** (`player?L=<league>&P=<id>`, public) has in one request what the exports spread
   over many (`playerScores` takes one week per request): the biography (height and weight, born and
@@ -54,9 +56,17 @@ MFL documents little of this.
   the first it can. Players without an NFL team show as "FA*".
 - **Pending claims** (`export?TYPE=pendingWaivers`) are the logged-in owner's own:
   `{"pendingWaivers":{"blindBidWaiverRequest":{"round":"1","addsDrops":"13753_1_16619,13308_1_16152",
-  "comments":"1 yearbr/2 years","timestamp":"…"}}}`, one entry per group (presumably a list when
-  there are several), claims in priority order as `ADD_BID_DROP`, and the comment's line breaks
-  mangled to `br/`.
+  "comments":"1 yearbr/2 years","timestamp":"…"}}}`, one entry per group (a list when there are
+  several), claims in priority order as `ADD_BID_DROP` (a claim with no drop ends `_0000`), and the
+  comment's line breaks mangled to `br/`. Until the run, each group also shows in `transactions` as
+  a `BBID_WAIVER_REQUEST` (`"transaction":"<round>|<claims>"`).
+- **The board's pages:** a topic is `options?L=<league>&O=28&TOPIC_ID=<thread id>`, a new one
+  `options?L=<league>&O=28&ACTION=add`. The home page's "10 Newest Message Board Topics" module
+  (`#message_board_summary`, links in `td.topic`) shows to guests too.
+- **Pending trades** (`export?TYPE=pendingTrades`) are the logged-in owner's, both offered and
+  received; with none it's an empty `{"pendingTrades":{}}`. `transactions` also lists each offer as a
+  `TRADE_PROPOSAL` and each refusal as a `TRADE_REJECTION` (`by_commish` when the commissioner acted
+  for a team).
 - **Message board API** (`messageBoard`, `messageBoardThread`) needs a login and returns nothing for
   2024 and earlier; past seasons' boards are a public archive at `/<season>/options?L=<league>&O=28`.
 - **Edited posts** keep their original `postTime` and return the edited text; the API has no edit
@@ -133,13 +143,16 @@ Each is an ordinary page form, posted from the logged-in browser.
   by `mfl_common.js` from one feed, `fflnetdynamic<season>/<league>_chat.xml`, polled every 5
   seconds (stopping after about 2 hours without posting); they differ only in `displayMessages` (9
   or 40).
-- The feed's `<message>` elements carry `id`, `franchise_id` (the sender), `to` (a team, for a
-  private message), `message` and `posted`; it holds the season's messages until someone posts
-  `:clear:`.
+- The feed is `<messages>` of `<message>` elements, newest first, carrying `id`, `franchise_id`
+  (the sender), `to` (a team or `0000` the commissioner, for a private message; empty for everyone),
+  `message` and `posted`. `posted` is text ("Sat Oct 10 8:36:55 p.m. CT 2026"); the `id` starts
+  with the post's time in seconds (`1791682615dog683`). It holds the season's messages until
+  someone posts `:clear:`.
 - **Private messages are in the public feed:** MFL's script just skips those not to or from the
   viewer, so v2 must apply the same filter.
 - Posting is a GET from the logged-in browser:
-  `chat_save?L=<league>&MESSAGE=<escaped text>&TO_FID=<team, or empty for everyone>`.
+  `chat_save?L=<league>&MESSAGE=<escaped text>&TO_FID=<team, or empty for everyone>`. It can take a few
+  seconds to answer, as can a board import; the feed has the message once it does.
 
 ## League settings
 
