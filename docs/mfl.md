@@ -159,7 +159,8 @@ Each is an ordinary page form, posted from the logged-in browser.
     against the position, YTD, Avg and Proj points, position rank, % Start and NFL News; last week's
     starters in bold.
   - The checkbox is **disabled** (no name) for a player on a bye or whose game has started, so
-    neither can be submitted. An Out player can stay checked.
+    neither can be changed. A starter whose game has started stays checked, and a hidden input of
+    the same name and value keeps him in the posted lineup. An Out player can stay checked.
   - Then `MESSAGE<team>` ("Optional Message"), and `SUBMIT` ("Submit Lineup"; with nothing checked
     it asks to confirm "un-submitting" the lineup). IR players are listed below the table ("you must
     first activate them on the Injured Reserve page").
