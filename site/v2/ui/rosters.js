@@ -330,9 +330,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     order().then((ordered) => {
                         const mountPicks = body.querySelector(".fuad-picks-mount");
                         if (mountPicks && mount.contains(mountPicks)) {
-                            league().then(({names}) => extras().then(({futureDraftPicks}) => {
+                            return Promise.all([league(), extras()]).then(([{names}, {futureDraftPicks}]) => {
                                 mountPicks.innerHTML = picksPanels(picksOf(teamId, futureDraftPicks, {names, numbers: pickNumbers(ordered.rows), nextYear: season + 1}), {nextYear: season + 1, live});
-                            }));
+                            });
                         }
                     }).catch((error) => console.warn("[fuad] couldn't number the picks:", error));
                 }

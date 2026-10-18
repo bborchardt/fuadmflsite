@@ -289,6 +289,18 @@ export function playoffFinish(brackets, {completedWeek = Infinity} = {}) {
 // owner if traded), the player once picked, and his salary today ("—" once released)
 export function draftBoard(draftResults, {names, players, salaries}) {
     const picks = asArray(draftResults && draftResults.draftUnit).flatMap((unit) => asArray(unit.draftPick));
+    // MFL notes a traded pick in its comment ("Pick traded from …"), with the team's name then. Every
+    // round keeps one order, so a slot's original owner is whoever holds it untraded in some round.
+    const tradedNote = (pick) => (String(pick.comments || "").match(/Pick traded from (.+?)\.(?:\s|$)/) || [])[1] || "";
+    const originals = new Map();
+    picks.filter((pick) => !tradedNote(pick)).forEach((pick) => originals.set(pick.pick, pick.franchise));
+    const fromOf = (pick) => {
+        const original = originals.get(pick.pick);
+        if (original) {
+            return original === pick.franchise ? "" : names.get(original) || original;
+        }
+        return tradedNote(pick);
+    };
     const rounds = new Map();
     picks.forEach((pick, index) => {
         const round = Number(pick.round);
@@ -301,8 +313,7 @@ export function draftBoard(draftResults, {names, players, salaries}) {
             number: `${round}.${pick.pick}`,
             team: pick.franchise,
             teamName: names.get(pick.franchise) || pick.franchise,
-            // MFL notes a traded slot in its comment: "Pick traded from The Kittle Engine That Could."
-            from: (String(pick.comments || "").match(/Pick traded from (.+?)\.(?:\s|$)/) || [])[1] || "",
+            from: fromOf(pick),
             player: player ? {id: player.playerId, name: player.fullName, position: player.nflPosition} : null,
             salary: player && salaries.has(player.playerId) ? salaries.get(player.playerId) : null
         });

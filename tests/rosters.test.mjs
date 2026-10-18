@@ -133,14 +133,19 @@ test("this site's draft: rounds of picks with the player and his salary today", 
     assert.ok(released.every((pick) => !salaries.has(pick.player.id)));
 });
 
-test("a traded draft slot names its original owner, as MFL's comment does", () => {
+test("a traded draft slot names its original owner by today's name, and not when it came back", () => {
     const players = playersFromExport(playersExport);
     const board = draftBoard(fixture("draft-results.json").draftResults, {names, players, salaries: new Map()});
     const pick = (number) => board.flatMap((round) => round.picks).find((entry) => entry.number === number);
-    assert.equal(pick("1.06").from, "The Kittle Engine That Could");
+    // slot 6 is 0007's (untraded in rounds 2 and 3); MFL's comment still has the team's old name
+    assert.equal(pick("1.06").from, names.get("0007"));
     assert.equal(pick("1.10").from, "Smooth City Styles!");
     assert.equal(pick("2.06").from, "");
     assert.equal(pick("3.06").from, "");
+    // a pick traded away and back is the holder's own
+    const all = board.flatMap((round) => round.picks);
+    assert.ok(all.every((entry) => entry.from !== entry.teamName));
+    assert.ok(all.every((entry) => !/â/.test(entry.from)));
 });
 
 test("a cut already charged isn't listed again as owed", () => {
