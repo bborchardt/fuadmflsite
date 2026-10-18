@@ -169,7 +169,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -249,8 +249,29 @@ tried in the beta (the commissioner's team only) before the next.
      with `DETAILS=1`, which Home now asks for too.
    - To revisit: compare a card's win % with MFL's page during a full Sunday; playoff weeks
      (15–17) through `liveScoring` are untested until December.
-   **Next: step 4.**
-4. **Rosters** (row 8): My team, Teams, Players, Draft; the popup's Rosters actions.
+4. **Rosters** (done, provisional; row 8; PR #26): My team, Teams (each team under
+   `#rosters-teams/<id>`), Players, Draft; the popup's Rosters actions. Decided while building
+   (18 Oct 2026):
+   - Built as a provisional version to keep moving through the steps (the commissioner); the
+     simplifications below are to revisit after the build.
+   - The popup's actions (Drop, IR, Propose a trade, Add) open MFL's own Moves pages until steps
+     6–9 rebuild them, without the player chosen; Propose a trade opens MFL's proposal page for
+     the two teams.
+   - Points are `playerScores` (`W=YTD`), which covers free agents too; byes `nflByeWeeks`.
+   - Franchise tags reuse the Contracts tab's logic (`ui/franchise-view.js`): the deadline
+     snapshot until week 1, live until the deadline, then fixed.
+   - In the offseason a rostered player with no years left reads as an RFA; whether MFL shows
+     them that way after the commissioner's rollover is for step 10.
+   - Simplified for now: Draft on desktop lists rounds rather than the one grid (rounds across,
+     picks down) and the order as a list rather than tiles; the board's salary range shows as
+     text, not on hover.
+   - A traded pick's original owner is the team holding that slot untraded in another round
+     (every round keeps one order), by today's name; MFL's "Pick traded from …" comment keeps the
+     name at the time of the trade.
+   - Next year's order counts the playoffs once MFL's `completedWeek` reaches the last bracket week;
+     what MFL's page sets it to after the season is for step 10.
+   - Tested offline with the harness (saved `playerScores` YTD in `samples/league-2026-10-18`).
+   **Next: step 5.**
 5. **Lineup** (row 14): MFL's Submit Lineup restyled, with the warnings and the save bar.
 6. **Moves › Add** (rows 5, 12): v2's controls over MFL's `add_drop` forms, comment lines, the
    board post. The riskiest step; it wants the commissioner to-do's saved Add/Drop page from the
