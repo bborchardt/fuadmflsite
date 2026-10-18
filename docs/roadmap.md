@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 3 built)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 5 built)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -169,7 +169,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -273,8 +273,26 @@ tried in the beta (the commissioner's team only) before the next.
    - Next year's order counts the playoffs once MFL's `completedWeek` reaches the last bracket week;
      what MFL's page sets it to after the season is for step 10.
    - Tested offline with the harness (saved `playerScores` YTD in `samples/league-2026-10-18`).
-   **Next: step 5.**
-5. **Lineup** (row 14): MFL's Submit Lineup restyled, with the warnings and the save bar.
+5. **Lineup** (done; row 14; PR #29): MFL's Submit Lineup page, with v2's rows, warnings and save
+   bar drawn over MFL's own form (`ui/lineup.js`). Decided while building (18 Oct 2026):
+   - Everything shown comes from MFL's page; the only export is the week's injury report, which
+     tells IR and suspensions apart where MFL's one-letter Inj column doesn't (`I` is IR).
+   - A tap sets MFL's checkbox; Save posts MFL's own form in place (no page reload), then confirms
+     from MFL's answer (or the page read back): "Lineup saved.", "Not saved: MFL kept the lineup
+     below." or, when MFL kept only part, "Saved, but MFL kept the lineup below.", with MFL's lineup
+     shown. A save that went but couldn't be checked turns Save off until a reload.
+   - A starter whose game has started stays checked and locked, and counts toward the total: MFL
+     keeps him with a hidden input (master's `docs/mfl.md`), so posting MFL's form keeps him too.
+   - Before the draft is told from `draftResults`, asked fresh before the note shows, and never
+     after week 1.
+   - On phones the row's tap starts or benches, so the popup isn't reached from Lineup there.
+   - Tested offline with `harness/lineup.py` in the backtest repo (saved Saturday and Sunday pages
+     in `samples/clone-2026-10-17` and `clone-2026-10-18`; flags for a refused save, a blank POST
+     answer, logged out), then live in the clone league with `harness/live.py` (this checkout's v2
+     in Chrome, the member saving by hand): a swap saved with the started starters kept.
+   - To revisit: whether a carried-over starter on a bye gets MFL's hidden input like a started
+     game (none seen yet); each tap redraws the whole page (fine at 30 rows).
+   **Next: step 6.**
 6. **Moves › Add** (rows 5, 12): v2's controls over MFL's `add_drop` forms, comment lines, the
    board post. The riskiest step; it wants the commissioner to-do's saved Add/Drop page from the
    blind-bid period.
@@ -286,8 +304,7 @@ tried in the beta (the commissioner's team only) before the next.
 11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
 
 **Open, to settle while building:** whether MFL accepts bids on a player whose game has started, and whether it
-carries a lineup over unchecked (the to-do's saved page, and the beta); what MFL's `I` injury code
-means (presumably IR).
+carries a lineup over unchecked (the to-do's saved page, and the beta).
 
 **The build prompt** (for a fresh session on master, one per step):
 
