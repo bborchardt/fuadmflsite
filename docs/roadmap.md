@@ -976,7 +976,10 @@ saves little.
 
 ## Optional, later
 
-A small public league-history site (records, champions, bylaws), only after v2 is the default.
+- A small public league-history site (records, champions, bylaws), only after v2 is the default.
+- **Optimal lineup in Scores** (after the build; the commissioner, 18 Oct 2026): what each team's
+  best lineup would have scored, as MFL's live scoring page offers. For finished weeks
+  `weeklyResults` already has each team's `optimal` starters and `opt_pts`.
 
 ## Reference: bylaws v2 relies on
 
