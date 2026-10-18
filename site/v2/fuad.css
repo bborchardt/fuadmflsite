@@ -2507,3 +2507,29 @@ body [tabindex]:focus-visible {
     #fuad-rosters .fuad-board-picks[hidden] { display: block !important; }
     #fuad-rosters .fuad-board-picks > li { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 6px; font-size: 14px; }
 }
+
+/* Players: fixed column widths, so filtering doesn't make the columns jump */
+#fuad-rosters .fuad-player-table { table-layout: fixed; }
+
+#fuad-rosters .fuad-player-table .fuad-col-position { width: 56px; }
+
+#fuad-rosters .fuad-player-table .fuad-col-nfl { width: 60px; }
+
+#fuad-rosters .fuad-player-table .fuad-col-bye { width: 52px; }
+
+#fuad-rosters .fuad-player-table .fuad-col-projected,
+#fuad-rosters .fuad-player-table .fuad-col-points { width: 76px; }
+
+#fuad-rosters .fuad-player-table .fuad-col-salary { width: 80px; }
+
+#fuad-rosters .fuad-player-table .fuad-col-years { width: 72px; }
+
+#fuad-rosters .fuad-player-table .fuad-col-owner { width: 30%; }
+
+#fuad-rosters .fuad-player-table td { overflow-wrap: anywhere; }
+
+@media (max-width: 48em) {
+    #fuad-rosters .fuad-player-table .fuad-col-projected,
+    #fuad-rosters .fuad-player-table .fuad-col-points,
+    #fuad-rosters .fuad-player-table .fuad-col-salary { width: 60px; }
+}
