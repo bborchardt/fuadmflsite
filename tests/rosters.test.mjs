@@ -132,3 +132,27 @@ test("this site's draft: rounds of picks with the player and his salary today", 
     const released = board.flatMap((round) => round.picks).filter((pick) => pick.player && pick.salary === null);
     assert.ok(released.every((pick) => !salaries.has(pick.player.id)));
 });
+
+test("a traded draft slot names its original owner, as MFL's comment does", () => {
+    const players = playersFromExport(playersExport);
+    const board = draftBoard(fixture("draft-results.json").draftResults, {names, players, salaries: new Map()});
+    const pick = (number) => board.flatMap((round) => round.picks).find((entry) => entry.number === number);
+    assert.equal(pick("1.06").from, "The Kittle Engine That Could");
+    assert.equal(pick("1.10").from, "Smooth City Styles!");
+    assert.equal(pick("2.06").from, "");
+    assert.equal(pick("3.06").from, "");
+});
+
+test("a cut already charged isn't listed again as owed", () => {
+    const team = {franchiseId: "0001", pendingDroppedPlayers: [
+        {fullName: "Charged Player", years: 2, salary: 10, capPenalty: 8, penaltyCharged: true},
+        {fullName: "Owed Player", years: 1, salary: 2, capPenalty: 1, penaltyCharged: false}
+    ]};
+    assert.deepEqual(penaltiesOf(team, {salaryAdjustment: []}).map((penalty) => penalty.who), ["Owed Player"]);
+});
+
+test("the playoff finish waits for its last week to be done", () => {
+    const brackets = [fixture("playoff-bracket-2025-1.json").playoffBracket, fixture("playoff-bracket-2025-2.json").playoffBracket];
+    assert.equal(playoffFinish(brackets, {completedWeek: 16}), null);
+    assert.equal(playoffFinish(brackets, {completedWeek: 17}).length, 6);
+});
