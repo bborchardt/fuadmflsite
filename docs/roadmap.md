@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 10 Oct 2026
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 17 Oct 2026
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -71,8 +71,7 @@ What a reviewer needs beyond the sections below:
   sent the offer); claims, offers and saves are seeded or kept only until reload.
 - **Deliberately not drawn:** the offseason auction and franchise tags in Moves.
 - **Sources:** the bylaws and MFL's league settings (`docs/bylaws.md`, this branch); on master,
-  `docs/design.md` (why the site works as it does) and `docs/mfl.md` (MFL's behavior); the Reference
-  section at the end of this file (MFL's forms and settings for v2).
+  `docs/design.md` (why the site works as it does) and `docs/mfl.md` (MFL's behavior, including the forms, chat feed and settings v2 uses).
 - **Most worth challenging:** flows end to end across sections; consistency between boards (the
   earlier rows 6–8 predate some principles above); missing states (empty, loading, errors,
   offseason); accessibility; fit with the bylaws, e.g. the Lineup warnings against MFL's own
@@ -170,7 +169,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20). Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -186,9 +185,9 @@ tried in the beta (the commissioner's team only) before the next.
   type sizes, names that wrap.
 
 **Steps:**
-0. **Docs on master:** the Reference section below moves into `docs/mfl.md`; `docs/design.md` gets
-   v2's changes to its goals (five sections replace the custom tabs: "no new navigation layer" no
-   longer holds) and the beta-in-place exception (Rollout 2).
+0. **Docs on master** (done, PR #20): MFL's forms, chat feed, pending claims, API imports and league
+   settings are in `docs/mfl.md`; `docs/design.md`'s goal is "one navigation layer" (v2's five
+   sections replace the custom tabs); the beta-in-place exception was already there. **Next: step 1.**
 1. **The frame** (canvas rows 13, 16): header (☰ site menu with MFL's menu, the wordmark and
    context line, the team sheet with Log in / Log out and Viewing as), the five sections (bottom
    tabs, top bar), view segments as URL views, the tokens and type, the loading and error pattern,
@@ -663,7 +662,7 @@ commissioner void over-cap moves after waivers run, as today.
 
 ### Trades (Moves › Trades)
 
-Designed (phone and desktop): the canvas's row 9. MFL's trade pages (Reference) drive it; v2's own screens fill
+Designed (phone and desktop): the canvas's row 9. MFL's trade pages (`docs/mfl.md`, Forms) drive it; v2's own screens fill
 their forms.
 - **The Trades view:** offers to the member (each with what moves, its effect on the member's cap and
   roster, and Accept / Counter / Reject with a comment), the member's own offers (each with Withdraw,
@@ -716,7 +715,7 @@ their forms.
 
 ### Lineup
 
-MFL's Submit Lineup page (`lineup`, Reference), restyled; designed for phones and desktop on canvas row 14 from
+MFL's Submit Lineup page (`lineup`; `docs/mfl.md`, Forms), restyled; designed for phones and desktop on canvas row 14 from
 the page saved 17 Oct 2026 (week 6). Top to bottom: the header, a week picker (‹ Week 6 ›: this
 week and later, MFL's week links), the warnings, the roster by position in MFL's order (QB, RB, WR,
 TE, PK, alphabetical within; each group's heading "QB · start 1–2 · 2 starting"), "On IR: …" with
@@ -760,7 +759,7 @@ the columns' bottoms meet; review, 17 Oct 2026):
 3. **Chat:** compact: grows to about four messages, then scrolls inside itself, newest at the bottom
    by the box, opened scrolled to the newest; one line when empty ("No messages yet."). A "To" picker sends to everyone or privately to one team; private messages carry a
    lock tag ("to you", "to The Obliterators"). Reads MFL's chat feed and posts through `chat_save`
-   (Reference). The league barely uses chat (3 messages this season, all private).
+   (`docs/mfl.md`, Chat). The league barely uses chat (3 messages this season, all private).
 4. **Message board:** the newest topics, linking to MFL's board, and "New topic" (subject and
    message, posted with MFL's `messageBoard` import); replies on the topic's own page.
 5. **Recent moves:** the league's latest transactions, the home for them now that Moves has no
@@ -922,111 +921,13 @@ saves little.
 
 A small public league-history site (records, champions, bylaws), only after v2 is the default.
 
-## Reference: MFL details gathered for v2
+## Reference: bylaws v2 relies on
 
-From pages the commissioner saved on 10 Oct 2026 (2026 site, logged in as 0001). Moves into master's
-`docs/mfl.md` when v2 starts; the saved pages themselves aren't kept.
-
-**Add/Drop (`add_drop?L=48571`)**, one form posted to `add_drop`:
-- Fields: `L`, `add_pid` and `drop_pid` (hidden, `#add_pid_field_id`, `#drop_pid_field_id`),
-  `FORCE_WAIVER` (checkbox), `BBID_AMT`, `ROUND` (a select of existing groups plus the next),
-  `COMMENTS` (textarea), `SUBMIT` (`#add_drop_submit`; its label is "Perform Add/Drop" or "Submit
-  Request"), plus `add_settings` and `PROJSRC`.
-- Player lists are JavaScript data: `playerDatabaseObj["add"]` and `["drop"]`, arrays of `Player2`
-  (`id, name, nfl_team, pos, bye_week, sal, inj, roster, pts, opp, pwpts, sort_sal`). `pts` is points
-  scored so far, `pwpts` this week's projection. Names carry flags: `*` dropped recently, `!` game
-  started, `(R)` rookie.
-- MFL's `picker.js` draws the rows (`tr#add_<id>`, `tr#drop_<id>`); a click fills the hidden id and the
-  "To Add"/"To Drop" cells (`#add_name_field_id`, `#drop_name_field_id`), then
-  `picker_locked_check(...)` shows or hides the bid, group and comment rows (`#amt_field_id`,
-  `#round_field_id`, `#comments_field_id`) and the `FORCE_WAIVER` row.
-- After a submit MFL shows Add/Drop again, with no message; the claim appears in
-  `#waiver_request_list`.
-- Claims table (`#waiver_request_list`): Group, Add, Drop, Bid Amount, Action, Time Entered, Comments
-  (one cell per group). Action links, with a claim written `ROUND_ADDID_BID_DROPID`:
-  `add_drop?L=48571&F=0001&MOVE_UP=1_13308_1_16152`, `MOVE_DOWN=...`, `DELETE=...`,
-  `COPY_ROUND=1_13753_1_16619_2` (the last part is the target group), and Edit:
-  `options?L=48571&O=255&F=0001&ROUND=1`.
-
-**Edit a group (`options?O=255&ROUND=n`)**, one form posted to `options`: `form_name=editwr`,
-`LEAGUE_ID`, `O=255`, `ROUND`; per claim `amount_<i>` and `drop_<i>` (a select of the roster plus
-"None"); `applyall` (checkbox); `comment` (the group's one comment); `SAVE` / `CANCEL`.
-
-**`export?TYPE=pendingWaivers&L=48571&JSON=1`** (the logged-in owner's own claims):
-`{"pendingWaivers":{"blindBidWaiverRequest":{"round":"1","addsDrops":"13753_1_16619,13308_1_16152",
-"comments":"1 yearbr/2 years","timestamp":"..."}}}`: one entry per group (an object when there's
-one, presumably an array when more), claims in priority order as `ADD_BID_DROP`, and the comment
-with line breaks mangled to `br/`.
-
-**Chat:** the Main tab module `#league_chat` and the chat page (`chat?L=48571&COUNT=40`) are both
-drawn by `mfl_common.js` from one feed, `fflnetdynamic2026/48571_chat.xml`, polled every 5 seconds
-(stopping after about 2 hours without posting); they differ only in `displayMessages` (9 or 40).
-The feed's `<message>` elements carry `id`, `franchise_id` (sender), `to` (a team, for a private
-message), `message` and `posted`; it holds the season's messages until someone posts `:clear:`.
-**Private messages are in the public feed**: MFL's script just skips those not to or from the
-viewer, so v2 must apply the same filter. Posting is a GET from the logged-in browser:
-`chat_save?L=48571&MESSAGE=<escaped text>&TO_FID=<team, or empty for everyone>`.
-
-**API (api_info):** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, ...) and `ROUND` but no
-comment; `messageBoard` (import) lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`);
-`salaries` (import) needs the commissioner's cookie.
-
-**IR (`options?L=48571&O=18`)**, one form posted to `ir`: `LEAGUE_ID`, `FRANCHISE_ID`; per player
-checkboxes `deactivate<franchise>` (to IR), `activate<franchise>` (from IR) and `drop<franchise>`
-(value: player id), all in one submit ("Perform Injured Reserve"), so an activation and a drop go
-together. Two tables: "Select Players To Deactivate/Drop" (active players, with Starter?) and
-"Select Players To Activate" (IR players). MFL itself refuses ineligible players ("Can not be
-deactivated" instead of a checkbox) and marks players whose game has started "Locked".
-
-**Trades (`options?L=48571&O=05`):** "Trades Offered By You", "Trades Offered To You", and a
-"Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
-proposal page.
-- Propose: one form posted to `trade_offer`: `LEAGUE_ID`, `FRANCHISE_ID` (`0001,0002`: both teams),
-  `input_expires`, checkboxes `drop<franchise>` per side whose value is a player id or a future pick
-  (`FP_<owner>_<year>_<round>`, "Year 2027 Round 1 Draft Pick from …"), `TRADE_EXPIRES_MONTH`, `_DAY`,
-  `_TIME`, `_YEAR`, `msg`, and `Propose` ("Propose Trade").
-- Respond: per offer, a form posted to `trade_response`: `LEAGUE_ID`, `TRADE_ID`, radio `ACTION`
-  (`accept`, `counter_proposal`, `reject`), `COMMENTS`, submit "Respond To Trade Offer" (off until a
-  choice is made; accept asks to confirm). Counter ("No, I'd like to reject this trade and offer a
-  counter-proposal") rejects the offer at once, then opens the ordinary proposal page for the two
-  teams (`options?O=05&FRANCHISE=<mine>,<theirs>`) with nothing ticked, an empty message and the
-  default 7-day expiry (seen on a league clone, 17 Oct 2026).
-- Withdraw: "Trades Offered By You" lists the member's offers, each with a Comments row; its Action
-  column links "I'd like to revoke this trade offer": a plain GET,
-  `trade_response?L=<league>&TRADE_ID=<id>&ACTION=revoke`, with no confirmation (league clone, 17 Oct
-  2026). v2 asks once first. The offer row shows date, each side's players and picks,
-  expiry, and "Compare Players".
-
-**Submit Lineup (`lineup?L=48571`, saved 17 Oct 2026, week 6, as 0001):** a week picker ("Submit
-Lineup For Week: 6 | 7 | … 17", `lineup?L=…&WEEK=n&F=0001`; this week and later), then one form posted
-to `lineup`: hidden `FRANCHISE`, `LEAGUE_ID`, `WEEK`, `FORM=1`, `lineup_expires`, `INITPROJSRC`; a
-`PROJSRC` select (projection source, submits the form on change); one table, `table.report`, a row per
-active player grouped by position and alphabetical within it ("Beck, Carson ARI QB"), the group's
-first row headed "Select 1-2 QB:"; per player a checkbox `QB0001` (`RB0001`, …) whose value is the
-player id, `checked` for a starter; columns Week 6 Opp (with kickoff), Inj (`O`, `Q`, `I`, which
-presumably means IR), Bye, opponent average and rank vs the position, YTD, Avg and Proj points, Pos
-rank, % Start, NFL News; last week's starters in bold. MFL **disables the checkbox** (no name) for a
-player on a bye and once his game has started (Thursday's, on the saved page), so neither can be
-submitted. An Out player can stay checked (Lamar Jackson was). Then `MESSAGE0001` ("Optional
-Message", a textarea), Submit (`SUBMIT`, "Submit Lineup"; submitting nothing checked asks to confirm
-"un-submitting" the lineup), and below the table the IR players ("you must first activate them on
-the Injured Reserve page").
-
-**Commissioner switch:** MFL's menu has "Become Commissioner", `logout?L=48571&BECOME=0000`, when the
-commissioner is logged in as a team; presumably `BECOME=<team>` the other way, not yet seen.
-
-**Trades setup** (commissioner page, 2026): accepted trades process immediately; trades that create
-invalid rosters go through, and that team can't submit a lineup until fixed; owners can't accept a
-trade with a player whose game has kicked off until the week's games end (4 hours after the last
-kickoff, per MFL's help); trade comments aren't shown to everyone; picks tradable 2 years out, rounds
-1–5; no trading of blind-bid dollars; proposals expire after 7 days by default.
+Each moves into master's `docs/design.md` (League rules the code relies on) with the step that
+enforces it. MFL's own details are in master's `docs/mfl.md`.
 
 **Bylaws** (`options?L=48571&O=26`) the redesign relies on: roster 23–30 from the final cut-down
 date to season's end, none in the offseason (2.4–2.5); violations voided by the commissioner (2.6,
 with exceptions); bids that could exceed the cap void all that owner's bids (5.5); free agent pickups
 cost $1 (5.7); trades 10.1–10.5 (above); IR doesn't count toward the roster limit (11.2); tanking
 includes byes (13.2); playoff seeding (League, above); rookie draft order (8.1–8.2, Rosters above).
-
-**League settings (`export?TYPE=league`):** `bbidConditional=Yes`, `maxWaiverRounds=8`,
-`bbidMinimum=1`, `bbidIncrement=1`, `bbidSeasonLimit=999999`, `currentWaiverType=BBID_FCFS`,
-`includeIRWithSalary=100`, `salaryCapAmount=300` (soft), `rosterSize=80`.
