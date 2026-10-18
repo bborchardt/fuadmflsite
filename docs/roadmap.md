@@ -204,6 +204,7 @@ tried in the beta (the commissioner's team only) before the next.
    - The popup reads MFL's player page (`player?L=…&P=…`), one request for the bio, status,
      contract, headlines and season by week, instead of the exports (`playerScores` takes a week per
      request); if MFL changes the page, MFL's own popup opens. A free agent shows no contract.
+   - The popup's news at 16 px (PR #22), after trying it on a phone.
    - To check in the beta: the popup's name sat indented on the live home page (BlueMesh) and
      nowhere else; headings were made immune to skin spacing, unconfirmed.
    **Next: step 2.**
@@ -268,7 +269,9 @@ the roadmap on its branch with what changed and what's next.
   controls (Show bench, sort headings, Show all) become full-height rows or cells. Space grows only
   where controls are packed tight: about half a row above Rosters › Players. Text is 12 px at the
   least (tab labels, uppercase headings at 0.04 em spacing, lineup stat lines, tags), meta lines
-  13 px.
+  13 px. Text read as prose (the popup's news articles, and later the board's posts) is 16 px with
+  1.55 line spacing, in full white, its headlines 16 px (`--fuad-read-size`; chosen on the canvas,
+  17 Oct 2026, after 14 px read small on a phone).
 - **Accessibility rules for the build** (review, 17 Oct 2026): a 2 px lime focus ring, offset 2 px,
   on `:focus-visible` for every control (no bare `outline: 0`); a visually hidden h1 per view
   ("Moves: Add"); views as links with `aria-current`, matching their URL (`#league-standings`);
