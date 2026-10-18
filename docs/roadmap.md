@@ -8,8 +8,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 ## Commissioner to-do
 
 - Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
-  - the calendar export, logged in (`/2026/export?TYPE=calendar&L=48571&JSON=1`): v2 reads draft
-    day and the cut-down date from it, so far without seeing its shape (it needs a login)
   - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
     the page behaves as it does while the free agent window is open
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
