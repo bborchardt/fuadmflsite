@@ -187,6 +187,15 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
+    // the message board's topic and reply pages: MFL's, restyled
+    const boardPage = (window.location.pathname.match(/\/mb\/(topic_show|post_add)\.pl$/) || [])[1];
+    if (context && boardPage) {
+        await import("./topic.js").then(({restyleReply, restyleTopic}) => (boardPage === "post_add" ? restyleReply() : restyleTopic())).catch((error) => {
+            console.error("[fuad] couldn't restyle the message board page:", error);
+            onTrouble();
+        });
+        return false;
+    }
     const found = mounts();
     const onHome = document.getElementById("tabcontent0") || found.contracts || found.commish || found.links;
     if (!context || !onHome) {
