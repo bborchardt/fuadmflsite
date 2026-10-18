@@ -262,9 +262,11 @@ tried in the beta (the commissioner's team only) before the next.
      snapshot until week 1, live until the deadline, then fixed.
    - In the offseason a rostered player with no years left reads as an RFA; whether MFL shows
      them that way after the commissioner's rollover is for step 10.
-   - Simplified for now: Draft on desktop lists rounds rather than the one grid (rounds across,
-     picks down) and the order as a list rather than tiles; the board's salary range shows as
-     text, not on hover.
+   - Simplified for now: Draft's order is a list rather than tiles on desktop; the board's salary
+     range shows as text, not on hover. The draft's rounds sit side by side on desktop (rounds
+     across, picks down), as specced.
+   - From the commissioner's desktop review: Teams' rows open their team (lime names, a chevron);
+     Players scrolls with the page, its chips wrapping, nothing scrolling inside it.
    - A traded pick's original owner is the team holding that slot untraded in another round
      (every round keeps one order), by today's name; MFL's "Pick traded from …" comment keeps the
      name at the time of the trade.
