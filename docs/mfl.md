@@ -23,7 +23,10 @@ MFL documents little of this.
   as "( O )"). The article page has the published time, the source, the update and "Analysis:".
 - **MFL's player popup** is `launch_player_modal(league, player)`, called from `javascript:` links on
   its pages.
-- **The calendar export** needs a logged-in member.
+- **The calendar export** needs a logged-in member. Each `event` has `id`, `type` (`CUSTOM` for the
+  commissioner's own, `TRADE`, `WAIVER_BBID`, `WAIVER_LOCK`), `title` (empty on MFL's own),
+  `start_time` and `end_time` in seconds, and `happens` (a weekday, `17`, for repeating ones). The
+  trade deadline's `start_time` is its week, `12`, not a time.
 - **Renewal:** MFL keeps past seasons' sites and copies home page messages forward. The league renews
   in mid-March or later, never on a fixed date.
 

@@ -33,7 +33,8 @@ export function draftDays(calendar) {
     return asArray(calendar && calendar.event)
         .filter((event) => /draft/i.test(event.title || event.name || ""))
         .map((event) => Number(event.start_time || event.startTime || event.start))
-        .filter((seconds) => seconds > 0)
+        // some events carry a week number there ("12" on the trade deadline)
+        .filter((seconds) => seconds > 1e9)
         .map((seconds) => centralDate(new Date(seconds * 1000)));
 }
 

@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {locate, pageOf, sections, viewHash} from "../site/v2/ui/nav.js";
+import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
 const base = "https://www44.myfantasyleague.com/2026";
@@ -99,4 +100,10 @@ test("the draft is in once a pick names a player; draft day comes from the calen
     // 7 p.m. CT on Aug 29 is already Aug 30 in UTC
     assert.deepEqual(draftDays({event: [{title: "Rookie Draft", start_time: "1788048000"}, {title: "Final cut-down", start_time: "1788500000"}]}), ["2026-08-29"]);
     assert.deepEqual(draftDays(null), []);
+});
+
+test("draft day from the league's calendar export, as saved 17 Oct 2026", () => {
+    const {calendar} = JSON.parse(readFileSync(new URL("./fixtures/calendar.json", import.meta.url), "utf8"));
+    // "draft" on Sep 6, 2026; the trade deadline's start_time is a week number, not a time
+    assert.deepEqual(draftDays(calendar), ["2026-09-06"]);
 });
