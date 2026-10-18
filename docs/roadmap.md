@@ -7,9 +7,13 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 
 ## Commissioner to-do
 
-- Save MFL pages for the v2 design (view source, logged in), when the chance comes up:
-  - Add/Drop between Sunday noon and Wednesday night CT, when every free agent is on waivers: whether
-    the page behaves as it does while the free agent window is open
+- Save MFL pages for the v2 design (⌘S, "Webpage, HTML Only", logged in), when the chance comes up:
+  - Add/Drop on a Thursday or Friday, after Wednesday night's blind-bid run, in the real league:
+    whether free agents can be added outright then. The clone's page in the lock (Sunday 18 Oct,
+    3:31 p.m., in the backtest repo's `samples/league-2026-10-18/add_drop-waivers.html`) marks every
+    free agent `#`, "Locked Player due to global player lock" (claim by blind bid only), or `!`,
+    game started; but its Saturday night page (`clone-2026-10-17`) has every free agent `#` too, so
+    an open window hasn't been seen yet. `#` goes into master's `docs/mfl.md` with step 6.
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 - Each season, once it's set: add the final cut-down date to MFL's league calendar as an event
