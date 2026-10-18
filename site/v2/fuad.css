@@ -37,6 +37,8 @@
     /* a bar or win chance that isn't yours or ahead */
     --fuad-bar-off: #4A5566;
     --fuad-raised-edge: #2F3743;
+    /* a choice that's made and can't be changed (a starter whose game has started) */
+    --fuad-locked: #4A5566;
     /* positions in charts: categorical, validated on the panel color */
     --fuad-pos-qb: #3987E5;
     --fuad-pos-rb: #D95926;
@@ -2672,6 +2674,17 @@ body [tabindex]:focus-visible {
 
 #fuad-lineup [aria-pressed="true"] .fuad-check,
 #fuad-lineup .fuad-check[aria-pressed="true"] { border-color: var(--fuad-lime); background: var(--fuad-lime); color: var(--fuad-on-lime); }
+
+/* locked (a bye, or a game that has started): grey, not lime, since it can't be tapped; a starter
+   keeps his check, a bench player shows a dash */
+#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="true"] .fuad-check,
+#fuad-lineup .fuad-check:disabled[aria-pressed="true"] { border-color: var(--fuad-locked); background: var(--fuad-locked); color: var(--fuad-text); }
+
+#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check,
+#fuad-lineup .fuad-check:disabled[aria-pressed="false"] { border-color: transparent; }
+
+#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check::before,
+#fuad-lineup .fuad-check:disabled[aria-pressed="false"]::before { content: ""; width: 10px; height: 2px; border-radius: 1px; background: var(--fuad-faint); }
 
 #fuad-lineup .fuad-lineup-head {
     display: flex;
