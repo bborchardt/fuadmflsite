@@ -38,8 +38,8 @@ would do until they're switched on.
   (`?fuadPreview=off` to stop).
 - **Turn chores on:** set the repository variables `DROP_PENALTIES` and `CONTRACT_YEARS` to
   `apply`.
-- **After a failed-run email:** open the run's summary page; it lists what was flagged and what the
-  job did.
+- **After a failed-run email:** the run page and the end of its log say what was flagged; the summary
+  page also lists what the job did.
 - **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button produces the
   file; commit it to the `league-data` branch and the next run publishes it.
 - **If GitHub Pages is down,** the custom tabs say so and MFL's own pages keep working.

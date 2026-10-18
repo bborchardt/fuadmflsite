@@ -556,9 +556,9 @@ try {
 } catch (error) {
     needsAttention(`Failed: ${error.message}`);
 } finally {
+    explainFailure();
     const logChanged = updateChoreLog();
     setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
     setOutput("publish", publish ? "true" : "false");
     writeSummary();
-    explainFailure();
 }
