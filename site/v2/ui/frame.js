@@ -160,6 +160,7 @@ export function drawFrame({context, storage}) {
         const current = here && here.section.name;
         // v2's Home replaces the home page's Main tab; its other tabs are still MFL's
         document.documentElement.classList.toggle("fuad-home-on", page.path === "home" && current === "Home");
+        document.documentElement.classList.toggle("fuad-league-on", page.path === "home" && Boolean(page.hash) && current === "League");
         const sectionLinks = all.map((section) => `<a href="${esc(section.href)}"${section.name === current ? ' aria-current="page"' : ""}>${icon(section.name)}<span>${esc(section.name)}</span></a>`).join("");
         root.querySelectorAll(".fuad-sections").forEach((nav) => {
             nav.innerHTML = sectionLinks;

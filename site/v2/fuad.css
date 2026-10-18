@@ -34,6 +34,15 @@
     --fuad-caution: #FF9F43;
     --fuad-caution-tint: rgba(255, 159, 67, 0.14);
     --fuad-lime-tint: rgba(200, 244, 60, 0.14);
+    /* a bar or win chance that isn't yours or ahead */
+    --fuad-bar-off: #4A5566;
+    --fuad-raised-edge: #2F3743;
+    /* positions in charts: categorical, validated on the panel color */
+    --fuad-pos-qb: #3987E5;
+    --fuad-pos-rb: #D95926;
+    --fuad-pos-wr: #199E70;
+    --fuad-pos-te: #C98500;
+    --fuad-pos-pk: #D55181;
     --fuad-scrim: rgba(0, 0, 0, 0.6);
     --fuad-shadow: rgba(0, 0, 0, 0.5);
     --fuad-body: Barlow, system-ui, sans-serif;
@@ -1296,9 +1305,11 @@ body [tabindex]:focus-visible {
     text-align: left;
 }
 
-#fuad-home a { color: var(--fuad-lime); text-decoration: none; }
+#fuad-home a,
+#fuad-league a { color: var(--fuad-lime); text-decoration: none; }
 
-#fuad-home a:hover { color: var(--fuad-lime-hover); }
+#fuad-home a:hover,
+#fuad-league a:hover { color: var(--fuad-lime-hover); }
 
 /* two columns of variable panels on desktop, the same gap in both, bottoms left to fall where they
    may; on phones one column in the reading order: alerts, league, chat, board, moves, dates */
@@ -1320,14 +1331,16 @@ body [tabindex]:focus-visible {
     .fuad-home-coming { order: 6; }
 }
 
-#fuad-home .fuad-panel {
+#fuad-home .fuad-panel,
+#fuad-league .fuad-panel {
     background: var(--fuad-panel);
     border: 1px solid var(--fuad-hairline);
     border-radius: 18px;
     padding: 16px 16px 6px;
 }
 
-#fuad-home .fuad-panel-head {
+#fuad-home .fuad-panel-head,
+#fuad-league .fuad-panel-head {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -1335,7 +1348,8 @@ body [tabindex]:focus-visible {
     margin-bottom: 6px;
 }
 
-#fuad-home .fuad-panel-heading {
+#fuad-home .fuad-panel-heading,
+#fuad-league .fuad-panel-heading {
     margin: 0 0 6px;
     padding: 0;
     background: none;
@@ -1350,14 +1364,18 @@ body [tabindex]:focus-visible {
     text-transform: uppercase;
 }
 
-#fuad-home .fuad-panel-head .fuad-panel-heading { margin-bottom: 0; }
+#fuad-home .fuad-panel-head .fuad-panel-heading,
+#fuad-league .fuad-panel-head .fuad-panel-heading { margin-bottom: 0; }
 
-#fuad-home .fuad-panel-actions { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+#fuad-home .fuad-panel-actions,
+#fuad-league .fuad-panel-actions { display: flex; align-items: center; gap: 14px; font-size: 13px; }
 
 /* a text link in a heading: a 44 px tall tap area around it */
-#fuad-home .fuad-panel-actions a { display: inline-flex; align-items: center; min-height: 44px; margin: -12px 0; }
+#fuad-home .fuad-panel-actions a,
+#fuad-league .fuad-panel-actions a { display: inline-flex; align-items: center; min-height: 44px; margin: -12px 0; }
 
-#fuad-home .fuad-chip {
+#fuad-home .fuad-chip,
+#fuad-league .fuad-chip {
     position: relative;
     height: 32px;
     padding: 0 12px;
@@ -1369,19 +1387,25 @@ body [tabindex]:focus-visible {
     cursor: pointer;
 }
 
-#fuad-home .fuad-chip::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+#fuad-home .fuad-chip::after,
+#fuad-league .fuad-chip::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 
-#fuad-home .fuad-rows { list-style: none; margin: 0; padding: 0; }
+#fuad-home .fuad-rows,
+#fuad-league .fuad-rows { list-style: none; margin: 0; padding: 0; }
 
 .fuad-rows > li { margin: 0; border-top: 1px solid var(--fuad-rule); }
 
-#fuad-home .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+#fuad-home .fuad-row-text,
+#fuad-league .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 
-#fuad-home .fuad-row-title { font-weight: 600; font-size: 15px; }
+#fuad-home .fuad-row-title,
+#fuad-league .fuad-row-title { font-weight: 600; font-size: 15px; }
 
-#fuad-home .fuad-meta { line-height: 1.3; }
+#fuad-home .fuad-meta,
+#fuad-league .fuad-meta { line-height: 1.3; }
 
-#fuad-home .fuad-empty { margin: 0; padding: 8px 0 12px; }
+#fuad-home .fuad-empty,
+#fuad-league .fuad-empty { margin: 0; padding: 8px 0 12px; }
 
 #fuad-home .fuad-alert {
     display: grid;
@@ -1487,7 +1511,8 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-chat-message { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
 
-#fuad-home .fuad-tag {
+#fuad-home .fuad-tag,
+#fuad-league .fuad-tag {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -1530,7 +1555,8 @@ body [tabindex]:focus-visible {
 #fuad-home input::placeholder,
 #fuad-home textarea::placeholder { color: var(--fuad-muted); }
 
-#fuad-home .fuad-cta {
+#fuad-home .fuad-cta,
+#fuad-league .fuad-cta {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1544,7 +1570,8 @@ body [tabindex]:focus-visible {
     cursor: pointer;
 }
 
-#fuad-home .fuad-cta:disabled { opacity: 0.6; cursor: default; }
+#fuad-home .fuad-cta:disabled,
+#fuad-league .fuad-cta:disabled { opacity: 0.6; cursor: default; }
 
 #fuad-home .fuad-topic-form { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--fuad-rule); }
 
@@ -1555,3 +1582,475 @@ body [tabindex]:focus-visible {
 #fuad-home .fuad-result { margin: 6px 0 0; font-size: 13px; color: var(--fuad-bad); }
 
 #fuad-home .fuad-result:empty { display: none; }
+
+/* ---- League (ui/league.js): Scores, Standings, Power, Winners on the home page ---- */
+
+#fuad-league { display: none; }
+
+.fuad-league-on #fuad-league { display: block; }
+
+.fuad-league-on body .pagebody > :not(#fuad-league) { display: none !important; }
+
+#fuad-league {
+    padding: 8px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+#fuad-league .fuad-league-view { display: flex; flex-direction: column; gap: 16px; }
+
+#fuad-league .fuad-league-view[hidden],
+#fuad-league [hidden] { display: none; }
+
+#fuad-league .fuad-league-view > div:not(.fuad-scores-bar) { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+#fuad-league .fuad-panel-body > .fuad-panel + .fuad-panel { margin-top: 16px; }
+
+#fuad-league .fuad-muted { color: var(--fuad-muted); }
+
+#fuad-league .fuad-good { color: var(--fuad-good); }
+
+#fuad-league .fuad-bad-text { color: var(--fuad-bad); }
+
+#fuad-league .fuad-live { color: var(--fuad-lime); }
+
+#fuad-league .fuad-mine { color: var(--fuad-lime); }
+
+#fuad-league .fuad-strong { font-weight: 700; }
+
+#fuad-league .fuad-subhead { margin: 8px 0 2px; }
+
+#fuad-league .fuad-if { margin: -4px 0 8px; }
+
+#fuad-league .fuad-row-mine { background: var(--fuad-raised); }
+
+#fuad-league .fuad-row-mine .fuad-team,
+#fuad-league .fuad-row-mine .fuad-row-title { font-weight: 700; }
+
+#fuad-league .fuad-tag-lime { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+
+#fuad-league button { font-family: var(--fuad-body); }
+
+@media (min-width: 48.01em) {
+    #fuad-league .fuad-phone-only { display: none !important; }
+}
+
+@media (max-width: 48em) {
+    #fuad-league { padding-top: 0; }
+    #fuad-league .fuad-league-view,
+    #fuad-league .fuad-league-view > div:not(.fuad-scores-bar) { gap: 12px; }
+    #fuad-league .fuad-desktop-only { display: none !important; }
+}
+
+/* Scores: the week picker, Season, and a card per matchup */
+#fuad-league .fuad-scores-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+#fuad-league .fuad-weekpicker { display: flex; align-items: center; gap: 4px; }
+
+#fuad-league .fuad-step,
+#fuad-league .fuad-toggle {
+    min-width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--fuad-panel);
+    color: var(--fuad-text);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+#fuad-league .fuad-step:disabled { color: var(--fuad-faint); cursor: default; }
+
+#fuad-league .fuad-toggle { padding: 0 14px; font: 600 14px var(--fuad-body); }
+
+#fuad-league .fuad-toggle[aria-pressed="true"] { background: var(--fuad-text); color: var(--fuad-page); }
+
+#fuad-league .fuad-week-label { min-width: 116px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+
+#fuad-league .fuad-week-name { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; }
+
+#fuad-league .fuad-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 16px; align-items: stretch; }
+
+#fuad-league .fuad-card {
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+#fuad-league .fuad-card-mine { background: var(--fuad-raised); border-color: var(--fuad-raised-edge); }
+
+/* an opened game moves to the top, across both columns */
+#fuad-league .fuad-card-open { grid-column: 1 / -1; order: -1; }
+
+#fuad-league .fuad-card-head {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+#fuad-league .fuad-faces { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; width: 100%; align-items: end; }
+
+#fuad-league .fuad-face { display: flex; flex-direction: column; gap: 1px; min-width: 0; overflow-wrap: anywhere; }
+
+#fuad-league .fuad-face-right { align-items: flex-end; text-align: right; }
+
+#fuad-league .fuad-face-name { font-weight: 600; font-size: 15px; }
+
+#fuad-league .fuad-face-name.fuad-face-mine { font-weight: 700; }
+
+#fuad-league .fuad-face-score { font-family: var(--fuad-display); font-weight: 700; font-size: 36px; line-height: 1; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-trailing .fuad-face-score,
+#fuad-league .fuad-trailing .fuad-face-name { color: var(--fuad-muted); }
+
+#fuad-league .fuad-card-middle { width: 100%; margin-top: 4px; }
+
+#fuad-league .fuad-winbar { display: flex; flex-direction: column; gap: 3px; }
+
+#fuad-league .fuad-winbar-labels { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; color: var(--fuad-muted); }
+
+#fuad-league .fuad-winbar-labels .fuad-ahead { color: var(--fuad-lime); }
+
+#fuad-league .fuad-winbar-track { display: flex; gap: 2px; height: 10px; }
+
+#fuad-league .fuad-winbar-track span { display: block; background: var(--fuad-bar-off); }
+
+#fuad-league .fuad-winbar-track span:first-child { border-radius: 5px 0 0 5px; }
+
+#fuad-league .fuad-winbar-track span:last-child { border-radius: 0 5px 5px 0; }
+
+#fuad-league .fuad-winbar-track .fuad-ahead { background: var(--fuad-lime); }
+
+#fuad-league .fuad-chip-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; width: 100%; }
+
+#fuad-league .fuad-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+#fuad-league .fuad-chips-right { justify-content: flex-end; }
+
+#fuad-league .fuad-chip-stat { padding: 3px 8px; border-radius: 8px; background: var(--fuad-page); font-size: 13px; }
+
+#fuad-league .fuad-chip-stat b { font-weight: 700; }
+
+#fuad-league .fuad-card-body { border-top: 1px solid var(--fuad-hairline); padding: 6px 14px 12px; }
+
+/* the lineups head to head: a's name and points, then b's points and name, so the points meet */
+#fuad-league .fuad-lineup { display: grid; grid-template-columns: minmax(0, 1fr) 108px 108px minmax(0, 1fr); gap: 0 10px; align-items: stretch; }
+
+#fuad-league .fuad-ln,
+#fuad-league .fuad-ln-pts,
+#fuad-league .fuad-ln-empty { border-top: 1px solid var(--fuad-rule); padding: 9px 0; min-width: 0; }
+
+#fuad-league .fuad-ln {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 170px) minmax(0, 1fr);
+    gap: 0 10px;
+    align-items: center;
+    min-height: 44px;
+    margin: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+}
+
+#fuad-league .fuad-ln-b { grid-template-columns: minmax(0, 1fr) minmax(0, 170px) 26px; text-align: right; }
+
+#fuad-league .fuad-ln-pos { font-size: 13px; font-weight: 700; color: var(--fuad-muted); }
+
+#fuad-league .fuad-ln-name { font-weight: 600; overflow-wrap: anywhere; }
+
+#fuad-league .fuad-ln-meta { font-size: 13px; color: var(--fuad-muted); line-height: 1.3; overflow-wrap: anywhere; }
+
+#fuad-league .fuad-ln-meta.fuad-live { color: var(--fuad-lime); }
+
+#fuad-league .fuad-ln-b .fuad-ln-pos { order: 3; }
+
+#fuad-league .fuad-ln-b .fuad-ln-name { order: 2; }
+
+#fuad-league .fuad-ln-b .fuad-ln-desk { order: 1; }
+
+#fuad-league .fuad-ln-phone,
+#fuad-league .fuad-short { display: none; }
+
+/* points and projection each in a fixed slot, so both columns line up whatever the values */
+#fuad-league .fuad-ln-pts { display: grid; grid-template-columns: 40px 44px; align-items: center; gap: 0 8px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; text-align: right; }
+
+#fuad-league .fuad-ln-pts-b { grid-template-columns: 44px 40px; text-align: left; }
+
+#fuad-league .fuad-ln-pts-a .fuad-ln-proj { grid-column: 1; grid-row: 1; }
+
+#fuad-league .fuad-ln-pts-b .fuad-ln-proj { grid-column: 2; grid-row: 1; }
+
+/* the dividing line between the sides, with the same room on each side of it */
+#fuad-league .fuad-ln-pts-a { padding-right: 12px; border-right: 1px solid var(--fuad-raised-edge); }
+
+#fuad-league .fuad-ln-pts-b { padding-left: 2px; }
+
+#fuad-league .fuad-ln-proj { font-size: 13px; font-weight: 500; color: var(--fuad-muted); }
+
+#fuad-league .fuad-bench-toggle {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--fuad-lime);
+    font: 600 14px var(--fuad-body);
+    text-align: left;
+    cursor: pointer;
+}
+
+/* about eight rows, then the bench scrolls inside itself */
+#fuad-league .fuad-bench { max-height: 400px; overflow-y: auto; }
+
+/* desktop: an opened card's header is a score bug, names and chips toward the middle, the scores
+   beside a center column with the win bar */
+@media (min-width: 48.01em) {
+    #fuad-league .fuad-card-open .fuad-card-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(240px, 340px) auto minmax(0, 1fr);
+        grid-template-areas: "an as mid bs bn" "ac ap mid bp bc";
+        gap: 4px 20px;
+        align-items: center;
+    }
+    #fuad-league .fuad-card-open .fuad-faces,
+    #fuad-league .fuad-card-open .fuad-face,
+    #fuad-league .fuad-card-open .fuad-chip-row { display: contents; }
+    #fuad-league .fuad-card-open .fuad-face-left .fuad-face-name { grid-area: an; text-align: right; font-size: 20px; }
+    #fuad-league .fuad-card-open .fuad-face-left .fuad-face-score { grid-area: as; }
+    #fuad-league .fuad-card-open .fuad-face-left .fuad-meta { grid-area: ap; text-align: center; }
+    #fuad-league .fuad-card-open .fuad-face-right .fuad-face-name { grid-area: bn; text-align: left; font-size: 20px; }
+    #fuad-league .fuad-card-open .fuad-face-right .fuad-face-score { grid-area: bs; }
+    #fuad-league .fuad-card-open .fuad-face-right .fuad-meta { grid-area: bp; text-align: center; }
+    #fuad-league .fuad-card-open .fuad-face-score { font-size: 52px; }
+    #fuad-league .fuad-card-open .fuad-card-middle { grid-area: mid; margin: 0; }
+    #fuad-league .fuad-card-open .fuad-chips-left { grid-area: ac; justify-content: flex-end; }
+    #fuad-league .fuad-card-open .fuad-chips-right { grid-area: bc; justify-content: flex-start; }
+    #fuad-league .fuad-ln-b .fuad-ln-desk { text-align: right; }
+}
+
+/* phones: the same tug of war, smaller; the lineups as four columns, a player's grey line under
+   his name, his projection under his points */
+@media (max-width: 48em) {
+    #fuad-league .fuad-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    #fuad-league .fuad-face-name { font-size: 14px; }
+    #fuad-league .fuad-face-score { font-size: 30px; }
+    #fuad-league .fuad-chip-stat { padding: 0; background: none; color: var(--fuad-muted); }
+    #fuad-league .fuad-chip-stat b { color: var(--fuad-text); }
+    #fuad-league .fuad-chip-stat b.fuad-live { color: var(--fuad-lime); }
+    #fuad-league .fuad-chip-stat + .fuad-chip-stat::before { content: "· "; }
+    #fuad-league .fuad-chips { gap: 0 4px; line-height: 1.35; }
+    #fuad-league .fuad-lineup { grid-template-columns: minmax(0, 1fr) 40px 40px minmax(0, 1fr); gap: 0 6px; }
+    #fuad-league .fuad-ln,
+    #fuad-league .fuad-ln-b { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 0; font-size: 14px; }
+    #fuad-league .fuad-ln-b { align-items: flex-end; }
+    #fuad-league .fuad-ln-pos,
+    #fuad-league .fuad-ln-desk,
+    #fuad-league .fuad-full { display: none; }
+    #fuad-league .fuad-ln-phone,
+    #fuad-league .fuad-short { display: inline; }
+    #fuad-league .fuad-ln-meta { font-size: 12px; }
+    #fuad-league .fuad-ln-pts,
+    #fuad-league .fuad-ln-pts-b { grid-template-columns: minmax(0, 1fr); grid-auto-rows: min-content; align-content: start; gap: 0; padding: 6px 0; font-size: 14px; border-right: 0; }
+    #fuad-league .fuad-ln-pts-a .fuad-ln-proj,
+    #fuad-league .fuad-ln-pts-b .fuad-ln-proj { grid-column: 1; grid-row: 2; }
+    #fuad-league .fuad-bench { max-height: 360px; }
+}
+
+#fuad-league .fuad-season-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 40px; font-size: 15px; }
+
+#fuad-league .fuad-season-row > :last-child { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Standings, Power, Winners: tables that fill their width on desktop */
+#fuad-league .fuad-table-scroll { overflow-x: auto; }
+
+#fuad-league .fuad-table { width: 100%; border-collapse: collapse; font-size: 14px; background: none; border: 0; }
+
+#fuad-league .fuad-table th,
+#fuad-league .fuad-table td { padding: 9px 6px; border: 0; border-top: 1px solid var(--fuad-rule); background: none; color: inherit; text-align: left; vertical-align: top; }
+
+#fuad-league .fuad-table thead th { padding-top: 0; border-top: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-muted); white-space: nowrap; vertical-align: bottom; }
+
+#fuad-league .fuad-table tbody th { font-size: 14px; font-weight: 500; letter-spacing: normal; text-transform: none; }
+
+#fuad-league .fuad-table .fuad-good { color: var(--fuad-good); }
+
+#fuad-league .fuad-table .fuad-bad-text { color: var(--fuad-bad); }
+
+#fuad-league .fuad-table .fuad-muted { color: var(--fuad-muted); }
+
+#fuad-league .fuad-table .fuad-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+#fuad-league .fuad-table .fuad-row-mine > * { background: var(--fuad-raised); }
+
+#fuad-league .fuad-team { min-width: 150px; overflow-wrap: anywhere; }
+
+@media (max-width: 48em) {
+    #fuad-league .fuad-wide { display: none; }
+    #fuad-league .fuad-team { min-width: 0; }
+    #fuad-league .fuad-table th,
+    #fuad-league .fuad-table td { padding: 9px 4px; }
+}
+
+#fuad-league .fuad-picture { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 40px; align-items: start; }
+
+#fuad-league .fuad-seeds > li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 44px; padding: 6px 0; }
+
+#fuad-league .fuad-seed { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; color: var(--fuad-lime); }
+
+#fuad-league .fuad-seed-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+
+#fuad-league .fuad-seed-why { text-align: right; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-hunt > li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; min-height: 40px; padding: 6px 0; }
+
+#fuad-league .fuad-hunt-back { min-width: 64px; text-align: right; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 48em) {
+    #fuad-league .fuad-picture { grid-template-columns: minmax(0, 1fr); }
+    #fuad-league .fuad-seeds > li { grid-template-columns: 28px minmax(0, 1fr); gap: 1px 10px; align-items: start; padding: 8px 0; }
+    #fuad-league .fuad-seed-why { grid-column: 2; text-align: left; }
+    #fuad-league .fuad-hunt > li { grid-template-columns: minmax(0, 1fr) auto; }
+    #fuad-league .fuad-hunt .fuad-meta { grid-column: 1; grid-row: 2; margin-top: -4px; }
+    #fuad-league .fuad-hunt-back { grid-row: 1 / 3; grid-column: 2; }
+}
+
+#fuad-league .fuad-power-bar { display: block; height: 6px; border-radius: 3px; background: var(--fuad-quiet); }
+
+#fuad-league .fuad-power-bar span { display: block; height: 6px; border-radius: 3px; background: var(--fuad-bar-off); }
+
+#fuad-league .fuad-power-bar .fuad-bar-mine { background: var(--fuad-lime); }
+
+#fuad-league .fuad-power-cell { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+
+#fuad-league .fuad-power-cell .fuad-power-bar { flex: 1; }
+
+#fuad-league .fuad-power-score { font-family: var(--fuad-display); font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; text-align: right; }
+
+#fuad-league .fuad-power-list > li { border-radius: 8px; }
+
+#fuad-league .fuad-power-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 56px;
+    gap: 4px 10px;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 4px;
+    border: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    text-align: left;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#fuad-league .fuad-power-row .fuad-row-text { gap: 4px; }
+
+#fuad-league .fuad-power-rank { font-family: var(--fuad-display); font-weight: 700; font-size: 18px; color: var(--fuad-muted); }
+
+#fuad-league .fuad-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; margin: 0; padding: 0 4px 10px 36px; font-size: 13px; }
+
+#fuad-league .fuad-facts[hidden] { display: none; }
+
+#fuad-league .fuad-power td,
+#fuad-league .fuad-power th { vertical-align: middle; }
+
+#fuad-league .fuad-facts div { display: flex; justify-content: space-between; gap: 8px; }
+
+#fuad-league .fuad-facts dt { color: var(--fuad-muted); }
+
+#fuad-league .fuad-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-collapse { min-height: 44px; margin: -12px 0; padding: 0; border: 0; background: none; color: var(--fuad-lime); font: 600 14px var(--fuad-body); cursor: pointer; }
+
+#fuad-league .fuad-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 10px; font-size: 13px; color: var(--fuad-muted); }
+
+#fuad-league .fuad-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+
+#fuad-league .fuad-swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+#fuad-league .fuad-pos-qb { background: var(--fuad-pos-qb); }
+
+#fuad-league .fuad-pos-rb { background: var(--fuad-pos-rb); }
+
+#fuad-league .fuad-pos-wr { background: var(--fuad-pos-wr); }
+
+#fuad-league .fuad-pos-te { background: var(--fuad-pos-te); }
+
+#fuad-league .fuad-pos-pk { background: var(--fuad-pos-pk); }
+
+#fuad-league .fuad-position-rows { list-style: none; margin: 0; padding: 0 0 10px; display: grid; grid-template-columns: minmax(150px, 260px) minmax(0, 1fr) 56px; gap: 8px 12px; align-items: center; font-size: 14px; }
+
+#fuad-league .fuad-position-rows > li { display: contents; }
+
+#fuad-league .fuad-stack { display: flex; gap: 2px; height: 20px; }
+
+#fuad-league .fuad-stack span { display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--fuad-page); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-stack span:last-child { border-radius: 0 4px 4px 0; }
+
+#fuad-league .fuad-position-total { text-align: right; color: var(--fuad-muted); font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-position-values { display: none; }
+
+/* phones: the values listed under each bar, since the segments are too narrow to label */
+@media (max-width: 48em) {
+    #fuad-league .fuad-position-rows { grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; }
+    #fuad-league .fuad-position-name { grid-column: 1; }
+    #fuad-league .fuad-position-total { grid-column: 2; }
+    #fuad-league .fuad-stack { grid-column: 1 / -1; height: 12px; }
+    #fuad-league .fuad-stack span { font-size: 0; }
+    #fuad-league .fuad-position-values { display: block; grid-column: 1 / -1; margin-bottom: 8px; font-size: 12px; color: var(--fuad-muted); font-variant-numeric: tabular-nums; }
+}
+
+#fuad-league .fuad-won { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 6px; margin: 0 -6px; border-radius: 8px; }
+
+#fuad-league .fuad-won-total { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-prize-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 40px; align-items: start; padding-bottom: 10px; }
+
+#fuad-league .fuad-prizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+
+#fuad-league .fuad-prize { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--fuad-raised); min-width: 0; }
+
+#fuad-league .fuad-prize-place { font-size: 13px; font-weight: 600; }
+
+#fuad-league .fuad-prize-amount { font-family: var(--fuad-display); font-weight: 700; font-size: 26px; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-prize-team { font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+
+#fuad-league .fuad-pot { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+
+#fuad-league .fuad-pot div { display: flex; justify-content: space-between; gap: 12px; }
+
+#fuad-league .fuad-pot dd { margin: 0; }
+
+#fuad-league .fuad-pot-line { min-height: 40px; align-items: center; border-top: 1px solid var(--fuad-rule); }
+
+#fuad-league .fuad-pot-entry { padding: 0 0 4px 14px; font-size: 14px; color: var(--fuad-muted); }
+
+#fuad-league .fuad-pot-total { font-weight: 700; border-top-color: var(--fuad-hairline); }
+
+@media (max-width: 48em) {
+    #fuad-league .fuad-prize-columns { grid-template-columns: minmax(0, 1fr); }
+    #fuad-league .fuad-prize { padding: 10px; }
+    #fuad-league .fuad-prize-amount { font-size: 22px; }
+}

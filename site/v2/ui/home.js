@@ -334,7 +334,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 const week = Number(window.liveScoringWeek) || Number(built.week) || 1;
                 const [timeline, live, schedule, waivers, trades, board, lengths, upcoming, draft] = await Promise.all([
                     dates,
-                    exp("liveScoring", {W: week}, {optional: true}),
+                    exp("liveScoring", {W: week, DETAILS: 1}, {optional: true}),
                     exp("nflSchedule", {W: week}, {base: API_BASE, optional: true}),
                     exp("pendingWaivers", {}, {optional: true}),
                     exp("pendingTrades", {}, {optional: true}),

@@ -155,17 +155,17 @@ async function contractReadings({season, leagueId}, league) {
     return postReadings({adds: open, pending: league.pendingAdds, posts, teams: teamPlayers({rosters, players: playerNames})});
 }
 
-// Home's requests wait until it's the view (the frame sets `fuad-home-on`), so landing on another
-// home page tab doesn't fetch them
-function whenHomeShows() {
+// A rebuilt section's requests wait until it's the view (the frame sets `fuad-home-on` or
+// `fuad-league-on`), so landing on another home page tab doesn't fetch them
+function whenShown(className) {
     const root = document.documentElement;
     return new Promise((resolve) => {
-        if (root.classList.contains("fuad-home-on")) {
+        if (root.classList.contains(className)) {
             resolve();
             return;
         }
         const watch = new MutationObserver(() => {
-            if (root.classList.contains("fuad-home-on")) {
+            if (root.classList.contains(className)) {
                 watch.disconnect();
                 resolve();
             }
@@ -232,11 +232,20 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         return loading;
     };
     const homeShown = document.getElementById("tabcontent0")
-        ? whenHomeShows().then(() => startHome(context, league, {beta, inBeta})).catch((error) => {
+        ? whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta})).catch((error) => {
             console.error("[fuad] couldn't draw Home:", error);
             return false;
         })
         : Promise.resolve(false);
+    if (document.getElementById("tabcontent0")) {
+        whenShown("fuad-league-on")
+            .then(() => import("./league.js"))
+            .then(({drawLeague}) => drawLeague({context, franchiseId: window.franchise_id || null}))
+            .catch((error) => {
+                console.error("[fuad] couldn't draw League:", error);
+                onTrouble();
+            });
+    }
 
     let built;
     try {
