@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 6 built, request volume reviewed; step 7 next)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 7 built, PR #35 awaiting its live run; step 8 next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -173,7 +173,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is branch `v2-request-volume`. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -351,8 +351,23 @@ tried in the beta (the commissioner's team only) before the next.
        asked in bursts, until the request volume review (Performance).
      - Phone chat: the 10 newest messages in the page, not in their own scroll box, which caught
        swipes meant for the page (Home, Chat).
-   **Next: step 7.**
-7. **Moves › Drop** (row 15).
+7. **Moves › Drop** (done; row 15; PR #35): MFL's Drop Players page (`options?O=257`) with v2's
+   roster drawn over it (`ui/drop.js`, `ui/drop-model.js`). Decided while building (18–19 Oct 2026):
+   - Over MFL's page, as Add is, rather than on the home page: "Game started" is MFL's own `!` in
+     that page's roster list, and Drop posts MFL's own form for one player, then reads the roster
+     back before the page reloads with "Jackson dropped." A page v2 can't read stays MFL's.
+   - The Drop button is filled lime, the screen's own action; Add's Remove is grey like Edit and
+     Copy (it was outlined red). Red marks only limits, never a button (the commissioner).
+   - A pending claim that drops the same player counts as no drop after the cut (as an immediate
+     add's does), so the cut is blocked only if it's what takes cap used past the cap.
+   - In season an active player can't go at 23 active, and no one can under 23 (10.5); an IR
+     player can still go at exactly 23.
+   - Add's data loading and form posting are shared (`ui/moves.js`).
+   - Tested offline with `harness/drop.py` in the backtest repo (phone and desktop; a refused drop,
+     a deep link, 23 active, logged out, a lower cap), one reviewer pass (no blockers).
+   - Before merging: one live drop in the clone, checking cap used after the reload includes the
+     penalty (the saved exports can't show it).
+   **Next: step 8.**
 8. **Moves › Trades** (row 9).
 9. **Moves › IR** (row 10).
 10. **Before the season:** every phase checked against saved exports with simulated dates, since
@@ -393,9 +408,9 @@ the roadmap on its branch with what changed and what's next.
   Questionable, notices); **plain** white or grey for facts (cut penalty amounts, "from …" and
   "Traded to …" picks, You give and You get). Red and green always come with a sign, letter or word.
   Panels (#161B22) carry a 1 px #262D37 hairline, the header's border color, for a sharper edge
-  on the #0D1117 page (1.36:1; compared on canvas row 6). Buttons: filled lime for a screen's own action (Post, Log in, Propose a trade on a team's page);
+  on the #0D1117 page (1.36:1; compared on canvas row 6). Buttons: filled lime for a screen's own action (Post, Log in, Propose a trade on a team's page, Drop);
   outlined lime for an action that isn't the screen's point (the popup's Rosters actions; the
-  commissioner, 18 Oct 2026); grey for quiet ones (Log out, Retry). Controls meet 3:1 for state and edges (WCAG 1.4.11): chips, single or multi-select, everywhere as
+  commissioner, 18 Oct 2026); grey for quiet ones (Log out, Retry, Add's Edit, Copy and Remove); never red, which marks only limits (the commissioner, 19 Oct 2026). Controls meet 3:1 for state and edges (WCAG 1.4.11): chips, single or multi-select, everywhere as
   Add's (selected: white fill, dark text); view segments mark the selected view with lime
   text and a 2 px lime bar under the label, the fill subtle; fields have a #6B7583 border, lime on
   focus. Text meets 4.5:1: reasons, values, placeholders and disabled labels use the muted
