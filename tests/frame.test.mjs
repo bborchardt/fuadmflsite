@@ -68,9 +68,9 @@ test("a rebuilt view lives on the home page under its own #", () => {
     const built = sections({base, leagueId: "48571", franchiseId: "0001", rebuilt: ["League/Standings", "Home"]});
     const league = built.find((s) => s.name === "League");
     assert.equal(league.views[1].href, `${base}/home/48571#league-standings`);
-    assert.equal(built[0].href, `${base}/home/48571#home`);
+    assert.equal(built[0].href, `${base}/home/48571#home-page`);
     assert.deepEqual(at(`${base}/home/48571#league-standings`, "0001", built), ["League", "Standings"]);
-    assert.deepEqual(at(`${base}/home/48571#home`, "0001", built), ["Home", null]);
+    assert.deepEqual(at(`${base}/home/48571#home-page`, "0001", built), ["Home", null]);
     // the MFL page it replaces still belongs to the view
     assert.deepEqual(at(`${base}/standings?L=48571`, "0001", built), ["League", "Standings"]);
     // a # v2 doesn't know is the home page's Main tab
