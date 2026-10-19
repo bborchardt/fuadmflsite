@@ -116,7 +116,7 @@ function newsSection(player, links) {
     </section>`;
 }
 
-// `actions` holds the Moves links: {drop, ir, add, trade(teamId)}
+// `actions` holds the Moves links: {drop, ir, add(playerId), trade(teamId)}
 function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
     if (!actions || !franchiseId || franchiseId === "0000") {
         return "";
@@ -124,7 +124,7 @@ function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
     const links = mine
         ? [["Drop", actions.drop], ...(player.injury && /^IR/i.test(player.injury.status) ? [["IR", actions.ir]] : [])]
         : ownerId ? [["Propose a trade", actions.trade && actions.trade(ownerId)]]
-        : [["Add", actions.add]];
+        : [["Add", actions.add && actions.add(player.id)]];
     const shown = links.filter(([, href]) => href);
     return shown.length ? `<div class="fuad-popup-actions">${shown.map(([label, href]) => `<a class="fuad-button fuad-button-outline" href="${esc(href)}">${esc(label)}</a>`).join("")}</div>` : "";
 }

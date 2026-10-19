@@ -69,8 +69,9 @@ MFL documents little of this.
   429; MFL asks for about a second between requests and no retries. Heavy testing from one machine
   is throttled within hours, so test against saved exports.
 - **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
-  comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`); `salaries`
-  needs the commissioner's cookie.
+  comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`), posted to
+  `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers
+  `<status>OK</status>` or `<error>`; `salaries` needs the commissioner's cookie.
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
   Commissioner", `logout?L=<league>&BECOME=0000`; presumably `BECOME=<team>` goes the other way (not
   yet seen).
@@ -81,6 +82,10 @@ MFL documents little of this.
   (`/<season>/processed_waivers?LEAGUE_ID=…&PERIOD=…`), one page per waiver run; the period id is the
   `BBID_WAIVER` transaction's timestamp. A conditional bid lists several players, of which MFL awards
   the first it can. Players without an NFL team show as "FA*".
+- **Processing** (MFL's blind bidding help; not yet seen happen): bids league-wide from the highest
+  dollar amount down; within a group the first valid claim wins; groups have no priority. A claim
+  whose drop is already gone (won by another group) is invalid, so a drop shared by two groups can't
+  add a player.
 - **Pending claims** (`export?TYPE=pendingWaivers`) are the logged-in owner's own:
   `{"pendingWaivers":{"blindBidWaiverRequest":{"round":"1","addsDrops":"13753_1_16619,13308_1_16152",
   "comments":"1 yearbr/2 years","timestamp":"…"}}}`, one entry per group (a list when there are
@@ -106,16 +111,23 @@ Each is an ordinary page form, posted from the logged-in browser.
 - **Add/Drop** (`add_drop?L=<league>`), one form posted to `add_drop`:
   - Fields: `L`, `add_pid` and `drop_pid` (hidden, `#add_pid_field_id`, `#drop_pid_field_id`),
     `FORCE_WAIVER` (checkbox), `BBID_AMT`, `ROUND` (a select of existing groups plus the next),
-    `COMMENTS` (textarea), `SUBMIT` (`#add_drop_submit`, "Perform Add/Drop" or "Submit Request"),
+    `COMMENTS` (textarea; a claim added to an existing group has its comment added to the group's
+    as a new line), `SUBMIT` (`#add_drop_submit`, "Perform Add/Drop" or "Submit Request"),
     `add_settings` and `PROJSRC`.
   - The player lists are JavaScript data, `playerDatabaseObj["add"]` and `["drop"]`: arrays of
     `Player2` (`id, name, nfl_team, pos, bye_week, sal, inj, roster, pts, opp, pwpts, sort_sal`),
     `pts` the points so far and `pwpts` this week's projection. Names carry flags: `*` dropped
-    recently, `!` game started, `(R)` rookie.
+    recently, `!` game started, `#` locked by the global player lock (from the Sunday noon lock to
+    the Wednesday night run, and a dropped player until the run after two days), `(R)` rookie. Only
+    a free agent with no flag can be added at once.
+  - The form opens between the table's rows, so its fields belong to it without being inside it
+    (`input.form`, not `form.querySelector`).
   - `picker.js` draws the rows (`tr#add_<id>`, `tr#drop_<id>`). A click fills the hidden id and the
     "To Add"/"To Drop" cells (`#add_name_field_id`, `#drop_name_field_id`), then
     `picker_locked_check(...)` shows or hides the bid, group and comment rows (`#amt_field_id`,
-    `#round_field_id`, `#comments_field_id`) and the `FORCE_WAIVER` row.
+    `#round_field_id`, `#comments_field_id`) and the `FORCE_WAIVER` row. A pick with any flag,
+    `!` included, becomes a blind bid ("Submit Request"), not a refusal; a row already picked is
+    unpicked by `picker_select` on it again. The drop list's `!` isn't checked by the page.
   - After a submit MFL shows Add/Drop again with no message; the claim appears in
     `#waiver_request_list`: Group, Add, Drop, Bid Amount, Action, Time Entered, Comments (one cell
     per group). Its action links write a claim as `ROUND_ADDID_BID_DROPID`:
