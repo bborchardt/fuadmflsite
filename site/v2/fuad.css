@@ -67,10 +67,6 @@ body.full-width {
     box-shadow: none;
 }
 
-/* v2's Home is `#home`, also the id of MFL's page body on the home page: scrolling "to" it stops at
-   the top, so the frame above it stays in view */
-.fuad-framed body .pagebody { scroll-margin-top: 100000px; }
-
 /* the page column, sized here so the frame lines up with it whatever the skin */
 body .pagebody {
     box-sizing: border-box;
@@ -1576,6 +1572,19 @@ body [tabindex]:focus-visible {
 #fuad-home .fuad-home-chat.fuad-panel { padding-bottom: 16px; }
 
 #fuad-home .fuad-chat-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+
+#fuad-home .fuad-chat-older-link { display: inline-flex; align-items: center; min-height: 44px; margin: -8px 0 4px; font-size: 13px; font-weight: 600; }
+
+#fuad-home .fuad-chat-older-link[hidden] { display: none; }
+
+@media (min-width: 48.01em) {
+    #fuad-home .fuad-chat-older-link { display: none; }
+}
+
+@media (max-width: 48em) {
+    #fuad-home .fuad-chat-list { max-height: none; overflow: visible; padding-right: 0; }
+    #fuad-home .fuad-chat-message.fuad-chat-older { display: none; }
+}
 
 #fuad-home .fuad-chat-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
 
