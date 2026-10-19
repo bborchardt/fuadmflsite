@@ -1174,6 +1174,10 @@ body [tabindex]:focus-visible {
     font-weight: 600;
 }
 
+/* Retry while MFL's wait lasts */
+.fuad-panel .fuad-quiet:disabled,
+.fuad-layer .fuad-quiet:disabled { color: var(--fuad-faint); cursor: default; }
+
 /* ---- The player popup (ui/popup.js): a bottom sheet on phones, a dialog on desktop ---- */
 
 .fuad-popup-layer { overflow-y: auto; padding: 64px 24px; box-sizing: border-box; }
@@ -3322,6 +3326,7 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 #fuad-add .fuad-add-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 
 #fuad-add .fuad-add-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); color: var(--fuad-text); }
+#fuad-add .fuad-add-retry:disabled { color: var(--fuad-faint); cursor: default; }
 
 #fuad-add .fuad-cta,
 #fuad-add .fuad-add-start,

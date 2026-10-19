@@ -11,7 +11,7 @@ import {renderContracts} from "./contracts.js";
 import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
 import {cached, storage} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
+import {mflFetch, pageFetch} from "./page-fetch.js";
 import {REBUILT, pageOf, sections, storedTabs} from "./nav.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -63,7 +63,7 @@ async function loadLeague({season, leagueId}) {
     const host = window.location.origin;
     const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
     const playersPromise = cached(`fuad.players.${season}`, DAY, async () => {
-        const players = await fetchExport(exportUrl(API_BASE, season, "players"), "players");
+        const players = await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch});
         return {player: players.player};
     });
     const weeklyResultsPromise = league("weeklyResults");
@@ -98,7 +98,7 @@ async function contractReadings({season, leagueId}, league) {
     if (!open.length) {
         return null;
     }
-    const board = (type, params) => fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
+    const board = (type, params) => fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
     const {postReadings, teamPlayers} = await import("../lib/contract-years.js");
     const earliest = Math.min(...open.map((add) => add.added));
     const threads = asArray((await board("messageBoard", {COUNT: 100})).thread).filter((thread) => Number(thread.lastPostTime) >= earliest);

@@ -124,6 +124,15 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 - IR: MFL doesn't say when a designation changed, so an add made after a player came off NFL IR
   isn't caught as a void.
 - While an add's hour is open, each Main tab view reads the message board once.
+- To stay within MFL's limits, v2 keeps what it reads in the browser, shared by every page
+  (`ui/page-fetch.js`): the NFL schedule, the league's settings and the calendar for a day; last
+  week's injury report for a day, today's for 5 minutes on a game day and an hour otherwise; the
+  week's results for an hour; rosters, adjustments, transactions, free agents, pending bids and
+  trades, and the message board for 2 minutes, which a move made in v2 clears. So a move made on
+  MFL's own pages, or by another team, can take 2 minutes to show. Moves' checks and who starts in
+  League › Scores always ask MFL.
+- After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel
+  with nothing to show says MFL asked us to wait, with Retry off until then. Moves aren't held.
 - League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from
   MFL's page by a point or so: MFL's simulation carries a random value across every lineup it has
   shown since the page loaded.

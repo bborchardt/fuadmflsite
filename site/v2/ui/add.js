@@ -11,7 +11,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {cached} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {seasonFacts} from "./context.js";
@@ -120,8 +120,10 @@ function fillForm(form, lists, {add, drop, bid = null, round = null, comment = "
     return fields;
 }
 
+// what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
 async function send(url, init) {
-    const response = await fetch(url, {credentials: "include", ...init});
+    forget();
+    const response = await fetch(url, {credentials: "include", ...init}).finally(forget);
     if (!response.ok) {
         throw new Error(`MFL answered HTTP ${response.status}`);
     }
@@ -143,7 +145,7 @@ async function loadData(context, franchiseId) {
     const {season, leagueId} = context;
     const host = window.location.origin;
     // the checks always use fresh rosters, penalties and pending bids
-    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
+    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
     // MFL refuses bursts (HTTP 429), so the fresh exports go one after another; the rest is
     // mostly cached for a day
     const freshInTurn = async () => {
@@ -154,7 +156,7 @@ async function loadData(context, franchiseId) {
         return found;
     };
     const [players, leagueInfo, calendar, facts, {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers}] = await Promise.all([
-        cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player})),
+        cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
         // only the teams' names and the league's settings, which don't change in a day
         cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
         fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
@@ -166,6 +168,9 @@ async function loadData(context, franchiseId) {
     const groups = pendingGroups(pendingWaivers);
     return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId};
 }
+
+// Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
+// a move made but not confirmed would show as failed.
 
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 async function freshPending(context) {
@@ -655,7 +660,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             : null;
         if (!state.data) {
             mount.innerHTML = state.failed
-                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked to wait: retry in a minute." : ""}</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry">Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
+                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry"${state.failed === "busy" && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
                     <button type="button" class="fuad-add-start" disabled>${PLUS}Add a player</button>`
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
@@ -1153,8 +1158,11 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         } catch (error) {
             console.warn("[fuad] couldn't load Add:", error);
             state.data = null;
-            // MFL asking to wait (HTTP 429) passes in a minute or so
             state.failed = error && error.status === 429 ? "busy" : true;
+            // Retry comes back on when MFL's wait is over
+            if (state.failed === "busy" && waitLeft()) {
+                setTimeout(render, waitLeft());
+            }
         }
         render();
         // Rosters' Add opens with its player chosen (`#player-<id>`)
