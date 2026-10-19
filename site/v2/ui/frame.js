@@ -20,6 +20,7 @@ const ICONS = {
 
 const icon = (name) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
 const MENU_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>';
+const BACK_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>';
 const CLOSE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 const SEARCH_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>';
 
@@ -137,8 +138,10 @@ export function drawFrame({context, storage}) {
     root.id = "fuad-frame";
     root.innerHTML = `
     <header class="fuad-top">
+        <button type="button" class="fuad-back" aria-label="Back" hidden>${BACK_ICON}</button>
         <button type="button" class="fuad-menu-button" aria-label="Menu" aria-expanded="false" aria-haspopup="dialog">${MENU_ICON}<span class="fuad-menu-word" aria-hidden="true">Menu</span></button>
         <a class="fuad-brand" href="${esc(all[0].href)}"><span class="fuad-wordmark">FUAD</span><span class="fuad-context"></span></a>
+        <span class="fuad-detour" hidden><span class="fuad-wordmark">FUAD</span><span class="fuad-detour-title"></span></span>
         <nav class="fuad-sections fuad-sections-top" aria-label="Sections"></nav>
         ${loggedIn
             ? `<button type="button" class="fuad-team" aria-label="${esc(team ? `${team.name}: your team` : "Commissioner")}" aria-haspopup="dialog">${esc(initials(team ? team.name : "Commissioner"))}</button>`
@@ -199,6 +202,29 @@ export function drawFrame({context, storage}) {
         }
         render();
     });
+
+    // A detour's screen (Moves › Add's drop step and review): on phones its name takes the context
+    // line's place and Back the menu's. `onTitle` makes the name a button (the player popup);
+    // `onBack` defaults to the browser's Back, since each screen is a history entry.
+    const back = root.querySelector(".fuad-back");
+    const detour = root.querySelector(".fuad-detour");
+    let onBack = null;
+    back.addEventListener("click", () => (onBack ? onBack() : window.history.back()));
+    window.fuadDetour = (screen) => {
+        document.documentElement.classList.toggle("fuad-detouring", Boolean(screen));
+        back.hidden = !screen;
+        detour.hidden = !screen;
+        onBack = screen && screen.onBack ? screen.onBack : null;
+        const title = detour.querySelector(".fuad-detour-title");
+        if (!screen) {
+            title.innerHTML = "";
+        } else if (screen.onTitle) {
+            title.innerHTML = `<button type="button" class="fuad-detour-link">${esc(screen.title)} ›</button>`;
+            title.firstChild.addEventListener("click", (event) => screen.onTitle(event.currentTarget));
+        } else {
+            title.textContent = screen.title;
+        }
+    };
 
     loadContext(context)
         .then((line) => {

@@ -189,7 +189,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     const actions = {
         drop: moveHref("Drop"),
         ir: moveHref("IR"),
-        add: moveHref("Add"),
+        // Moves › Add opens with him chosen
+        add: (playerId) => `${moveHref("Add")}#player-${encodeURIComponent(playerId)}`,
         // MFL's proposal page for the two teams (docs/mfl.md, Trades)
         trade: (teamId) => (viewer ? `${base}/options?L=${context.leagueId}&O=05&FRANCHISE=${viewer},${teamId}` : null)
     };
