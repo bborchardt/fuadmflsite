@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 5 built)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 6 built)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -9,11 +9,10 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
 
 - Save MFL pages for the v2 design (⌘S, "Webpage, HTML Only", logged in), when the chance comes up:
   - Add/Drop on a Thursday or Friday, after Wednesday night's blind-bid run, in the real league:
-    whether free agents can be added outright then. The clone's page in the lock (Sunday 18 Oct,
-    3:31 p.m., in the backtest repo's `samples/league-2026-10-18/add_drop-waivers.html`) marks every
-    free agent `#`, "Locked Player due to global player lock" (claim by blind bid only), or `!`,
-    game started; but its Saturday night page (`clone-2026-10-17`) has every free agent `#` too, so
-    an open window hasn't been seen yet. `#` goes into master's `docs/mfl.md` with step 6.
+    whether free agents can be added outright then (the clone marks every free agent `#` even on
+    Saturday night, so an open window hasn't been seen). Then one immediate add in the beta, as
+    the live test step 6 couldn't make: the add, its length posted to the board, and Home's
+    reminder reading it.
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
 - Each season, once it's set: add the final cut-down date to MFL's league calendar as an event
@@ -174,7 +173,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -306,10 +305,42 @@ tried in the beta (the commissioner's team only) before the next.
      red and orange, and moving around it can land on pages in MFL's own, jarringly different style
      (the topic list, a new topic, Preview). Restyle them the same way, or rebuild the board in v2
      after the Moves steps.
-   **Next: step 6.**
-6. **Moves › Add** (rows 5, 12): v2's controls over MFL's `add_drop` forms, comment lines, the
-   board post. The riskiest step; it wants the commissioner to-do's saved Add/Drop page from the
-   blind-bid period.
+6. **Moves › Add** (done; rows 5, 12; PR #31): MFL's Add/Drop page with v2's controls drawn over
+   it (`ui/add.js`, `ui/add-model.js`). Decided while building (18 Oct 2026):
+   - Picks go through MFL's own picker (`picker_select`) and form, posted in place, then read
+     back (`pendingWaivers`, or the roster for an immediate add) before the page reloads to show
+     them; a refused move shows "Not made: …", and if MFL changed anything anyway the page reloads
+     to show it. Reorder and remove are MFL's links; edit is MFL's edit page (`O=255`).
+   - A copy is a new claim through the add form, not MFL's `COPY_ROUND` (which only copies to a
+     new group and may leave the length line behind).
+   - Each group's comment is read back after a claim joins it and rewritten through the edit page
+     if any line is missing. Live, MFL added a second claim's comment as a new line (now in
+     master's `docs/mfl.md`). Remove takes out only a line in Add's own form ("Akins: 1 year"),
+     never a member's note; lines use the full name when two claims in a group share a surname.
+   - The window or blind-bids banner follows MFL's own marks (any free agent without one: the
+     window is open), its times from the calendar's weekly events.
+   - A free agent whose game has started is bid only, as MFL's page treats him (the
+     commissioner); a bid may drop a started player, an immediate add can't.
+   - An immediate add's length goes to the newest topic with "contract" in its name, else a new
+     "Contract lengths" topic (the commissioner).
+   - A move is blocked only when it takes cap used or the active count past its limit, or further
+     past it: bids already invalid stay "Current bids invalid" without blocking a move that
+     leaves them as they are (the clone team's are: 30 active and a no-drop claim). An immediate
+     add's drop counts as gone for a pending claim that drops him too; two groups sharing a drop
+     are allowed and noted, since MFL's help says the second can't then add a player.
+   - Edit leaves a length it can't read ("Evans two years") as written unless the member picks
+     one.
+   - Rosters' popup Add opens Add with the player chosen (`#player-<id>`), Back returning to
+     Rosters. The frame gained a phone detour: the screen's name in the context line, Back in the
+     menu's spot (`window.fuadDetour`).
+   - Tested offline with `harness/add.py` in the backtest repo (the saved clone pages with MFL's
+     own `picker.js`, saved in `samples/mfl-scripts/`; flags for the window, a refused move, a
+     failed post, roster and cap limits, logged out, MFL replacing a group's comment), three
+     reviewer passes, then live in the clone on desktop: bids into a new and an existing group,
+     edit, reorder, copy, remove, the clone left as it was.
+   - Not yet live: an immediate add and its board post (commissioner to-do), and the phone
+     screens (offline only).
+   **Next: step 7.**
 7. **Moves › Drop** (row 15).
 8. **Moves › Trades** (row 9).
 9. **Moves › IR** (row 10).
@@ -317,8 +348,8 @@ tried in the beta (the commissioner's team only) before the next.
     none of it shows live until March.
 11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
 
-**Open, to settle while building:** whether MFL accepts bids on a player whose game has started, and whether it
-carries a lineup over unchecked (the to-do's saved page, and the beta).
+**Open, to settle while building:** whether MFL runs a blind bid on a player whose game had started
+(its page takes it), and whether it carries a lineup over unchecked (the beta).
 
 **The build prompt** (for a fresh session on master, one per step):
 
