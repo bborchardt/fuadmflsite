@@ -4,6 +4,26 @@
 
 import {esc} from "./html.js";
 import {save, saved} from "./store.js";
+import {waitLeft} from "./page-fetch.js";
+
+// MFL refusing a burst (HTTP 429), as against any other failure
+export const refused = (error) => Boolean(error && error.status === 429);
+
+// "Couldn't load standings." and Retry; when MFL asked to wait, Retry is off until the wait is over
+export function failedMarkup(what, error) {
+    const text = refused(error) ? "MFL asked us to wait. Retry in a few seconds." : `Couldn’t load ${esc(what)}.`;
+    return `<div class="fuad-failed" role="alert"><span>${text}</span><button type="button" class="fuad-quiet">Retry</button></div>`;
+}
+
+export function armRetry(button, error, retry) {
+    button.addEventListener("click", retry);
+    if (refused(error) && waitLeft()) {
+        button.disabled = true;
+        setTimeout(() => {
+            button.disabled = false;
+        }, waitLeft());
+    }
+}
 
 // "7:42 p.m.", as the league's pages write times
 export function clockText(date) {
@@ -53,8 +73,8 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
                 return entry.value;
             }
             mount.removeAttribute("aria-busy");
-            body.innerHTML = `<div class="fuad-failed" role="alert"><span>Couldn't load ${esc(what)}.</span><button type="button" class="fuad-quiet">Retry</button></div>`;
-            body.querySelector("button").addEventListener("click", run);
+            body.innerHTML = failedMarkup(what, error);
+            armRetry(body.querySelector("button"), error, run);
             return null;
         });
     };
