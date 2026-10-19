@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 6 built)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 18 Oct 2026 (step 6 built; request volume to review next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -173,7 +173,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -340,7 +340,18 @@ tried in the beta (the commissioner's team only) before the next.
      edit, reorder, copy, remove, the clone left as it was.
    - Not yet live: an immediate add and its board post (commissioner to-do), and the phone
      screens (offline only).
-   **Next: step 7.**
+   - After the commissioner's look at the beta (PRs #32, #33):
+     - Home is `#home-page`, not `#home`. `#home` is the id of MFL's page body on the home
+       page, so browsers scrolled to it, past the header. Safari did even with a scroll margin.
+     - Lineup and Add hide MFL's page from the start, rather than once their code has loaded,
+       so MFL's page doesn't flash first.
+     - Add showed "Couldn't check your cap" in the real league: MFL answered one of its exports
+       with HTTP 429. Add's five fresh exports now go one after another, and the league's
+       settings are kept for a day. A refusal says MFL asked to wait. The rest of the site still
+       asks in bursts: see Performance, request volume.
+     - Phone chat: the 10 newest messages in the page, not in their own scroll box, which caught
+       swipes meant for the page (Home, Chat).
+   **Next: the request volume review (Performance), then step 7.**
 7. **Moves › Drop** (row 15).
 8. **Moves › Trades** (row 9).
 9. **Moves › IR** (row 10).
@@ -504,10 +515,24 @@ Measured 10 Oct 2026 on v1, as a guest, on an emulated mid-range phone (slow 4G,
 - Not yet measured logged in (chat and member modules) or on Add/Drop. The emulation likely left out
   the first response's latency: real 4G adds roughly 0.3–0.5 s.
 
+**Request volume (to review next, before step 7):** MFL throttles by machine, doesn't say how
+much, refuses bursts with HTTP 429, and asks for about a second between requests (master's
+`docs/mfl.md`, Login and limits). Running inside MFL's pages doesn't exempt v2's export requests.
+On 18 Oct 2026, after the commissioner had moved quickly between views in the real league, Add got a
+429 and couldn't check the cap. Add now asks for its fresh exports one at a time (PR #32), but
+Home, League, Rosters, the popup and the frame's context line still each send several at once. Some
+are shared within a page (`ui/page-fetch.js`), and some are cached in the browser for a day
+(players, kickoffs, bye weeks, rules, the season's facts, the league's settings for Add). A member
+who moves between views quickly multiplies them. The review should count what each view asks
+for, first visit and returning; decide what can be cached longer, shared across views or pages,
+or asked in turn; and say what a member sees when MFL refuses anyway. Each check in Moves still
+needs fresh data.
+
 Rules for v2:
 - **Readable within 1.5 s** for a returning member on a mid-range phone, checked against this
   baseline.
-- **Each page fetches only what it shows,** in parallel.
+- **Each page fetches only what it shows,** in parallel (but see request volume, below: MFL
+  refuses bursts).
 - **Cached for as long as it stays true:** players and the season calendar for a day, standings and
   power rankings until the next results, rosters and transactions for a minute or two. Pages that
   only display draw from the cache at once, then refresh.
@@ -901,8 +926,10 @@ the columns' bottoms meet; review, 17 Oct 2026):
 1. **My alerts:** the member's own, each one tappable to the page that fixes it (so a player named
    in one doesn't open the player popup); a quiet "All clear" when empty.
 2. **League alerts:** every other team's (tap: that team in Rosters › Teams).
-3. **Chat:** compact: grows to about four messages, then scrolls inside itself, newest at the bottom
-   by the box, opened scrolled to the newest; one line when empty ("No messages yet."). A "To" picker sends to everyone or privately to one team; private messages carry a
+3. **Chat:** compact. On desktop it grows to about four messages, then scrolls inside itself, newest
+   at the bottom of the box, opened scrolled to the newest. On phones the 10 newest show in the
+   page, with "Older messages" to MFL's chat page: an inner box caught swipes meant for the page
+   (the commissioner, 18 Oct 2026). One line when empty ("No messages yet."). A "To" picker sends to everyone or privately to one team; private messages carry a
    lock tag ("to you", "to The Obliterators"). Reads MFL's chat feed and posts through `chat_save`
    (`docs/mfl.md`, Chat). The league barely uses chat (3 messages this season, all private).
 4. **Message board:** the newest topics, linking to MFL's board, and "New topic" (subject and
