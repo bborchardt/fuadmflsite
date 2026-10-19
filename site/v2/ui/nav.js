@@ -12,8 +12,10 @@ export const REBUILT = ["Home", "League/Scores", "League/Standings", "League/Pow
 
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
+// Home isn't `#home`: that's the id of MFL's page body on the home page, and browsers scroll to it,
+// past the frame (Safari even with a scroll margin)
 export function viewHash(section, view) {
-    return `#${slug(section)}${view ? `-${slug(view)}` : ""}`;
+    return section === "Home" && !view ? "#home-page" : `#${slug(section)}${view ? `-${slug(view)}` : ""}`;
 }
 
 // `rebuilt` lists the "Section" or "Section/View" names v2 draws itself

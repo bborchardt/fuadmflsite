@@ -21,6 +21,9 @@ const DAY = 24 * 60 * 60 * 1000;
 const CHAT_POLL = 15 * 1000;
 // MFL's own chat stops polling after about two hours without posting
 const CHAT_IDLE = 2 * 60 * 60 * 1000;
+// phones show the newest messages in the page, with no box of their own to trap a swipe; the rest
+// are on MFL's chat page
+const PHONE_CHAT = 10;
 const CHEVRON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>';
@@ -100,6 +103,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
     let timer = null;
     // null until the first draw, so an empty chat still draws its "No messages yet."
     let drawnIds = null;
+    let olderLink = null;
     const load = async () => {
         const response = await fetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
@@ -114,12 +118,13 @@ function drawChat(mount, {context, franchiseId, teams}) {
         }
         drawnIds = ids;
         const today = dayText(Date.now() / 1000);
+        const older = Math.max(0, messages.length - PHONE_CHAT);
         list.innerHTML = messages.length
-            ? messages.map((message) => {
+            ? messages.map((message, i) => {
                 const mine = message.from === franchiseId;
                 const to = !message.to ? "" : message.to === franchiseId ? "to you" : message.to === "0000" ? "to the commissioner" : `to ${teams.get(message.to) || "a team"}`;
                 const when = message.at ? (dayText(message.at) === today ? clock(message.at) : `${dayText(message.at)}, ${clock(message.at)}`) : "";
-                return `<div class="fuad-chat-message">
+                return `<div class="fuad-chat-message${i < older ? " fuad-chat-older" : ""}">
                     <div class="fuad-chat-head"><span class="fuad-chat-who"><span class="${mine ? "fuad-chat-mine" : ""}">${esc(teams.get(message.from) || "Commissioner")}</span>${to ? `<span class="fuad-tag">${LOCK}${esc(to)}</span>` : ""}</span><span class="fuad-meta">${esc(when)}</span></div>
                     <div>${esc(message.text)}</div>
                 </div>`;
@@ -127,12 +132,14 @@ function drawChat(mount, {context, franchiseId, teams}) {
             : '<p class="fuad-muted fuad-empty">No messages yet.</p>';
         list.classList.toggle("fuad-chat-list", messages.length > 0);
         list.scrollTop = list.scrollHeight;
+        olderLink.hidden = older === 0;
     };
     const render = (messages, body) => {
         drawnIds = null;
         const typed = mount.querySelector("#fuad-chat-input");
         const draft = typed ? {text: typed.value, to: mount.querySelector("#fuad-chat-to").value} : null;
         body.innerHTML = `
+        <a class="fuad-chat-older-link" href="${esc(`${window.location.origin}/${context.season}/chat?L=${encodeURIComponent(context.leagueId)}&COUNT=40`)}" hidden>Older messages</a>
         <div class="fuad-chat-scroll"></div>
         <div class="fuad-chat-to"><label for="fuad-chat-to" class="fuad-meta">To</label>
             <select id="fuad-chat-to"><option value="">Everyone</option>${others.map(([id, name]) => `<option value="${esc(id)}">${esc(name)} (private)</option>`).join("")}</select></div>
@@ -143,6 +150,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
         </form>
         <p class="fuad-result" role="status"></p>`;
         const list = body.querySelector(".fuad-chat-scroll");
+        olderLink = body.querySelector(".fuad-chat-older-link");
         const input = body.querySelector("input");
         const to = body.querySelector("select");
         const result = body.querySelector(".fuad-result");
