@@ -65,7 +65,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     const form = dropForm();
     const roster = readRoster(scriptText());
     // not the page v2 knows (MFL changed it), or another team's: MFL's own page, restyled
-    if (!form || !form.elements.FRANCHISE || form.elements.FRANCHISE.value !== franchiseId) {
+    if (!form || !roster.length || !form.elements.FRANCHISE || form.elements.FRANCHISE.value !== franchiseId) {
         standAside();
         return;
     }
@@ -195,24 +195,38 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         state.busy = true;
         state.error = "";
         render();
+        let sent = false;
+        let read = false;
         try {
             const answer = await send(form.action, {method: "POST", body: formFields(form, playerId)});
-            if ((await rosterIds(context, franchiseId)).includes(playerId)) {
+            sent = true;
+            const after = await rosterIds(context, franchiseId);
+            read = true;
+            if (after.includes(playerId)) {
                 throw new Error(refusal(answer));
             }
             reloadWith({done: `${name} dropped.`});
         } catch (error) {
             console.warn("[fuad] couldn't drop:", error);
-            const message = `${error.message.replace(/\.$/, "")}.`;
+            let message = `${error.message.replace(/\.$/, "")}.`;
             // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it
             const ids = await rosterIds(context, franchiseId).catch(() => null);
             if (ids && JSON.stringify(ids) !== JSON.stringify(mine())) {
                 reloadWith({error: `${message} MFL's page has changed: this is how it stands.`});
                 return;
             }
+            // sent, but the roster couldn't be read to tell whether MFL made it
+            if (!ids && sent && !read) {
+                message = "Couldn't check whether MFL made it. Reload the page to see your roster.";
+            }
             state.error = message;
             state.busy = false;
             render();
+            // the button was off while sending, so focus fell away from it
+            const again = mount.querySelector(`[data-act="drop"][data-id="${playerId}"]`);
+            if (again) {
+                again.focus();
+            }
         }
     }
 
