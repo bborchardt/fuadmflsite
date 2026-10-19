@@ -349,7 +349,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     exp("messageBoard", {COUNT: 20}, {optional: true}),
                     readings(built).catch(() => null),
                     coming(),
-                    exp("draftResults", {}, {optional: true})
+                    // only before week 1 does the draft matter
+                    dates.then(({kickoffs: times}) => (times.get(1) && nowSeconds() >= times.get(1) ? null : exp("draftResults", {}, {optional: true})))
                 ]);
                 const now = nowSeconds();
                 const phase = homePhase({

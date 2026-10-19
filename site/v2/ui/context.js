@@ -44,10 +44,12 @@ export function seasonFacts({season, leagueId}) {
     const host = window.location.origin;
     const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch}).catch(() => null);
     return cached(`fuad.context.${season}`, DAY, async () => {
+        const week1Promise = weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
         const [week1, seasonEnd, draftResults, calendar] = await Promise.all([
-            weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null),
+            week1Promise,
             weekEnd(season, ROSTER_CHECK_LAST_WEEK, {fetchImpl: pageFetch}).catch(() => null),
-            league("draftResults"),
+            // only before week 1 does the draft matter
+            week1Promise.then((date) => (date && Date.now() >= date.getTime() ? null : league("draftResults"))),
             league("calendar")
         ]);
         return {
