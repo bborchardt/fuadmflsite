@@ -177,7 +177,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     const context = pageContext();
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
-    // Lineup and Add draw over MFL's page: it's hidden from the start, so it doesn't show while their
+    // Lineup, Add and Drop draw over MFL's page: it's hidden from the start, so it doesn't show while their
     // code loads (the commissioner's view stays MFL's)
     const over = (className) => {
         if (window.franchise_id !== "0000") {
@@ -203,6 +203,14 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const shown = over("fuad-add-on");
         await import("./add.js").then(({drawAdd}) => drawAdd({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Add:", error);
+            onTrouble();
+        });
+        return false;
+    }
+    if (context && here.path === "options" && here.option === "257") {
+        const shown = over("fuad-drop-on");
+        await import("./drop.js").then(({drawDrop}) => drawDrop({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch(shown).catch((error) => {
+            console.error("[fuad] couldn't draw Drop:", error);
             onTrouble();
         });
         return false;

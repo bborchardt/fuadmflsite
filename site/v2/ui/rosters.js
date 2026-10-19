@@ -187,7 +187,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     const moves = nav.find((section) => section.name === "Moves").views;
     const moveHref = (name) => (moves.find((view) => view.name === name) || {}).href || null;
     const actions = {
-        drop: moveHref("Drop"),
+        drop: (playerId) => `${moveHref("Drop")}#player-${encodeURIComponent(playerId)}`,
         ir: moveHref("IR"),
         // Moves › Add opens with him chosen
         add: (playerId) => `${moveHref("Add")}#player-${encodeURIComponent(playerId)}`,

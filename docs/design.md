@@ -91,6 +91,10 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   already over a limit stay "Current bids invalid" until fixed, without blocking a move that leaves
   them as they are. Over 30 active in season no adds at all, and under 23 no add drops an active
   player (10.5); a player the team dropped can't be re-added for 48 hours (9.4).
+- **Moves › Drop** (v2, `ui/drop-model.js`) blocks a cut whose penalty takes cap used past the
+  cap, or further past it, with every pending group's costliest claim counted (a claim dropping the
+  same player counts as no drop after it); in season, an active player's at 23 active (9.2) and any
+  under 23 (10.5); and a player whose game has started (MFL's mark).
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
 - **Playoff seeds and payouts** (v2's League, `ui/league-model.js`, display only): the division

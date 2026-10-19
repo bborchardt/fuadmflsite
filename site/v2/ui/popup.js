@@ -124,7 +124,7 @@ function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
         return "";
     }
     const links = mine
-        ? [["Drop", actions.drop], ...(player.injury && /^IR/i.test(player.injury.status) ? [["IR", actions.ir]] : [])]
+        ? [["Drop", actions.drop && actions.drop(player.id)], ...(player.injury && /^IR/i.test(player.injury.status) ? [["IR", actions.ir]] : [])]
         : ownerId ? [["Propose a trade", actions.trade && actions.trade(ownerId)]]
         : [["Add", actions.add && actions.add(player.id)]];
     const shown = links.filter(([, href]) => href);
