@@ -11,7 +11,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {cached} from "./store.js";
-import {forget, pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {seasonFacts} from "./context.js";
@@ -144,7 +144,7 @@ async function loadData(context, franchiseId) {
     const {season, leagueId} = context;
     const host = window.location.origin;
     // the checks always use fresh rosters, penalties and pending bids
-    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
+    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
     // MFL refuses bursts (HTTP 429), so the fresh exports go one after another; the rest is
     // mostly cached for a day
     const freshInTurn = async () => {
@@ -155,7 +155,7 @@ async function loadData(context, franchiseId) {
         return found;
     };
     const [players, leagueInfo, calendar, facts, {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers}] = await Promise.all([
-        cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player})),
+        cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
         // only the teams' names and the league's settings, which don't change in a day
         cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
         fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
@@ -170,13 +170,13 @@ async function loadData(context, franchiseId) {
 
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 async function freshPending(context) {
-    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}});
+    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {fetchImpl: mflFetch, init: {cache: "no-store"}});
     const groups = pendingGroups(pending);
     return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
 }
 
 async function rosterIds(context, franchiseId) {
-    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}});
+    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {fetchImpl: mflFetch, init: {cache: "no-store"}});
     const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
     return team ? asArray(team.player).map((player) => player.id).sort() : [];
 }
@@ -189,7 +189,7 @@ const onRoster = async (context, franchiseId, playerId) => (await rosterIds(cont
 // Posts the length to the board (messageBoard import): a reply in the contract topic, or a new one
 async function postLength(context, line) {
     const {season, leagueId} = context;
-    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {init: {cache: "no-store"}});
+    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {fetchImpl: mflFetch, init: {cache: "no-store"}});
     const topic = contractTopic(board);
     const fields = new URLSearchParams(topic ? {THREAD: topic.id, BODY: line} : {SUBJECT: NEW_TOPIC, BODY: line});
     const answer = await send(`${window.location.origin}/${season}/import?TYPE=messageBoard&L=${encodeURIComponent(leagueId)}`, {method: "POST", body: fields});

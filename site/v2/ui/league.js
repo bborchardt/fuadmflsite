@@ -6,7 +6,7 @@ import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl
 import {esc} from "./html.js";
 import {drawPanel, placeholders} from "./panel.js";
 import {cached} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
+import {mflFetch, pageFetch} from "./page-fetch.js";
 import {clock, dayText} from "./home-model.js";
 import {gameStates, readProjections, readRules, readStats} from "./live-scoring.js";
 import {
@@ -537,7 +537,7 @@ export function drawLeague({context, franchiseId}) {
         const leagueParams = base === host ? {L: context.leagueId, ...params} : params;
         // the year to date comes back as `allWeeklyResults`
         const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
-        const request = fetchExport(exportUrl(base, year, type, leagueParams), section, {fetchImpl: fresh ? fetch : pageFetch, init: {cache: "no-store"}});
+        const request = fetchExport(exportUrl(base, year, type, leagueParams), section, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}});
         return optional ? request.catch((error) => {
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
@@ -545,7 +545,7 @@ export function drawLeague({context, franchiseId}) {
     };
     // MFL's live feeds (stats, projections), read as its live scoring page reads them
     const feed = async (name) => {
-        const response = await fetch(`${host}/fflnetdynamic${season}/${name}?RANDOM=${Date.now()}`, {cache: "no-store"});
+        const response = await mflFetch(`${host}/fflnetdynamic${season}/${name}?RANDOM=${Date.now()}`, {cache: "no-store"});
         if (!response.ok) {
             throw Object.assign(new Error(`${name} returned HTTP ${response.status}`), {status: response.status});
         }
@@ -580,7 +580,7 @@ export function drawLeague({context, franchiseId}) {
             return false;
         }
     });
-    const players = once(async () => playersMap(await cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player}))));
+    const players = once(async () => playersMap(await cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player}))));
     const rules = once(async () => readRules(await cached(`fuad.rules.${season}`, DAY, () => exp("rules"))));
     // the projections don't change during a week: read once, as MFL's page does
     const projected = new Map();

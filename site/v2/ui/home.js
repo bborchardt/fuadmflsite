@@ -8,7 +8,7 @@ import {TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
-import {forget, pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, cutDownDate, dayText, homePhase, leagueAlerts,
@@ -40,7 +40,7 @@ function fetcher({season, leagueId}, {fresh = false} = {}) {
     const host = window.location.origin;
     return (type, params = {}, {base = host, optional = false} = {}) => {
         const leagueParams = base === host ? {L: leagueId, ...params} : params;
-        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? fetch : pageFetch, init: {cache: "no-store"}});
+        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}});
         return optional ? request.catch((error) => {
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
@@ -105,7 +105,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
     let drawnIds = null;
     let olderLink = null;
     const load = async () => {
-        const response = await fetch(feedUrl, {cache: "no-store"});
+        const response = await mflFetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
             throw new Error(`the chat feed returned HTTP ${response.status}`);
         }
