@@ -8,7 +8,7 @@ import {TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
+import {forget, pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, cutDownDate, dayText, homePhase, leagueAlerts,
@@ -289,6 +289,7 @@ function wireNewTopic(mount, body, {context}) {
             if (!response.ok || !/<status>\s*OK\s*<\/status>/i.test(text)) {
                 throw new Error((text.match(/<error[^>]*>([^<]*)/i) || [])[1] || (response.ok ? "MFL didn't confirm it" : `HTTP ${response.status}`));
             }
+            forget();
             form.reset();
             show(false);
             mount.dispatchEvent(new CustomEvent("fuad-refresh"));

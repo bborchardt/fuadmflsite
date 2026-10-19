@@ -10,6 +10,7 @@ import {NFL_TEAMS, ownerOf, readArticle, readPlayerPage} from "./player-page.js"
 import {openDialog} from "./dialog.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
+import {pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -43,7 +44,8 @@ async function page(url) {
 // the viewer's cap used, for "Cut now"; kept a couple of minutes, since it's only shown, not checked
 function capUsed({season, leagueId}, franchiseId) {
     const host = window.location.origin;
-    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type);
+    // the page's own league load, when it has one (page-fetch.js)
+    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
     return cached(`fuad.capUsed.${season}.${franchiseId}`, CAP_AGE, async () => {
         const [players, leagueInfo, rosters, salaryAdjustments, transactions, freeAgents] = await Promise.all([
             cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player})),

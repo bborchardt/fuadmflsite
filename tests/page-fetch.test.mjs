@@ -1,20 +1,24 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {gameToday, keepFor} from "../site/v2/ui/page-fetch.js";
+import {forget, gameToday, keepFor} from "../site/v2/ui/page-fetch.js";
 
 const MINUTE = 60 * 1000;
 const league = (type, extra = "") => `https://www44.myfantasyleague.com/2026/export?TYPE=${type}&L=48571${extra}&JSON=1`;
 const api = (type, extra = "") => `https://api.myfantasyleague.com/2026/export?TYPE=${type}${extra}&JSON=1`;
 const options = (gameDay = false) => ({liveWeek: 6, gameDay: () => gameDay});
 
-test("exports that rarely change are kept; those that do, and Moves' inputs, aren't", () => {
+test("exports that rarely change are kept for a day or an hour; what a move changes, 2 minutes", () => {
     assert.equal(keepFor(api("nflSchedule", "&W=6"), options()), 24 * 60 * MINUTE);
     assert.equal(keepFor(league("league"), options()), 24 * 60 * MINUTE);
     assert.equal(keepFor(league("calendar"), options()), 24 * 60 * MINUTE);
     assert.equal(keepFor(league("weeklyResults"), options()), 60 * MINUTE);
-    for (const type of ["rosters", "transactions", "salaryAdjustments", "freeAgents", "pendingWaivers", "pendingTrades", "liveScoring", "messageBoard", "draftResults"]) {
-        assert.equal(keepFor(league(type), options()), 0, type);
+    for (const type of ["rosters", "transactions", "salaryAdjustments", "freeAgents", "pendingWaivers", "pendingTrades", "messageBoard"]) {
+        assert.equal(keepFor(league(type), options()), 2 * MINUTE, type);
     }
+    // who starts, for League › Scores: never older than the page
+    assert.equal(keepFor(league("liveScoring", "&W=6&DETAILS=1"), options()), 0);
+    // Rosters › Draft shows picks as they're entered
+    assert.equal(keepFor(league("draftResults"), options()), 0);
     assert.equal(keepFor(league("weeklyResults", "&W=YTD"), options()), 0);
     assert.equal(keepFor("https://www44.myfantasyleague.com/2026/options?L=48571&O=101", options()), 0);
 });
@@ -35,4 +39,27 @@ test("a game day is one with a kickoff on today's Central date, or an unknown sc
     // 11 p.m. Sunday CT is already Monday in UTC
     assert.equal(gameToday({matchup: kickoff("2026-10-18T19:20:00-05:00")}, new Date("2026-10-18T23:00:00-05:00")), true);
     assert.equal(gameToday(null, new Date()), true);
+});
+
+test("a move made in v2 forgets what it changes, and keeps the rest", () => {
+    const items = new Map();
+    const localStorage = {
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => items.set(key, String(value)),
+        removeItem: (key) => items.delete(key)
+    };
+    // Object.keys(localStorage) lists what's stored, as in a browser
+    globalThis.window = {localStorage: new Proxy(localStorage, {
+        ownKeys: () => [...items.keys()],
+        getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
+    })};
+    const entry = JSON.stringify({expires: Date.now() + MINUTE, body: "{}"});
+    items.set(`fuad.keep.${league("rosters")}`, entry);
+    items.set(`fuad.keep.${league("pendingWaivers")}`, entry);
+    items.set(`fuad.keep.${league("league")}`, entry);
+    items.set("fuad.capUsed.2026.0001", entry);
+    items.set("fuad.players.2026", entry);
+    forget();
+    assert.deepEqual([...items.keys()].sort(), [`fuad.keep.${league("league")}`, "fuad.players.2026"]);
+    delete globalThis.window;
 });
