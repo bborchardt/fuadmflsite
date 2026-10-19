@@ -61,6 +61,22 @@ export function keepFor(url, {liveWeek, gameDay}) {
     }
 }
 
+// Some exports answer for whoever is logged in (the calendar, pending bids and trades), so what's
+// kept is the viewer's own: `fuad.keep.<team or guest>|<url>`
+const viewer = () => (typeof window !== "undefined" && window.franchise_id) || "guest";
+const keyOf = (url) => `${KEEP}${viewer()}|${url}`;
+const urlOf = (name) => name.slice(name.indexOf("|") + 1);
+
+// only an answer with its section: MFL reports an error, a login one included, with HTTP 200
+export function keepable(url, body) {
+    try {
+        const parsed = JSON.parse(body);
+        return Boolean(parsed) && !parsed.error && new URL(url).searchParams.get("TYPE") in parsed;
+    } catch (error) {
+        return false;
+    }
+}
+
 function kept(key) {
     try {
         const entry = JSON.parse(storage.get(key));
@@ -75,7 +91,7 @@ function keep(key, body, maxAge) {
     const now = Date.now();
     try {
         for (const name of Object.keys(window.localStorage)) {
-            if (name.startsWith(KEEP) && !(JSON.parse(window.localStorage.getItem(name)) || {}).expires > now) {
+            if (name.startsWith(KEEP) && !((JSON.parse(window.localStorage.getItem(name)) || {}).expires > now)) {
                 window.localStorage.removeItem(name);
             }
         }
@@ -93,7 +109,7 @@ export function forget() {
     }
     try {
         for (const name of Object.keys(window.localStorage)) {
-            if ((name.startsWith(KEEP) && keepFor(name.slice(KEEP.length), {liveWeek: 0, gameDay: () => true}) === MOVES_KEPT)
+            if ((name.startsWith(KEEP) && keepFor(urlOf(name), {liveWeek: 0, gameDay: () => true}) === MOVES_KEPT)
                 || name.startsWith("fuad.capUsed.")) {
                 window.localStorage.removeItem(name);
             }
@@ -110,7 +126,7 @@ function thisWeeksSchedule() {
     if (!week || !season) {
         return null;
     }
-    const body = kept(`${KEEP}https://api.myfantasyleague.com/${season}/export?TYPE=nflSchedule&W=${week}&JSON=1`);
+    const body = kept(keyOf(`https://api.myfantasyleague.com/${season}/export?TYPE=nflSchedule&W=${week}&JSON=1`));
     try {
         return body ? JSON.parse(body).nflSchedule : null;
     } catch (error) {
@@ -143,14 +159,17 @@ export function pageFetch(url, init) {
     const key = String(url);
     if (!responses.has(key)) {
         const maxAge = keepFor(key, {liveWeek: liveWeek(), gameDay: () => gameToday(thisWeeksSchedule(), new Date())});
-        const body = maxAge ? kept(KEEP + key) : null;
+        const body = maxAge ? kept(keyOf(key)) : null;
         const request = body !== null
             ? Promise.resolve(new Response(body, {status: 200, headers: {"Content-Type": "application/json"}}))
             : mflFetch(url, init).then(async (response) => {
                 if (!response.ok) {
                     responses.delete(key);
                 } else if (maxAge) {
-                    keep(KEEP + key, await response.clone().text(), maxAge);
+                    const text = await response.clone().text();
+                    if (keepable(key, text)) {
+                        keep(keyOf(key), text, maxAge);
+                    }
                 }
                 return response;
             }, (error) => {

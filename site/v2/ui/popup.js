@@ -36,7 +36,7 @@ function nameFromLink(label) {
 async function page(url) {
     const response = await mflFetch(url, {credentials: "include"});
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
     }
     return response.text();
 }
