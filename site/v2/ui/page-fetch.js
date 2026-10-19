@@ -9,6 +9,8 @@ const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const KEEP = "fuad.keep.";
+const WAIT_KEY = "fuad.mflWait";
+const WAIT = 30 * 1000;
 const MOVES_KEPT = 2 * MINUTE;
 
 const centralDate = (date) => date.toLocaleDateString("en-CA", {timeZone: "America/Chicago"});
@@ -116,6 +118,20 @@ function thisWeeksSchedule() {
     }
 }
 
+// Every read from MFL. After MFL answers 429 nothing is asked of it for a while, on any page; a read
+// in that time answers 429 at once, so it fails as MFL's refusal would. Moves aren't held.
+export async function mflFetch(url, init) {
+    const until = Number(storage.get(WAIT_KEY)) || 0;
+    if (Date.now() < until) {
+        return new Response("", {status: 429});
+    }
+    const response = await fetch(url, init);
+    if (response.status === 429) {
+        storage.set(WAIT_KEY, String(Date.now() + WAIT));
+    }
+    return response;
+}
+
 const responses = new Map();
 
 export function pageFetch(url, init) {
@@ -125,7 +141,7 @@ export function pageFetch(url, init) {
         const body = maxAge ? kept(KEEP + key) : null;
         const request = body !== null
             ? Promise.resolve(new Response(body, {status: 200, headers: {"Content-Type": "application/json"}}))
-            : fetch(url, init).then(async (response) => {
+            : mflFetch(url, init).then(async (response) => {
                 if (!response.ok) {
                     responses.delete(key);
                 } else if (maxAge) {

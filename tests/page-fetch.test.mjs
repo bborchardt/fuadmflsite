@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {forget, gameToday, keepFor} from "../site/v2/ui/page-fetch.js";
+import {forget, gameToday, keepFor, mflFetch} from "../site/v2/ui/page-fetch.js";
 
 const MINUTE = 60 * 1000;
 const league = (type, extra = "") => `https://www44.myfantasyleague.com/2026/export?TYPE=${type}&L=48571${extra}&JSON=1`;
@@ -62,4 +62,28 @@ test("a move made in v2 forgets what it changes, and keeps the rest", () => {
     forget();
     assert.deepEqual([...items.keys()].sort(), [`fuad.keep.${league("league")}`, "fuad.players.2026"]);
     delete globalThis.window;
+});
+
+test("after MFL answers 429, nothing is asked of it for 30 seconds", async () => {
+    const items = new Map();
+    globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))}};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    let status = 429;
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        return new Response("{}", {status});
+    };
+    try {
+        assert.equal((await mflFetch(league("rosters"))).status, 429);
+        status = 200;
+        assert.equal((await mflFetch(league("transactions"))).status, 429);
+        assert.deepEqual(asked, [league("rosters")]);
+        items.set("fuad.mflWait", String(Date.now() - 1));
+        assert.equal((await mflFetch(league("transactions"))).status, 200);
+        assert.equal(asked.length, 2);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
 });
