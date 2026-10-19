@@ -120,9 +120,10 @@ function fillForm(form, lists, {add, drop, bid = null, round = null, comment = "
     return fields;
 }
 
+// what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
 async function send(url, init) {
     forget();
-    const response = await fetch(url, {credentials: "include", ...init});
+    const response = await fetch(url, {credentials: "include", ...init}).finally(forget);
     if (!response.ok) {
         throw new Error(`MFL answered HTTP ${response.status}`);
     }
@@ -168,15 +169,18 @@ async function loadData(context, franchiseId) {
     return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId};
 }
 
+// Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
+// a move made but not confirmed would show as failed.
+
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 async function freshPending(context) {
-    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}});
     const groups = pendingGroups(pending);
     return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
 }
 
 async function rosterIds(context, franchiseId) {
-    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}});
     const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
     return team ? asArray(team.player).map((player) => player.id).sort() : [];
 }
@@ -189,7 +193,7 @@ const onRoster = async (context, franchiseId, playerId) => (await rosterIds(cont
 // Posts the length to the board (messageBoard import): a reply in the contract topic, or a new one
 async function postLength(context, line) {
     const {season, leagueId} = context;
-    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {init: {cache: "no-store"}});
     const topic = contractTopic(board);
     const fields = new URLSearchParams(topic ? {THREAD: topic.id, BODY: line} : {SUBJECT: NEW_TOPIC, BODY: line});
     const answer = await send(`${window.location.origin}/${season}/import?TYPE=messageBoard&L=${encodeURIComponent(leagueId)}`, {method: "POST", body: fields});

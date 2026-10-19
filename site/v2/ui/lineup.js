@@ -112,7 +112,7 @@ async function save(context, form, state) {
     let response;
     forget();
     try {
-        response = await fetch(form.action, {method: "POST", body: fields, credentials: "include"});
+        response = await fetch(form.action, {method: "POST", body: fields, credentials: "include"}).finally(forget);
     } catch (error) {
         throw Object.assign(error, {sent: false});
     }

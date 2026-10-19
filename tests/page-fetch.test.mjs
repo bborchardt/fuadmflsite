@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {forget, gameToday, keepFor, mflFetch} from "../site/v2/ui/page-fetch.js";
+import {forget, gameToday, keepFor, keepable, mflFetch} from "../site/v2/ui/page-fetch.js";
 
 const MINUTE = 60 * 1000;
 const league = (type, extra = "") => `https://www44.myfantasyleague.com/2026/export?TYPE=${type}&L=48571${extra}&JSON=1`;
@@ -54,13 +54,13 @@ test("a move made in v2 forgets what it changes, and keeps the rest", () => {
         getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
     })};
     const entry = JSON.stringify({expires: Date.now() + MINUTE, body: "{}"});
-    items.set(`fuad.keep.${league("rosters")}`, entry);
-    items.set(`fuad.keep.${league("pendingWaivers")}`, entry);
-    items.set(`fuad.keep.${league("league")}`, entry);
+    items.set(`fuad.keep.0001|${league("rosters")}`, entry);
+    items.set(`fuad.keep.guest|${league("pendingWaivers")}`, entry);
+    items.set(`fuad.keep.0001|${league("league")}`, entry);
     items.set("fuad.capUsed.2026.0001", entry);
     items.set("fuad.players.2026", entry);
     forget();
-    assert.deepEqual([...items.keys()].sort(), [`fuad.keep.${league("league")}`, "fuad.players.2026"]);
+    assert.deepEqual([...items.keys()].sort(), [`fuad.keep.0001|${league("league")}`, "fuad.players.2026"]);
     delete globalThis.window;
 });
 
@@ -82,6 +82,50 @@ test("after MFL answers 429, nothing is asked of it for 30 seconds", async () =>
         items.set("fuad.mflWait", String(Date.now() - 1));
         assert.equal((await mflFetch(league("transactions"))).status, 200);
         assert.equal(asked.length, 2);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("only an answer with its section is kept, never MFL's error", () => {
+    assert.equal(keepable(league("calendar"), '{"version":"1.0","calendar":{"event":[]}}'), true);
+    assert.equal(keepable(league("calendar"), '{"error":{"$t":"API requires logged in user"}}'), false);
+    assert.equal(keepable(league("calendar"), '{"version":"1.0"}'), false);
+    assert.equal(keepable(league("calendar"), "<html>"), false);
+});
+
+test("what's expired goes when something new is kept; the viewer's own copy is used", async () => {
+    const items = new Map();
+    const localStorage = {
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => items.set(key, String(value)),
+        removeItem: (key) => items.delete(key)
+    };
+    globalThis.window = {
+        franchise_id: "0001",
+        liveScoringWeek: 6,
+        location: {pathname: "/2026/home/48571"},
+        localStorage: new Proxy(localStorage, {
+            ownKeys: () => [...items.keys()],
+            getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
+        })
+    };
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        return new Response('{"league":{"name":"FUAD"}}', {status: 200});
+    };
+    try {
+        const old = league("injuries", "&W=1");
+        items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
+        items.set(`fuad.keep.guest|${league("league")}`, JSON.stringify({expires: Date.now() + MINUTE, body: '{"league":{"name":"guest"}}'}));
+        const {pageFetch} = await import("../site/v2/ui/page-fetch.js");
+        assert.equal((await (await pageFetch(league("league"))).json()).league.name, "FUAD");
+        assert.deepEqual(asked, [league("league")]);
+        assert.equal(items.has(`fuad.keep.0001|${old}`), false);
+        assert.equal(items.has(`fuad.keep.0001|${league("league")}`), true);
     } finally {
         globalThis.fetch = realFetch;
         delete globalThis.window;
