@@ -4,7 +4,7 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {esc} from "./html.js";
-import {pageFetch} from "./page-fetch.js";
+import {forget, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
@@ -110,6 +110,7 @@ async function save(context, form, state) {
     const fields = new URLSearchParams(new FormData(form));
     fields.set("SUBMIT", "Submit Lineup");
     let response;
+    forget();
     try {
         response = await fetch(form.action, {method: "POST", body: fields, credentials: "include"});
     } catch (error) {

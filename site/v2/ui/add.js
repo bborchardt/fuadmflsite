@@ -11,7 +11,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {cached} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
+import {forget, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {seasonFacts} from "./context.js";
@@ -121,6 +121,7 @@ function fillForm(form, lists, {add, drop, bid = null, round = null, comment = "
 }
 
 async function send(url, init) {
+    forget();
     const response = await fetch(url, {credentials: "include", ...init});
     if (!response.ok) {
         throw new Error(`MFL answered HTTP ${response.status}`);
