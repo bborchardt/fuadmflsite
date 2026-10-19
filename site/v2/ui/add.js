@@ -144,11 +144,22 @@ async function loadData(context, franchiseId) {
     const host = window.location.origin;
     // the checks always use fresh rosters, penalties and pending bids
     const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {init: {cache: "no-store"}});
-    const [players, leagueInfo, salaryAdjustments, rosters, transactions, freeAgents, pendingWaivers, calendar, facts] = await Promise.all([
+    // MFL refuses bursts (HTTP 429), so the fresh exports go one after another; the rest is
+    // mostly cached for a day
+    const freshInTurn = async () => {
+        const found = {};
+        for (const type of ["rosters", "salaryAdjustments", "transactions", "freeAgents", "pendingWaivers"]) {
+            found[type] = await fresh(type);
+        }
+        return found;
+    };
+    const [players, leagueInfo, calendar, facts, {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers}] = await Promise.all([
         cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player})),
-        fresh("league"), fresh("salaryAdjustments"), fresh("rosters"), fresh("transactions"), fresh("freeAgents"), fresh("pendingWaivers"),
+        // only the teams' names and the league's settings, which don't change in a day
+        cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
         fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
-        seasonFacts(context).catch(() => ({}))
+        seasonFacts(context).catch(() => ({})),
+        freshInTurn()
     ]);
     const league = buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents});
     const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
@@ -156,7 +167,6 @@ async function loadData(context, franchiseId) {
     return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId};
 }
 
-// the pending claims, fresh, to confirm a move
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 async function freshPending(context) {
     const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}});
@@ -263,6 +273,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     const lists = readPlayerLists(scriptText());
     // not the page v2 knows (MFL changed it): MFL's own page, restyled
     if (!form || !lists.add.length || typeof window.picker_select !== "function" || !form.elements.ROUND || !form.elements.COMMENTS) {
+        standAside();
         return;
     }
     mount.innerHTML = `<section class="fuad-panel">${placeholders(8)}</section>`;
@@ -644,7 +655,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             : null;
         if (!state.data) {
             mount.innerHTML = state.failed
-                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry">Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
+                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked to wait: retry in a minute." : ""}</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry">Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
                     <button type="button" class="fuad-add-start" disabled>${PLUS}Add a player</button>`
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
@@ -1142,7 +1153,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         } catch (error) {
             console.warn("[fuad] couldn't load Add:", error);
             state.data = null;
-            state.failed = true;
+            // MFL asking to wait (HTTP 429) passes in a minute or so
+            state.failed = error && error.status === 429 ? "busy" : true;
         }
         render();
         // Rosters' Add opens with its player chosen (`#player-<id>`)

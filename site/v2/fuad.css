@@ -67,6 +67,10 @@ body.full-width {
     box-shadow: none;
 }
 
+/* v2's Home is `#home`, also the id of MFL's page body on the home page: scrolling "to" it stops at
+   the top, so the frame above it stays in view */
+.fuad-framed body .pagebody { scroll-margin-top: 100000px; }
+
 /* the page column, sized here so the frame lines up with it whatever the skin */
 body .pagebody {
     box-sizing: border-box;
