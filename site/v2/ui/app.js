@@ -177,18 +177,31 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     const context = pageContext();
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
+    // Lineup and Add draw over MFL's page: it's hidden from the start, so it doesn't show while their
+    // code loads (the commissioner's view stays MFL's)
+    const over = (className) => {
+        if (window.franchise_id !== "0000") {
+            document.documentElement.classList.add(className);
+        }
+        return (error) => {
+            document.documentElement.classList.remove(className);
+            throw error;
+        };
+    };
     if (context && (here.path === "lineup" || (here.path === "options" && here.option === "02"))) {
         const franchiseId = window.franchise_id || null;
+        const shown = over("fuad-lineup-on");
         await import("./lineup.js").then(({drawLineup}) => drawLineup({
             context, franchiseId, loginHref: loginLink(context), irHref: viewLinks(context, franchiseId)("Moves", "IR")
-        })).catch((error) => {
+        })).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Lineup:", error);
             onTrouble();
         });
         return false;
     }
     if (context && here.path === "add_drop") {
-        await import("./add.js").then(({drawAdd}) => drawAdd({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch((error) => {
+        const shown = over("fuad-add-on");
+        await import("./add.js").then(({drawAdd}) => drawAdd({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Add:", error);
             onTrouble();
         });
