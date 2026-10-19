@@ -19,7 +19,7 @@ export const POSITIONS = ["QB", "RB", "WR", "TE", "PK"];
 const SUFFIXES = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
 
 // one `new Player2 (...)` call's arguments: quoted strings (names hold commas) and bare numbers
-function args(text) {
+export function args(text) {
     return (text.match(/"(?:[^"\\]|\\.)*"|[^,\s][^,]*/g) || []).map((arg) => {
         const trimmed = arg.trim();
         return trimmed.startsWith("\"") ? trimmed.slice(1, -1).replace(/\\(.)/g, "$1") : trimmed;
