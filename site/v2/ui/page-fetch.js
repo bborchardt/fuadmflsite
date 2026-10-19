@@ -132,6 +132,11 @@ export async function mflFetch(url, init) {
     return response;
 }
 
+// how long until MFL may be asked again, in ms
+export function waitLeft() {
+    return Math.max(0, (Number(storage.get(WAIT_KEY)) || 0) - Date.now());
+}
+
 const responses = new Map();
 
 export function pageFetch(url, init) {

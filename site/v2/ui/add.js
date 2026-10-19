@@ -11,7 +11,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {cached} from "./store.js";
-import {forget, mflFetch, pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {seasonFacts} from "./context.js";
@@ -656,7 +656,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             : null;
         if (!state.data) {
             mount.innerHTML = state.failed
-                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked to wait: retry in a minute." : ""}</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry">Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
+                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry"${state.failed === "busy" && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
                     <button type="button" class="fuad-add-start" disabled>${PLUS}Add a player</button>`
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
@@ -1154,8 +1154,11 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         } catch (error) {
             console.warn("[fuad] couldn't load Add:", error);
             state.data = null;
-            // MFL asking to wait (HTTP 429) passes in a minute or so
             state.failed = error && error.status === 429 ? "busy" : true;
+            // Retry comes back on when MFL's wait is over
+            if (state.failed === "busy" && waitLeft()) {
+                setTimeout(render, waitLeft());
+            }
         }
         render();
         // Rosters' Add opens with its player chosen (`#player-<id>`)

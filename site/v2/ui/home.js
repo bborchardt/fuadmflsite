@@ -107,7 +107,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
     const load = async () => {
         const response = await mflFetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
-            throw new Error(`the chat feed returned HTTP ${response.status}`);
+            throw Object.assign(new Error(`the chat feed returned HTTP ${response.status}`), {status: response.status});
         }
         return readChat(await response.text(), {viewer: franchiseId});
     };

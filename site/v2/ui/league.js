@@ -4,7 +4,7 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {esc} from "./html.js";
-import {drawPanel, placeholders} from "./panel.js";
+import {armRetry, drawPanel, failedMarkup, placeholders} from "./panel.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {clock, dayText} from "./home-model.js";
@@ -292,8 +292,8 @@ function drawScores(mount, data) {
                 return;
             }
             body.removeAttribute("aria-busy");
-            body.innerHTML = '<div class="fuad-panel"><div class="fuad-failed" role="alert"><span>Couldn’t load scores.</span><button type="button" class="fuad-quiet">Retry</button></div></div>';
-            body.querySelector("button").addEventListener("click", showWeek);
+            body.innerHTML = `<div class="fuad-panel">${failedMarkup("scores", error)}</div>`;
+            armRetry(body.querySelector("button"), error, showWeek);
         });
     };
 
@@ -654,7 +654,7 @@ export function drawLeague({context, franchiseId}) {
                 load: async () => {
                     const response = await pageFetch(`${host}/${year}/options?L=${context.leagueId}&O=101`, {credentials: "include"});
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
                     }
                     const teams = readPowerPage(await response.text());
                     if (!teams) {
@@ -734,8 +734,8 @@ export function drawLeague({context, franchiseId}) {
             drawn.set(view, Promise.resolve().then(() => views[view](mount)).catch((error) => {
                 console.error(`[fuad] couldn't draw League's ${view}:`, error);
                 drawn.delete(view);
-                mount.innerHTML = '<div class="fuad-panel"><div class="fuad-failed" role="alert"><span>Couldn’t load this page.</span><button type="button" class="fuad-quiet">Retry</button></div></div>';
-                mount.querySelector("button").addEventListener("click", () => {
+                mount.innerHTML = `<div class="fuad-panel">${failedMarkup("this page", error)}</div>`;
+                armRetry(mount.querySelector("button"), error, () => {
                     visible = null;
                     show();
                 });
