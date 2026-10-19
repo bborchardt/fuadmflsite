@@ -10,6 +10,7 @@ import {NFL_TEAMS, ownerOf, readArticle, readPlayerPage} from "./player-page.js"
 import {openDialog} from "./dialog.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
+import {mflFetch, pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -33,9 +34,9 @@ function nameFromLink(label) {
 }
 
 async function page(url) {
-    const response = await fetch(url, {credentials: "include"});
+    const response = await mflFetch(url, {credentials: "include"});
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
     }
     return response.text();
 }
@@ -43,10 +44,11 @@ async function page(url) {
 // the viewer's cap used, for "Cut now"; kept a couple of minutes, since it's only shown, not checked
 function capUsed({season, leagueId}, franchiseId) {
     const host = window.location.origin;
-    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type);
+    // the page's own league load, when it has one (page-fetch.js)
+    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
     return cached(`fuad.capUsed.${season}.${franchiseId}`, CAP_AGE, async () => {
         const [players, leagueInfo, rosters, salaryAdjustments, transactions, freeAgents] = await Promise.all([
-            cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players")).player})),
+            cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
             league("league"), league("rosters"), league("salaryAdjustments"), league("transactions"), league("freeAgents")
         ]);
         const built = buildLeague({players: playersFromExport(players), league: leagueInfo, rosters, salaryAdjustments, transactions, freeAgents});

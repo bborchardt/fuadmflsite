@@ -4,7 +4,7 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {esc} from "./html.js";
-import {pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
@@ -110,8 +110,9 @@ async function save(context, form, state) {
     const fields = new URLSearchParams(new FormData(form));
     fields.set("SUBMIT", "Submit Lineup");
     let response;
+    forget();
     try {
-        response = await fetch(form.action, {method: "POST", body: fields, credentials: "include"});
+        response = await fetch(form.action, {method: "POST", body: fields, credentials: "include"}).finally(forget);
     } catch (error) {
         throw Object.assign(error, {sent: false});
     }
@@ -148,7 +149,7 @@ async function stillBeforeDraft(context) {
     if (!facts || facts.draftKnown === false || facts.drafted || (facts.week1 && Date.now() >= facts.week1)) {
         return false;
     }
-    const results = await fetchExport(exportUrl(window.location.origin, context.season, "draftResults", {L: context.leagueId}), "draftResults", {init: {cache: "no-store"}}).catch(() => null);
+    const results = await fetchExport(exportUrl(window.location.origin, context.season, "draftResults", {L: context.leagueId}), "draftResults", {fetchImpl: mflFetch, init: {cache: "no-store"}}).catch(() => null);
     return Boolean(results) && !draftPicked(results);
 }
 

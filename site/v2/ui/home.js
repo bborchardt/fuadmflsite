@@ -8,7 +8,7 @@ import {TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, cutDownDate, dayText, homePhase, leagueAlerts,
@@ -40,7 +40,7 @@ function fetcher({season, leagueId}, {fresh = false} = {}) {
     const host = window.location.origin;
     return (type, params = {}, {base = host, optional = false} = {}) => {
         const leagueParams = base === host ? {L: leagueId, ...params} : params;
-        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? fetch : pageFetch, init: {cache: "no-store"}});
+        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}});
         return optional ? request.catch((error) => {
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
@@ -105,9 +105,9 @@ function drawChat(mount, {context, franchiseId, teams}) {
     let drawnIds = null;
     let olderLink = null;
     const load = async () => {
-        const response = await fetch(feedUrl, {cache: "no-store"});
+        const response = await mflFetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
-            throw new Error(`the chat feed returned HTTP ${response.status}`);
+            throw Object.assign(new Error(`the chat feed returned HTTP ${response.status}`), {status: response.status});
         }
         return readChat(await response.text(), {viewer: franchiseId});
     };
@@ -289,6 +289,7 @@ function wireNewTopic(mount, body, {context}) {
             if (!response.ok || !/<status>\s*OK\s*<\/status>/i.test(text)) {
                 throw new Error((text.match(/<error[^>]*>([^<]*)/i) || [])[1] || (response.ok ? "MFL didn't confirm it" : `HTTP ${response.status}`));
             }
+            forget();
             form.reset();
             show(false);
             mount.dispatchEvent(new CustomEvent("fuad-refresh"));
@@ -349,7 +350,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     exp("messageBoard", {COUNT: 20}, {optional: true}),
                     readings(built).catch(() => null),
                     coming(),
-                    exp("draftResults", {}, {optional: true})
+                    // only before week 1 does the draft matter
+                    dates.then(({kickoffs: times}) => (times.get(1) && nowSeconds() >= times.get(1) ? null : exp("draftResults", {}, {optional: true})))
                 ]);
                 const now = nowSeconds();
                 const phase = homePhase({
