@@ -5,24 +5,20 @@
 // so its comment line goes with it. An immediate add's length is posted to the board once MFL has
 // made the add. MFL's form stays in the page underneath; anything v2 can't read leaves MFL's page.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
-import {buildLeague, playersFromExport} from "../lib/league.js";
-import {pendingGroups} from "../lib/bids.js";
+import {exportUrl, fetchExport} from "../lib/mfl.js";
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
-import {cached} from "./store.js";
-import {forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
+import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
-import {seasonFacts} from "./context.js";
+import {freshPending, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {contractTopic} from "./home-model.js";
 import {
-    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addPhase, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
+    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
     commentLines, copyTargets, cutLater, fullNameLines, isLengthLine, dropGroups, droppedByTeam, freeAgentRows, groupViews, injuryText, lengthLine, lineFor, maxBid,
-    firstLast, pendingWithComments, projection, readPlayerLists, rewriteComment, signed, surname, teamState, usedTone, yearsIn
+    firstLast, projection, readPlayerLists, rewriteComment, signed, surname, teamState, usedTone, yearsIn
 } from "./add-model.js";
 
-const DAY = 24 * 60 * 60 * 1000;
 const FLASH_KEY = "fuad.addFlash";
 const WIDE = "(min-width: 48.01em)";
 // the board topic a length post starts when the league has none with "contract" in its name
@@ -120,70 +116,7 @@ function fillForm(form, lists, {add, drop, bid = null, round = null, comment = "
     return fields;
 }
 
-// what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
-async function send(url, init) {
-    forget();
-    const response = await fetch(url, {credentials: "include", ...init}).finally(forget);
-    if (!response.ok) {
-        throw new Error(`MFL answered HTTP ${response.status}`);
-    }
-    return response.text();
-}
-
-// MFL's reason in its answer to a move it didn't make, if it gave one
-function refusal(html) {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const found = [...doc.querySelectorAll(".pagebody .warning, .pagebody .error, .pagebody [class*=error], .pagebody [class*=warning], .pagebody .reportnavigationheader")]
-        .map((node) => node.textContent.replace(/\s+/g, " ").trim())
-        .find((line) => line && line.length < 300 && !/^Use projections/i.test(line));
-    return found || "MFL didn't make it";
-}
-
 // ---- data ----
-
-async function loadData(context, franchiseId) {
-    const {season, leagueId} = context;
-    const host = window.location.origin;
-    // the checks always use fresh rosters, penalties and pending bids
-    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
-    // MFL refuses bursts (HTTP 429), so the fresh exports go one after another; the rest is
-    // mostly cached for a day
-    const freshInTurn = async () => {
-        const found = {};
-        for (const type of ["rosters", "salaryAdjustments", "transactions", "freeAgents", "pendingWaivers"]) {
-            found[type] = await fresh(type);
-        }
-        return found;
-    };
-    const [players, leagueInfo, calendar, facts, {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers}] = await Promise.all([
-        cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
-        // only the teams' names and the league's settings, which don't change in a day
-        cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
-        fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
-        seasonFacts(context).catch(() => ({})),
-        freshInTurn()
-    ]);
-    const league = buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents});
-    const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
-    const groups = pendingGroups(pendingWaivers);
-    return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId};
-}
-
-// Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
-// a move made but not confirmed would show as failed.
-
-// the pending claims, fresh, to confirm a move: the groups and each group's comment
-async function freshPending(context) {
-    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}});
-    const groups = pendingGroups(pending);
-    return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
-}
-
-async function rosterIds(context, franchiseId) {
-    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}});
-    const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
-    return team ? asArray(team.player).map((player) => player.id).sort() : [];
-}
 
 const hasClaim = (groups, round, claim) => groups.some((group) => group.round === round
     && group.claims.some((other) => other.add === claim.add && other.bid === claim.bid && (other.drop || null) === (claim.drop || null)));
@@ -306,16 +239,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     // ---- the model for what's drawn ----
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
-    // without the season's dates, MFL's own week says whether it has started; a draft that couldn't
-    // be checked doesn't close Add
-    const phase = () => {
-        const facts = state.data.facts;
-        return addPhase({
-            started: facts.week1 ? Date.now() >= facts.week1 : Number(window.liveScoringWeek) > 1,
-            over: Boolean(facts.seasonEnd && Date.now() >= facts.seasonEnd),
-            drafted: facts.draftKnown === false || facts.drafted !== false
-        });
-    };
+    const phase = () => movesPhase(state.data.facts);
     const now = () => Date.now() / 1000;
     const names = (id) => {
         const listed = lists.add.find((player) => player.id === id) || lists.drop.find((player) => player.id === id);
