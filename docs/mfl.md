@@ -136,6 +136,11 @@ Each is an ordinary page form, posted from the logged-in browser.
     `add_drop?L=<league>&F=<team>&MOVE_UP=1_13308_1_16152`, `MOVE_DOWN=…`, `DELETE=…`,
     `COPY_ROUND=1_13753_1_16619_2` (the last part is the target group), and Edit,
     `options?L=<league>&O=255&F=<team>&ROUND=1`.
+- **Drop Players** (`options?L=<league>&O=257`), one form posted to `add_drop`: `LEAGUE_ID`,
+  `FRANCHISE`, `OPTION=257`, `drop_pid` (a multiple select, filled by "Add To List"), `SUBMIT`
+  ("Drop Players"). The roster is JavaScript data, `playerDatabaseObj["picker"]`: `Player2` (`id,
+  name, nfl_team, pos, bye_week, sal, inj, roster, pts, projpts, sort_sal`), `roster` `S`, `NS` or
+  `IR`, and `!` on the name once his game has started.
 - **Edit a claim group** (`options?O=255&ROUND=<n>`), one form posted to `options`:
   `form_name=editwr`, `LEAGUE_ID`, `O=255`, `ROUND`; per claim `amount_<i>` and `drop_<i>` (a select
   of the roster plus "None"); `applyall` (checkbox); `comment` (the group's one comment); `SAVE` /

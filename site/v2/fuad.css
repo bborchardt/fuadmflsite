@@ -3443,10 +3443,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
 #fuad-add .fuad-add-claim-buttons button { flex: 1; min-height: 44px; }
 
+/* red is kept for limits: Remove is as quiet as Edit and Copy */
 #fuad-add .fuad-add-quiet,
 #fuad-add .fuad-add-remove { border: 1px solid var(--fuad-raised-edge); }
-
-#fuad-add .fuad-add-remove { border-color: var(--fuad-bad); color: var(--fuad-bad); font-weight: 700; }
 
 #fuad-add .fuad-add-copies { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
@@ -3892,3 +3891,242 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 .fuad-add-layer .fuad-add-chip::after { content: ""; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
 
 .fuad-add-layer .fuad-add-submit { min-height: 52px; }
+
+/* ---- Moves › Drop: MFL's Drop Players page with v2's roster over it ---- */
+
+.fuad-drop-on body .pagebody > :not(#fuad-drop) { display: none !important; }
+
+#fuad-drop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+#fuad-drop a { color: var(--fuad-lime); text-decoration: none; }
+
+/* the buttons set every property MFL's button styles touch */
+#fuad-drop button {
+    box-sizing: border-box;
+    margin: 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--fuad-text);
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    text-shadow: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+#fuad-drop button:disabled { cursor: default; }
+
+#fuad-drop .fuad-panel {
+    margin: 0;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    padding: 12px 14px;
+}
+
+#fuad-drop .fuad-meta { font-size: 13px; font-weight: 500; color: var(--fuad-muted); }
+#fuad-drop .fuad-muted { color: var(--fuad-muted); }
+#fuad-drop .fuad-good { color: var(--fuad-good); }
+#fuad-drop .fuad-bad { color: var(--fuad-bad); }
+#fuad-drop .fuad-caution { color: var(--fuad-caution); }
+#fuad-drop .fuad-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+#fuad-drop .fuad-drop-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; }
+
+#fuad-drop .fuad-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font-weight: 700;
+}
+
+#fuad-drop .fuad-drop-status {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(74, 222, 128, 0.1);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+#fuad-drop .fuad-drop-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
+
+#fuad-drop .fuad-drop-alert {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--fuad-bad-tint);
+    color: #FFB3B3;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#fuad-drop .fuad-drop-alert strong { color: var(--fuad-bad); }
+
+#fuad-drop .fuad-drop-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
+
+#fuad-drop .fuad-drop-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+#fuad-drop .fuad-drop-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
+#fuad-drop .fuad-drop-retry:disabled { color: var(--fuad-faint); }
+
+#fuad-drop .fuad-drop-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+#fuad-drop .fuad-drop-roster { padding: 4px 12px; border-radius: 18px; }
+
+#fuad-drop .fuad-drop-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 4px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+#fuad-drop .fuad-drop-head strong { color: var(--fuad-text); }
+
+#fuad-drop .fuad-drop-item { border-top: 1px solid var(--fuad-rule); }
+
+#fuad-drop .fuad-drop-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    text-align: left;
+}
+
+#fuad-drop .fuad-drop-open .fuad-drop-row { background: var(--fuad-raised); }
+
+#fuad-drop .fuad-drop-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+#fuad-drop .fuad-drop-name { font-weight: 600; overflow-wrap: anywhere; }
+
+#fuad-drop .fuad-drop-row:disabled .fuad-drop-name { color: var(--fuad-muted); }
+
+#fuad-drop .fuad-drop-cost { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; text-align: right; }
+
+#fuad-drop .fuad-drop-cost .fuad-drop-change { font: 700 18px var(--fuad-display); }
+
+#fuad-drop .fuad-drop-review {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin: 0 0 6px;
+    padding: 10px 12px 12px;
+    border-radius: 12px;
+    background: var(--fuad-raised);
+}
+
+#fuad-drop .fuad-drop-cut { flex: 1 1 200px; font-size: 14px; color: var(--fuad-muted); font-variant-numeric: tabular-nums; }
+
+#fuad-drop .fuad-drop-cut strong { color: var(--fuad-text); }
+#fuad-drop .fuad-drop-cut strong.fuad-good { color: var(--fuad-good); }
+#fuad-drop .fuad-drop-cut strong.fuad-bad { color: var(--fuad-bad); }
+
+#fuad-drop .fuad-drop-review .fuad-drop-alert { flex-basis: 100%; }
+
+/* the screen's own action: filled lime (red is kept for limits) */
+#fuad-drop .fuad-drop-go {
+    min-height: 44px;
+    padding: 0 18px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
+    font-weight: 700;
+}
+
+#fuad-drop .fuad-drop-go:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+#fuad-drop .fuad-tag {
+    padding: 0 6px;
+    border-radius: 5px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* desktop: one table, a row per player; a narrow window scrolls it sideways */
+#fuad-drop .fuad-drop-line {
+    display: grid;
+    grid-template-columns: minmax(220px, 340px) 72px 64px 90px repeat(2, minmax(90px, 1fr)) 24px;
+    gap: 0 12px;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#fuad-drop .fuad-drop-columns {
+    padding: 8px 8px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+#fuad-drop .fuad-drop-group {
+    padding: 12px 8px 4px;
+    border-top: 1px solid var(--fuad-hairline);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+#fuad-drop .fuad-drop-group strong { font: 700 20px var(--fuad-display); letter-spacing: 0; color: var(--fuad-text); }
+
+@media (min-width: 48.01em) {
+    #fuad-drop { gap: 16px; padding-top: 8px; }
+    #fuad-drop .fuad-drop-roster { padding: 6px 16px 8px; overflow-x: auto; }
+    #fuad-drop .fuad-drop-roster > * { min-width: 860px; }
+    #fuad-drop .fuad-drop-row { display: block; min-height: 44px; padding: 0 8px; font-weight: 500; font-size: 14px; }
+    #fuad-drop .fuad-drop-line .fuad-drop-who { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+    #fuad-drop .fuad-drop-line .fuad-drop-change { font-weight: 700; }
+    #fuad-drop .fuad-drop-chev { display: flex; justify-content: flex-end; color: var(--fuad-muted); }
+    #fuad-drop .fuad-drop-open .fuad-drop-chev svg { transform: rotate(180deg); }
+    #fuad-drop .fuad-drop-row .fuad-drop-line { min-height: 44px; }
+    #fuad-drop .fuad-drop-review { margin: 0 0 6px; }
+}
