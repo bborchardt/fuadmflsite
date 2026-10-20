@@ -147,11 +147,12 @@ Each is an ordinary page form, posted from the logged-in browser.
   `CANCEL`.
 - **Injured reserve** (`options?L=<league>&O=18`), one form posted to `ir`: `LEAGUE_ID`,
   `FRANCHISE_ID`; per player checkboxes `deactivate<team>` (to IR), `activate<team>` (from IR) and
-  `drop<team>`, each valued with the player id, all in one submit ("Perform Injured Reserve"), so an
-  activation and a drop go together. Two tables: "Select Players To Deactivate/Drop" (active
-  players, with Starter?) and "Select Players To Activate" (IR players). MFL refuses ineligible
-  players itself ("Can not be deactivated" in place of a checkbox) and marks players whose game has
-  started "Locked".
+  `drop<team>`, each valued with the player id, all in one submit ("Perform Injured Reserve", no
+  name), so an activation and a drop go together. Two tables, each with the drop box: "Select
+  Players To Deactivate/Drop" (active players, with Starter?) and "Select Players To Activate" (IR
+  players). Each player is a `launch_player_modal` link with MFL's injury mark after it ("(IR)",
+  "(Out)"). MFL refuses ineligible players itself ("Can not be deactivated" in place of a
+  checkbox) and puts "Locked" in place of a player's boxes once his game has started.
 - **Trades** (`options?L=<league>&O=05`): "Trades Offered By You", "Trades Offered To You", and a
   "Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
   proposal page.

@@ -177,7 +177,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     const context = pageContext();
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
-    // Lineup, Add, Drop and Trades draw over MFL's page: it's hidden from the start, so it doesn't show while their
+    // Lineup, Add, Drop, IR and Trades draw over MFL's page: it's hidden from the start, so it doesn't show while their
     // code loads (the commissioner's view stays MFL's)
     const over = (className) => {
         if (window.franchise_id !== "0000") {
@@ -211,6 +211,17 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const shown = over("fuad-drop-on");
         await import("./drop.js").then(({drawDrop}) => drawDrop({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Drop:", error);
+            onTrouble();
+        });
+        return false;
+    }
+    if (context && here.path === "options" && here.option === "18") {
+        const franchiseId = window.franchise_id || null;
+        const shown = over("fuad-ir-on");
+        await import("./ir.js").then(({drawIR}) => drawIR({
+            context, franchiseId, loginHref: loginLink(context), dropHref: viewLinks(context, franchiseId)("Moves", "Drop")
+        })).catch(shown).catch((error) => {
+            console.error("[fuad] couldn't draw IR:", error);
             onTrouble();
         });
         return false;

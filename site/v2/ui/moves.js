@@ -63,12 +63,16 @@ export function refusal(html) {
 // Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
 // a move made but not confirmed would show as failed.
 
-// the team's player ids, fresh, to confirm a move
-export async function rosterIds(context, franchiseId) {
+// the team's players and their status (`ROSTER`, `INJURED_RESERVE`), fresh, to confirm a move; null
+// when the team isn't in the answer
+export async function rosterStatuses(context, franchiseId) {
     const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}});
     const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
-    return team ? asArray(team.player).map((player) => player.id).sort() : [];
+    return team ? new Map(asArray(team.player).map((player) => [player.id, player.status])) : null;
 }
+
+// the team's player ids, fresh, to confirm a move
+export const rosterIds = async (context, franchiseId) => [...((await rosterStatuses(context, franchiseId)) || new Map()).keys()].sort();
 
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 export async function freshPending(context) {

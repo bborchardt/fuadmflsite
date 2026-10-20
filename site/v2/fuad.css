@@ -4131,6 +4131,306 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-drop .fuad-drop-review { margin: 0 0 6px; }
 }
 
+/* ---- Moves › IR: MFL's Injured Reserve page with v2's lists over it ---- */
+
+.fuad-ir-on body .pagebody > :not(#fuad-ir) { display: none !important; }
+
+#fuad-ir {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+#fuad-ir a { color: var(--fuad-lime); text-decoration: none; font-weight: 600; }
+
+/* the buttons set every property MFL's button styles touch */
+#fuad-ir button {
+    box-sizing: border-box;
+    margin: 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--fuad-text);
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    text-shadow: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+#fuad-ir button:disabled { cursor: default; }
+
+#fuad-ir .fuad-panel {
+    margin: 0;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    padding: 12px 14px;
+}
+
+#fuad-ir h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: 700 20px var(--fuad-display);
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--fuad-text);
+}
+
+#fuad-ir .fuad-meta { font-size: 13px; font-weight: 500; color: var(--fuad-muted); }
+#fuad-ir .fuad-muted { color: var(--fuad-muted); }
+#fuad-ir .fuad-good { color: var(--fuad-good); }
+#fuad-ir .fuad-bad { color: var(--fuad-bad); }
+#fuad-ir .fuad-caution { color: var(--fuad-caution); }
+#fuad-ir .fuad-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+#fuad-ir .fuad-ir-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; }
+
+#fuad-ir .fuad-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font-weight: 700;
+}
+
+#fuad-ir .fuad-ir-status {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(74, 222, 128, 0.1);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+#fuad-ir .fuad-ir-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
+
+#fuad-ir .fuad-ir-alert {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--fuad-bad-tint);
+    color: #FFB3B3;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#fuad-ir .fuad-ir-alert strong { color: var(--fuad-bad); }
+
+#fuad-ir .fuad-ir-must { color: var(--fuad-text); font-size: 15px; font-weight: 500; }
+
+#fuad-ir .fuad-ir-must a { white-space: nowrap; }
+
+#fuad-ir .fuad-ir-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
+
+#fuad-ir .fuad-ir-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+#fuad-ir .fuad-ir-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
+#fuad-ir .fuad-ir-retry:disabled { color: var(--fuad-faint); }
+
+#fuad-ir .fuad-ir-group { padding: 12px 14px 4px; }
+
+#fuad-ir .fuad-ir-group h2 { padding-bottom: 6px; }
+
+#fuad-ir .fuad-ir-empty { margin: 0; padding: 10px 0 12px; border-top: 1px solid var(--fuad-rule); color: var(--fuad-muted); font-size: 14px; }
+
+/* phones: the whole row ticks its box */
+#fuad-ir .fuad-ir-row,
+#fuad-ir .fuad-ir-drow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 56px;
+    margin: 0 -6px;
+    padding: 6px;
+    border-top: 1px solid var(--fuad-rule);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#fuad-ir .fuad-ir-drow { grid-template-columns: 24px minmax(0, 1fr) auto; margin: 0; }
+
+#fuad-ir .fuad-ir-off { cursor: default; }
+
+#fuad-ir .fuad-ir-on-row { background: var(--fuad-raised); }
+
+#fuad-ir .fuad-ir-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+#fuad-ir .fuad-ir-name { font-weight: 600; overflow-wrap: anywhere; }
+
+#fuad-ir .fuad-ir-off .fuad-ir-name { color: var(--fuad-muted); }
+
+#fuad-ir .fuad-ir-act {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-height: 44px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fuad-muted);
+    white-space: nowrap;
+}
+
+#fuad-ir .fuad-ir-on-row .fuad-ir-act { color: var(--fuad-lime); }
+
+#fuad-ir input[type=checkbox],
+#fuad-ir input[type=radio] { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-lime); cursor: pointer; }
+
+#fuad-ir input:disabled { cursor: default; }
+
+#fuad-ir .fuad-ir-cost { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+
+#fuad-ir .fuad-ir-cost .fuad-ir-change { font-weight: 700; }
+
+#fuad-ir .fuad-ir-drops { padding: 12px 14px; }
+
+#fuad-ir .fuad-ir-drops-needed { border-color: var(--fuad-bad); }
+
+#fuad-ir .fuad-ir-drops h2 { padding-bottom: 8px; }
+
+/* all the active players, in a box that scrolls inside itself */
+#fuad-ir .fuad-ir-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid var(--fuad-rule);
+    border-bottom: 1px solid var(--fuad-rule);
+}
+
+#fuad-ir .fuad-ir-scroll > :first-child { border-top: 0; }
+
+/* the result: phones keep it above the tabs while the lists scroll */
+#fuad-ir .fuad-ir-bar {
+    position: sticky;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--fuad-raised);
+    border: 1px solid var(--fuad-raised-edge);
+    box-shadow: 0 8px 24px var(--fuad-shadow);
+    font-variant-numeric: tabular-nums;
+}
+
+#fuad-ir .fuad-ir-bar-blocked { border-color: var(--fuad-bad); }
+
+#fuad-ir .fuad-ir-figure { display: flex; align-items: baseline; gap: 8px; font-size: 14px; }
+
+#fuad-ir .fuad-ir-figure strong { font: 700 22px var(--fuad-display); }
+
+#fuad-ir .fuad-ir-why { flex: 1 1 100%; font-size: 14px; line-height: 1.35; }
+
+#fuad-ir .fuad-ir-why:empty { display: none; }
+
+#fuad-ir .fuad-ir-why strong { color: var(--fuad-bad); }
+
+/* the screen's own action: filled lime (red is kept for limits) */
+#fuad-ir .fuad-ir-save {
+    flex: 1 1 100%;
+    min-height: 48px;
+    padding: 0 22px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#fuad-ir .fuad-ir-save:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+#fuad-ir .fuad-ir-columns {
+    padding: 0 8px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+@media (min-width: 48.01em) {
+    #fuad-ir { gap: 16px; padding-top: 8px; }
+
+    #fuad-ir .fuad-ir-bar { top: 8px; bottom: auto; flex-wrap: wrap; gap: 10px 32px; padding: 12px 16px; border-radius: 16px; }
+    #fuad-ir .fuad-ir-figure strong { font-size: 24px; }
+    #fuad-ir .fuad-ir-why { flex: 1 1 200px; }
+    #fuad-ir .fuad-ir-why:empty { display: block; }
+    #fuad-ir .fuad-ir-save { flex: none; min-height: 44px; }
+
+    /* one table in the two groups; a narrow window scrolls it sideways */
+    #fuad-ir .fuad-ir-table,
+    #fuad-ir .fuad-ir-drops { padding: 14px 16px 8px; border-radius: 18px; overflow-x: auto; }
+    #fuad-ir .fuad-ir-wide { min-width: 900px; }
+    #fuad-ir .fuad-ir-drops .fuad-ir-wide { min-width: 760px; }
+
+    #fuad-ir .fuad-ir-line {
+        display: grid;
+        grid-template-columns: minmax(180px, 260px) 56px 64px 72px minmax(160px, 1.4fr) minmax(110px, 1fr) 150px;
+        gap: 0 12px;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    #fuad-ir .fuad-ir-item { min-height: 46px; padding: 0 8px; border-top: 1px solid var(--fuad-rule); border-radius: 6px; font-size: 14px; }
+
+    #fuad-ir .fuad-ir-group-head { padding: 12px 8px 6px; border-top: 1px solid var(--fuad-hairline); }
+
+    #fuad-ir .fuad-ir-empty { padding: 10px 8px 12px; }
+
+    /* the name opens the popup; the box is its own control */
+    #fuad-ir .fuad-ir-link {
+        position: relative;
+        padding: 0;
+        border-radius: 4px;
+        font-size: 14px;
+        text-align: left;
+    }
+
+    #fuad-ir .fuad-ir-link::after { content: ""; position: absolute; left: -4px; right: -4px; top: -12px; bottom: -12px; }
+
+    #fuad-ir .fuad-ir-link:hover { color: var(--fuad-lime); }
+
+    #fuad-ir .fuad-ir-act { cursor: pointer; }
+
+    #fuad-ir .fuad-ir-dline {
+        display: grid;
+        grid-template-columns: 28px minmax(180px, 260px) 56px 64px repeat(4, minmax(72px, 1fr));
+        gap: 0 12px;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    #fuad-ir .fuad-ir-drow.fuad-ir-dline { min-height: 42px; margin: 0; padding: 0 8px; border-radius: 6px; font-size: 14px; }
+
+    #fuad-ir .fuad-ir-drow.fuad-ir-dline input { margin-left: 2px; }
+
+    #fuad-ir .fuad-ir-scroll { max-height: 440px; }
+
+    #fuad-ir .fuad-ir-change { font-weight: 700; }
+}
+
 /* ---- Moves › Trades: MFL's Trades and proposal pages with v2's screens over them ---- */
 
 .fuad-trades-on body .pagebody > :not(#fuad-trades) { display: none !important; }
