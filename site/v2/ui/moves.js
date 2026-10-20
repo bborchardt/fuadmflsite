@@ -51,24 +51,45 @@ export async function send(url, init) {
     return response.text();
 }
 
-// MFL's reason in its answer to a move it didn't make, if it gave one
+// A move MFL didn't make; `reason` is MFL's, when it gave one (refusal)
+export class Refused extends Error {
+    constructor(reason) {
+        super(reason || "MFL gave no reason");
+        this.reason = reason || null;
+    }
+}
+
+// The line for a move that didn't happen: "Couldn't drop Jackson: <MFL's reason>." or, with no
+// reason, "Couldn't drop Jackson. Reload the page and try again." `changed`: MFL changed something
+// anyway, and the page reloads to show it.
+export function failedLine(what, error, {changed = false} = {}) {
+    const reason = error && error.reason ? String(error.reason).replace(/\.$/, "") : null;
+    const tail = changed ? " This is how MFL has it now." : reason ? "" : " Reload the page and try again.";
+    return `Couldn’t ${what}${reason ? `: ${reason}` : ""}.${tail}`;
+}
+
+// MFL's reason in its answer to a move it didn't make, if it gave one, else null
 export function refusal(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const found = [...doc.querySelectorAll(".pagebody .warning, .pagebody .error, .pagebody [class*=error], .pagebody [class*=warning], .pagebody .reportnavigationheader")]
         .map((node) => node.textContent.replace(/\s+/g, " ").trim())
         .find((line) => line && line.length < 300 && !/^Use projections/i.test(line));
-    return found || "MFL didn't make it";
+    return found || null;
 }
 
 // Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
 // a move made but not confirmed would show as failed.
 
-// the team's player ids, fresh, to confirm a move
-export async function rosterIds(context, franchiseId) {
+// the team's players and their status (`ROSTER`, `INJURED_RESERVE`), fresh, to confirm a move; null
+// when the team isn't in the answer
+export async function rosterStatuses(context, franchiseId) {
     const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}});
     const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
-    return team ? asArray(team.player).map((player) => player.id).sort() : [];
+    return team ? new Map(asArray(team.player).map((player) => [player.id, player.status])) : null;
 }
+
+// the team's player ids, fresh, to confirm a move
+export const rosterIds = async (context, franchiseId) => [...((await rosterStatuses(context, franchiseId)) || new Map()).keys()].sort();
 
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 export async function freshPending(context) {

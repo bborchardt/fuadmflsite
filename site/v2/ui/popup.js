@@ -118,13 +118,13 @@ function newsSection(player, links) {
     </section>`;
 }
 
-// `actions` holds the Moves links: {drop, ir, add(playerId), trade(teamId, playerId)}
+// `actions` holds the Moves links: {drop(playerId), ir(playerId), add(playerId), trade(teamId, playerId)}
 function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
     if (!actions || !franchiseId || franchiseId === "0000") {
         return "";
     }
     const links = mine
-        ? [["Drop", actions.drop && actions.drop(player.id)], ...(player.injury && /^IR/i.test(player.injury.status) ? [["IR", actions.ir]] : [])]
+        ? [["Drop", actions.drop && actions.drop(player.id)], ...(player.injury && /^IR/i.test(player.injury.status) ? [["IR", actions.ir && actions.ir(player.id)]] : [])]
         : ownerId ? [["Propose a trade", actions.trade && actions.trade(ownerId, player.id)]]
         : [["Add", actions.add && actions.add(player.id)]];
     const shown = links.filter(([, href]) => href);

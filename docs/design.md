@@ -101,6 +101,11 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   The member's own pending bids are checked as for a cut: a notice if the trade lets them break a
   limit (5.5). Proposing closes at the deadline (10.1). "Locked" comes from the NFL schedule;
   MFL decides whether it still holds.
+- **Moves › IR** (v2, `ui/ir-model.js`) saves moves to IR, activations and a drop together, as
+  MFL's one form does, and blocks a save that takes cap used, or the active count once the roster
+  limits apply, past its limit or further past it, with every pending group's costliest claim
+  counted (5.5). A player the NFL no longer lists on IR must be activated (11.1): he's in every save
+  until he is. Who can go on IR, and whose game has started, is MFL's own page's say.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
 - **Playoff seeds and payouts** (v2's League, `ui/league-model.js`, display only): the division
