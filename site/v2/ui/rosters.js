@@ -188,7 +188,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     const moveHref = (name) => (moves.find((view) => view.name === name) || {}).href || null;
     const actions = {
         drop: (playerId) => moveHref("Drop") && `${moveHref("Drop")}#player-${encodeURIComponent(playerId)}`,
-        ir: moveHref("IR"),
+        // Moves › IR opens with him ticked
+        ir: (playerId) => moveHref("IR") && `${moveHref("IR")}#player-${encodeURIComponent(playerId)}`,
         // Moves › Add opens with him chosen
         add: (playerId) => `${moveHref("Add")}#player-${encodeURIComponent(playerId)}`,
         // Moves › Trades' proposal for the two teams, with the player chosen if one is named

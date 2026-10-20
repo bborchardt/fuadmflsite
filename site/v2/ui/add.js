@@ -11,7 +11,7 @@ import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
-import {freshPending, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {Refused, failedLine, freshPending, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {contractTopic} from "./home-model.js";
 import {
     LENGTHS, MAX_GROUPS, POSITIONS, addBlock, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
@@ -312,7 +312,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         }
         // a move being composed shows its failure beside it
         if (state.error && !state.compose) {
-            parts.push(`<p class="fuad-add-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>`);
+            parts.push(`<p class="fuad-add-alert" role="alert">${esc(state.error)}</p>`);
         }
         return parts.join("");
     }
@@ -483,7 +483,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         return `${groupSummary}${picks}${wide.matches ? groupChips : ""}${bidField}${lengths}
         <section class="fuad-add-total">${cap}</section>
         ${blocked ? `<p class="fuad-add-alert" role="alert">${esc(blockText)}</p>` : ""}
-        ${state.error ? `<p class="fuad-add-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>` : ""}
+        ${state.error ? `<p class="fuad-add-alert" role="alert">${esc(state.error)}</p>` : ""}
         <button type="button" class="fuad-add-submit" data-act="submit"${ready ? "" : " disabled"}>${esc(label)}</button>`;
     }
 
@@ -746,7 +746,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         return null;
     }
 
-    async function run(task) {
+    // `what` names the move for its failure line: "place your bid on Higbee"
+    async function run(what, task) {
         state.busy = true;
         state.error = "";
         render();
@@ -754,14 +755,13 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             await task();
         } catch (error) {
             console.warn("[fuad] couldn't make the move:", error);
-            const message = error.message.replace(/\.$/, "") + ".";
             // MFL may have made something anyway (a bid where an add was asked, a move whose answer
             // failed): then the page reloads to show what it holds
             if (await mflChanged().catch(() => false)) {
-                reloadWith({error: `${message} MFL's page has changed: this is how it stands.`});
+                reloadWith({error: failedLine(what, error, {changed: true})});
                 return;
             }
-            state.error = message;
+            state.error = failedLine(what, error);
             state.busy = false;
             if (state.screen === "home" && !wide.matches) {
                 state.compose = null;
@@ -800,7 +800,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             return;
         }
         const fa = freeAgent(c.add) || {mflName: names(c.add).mflName};
-        await run(async () => {
+        const who = surname(fa.mflName);
+        await run(c.editing ? `change your bid on ${who}` : c.kind === "bid" ? `place your bid on ${who}` : `add ${who}`, async () => {
             if (c.editing) {
                 const found = claimOf(c.editing);
                 const others = found.group.claims.filter((claim) => claim.key !== c.editing).map((claim) => claim.addMfl);
@@ -812,7 +813,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
                 const fresh = await freshPending(context);
                 if (!hasClaim(fresh.groups, c.round, claim) || (line && lineFor(commentLines(fresh.comments.get(c.round)), fa.mflName, others) !== line)) {
-                    throw new Error("MFL didn't keep all of the edit");
+                    throw new Refused("MFL kept only part of it");
                 }
                 reloadWith({highlight: claimKey(c.round, claim)});
                 return;
@@ -824,7 +825,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
                 const answer = await send(form.action, {method: "POST", body: fillForm(form, lists, {...claim, round: c.round, comment: line})});
                 if (!hasClaim((await freshPending(context)).groups, c.round, claim)) {
-                    throw new Error(refusal(answer));
+                    throw new Refused(refusal(answer));
                 }
                 const kept = await ensureLine(c.round, fa.mflName, line, others).catch(() => false);
                 reloadWith({highlight: claimKey(c.round, claim), done: kept ? null : {text: `Bid made, but MFL didn’t keep group ${c.round}’s comment as it was: check its lengths with Edit.`, failed: true}});
@@ -832,7 +833,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             }
             const answer = await send(form.action, {method: "POST", body: fillForm(form, lists, {add: c.add, drop: c.drop || null})});
             if (!(await onRoster(context, franchiseId, c.add))) {
-                throw new Error(refusal(answer));
+                throw new Refused(refusal(answer));
             }
             const line = lengthLine(fa.mflName, c.years);
             const dropped = c.drop ? surname(names(c.drop).mflName) : null;
@@ -855,7 +856,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             return;
         }
         const {group, claim} = found;
-        await run(async () => {
+        const who = surname(claim.addMfl);
+        await run(act === "remove" ? `remove your bid on ${who}` : act === "copy" ? `copy your bid on ${who} to group ${round}` : `move your bid on ${who}`, async () => {
             if (act === "up" || act === "down") {
                 const link = claimLink(act === "up" ? "MOVE_UP" : "MOVE_DOWN", key);
                 if (!link) {
@@ -885,7 +887,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
                 const copy = {add: claim.add, bid: claim.bid, drop: claim.drop || null};
                 const answer = await send(form.action, {method: "POST", body: fillForm(form, lists, {...copy, round, comment: line})});
                 if (!hasClaim((await freshPending(context)).groups, round, copy)) {
-                    throw new Error(refusal(answer));
+                    throw new Refused(refusal(answer));
                 }
                 const kept = await ensureLine(round, claim.addMfl, line, others).catch(() => false);
                 reloadWith({highlight: claimKey(round, copy), done: kept ? null : {text: `Copied, but MFL didn’t keep group ${round}’s comment as it was: check its lengths with Edit.`, failed: true}});
