@@ -8,7 +8,7 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {NO_REASON, loadData, movesPhase, refusal, rosterStatuses, send} from "./moves.js";
+import {Refused, failedLine, loadData, movesPhase, refusal, rosterStatuses, send} from "./moves.js";
 import {changeTone, signed, teamState} from "./add-model.js";
 import {calendarDates, cutDownDate} from "./home-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
@@ -115,7 +115,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
             parts.push(`<p class="fuad-ir-status" role="status">${CHECK}<span>${esc(state.done)}</span></p>`);
         }
         if (state.error) {
-            parts.push(`<p class="fuad-ir-alert" role="alert"><strong>Not saved:</strong> ${esc(state.error)}</p>`);
+            parts.push(`<p class="fuad-ir-alert" role="alert">${esc(state.error)}</p>`);
         }
         return parts.join("");
     }
@@ -300,19 +300,19 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         }
         const answered = sent ? readIRPage(new DOMParser().parseFromString(answer, "text/html"), franchiseId) : null;
         // MFL's reason, unless it answered with the IR page itself, whose marks aren't one
-        const reason = `${(!sent || answered ? NO_REASON : refusal(answer)).replace(/\.$/, "")}.`;
+        const refused = new Refused(sent && !answered ? refusal(answer) : null);
         const roster = await readBack(asked, answered);
         if (roster) {
             const {done, missed} = savedMoves(roster, asked);
             if (done.length) {
                 reloadWith({
                     done: `Saved: ${movesText(done, nameOf)}.`,
-                    error: missed.length ? `${movesText(missed, nameOf, {undone: true})}. ${reason[0].toUpperCase()}${reason.slice(1)}` : ""
+                    error: missed.length ? failedLine(movesText(missed, nameOf, {undone: true}), refused) : ""
                 });
                 return;
             }
         }
-        state.error = !roster && sent ? "Couldn't check whether MFL made it. Reload the page to see your roster." : reason;
+        state.error = !roster && sent ? "Couldn't check whether MFL made it. Reload the page to see your roster." : failedLine("save your IR moves", refused);
         state.busy = false;
         render();
         const again = mount.querySelector("[data-act=save]");

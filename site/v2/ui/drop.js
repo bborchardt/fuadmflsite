@@ -6,7 +6,7 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {Refused, failedLine, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
 
@@ -95,7 +95,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         }
         // a cut being reviewed shows its failure beside it
         if (state.error && !state.open) {
-            parts.push(`<p class="fuad-drop-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>`);
+            parts.push(`<p class="fuad-drop-alert" role="alert">${esc(state.error)}</p>`);
         }
         return parts.join("");
     }
@@ -113,7 +113,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         const to = checkDrop(team(), {drop: row.player.playerId, phase: phase()}).cap.to;
         return `<div class="fuad-drop-review" id="fuad-drop-review-${esc(row.player.playerId)}">
             <span class="fuad-drop-cut">Cut now: <strong>${esc(money(row.penalty))} penalty</strong> · cap used ${esc(money(from))} → <strong class="${tone(usedTone(from, to)).trim()}">${esc(money(to))}</strong></span>
-            ${state.error ? `<p class="fuad-drop-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>` : ""}
+            ${state.error ? `<p class="fuad-drop-alert" role="alert">${esc(state.error)}</p>` : ""}
             <button type="button" class="fuad-drop-go" data-act="drop" data-id="${esc(row.player.playerId)}"${state.busy ? " disabled" : ""}>${state.busy ? "Dropping…" : `Drop ${esc(surname(state.data.mflNames.get(row.player.playerId) || row.player.fullName))}`}</button>
         </div>`;
     }
@@ -203,16 +203,16 @@ export async function drawDrop({context, franchiseId, loginHref}) {
             const after = await rosterIds(context, franchiseId);
             read = true;
             if (after.includes(playerId)) {
-                throw new Error(refusal(answer));
+                throw new Refused(refusal(answer));
             }
             reloadWith({done: `${name} dropped.`});
         } catch (error) {
             console.warn("[fuad] couldn't drop:", error);
-            let message = `${error.message.replace(/\.$/, "")}.`;
+            let message = failedLine(`drop ${name}`, error);
             // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it
             const ids = await rosterIds(context, franchiseId).catch(() => null);
             if (ids && JSON.stringify(ids) !== JSON.stringify(mine())) {
-                reloadWith({error: `${message} MFL's page has changed: this is how it stands.`});
+                reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
                 return;
             }
             // sent, but the roster couldn't be read to tell whether MFL made it

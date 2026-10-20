@@ -195,10 +195,12 @@ export function savedMoves(roster, {toIR, activate, drop}) {
     return {moves, done: moves.filter((move) => move.done), missed: moves.filter((move) => !move.done)};
 }
 
-// "Brown to IR, McMillan activated, Olave dropped"; `undone`: "moving Brown to IR, activating …"
+// "Brown to IR, McMillan activated, Olave dropped"; `undone`, for "Couldn't …": "move Brown to IR,
+// activate McMillan or drop Olave"
 export function movesText(moves, nameOf, {undone = false} = {}) {
     const said = undone
-        ? {toIR: (name) => `moving ${name} to IR`, activate: (name) => `activating ${name}`, drop: (name) => `dropping ${name}`}
+        ? {toIR: (name) => `move ${name} to IR`, activate: (name) => `activate ${name}`, drop: (name) => `drop ${name}`}
         : {toIR: (name) => `${name} to IR`, activate: (name) => `${name} activated`, drop: (name) => `${name} dropped`};
-    return moves.map((move) => said[move.kind](nameOf(move.id))).join(", ");
+    const parts = moves.map((move) => said[move.kind](nameOf(move.id)));
+    return undone && parts.length > 1 ? `${parts.slice(0, -1).join(", ")} or ${parts[parts.length - 1]}` : parts.join(", ");
 }
