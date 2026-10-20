@@ -95,6 +95,12 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   cap, or further past it, with every pending group's costliest claim counted (a claim dropping the
   same player counts as no drop after it); in season, an active player's at 23 active (9.2) and any
   under 23 (10.5); and a player whose game has started (MFL's mark).
+- **Moves › Trades** (v2, `ui/trades-model.js`) blocks a trade, proposed or accepted, that leaves
+  either team over the cap (10.3; a team already over may trade back under, not stay over). Taking
+  a team past 30 or under 23 active is allowed with a notice, once the roster limits apply (10.5).
+  The member's own pending bids are checked as for a cut: a notice if the trade lets them break a
+  limit (5.5). Proposing closes at the deadline (10.1). "Locked" comes from the NFL schedule;
+  MFL decides whether it still holds.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
 - **Playoff seeds and payouts** (v2's League, `ui/league-model.js`, display only): the division
@@ -140,5 +146,7 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 - League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from
   MFL's page by a point or so: MFL's simulation carries a random value across every lineup it has
   shown since the page loaded.
+- Moves › Trades' "Locked" note shows for the rest of the NFL week once a traded player's game has
+  kicked off, after MFL's own lock has lifted: Accept stays on, so MFL takes or refuses it.
 - A preview or beta whose features fail after starting shows their errors, with its bar there to
   leave. The beta is per browser, isn't in MFL's app, and nothing reports who's using it.
