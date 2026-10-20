@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 7 merged, PR #35; step 8 next)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 8 in PR #36; step 9 next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -173,7 +173,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -366,8 +366,41 @@ tried in the beta (the commissioner's team only) before the next.
    - Tested offline with `harness/drop.py` in the backtest repo (phone and desktop; a refused drop,
      a deep link, 23 active, logged out, a lower cap), one reviewer pass (no blockers), and two live
      drops in the clone: each said "dropped" and cap used rose by the penalty after the reload.
-   **Next: step 8.**
-8. **Moves › Trades** (row 9).
+8. **Moves › Trades** (done; row 9; PR #36): MFL's Trades page (`options?O=05`) and its proposal
+   page (`O=05&FRANCHISE=<mine>,<theirs>`) with v2's screens over them (`ui/trades.js`,
+   `ui/trades-model.js`). Decided while building (19 Oct 2026):
+   - Over MFL's pages, as Add and Drop are: the proposal page's checkboxes are what MFL lets each
+     side trade (players and picks), so v2 lists exactly those. Each move posts MFL's own form
+     (`trade_offer`, `trade_response`) or follows its revoke link in place, then reads
+     `pendingTrades` back (and the roster after an accept) before reloading with one line ("Offer
+     sent to …", "Trade with … accepted.", "Counter sent to …"). A page v2 can't read stays MFL's.
+   - Blocked: a trade, proposed or accepted, that leaves either team over $300, strictly (a team
+     over may trade back under, not stay over). Roster limits are notices once they apply (the
+     cut-down date, else week 1); the member's own pending bids are checked as for a cut.
+   - "Locked" comes from the NFL schedule (MFL marks nothing on its trade pages): from a traded
+     player's kickoff until 4 hours after the week's last; Accept stays on and MFL decides (the
+     commissioner). The kickoff heads-up shows within 3 hours of a traded player's kickoff (the
+     commissioner).
+   - Withdraw opens "Withdraw this offer?" Keep (grey) / Withdraw (filled lime), not the canvas's
+     red (the commissioner). You give and You get are plain text, not the canvas's orange and lime.
+   - After the deadline, Propose a trade shows "Closed since the deadline, Wed Nov 25. Trades
+     reopen after the season." in place of the teams (the commissioner); a proposal page opened
+     then says the same.
+   - Expiry: before Sunday's games is the hour of the next Sunday kickoff (8:00 a.m. with a London
+     game), offered only while that hour is ahead; before Thursday's game likewise; In 7 days is
+     MFL's own default. In the offseason and preseason only In 7 days.
+   - The offer's message shows on its card; the phone header carries the step's name as a detour
+     ("You give", "You get", "Review"), with "Trade with … · step 1 of 3" above the list.
+   - Rosters' popup Propose a trade opens the proposal with the player ticked (`#player-<id>`);
+     Counter opens it with the offer ticked (`#counter-<id>`).
+   - Tested offline with `harness/trades.py` in the backtest repo (phone and desktop; a fixed
+     clock; propose, accept, reject, withdraw, counter, a failed counter answer, MFL refusing,
+     kickoff, Locked, cap block, pending bids, logged out, an unreadable page), one reviewer pass
+     (no blockers; its fixes applied), then live in the clone: a counter (the new offer, then
+     MFL's counter answer, which redirects to the proposal page) and a withdraw, all answered.
+   - Not yet live: an accept (the roster read-back), the phone screens at 320 and 430 px, and the
+     offseason (RFAs, this year's picks as `DP_`), for step 10.
+   **Next: step 9.**
 9. **Moves › IR** (row 10).
 10. **Before the season:** every phase checked against saved exports with simulated dates, since
     none of it shows live until March.
