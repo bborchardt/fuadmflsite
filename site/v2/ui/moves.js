@@ -51,16 +51,30 @@ export async function send(url, init) {
     return response.text();
 }
 
-// when MFL gives no reason, what the member can do
-export const NO_REASON = "reload the page and try again";
+// A move MFL didn't make; `reason` is MFL's, when it gave one (refusal)
+export class Refused extends Error {
+    constructor(reason) {
+        super(reason || "MFL gave no reason");
+        this.reason = reason || null;
+    }
+}
 
-// MFL's reason in its answer to a move it didn't make, if it gave one
+// The line for a move that didn't happen: "Couldn't drop Jackson: <MFL's reason>." or, with no
+// reason, "Couldn't drop Jackson. Reload the page and try again." `changed`: MFL changed something
+// anyway, and the page reloads to show it.
+export function failedLine(what, error, {changed = false} = {}) {
+    const reason = error && error.reason ? String(error.reason).replace(/\.$/, "") : null;
+    const tail = changed ? " This is how MFL has it now." : reason ? "" : " Reload the page and try again.";
+    return `Couldn’t ${what}${reason ? `: ${reason}` : ""}.${tail}`;
+}
+
+// MFL's reason in its answer to a move it didn't make, if it gave one, else null
 export function refusal(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const found = [...doc.querySelectorAll(".pagebody .warning, .pagebody .error, .pagebody [class*=error], .pagebody [class*=warning], .pagebody .reportnavigationheader")]
         .map((node) => node.textContent.replace(/\s+/g, " ").trim())
         .find((line) => line && line.length < 300 && !/^Use projections/i.test(line));
-    return found || NO_REASON;
+    return found || null;
 }
 
 // Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:

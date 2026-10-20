@@ -9,7 +9,7 @@ import {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {freshTrades, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {Refused, failedLine, freshTrades, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {calendarDates, cutDownDate, dayText, whenText} from "./home-model.js";
 import {
@@ -135,7 +135,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
         return [
             state.done ? `<p class="fuad-trades-status" role="status">${CHECK}<span>${esc(state.done)}</span></p>` : "",
             state.note ? `<p class="fuad-trades-notice fuad-trades-plain" role="status">${esc(state.note)}</p>` : "",
-            state.error ? `<p class="fuad-trades-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>` : ""
+            state.error ? `<p class="fuad-trades-alert" role="alert">${esc(state.error)}</p>` : ""
         ].join("");
     }
 
@@ -204,7 +204,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
                     <textarea id="fuad-reply-${esc(offer.id)}" rows="2" data-act="comment" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>${esc(state.comment[offer.id] || "")}</textarea>
                     <button type="button" class="fuad-trades-go" data-act="send-answer" data-id="${esc(offer.id)}"${busy || (answer === "accept" && blocked) ? " disabled" : ""}>${busy ? (answer === "accept" ? "Accepting…" : "Rejecting…") : answer === "accept" ? "Accept trade" : "Reject trade"}</button>
                 </div>` : ""}
-                ${failure ? `<p class="fuad-trades-alert" role="alert"><strong>Not made:</strong> ${esc(failure)}</p>` : ""}
+                ${failure ? `<p class="fuad-trades-alert" role="alert">${esc(failure)}</p>` : ""}
             </div>
         </article>`;
     }
@@ -222,7 +222,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             <span class="fuad-trades-withdraw">${asking
                 ? `<span class="fuad-trades-ask">Withdraw this offer?</span><button type="button" class="fuad-trades-quiet" data-act="keep" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>Keep</button><button type="button" class="fuad-trades-go" data-act="withdraw" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>${busy ? "Withdrawing…" : "Withdraw"}</button>`
                 : `<button type="button" class="fuad-trades-quiet" data-act="ask" data-id="${esc(offer.id)}">Withdraw</button>`}</span>
-            ${failure ? `<p class="fuad-trades-alert" role="alert"><strong>Not made:</strong> ${esc(failure)}</p>` : ""}
+            ${failure ? `<p class="fuad-trades-alert" role="alert">${esc(failure)}</p>` : ""}
         </article>`;
     }
 
@@ -341,7 +341,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             <div class="fuad-trades-message">
                 <label class="fuad-meta" for="fuad-trades-msg">Message (optional)</label>
                 <textarea id="fuad-trades-msg" rows="2" data-act="message"${state.busy ? " disabled" : ""}>${esc(state.message)}</textarea>
-                ${state.error ? `<p class="fuad-trades-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>` : ""}
+                ${state.error ? `<p class="fuad-trades-alert" role="alert">${esc(state.error)}</p>` : ""}
                 <button type="button" class="fuad-trades-go fuad-trades-send" data-act="send"${off ? " disabled" : ""}>${state.busy ? "Sending…" : label}</button>
             </div>`;
     }
@@ -462,14 +462,15 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
     };
 
     // after a failure: if MFL's trades changed anyway, the page reloads to show them
-    async function failed(error, {sent, read, offerId = null}) {
+    // `what` names the move for its failure line: "accept the offer from Kings"
+    async function failed(error, {sent, read, offerId = null, what}) {
         console.warn("[fuad] trade move failed:", error);
-        let message = `${String(error.message).replace(/\.$/, "")}.`;
+        let message = failedLine(what, error);
         const after = await freshTrades(context).then((found) => offersOf(found, franchiseId)).catch(() => null);
         const ids = (list) => list.map((offer) => offer.id).sort().join();
         if (after && ids(after) !== ids(offers())) {
             // sent but not confirmed: the change may be this move's own
-            reloadList(sent && !read ? {note: "Couldn't confirm the move: this is how MFL has your trades now."} : {error: `${message} MFL's page has changed: this is how it stands.`});
+            reloadList(sent && !read ? {note: "Couldn't confirm the move: this is how MFL has your trades now."} : {error: failedLine(what, error, {changed: true})});
             return;
         }
         if (!after && sent && !read) {
@@ -505,7 +506,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             const after = offersOf(await freshTrades(context), franchiseId);
             read = true;
             if (after.some((other) => other.id === offer.id)) {
-                throw new Error(refusal(reply));
+                throw new Refused(refusal(reply));
             }
             const partnerName = nameOf(offer.partner);
             if (action === "accept") {
@@ -514,7 +515,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
                 read = false;
                 const roster = await rosterIds(context, franchiseId);
                 if (!players.every((id) => roster.includes(id))) {
-                    reloadList({error: `MFL didn't make it: the offer from ${partnerName} is no longer open.`});
+                    reloadList({error: failedLine(`accept the offer from ${partnerName}`, new Refused("it’s no longer open"))});
                     return;
                 }
                 reloadList({done: stop(`Trade with ${partnerName} accepted`)});
@@ -522,7 +523,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
                 reloadList({done: stop(`Offer from ${partnerName} rejected`)});
             }
         } catch (error) {
-            await failed(error, {sent, read, offerId: offer.id});
+            await failed(error, {sent, read, offerId: offer.id, what: `${action === "accept" ? "accept" : "reject"} the offer from ${nameOf(offer.partner)}`});
         }
     }
 
@@ -543,11 +544,11 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             const after = offersOf(await freshTrades(context), franchiseId);
             read = true;
             if (after.some((other) => other.id === offer.id)) {
-                throw new Error(refusal(reply));
+                throw new Refused(refusal(reply));
             }
             reloadList({done: stop(`Offer to ${nameOf(offer.partner)} withdrawn`)});
         } catch (error) {
-            await failed(error, {sent, read, offerId: offer.id});
+            await failed(error, {sent, read, offerId: offer.id, what: `withdraw your offer to ${nameOf(offer.partner)}`});
         }
     }
 
@@ -573,7 +574,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             read = true;
             const made = findOffer(after.filter((offer) => !known.has(offer.id)), {partner: proposal.partner, give: check.give, get: check.get});
             if (!made) {
-                throw new Error(refusal(reply));
+                throw new Refused(refusal(reply));
             }
             if (!state.counter) {
                 reloadList({done: stop(`Offer sent to ${check.partnerName}`)});
@@ -592,7 +593,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
                 reloadList({done: stop(`Counter sent to ${check.partnerName}`), stillOpen: counter});
             }
         } catch (error) {
-            await failed(error, {sent, read});
+            await failed(error, {sent, read, what: `send your ${state.counter ? "counter" : "offer"} to ${check.partnerName}`});
         }
     }
 

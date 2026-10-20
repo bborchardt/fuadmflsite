@@ -153,7 +153,8 @@ test("the roster read back says which moves MFL made", () => {
     const names = {hurts: "Jalen Hurts", achane: "De'Von Achane", olave: "Chris Olave"};
     assert.equal(movesText(done, (id) => names[id]), "Jalen Hurts to IR, De'Von Achane activated");
     assert.equal(movesText(missed, (id) => names[id]), "Chris Olave dropped");
-    assert.equal(movesText(missed.concat(done), (id) => names[id], {undone: true}), "dropping Chris Olave, moving Jalen Hurts to IR, activating De'Von Achane");
+    assert.equal(movesText(missed, (id) => names[id], {undone: true}), "drop Chris Olave");
+    assert.equal(movesText(missed.concat(done), (id) => names[id], {undone: true}), "drop Chris Olave, move Jalen Hurts to IR or activate De'Von Achane");
     assert.equal(savedMoves(new Map([["achane", "INJURED_RESERVE"]]), {toIR: [], activate: ["achane"], drop: null}).done.length, 0);
 });
 
