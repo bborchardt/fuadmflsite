@@ -115,7 +115,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
             parts.push(`<p class="fuad-ir-status" role="status">${CHECK}<span>${esc(state.done)}</span></p>`);
         }
         if (state.error) {
-            parts.push(`<p class="fuad-ir-alert" role="alert"><strong>Not made:</strong> ${esc(state.error)}</p>`);
+            parts.push(`<p class="fuad-ir-alert" role="alert"><strong>Not saved:</strong> ${esc(state.error)}</p>`);
         }
         return parts.join("");
     }
@@ -300,14 +300,14 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         }
         const answered = sent ? readIRPage(new DOMParser().parseFromString(answer, "text/html"), franchiseId) : null;
         // MFL's reason, unless it answered with the IR page itself, whose marks aren't one
-        const reason = `${(!sent ? "MFL didn't answer" : answered ? NO_REASON : refusal(answer)).replace(/\.$/, "")}.`;
+        const reason = `${(!sent || answered ? NO_REASON : refusal(answer)).replace(/\.$/, "")}.`;
         const roster = await readBack(asked, answered);
         if (roster) {
             const {done, missed} = savedMoves(roster, asked);
             if (done.length) {
                 reloadWith({
                     done: `Saved: ${movesText(done, nameOf)}.`,
-                    error: missed.length ? `${movesText(missed, nameOf, {undone: true})}. ${reason}` : ""
+                    error: missed.length ? `${movesText(missed, nameOf, {undone: true})}. ${reason[0].toUpperCase()}${reason.slice(1)}` : ""
                 });
                 return;
             }

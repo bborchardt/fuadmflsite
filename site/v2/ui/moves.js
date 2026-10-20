@@ -51,7 +51,8 @@ export async function send(url, init) {
     return response.text();
 }
 
-export const NO_REASON = "MFL refused it without giving a reason";
+// when MFL gives no reason, what the member can do
+export const NO_REASON = "reload the page and try again";
 
 // MFL's reason in its answer to a move it didn't make, if it gave one
 export function refusal(html) {
