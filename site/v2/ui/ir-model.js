@@ -180,6 +180,10 @@ export function irFields(form, {franchiseId, toIR, activate, drop}) {
     return fields;
 }
 
+// The team's players and their status as readIRPage's page shows them (a dropped player is gone)
+export const rosterFromPage = (page) => new Map(page.active.map((entry) => [entry.id, "ROSTER"])
+    .concat(page.reserve.map((entry) => [entry.id, IR])));
+
 // What MFL made of a save, from the roster read back: each move done or not. `roster` maps the
 // team's player ids to MFL's status (`ROSTER`, `INJURED_RESERVE`).
 export function savedMoves(roster, {toIR, activate, drop}) {

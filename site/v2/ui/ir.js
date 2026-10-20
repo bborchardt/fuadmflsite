@@ -8,12 +8,16 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {loadData, movesPhase, refusal, rosterStatuses, send} from "./moves.js";
+import {NO_REASON, loadData, movesPhase, refusal, rosterStatuses, send} from "./moves.js";
 import {changeTone, signed, teamState} from "./add-model.js";
 import {calendarDates, cutDownDate} from "./home-model.js";
-import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, savedMoves} from "./ir-model.js";
+import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 
 const FLASH_KEY = "fuad.irFlash";
+// reading the roster back after a save: how many times, and how far apart (MFL asks for about a
+// second between requests)
+const READS = 3;
+const READ_GAP = 1500;
 const WIDE = "(min-width: 48.01em)";
 
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
@@ -253,6 +257,29 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         window.location.replace(window.location.pathname + window.location.search);
     }
 
+    // What MFL made of a save: the IR page it answered with, as the roster now stands, else the
+    // rosters export, read again a few times while it shows nothing done, since it can lag a move
+    // (seen live: a move to IR made, the export read just after still had him active)
+    async function readBack(asked, answered) {
+        if (answered) {
+            const roster = rosterFromPage(answered);
+            if (savedMoves(roster, asked).done.length) {
+                return roster;
+            }
+        }
+        let roster = null;
+        for (let tries = 0; tries < READS; tries += 1) {
+            if (tries) {
+                await new Promise((resolve) => setTimeout(resolve, READ_GAP));
+            }
+            roster = (await rosterStatuses(context, franchiseId).catch(() => null)) || roster;
+            if (roster && !savedMoves(roster, asked).missed.length) {
+                break;
+            }
+        }
+        return roster;
+    }
+
     async function save() {
         const result = check();
         if (state.busy || irBlockText(result) || !(result.toIR.length + result.activate.length + (result.drop ? 1 : 0))) {
@@ -271,10 +298,10 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         } catch (error) {
             console.warn("[fuad] couldn't save IR moves:", error);
         }
+        const answered = sent ? readIRPage(new DOMParser().parseFromString(answer, "text/html"), franchiseId) : null;
         // MFL's reason, unless it answered with the IR page itself, whose marks aren't one
-        const reason = `${(!sent ? "MFL didn't answer" : readIRPage(new DOMParser().parseFromString(answer, "text/html"), franchiseId) ? "MFL didn't make it" : refusal(answer)).replace(/\.$/, "")}.`;
-        // what MFL made of it, from the roster read back, even after an answer that failed
-        const roster = await rosterStatuses(context, franchiseId).catch(() => null);
+        const reason = `${(!sent ? "MFL didn't answer" : answered ? NO_REASON : refusal(answer)).replace(/\.$/, "")}.`;
+        const roster = await readBack(asked, answered);
         if (roster) {
             const {done, missed} = savedMoves(roster, asked);
             if (done.length) {

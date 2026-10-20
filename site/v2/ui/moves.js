@@ -51,13 +51,15 @@ export async function send(url, init) {
     return response.text();
 }
 
+export const NO_REASON = "MFL refused it without giving a reason";
+
 // MFL's reason in its answer to a move it didn't make, if it gave one
 export function refusal(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const found = [...doc.querySelectorAll(".pagebody .warning, .pagebody .error, .pagebody [class*=error], .pagebody [class*=warning], .pagebody .reportnavigationheader")]
         .map((node) => node.textContent.replace(/\s+/g, " ").trim())
         .find((line) => line && line.length < 300 && !/^Use projections/i.test(line));
-    return found || "MFL didn't make it";
+    return found || NO_REASON;
 }
 
 // Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
