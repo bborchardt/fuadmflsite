@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, savedMoves} from "../site/v2/ui/ir-model.js";
+import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, rosterFromPage, savedMoves} from "../site/v2/ui/ir-model.js";
 
 // the clone's team: $293 used, 30 active
 const player = (playerId, fullName, salary, years, extra = {}) => ({playerId, fullName, salary, years, capPenalty: years > 0 ? Math.max(Math.ceil(Math.max(1, 0.4 * salary * years)), years) : 0,
@@ -155,4 +155,12 @@ test("the roster read back says which moves MFL made", () => {
     assert.equal(movesText(missed, (id) => names[id]), "Chris Olave dropped");
     assert.equal(movesText(missed.concat(done), (id) => names[id], {undone: true}), "dropping Chris Olave, moving Jalen Hurts to IR, activating De'Von Achane");
     assert.equal(savedMoves(new Map([["achane", "INJURED_RESERVE"]]), {toIR: [], activate: ["achane"], drop: null}).done.length, 0);
+});
+
+test("MFL's answer, the IR page as it now stands, reads as the roster", () => {
+    const roster = rosterFromPage(page);
+    assert.equal(roster.get("hurts"), "ROSTER");
+    assert.equal(roster.get("achane"), "INJURED_RESERVE");
+    assert.equal(roster.has("gone"), false);
+    assert.equal(savedMoves(roster, {toIR: ["hurts"], activate: ["achane"], drop: "gone"}).done.length, 1);
 });
