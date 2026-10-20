@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 7 built, PR #35 awaiting its live run; step 8 next)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 7 merged, PR #35; step 8 next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -364,9 +364,8 @@ tried in the beta (the commissioner's team only) before the next.
      player can still go at exactly 23.
    - Add's data loading and form posting are shared (`ui/moves.js`).
    - Tested offline with `harness/drop.py` in the backtest repo (phone and desktop; a refused drop,
-     a deep link, 23 active, logged out, a lower cap), one reviewer pass (no blockers).
-   - Before merging: one live drop in the clone, checking cap used after the reload includes the
-     penalty (the saved exports can't show it).
+     a deep link, 23 active, logged out, a lower cap), one reviewer pass (no blockers), and two live
+     drops in the clone: each said "dropped" and cap used rose by the penalty after the reload.
    **Next: step 8.**
 8. **Moves › Trades** (row 9).
 9. **Moves › IR** (row 10).
