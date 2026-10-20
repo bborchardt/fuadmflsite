@@ -11,7 +11,8 @@ import {addPhase, pendingWithComments} from "./add-model.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
-export async function loadData(context, franchiseId) {
+// `more` names further exports a page's checks need fresh (Trades: `pendingTrades`), in `fresh`
+export async function loadData(context, franchiseId, {more = []} = {}) {
     const {season, leagueId} = context;
     const host = window.location.origin;
     // the checks always use fresh rosters, penalties and pending bids
@@ -20,12 +21,12 @@ export async function loadData(context, franchiseId) {
     // mostly cached for a day
     const freshInTurn = async () => {
         const found = {};
-        for (const type of ["rosters", "salaryAdjustments", "transactions", "freeAgents", "pendingWaivers"]) {
+        for (const type of ["rosters", "salaryAdjustments", "transactions", "freeAgents", "pendingWaivers", ...more]) {
             found[type] = await fresh(type);
         }
         return found;
     };
-    const [players, leagueInfo, calendar, facts, {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers}] = await Promise.all([
+    const [players, leagueInfo, calendar, facts, found] = await Promise.all([
         cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
         // only the teams' names and the league's settings, which don't change in a day
         cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
@@ -33,10 +34,11 @@ export async function loadData(context, franchiseId) {
         seasonFacts(context).catch(() => ({})),
         freshInTurn()
     ]);
+    const {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers} = found;
     const league = buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents});
     const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
     const groups = pendingGroups(pendingWaivers);
-    return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId};
+    return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
 }
 
 // what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
@@ -74,6 +76,9 @@ export async function freshPending(context) {
     const groups = pendingGroups(pending);
     return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
 }
+
+// the member's pending trades, fresh, to confirm a move
+export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}});
 
 // Add's phase (add-model.js) from the season's dates. Without them, MFL's own week says whether
 // the season has started; a draft that couldn't be checked counts as made.

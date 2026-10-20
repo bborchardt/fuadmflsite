@@ -4130,3 +4130,465 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-drop .fuad-drop-row .fuad-drop-line { min-height: 44px; }
     #fuad-drop .fuad-drop-review { margin: 0 0 6px; }
 }
+
+/* ---- Moves › Trades: MFL's Trades and proposal pages with v2's screens over them ---- */
+
+.fuad-trades-on body .pagebody > :not(#fuad-trades) { display: none !important; }
+
+#fuad-trades {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+#fuad-trades a { color: var(--fuad-lime); text-decoration: none; }
+
+/* the buttons set every property MFL's button styles touch */
+#fuad-trades button {
+    box-sizing: border-box;
+    margin: 0;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fuad-text);
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    text-shadow: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+#fuad-trades button:disabled { cursor: default; }
+
+#fuad-trades .fuad-panel {
+    margin: 0;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+    padding: 12px 14px;
+}
+
+#fuad-trades .fuad-meta { font-size: 13px; font-weight: 500; color: var(--fuad-muted); }
+#fuad-trades .fuad-muted { color: var(--fuad-muted); }
+#fuad-trades .fuad-good { color: var(--fuad-good); }
+#fuad-trades .fuad-bad { color: var(--fuad-bad); }
+#fuad-trades .fuad-caution { color: var(--fuad-caution); }
+#fuad-trades .fuad-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+#fuad-trades .fuad-tag {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 5px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#fuad-trades .fuad-trades-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; }
+
+#fuad-trades .fuad-button {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime) !important;
+    font-weight: 700;
+}
+
+#fuad-trades .fuad-trades-status {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(74, 222, 128, 0.1);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+#fuad-trades .fuad-trades-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
+
+#fuad-trades .fuad-trades-alert {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--fuad-bad-tint);
+    color: #FFB3B3;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#fuad-trades .fuad-trades-alert strong { color: var(--fuad-bad); }
+
+#fuad-trades .fuad-trades-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
+
+#fuad-trades .fuad-trades-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+#fuad-trades .fuad-trades-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
+#fuad-trades .fuad-trades-retry:disabled { color: var(--fuad-faint); }
+
+/* notices: red for a limit, orange for caution, grey for a plain fact */
+#fuad-trades .fuad-trades-notice {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+#fuad-trades .fuad-trades-bad { background: var(--fuad-bad-tint); }
+#fuad-trades .fuad-trades-bad strong { color: var(--fuad-bad); }
+#fuad-trades .fuad-trades-caution { background: var(--fuad-caution-tint); }
+#fuad-trades .fuad-trades-caution strong { color: var(--fuad-caution); }
+#fuad-trades .fuad-trades-plain { background: var(--fuad-quiet); }
+#fuad-trades .fuad-trades-notice a { font-weight: 600; }
+
+#fuad-trades .fuad-trades-open { display: flex; flex-direction: column; gap: 8px; margin: 0 0 10px; }
+
+#fuad-trades .fuad-trades-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 16px; }
+
+#fuad-trades h2,
+#fuad-trades h3 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: 700 22px var(--fuad-display);
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--fuad-text);
+}
+
+#fuad-trades .fuad-trades-none { margin: 6px 0 0; font-size: 15px; color: var(--fuad-muted); }
+
+#fuad-trades .fuad-trades-card {
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid var(--fuad-raised-edge);
+    border-radius: 14px;
+    background: var(--fuad-raised);
+}
+
+#fuad-trades .fuad-trades-from { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 13px; color: var(--fuad-muted); }
+
+#fuad-trades .fuad-trades-from strong { color: var(--fuad-text); font-weight: 600; overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+
+#fuad-trades .fuad-trades-sides > div { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+
+#fuad-trades .fuad-trades-asset {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    padding: 2px 0;
+    text-align: left;
+}
+
+#fuad-trades .fuad-trades-name { font-weight: 600; overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-link { position: relative; padding: 0; font-size: inherit; text-align: left; }
+#fuad-trades .fuad-trades-link:hover { color: var(--fuad-lime); }
+#fuad-trades .fuad-trades-link::after { content: ""; position: absolute; left: -4px; right: -4px; top: -10px; bottom: -10px; }
+
+/* the effect spans the card under both sides on phones */
+#fuad-trades .fuad-trades-effect {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--fuad-raised-edge);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+#fuad-trades .fuad-trades-comment { margin: 8px 0 0; font-size: 14px; color: var(--fuad-soft); overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+
+#fuad-trades .fuad-trades-choice { min-height: 44px; border: 1px solid var(--fuad-raised-edge); background: var(--fuad-page); }
+#fuad-trades .fuad-trades-choice[aria-pressed="true"] { border-color: var(--fuad-text); background: var(--fuad-text); color: var(--fuad-page); }
+#fuad-trades .fuad-trades-choice[data-answer="accept"][aria-pressed="true"] { border-color: var(--fuad-lime); background: var(--fuad-lime); color: var(--fuad-on-lime); }
+#fuad-trades .fuad-trades-choice:disabled { color: var(--fuad-muted); }
+
+#fuad-trades .fuad-trades-reply,
+#fuad-trades .fuad-trades-message { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+#fuad-trades .fuad-trades-answer > .fuad-trades-alert { margin-top: 10px; }
+
+#fuad-trades textarea,
+#fuad-trades input[type="date"],
+#fuad-trades select {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: var(--fuad-page);
+    color: var(--fuad-text);
+    color-scheme: dark;
+    /* 16 px, so iPhones don't zoom in on focus */
+    font: 16px var(--fuad-body);
+}
+
+#fuad-trades textarea { padding: 8px 12px !important; line-height: 1.4; resize: vertical; }
+#fuad-trades input[type="date"] { padding: 0 10px !important; }
+#fuad-trades select { padding: 0 8px !important; }
+
+#fuad-trades textarea:focus,
+#fuad-trades input:focus,
+#fuad-trades select:focus { border-color: var(--fuad-lime); }
+
+/* the screen's own action: filled lime (red is kept for limits) */
+#fuad-trades .fuad-trades-go {
+    min-height: 44px;
+    padding: 0 18px;
+    background: var(--fuad-lime);
+    color: var(--fuad-on-lime);
+    font-weight: 700;
+}
+
+#fuad-trades .fuad-trades-go:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+#fuad-trades .fuad-trades-quiet { min-height: 44px; padding: 0 14px; border: 1px solid var(--fuad-raised-edge); background: var(--fuad-quiet); }
+
+#fuad-trades .fuad-trades-sent { display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
+
+#fuad-trades .fuad-trades-moves { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-moves strong { font-weight: 700; }
+
+#fuad-trades .fuad-trades-withdraw { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+#fuad-trades .fuad-trades-withdraw > .fuad-trades-quiet:only-child { flex: 1; }
+#fuad-trades .fuad-trades-ask { flex: 1; font-weight: 600; }
+
+#fuad-trades .fuad-trades-partners { display: flex; flex-direction: column; margin-top: 4px; }
+
+#fuad-trades .fuad-trades-partner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    border-top: 1px solid var(--fuad-rule);
+    color: var(--fuad-text);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+#fuad-trades .fuad-trades-partner:hover { color: var(--fuad-lime); }
+
+#fuad-trades .fuad-trades-used { flex: none; font-size: 13px; font-weight: 500; }
+
+/* the proposal */
+#fuad-trades .fuad-trades-kicker {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+    overflow-wrap: anywhere;
+}
+
+#fuad-trades .fuad-trades-side { padding: 4px 14px 6px; }
+
+#fuad-trades .fuad-trades-group {
+    padding: 10px 0 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fuad-muted);
+}
+
+#fuad-trades .fuad-trades-pick-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 48px;
+    border-top: 1px solid var(--fuad-rule);
+    cursor: pointer;
+}
+
+#fuad-trades .fuad-trades-pick-row input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-lime); }
+
+#fuad-trades .fuad-trades-who { display: flex; flex-direction: column; min-width: 0; }
+
+/* the phone's bar for picking: above the tabs */
+#fuad-trades .fuad-trades-stepbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    z-index: 8999;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--fuad-hairline);
+    background: var(--fuad-panel);
+}
+
+#fuad-trades .fuad-trades-bar-blocked { border-top-color: var(--fuad-bad); }
+
+#fuad-trades .fuad-trades-stepbar .fuad-trades-bar-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 2px 12px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+#fuad-trades .fuad-trades-stepbar .fuad-trades-bar-grid > :nth-child(3n + 1) { overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-bar-why { font-size: 13px; line-height: 1.35; }
+
+#fuad-trades .fuad-trades-bar-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; }
+
+.fuad-trades-barred.fuad-framed body { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+
+#fuad-trades .fuad-trades-review { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+#fuad-trades .fuad-trades-review > div { min-width: 0; }
+
+#fuad-trades .fuad-trades-review-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+#fuad-trades .fuad-trades-edit { min-height: 36px; padding: 0 10px; font-size: 13px; position: relative; }
+#fuad-trades .fuad-trades-edit::after { content: ""; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
+
+#fuad-trades .fuad-trades-table {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 10px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+#fuad-trades .fuad-trades-table > .fuad-label { overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-sendband { display: flex; flex-direction: column; gap: 8px; }
+
+#fuad-trades .fuad-trades-expiry { display: flex; flex-direction: column; gap: 8px; }
+
+#fuad-trades .fuad-trades-expiry p { margin: 0; line-height: 1.4; }
+
+#fuad-trades .fuad-trades-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+#fuad-trades .fuad-chip {
+    position: relative;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--fuad-raised-edge);
+    border-radius: 18px;
+    background: var(--fuad-page);
+    font-size: 13px;
+}
+
+#fuad-trades .fuad-chip::after { content: ""; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
+#fuad-trades .fuad-chip[aria-pressed="true"] { border-color: var(--fuad-text); background: var(--fuad-text); color: var(--fuad-page); }
+
+#fuad-trades .fuad-trades-when { display: grid; grid-template-columns: minmax(0, 1fr) 128px; gap: 8px; }
+
+#fuad-trades .fuad-trades-when label { display: flex; flex-direction: column; gap: 4px; }
+
+#fuad-trades .fuad-trades-send { min-height: 48px; font-size: 16px; }
+
+#fuad-trades .fuad-trades-title { display: flex; align-items: center; gap: 12px; }
+
+#fuad-trades .fuad-trades-title h2 { font-size: 30px; text-transform: none; overflow-wrap: anywhere; }
+
+#fuad-trades .fuad-trades-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    background: var(--fuad-panel);
+}
+
+/* desktop: full-width bands; the effect bar sticky; both sides' full rosters side by side */
+@media (min-width: 48.01em) {
+    #fuad-trades { gap: 16px; padding-top: 8px; }
+    #fuad-trades .fuad-trades-panel { padding: 14px 16px 16px; }
+    #fuad-trades .fuad-trades-card { padding: 14px 16px; }
+    #fuad-trades .fuad-trades-from { font-size: 14px; }
+    #fuad-trades .fuad-trades-sides { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+    #fuad-trades .fuad-trades-asset { min-height: 0; padding: 4px 0 0; }
+    #fuad-trades .fuad-trades-effect { grid-column: auto; align-content: start; padding-top: 0; border-top: 0; font-size: 14px; }
+    #fuad-trades .fuad-trades-answer { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--fuad-raised-edge); }
+    #fuad-trades .fuad-trades-answer > * { margin-top: 0; }
+    #fuad-trades .fuad-trades-answer > .fuad-trades-notice,
+    #fuad-trades .fuad-trades-answer > .fuad-trades-alert { flex-basis: 100%; }
+    #fuad-trades .fuad-trades-choices { display: flex; }
+    #fuad-trades .fuad-trades-choice { min-width: 96px; padding: 0 14px; }
+    #fuad-trades .fuad-trades-reply { flex: 1; flex-direction: row; flex-wrap: wrap; align-items: flex-end; min-width: 240px; }
+    #fuad-trades .fuad-trades-reply label { flex-basis: 100%; }
+    #fuad-trades .fuad-trades-reply textarea { flex: 1; min-width: 200px; }
+    #fuad-trades .fuad-trades-open { flex-direction: row; align-items: center; justify-content: space-between; }
+
+    #fuad-trades .fuad-trades-sent { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto auto; gap: 8px 16px; align-items: center; padding: 12px 16px; }
+    #fuad-trades .fuad-trades-sent > .fuad-trades-alert { grid-column: 1 / -1; }
+    #fuad-trades .fuad-trades-withdraw { justify-content: flex-end; margin-top: 0; }
+
+    #fuad-trades .fuad-trades-partners { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    #fuad-trades .fuad-trades-partner { min-height: 56px; padding: 8px 14px; border-top: 0; border-radius: 12px; background: var(--fuad-raised); }
+
+    #fuad-trades .fuad-trades-bar {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 16px;
+        border: 1px solid var(--fuad-raised-edge);
+        border-radius: 16px;
+        background: var(--fuad-raised);
+        box-shadow: 0 8px 24px var(--fuad-shadow);
+    }
+    #fuad-trades .fuad-trades-bar.fuad-trades-bar-blocked { border-color: var(--fuad-bad); }
+    #fuad-trades .fuad-trades-bar .fuad-trades-notice { margin: 0; }
+    #fuad-trades .fuad-trades-bar-grid { display: grid; grid-template-columns: minmax(120px, 220px) repeat(2, minmax(0, 1fr)) minmax(0, 1.4fr); gap: 4px 16px; align-items: baseline; font-variant-numeric: tabular-nums; }
+    #fuad-trades .fuad-trades-big { font: 700 22px var(--fuad-display); }
+    #fuad-trades .fuad-trades-big strong { font-weight: 700; }
+    #fuad-trades .fuad-trades-soft { font-size: 14px; color: var(--fuad-soft); overflow-wrap: anywhere; }
+
+    #fuad-trades .fuad-trades-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+    #fuad-trades .fuad-trades-side { min-width: 0; padding: 14px 16px 10px; }
+    #fuad-trades .fuad-trades-side .fuad-trades-pick-row { grid-template-columns: 28px minmax(0, 1fr) 52px 64px 56px; gap: 0 8px; min-height: 40px; border-radius: 6px; font-size: 14px; cursor: default; }
+    #fuad-trades .fuad-trades-side .fuad-trades-pick-row input { width: 18px; height: 18px; margin-left: 4px; cursor: pointer; }
+    #fuad-trades .fuad-trades-on-row { background: var(--fuad-lime-tint); }
+    #fuad-trades .fuad-trades-who { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+    #fuad-trades .fuad-trades-who .fuad-tag { margin-left: 0; }
+    #fuad-trades .fuad-trades-columns { min-height: 0; padding: 10px 0 4px; border-top: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-muted); }
+
+    #fuad-trades .fuad-trades-sendband { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; align-items: end; padding: 14px 16px 16px; }
+    #fuad-trades .fuad-trades-when { grid-template-columns: minmax(0, 1fr) 150px; }
+    #fuad-trades .fuad-trades-message { margin-top: 0; }
+}
