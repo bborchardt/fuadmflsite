@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 8 in PR #36; step 9 next)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 9 in PR #37; step 10 next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -173,7 +173,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36; step 9's IR is PR #37. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -309,7 +309,8 @@ tried in the beta (the commissioner's team only) before the next.
    it (`ui/add.js`, `ui/add-model.js`). Decided while building (18 Oct 2026):
    - Picks go through MFL's own picker (`picker_select`) and form, posted in place, then read
      back (`pendingWaivers`, or the roster for an immediate add) before the page reloads to show
-     them; a refused move shows "Not made: …", and if MFL changed anything anyway the page reloads
+     them; a refused move shows one line naming it ("Couldn't place your bid on Higbee." with MFL's
+     reason or "Reload the page and try again."), and if MFL changed anything anyway the page reloads
      to show it. Reorder and remove are MFL's links; edit is MFL's edit page (`O=255`).
    - A copy is a new claim through the add form, not MFL's `COPY_ROUND` (which only copies to a
      new group and may leave the length line behind).
@@ -400,8 +401,36 @@ tried in the beta (the commissioner's team only) before the next.
      MFL's counter answer, which redirects to the proposal page) and a withdraw, all answered.
    - Not yet live: an accept (the roster read-back), the phone screens at 320 and 430 px, and the
      offseason (RFAs, this year's picks as `DP_`), for step 10.
-   **Next: step 9.**
-9. **Moves › IR** (row 10).
+9. **Moves › IR** (done; row 10; PR #37): MFL's Injured Reserve page (`options?O=18`) with v2's
+   lists over it (`ui/ir.js`, `ui/ir-model.js`). Decided while building (19 Oct 2026):
+   - Over MFL's page, as Add, Drop and Trades are: who can go on IR and whose game has started
+     ("Locked") is MFL's page's say; the NFL status and expected return come from today's injury
+     report, which also says who must come off IR (11.1), as League alerts reads it. A page v2
+     can't read stays MFL's.
+   - The 30-active check counts the pending bids, as Add does (the commissioner): blocked when
+     the save, with every group's costliest claim, takes the active count or cap used past its
+     limit or further past it; 31 active now is blocked whatever the bids.
+   - One drop per save, as drawn (the commissioner): when two would be needed, "Activate one at a
+     time, or move another player to IR." A drop picked earlier is let go once it isn't needed or
+     isn't a choice (moved to IR, over the cap).
+   - Save posts MFL's one form, then confirms from MFL's answer (the IR page as it now stands),
+     else the rosters export, read up to three times 1.5 s apart: live, the export read just after
+     a move to IR still had him active, and v2 called a made move failed.
+   - Failure lines on every Moves screen name the move (the commissioner): "Couldn't save your IR
+     moves." / "Couldn't drop Chris Olave." then MFL's reason after a colon, else "Reload the page
+     and try again."; "This is how MFL has it now." when the page reloads because MFL changed
+     something anyway. Lineup keeps its own "Not saved: MFL kept the lineup below."
+   - Rosters' popup IR opens with the player ticked (`#player-<id>`).
+   - MFL's IR form has a drop box in both tables, IR players included (now in master's
+     `docs/mfl.md`).
+   - Tested with `tests/ir.test.mjs` and offline with `harness/ir.py` in the backtest repo (phone
+     at 320 and 390 px, desktop; must activate with a drop, a partial save, MFL refusing with and
+     without a reason, a lagging export, preseason, a deep link, logged out, the popup), one
+     reviewer pass (one blocker, fixed), then live in the clone: Hurts to IR and back, each saved
+     and confirmed.
+   - Not yet live: a save with a drop, Must activate (needs a player the NFL takes off IR), the
+     phone screens (offline only).
+   **Next: step 10.**
 10. **Before the season:** every phase checked against saved exports with simulated dates, since
     none of it shows live until March.
 11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
@@ -479,8 +508,8 @@ the roadmap on its branch with what changed and what's next.
   everything the sections don't, so "nothing gets hidden" becomes "nothing becomes unreachable"
   (below; canvas row 13). A drawer from the left on both.
 - **The team button** (top right, the team's initials) holds only the member's own things (below).
-- **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: Lineup, Trades, IR and the
-  fallback pages. **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
+- **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: the message board's topic and
+  reply pages and the fallback pages (Lineup and Moves draw v2's own controls over MFL's forms). **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
   controls still work.
 - **A player popup everywhere:** a player name opens it in one click, so a member can research
   a player where they're deciding on him; where a row's tap already does something (a phone
@@ -502,7 +531,7 @@ the roadmap on its branch with what changed and what's next.
   and points; the biography last; all but the articles from MFL's player page (`player?L=…&P=…`)
   in one request (built in step 1).
   A bottom sheet on phones, a two-column dialog on desktop.
-- **Rebuilt:** Home, League, Rosters and Moves › Add and Drop. Home, League and Rosters live on MFL's home
+- **Rebuilt:** Home, League, Rosters and Moves (Add, Drop, Trades, IR; drawn over MFL's own pages). Home, League and Rosters live on MFL's home
   page (`home/48571`), so moving between them doesn't reload.
 - **Owners' customizations don't reach v2.** Each owner can choose their own MFL skin (63 of them;
   the league's is only the default) and their own home page tabs and the modules in them. v2's
@@ -611,7 +640,9 @@ Rules for v2:
   the cache with "As of 7:42 p.m." under the heading; a failed load with nothing cached shows
   "Couldn't load standings." and Retry in the panel's place, the others unaffected. In Moves, the
   controls that need fresh data (rosters, penalties, pending bids) are disabled while it can't be
-  had ("Couldn't check your cap." Retry); a move MFL refuses shows "Not made: …" with its reason.
+  had ("Couldn't check your cap." Retry); a move MFL refuses shows one line naming it, with MFL's
+  reason ("Couldn't drop Jackson: …") or, with none, "Couldn't drop Jackson. Reload the page and try
+  again."
 - **What v2 still pays for v1:** only what MFL builds (the home page modules v1 members use) and
   v1's code download before the handover; none of v1's own code runs. The modules go when v1 is
   retired.
@@ -760,7 +791,8 @@ page is built around free agents and bids; Recent's transactions live in Home's 
   box locked on ("Must activate"), so every IR save includes it: the bylaw sets no deadline, and MFL
   takes no lineup while it's unmet (league setting). MFL itself refuses players the NFL doesn't list on IR.
   The notice also offers **Drop him instead** (review, 17 Oct 2026): Moves › Drop with his row
-  open (MFL's IR form drops only active players), Back returning to IR; Pick a drop stays for
+  open (MFL's IR form could drop him too, but Drop shows the penalty and runs its checks), Back
+  returning to IR; Pick a drop stays for
   activating him and cutting someone else.
 
 **Add** is MFL's Add/Drop page (`add_drop`) with v2's own controls, which fill in MFL's real
@@ -829,7 +861,8 @@ The design (settled for now; the canvas's row 5 is the phone reference, row 12 t
   `playerDatabaseObj` names; "Locked" on the IR page). A marked player's row says "Game started"
   and is disabled for the move MFL refuses, and opens again when the mark goes; no reopening time
   is shown. Blind bids follow what MFL's page still offers for him. A move MFL refuses anyway shows
-  as one failure line, "Not made: …" with MFL's reason; the same in IR.
+  as one failure line naming the move, with MFL's reason or "Reload the page and try again."; the
+  same in IR.
 - **Re-adding a dropped player** (review, 17 Oct 2026): 9.4 is the league's rule, so v2 blocks it: a
   player the member dropped within 48 hours shows "Dropped by you · bid from Fri 3:12 p.m." (the
   drop's time, from the transactions, plus 48 hours) and can't be picked. 9.5 needs nothing of v2:
