@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 19 Oct 2026 (step 9 in PR #37; step 10 next)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 20 Oct 2026 (step 10 in PR #38; step 11 next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -173,7 +173,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36; step 9's IR is PR #37. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36; step 9's IR is PR #37; step 10's phases are PR #38. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -430,9 +430,34 @@ tried in the beta (the commissioner's team only) before the next.
      and confirmed.
    - Not yet live: a save with a drop, Must activate (needs a player the NFL takes off IR), the
      phone screens (offline only).
-   **Next: step 10.**
-10. **Before the season:** every phase checked against saved exports with simulated dates, since
-    none of it shows live until March.
+10. **Before the season** (done; PR #38): every phase checked against saved exports with
+    simulated dates (`harness/phases.py` in the backtest repo: before the draft, draft day, before
+    the cut-down, preseason, season, after the deadline, playoffs, over; the rollover, draft-day
+    players and rookies modeled). Decided while building (20 Oct 2026):
+    - The roster limits start at the calendar's cut-down date (2.5), on Home's alerts and in Add,
+      Drop, Trades and IR (the commissioner); the daily job, without the calendar, from week 1.
+      Over 30 in the preseason, My alerts says "Over the roster limit: N active of 30" with Drop.
+    - Cutting a player whose length is still due (0 years, $1 or more) costs the 1-year penalty,
+      the shortest he can end up with, except a rookie from this season's draft: none (the
+      commissioner, per the bylaws). v2's pages only (`markContracts`); the daily job charges none,
+      so the commissioner enters such a penalty by hand. Years read "length due"; RFAs (0 years
+      under $1) read "RFA" with no salary.
+    - Before the draft My team lists this year's picks first, numbered from the draft's order
+      ("3.08 from Golden Ratio", "Traded to …"), then the two years after, also tradable (the
+      commissioner); Teams counts this year's picks until the draft.
+    - Add is closed after week 17 ("Adds open after the draft."), as before the draft (the
+      commissioner); Drop and Trades stay open.
+    - Fixed as the spec already said: no tanking alerts before week 1's kickoff (MFL's results
+      list week 1's lineups before it's played); blind bid and lock times keep Central time across
+      DST; Coming up keeps its three rows for dates still ahead and skips blind bids until the
+      draft; Rosters' points before week 1 are last season's ("2025 pts").
+    - Left as is: the draft board's rounds are open before the draft (step 4's choice).
+    - Tested with `npm test` (170) and the harness on phone and desktop, one reviewer pass (no
+      blockers), then live in the clone in season: Home, Rosters and Moves as before (the clone
+      plays no games, so its points are 0 and its next-year picks unnumbered).
+    - Seen only at renewal: MFL's own pages after the rollover (how it shows RFAs, its
+      `completedWeek` after the season, this year's picks as `DP_` in Trades).
+    **Next: step 11.**
 11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
 
 **Open, to settle while building:** whether MFL runs a blind bid on a player whose game had started
