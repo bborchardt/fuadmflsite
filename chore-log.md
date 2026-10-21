@@ -26,3 +26,6 @@ What the daily job did, newest last.
 - 2026-10-19 14:55 UTC: Charged $5 to Smooth City Styles! for Kaytron Allen (5yrs@1, 10/18), and reset the player to $1 / 0 years.
 - 2026-10-20 12:54 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
 - 2026-10-20 12:54 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
+- 2026-10-21 13:08 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
+- 2026-10-21 13:08 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
+- 2026-10-21 13:08 UTC: Charged $1 to Smooth City Styles! for Rashod Bateman (1yrs@2, 10/20), and reset the player to $1 / 0 years.
