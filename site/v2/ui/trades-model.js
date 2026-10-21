@@ -8,6 +8,7 @@ import {projectBids} from "../lib/bids.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
 import {POSITIONS, firstLast, projection, surname} from "./add-model.js";
 import {clock, dayText} from "./home-model.js";
+import {contractYears} from "./rosters-model.js";
 
 const CT = "America/Chicago";
 const HOUR = 3600;
@@ -171,13 +172,11 @@ export function assetView(id, {league, mflNames, holder, names, season}) {
         id, pick: false, player,
         name: player.fullName,
         surname: surname(mfl || player.fullName),
-        meta: [player.nflPosition, player.team, `$${round2(player.salary)}`, yearsText(player.years)].join(" · "),
+        meta: [player.nflPosition, player.team, player.rfa ? "" : `$${round2(player.salary)}`, contractYears(player)].filter(Boolean).join(" · "),
         ir: isIR(player)
     };
 }
 
-// "1 yr", "2 yrs"; no years left is an RFA (offseason only, after the rollover)
-export const yearsText = (years) => (years > 0 ? `${years} yr${years === 1 ? "" : "s"}` : "RFA");
 
 // ---- what a trade does ----
 

@@ -12,8 +12,8 @@ import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
 import {
-    FIRST_DIRECTION, SCALE_PICKS, byeWeeks, dollars, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf,
-    playerPool, playoffFinish, pointsById, scaleRange, scaleText, sortPlayers, teamSheets, yearsText
+    FIRST_DIRECTION, SCALE_PICKS, boardPicksOf, byeWeeks, contractYears, dollars, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf,
+    playerPool, playoffFinish, pointsById, scaleRange, scaleText, sortPlayers, teamSheets
 } from "./rosters-model.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -54,21 +54,21 @@ function capPanel(sheet) {
 
 // the roster by position, then this season's penalties as its last group. `cut` adds the cut
 // columns (the member's own team).
-function rosterTable(sheet, {cut}) {
+function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
     const columns = cut ? 8 : 6;
     const player = (row) => `<tr>
         <th scope="row" class="fuad-team">
             <button type="button" class="fuad-name" data-player="${esc(row.id)}">${esc(row.name)}</button>${row.ir ? ' <span class="fuad-tag">IR</span>' : ""}
             <span class="fuad-meta fuad-phone-only">${esc(`${row.nfl || "FA"} · bye ${row.bye || "—"} · ${pts(row.points)} pts`)}</span>
         </th>
-        <td class="fuad-num">${esc(dollars(row.salary))}</td>
-        <td class="fuad-num fuad-muted">${row.years ? esc(yearsText(row.years)) : "—"}</td>
+        <td class="fuad-num">${row.rfa ? "—" : esc(dollars(row.salary))}</td>
+        <td class="fuad-num fuad-muted">${esc(contractYears(row))}</td>
         ${cut ? `<td class="fuad-num fuad-wide">${row.cutPenalty ? esc(dollars(row.cutPenalty)) : "—"}</td><td class="fuad-num fuad-wide">${esc(dollars(row.capAfterCut))}</td>` : ""}
         <td class="fuad-wide">${esc(row.nfl || "FA")}</td><td class="fuad-num fuad-wide">${esc(row.bye || "—")}</td><td class="fuad-num fuad-wide">${esc(pts(row.points))}</td>
     </tr>`;
     const head = `<tr><th scope="col">Player</th><th scope="col" class="fuad-num">Salary</th><th scope="col" class="fuad-num">Years</th>
         ${cut ? '<th scope="col" class="fuad-num fuad-wide">Cut penalty</th><th scope="col" class="fuad-num fuad-wide">Cap used after cut</th>' : ""}
-        <th scope="col" class="fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">Pts</th></tr>`;
+        <th scope="col" class="fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">${esc(pointsLabel)}</th></tr>`;
     const penalties = sheet.penalties.length ? `<tbody>
         <tr class="fuad-group"><th scope="rowgroup">Penalties · ${sheet.penalties.length}</th><td class="fuad-num">${esc(dollars(sheet.penaltyTotal))}</td><td colspan="${columns - 2}"></td></tr>
         ${sheet.penalties.map((penalty) => `<tr>
@@ -196,10 +196,10 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         trade: (teamId, playerId = null) => (viewer ? `${base}/options?L=${context.leagueId}&O=05&FRANCHISE=${viewer},${teamId}${playerId ? `#player-${encodeURIComponent(playerId)}` : ""}` : null)
     };
 
-    const exp = (type, params = {}, {base: from = host, optional = false} = {}) => {
+    const exp = (type, params = {}, {base: from = host, optional = false, year = season} = {}) => {
         const leagueParams = from === host ? {L: context.leagueId, ...params} : params;
         const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
-        const request = fetchExport(exportUrl(from, season, type, leagueParams), section, {fetchImpl: pageFetch, init: {cache: "no-store"}});
+        const request = fetchExport(exportUrl(from, year, type, leagueParams), section, {fetchImpl: pageFetch, init: {cache: "no-store"}});
         return optional ? request.catch((error) => {
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
@@ -245,7 +245,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const [futureDraftPicks, byes, points] = await Promise.all([
             exp("futureDraftPicks", {}, {optional: true}),
             cached(`fuad.byes.${season}`, DAY, () => exp("nflByeWeeks", {}, {base: API_BASE})).catch(() => null),
-            exp("playerScores", {W: "YTD"}, {optional: true})
+            // before week 1 the new site has no points: last season's, from its own site
+            beforeSeason().then((before) => exp("playerScores", {W: "YTD"}, {optional: true, year: before ? season - 1 : season}))
         ]);
         return {futureDraftPicks, byes: byeWeeks(byes), points: pointsById(points)};
     });
@@ -267,9 +268,18 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const rows = draftOrder(playoffPicture(divisions), {finish, futureDraftPicks, names, nextYear: season + 1});
         return {rows, final: Boolean(finish)};
     });
+    // this site's draft before it's held (its picks matter most then), else null
+    const coming = once(async () => {
+        if (!(await beforeSeason())) {
+            return null;
+        }
+        const [{built, names}, results] = await Promise.all([league(), exp("draftResults", {}, {optional: true})]);
+        const board = draftBoard(results, {names, players: built.players, salaries: new Map()});
+        return board.length && !drafted(board) ? board : null;
+    });
     const sheets = once(async () => {
-        const [{built, salaryAdjustments, names}, {futureDraftPicks, byes, points}] = await Promise.all([league(), extras()]);
-        return teamSheets(built, {salaryAdjustments, futureDraftPicks, byes, points, season, names});
+        const [{built, salaryAdjustments, names}, {futureDraftPicks, byes, points}, board] = await Promise.all([league(), extras(), coming()]);
+        return teamSheets(built, {salaryAdjustments, futureDraftPicks, byes, points, season, names, board});
     });
 
     const root = document.createElement("main");
@@ -313,12 +323,15 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         drawPanel(mount, {
             what: teamId === viewer ? "your team" : "this team", key: `fuad.rosters.team.${season}.${teamId}`, maxAge: 2 * MINUTE, rows: 10,
             load: async () => {
-                const [all, {futureDraftPicks}, {names}, before] = await Promise.all([sheets(), extras(), league(), beforeSeason()]);
+                const [all, {futureDraftPicks}, {names}, before, board] = await Promise.all([sheets(), extras(), league(), beforeSeason(), coming()]);
                 const sheet = all.find((entry) => entry.id === teamId);
                 if (!sheet) {
                     throw new Error(`no team ${teamId}`);
                 }
-                return {sheet, picks: picksOf(teamId, futureDraftPicks, {names, nextYear: season + 1}), live: !before};
+                // before the draft its picks first, then the two years after it, also tradable
+                // the board has this year's, should MFL still list them as future picks
+                const later = picksOf(teamId, futureDraftPicks, {names, nextYear: season + 1}).filter((entry) => !board || entry.year > season);
+                return {sheet, picks: board ? [boardPicksOf(teamId, board, season), ...later] : later, live: !before};
             },
             render: ({sheet, picks, live}, body) => {
                 const own = teamId === viewer;
@@ -330,7 +343,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     ${viewer && !own ? `<a class="fuad-cta" href="${esc(actions.trade(teamId))}">Propose a trade</a>` : ""}
                 </div>` : ""}
                 ${capPanel(sheet)}
-                ${rosterTable(sheet, {cut: own})}
+                ${rosterTable(sheet, {cut: own, pointsLabel: live ? "Pts" : `${season - 1} pts`})}
                 <div class="fuad-picks-mount">${picksPanels(picks, {nextYear: season + 1, live})}</div>`;
                 // next year's pick numbers once the order is known (it needs the standings)
                 if (live) {
@@ -356,7 +369,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             }
             drawPanel(mount, {
                 what: "teams", key: `fuad.rosters.teams.${season}`, maxAge: 2 * MINUTE, rows: 10,
-                load: async () => (await sheets()).map((sheet) => ({id: sheet.id, name: sheet.name, capUsed: sheet.capUsed, tight: sheet.tight, picksLine: sheet.picksLine, active: sheet.active, ir: sheet.ir, seasons: sheet.seasons})),
+                load: async () => (await sheets()).map((sheet) => ({id: sheet.id, name: sheet.name, capUsed: sheet.capUsed, tight: sheet.tight, picksLine: sheet.picksLine, picksYear: sheet.picksYear, active: sheet.active, ir: sheet.ir, seasons: sheet.seasons})),
                 render: (list, body) => {
                     mount.classList.remove("fuad-panel");
                     const later = list[0] ? list[0].seasons.slice(1) : [];
@@ -365,10 +378,10 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             <a class="fuad-team-row" href="#rosters-teams/${esc(team.id)}">
                                 <span class="fuad-team-line"><span class="fuad-row-title">${esc(team.name)}</span><span class="fuad-figure ${team.tight ? "fuad-caution" : ""}">${esc(dollars(team.capUsed))}</span></span>
                                 <span class="fuad-power-bar" aria-hidden="true"><span class="${team.id === viewer ? "fuad-bar-mine" : ""}" style="width: ${Math.min(100, Math.round(team.capUsed / SALARY_CAP * 100))}%"></span></span>
-                                <span class="fuad-meta">${season + 1} picks ${esc(team.picksLine)} · ${team.active} / 30${team.ir ? ` + ${team.ir} IR` : ""}</span>
+                                <span class="fuad-meta">${team.picksYear} picks ${esc(team.picksLine)} · ${team.active} / 30${team.ir ? ` + ${team.ir} IR` : ""}</span>
                             </a></li>`).join("")}</ul>
                         <div class="fuad-table-scroll fuad-desktop-only"><table class="fuad-table fuad-teams">
-                            <thead><tr><th scope="col">Team</th><th scope="col">Cap used</th><th scope="col" class="fuad-num">${season + 1} picks</th>
+                            <thead><tr><th scope="col">Team</th><th scope="col">Cap used</th><th scope="col" class="fuad-num">${list.length ? list[0].picksYear : season + 1} picks</th>
                                 ${later.map((entry) => `<th scope="col" class="fuad-num">’${String(entry.season).slice(2)}</th>`).join("")}<th scope="col" class="fuad-num">Roster</th><th scope="col"><span class="fuad-hidden">Open</span></th></tr></thead>
                             <tbody>${list.map((team) => `<tr class="fuad-row-link${team.id === viewer ? " fuad-row-mine" : ""}" data-href="#rosters-teams/${esc(team.id)}">
                                 <th scope="row" class="fuad-team"><a href="#rosters-teams/${esc(team.id)}">${esc(team.name)}</a></th>
@@ -424,7 +437,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         const phone = key === "name" || phoneKeys.includes(key) ? "" : " fuad-wide";
                         switch (key) {
                             case "name": {
-                                const contract = player.fa ? "Free agent" : player.rfa ? "RFA" : `${before ? "" : `${dollars(player.salary)} · `}${yearsText(player.years)}`;
+                                const contract = player.fa ? "Free agent" : player.rfa ? "RFA" : `${before ? "" : `${dollars(player.salary)} · `}${contractYears(player)}`;
                                 return `<th scope="row" class="fuad-team"><button type="button" class="fuad-name" data-player="${esc(player.id)}">${esc(player.name)}</button>
                                     <span class="fuad-meta fuad-phone-only">${esc([player.position, player.nfl, contract, player.fa ? "" : player.ownerName].filter(Boolean).join(" · "))}</span></th>`;
                             }
@@ -434,7 +447,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             case "projected": return `<td class="fuad-num${phone}">${player.projected === null ? "—" : esc(player.projected.toFixed(1))}</td>`;
                             case "points": return `<td class="fuad-num${phone}">${esc(pts(player.points))}</td>`;
                             case "salary": return `<td class="fuad-num${phone}">${player.salary === null ? "—" : esc(dollars(player.salary))}</td>`;
-                            case "years": return `<td class="fuad-num fuad-muted${phone}">${player.fa ? (before ? "UFA" : "—") : player.rfa ? "RFA" : esc(yearsText(player.years))}</td>`;
+                            case "years": return `<td class="fuad-num fuad-muted${phone}">${player.fa ? (before ? "UFA" : "—") : player.rfa ? "RFA" : esc(contractYears(player))}</td>`;
                             default: return `<td class="fuad-muted${phone}">${esc(player.ownerName)}</td>`;
                         }
                     };

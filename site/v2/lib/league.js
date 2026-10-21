@@ -213,3 +213,26 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
 
     return {players, franchises, rosteredPlayers, week, injuryReportKnown};
 }
+
+// v2's pages only (the daily job doesn't call it): rostered players with no contract years are the
+// commissioner's RFAs ($0.01 after the rollover, read as $0) or players whose length is still due
+// (draft day, or an add's hour). Cutting one whose length is due costs a 1-year penalty, the
+// shortest he can end up with, except a rookie from this season's draft (`rookies`, player ids).
+export function markContracts(league, rookies = new Set()) {
+    for (const player of league.rosteredPlayers) {
+        if (player.years > 0) {
+            continue;
+        }
+        player.rfa = player.salary === 0;
+        player.lengthDue = player.salary >= 1;
+        if (player.lengthDue && !rookies.has(player.playerId)) {
+            player.capPenalty = capPenalty(1, player.salary);
+            player.netCapSpace = player.salary - player.capPenalty;
+        }
+    }
+    return league;
+}
+
+// the players picked in a draftResults export
+export const draftedIds = (draftResults) => new Set(asArray(draftResults && draftResults.draftUnit)
+    .flatMap((unit) => asArray(unit.draftPick)).map((pick) => pick.player).filter(Boolean));
