@@ -61,7 +61,7 @@ function siteMenu(groups) {
     </section>`;
 }
 
-function teamSheet({team, member, myTeam, logout, become, franchiseId}) {
+function teamSheet({team, member, setup, logout, become, franchiseId}) {
     const switchTo = become && become.getAttribute("href");
     return `
     <section class="fuad-sheet" role="dialog" aria-modal="true" aria-labelledby="fuad-sheet-title">
@@ -71,7 +71,7 @@ function teamSheet({team, member, myTeam, logout, become, franchiseId}) {
             <button type="button" class="fuad-close" data-close aria-label="Close">${CLOSE_ICON}</button>
         </div>
         <div class="fuad-sheet-actions">
-            ${member && myTeam ? `<a class="fuad-button" href="${esc(myTeam)}">My team</a>` : ""}
+            ${member && setup ? `<a class="fuad-button fuad-button-quiet" href="${esc(setup.getAttribute("href"))}">Franchise setup</a>` : ""}
             ${logout ? `<a class="fuad-button fuad-button-quiet" href="${esc(logout.getAttribute("href"))}">Log out</a>` : ""}
         </div>
         ${switchTo ? `
@@ -129,9 +129,8 @@ export function drawFrame({context, storage}) {
     const logout = mflLink((a) => /^log\s*out$/i.test(clean(a.textContent)));
     const login = mflLink((a) => /^log\s*in$/i.test(clean(a.textContent)));
     const become = mflLink((a) => /[?&]BECOME=/.test(a.getAttribute("href")));
+    const setup = mflLink((a) => /\/csetup\?.*\bC=FRANCHISE\b/.test(a.getAttribute("href")));
     const loggedIn = Boolean(franchiseId);
-    const rosters = all.find((section) => section.name === "Rosters");
-    const myTeam = member ? rosters.views[0].href : null;
     const mflTitle = clean((document.querySelector(".pagetitle h1") || {}).textContent);
 
     const root = document.createElement("div");
@@ -151,7 +150,7 @@ export function drawFrame({context, storage}) {
     <nav class="fuad-views" hidden></nav>
     <nav class="fuad-sections fuad-sections-bottom" aria-label="Sections"></nav>
     <div class="fuad-layer fuad-menu-layer" hidden>${siteMenu(mflMenu())}</div>
-    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, myTeam, logout, become, franchiseId})}</div>` : ""}`;
+    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, setup, logout, become, franchiseId})}</div>` : ""}`;
 
     const render = () => {
         const page = pageOf(window.location, tabs);
@@ -181,8 +180,12 @@ export function drawFrame({context, storage}) {
     const menuButton = root.querySelector(".fuad-menu-button");
     const menuLayer = root.querySelector(".fuad-menu-layer");
     wireMenu(menuLayer);
+    // with a mouse, the filter takes focus so typing finds a page; on a touch screen that would raise
+    // the keyboard over the menu
+    const filter = menuLayer.querySelector(".fuad-search input");
     menuButton.addEventListener("click", () => {
         menuButton.setAttribute("aria-expanded", "true");
+        filter.toggleAttribute("autofocus", window.matchMedia("(hover: hover) and (pointer: fine)").matches);
         openDialog(menuLayer, {onClose: () => menuButton.setAttribute("aria-expanded", "false")});
     });
     const teamButton = root.querySelector(".fuad-team");
