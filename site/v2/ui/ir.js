@@ -122,10 +122,12 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         const blocked = irBlockText(result);
         const count = result.toIR.length + result.activate.length + (result.drop ? 1 : 0);
         const off = Boolean(blocked) || !count || state.busy;
-        const activeTone = limits() && result.active.to > ROSTER_MAX ? "fuad-bad" : "";
+        const activeTone = (active) => (limits() && active > ROSTER_MAX ? "fuad-bad" : "");
+        // where the team stands, and with a move ticked, where it would stand: each number in its own tone
+        const figure = (label, {from, to}, tone, show, most) => `<span class="fuad-ir-figure"><span class="fuad-muted">${label}</span> <strong><span class="${tone(from)}">${esc(show(from))}</span>${from === to ? "" : ` → <span class="${tone(to)}">${esc(show(to))}</span>`}</strong>${most === null ? "" : ` <span class="fuad-muted">of ${esc(show(most))}</span>`}</span>`;
         return `<section class="fuad-ir-bar${blocked ? " fuad-ir-bar-blocked" : ""}" aria-label="Result">
-            <span class="fuad-ir-figure"><span class="fuad-muted">Active</span> <strong>${result.active.from} → <span class="${activeTone}">${result.active.to}</span></strong></span>
-            <span class="fuad-ir-figure"><span class="fuad-muted">Cap used</span> <strong>${esc(money(result.cap.from))} → <span class="${capTone(result.cap.to)}">${esc(money(result.cap.to))}</span></strong></span>
+            ${figure("Active", result.active, activeTone, String, limits() ? ROSTER_MAX : null)}
+            ${figure("Cap used", result.cap, capTone, money, SALARY_CAP)}
             <span class="fuad-ir-why">${blocked ? `<strong class="fuad-bad">Blocked:</strong> ${esc(blocked)}` : ""}</span>
             <button type="button" class="fuad-ir-save" data-act="save"${off ? " disabled" : ""}>${state.busy ? "Saving…" : count ? "Save IR moves" : "Nothing to save"}</button>
         </section>`;
@@ -159,17 +161,17 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
 
     function deskTable(groupList, result) {
         return `<section class="fuad-panel fuad-ir-table" aria-label="Injured reserve"><div class="fuad-ir-wide">
-            <div class="fuad-ir-line fuad-ir-columns" aria-hidden="true"><span>Player</span><span>Pos</span><span>NFL</span><span class="fuad-num">Salary</span><span>NFL status</span><span>Expected back</span><span></span></div>
+            <div class="fuad-ir-line fuad-ir-columns" aria-hidden="true"><span>Player</span><span class="fuad-mid">Pos</span><span class="fuad-mid">NFL</span><span class="fuad-num">Salary</span><span>NFL status</span><span class="fuad-mid">Expected back</span><span></span></div>
             ${groupList.map(({id, title, rows, kind, empty}) => `<h2 class="fuad-ir-group-head" id="${id}">${esc(title)}</h2>
                 ${rows.map((row) => {
                     const {on, html} = box(row, kind, result);
                     return `<div class="fuad-ir-line fuad-ir-item${on ? " fuad-ir-on-row" : ""}">
                         <span><button type="button" class="fuad-ir-name fuad-ir-link" data-act="player" data-id="${esc(row.player.playerId)}">${esc(row.player.fullName)}</button></span>
-                        <span class="fuad-muted">${esc(row.player.nflPosition || "")}</span>
-                        <span class="fuad-muted">${esc(row.player.team || "")}</span>
+                        <span class="fuad-mid fuad-muted">${esc(row.player.nflPosition || "")}</span>
+                        <span class="fuad-mid fuad-muted">${esc(row.player.team || "")}</span>
                         <span class="fuad-num"><strong>${esc(money(row.player.salary))}</strong></span>
                         <span class="${row.must ? "fuad-bad" : "fuad-muted"}">${esc(row.status)}</span>
-                        <span class="fuad-muted">${esc(row.back)}</span>
+                        <span class="fuad-mid fuad-muted">${esc(row.back)}</span>
                         <label class="fuad-ir-act">${html}</label>
                     </div>`;
                 }).join("") || `<p class="fuad-ir-empty">${esc(empty)}</p>`}`).join("")}
@@ -191,8 +193,8 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
             if (wide.matches) {
                 return `<label class="fuad-ir-dline fuad-ir-drow${on ? " fuad-ir-on-row" : ""}${choice.off ? " fuad-ir-off" : ""}">${radio(choice)}
                     <span class="fuad-ir-name">${esc(player.fullName)}</span>
-                    <span class="fuad-muted">${esc(player.nflPosition || "")}</span>
-                    <span class="fuad-muted">${esc(player.team || "")}</span>
+                    <span class="fuad-mid fuad-muted">${esc(player.nflPosition || "")}</span>
+                    <span class="fuad-mid fuad-muted">${esc(player.team || "")}</span>
                     <span class="fuad-num">${player.rfa ? "—" : esc(money(player.salary))}</span>
                     <span class="fuad-num fuad-muted">${esc(contractYears(player))}</span>
                     <span class="fuad-num">${choice.off ? `<span class="fuad-muted">${esc(choice.why)}</span>` : esc(money(choice.penalty))}</span>
@@ -205,11 +207,11 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
             </label>`;
         }).join("");
         const head = wide.matches
-            ? '<div class="fuad-ir-dline fuad-ir-columns" aria-hidden="true"><span></span><span>Player</span><span>Pos</span><span>NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span></div>'
+            ? '<div class="fuad-ir-dline fuad-ir-columns" aria-hidden="true"><span></span><span>Player</span><span class="fuad-mid">Pos</span><span class="fuad-mid">NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span></div>'
             : "";
         return `<section class="fuad-panel fuad-ir-drops${result.drop ? "" : " fuad-ir-drops-needed"}" aria-labelledby="fuad-ir-drop-head">
             <h2 id="fuad-ir-drop-head">Pick a drop</h2>
-            <div class="fuad-ir-wide">${head}<div class="fuad-ir-scroll" role="radiogroup" aria-labelledby="fuad-ir-drop-head">${rows}</div></div>
+            <div class="fuad-ir-wide">${head}<div class="fuad-ir-drop-list" role="radiogroup" aria-labelledby="fuad-ir-drop-head">${rows}</div></div>
         </section>`;
     }
 

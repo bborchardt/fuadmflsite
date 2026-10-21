@@ -103,10 +103,11 @@ export async function drawDrop({context, franchiseId, loginHref}) {
 
     function capBar() {
         const franchise = team().franchise;
-        const capTone = franchise.capTotal > SALARY_CAP ? " fuad-bad" : franchise.capTotal > SALARY_CAP - 10 ? " fuad-caution" : "";
+        const capTone = franchise.capTotal > SALARY_CAP ? "fuad-bad" : franchise.capTotal > SALARY_CAP - 10 ? "fuad-caution" : "";
         // no roster limits before the season (2.5)
-        const active = phase() === "season" ? `${franchise.numPlayers} of ${ROSTER_MAX}` : String(franchise.numPlayers);
-        return `<div class="fuad-drop-bar"><span><span class="fuad-muted">Cap used</span> <strong class="${capTone.trim()}">${esc(money(franchise.capTotal))}</strong> <span class="fuad-muted">of $${SALARY_CAP}</span></span><span><span class="fuad-muted">Active</span> <strong>${esc(active)}</strong></span></div>`;
+        const season = phase() === "season";
+        const figure = (label, value, tone, most) => `<span class="fuad-drop-figure"><span class="fuad-muted">${label}</span> <strong class="${tone}">${esc(value)}</strong>${most ? ` <span class="fuad-muted">of ${esc(most)}</span>` : ""}</span>`;
+        return `<div class="fuad-drop-bar">${figure("Active", String(franchise.numPlayers), season && franchise.numPlayers > ROSTER_MAX ? "fuad-bad" : "", season ? String(ROSTER_MAX) : "")}${figure("Cap used", money(franchise.capTotal), capTone, `$${SALARY_CAP}`)}</div>`;
     }
 
     function review(row) {
@@ -130,8 +131,10 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         </div>`;
     }
 
+    const band = (group, end = "") => `<div class="fuad-band"><span class="fuad-band-pos">${esc(group.pos)}</span><span>${group.players.length} ${group.players.length === 1 ? "player" : "players"}</span>${end}</div>`;
+
     function phoneRows(groups) {
-        return groups.map((group) => `<div class="fuad-drop-head"><span><strong>${esc(group.pos)}</strong> · ${group.players.length}</span><span>penalty · cap change</span></div>
+        return groups.map((group) => `${band(group, '<span class="fuad-band-end">penalty · cap change</span>')}
             ${group.players.map((row) => {
                 const meta = [group.pos, row.player.team, row.player.rfa ? "" : money(row.player.salary), contractYears(row.player), row.player.status === "INJURED_RESERVE" ? "IR" : "", usedNote(row)].filter(Boolean).join(" · ");
                 return rowButton(row, `<span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span><span class="fuad-meta">${esc(meta)}</span></span>
@@ -140,11 +143,11 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     }
 
     function deskRows(groups) {
-        return `<div class="fuad-drop-line fuad-drop-columns" aria-hidden="true"><span>Player</span><span>NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span><span></span></div>
-        ${groups.map((group) => `<div class="fuad-drop-group"><strong>${esc(group.pos)}</strong> · ${group.players.length}</div>
+        return `<div class="fuad-drop-line fuad-drop-columns" aria-hidden="true"><span>Player</span><span class="fuad-mid">NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span><span></span></div>
+        ${groups.map((group) => `${band(group)}
             ${group.players.map((row) => rowButton(row, `<span class="fuad-drop-line">
                 <span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span>${row.player.status === "INJURED_RESERVE" ? '<span class="fuad-tag">IR</span>' : ""}${row.usedIn ? `<span class="fuad-meta">${esc(usedNote(row))}</span>` : ""}</span>
-                <span class="fuad-muted">${esc(row.player.team || "")}</span>
+                <span class="fuad-mid fuad-muted">${esc(row.player.team || "")}</span>
                 <span class="fuad-num">${row.player.rfa ? "—" : esc(money(row.player.salary))}</span>
                 <span class="fuad-num fuad-muted">${esc(contractYears(row.player))}</span>
                 <span class="fuad-num">${row.off ? `<span class="fuad-muted">${esc(row.why)}</span>` : esc(money(row.penalty))}</span>
