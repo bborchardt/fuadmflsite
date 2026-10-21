@@ -1,12 +1,12 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
+import {buildLeague, draftedIds, markContracts, playersFromExport} from "../site/v2/lib/league.js";
 import {SALARY_CAP} from "../site/v2/lib/rules.js";
 import {playoffPicture, standings} from "../site/v2/ui/league-model.js";
 import {
-    byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, penaltiesOf, pickNumbers, picksOf, picksSummary, playerPool,
-    playoffFinish, pointsById, scaleRange, scaleText, sortPlayers, teamSheets
+    boardPicksOf, boardSummary, byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, penaltiesOf, pickNumbers, picksOf, picksSummary, playerPool,
+    contractYears, playoffFinish, pointsById, scaleRange, scaleText, sortPlayers, teamSheets
 } from "../site/v2/ui/rosters-model.js";
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
@@ -160,4 +160,33 @@ test("the playoff finish waits for its last week to be done", () => {
     const brackets = [fixture("playoff-bracket-2025-1.json").playoffBracket, fixture("playoff-bracket-2025-2.json").playoffBracket];
     assert.equal(playoffFinish(brackets, {completedWeek: 16}), null);
     assert.equal(playoffFinish(brackets, {completedWeek: 17}).length, 6);
+});
+
+test("0-year contracts: an RFA at $0.01, a length due costing a 1-year cut, a rookie's cut free", () => {
+    const rosters = JSON.parse(JSON.stringify(fixture("rosters.json").rosters));
+    const [rfa, auction, rookie] = rosters.franchise[0].player;
+    Object.assign(rfa, {salary: "0.01", contractYear: "0"});
+    Object.assign(auction, {salary: "12", contractYear: "0"});
+    Object.assign(rookie, {salary: "6", contractYear: "0"});
+    const built = buildLeague({players: playersFromExport(playersExport), league: settings, salaryAdjustments: fixture("salary-adjustments.json").salaryAdjustments, rosters, freeAgents: fixture("free-agents.json").freeAgents});
+    markContracts(built, draftedIds({draftUnit: {draftPick: [{player: rookie.id}, {player: ""}]}}));
+    const [a, b, c] = [rfa, auction, rookie].map((entry) => built.players.get(entry.id));
+    assert.deepEqual([a, b, c].map(contractYears), ["RFA", "length due", "length due"]);
+    // 12 × 0.4 × 1 = 4.8, rounded up
+    assert.deepEqual([a, b, c].map((player) => player.capPenalty), [0, 5, 0]);
+    assert.equal(contractYears({years: 2}), "2 yrs");
+});
+
+test("before the draft, a team's picks in it come from the board: held ones numbered, its own traded away", () => {
+    const board = draftBoard(fixture("draft-results.json").draftResults, {names, players: playersFromExport(playersExport), salaries: new Map()});
+    // slot 6 is 0007's; 1.06 went to another team
+    const seven = boardPicksOf("0007", board, 2026);
+    assert.equal(seven.year, 2026);
+    const first = seven.rows.find((row) => row.round === 1);
+    assert.equal(first.traded, true);
+    assert.match(first.note, /^Traded to /);
+    const holder = board[0].picks.find((pick) => pick.number === "1.06").team;
+    assert.ok(boardPicksOf(holder, board, 2026).rows.some((row) => row.number === "1.06" && row.note === `from ${names.get("0007")}`));
+    const held = board.flatMap((round) => round.picks).filter((pick) => pick.team === "0007");
+    assert.match(boardSummary("0007", board), new RegExp(`^${held.length}`));
 });

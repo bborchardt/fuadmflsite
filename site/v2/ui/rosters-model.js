@@ -13,6 +13,9 @@ export const SCALE_PICKS = 10;
 export const TIGHT = 10;
 
 export const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;
+// a rostered player's years as every view writes them: "2 yrs", the commissioner's "RFA" (no salary
+// shown), or "length due" (draft day or an add's hour; lib/league.js markContracts)
+export const contractYears = (player) => (player.years > 0 ? yearsText(player.years) : player.lengthDue ? "length due" : "RFA");
 export const dollars = (value) => `$${Number.isInteger(value) ? value : Number(value).toFixed(2)}`;
 
 const centralDate = (seconds) => new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", timeZone: "America/Chicago"}).replace(",", "");
@@ -81,6 +84,7 @@ export function rosterGroups(team, rosteredPlayers, {byes, points}) {
         points: points.get(player.playerId) || 0,
         salary: player.salary,
         years: player.years,
+        rfa: Boolean(player.rfa), lengthDue: Boolean(player.lengthDue),
         ir: player.status === "INJURED_RESERVE",
         nflIr: /^IR/.test(player.injuryStatus || ""),
         cutPenalty: player.capPenalty,
@@ -133,7 +137,8 @@ export function picksSummary(teamId, futureDraftPicks, year) {
 }
 
 // every team's sheet, least cap used first
-export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, points, season, names}) {
+// `board`: the coming draft's, before it's held; its picks are then the ones counted
+export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, points, season, names, board = null}) {
     return [...league.franchises.values()].map((team) => {
         const penalties = penaltiesOf(team, salaryAdjustments);
         const penaltyTotal = Math.round(penalties.reduce((sum, penalty) => sum + penalty.amount, 0) * 100) / 100;
@@ -149,7 +154,8 @@ export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, p
             seasons: usedBySeason(team, league.rosteredPlayers, season),
             groups: rosterGroups(team, league.rosteredPlayers, {byes, points}),
             penalties,
-            picksLine: picksSummary(team.franchiseId, futureDraftPicks, season + 1)
+            picksYear: board ? season : season + 1,
+            picksLine: board ? boardSummary(team.franchiseId, board) : picksSummary(team.franchiseId, futureDraftPicks, season + 1)
         };
     }).sort((a, b) => a.capUsed - b.capUsed || a.name.localeCompare(b.name));
 }
@@ -160,12 +166,12 @@ export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, p
 // expiring contracts are restricted free agents (0 years left, still on the roster).
 export function playerPool(league, {freeAgents, points, projections, byes, names, offseason}) {
     const rostered = league.rosteredPlayers.map((player) => {
-        const rfa = offseason && !(player.years > 0);
+        const rfa = offseason && Boolean(player.rfa);
         return {
             id: player.playerId, name: player.fullName, position: player.nflPosition, nfl: player.team,
             bye: byes.get(player.team) || "", points: points.get(player.playerId) || 0,
             projected: projections.has(player.playerId) ? projections.get(player.playerId) : null,
-            salary: rfa ? null : player.salary, years: rfa ? null : player.years, rfa, fa: false,
+            salary: rfa ? null : player.salary, years: rfa ? null : player.years, rfa, lengthDue: Boolean(player.lengthDue), fa: false,
             owner: player.franchise.franchiseId, ownerName: names.get(player.franchise.franchiseId) || player.franchise.teamName
         };
     });
@@ -313,12 +319,36 @@ export function draftBoard(draftResults, {names, players, salaries}) {
             number: `${round}.${pick.pick}`,
             team: pick.franchise,
             teamName: names.get(pick.franchise) || pick.franchise,
+            original: originals.get(pick.pick) || null,
             from: fromOf(pick),
             player: player ? {id: player.playerId, name: player.fullName, position: player.nflPosition} : null,
             salary: player && salaries.has(player.playerId) ? salaries.get(player.playerId) : null
         });
     });
     return [...rounds].sort((a, b) => a[0] - b[0]).map(([round, list]) => ({round, picks: list}));
+}
+
+// Before the draft, a team's picks in it from the board, as picksOf writes a year: those it holds
+// numbered ("1.09", "from …"), its own traded away greyed
+export function boardPicksOf(teamId, board, year) {
+    const rows = [];
+    for (const round of board) {
+        for (const pick of round.picks) {
+            if (pick.team === teamId) {
+                rows.push({round: round.round, number: pick.number, note: pick.from ? `from ${pick.from}` : "", traded: false});
+            } else if (pick.original === teamId) {
+                rows.push({round: round.round, number: "", note: `Traded to ${pick.teamName}`, traded: true});
+            }
+        }
+    }
+    return {year, rows};
+}
+
+// "7 · 2 1sts", "4 · no 1st": a team's picks in the coming draft, from the board
+export function boardSummary(teamId, board) {
+    const mine = board.flatMap((round) => round.picks.filter((pick) => pick.team === teamId).map(() => round.round));
+    const firsts = mine.filter((round) => round === 1).length;
+    return `${mine.length}${firsts === 1 ? "" : firsts === 0 ? " · no 1st" : ` · ${firsts} 1sts`}`;
 }
 
 export const drafted = (board) => board.some((round) => round.picks.some((pick) => pick.player));

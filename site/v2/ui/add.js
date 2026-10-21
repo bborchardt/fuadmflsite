@@ -11,10 +11,11 @@ import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
-import {Refused, failedLine, freshPending, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {contractTopic} from "./home-model.js";
+import {contractYears} from "./rosters-model.js";
 import {
-    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
+    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
     commentLines, copyTargets, cutLater, fullNameLines, isLengthLine, dropGroups, droppedByTeam, freeAgentRows, groupViews, injuryText, lengthLine, lineFor, maxBid,
     firstLast, projection, readPlayerLists, rewriteComment, signed, surname, teamState, usedTone, yearsIn
 } from "./add-model.js";
@@ -35,7 +36,6 @@ const SEARCH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 
 const money = (amount) => `$${Math.round(amount * 100) / 100}`;
-const yearsShort = (years) => `${years} yr${years === 1 ? "" : "s"}`;
 const tone = (name) => (name ? ` fuad-${name}` : "");
 
 // ---- MFL's page ----
@@ -240,6 +240,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
     const phase = () => movesPhase(state.data.facts);
+    // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
+    const checks = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : phase());
     const now = () => Date.now() / 1000;
     const names = (id) => {
         const listed = lists.add.find((player) => player.id === id) || lists.drop.find((player) => player.id === id);
@@ -257,7 +259,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     function composeChecks() {
         const c = state.compose;
         const t = team();
-        const ph = phase();
+        const ph = checks();
         if (c.kind === "bid") {
             const bid = Math.max(0, parseInt(c.bid, 10) || 0);
             const result = checkBid(t, {round: c.round, claim: {add: c.add, bid, drop: c.drop || null}, without: c.editing, phase: ph});
@@ -276,11 +278,11 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         const c = state.compose;
         const t = team();
         if (c.kind === "bid") {
-            const result = checkBid(t, {round: c.round, claim: {add: c.add, bid: 1, drop: id}, without: c.editing, phase: phase()});
+            const result = checkBid(t, {round: c.round, claim: {add: c.add, bid: 1, drop: id}, without: c.editing, phase: checks()});
             return result;
         }
         const fa = freeAgent(c.add);
-        return checkAdd(t, {cost: fa ? fa.salary || 1 : 1, drop: id, phase: phase()});
+        return checkAdd(t, {cost: fa ? fa.salary || 1 : 1, drop: id, phase: checks()});
     }
 
     // where each player is already dropped in another group
@@ -334,7 +336,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     }
 
     function copyChips(group, claim) {
-        const targets = copyTargets(team(), {round: group.round, claim, rounds: rounds(), phase: phase()});
+        const targets = copyTargets(team(), {round: group.round, claim, rounds: rounds(), phase: checks()});
         return `<span class="fuad-meta">Copy to</span>${targets.map((target) => `<button type="button" class="fuad-add-chip" data-act="copy" data-key="${esc(claim.key)}" data-round="${target.round}"${target.off ? " disabled" : ""}>${target.isNew ? "new group" : "group"} ${target.round}${target.why ? ` · ${esc(target.why)}` : ""}</button>`).join("")}`;
     }
 
@@ -349,7 +351,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     function phoneHome() {
         const b = theBanner();
-        const block = addBlock(team(), {phase: phase()});
+        const block = addBlock(team(), {phase: checks()});
         const shown = views();
         const bidsPeriod = b.kind === "bids";
         const canStart = rounds().length < MAX_GROUPS && !block && !state.busy;
@@ -414,7 +416,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             ${group.players.map((row) => {
                 const listed = row.listed;
                 const where = listed.opp && !/^bye$/i.test(listed.opp) ? `${fmtProj(listed.proj || 0)} proj` : listed.opp ? "bye" : "";
-                const meta = [money(row.player.salary), yearsShort(row.player.years), row.player.status === "INJURED_RESERVE" ? "IR" : "", where].filter(Boolean).join(" · ")
+                const meta = [row.player.rfa ? "" : money(row.player.salary), contractYears(row.player), row.player.status === "INJURED_RESERVE" ? "IR" : "", where].filter(Boolean).join(" · ")
                     + (row.usedIn ? ` · also dropped in group ${row.usedIn}` : "");
                 return `<button type="button" class="fuad-add-drop" data-act="pick-drop" data-id="${esc(row.player.playerId)}"${row.off ? " disabled" : ""} aria-pressed="${c.drop === row.player.playerId}">
                 <span class="fuad-add-name">${esc(row.player.fullName)}</span>
@@ -490,7 +492,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     function deskHome() {
         const t = team();
         const b = theBanner();
-        const block = addBlock(t, {phase: phase()});
+        const block = addBlock(t, {phase: checks()});
         const shown = views();
         const p = projection(t);
         const invalid = shown.length && (p.overCap || p.overRoster);
@@ -589,7 +591,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
         }
-        if (phase() === "closed") {
+        if (addsClosed(phase())) {
             mount.innerHTML = bannerMarkup();
             return;
         }
@@ -1093,9 +1095,9 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         render();
         // Rosters' Add opens with its player chosen (`#player-<id>`)
         const asked = (window.location.hash.match(/^#player-(\d+)$/) || [])[1];
-        if (asked && state.data && phase() !== "closed") {
+        if (asked && state.data && !addsClosed(phase())) {
             window.history.replaceState(null, "", window.location.pathname + window.location.search);
-            if (freeAgent(asked) && !rows().find((row) => row.player.id === asked).off && !addBlock(team(), {phase: phase()})) {
+            if (freeAgent(asked) && !rows().find((row) => row.player.id === asked).off && !addBlock(team(), {phase: checks()})) {
                 startCompose(asked, {replace: true});
             }
         }

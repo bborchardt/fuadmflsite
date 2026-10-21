@@ -47,11 +47,14 @@ function contractNotice(teamName, add, reading) {
 
 // Returns [{kind, franchiseId, text, warning}]; `warning` items are rule violations, the others
 // notices.
-export function ruleViolations(league, {pendingAdds = [], readings = new Map(), now = Date.now() / 1000} = {}) {
+// `cutDown` (in seconds): the final cut-down date, when the roster limits start (2.5); without it
+// they start with week 1.
+export function ruleViolations(league, {pendingAdds = [], readings = new Map(), now = Date.now() / 1000, cutDown = null} = {}) {
     const items = [];
     const week = Number(league.week);
-    // roster and IR checks run from week 1's kickoff until week 17 is over; otherwise only the cap
+    // the IR check runs from week 1's kickoff until week 17 is over; otherwise only the cap
     const rosterSeason = league.started !== false && !league.seasonOver && week <= ROSTER_CHECK_LAST_WEEK;
+    const limitsSeason = rosterSeason || (Boolean(cutDown) && now >= cutDown && !league.seasonOver);
     const push = (kind, franchise, text, warning = true) => items.push({kind, franchiseId: franchise.franchiseId, text, warning});
     for (const franchise of league.franchises.values()) {
         if (franchise.capTotal > SALARY_CAP) {
@@ -59,10 +62,10 @@ export function ruleViolations(league, {pendingAdds = [], readings = new Map(), 
                 ? `${franchise.teamName} is over the salary cap with a total salary of ${franchise.capTotal}, counting $${franchise.unchargedPenalty} in drop penalties not yet charged!`
                 : `${franchise.teamName} is over the salary cap with a total salary of ${franchise.capTotal}!`);
         }
-        if (rosterSeason && franchise.numPlayers > ROSTER_MAX) {
+        if (limitsSeason && franchise.numPlayers > ROSTER_MAX) {
             push("roster-over", franchise, `${franchise.teamName} is over the roster limit with ${franchise.numPlayers} players!`);
         }
-        if (rosterSeason && franchise.numPlayers < ROSTER_MIN) {
+        if (limitsSeason && franchise.numPlayers < ROSTER_MIN) {
             push("roster-under", franchise, `${franchise.teamName} is under the roster limit with ${franchise.numPlayers} players!`);
         }
         // today's NFL injury report is what makes a player IR-eligible
@@ -75,7 +78,8 @@ export function ruleViolations(league, {pendingAdds = [], readings = new Map(), 
                 push("ir-roster", franchise, `Moving ${healthy.length === 1 ? "him" : "them"} back would put ${franchise.teamName} at ${franchise.numPlayers + healthy.length} players, over the roster limit!`);
             }
         }
-        if (!league.tankingOver && week <= INJURY_CHECK_LAST_WEEK) {
+        // before week 1's kickoff MFL's results can list week 1's lineups, which nobody has played
+        if (league.started !== false && !league.tankingOver && week <= INJURY_CHECK_LAST_WEEK) {
             for (const player of franchise.lineup.filter((starter) => starter.injured)) {
                 push("injured-starter", franchise, `${franchise.teamName} started injured/suspended player ${player.fullName} in week ${league.week}!`);
             }
