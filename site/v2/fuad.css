@@ -166,9 +166,11 @@ body a:link,
 body a:visited,
 body a:active { color: var(--fuad-lime); }
 
-body a:hover,
-body a:link:hover,
-body a:visited:hover { color: var(--fuad-lime-hover); }
+@media (hover: hover) {
+    body a:hover,
+    body a:link:hover,
+    body a:visited:hover { color: var(--fuad-lime-hover); }
+}
 
 body .warning,
 body th.warning { color: var(--fuad-bad); }
@@ -185,12 +187,16 @@ body .myfantasyleague_menu ul ul li {
 
 body .myfantasyleague_menu { border-bottom: 1px solid var(--fuad-hairline); }
 
-body .myfantasyleague_menu ul li:hover a { color: var(--fuad-text); }
+@media (hover: hover) {
+    body .myfantasyleague_menu ul li:hover a { color: var(--fuad-text); }
+}
 
-body .myfantasyleague_menu li:hover > a,
-body .myfantasyleague_menu ul li ul li:hover > a {
-    background: var(--fuad-raised);
-    color: var(--fuad-text);
+@media (hover: hover) {
+    body .myfantasyleague_menu li:hover > a,
+    body .myfantasyleague_menu ul li ul li:hover > a {
+        background: var(--fuad-raised);
+        color: var(--fuad-text);
+    }
 }
 
 body .myfantasyleague_menu ul ul li a,
@@ -236,16 +242,22 @@ body .myfantasyleague_menu ul li label span:after,
 body .myfantasyleague_tabmenu > label span:before,
 body .myfantasyleague_tabmenu > label span:after { background: var(--fuad-lime); }
 
-body #hsubmenu ul li:hover,
-body .myfantasyleague_tabmenu #homepagetabs li:hover { background: var(--fuad-raised); }
+@media (hover: hover) {
+    body #hsubmenu ul li:hover,
+    body .myfantasyleague_tabmenu #homepagetabs li:hover { background: var(--fuad-raised); }
+}
 
-body #hsubmenu ul li:hover a,
-body .myfantasyleague_tabmenu #homepagetabs li:hover a { color: var(--fuad-text); }
+@media (hover: hover) {
+    body #hsubmenu ul li:hover a,
+    body .myfantasyleague_tabmenu #homepagetabs li:hover a { color: var(--fuad-text); }
+}
 
-body .myfantasyleague_tabmenu #homepagetabs li.currenttab,
-body .myfantasyleague_tabmenu #homepagetabs li.currenttab:hover {
-    background: var(--fuad-raised);
-    box-shadow: none;
+@media (hover: hover) {
+    body .myfantasyleague_tabmenu #homepagetabs li.currenttab,
+    body .myfantasyleague_tabmenu #homepagetabs li.currenttab:hover {
+        background: var(--fuad-raised);
+        box-shadow: none;
+    }
 }
 
 body .myfantasyleague_tabmenu #homepagetabs li.currenttab a { color: var(--fuad-lime); }
@@ -361,8 +373,10 @@ body .eventablerow a {
     text-underline-offset: 3px;
 }
 
-body .oddtablerow a:hover,
-body .eventablerow a:hover { color: var(--fuad-lime); text-decoration-color: currentColor; }
+@media (hover: hover) {
+    body .oddtablerow a:hover,
+    body .eventablerow a:hover { color: var(--fuad-lime); text-decoration-color: currentColor; }
+}
 
 body .newposition td,
 body .newposition th { border-top: 1px solid var(--fuad-hairline) !important; }
@@ -448,11 +462,13 @@ body .pagebody button {
     cursor: pointer;
 }
 
-body input[type="button"]:hover,
-body input[type="submit"]:hover,
-body .pagebody button:hover {
-    background: var(--fuad-lime-hover);
-    color: var(--fuad-on-lime);
+@media (hover: hover) {
+    body input[type="button"]:hover,
+    body input[type="submit"]:hover,
+    body .pagebody button:hover {
+        background: var(--fuad-lime-hover);
+        color: var(--fuad-on-lime);
+    }
 }
 
 body input[type="checkbox"],
@@ -553,10 +569,12 @@ body ul.MFLPlayerPopupTab li { border-color: var(--fuad-hairline); }
 
 body ul.MFLPlayerPopupTab li a { color: var(--fuad-muted); }
 
-body ul.MFLPlayerPopupTab li a:hover,
-body ul.MFLPlayerPopupTab li a.active {
-    background: var(--fuad-raised);
-    color: var(--fuad-lime);
+@media (hover: hover) {
+    body ul.MFLPlayerPopupTab li a:hover,
+    body ul.MFLPlayerPopupTab li a.active {
+        background: var(--fuad-raised);
+        color: var(--fuad-lime);
+    }
 }
 
 body #tooltip {
@@ -750,7 +768,9 @@ body [tabindex]:focus-visible {
 
 .fuad-sections-top a svg { display: none; }
 
-.fuad-sections-top a:hover { color: var(--fuad-text) !important; }
+@media (hover: hover) {
+    .fuad-sections-top a:hover { color: var(--fuad-text) !important; }
+}
 
 .fuad-sections-top a[aria-current="page"] {
     background: var(--fuad-raised);
@@ -1098,7 +1118,9 @@ body [tabindex]:focus-visible {
     font-size: 15px;
 }
 
-.fuad-menu-links a:hover { color: var(--fuad-text) !important; }
+@media (hover: hover) {
+    .fuad-menu-links a:hover { color: var(--fuad-text) !important; }
+}
 
 .fuad-menu-none { margin: 6px 0 0; font-size: 14px; }
 
@@ -1142,7 +1164,9 @@ body [tabindex]:focus-visible {
 /* an action that isn't the screen's point (the popup's Rosters actions): lime, but outlined */
 .fuad-layer .fuad-button-outline { background: transparent; border: 1px solid var(--fuad-lime); color: var(--fuad-lime) !important; font-weight: 600; }
 
-.fuad-layer .fuad-button-outline:hover { background: var(--fuad-lime-tint); }
+@media (hover: hover) {
+    .fuad-layer .fuad-button-outline:hover { background: var(--fuad-lime-tint); }
+}
 
 .fuad-switch { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 
@@ -1415,9 +1439,11 @@ body [tabindex]:focus-visible {
 #fuad-league a,
 #fuad-rosters a { color: var(--fuad-lime); text-decoration: none; }
 
-#fuad-home a:hover,
-#fuad-league a:hover,
-#fuad-rosters a:hover { color: var(--fuad-lime-hover); }
+@media (hover: hover) {
+    #fuad-home a:hover,
+    #fuad-league a:hover,
+    #fuad-rosters a:hover { color: var(--fuad-lime-hover); }
+}
 
 /* two columns of variable panels on desktop, the same gap in both, bottoms left to fall where they
    may; on phones one column in the reading order: alerts, league, chat, board, moves, dates */
@@ -2455,7 +2481,9 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
-#fuad-rosters .fuad-name:hover { color: var(--fuad-lime); }
+@media (hover: hover) {
+    #fuad-rosters .fuad-name:hover { color: var(--fuad-lime); }
+}
 
 #fuad-rosters .fuad-team .fuad-meta { display: block; font-weight: 400; }
 
@@ -2649,12 +2677,14 @@ body #fuad-home select {
     #fuad-rosters .fuad-table tbody td { vertical-align: middle; }
 }
 
-/* Teams on desktop: a row opens its team, the name lime as a link, a chevron at the end */
+/* Teams on desktop: a row opens its team (the name white like every name, lime on hover), a chevron at the end */
 #fuad-rosters .fuad-row-link { cursor: pointer; }
 
-#fuad-rosters .fuad-row-link:hover > * { background: var(--fuad-raised); }
+@media (hover: hover) {
+    #fuad-rosters .fuad-row-link:hover > * { background: var(--fuad-raised); }
+    #fuad-rosters .fuad-teams .fuad-row-link:hover .fuad-team a { color: var(--fuad-lime); }
+}
 
-#fuad-rosters .fuad-teams .fuad-team a { color: var(--fuad-lime); }
 
 #fuad-rosters .fuad-chevron { width: 16px; color: var(--fuad-muted); font-size: 20px; line-height: 1; text-align: right; }
 
@@ -2735,7 +2765,9 @@ body #fuad-home select {
 
 #fuad-lineup a { color: var(--fuad-lime); text-decoration: none; }
 
-#fuad-lineup a:hover { color: var(--fuad-lime-hover); }
+@media (hover: hover) {
+    #fuad-lineup a:hover { color: var(--fuad-lime-hover); }
+}
 
 #fuad-lineup button { font-family: var(--fuad-body); }
 
@@ -2939,7 +2971,9 @@ body #fuad-home select {
 
 #fuad-lineup .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
-#fuad-lineup .fuad-name:hover { color: var(--fuad-lime); }
+@media (hover: hover) {
+    #fuad-lineup .fuad-name:hover { color: var(--fuad-lime); }
+}
 
 /* desktop: full-width bands, the save bar sticky, then one table by position */
 @media (min-width: 48.01em) {
@@ -3173,7 +3207,9 @@ body .fuad-reply-formats button.tbt {
     font-weight: 600;
 }
 
-body .fuad-reply-formats button.tbt:hover { background: var(--fuad-raised); color: var(--fuad-text); }
+@media (hover: hover) {
+    body .fuad-reply-formats button.tbt:hover { background: var(--fuad-raised); color: var(--fuad-text); }
+}
 
 body .fuad-reply-formats button[data-format="B"] { font-weight: 800; }
 
@@ -3814,7 +3850,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
 #fuad-add .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
-#fuad-add .fuad-name:hover { color: var(--fuad-lime); }
+@media (hover: hover) {
+    #fuad-add .fuad-name:hover { color: var(--fuad-lime); }
+}
 
 @media (min-width: 48.01em) {
     #fuad-add { gap: 16px; padding-top: 0; }
@@ -4458,7 +4496,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
     #fuad-ir .fuad-ir-link::after { content: ""; position: absolute; left: -4px; right: -4px; top: -12px; bottom: -12px; }
 
-    #fuad-ir .fuad-ir-link:hover { color: var(--fuad-lime); }
+    @media (hover: hover) {
+        #fuad-ir .fuad-ir-link:hover { color: var(--fuad-lime); }
+    }
 
     #fuad-ir .fuad-ir-act { cursor: pointer; }
 
@@ -4656,7 +4696,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 #fuad-trades .fuad-trades-name { font-weight: 600; overflow-wrap: anywhere; }
 
 #fuad-trades .fuad-trades-link { position: relative; padding: 0; font-size: inherit; text-align: left; }
-#fuad-trades .fuad-trades-link:hover { color: var(--fuad-lime); }
+@media (hover: hover) {
+    #fuad-trades .fuad-trades-link:hover { color: var(--fuad-lime); }
+}
 #fuad-trades .fuad-trades-link::after { content: ""; position: absolute; left: -4px; right: -4px; top: -10px; bottom: -10px; }
 
 /* the effect spans the card under both sides on phones */
@@ -4746,7 +4788,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     overflow-wrap: anywhere;
 }
 
-#fuad-trades .fuad-trades-partner:hover { color: var(--fuad-lime); }
+@media (hover: hover) {
+    #fuad-trades .fuad-trades-partner:hover { color: var(--fuad-lime); }
+}
 
 #fuad-trades .fuad-trades-used { flex: none; font-size: 13px; font-weight: 500; }
 
