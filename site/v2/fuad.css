@@ -4356,15 +4356,10 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
 #fuad-ir .fuad-ir-drops h2 { padding-bottom: 8px; }
 
-/* all the active players, in a box that scrolls inside itself */
-#fuad-ir .fuad-ir-scroll {
-    max-height: 300px;
-    overflow-y: auto;
-    border-top: 1px solid var(--fuad-rule);
-    border-bottom: 1px solid var(--fuad-rule);
-}
+/* all the active players, at full length: only the page scrolls, and the bar stays pinned */
+#fuad-ir .fuad-ir-drop-list { border-top: 1px solid var(--fuad-rule); }
 
-#fuad-ir .fuad-ir-scroll > :first-child { border-top: 0; }
+#fuad-ir .fuad-ir-drop-list > :first-child { border-top: 0; }
 
 /* the result: phones keep it above the tabs while the lists scroll */
 #fuad-ir .fuad-ir-bar {
@@ -4473,7 +4468,6 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
     #fuad-ir .fuad-ir-drow.fuad-ir-dline input { margin-left: 2px; }
 
-    #fuad-ir .fuad-ir-scroll { max-height: 440px; }
 
     #fuad-ir .fuad-ir-change { font-weight: 700; }
 }
