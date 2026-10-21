@@ -143,11 +143,11 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     }
 
     function deskRows(groups) {
-        return `<div class="fuad-drop-line fuad-drop-columns" aria-hidden="true"><span>Player</span><span>NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span><span></span></div>
+        return `<div class="fuad-drop-line fuad-drop-columns" aria-hidden="true"><span>Player</span><span class="fuad-mid">NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span><span></span></div>
         ${groups.map((group) => `${band(group)}
             ${group.players.map((row) => rowButton(row, `<span class="fuad-drop-line">
                 <span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span>${row.player.status === "INJURED_RESERVE" ? '<span class="fuad-tag">IR</span>' : ""}${row.usedIn ? `<span class="fuad-meta">${esc(usedNote(row))}</span>` : ""}</span>
-                <span class="fuad-muted">${esc(row.player.team || "")}</span>
+                <span class="fuad-mid fuad-muted">${esc(row.player.team || "")}</span>
                 <span class="fuad-num">${row.player.rfa ? "—" : esc(money(row.player.salary))}</span>
                 <span class="fuad-num fuad-muted">${esc(contractYears(row.player))}</span>
                 <span class="fuad-num">${row.off ? `<span class="fuad-muted">${esc(row.why)}</span>` : esc(money(row.penalty))}</span>
