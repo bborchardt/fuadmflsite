@@ -211,7 +211,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
             : "";
         return `<section class="fuad-panel fuad-ir-drops${result.drop ? "" : " fuad-ir-drops-needed"}" aria-labelledby="fuad-ir-drop-head">
             <h2 id="fuad-ir-drop-head">Pick a drop</h2>
-            <div class="fuad-ir-wide">${head}<div class="fuad-ir-scroll" role="radiogroup" aria-labelledby="fuad-ir-drop-head">${rows}</div></div>
+            <div class="fuad-ir-wide">${head}<div class="fuad-ir-drop-list" role="radiogroup" aria-labelledby="fuad-ir-drop-head">${rows}</div></div>
         </section>`;
     }
 
