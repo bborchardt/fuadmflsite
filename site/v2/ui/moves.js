@@ -2,12 +2,13 @@
 // limits depend on it, and posting MFL's own forms and links from the page.
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
-import {buildLeague, playersFromExport} from "../lib/league.js";
+import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingGroups} from "../lib/bids.js";
 import {cached} from "./store.js";
 import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
+import {calendarDates, cutDownDate} from "./home-model.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -35,7 +36,10 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
         freshInTurn()
     ]);
     const {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers} = found;
-    const league = buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents});
+    // this season's rookies, whose cut costs nothing while their length is due; only before week 1
+    const draftResults = facts.week1 && Date.now() >= facts.week1 ? null
+        : await fetchExport(exportUrl(host, season, "draftResults", {L: leagueId}), "draftResults", {fetchImpl: pageFetch}).catch(() => null);
+    const league = markContracts(buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents}), draftedIds(draftResults));
     const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
     const groups = pendingGroups(pendingWaivers);
     return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
@@ -100,6 +104,13 @@ export async function freshPending(context) {
 
 // the member's pending trades, fresh, to confirm a move
 export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}});
+
+// The roster limits hold from the final cut-down date (2.5); without one on the calendar, from week 1
+export function limitsApply(facts, calendar, now = Date.now()) {
+    const phase = movesPhase(facts, now);
+    const cut = cutDownDate(calendarDates(calendar));
+    return phase === "season" || (phase === "preseason" && Boolean(cut) && now / 1000 >= cut);
+}
 
 // Add's phase (add-model.js) from the season's dates. Without them, MFL's own week says whether
 // the season has started; a draft that couldn't be checked counts as made.

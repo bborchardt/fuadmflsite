@@ -71,13 +71,18 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new version.
 
 - **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
-- **Roster:** 23–30 active players (IR doesn't count), from week 1's kickoff until week 17 is over.
-  Going over 30 voids the move, as going over the cap does; under 23 must be fixed but voids
-  nothing.
+- **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
+  calendar event titled with "cut") until week 17 is over; the daily job, without the calendar,
+  from week 1's kickoff. Going over 30 voids the move, as going over the cap does; under 23 must be
+  fixed but voids nothing.
 - **Injured reserve:** only players the NFL lists on IR (and its variants). One who comes off must
   move back to the active roster.
-- **Anti-tanking:** starting an injured (IR or Out) or suspended player is flagged in weeks 1–14.
-- **Drop penalty:** `max(ceil(max(1, 0.4 × salary × years)), years)`.
+- **Anti-tanking:** starting an injured (IR or Out) or suspended player is flagged in weeks 1–14,
+  from week 1's kickoff.
+- **Drop penalty:** `max(ceil(max(1, 0.4 × salary × years)), years)`. A player whose length is
+  still due (0 years, $1 or more: draft day, or an add's hour) costs the 1-year penalty, except a
+  rookie from this season's draft, who costs nothing (v2's pages, `markContracts`; the daily job
+  charges none). 0 years at under $1 is an RFA after the rollover.
 - **Rookie salaries:** first pick QB $6, RB $10, WR $10, TE $4, PK $1; each later pick 80% of the
   one before, never under $1.
 - **Franchise salary:** the average of the position's top 5 salaries at the trade deadline (the first
@@ -90,7 +95,9 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   past its limit, or further past it, with every pending group's costliest claim counted; bids
   already over a limit stay "Current bids invalid" until fixed, without blocking a move that leaves
   them as they are. Over 30 active in season no adds at all, and under 23 no add drops an active
-  player (10.5); a player the team dropped can't be re-added for 48 hours (9.4).
+  player (10.5); a player the team dropped can't be re-added for 48 hours (9.4). Adds are closed
+  before the draft and after week 17. The roster limits here, in Drop, Trades and IR apply from the
+  cut-down date.
 - **Moves › Drop** (v2, `ui/drop-model.js`) blocks a cut whose penalty takes cap used past the
   cap, or further past it, with every pending group's costliest claim counted (a claim dropping the
   same player counts as no drop after it); in season, an active player's at 23 active (9.2) and any

@@ -9,13 +9,14 @@ import {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, failedLine, freshTrades, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {Refused, failedLine, freshTrades, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {teamState} from "./add-model.js";
-import {calendarDates, cutDownDate, dayText, whenText} from "./home-model.js";
+import {dayText, whenText} from "./home-model.js";
+import {contractYears} from "./rosters-model.js";
 import {
     answerFields, assetList, assetView, bidsAfter, blockReason, ctParts, ctSeconds, deadlineWeek, expiresText,
     expiryChoices, findOffer, kickoffText, lockedText, offersOf, pickGroups, pickedSummary, proposalFields,
-    readProposal, readTradesPage, rosterNotices, teamKickoffs, throughGames, tradeEffect, yearsText
+    readProposal, readTradesPage, rosterNotices, teamKickoffs, throughGames, tradeEffect
 } from "./trades-model.js";
 
 const FLASH_KEY = "fuad.tradesFlash";
@@ -119,11 +120,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
     const names = () => new Map([...state.data.league.franchises.values()].map((team) => [team.franchiseId, String(team.teamName || "").trim()]));
     const nameOf = (id) => names().get(id) || "another team";
     const phase = () => movesPhase(state.data.facts);
-    // the roster limits hold from the final cut-down date (2.5); without one, from week 1
-    const limits = () => {
-        const cut = cutDownDate(calendarDates(state.data.calendar));
-        return phase() === "season" || (phase() === "preseason" && Boolean(cut) && now() >= cut);
-    };
+    const limits = () => limitsApply(state.data.facts, state.data.calendar, now() * 1000);
     const offers = () => offersOf(state.data.fresh.pendingTrades, franchiseId);
     const view = (id, holder) => assetView(id, {league: state.data.league, mflNames: state.data.mflNames, holder, names: names(), season: context.season});
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
@@ -281,17 +278,17 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             ${group.items.map((asset) => {
                 const box = `<input type="checkbox" data-act="tick" data-side="${key}" data-id="${esc(asset.id)}"${set.has(asset.id) ? " checked" : ""} aria-label="${esc(asset.name)}">`;
                 const tag = asset.ir ? '<span class="fuad-tag">IR</span>' : "";
-                const salary = asset.player ? money(asset.player.salary) : "";
+                const salary = asset.player && !asset.player.rfa ? money(asset.player.salary) : "";
                 if (wide.matches) {
                     const name = asset.player
                         ? `<button type="button" class="fuad-trades-name fuad-trades-link" data-act="player" data-id="${esc(asset.id)}">${esc(asset.name)}</button>`
                         : `<span class="fuad-trades-name">${esc(asset.name)}</span>${asset.pick ? `<span class="fuad-meta">${esc(asset.meta)}</span>` : ""}`;
                     return `<div class="fuad-trades-pick-row${set.has(asset.id) ? " fuad-trades-on-row" : ""}">${box}<span class="fuad-trades-who">${name}${tag}</span>
                         <span class="fuad-muted">${esc(asset.player ? asset.player.team || "" : "")}</span>
-                        <span class="fuad-num fuad-muted">${esc(asset.player ? yearsText(asset.player.years) : "")}</span>
+                        <span class="fuad-num fuad-muted">${esc(asset.player ? contractYears(asset.player) : "")}</span>
                         <span class="fuad-num"><strong>${esc(salary)}</strong></span></div>`;
                 }
-                const meta = asset.player ? [asset.player.team, yearsText(asset.player.years)].filter(Boolean).join(" · ") : asset.meta;
+                const meta = asset.player ? [asset.player.team, contractYears(asset.player)].filter(Boolean).join(" · ") : asset.meta;
                 return `<label class="fuad-trades-pick-row${set.has(asset.id) ? " fuad-trades-on-row" : ""}">${box}<span class="fuad-trades-who"><span><span class="fuad-trades-name">${esc(asset.name)}</span>${tag}</span><span class="fuad-meta">${esc(meta)}</span></span><span class="fuad-num"><strong>${esc(salary)}</strong></span></label>`;
             }).join("")}`).join("");
     }

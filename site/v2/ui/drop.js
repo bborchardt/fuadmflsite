@@ -6,9 +6,10 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, failedLine, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {Refused, failedLine, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
+import {contractYears} from "./rosters-model.js";
 
 const FLASH_KEY = "fuad.dropFlash";
 const WIDE = "(min-width: 48.01em)";
@@ -17,7 +18,6 @@ const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" strok
 const CHEVRON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
 const money = (amount) => `$${Math.round(amount * 100) / 100}`;
-const yearsShort = (years) => `${years} yr${years === 1 ? "" : "s"}`;
 const tone = (name) => (name ? ` fuad-${name}` : "");
 
 // MFL's Drop Players form: one player at a time is posted in place
@@ -83,7 +83,8 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     const state = {data: null, failed: false, open: null, done: flash && flash.done, error: (flash && flash.error) || "", busy: false};
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
-    const phase = () => movesPhase(state.data.facts);
+    // in season once the roster limits hold, from the cut-down date (2.5)
+    const phase = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : movesPhase(state.data.facts));
     const rows = () => dropRows(team(), {roster, phase: phase()});
 
     // ---- markup ----
@@ -132,7 +133,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     function phoneRows(groups) {
         return groups.map((group) => `<div class="fuad-drop-head"><span><strong>${esc(group.pos)}</strong> · ${group.players.length}</span><span>penalty · cap change</span></div>
             ${group.players.map((row) => {
-                const meta = [group.pos, row.player.team, money(row.player.salary), yearsShort(row.player.years), row.player.status === "INJURED_RESERVE" ? "IR" : "", usedNote(row)].filter(Boolean).join(" · ");
+                const meta = [group.pos, row.player.team, row.player.rfa ? "" : money(row.player.salary), contractYears(row.player), row.player.status === "INJURED_RESERVE" ? "IR" : "", usedNote(row)].filter(Boolean).join(" · ");
                 return rowButton(row, `<span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span><span class="fuad-meta">${esc(meta)}</span></span>
                     <span class="fuad-drop-cost">${row.off ? `<span class="fuad-muted">${esc(row.why)}</span>` : `<span>${esc(money(row.penalty))}</span><span class="fuad-drop-change${tone(changeTone(row.capChange))}">${esc(signed(row.capChange))}</span>`}</span>`);
             }).join("")}`).join("");
@@ -144,8 +145,8 @@ export async function drawDrop({context, franchiseId, loginHref}) {
             ${group.players.map((row) => rowButton(row, `<span class="fuad-drop-line">
                 <span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span>${row.player.status === "INJURED_RESERVE" ? '<span class="fuad-tag">IR</span>' : ""}${row.usedIn ? `<span class="fuad-meta">${esc(usedNote(row))}</span>` : ""}</span>
                 <span class="fuad-muted">${esc(row.player.team || "")}</span>
-                <span class="fuad-num">${esc(money(row.player.salary))}</span>
-                <span class="fuad-num fuad-muted">${esc(yearsShort(row.player.years))}</span>
+                <span class="fuad-num">${row.player.rfa ? "—" : esc(money(row.player.salary))}</span>
+                <span class="fuad-num fuad-muted">${esc(contractYears(row.player))}</span>
                 <span class="fuad-num">${row.off ? `<span class="fuad-muted">${esc(row.why)}</span>` : esc(money(row.penalty))}</span>
                 <span class="fuad-num fuad-drop-change${row.off ? " fuad-muted" : tone(changeTone(row.capChange))}">${esc(signed(row.capChange))}</span>
                 <span class="fuad-drop-chev">${row.off ? "" : CHEVRON}</span>
