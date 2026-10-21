@@ -64,13 +64,17 @@ function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
         <td class="fuad-num">${row.rfa ? "—" : esc(dollars(row.salary))}</td>
         <td class="fuad-num fuad-muted">${esc(contractYears(row))}</td>
         ${cut ? `<td class="fuad-num fuad-wide">${row.cutPenalty ? esc(dollars(row.cutPenalty)) : "—"}</td><td class="fuad-num fuad-wide">${esc(dollars(row.capAfterCut))}</td>` : ""}
-        <td class="fuad-wide">${esc(row.nfl || "FA")}</td><td class="fuad-num fuad-wide">${esc(row.bye || "—")}</td><td class="fuad-num fuad-wide">${esc(pts(row.points))}</td>
+        <td class="fuad-mid fuad-wide">${esc(row.nfl || "FA")}</td><td class="fuad-num fuad-wide">${esc(row.bye || "—")}</td><td class="fuad-num fuad-wide">${esc(pts(row.points))}</td>
     </tr>`;
     const head = `<tr><th scope="col">Player</th><th scope="col" class="fuad-num">Salary</th><th scope="col" class="fuad-num">Years</th>
         ${cut ? '<th scope="col" class="fuad-num fuad-wide">Cut penalty</th><th scope="col" class="fuad-num fuad-wide">Cap used after cut</th>' : ""}
-        <th scope="col" class="fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">${esc(pointsLabel)}</th></tr>`;
+        <th scope="col" class="fuad-mid fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">${esc(pointsLabel)}</th></tr>`;
+    // a group's band, with the space above it as its own row (a table row takes no margin)
+    const band = (name, note, total) => `<tr class="fuad-band-gap" aria-hidden="true"><td colspan="${columns}"></td></tr>
+        <tr class="fuad-group"><th scope="rowgroup"><span class="fuad-band-pos">${esc(name)}</span><span>${esc(note)}</span></th><td class="fuad-num">${esc(dollars(total))}</td><td colspan="${columns - 2}"></td></tr>`;
+    const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
     const penalties = sheet.penalties.length ? `<tbody>
-        <tr class="fuad-group"><th scope="rowgroup">Penalties · ${sheet.penalties.length}</th><td class="fuad-num">${esc(dollars(sheet.penaltyTotal))}</td><td colspan="${columns - 2}"></td></tr>
+        ${band("Penalties", count(sheet.penalties.length, "penalty", "penalties"), sheet.penaltyTotal)}
         ${sheet.penalties.map((penalty) => `<tr>
             <th scope="row" class="fuad-team">${esc(penalty.who)}<span class="fuad-meta">${esc([penalty.when && `Cut ${penalty.when}`, penalty.terms].filter(Boolean).join(" · "))}</span></th>
             <td class="fuad-num">${esc(dollars(penalty.amount))}</td><td colspan="${columns - 2}"></td>
@@ -80,7 +84,7 @@ function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
         <div class="fuad-table-scroll"><table class="fuad-table fuad-roster">
             <thead>${head}</thead>
             ${sheet.groups.map((group) => `<tbody>
-                <tr class="fuad-group"><th scope="rowgroup">${esc(group.position)} · ${group.players.length}</th><td class="fuad-num">${esc(dollars(group.salary))}</td><td colspan="${columns - 2}"></td></tr>
+                ${band(group.position, count(group.players.length, "player", "players"), group.salary)}
                 ${group.players.map(player).join("")}
             </tbody>`).join("")}
             ${penalties}
@@ -423,7 +427,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         <div class="fuad-table-scroll fuad-players-scroll"><table class="fuad-table fuad-player-table">
                             <thead><tr>${columns.map(([key, label, sortable = true]) => {
                                 const phone = key === "name" || phoneKeys.includes(key) ? "" : " fuad-wide";
-                                const numeric = ["bye", "projected", "points", "salary", "years"].includes(key) ? " fuad-num" : "";
+                                const numeric = ["bye", "projected", "points", "salary", "years"].includes(key) ? " fuad-num" : ["position", "nfl"].includes(key) ? " fuad-mid" : "";
                                 return `<th scope="col" class="fuad-col-${key}${phone}${numeric}">${sortable ? `<button type="button" class="fuad-sort" data-sort="${key}">${esc(label)}<span class="fuad-sort-mark" aria-hidden="true"></span></button>` : esc(label)}</th>`;
                             }).join("")}</tr></thead>
                             <tbody></tbody>
@@ -441,14 +445,14 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                                 return `<th scope="row" class="fuad-team"><button type="button" class="fuad-name" data-player="${esc(player.id)}">${esc(player.name)}</button>
                                     <span class="fuad-meta fuad-phone-only">${esc([player.position, player.nfl, contract, player.fa ? "" : player.ownerName].filter(Boolean).join(" · "))}</span></th>`;
                             }
-                            case "position": return `<td class="${phone}">${esc(player.position)}</td>`;
-                            case "nfl": return `<td class="${phone}">${esc(player.nfl)}</td>`;
+                            case "position": return `<td class="fuad-mid${phone}">${esc(player.position)}</td>`;
+                            case "nfl": return `<td class="fuad-mid${phone}">${esc(player.nfl)}</td>`;
                             case "bye": return `<td class="fuad-num${phone}">${esc(player.bye || "—")}</td>`;
                             case "projected": return `<td class="fuad-num${phone}">${player.projected === null ? "—" : esc(player.projected.toFixed(1))}</td>`;
                             case "points": return `<td class="fuad-num${phone}">${esc(pts(player.points))}</td>`;
                             case "salary": return `<td class="fuad-num${phone}">${player.salary === null ? "—" : esc(dollars(player.salary))}</td>`;
-                            case "years": return `<td class="fuad-num fuad-muted${phone}">${player.fa ? (before ? "UFA" : "—") : player.rfa ? "RFA" : esc(contractYears(player))}</td>`;
-                            default: return `<td class="fuad-muted${phone}">${esc(player.ownerName)}</td>`;
+                            case "years": return player.fa && !before ? `<td class="fuad-num fuad-muted${phone}">—</td>` : `<td class="fuad-num${phone}">${player.fa ? "UFA" : player.rfa ? "RFA" : esc(contractYears(player))}</td>`;
+                            default: return `<td class="${phone}">${esc(player.ownerName)}</td>`;
                         }
                     };
                     const redraw = () => {
