@@ -2920,6 +2920,9 @@ body #fuad-home select {
 
 .fuad-lineup-on.fuad-framed body { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 
+/* a row reached by Tab scrolls clear of the save bar */
+.fuad-lineup-on { scroll-padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+
 #fuad-lineup .fuad-lineup-table { display: none; }
 
 #fuad-lineup .fuad-name {
