@@ -1,6 +1,6 @@
 # Roadmap
 
-**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 20 Oct 2026 (step 10 in PR #38; step 11 next)
+**League:** 48571 (contract dynasty) on MyFantasyLeague · **As of:** 20 Oct 2026 (the desktop review in PR #39; step 11 next)
 
 What comes next and what's waiting on the commissioner. What's live, why it works that way, the
 league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `docs/mfl.md`.
@@ -69,6 +69,11 @@ What a reviewer needs beyond the sections below:
   - Back returns to the screen just left; a detour (Edit, Change) closes back to where it opened.
   - Desktop: full-width bands; no side-by-side panels of different heights; tables fill their width.
     The exception is Home's two columns of variable panels (see Home).
+  - Desktop tables: names and long text (an opponent with its kickoff, NFL status, a team's name)
+    left; numbers and short text (NFL, Pos, Opp, Bye) centered in their columns, so neighbors sit
+    evenly apart; the spare width spread across the columns. Phones keep numbers right-aligned.
+  - Players grouped by position (Lineup, Drop, My team and a team's page) get a shaded band per
+    position: the position large, then its note ("6 players"; Lineup's slot dots and "start 1–3").
   - MFL's mechanics stay out of sight: members see results, not the forms behind them.
 - **Prototype limits, not design:** sample data from around week 5 (Oct 10), so some dates are past;
   only two other teams' rosters exist (Trades opens The Obliterators for any team but the one that
@@ -173,7 +178,7 @@ keeps following `RULES_VERSION`. Checked with master's `tools/verify/verify.py`.
 
 **Where it starts** (master, 17 Oct 2026): `site/v2/` is v1's code in the Night Game look, holding up
 over all 63 MFL skins, offered as the beta from League Alerts (PRs #18 and #19); the loader change
-(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36; step 9's IR is PR #37; step 10's phases are PR #38. Everything below is new work in `site/v2/`: one branch and PR per step, each
+(Rollout 1) is in; step 0's docs are in (PR #20); step 1's frame is PR #21; step 2's Home is PR #23; step 3's League is PR #25; step 4's Rosters is PR #26; step 5's Lineup is PR #29; step 6's Add is PR #31, with beta fixes in PRs #32 and #33; the request volume review (Performance) is PR #34; step 7's Drop is PR #35; step 8's Trades is PR #36; step 9's IR is PR #37; step 10's phases are PR #38; the desktop review is PR #39. Everything below is new work in `site/v2/`: one branch and PR per step, each
 tried in the beta (the commissioner's team only) before the next.
 
 **For every step:**
@@ -194,7 +199,7 @@ tried in the beta (the commissioner's team only) before the next.
    sections replace the custom tabs); the beta-in-place exception was already there. **Next: step 1.**
 1. **The frame** (done; canvas rows 13, 16; PRs #21, #22): the header (☰ site
    menu with MFL's menu in its groups and a filter; the wordmark and context line; the team button,
-   or Log in), the team sheet (My team, Log out, Viewing as), the five sections, the redesign's
+   or Log in), the team sheet (Franchise setup, Log out, Viewing as), the five sections, the redesign's
    views, the tokens, focus rings, hidden h1s and tap areas, the loading and error pattern
    (`ui/panel.js`), and the player popup, information only, in place of MFL's on MFL's own pages.
    Decided while building (17 Oct 2026):
@@ -457,6 +462,14 @@ tried in the beta (the commissioner's team only) before the next.
       plays no games, so its points are 0 and its next-year picks unnumbered).
     - Seen only at renewal: MFL's own pages after the rollover (how it shows RFAs, its
       `completedWeek` after the season, this year's picks as `DP_` in Trades).
+    - **Desktop review** (done; PR #39; the commissioner, 20 Oct 2026): MFL's skin scrolls the page
+      column (`.pagebody { overflow: auto }`), so no sticky bar stuck; v2's screens set it visible.
+      Then the items above: Lineup's bar at the foot, Proj by the name and the position bands; Add's
+      columns and injury tags; bands on Drop and My team; IR's boxes in one column, its bar with
+      "of 30"/"of $300" and the arrow only for a change, its drop list at full length; Drop's bar as
+      IR's; centered table columns; Season stays right; Winners' prizes stacked beside the pot;
+      Players in full white; Franchise setup in the team sheet; the site menu's filter focused with
+      a mouse (not on touch). The offline harness now loads MFL's saved skin.
     **Next: step 11.**
 11. **Widen the beta** to the league; ask in its feedback thread whether anyone wants a light theme.
 
@@ -584,8 +597,8 @@ feed); New topic asks to log in. Lineup: "Log in to set your lineup". Moves: Add
 IR show "Log in to make moves". League as usual, nothing highlighted. Rosters
 opens on Teams, Players without the Mine chip; the popup has no actions.
 
-**The team sheet** (slides up on phones, drops from the button on desktop): the team's name, My team,
-Log in / Log out, and for the commissioner a "Viewing as: Member | Commissioner" switch that uses
+**The team sheet** (slides up on phones, drops from the button on desktop): the team's name, Franchise
+setup (MFL's own link, from its menu), Log in / Log out, and for the commissioner a "Viewing as: Member | Commissioner" switch that uses
 MFL's own switch link, found in MFL's header.
 
 **The site menu:**
@@ -679,7 +692,7 @@ canvas's row 8; Teams is the cap ledger (row 4).
 **Desktop (row 8, under review):** My team, top to bottom, all full width: the cap panel (cap
 used, "$293 of $300" over "$291 salaries + $2 penalties"; active and IR; used by season in boxes
 as tall as the other two parts, so their tops and bottoms line up); the roster table grouped by position
-("QB · 6 · $150" on each group's line), with Player, then the money (Salary, Years, Cut penalty,
+(each position's band: "QB · 6 players", its salary under Salary), with Player, then the money (Salary, Years, Cut penalty,
 Cap used after cut), then NFL, Bye, Pts, and this season's penalties as the last group (who, the amount
 under Salary, then when cut and the terms); no clicks: the
 name opens the player popup, with its Rosters actions; then two panels, one
@@ -689,8 +702,7 @@ with a bar; next year's picks held, "8 · 3 1sts", "4 · no 1st", plain 5 greyed
 season; roster count; least used first). A team opens in My team's layout with "Propose a trade",
 its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts (no cut columns). Every Rosters table puts the contract beside the name.
 Players is every rostered player in one table (Player, then the
-contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last, in
-plain grey so it doesn't read as a second name column) under the filter chips, in a scroll box, salary first; clicking Player,
+contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last) under the filter chips, in a scroll box, salary first; clicking Player,
 Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: every panel full width, so none sits beside one of a different height: franchise
 tags (five tiles across; clicking one shows its top 5 as five cells across, name over salary); the 2027 draft order as two rows of five tiles (picks 1–5, 6–10; each row one height, so long names wrap to two lines; review, 17 Oct 2026) (number, team, record, traded
 picks; undecided picks unnumbered), or before the draft Your 2027 picks as one tile per round,
@@ -788,8 +800,8 @@ From the Contracts design (canvas row 4):
 
 Views: **Add · Drop · Trades · IR** (review, 17 Oct 2026: dropping got its own view, since Add's
 page is built around free agents and bids; Recent's transactions live in Home's Recent moves).
-- **Drop** (canvas row 15, phone and desktop): cap used and active on top, then the roster by
-  position (desktop as a table: Player, NFL, Salary, Years, Cut penalty, Cap change), each row with
+- **Drop** (canvas row 15, phone and desktop): active and cap used on top, as IR's bar shows them
+  ("Active 30 of 30 · Cap used $293 of $300"), then the roster by position in bands (desktop as a table: Player, NFL, Salary, Years, Cut penalty, Cap change), each row with
   its penalty and signed cap change. Clicking a row opens its review in place, "Cut now: $28 penalty
   · cap used $293 → $253" and Drop Jackson; no dialog, no second pick. The result is one line
   ("Jackson dropped."), the row gone. A row is off, with its reason, when the cut with the pending
@@ -802,7 +814,7 @@ page is built around free agents and bids; Recent's transactions live in Home's 
 - **IR** (designed, phone and desktop: the canvas's row 10): "Can go on IR" lists the member's active players the
   NFL lists on IR (injury, expected return; injuries export), "On your IR" the rest, each with a
   checkbox (Move to IR, Activate). When activating would make 31 active, "Pick a drop" lists all 30
-  active players in a box that scrolls inside itself, lowest penalty first, each with its penalty and
+  active players at full length (only the page scrolls; the pinned bar keeps Save in reach), lowest penalty first, each with its penalty and
   cap change. It shows only while activating needs a drop: when the IR checkboxes stop needing
   one, it goes and a drop picked earlier is let go. Desktop: the alert, then the bar (sticky, Save
   on its right), one IR table in the two groups (position, NFL team, salary, NFL status, expected
@@ -859,7 +871,8 @@ How MFL runs it (league settings):
   page.
 
 The design (settled for now; the canvas's row 5 is the phone reference, row 12 the desktop one):
-- **Free agents** sorted by this week's projection (MFL's WProj), with team, opponent and bye week.
+- **Free agents** sorted by this week's projection (MFL's WProj), with team, opponent and bye week
+  (desktop: Player with its injury tag, Pos, Proj, Pts, NFL, Opp, Bye).
   On phones a row tap picks the player (one tap to add); his name on the drop step ("Adding
   Higbee") and the review opens the player popup, Back returning there. On desktop the name in the
   table opens it and the row's Bid or Add button picks him.
@@ -1007,7 +1020,8 @@ their forms.
 MFL's Submit Lineup page (`lineup`; `docs/mfl.md`, Forms), restyled; designed for phones and desktop on canvas row 14 from
 the page saved 17 Oct 2026 (week 6). Top to bottom: the header, a week picker (‹ Week 6 ›: this
 week and later, MFL's week links), the warnings, the roster by position in MFL's order (QB, RB, WR,
-TE, PK, alphabetical within; each group's heading "QB · start 1–2 · 2 starting"), "On IR: …" with
+TE, PK, alphabetical within; each group's band: the position, a dot per slot up to its most, filled
+per starter (red, with an extra dot, when over), and "start 1–2"), "On IR: …" with
 a link to Moves › IR, and a save bar above the tabs.
 - **A row per player:** a round check (lime when starting), the name with a tag (Out or IR red,
   Questionable orange, Bye or Game started grey), "BAL · @CLE Sun 12:00 p.m.", the projection. A tap
@@ -1028,10 +1042,10 @@ a link to Moves › IR, and a save bar above the tabs.
 - **Left out:** MFL's projection source menu (FantasySharks stays), the Optional Message box and
   last week's starters in bold. Backup starters (16.5) stay on the message board as today; a
   Backups panel posting to the designated thread is a later idea, not part of v2.
-- **Desktop:** full-width bands: the week picker, the warnings, the save bar (sticky, Save on its
-  right), then one table by position (Start as its own round button, Player with its tag and the
-  popup link, NFL, Opponent, Opp rank (MFL's vs the position; higher is a weaker defense), YTD, Avg,
-  Proj), starting rows shaded, and "On IR: …" last. % Start, Pos rank, opponent average and News are
+- **Desktop:** full-width bands: the week picker, the warnings, then one table by position (Start as
+  its own round button, Player with its tag and the popup link, Proj, NFL, Opponent, Opp rank (MFL's
+  vs the position; higher is a weaker defense), YTD, Avg), starting rows shaded, "On IR: …", and the
+  save bar pinned to the window's foot (Save on its right), since a lineup is set top to bottom. % Start, Pos rank, opponent average and News are
   left out so it fits 1,240 px without scrolling.
 - (v1 doesn't flag byes; v1 gets no more fixes, so this comes with v2.)
 
