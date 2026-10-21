@@ -130,8 +130,10 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         </div>`;
     }
 
+    const band = (group, end = "") => `<div class="fuad-band"><span class="fuad-band-pos">${esc(group.pos)}</span><span>${group.players.length} ${group.players.length === 1 ? "player" : "players"}</span>${end}</div>`;
+
     function phoneRows(groups) {
-        return groups.map((group) => `<div class="fuad-drop-head"><span><strong>${esc(group.pos)}</strong> · ${group.players.length}</span><span>penalty · cap change</span></div>
+        return groups.map((group) => `${band(group, '<span class="fuad-band-end">penalty · cap change</span>')}
             ${group.players.map((row) => {
                 const meta = [group.pos, row.player.team, row.player.rfa ? "" : money(row.player.salary), contractYears(row.player), row.player.status === "INJURED_RESERVE" ? "IR" : "", usedNote(row)].filter(Boolean).join(" · ");
                 return rowButton(row, `<span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span><span class="fuad-meta">${esc(meta)}</span></span>
@@ -141,7 +143,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
 
     function deskRows(groups) {
         return `<div class="fuad-drop-line fuad-drop-columns" aria-hidden="true"><span>Player</span><span>NFL</span><span class="fuad-num">Salary</span><span class="fuad-num">Years</span><span class="fuad-num">Cut penalty</span><span class="fuad-num">Cap change</span><span></span></div>
-        ${groups.map((group) => `<div class="fuad-drop-group"><strong>${esc(group.pos)}</strong> · ${group.players.length}</div>
+        ${groups.map((group) => `${band(group)}
             ${group.players.map((row) => rowButton(row, `<span class="fuad-drop-line">
                 <span class="fuad-drop-who"><span class="fuad-drop-name">${esc(row.player.fullName)}</span>${row.player.status === "INJURED_RESERVE" ? '<span class="fuad-tag">IR</span>' : ""}${row.usedIn ? `<span class="fuad-meta">${esc(usedNote(row))}</span>` : ""}</span>
                 <span class="fuad-muted">${esc(row.player.team || "")}</span>

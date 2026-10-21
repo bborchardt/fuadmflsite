@@ -37,6 +37,7 @@
     /* a bar or win chance that isn't yours or ahead */
     --fuad-bar-off: #4A5566;
     --fuad-raised-edge: #2F3743;
+    --fuad-band: #252D38;
     /* a choice that's made and can't be changed (a starter whose game has started) */
     --fuad-locked: #4A5566;
     /* positions in charts: categorical, validated on the panel color */
@@ -79,6 +80,50 @@ body .pagebody {
     border: 0;
     border-radius: 0;
     box-shadow: none;
+}
+
+/* MFL's skin scrolls the page column (overflow: auto), which keeps a sticky bar from sticking to the
+   window; v2's own screens have nothing wider than the column */
+.fuad-home-on body .pagebody,
+.fuad-league-on body .pagebody,
+.fuad-rosters-on body .pagebody,
+.fuad-lineup-on body .pagebody,
+.fuad-add-on body .pagebody,
+.fuad-drop-on body .pagebody,
+.fuad-ir-on body .pagebody,
+.fuad-trades-on body .pagebody { overflow: visible; }
+
+/* a position's heading (Lineup, Drop, Rosters › My team): a shaded band, the position, then its note */
+.fuad-band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    margin-top: 14px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--fuad-band);
+    font: 400 14px/1.35 var(--fuad-body);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--fuad-muted);
+}
+
+.fuad-band-pos { font: 700 22px/1.1 var(--fuad-display); color: var(--fuad-text); }
+
+.fuad-band-end { margin-left: auto; font-size: 12px; }
+
+.fuad-slots { display: flex; gap: 5px; }
+
+.fuad-slot { box-sizing: border-box; width: 12px; height: 12px; border: 2px solid var(--fuad-faint); border-radius: 6px; }
+
+.fuad-slot-on { border-color: var(--fuad-lime); background: var(--fuad-lime); }
+
+.fuad-slots-bad .fuad-slot-on { border-color: var(--fuad-bad); background: var(--fuad-bad); }
+
+@media (min-width: 48.01em) {
+    .fuad-band { padding: 10px 12px; }
+    .fuad-band-pos { font-size: 24px; }
 }
 
 body #withmenus,
@@ -1784,6 +1829,10 @@ body #fuad-home select {
 #fuad-league .fuad-scores-bar,
 #fuad-rosters .fuad-scores-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
+/* Season stays at the right when the week picker hides */
+#fuad-league .fuad-scores-bar > .fuad-toggle,
+#fuad-rosters .fuad-scores-bar > .fuad-toggle { margin-left: auto; }
+
 #fuad-league .fuad-weekpicker,
 #fuad-rosters .fuad-weekpicker { display: flex; align-items: center; gap: 4px; }
 
@@ -2370,6 +2419,14 @@ body #fuad-home select {
 #fuad-league .fuad-pot-total,
 #fuad-rosters .fuad-pot-total { font-weight: 700; border-top-color: var(--fuad-hairline); }
 
+/* desktop: the places stacked, centered beside the pot */
+@media (min-width: 48.01em) {
+    #fuad-league .fuad-prize-columns,
+    #fuad-rosters .fuad-prize-columns { align-items: stretch; }
+    #fuad-league .fuad-prizes,
+    #fuad-rosters .fuad-prizes { grid-template-columns: minmax(0, 260px); justify-content: center; align-content: center; }
+}
+
 @media (max-width: 48em) {
     #fuad-league .fuad-prize-columns,
     #fuad-rosters .fuad-prize-columns { grid-template-columns: minmax(0, 1fr); }
@@ -2418,7 +2475,22 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-season-boxes li { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--fuad-page); font-weight: 700; font-variant-numeric: tabular-nums; }
 
-#fuad-rosters .fuad-roster .fuad-group > * { padding-top: 14px; padding-bottom: 6px; border-top: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-muted); vertical-align: bottom; }
+/* a group's heading: Lineup's band across the row (separate borders, so its ends can round) */
+#fuad-rosters .fuad-roster { border-collapse: separate; border-spacing: 0; }
+
+#fuad-rosters .fuad-roster .fuad-band-gap td { height: 12px; padding: 0; border: 0; }
+
+#fuad-rosters .fuad-roster .fuad-group > * { padding: 8px 10px; border-top: 0; background: var(--fuad-band); font-size: 14px; color: var(--fuad-muted); vertical-align: middle; }
+
+#fuad-rosters .fuad-roster .fuad-group > :first-child { border-radius: 10px 0 0 10px; }
+
+#fuad-rosters .fuad-roster .fuad-group > :last-child { border-radius: 0 10px 10px 0; }
+
+#fuad-rosters .fuad-roster .fuad-group th > span { vertical-align: middle; }
+
+#fuad-rosters .fuad-roster .fuad-group .fuad-band-pos { margin-right: 14px; }
+
+#fuad-rosters .fuad-roster .fuad-group + tr > * { border-top: 0; }
 
 #fuad-rosters .fuad-roster .fuad-tag { vertical-align: 1px; }
 
@@ -2770,21 +2842,7 @@ body #fuad-home select {
 #fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check::before,
 #fuad-lineup .fuad-check:disabled[aria-pressed="false"]::before { content: ""; width: 10px; height: 2px; border-radius: 1px; background: var(--fuad-faint); }
 
-#fuad-lineup .fuad-lineup-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 12px 4px 4px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--fuad-muted);
-}
-
-#fuad-lineup .fuad-lineup-head > span[role="cell"] { display: flex; justify-content: space-between; width: 100%; }
-
-#fuad-lineup .fuad-lineup-pos { color: var(--fuad-text); }
+#fuad-lineup .fuad-lineup-list > .fuad-band:first-child { margin-top: 8px; }
 
 /* phones: the whole row starts or benches him */
 #fuad-lineup .fuad-lineup-row {
@@ -2891,8 +2949,7 @@ body #fuad-home select {
 
     #fuad-lineup .fuad-save-bar {
         position: sticky;
-        top: 0;
-        bottom: auto;
+        bottom: 0;
         z-index: 2;
         display: flex;
         flex-wrap: wrap;
@@ -2901,7 +2958,7 @@ body #fuad-home select {
         border: 1px solid var(--fuad-raised-edge);
         border-radius: 16px;
         background: var(--fuad-raised);
-        box-shadow: 0 8px 24px var(--fuad-shadow);
+        box-shadow: 0 -8px 24px var(--fuad-shadow);
     }
 
     #fuad-lineup .fuad-save-count { font: 700 24px var(--fuad-display); }
@@ -2915,7 +2972,7 @@ body #fuad-home select {
         display: grid;
         /* the name capped, the rest spread evenly across the panel (the opponent twice as wide); each
            row is its own grid, so no track may grow past its share or the rows stop lining up */
-        grid-template-columns: 40px minmax(200px, 300px) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: 40px minmax(200px, 300px) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
         gap: 0 12px;
         align-items: center;
         min-height: 46px;
@@ -2926,6 +2983,8 @@ body #fuad-home select {
     }
 
     #fuad-lineup .fuad-lineup-line.fuad-lineup-starting { background: var(--fuad-raised); }
+    /* Proj, right-aligned, then NFL's text: room between them */
+    #fuad-lineup .fuad-lineup-line > :nth-child(3) { padding-right: 24px; }
 
     #fuad-lineup .fuad-lineup-columns {
         min-height: 0;
@@ -2938,8 +2997,7 @@ body #fuad-home select {
         color: var(--fuad-muted);
     }
 
-    #fuad-lineup .fuad-lineup-table .fuad-lineup-head { padding: 12px 4px 6px; border-top: 1px solid var(--fuad-hairline); }
-    #fuad-lineup .fuad-lineup-table .fuad-lineup-pos { font: 700 20px var(--fuad-display); letter-spacing: 0; }
+    #fuad-lineup .fuad-lineup-band { display: block; padding-bottom: 4px; }
     #fuad-lineup .fuad-lineup-line .fuad-check { width: 28px; height: 28px; border-radius: 14px; cursor: pointer; }
     #fuad-lineup .fuad-lineup-line .fuad-check:disabled { cursor: default; }
     /* the drawn check stays small; its tap area fills the cell */
@@ -3811,7 +3869,8 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-add .fuad-add-fa-table { min-width: 900px; }
     #fuad-add .fuad-add-fa-line {
         display: grid;
-        grid-template-columns: minmax(180px, 2fr) repeat(6, minmax(56px, 1fr)) 84px;
+        /* Pos, Proj and Pts narrow, so the projection sits by the name; the text columns spread */
+        grid-template-columns: minmax(180px, 300px) 56px 64px 88px repeat(3, minmax(56px, 1fr)) 104px;
         gap: 0 8px;
         align-items: center;
         min-height: 44px;
@@ -3819,7 +3878,8 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
         border-top: 1px solid var(--fuad-rule);
         font-size: 14px;
     }
-    #fuad-add .fuad-add-fa-line.fuad-add-columns { border-top: 0; }
+    /* the row's 14px is declared after the headings' 12px */
+    #fuad-add .fuad-add-fa-line.fuad-add-columns { border-top: 0; font-size: 12px; }
     #fuad-add .fuad-add-sort { position: relative; min-height: 0; padding: 0; border-radius: 0; text-align: left; }
     #fuad-add .fuad-add-sort.fuad-num { width: 100%; text-align: right; }
     #fuad-add .fuad-add-sort::after { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }
@@ -3828,6 +3888,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-add .fuad-add-fa-name .fuad-bid-only,
     #fuad-add .fuad-add-why { font-size: 12px; font-weight: 700; }
     #fuad-add .fuad-add-proj-num { font: 700 19px var(--fuad-display); }
+    /* Pts, right-aligned, then NFL's text: room between them */
+    #fuad-add .fuad-add-fa-line > :nth-child(4) { padding-right: 24px; }
+    #fuad-add .fuad-add-fa-name .fuad-tag { padding: 0 6px; border-radius: 5px; font-size: 12px; }
     #fuad-add .fuad-add-row-action {
         position: relative;
         justify-self: end;
@@ -4008,19 +4071,9 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
 #fuad-drop .fuad-drop-roster { padding: 4px 12px; border-radius: 18px; }
 
-#fuad-drop .fuad-drop-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 4px 4px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--fuad-muted);
-}
+#fuad-drop .fuad-drop-roster > .fuad-band:first-child { margin-top: 8px; }
 
-#fuad-drop .fuad-drop-head strong { color: var(--fuad-text); }
+#fuad-drop .fuad-band { margin-bottom: 4px; }
 
 #fuad-drop .fuad-drop-item { border-top: 1px solid var(--fuad-rule); }
 
@@ -4106,17 +4159,6 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     color: var(--fuad-muted);
 }
 
-#fuad-drop .fuad-drop-group {
-    padding: 12px 8px 4px;
-    border-top: 1px solid var(--fuad-hairline);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--fuad-muted);
-}
-
-#fuad-drop .fuad-drop-group strong { font: 700 20px var(--fuad-display); letter-spacing: 0; color: var(--fuad-text); }
 
 @media (min-width: 48.01em) {
     #fuad-drop { gap: 16px; padding-top: 8px; }
@@ -4280,11 +4322,13 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
 
 #fuad-ir .fuad-ir-off .fuad-ir-name { color: var(--fuad-muted); }
 
+/* the box at the left of a fixed width, so the boxes line up whatever their labels */
 #fuad-ir .fuad-ir-act {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
+    min-width: 116px;
     min-height: 44px;
     font-size: 14px;
     font-weight: 600;

@@ -122,10 +122,12 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         const blocked = irBlockText(result);
         const count = result.toIR.length + result.activate.length + (result.drop ? 1 : 0);
         const off = Boolean(blocked) || !count || state.busy;
-        const activeTone = limits() && result.active.to > ROSTER_MAX ? "fuad-bad" : "";
+        const activeTone = (active) => (limits() && active > ROSTER_MAX ? "fuad-bad" : "");
+        // where the team stands, and with a move ticked, where it would stand: each number in its own tone
+        const figure = (label, {from, to}, tone, show, most) => `<span class="fuad-ir-figure"><span class="fuad-muted">${label}</span> <strong><span class="${tone(from)}">${esc(show(from))}</span>${from === to ? "" : ` → <span class="${tone(to)}">${esc(show(to))}</span>`}</strong> <span class="fuad-muted">of ${esc(show(most))}</span></span>`;
         return `<section class="fuad-ir-bar${blocked ? " fuad-ir-bar-blocked" : ""}" aria-label="Result">
-            <span class="fuad-ir-figure"><span class="fuad-muted">Active</span> <strong>${result.active.from} → <span class="${activeTone}">${result.active.to}</span></strong></span>
-            <span class="fuad-ir-figure"><span class="fuad-muted">Cap used</span> <strong>${esc(money(result.cap.from))} → <span class="${capTone(result.cap.to)}">${esc(money(result.cap.to))}</span></strong></span>
+            ${figure("Active", result.active, activeTone, String, ROSTER_MAX)}
+            ${figure("Cap used", result.cap, capTone, money, SALARY_CAP)}
             <span class="fuad-ir-why">${blocked ? `<strong class="fuad-bad">Blocked:</strong> ${esc(blocked)}` : ""}</span>
             <button type="button" class="fuad-ir-save" data-act="save"${off ? " disabled" : ""}>${state.busy ? "Saving…" : count ? "Save IR moves" : "Nothing to save"}</button>
         </section>`;

@@ -535,18 +535,19 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         <section class="fuad-panel fuad-add-free" aria-labelledby="fuad-add-free">
             <div class="fuad-add-free-head"><h2 id="fuad-add-free">Free agents</h2>${searchMarkup()}${chipsMarkup()}</div>
             <div class="fuad-table-scroll"><div class="fuad-add-fa-table" role="table" aria-label="Free agents">
-                <div class="fuad-add-fa-line fuad-add-columns" role="row"><span role="columnheader">${head("name", "Player")}</span><span role="columnheader">Pos</span><span role="columnheader">NFL</span><span role="columnheader">Opp</span><span role="columnheader" class="fuad-num">Bye</span><span role="columnheader" class="fuad-num">${head("pts", "Pts", " fuad-num")}</span><span role="columnheader" class="fuad-num">${head("proj", "Proj", " fuad-num")}</span><span role="columnheader"></span></div>
+                <div class="fuad-add-fa-line fuad-add-columns" role="row"><span role="columnheader">${head("name", "Player")}</span><span role="columnheader">Pos</span><span role="columnheader" class="fuad-num">${head("proj", "Proj", " fuad-num")}</span><span role="columnheader" class="fuad-num">${head("pts", "Pts", " fuad-num")}</span><span role="columnheader">NFL</span><span role="columnheader">Opp</span><span role="columnheader">Bye</span><span role="columnheader"></span></div>
                 ${list.map((row) => {
                     const action = row.bid ? "Bid" : "Add";
                     const injury = injuryText(row.player.inj);
+                    const tone = /^(Out|IR|Suspended)$/.test(injury) ? "bad" : "caution";
                     return `<div class="fuad-add-fa-line" role="row">
-                    <span role="cell" class="fuad-add-fa-name"><button type="button" class="fuad-name" data-act="popup" data-id="${esc(row.player.id)}">${esc(row.player.name)}</button>${window_ && row.bid ? '<span class="fuad-bid-only">bid only</span>' : ""}${row.why ? `<span class="fuad-muted fuad-add-why">${esc(row.why)}</span>` : ""}</span>
+                    <span role="cell" class="fuad-add-fa-name"><button type="button" class="fuad-name" data-act="popup" data-id="${esc(row.player.id)}">${esc(row.player.name)}</button>${injury ? `<span class="fuad-tag fuad-tag-${tone}">${esc(injury)}</span>` : ""}${window_ && row.bid ? '<span class="fuad-bid-only">bid only</span>' : ""}${row.why ? `<span class="fuad-muted fuad-add-why">${esc(row.why)}</span>` : ""}</span>
                     <span role="cell" class="fuad-muted">${esc(row.player.pos)}</span>
-                    <span role="cell" class="fuad-muted">${esc(row.player.nfl)}</span>
-                    <span role="cell" class="fuad-muted">${esc(/^bye$/i.test(row.player.opp) ? "Bye" : row.player.opp)}${injury ? ` <span class="fuad-caution">${esc(row.player.inj)}</span>` : ""}</span>
-                    <span role="cell" class="fuad-num fuad-muted">${esc(row.player.bye || "—")}</span>
-                    <span role="cell" class="fuad-num">${esc(fmtProj(row.player.pts))}</span>
                     <span role="cell" class="fuad-num fuad-add-proj-num${row.player.proj ? "" : " fuad-muted"}">${esc(fmtProj(row.player.proj || 0))}</span>
+                    <span role="cell" class="fuad-num">${esc(fmtProj(row.player.pts))}</span>
+                    <span role="cell" class="fuad-muted">${esc(row.player.nfl)}</span>
+                    <span role="cell" class="fuad-muted">${esc(/^bye$/i.test(row.player.opp) ? "Bye" : row.player.opp)}</span>
+                    <span role="cell" class="fuad-muted">${esc(row.player.bye || "—")}</span>
                     <span role="cell"><button type="button" class="fuad-add-row-action" data-act="pick-fa" data-id="${esc(row.player.id)}" aria-label="${action} ${esc(row.player.name)}"${row.off || block ? " disabled" : ""}>${action}</button></span>
                 </div>`;
                 }).join("")}
