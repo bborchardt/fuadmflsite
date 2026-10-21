@@ -103,10 +103,11 @@ export async function drawDrop({context, franchiseId, loginHref}) {
 
     function capBar() {
         const franchise = team().franchise;
-        const capTone = franchise.capTotal > SALARY_CAP ? " fuad-bad" : franchise.capTotal > SALARY_CAP - 10 ? " fuad-caution" : "";
+        const capTone = franchise.capTotal > SALARY_CAP ? "fuad-bad" : franchise.capTotal > SALARY_CAP - 10 ? "fuad-caution" : "";
         // no roster limits before the season (2.5)
-        const active = phase() === "season" ? `${franchise.numPlayers} of ${ROSTER_MAX}` : String(franchise.numPlayers);
-        return `<div class="fuad-drop-bar"><span><span class="fuad-muted">Cap used</span> <strong class="${capTone.trim()}">${esc(money(franchise.capTotal))}</strong> <span class="fuad-muted">of $${SALARY_CAP}</span></span><span><span class="fuad-muted">Active</span> <strong>${esc(active)}</strong></span></div>`;
+        const season = phase() === "season";
+        const figure = (label, value, tone, most) => `<span class="fuad-drop-figure"><span class="fuad-muted">${label}</span> <strong class="${tone}">${esc(value)}</strong>${most ? ` <span class="fuad-muted">of ${esc(most)}</span>` : ""}</span>`;
+        return `<div class="fuad-drop-bar">${figure("Active", String(franchise.numPlayers), season && franchise.numPlayers > ROSTER_MAX ? "fuad-bad" : "", season ? String(ROSTER_MAX) : "")}${figure("Cap used", money(franchise.capTotal), capTone, `$${SALARY_CAP}`)}</div>`;
     }
 
     function review(row) {
