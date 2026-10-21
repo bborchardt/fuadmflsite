@@ -64,11 +64,11 @@ function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
         <td class="fuad-num">${row.rfa ? "—" : esc(dollars(row.salary))}</td>
         <td class="fuad-num fuad-muted">${esc(contractYears(row))}</td>
         ${cut ? `<td class="fuad-num fuad-wide">${row.cutPenalty ? esc(dollars(row.cutPenalty)) : "—"}</td><td class="fuad-num fuad-wide">${esc(dollars(row.capAfterCut))}</td>` : ""}
-        <td class="fuad-wide">${esc(row.nfl || "FA")}</td><td class="fuad-num fuad-wide">${esc(row.bye || "—")}</td><td class="fuad-num fuad-wide">${esc(pts(row.points))}</td>
+        <td class="fuad-mid fuad-wide">${esc(row.nfl || "FA")}</td><td class="fuad-num fuad-wide">${esc(row.bye || "—")}</td><td class="fuad-num fuad-wide">${esc(pts(row.points))}</td>
     </tr>`;
     const head = `<tr><th scope="col">Player</th><th scope="col" class="fuad-num">Salary</th><th scope="col" class="fuad-num">Years</th>
         ${cut ? '<th scope="col" class="fuad-num fuad-wide">Cut penalty</th><th scope="col" class="fuad-num fuad-wide">Cap used after cut</th>' : ""}
-        <th scope="col" class="fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">${esc(pointsLabel)}</th></tr>`;
+        <th scope="col" class="fuad-mid fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">${esc(pointsLabel)}</th></tr>`;
     // a group's band, with the space above it as its own row (a table row takes no margin)
     const band = (name, note, total) => `<tr class="fuad-band-gap" aria-hidden="true"><td colspan="${columns}"></td></tr>
         <tr class="fuad-group"><th scope="rowgroup"><span class="fuad-band-pos">${esc(name)}</span><span>${esc(note)}</span></th><td class="fuad-num">${esc(dollars(total))}</td><td colspan="${columns - 2}"></td></tr>`;
@@ -427,7 +427,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         <div class="fuad-table-scroll fuad-players-scroll"><table class="fuad-table fuad-player-table">
                             <thead><tr>${columns.map(([key, label, sortable = true]) => {
                                 const phone = key === "name" || phoneKeys.includes(key) ? "" : " fuad-wide";
-                                const numeric = ["bye", "projected", "points", "salary", "years"].includes(key) ? " fuad-num" : "";
+                                const numeric = ["bye", "projected", "points", "salary", "years"].includes(key) ? " fuad-num" : ["position", "nfl"].includes(key) ? " fuad-mid" : "";
                                 return `<th scope="col" class="fuad-col-${key}${phone}${numeric}">${sortable ? `<button type="button" class="fuad-sort" data-sort="${key}">${esc(label)}<span class="fuad-sort-mark" aria-hidden="true"></span></button>` : esc(label)}</th>`;
                             }).join("")}</tr></thead>
                             <tbody></tbody>
@@ -445,8 +445,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                                 return `<th scope="row" class="fuad-team"><button type="button" class="fuad-name" data-player="${esc(player.id)}">${esc(player.name)}</button>
                                     <span class="fuad-meta fuad-phone-only">${esc([player.position, player.nfl, contract, player.fa ? "" : player.ownerName].filter(Boolean).join(" · "))}</span></th>`;
                             }
-                            case "position": return `<td class="${phone}">${esc(player.position)}</td>`;
-                            case "nfl": return `<td class="${phone}">${esc(player.nfl)}</td>`;
+                            case "position": return `<td class="fuad-mid${phone}">${esc(player.position)}</td>`;
+                            case "nfl": return `<td class="fuad-mid${phone}">${esc(player.nfl)}</td>`;
                             case "bye": return `<td class="fuad-num${phone}">${esc(player.bye || "—")}</td>`;
                             case "projected": return `<td class="fuad-num${phone}">${player.projected === null ? "—" : esc(player.projected.toFixed(1))}</td>`;
                             case "points": return `<td class="fuad-num${phone}">${esc(pts(player.points))}</td>`;

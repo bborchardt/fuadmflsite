@@ -93,20 +93,6 @@ body .pagebody {
 .fuad-ir-on body .pagebody,
 .fuad-trades-on body .pagebody { overflow: visible; }
 
-/* in every table, a right-aligned number ends at its column's right edge; the text column after it
-   starts at its left edge, so it needs room of its own (a Drop row's chevron is no column of text);
-   phones' tables are too narrow to spare it */
-@media (min-width: 48.01em) {
-    #fuad-home .fuad-num + :not(.fuad-num),
-    #fuad-league .fuad-num + :not(.fuad-num),
-    #fuad-rosters .fuad-num + :not(.fuad-num),
-    #fuad-lineup .fuad-num + :not(.fuad-num),
-    #fuad-add .fuad-num + :not(.fuad-num),
-    #fuad-drop .fuad-num + :not(.fuad-num):not(.fuad-drop-chev),
-    #fuad-ir .fuad-num + :not(.fuad-num),
-    #fuad-trades .fuad-num + :not(.fuad-num) { padding-left: 24px; }
-}
-
 /* a position's heading (Lineup, Drop, Rosters › My team): a shaded band, the position, then its note */
 .fuad-band {
     display: flex;
@@ -4952,4 +4938,23 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-trades .fuad-trades-sendband { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; align-items: end; padding: 14px 16px 16px; }
     #fuad-trades .fuad-trades-when { grid-template-columns: minmax(0, 1fr) 150px; }
     #fuad-trades .fuad-trades-message { margin-top: 0; }
+}
+
+/* desktop tables: numbers and short text (NFL, Pos, Opp, Bye) centered in their columns, so the space
+   between neighbors is even; names and long text stay left. Last in the file: each screen's own
+   right-aligned rule comes earlier. */
+@media (min-width: 48.01em) {
+    #fuad-league .fuad-table .fuad-num,
+    #fuad-rosters .fuad-table .fuad-num,
+    #fuad-rosters .fuad-table .fuad-mid,
+    #fuad-lineup .fuad-num,
+    #fuad-lineup .fuad-mid,
+    #fuad-add .fuad-num,
+    #fuad-add .fuad-mid,
+    #fuad-add .fuad-add-sort.fuad-num,
+    #fuad-drop .fuad-num,
+    #fuad-drop .fuad-mid,
+    #fuad-ir .fuad-num,
+    #fuad-ir .fuad-mid,
+    #fuad-trades .fuad-num { text-align: center; }
 }

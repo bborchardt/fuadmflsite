@@ -40,7 +40,7 @@ function deskRow(player, on) {
         <span role="cell"><button type="button" class="fuad-check" data-toggle="${esc(player.id)}" aria-pressed="${starting}" aria-label="Start ${esc(player.name)}"${player.locked ? " disabled" : ""}>${CHECK}</button></span>
         <span role="cell" class="fuad-lineup-name"><button type="button" class="fuad-name" data-player="${esc(player.id)}">${esc(player.name)}</button>${tag(player)}</span>
         <span role="cell" class="fuad-num fuad-lineup-projected${player.proj ? "" : " fuad-muted"}">${esc(pts(player.proj || 0))}</span>
-        <span role="cell" class="fuad-muted">${esc(player.nfl)}</span>
+        <span role="cell" class="fuad-mid fuad-muted">${esc(player.nfl)}</span>
         <span role="cell" class="fuad-muted">${esc(player.onBye ? "Bye week" : player.opp)}</span>
         <span role="cell" class="fuad-num fuad-muted">${esc(player.oppRank || "—")}</span>
         <span role="cell" class="fuad-num">${esc(pts(player.ytd))}</span>
@@ -83,7 +83,7 @@ function draw(mount, state) {
     </section>
     <section class="fuad-panel fuad-lineup-table" aria-label="Your roster">
         <div class="fuad-table-scroll"><div class="fuad-lineup-grid" role="table" aria-label="Your roster">
-            <div class="fuad-lineup-line fuad-lineup-columns" role="row"><span role="columnheader">Start</span><span role="columnheader">Player</span><span role="columnheader" class="fuad-num">Proj</span><span role="columnheader">NFL</span><span role="columnheader">Opponent</span><span role="columnheader" class="fuad-num">Opp rank</span><span role="columnheader" class="fuad-num">YTD</span><span role="columnheader" class="fuad-num">Avg</span></div>
+            <div class="fuad-lineup-line fuad-lineup-columns" role="row"><span role="columnheader">Start</span><span role="columnheader">Player</span><span role="columnheader" class="fuad-num">Proj</span><span role="columnheader" class="fuad-mid">NFL</span><span role="columnheader">Opponent</span><span role="columnheader" class="fuad-num">Opp rank</span><span role="columnheader" class="fuad-num">YTD</span><span role="columnheader" class="fuad-num">Avg</span></div>
             ${byPos.map((group) => `<div class="fuad-lineup-band" role="row"><span role="cell" class="fuad-band">${group.head}</span></div>${group.players.map((player) => deskRow(player, on)).join("")}`).join("")}
         </div></div>
     </section>
