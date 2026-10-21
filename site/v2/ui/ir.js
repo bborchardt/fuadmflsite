@@ -124,9 +124,9 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         const off = Boolean(blocked) || !count || state.busy;
         const activeTone = (active) => (limits() && active > ROSTER_MAX ? "fuad-bad" : "");
         // where the team stands, and with a move ticked, where it would stand: each number in its own tone
-        const figure = (label, {from, to}, tone, show, most) => `<span class="fuad-ir-figure"><span class="fuad-muted">${label}</span> <strong><span class="${tone(from)}">${esc(show(from))}</span>${from === to ? "" : ` → <span class="${tone(to)}">${esc(show(to))}</span>`}</strong> <span class="fuad-muted">of ${esc(show(most))}</span></span>`;
+        const figure = (label, {from, to}, tone, show, most) => `<span class="fuad-ir-figure"><span class="fuad-muted">${label}</span> <strong><span class="${tone(from)}">${esc(show(from))}</span>${from === to ? "" : ` → <span class="${tone(to)}">${esc(show(to))}</span>`}</strong>${most === null ? "" : ` <span class="fuad-muted">of ${esc(show(most))}</span>`}</span>`;
         return `<section class="fuad-ir-bar${blocked ? " fuad-ir-bar-blocked" : ""}" aria-label="Result">
-            ${figure("Active", result.active, activeTone, String, ROSTER_MAX)}
+            ${figure("Active", result.active, activeTone, String, limits() ? ROSTER_MAX : null)}
             ${figure("Cap used", result.cap, capTone, money, SALARY_CAP)}
             <span class="fuad-ir-why">${blocked ? `<strong class="fuad-bad">Blocked:</strong> ${esc(blocked)}` : ""}</span>
             <button type="button" class="fuad-ir-save" data-act="save"${off ? " disabled" : ""}>${state.busy ? "Saving…" : count ? "Save IR moves" : "Nothing to save"}</button>
