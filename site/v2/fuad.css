@@ -2488,6 +2488,10 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-roster .fuad-group th > span { vertical-align: middle; }
 
+/* Players: Years, right-aligned, then Team's text: room between them */
+#fuad-rosters .fuad-player-table th:last-child,
+#fuad-rosters .fuad-player-table td:last-child { padding-left: 24px; }
+
 #fuad-rosters .fuad-roster .fuad-group .fuad-band-pos { margin-right: 14px; }
 
 #fuad-rosters .fuad-roster .fuad-group + tr > * { border-top: 0; }
@@ -3873,7 +3877,7 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-add .fuad-add-fa-line {
         display: grid;
         /* Pos, Proj and Pts narrow, so the projection sits by the name; the text columns spread */
-        grid-template-columns: minmax(180px, 300px) 56px 64px 88px repeat(3, minmax(56px, 1fr)) 104px;
+        grid-template-columns: minmax(180px, 300px) 56px 64px 104px repeat(3, minmax(56px, 1fr)) 104px;
         gap: 0 8px;
         align-items: center;
         min-height: 44px;
@@ -3892,7 +3896,7 @@ body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); c
     #fuad-add .fuad-add-why { font-size: 12px; font-weight: 700; }
     #fuad-add .fuad-add-proj-num { font: 700 19px var(--fuad-display); }
     /* Pts, right-aligned, then NFL's text: room between them */
-    #fuad-add .fuad-add-fa-line > :nth-child(4) { padding-right: 24px; }
+    #fuad-add .fuad-add-fa-line > :nth-child(4) { padding-right: 40px; }
     #fuad-add .fuad-add-fa-name .fuad-tag { padding: 0 6px; border-radius: 5px; font-size: 12px; }
     #fuad-add .fuad-add-row-action {
         position: relative;
