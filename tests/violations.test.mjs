@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {ruleViolations as items} from "../site/v1/lib/violations.js";
+import {ruleViolations as v2Items} from "../site/v2/lib/violations.js";
 
 const ruleViolations = (league, options) => items(league, options).map((item) => item.text);
 
@@ -40,6 +41,23 @@ test("injured or suspended starters (anti-tanking): regular season lineups, unti
     assert.deepEqual(ruleViolations(league("15", franchise("Risky", 250, 25, [injured]))), []);
     // week 14's lineup once week 15 has kicked off
     assert.deepEqual(ruleViolations({...league("14", franchise("Risky", 250, 25, [injured])), tankingOver: true}), []);
+});
+
+test("v2: no injured starters before week 1's kickoff, when MFL's results can list week 1's lineups", () => {
+    const texts = (built) => v2Items(built).map((item) => item.text);
+    assert.deepEqual(texts({...league("1", franchise("Risky", 250, 25, [injured])), started: false}), []);
+    assert.deepEqual(texts({...league("1", franchise("Risky", 250, 25, [injured])), started: true}),
+        ["Risky started injured/suspended player Hurt Player in week 1!"]);
+});
+
+test("v2: the roster limits start at the final cut-down date (2.5), the IR check at week 1", () => {
+    const texts = (built, options) => v2Items(built, options).map((item) => item.text);
+    const crowded = {...league("1", franchise("Crowded", 250, 34), franchise("Thin", 250, 22)), started: false};
+    assert.deepEqual(texts(crowded, {now: 99, cutDown: 100}), []);
+    assert.deepEqual(texts(crowded, {now: 100, cutDown: 100}),
+        ["Crowded is over the roster limit with 34 players!", "Thin is under the roster limit with 22 players!"]);
+    // no cut-down date on the calendar: from week 1
+    assert.deepEqual(texts(crowded, {now: 100}), []);
 });
 
 test("before any results (no week yet) every check applies", () => {

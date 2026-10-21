@@ -132,6 +132,9 @@ test("between the draft and the cut-down: lengths to post and the roster limits"
         ["Post contract lengths for 2 players", "Draft-day players need them by Mon Sep 7; $5 a day late (12.6) · Message board"],
         ["Get to 30 active by Mon Sep 7", "You have 34 · Drop"]
     ]);
+    // after the cut-down the limits hold (2.5): over 30 is a violation, fixed by dropping
+    const after = myAlerts({league: leagueOf([me], [], {started: false}), franchiseId: "0001", phase: "preseason", links, now: at("2026-09-08T12:00:00-05:00"), cutDown});
+    assert.deepEqual(after.map((a) => [a.title, a.detail]), [["Over the roster limit: 34 active of 30", "Drop"]]);
 });
 
 test("the phase: before the draft, draft to cut-down, preseason, season, over", () => {
@@ -151,13 +154,15 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     const dates = calendarDates(calendar, kickoffs);
     assert.equal(cutDownDate(dates), 1788842700);
     // in season: the deadline, the commissioner's same-day event and the playoffs
-    assert.deepEqual(comingUp({dates, kickoffs, now}).map((d) => [d.what, d.when, d.soon]), [
+    assert.deepEqual(comingUp({dates, kickoffs, now}).slice(0, 3).map((d) => [d.what, d.when, d.soon]), [
         ["Trade deadline", "Wed Nov 25 · Week 12 kickoff", false],
         ["Rookie/Franchise Player Salaries Calculated for Next Year", "Wed Nov 25 · Week 12 kickoff", false],
         ["Playoffs begin", "Thu Dec 17 · Week 15 kickoff", false]
     ]);
-    // before the draft: draft day, the cut-down, the first blind bids
-    assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "First blind bids"]);
+    // before the draft: draft day, the cut-down, week 1 (the first blind bids follow the draft)
+    assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
+    // after the draft: the cut-down, the first blind bids, week 1
+    assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
     // logged out there's no calendar, but the season's own dates show
     assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin"]);
     // the cut-down two days away is soon
@@ -170,6 +175,9 @@ test("the next blind bid run repeats weekly from the first", () => {
     assert.equal(nextBidRun(calendar, now), at("2026-10-21T23:00:00-05:00"));
     assert.equal(nextBidRun(calendar, 1789012800 - 10), 1789012800);
     assert.equal(nextBidRun(null, now), null);
+    // still 11 p.m. CT once daylight time ends (Nov 1)
+    assert.equal(nextBidRun(calendar, at("2026-11-26T12:00:00-06:00")), at("2026-12-02T23:00:00-06:00"));
+    assert.equal(nextBidRun(calendar, at("2026-12-02T22:30:00-06:00")), at("2026-12-02T23:00:00-06:00"));
 });
 
 test("recent moves: the latest 10 adds, bids, IR moves and trades, as saved 4 Oct 2026", () => {

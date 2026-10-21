@@ -8,9 +8,9 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, failedLine, loadData, movesPhase, refusal, rosterStatuses, send} from "./moves.js";
+import {Refused, failedLine, limitsApply, loadData, refusal, rosterStatuses, send} from "./moves.js";
 import {changeTone, signed, teamState} from "./add-model.js";
-import {calendarDates, cutDownDate} from "./home-model.js";
+import {contractYears} from "./rosters-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 
 const FLASH_KEY = "fuad.irFlash";
@@ -23,7 +23,6 @@ const WIDE = "(min-width: 48.01em)";
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 
 const money = (amount) => `$${Math.round(amount * 100) / 100}`;
-const yearsShort = (years) => `${years} yr${years === 1 ? "" : "s"}`;
 const tone = (name) => (name ? ` fuad-${name}` : "");
 const capTone = (cap) => (cap > SALARY_CAP ? "fuad-bad" : cap > SALARY_CAP - 10 ? "fuad-caution" : "");
 
@@ -75,12 +74,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
     };
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
-    // the roster limits hold from the final cut-down date (2.5; in seconds); without one, from week 1
-    const limits = () => {
-        const phase = movesPhase(state.data.facts);
-        const cut = cutDownDate(calendarDates(state.data.calendar));
-        return phase === "season" || (phase === "preseason" && Boolean(cut) && Date.now() / 1000 >= cut);
-    };
+    const limits = () => limitsApply(state.data.facts, state.data.calendar);
     const groups = () => irGroups(state.data.league, page, state.report);
     // a player who must come off IR is in every save while his box is open (bylaw 11.1; MFL takes no
     // lineup until he is)
@@ -199,14 +193,14 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
                     <span class="fuad-ir-name">${esc(player.fullName)}</span>
                     <span class="fuad-muted">${esc(player.nflPosition || "")}</span>
                     <span class="fuad-muted">${esc(player.team || "")}</span>
-                    <span class="fuad-num">${esc(money(player.salary))}</span>
-                    <span class="fuad-num fuad-muted">${esc(yearsShort(player.years))}</span>
+                    <span class="fuad-num">${player.rfa ? "—" : esc(money(player.salary))}</span>
+                    <span class="fuad-num fuad-muted">${esc(contractYears(player))}</span>
                     <span class="fuad-num">${choice.off ? `<span class="fuad-muted">${esc(choice.why)}</span>` : esc(money(choice.penalty))}</span>
                     <span class="fuad-num fuad-ir-change${choice.off ? " fuad-muted" : tone(changeTone(choice.capChange))}">${esc(signed(choice.capChange))}</span>
                 </label>`;
             }
             return `<label class="fuad-ir-drow${on ? " fuad-ir-on-row" : ""}${choice.off ? " fuad-ir-off" : ""}">${radio(choice)}
-                <span class="fuad-ir-who"><span class="fuad-ir-name">${esc(player.fullName)}</span><span class="fuad-meta">${esc([player.nflPosition, player.team, money(player.salary), yearsShort(player.years)].filter(Boolean).join(" · "))}</span></span>
+                <span class="fuad-ir-who"><span class="fuad-ir-name">${esc(player.fullName)}</span><span class="fuad-meta">${esc([player.nflPosition, player.team, player.rfa ? "" : money(player.salary), contractYears(player)].filter(Boolean).join(" · "))}</span></span>
                 <span class="fuad-ir-cost">${cost}</span>
             </label>`;
         }).join("");

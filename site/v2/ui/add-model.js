@@ -5,7 +5,7 @@
 import {asArray} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {clock, dayText} from "./home-model.js";
+import {clock, dayText, weeklyAfter} from "./home-model.js";
 
 // the bylaws' contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
@@ -100,17 +100,14 @@ export function addPhase({started, over, drafted}) {
     return drafted ? "preseason" : "closed";
 }
 
-const DAY = 24 * 60 * 60;
+// after week 17 the next adds are the next draft's, on the next season's site
+export const addsClosed = (phase) => phase === "closed" || phase === "over";
 
 // the next time after `now` of one of MFL's weekly calendar events (WAIVER_BBID, WAIVER_LOCK), in
 // seconds: its first time, repeated weekly
 export function nextWeekly(calendar, type, now) {
     const event = asArray(calendar && calendar.event).find((entry) => entry.type === type && Number(entry.start_time) > 1e9);
-    if (!event) {
-        return null;
-    }
-    const first = Number(event.start_time);
-    return first > now ? first : first + Math.ceil((now - first) / (7 * DAY)) * 7 * DAY;
+    return event ? weeklyAfter(Number(event.start_time), now) : null;
 }
 
 // "Sunday noon", "Wednesday 11 p.m."
@@ -123,7 +120,7 @@ const timeText = (seconds) => {
 // The banner: MFL decides per player, so the free agent window is open while any free agent can be
 // added outright; the calendar says until when. `kind` is "window", "bids" or "closed".
 export function banner({phase, freeAgents, calendar, now}) {
-    if (phase === "closed") {
+    if (addsClosed(phase)) {
         return {kind: "closed", text: "Adds open after the draft."};
     }
     const open = freeAgents.some((player) => !bidOnly(player));

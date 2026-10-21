@@ -70,7 +70,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 // the event whose name contains "cut" (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the next few one-off dates. Without the calendar (logged out) the season's own dates
+// Coming up: the one-off dates still ahead, soonest first (the panel shows a few). Without the calendar (logged out) the season's own dates
 // still show: week 1, the trade deadline and the playoffs.
 export function comingUp({dates, kickoffs = new Map(), now}) {
     const all = dates.slice();
@@ -84,20 +84,38 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
     if (kickoffs.get(PLAYOFFS_START_WEEK)) {
         all.push({what: "Playoffs begin", at: kickoffs.get(PLAYOFFS_START_WEEK), week: PLAYOFFS_START_WEEK});
     }
-    return all.filter((date) => date.at > now)
+    // the first blind bids follow the draft, so before it they aren't yet worth a line
+    const draftAhead = all.some((date) => date.kind === "draft" && date.at > now);
+    return all.filter((date) => date.at > now && !(draftAhead && date.kind === "bids"))
         .sort((a, b) => a.at - b.at)
-        .slice(0, 3)
         .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at), soon: date.at - now <= SOON_DAYS * DAY}));
+}
+
+// Central time's offset from UTC at a moment, in seconds (−18000 in daylight time)
+const centralOffset = (seconds) => {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: CT, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric"})
+        .formatToParts(new Date(seconds * 1000)).map((part) => [part.type, Number(part.value)]));
+    return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) / 1000 - Math.floor(seconds / 60) * 60;
+};
+
+// The first time after `now` of an event repeated weekly from `first`, at the same Central clock
+// time: MFL's weekly runs stay at 11 p.m. CT when daylight time ends
+export function weeklyAfter(first, now) {
+    let weeks = Math.max(0, Math.floor((now - first) / (7 * DAY)));
+    for (;;) {
+        const plain = first + weeks * 7 * DAY;
+        const at = plain + centralOffset(first) - centralOffset(plain);
+        if (at > now) {
+            return at;
+        }
+        weeks += 1;
+    }
 }
 
 // MFL's weekly blind bid run after `now`: the first run, repeated weekly
 export function nextBidRun(calendar, now) {
     const event = asArray(calendar && calendar.event).find((entry) => entry.type === "WAIVER_BBID" && Number(entry.start_time) > 1e9);
-    if (!event) {
-        return null;
-    }
-    const first = Number(event.start_time);
-    return first > now ? first : first + Math.ceil((now - first) / (7 * DAY)) * 7 * DAY;
+    return event ? weeklyAfter(Number(event.start_time), now) : null;
 }
 
 // The viewer's starters this week that can't play: out, on IR, suspended, on a bye or with no NFL
@@ -138,13 +156,18 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     const byCut = cutDown ? `by ${dayText(cutDown)}` : "before the season";
 
     // the same violations League Alerts and the daily job flag, for the viewer's team
-    const own = ruleViolations(league, {now}).filter((item) => item.franchiseId === franchiseId);
+    const own = ruleViolations(league, {now, cutDown}).filter((item) => item.franchiseId === franchiseId);
     const kinds = new Set(own.map((item) => item.kind));
     if (kinds.has("cap")) {
         push(tones.red, "$", `Over the salary cap: ${money(franchise.capTotal)} of $${SALARY_CAP}`, "The commissioner will reverse the move that did it", null);
     }
     if (kinds.has("roster-over")) {
-        push(tones.red, String(franchise.numPlayers), `Over the roster limit: ${franchise.numPlayers} active of ${ROSTER_MAX}`, "The commissioner will reverse the move that did it", null);
+        // before week 1 it's the cut-down missed, fixed by dropping; in season a move did it
+        if (league.started === false) {
+            push(tones.red, String(franchise.numPlayers), `Over the roster limit: ${franchise.numPlayers} active of ${ROSTER_MAX}`, "", links.drop, "Drop");
+        } else {
+            push(tones.red, String(franchise.numPlayers), `Over the roster limit: ${franchise.numPlayers} active of ${ROSTER_MAX}`, "The commissioner will reverse the move that did it", null);
+        }
     }
     if (kinds.has("roster-under")) {
         push(tones.orange, String(franchise.numPlayers), `Under the roster minimum: ${franchise.numPlayers} active of ${ROSTER_MIN}`, "", links.add, "Add");
@@ -219,8 +242,8 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
 
 // Every other team's violations, as League Alerts and the daily job flag them. The red or orange
 // figure says how far off the limit the team is.
-export function leagueAlerts(league, franchiseId, {now} = {}) {
-    return ruleViolations(league, {now})
+export function leagueAlerts(league, franchiseId, {now, cutDown = null} = {}) {
+    return ruleViolations(league, {now, cutDown})
         .filter((item) => item.franchiseId !== franchiseId && item.kind !== "contract" && item.kind !== "ir-roster")
         .map((item) => {
             const franchise = league.franchises.get(item.franchiseId);

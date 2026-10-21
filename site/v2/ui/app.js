@@ -1,7 +1,7 @@
 // On pages other than the home page this does nothing; only the stylesheet applies.
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
-import {buildLeague, playersFromExport} from "../lib/league.js";
+import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {franchiseTopSalaries} from "../lib/rules.js";
 import {seasonPhase} from "../lib/violations.js";
@@ -66,23 +66,29 @@ async function loadLeague({season, leagueId}) {
         const players = await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch});
         return {player: players.player};
     });
-    const weeklyResultsPromise = league("weeklyResults");
+    // only the injured-starter check needs the results, so without them (a new site has none) that
+    // check flags nothing and the rest still loads
+    const weeklyResultsPromise = league("weeklyResults").catch(() => null);
     // the results week's report, for the injured-starter check; without it that check flags nothing
-    const injuriesPromise = weeklyResultsPromise.then((weeklyResults) =>
-        fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries", {fetchImpl: pageFetch})).catch(() => null);
+    const injuriesPromise = weeklyResultsPromise.then((weeklyResults) => (weeklyResults
+        ? fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries", {fetchImpl: pageFetch})
+        : null)).catch(() => null);
     // today's report, for injured reserve eligibility; without it that check is skipped
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries", {fetchImpl: pageFetch}).catch(() => null);
     // if the season's phase can't be told, in-season checks are hidden rather than risk false alerts
     const phasePromise = seasonPhase(season, new Date(), {fetchImpl: pageFetch}).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
-    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase] = await Promise.all([
+    // this season's rookies, whose cut costs nothing while their length is due; only before week 1
+    const draftPromise = phasePromise.then((phase) => (phase.started ? null : league("draftResults"))).catch(() => null);
+    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase, draftResults] = await Promise.all([
         playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
-        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise
+        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise, draftPromise
     ]);
     const built = buildLeague({
         players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters,
         transactions, weeklyResults, freeAgents, injuries, currentInjuries
     });
     Object.assign(built, phase);
+    markContracts(built, draftedIds(draftResults));
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
     built.raw = {transactions, league: leagueInfo, salaryAdjustments, freeAgents};
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});
