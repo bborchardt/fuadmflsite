@@ -231,33 +231,147 @@ export function restyleBoard(doc = document) {
     return true;
 }
 
+// MFL's message heading ("To <team> Date … Subject …") as {To|From, Date, Subject}, each the nodes after
+// its label; null when it holds another label
+function readMessageHead(hcl) {
+    const parts = {};
+    let key = null;
+    for (const node of hcl.childNodes) {
+        if (node.nodeType === 1 && node.matches("span.htt")) {
+            key = clean(node.textContent);
+            if (!["To", "From", "Date", "Subject"].includes(key) || parts[key]) {
+                return null;
+            }
+            parts[key] = [];
+        } else if (key) {
+            parts[key].push(node);
+        }
+    }
+    return parts;
+}
+
+// true when a private message (MFL's `mb/message_show.pl`) was restyled: its subject as the title,
+// then a card like a topic's post, MFL's own team link, text and links moved into it
+export function restyleMessage(doc = document) {
+    const frm = doc.querySelector("div.frm.msg");
+    const hcl = frm && frm.querySelector(":scope > .hcl");
+    const text = frm && frm.querySelector(":scope > .ccl");
+    const links = frm ? [...frm.querySelectorAll(":scope > .bcl a[href]")] : [];
+    const parts = hcl && readMessageHead(hcl);
+    const bar = doc.querySelector("th.messageboardbar");
+    const table = bar && bar.closest("table");
+    const nav = doc.querySelector("span.nav");
+    const up = nav && nav.querySelector("a[href*='message_list']");
+    const who = parts && (parts.From ? "From" : parts.To ? "To" : null);
+    const team = who && parts[who].find((node) => node.nodeType === 1 && node.matches("a"));
+    const container = frm && frm.parentElement;
+    if (!frm || !text || !parts || !who || !team || !parts.Subject || !table || !up
+        || [...container.childNodes].some((node) => (node.nodeType === 1 ? ![nav, table, frm].includes(node) && node.tagName !== "BR" : clean(node.textContent)))) {
+        return false;
+    }
+    const subject = clean(parts.Subject.map((node) => node.textContent).join(" "));
+    const header = doc.createElement("div");
+    header.className = "fuad-topic-head";
+    header.innerHTML = `
+        <div class="fuad-topic-title">
+            <a class="fuad-side-back" href="${esc(up.getAttribute("href"))}">‹ Messages</a>
+            <h2>${esc(subject || "Message")}</h2>
+        </div>`;
+    const article = doc.createElement("article");
+    article.className = "fuad-post";
+    article.innerHTML = `
+        <div class="fuad-post-head">
+            <span class="fuad-post-avatar" aria-hidden="true">${esc(initials(team.textContent))}</span>
+            <span class="fuad-post-who"><span class="fuad-post-team">${who} </span><span class="fuad-post-when">${esc(shortDate((parts.Date || []).map((node) => node.textContent).join(" ")))}</span></span>
+            <span class="fuad-post-actions"></span>
+        </div>
+        <div class="fuad-post-text"></div>`;
+    article.querySelector(".fuad-post-team").append(team);
+    article.querySelector(".fuad-post-actions").append(...links);
+    article.querySelector(".fuad-post-text").append(...text.childNodes);
+    nav.before(header);
+    frm.replaceWith(article);
+    table.classList.add("fuad-topic-bar");
+    // the topic page's layout: MFL's bar, arrows and breaks hidden, v2's heading
+    doc.documentElement.classList.add("fuad-topic");
+    return true;
+}
+
+// "[b]" … "[/b]" around the selection, or the cursor between them; a link's cursor goes after "[url="
+// for the address. Tapped again just before its closing tag (or a link's "]"), the chip steps past
+// it. MFL's own insertTags leaves the cursor after both tags, so a chip's next word isn't formatted.
+export function insertTags(value, start, end, open, close) {
+    const selected = value.slice(start, end);
+    const link = open.endsWith("=");
+    if (!selected && value.startsWith(`[/${close}]`, start)) {
+        return {text: value, caret: start + close.length + 3};
+    }
+    if (!selected && link && value[start] === "]") {
+        return {text: value, caret: start + 1};
+    }
+    const text = `${value.slice(0, start)}[${open}]${selected}[/${close}]${value.slice(end)}`;
+    const caret = link
+        ? start + open.length + 1
+        : start + open.length + 2 + (selected ? selected.length + close.length + 3 : 0);
+    return {text, caret};
+}
+
+// MFL's format buttons, made to call insertTags in place of MFL's
+function wireFormats(buttons, body) {
+    buttons.forEach((button) => {
+        const match = (button.getAttribute("onclick") || "").match(/insertTags\("([^"]+)","([^"]+)"\)/);
+        if (!match) {
+            return;
+        }
+        button.removeAttribute("onclick");
+        button.addEventListener("click", () => {
+            const {text, caret} = insertTags(body.value, body.selectionStart, body.selectionEnd, match[1], match[2]);
+            body.value = text;
+            body.focus();
+            body.setSelectionRange(caret, caret);
+        });
+    });
+}
+
+// MFL draws Preview's page with "Email me replies" ticked again; the member's choice is kept here
+// for the one page after Preview
+const NOTIFY_KEY = "fuad.board.notify";
+const NOTIFY_FOR = 10 * 60 * 1000;
+
 // MFL's formatting buttons by the tag they insert, as v2 labels them; the smileys are left out
 const FORMATS = {b: "B", i: "I", tt: "tt", "url=": "Link", img: "Image", video: "Video"};
 
-// true when the reply or new topic page (MFL's `mb/topic_add.pl`) was restyled; a new topic's form
-// is the reply's with a subject
+// true when the reply, new topic (MFL's `mb/topic_add.pl`) or edit page (`mb/post_edit.pl`) was
+// restyled; a new topic's form is the reply's with a subject, an edit's has no Preview and is followed
+// by MFL's delete form
 export function restyleReply(doc = document) {
-    const form = doc.querySelector("form.rpl, form[action='topic_add.pl']");
+    const form = doc.querySelector("form.rpl, form[action='topic_add.pl'], form.ept");
+    const editing = Boolean(form && form.matches("form.ept"));
     const up = doc.querySelector("span.nav a[href*='topic_show'], span.nav a[href*='board_show']");
     const bars = [...doc.querySelectorAll("th.messageboardbar")].map((th) => th.closest("table"));
     const body = form && form.querySelector("textarea[name=body]");
-    const post = form && form.querySelector("input[type=submit][name=add]");
+    // the edit form's button (Change) has no name
+    const post = form && form.querySelector(editing ? "input[type=submit]" : "input[type=submit][name=add]");
     const preview = form && form.querySelector("input[type=submit][name=preview]");
     const notify = form && form.querySelector("input[type=checkbox][name=notify]");
     const subject = form && form.querySelector("input[type=text][name=subject]");
-    if (!form || !up || !bars.length || bars.some((table) => !table) || !body || !post || !preview) {
+    const remover = editing ? doc.querySelector("form.dpt") : null;
+    const removeButton = remover && remover.querySelector("input[type=submit]");
+    const removeNote = remover && remover.querySelector(".ccl");
+    if (!form || !up || !bars.length || bars.some((table) => !table) || !body || !post || (!preview && !editing)
+        || (editing && (!remover || !removeButton || !removeNote))) {
         return false;
     }
     // a field v2 doesn't know would be lost, so such a form stays MFL's
-    const known = [subject, body, post, preview, notify].filter(Boolean);
-    if ([...form.querySelectorAll("input:not([type=hidden]), textarea, select, button:not(.tbt)")].some((field) => !known.includes(field))) {
+    const known = [subject, body, post, preview, notify, removeButton].filter(Boolean);
+    if ([form, remover].filter(Boolean).some((each) => [...each.querySelectorAll("input:not([type=hidden]), textarea, select, button:not(.tbt)")].some((field) => !known.includes(field)))) {
         return false;
     }
     const formats = [...form.querySelectorAll("button.tbt")].map((button) => {
         const tag = ((button.getAttribute("onclick") || "").match(/insertTags\("([^"]+)"/) || [])[1];
         return tag && FORMATS[tag] ? {button, label: FORMATS[tag]} : null;
     }).filter(Boolean);
-    const others = [...doc.querySelectorAll("div.frm")].filter((frm) => !form.contains(frm));
+    const others = [...doc.querySelectorAll("div.frm")].filter((frm) => !form.contains(frm) && !(remover && remover.contains(frm)));
     const heading = (frm) => clean((frm.querySelector(".hcl") || {}).textContent);
     const answered = others.find((frm) => /^In Response to/i.test(heading(frm)));
     // Preview's copy of the post: a reply's in a box after the form, a new topic's loose after it
@@ -270,7 +384,7 @@ export function restyleReply(doc = document) {
     const loose = subject && firstAfter && firstAfter.tagName === "B" && /^Preview$/i.test(clean(firstAfter.textContent))
         ? after.slice(after.indexOf(firstAfter) + 1) : null;
     const looseBreak = loose && loose[0] && loose[0].tagName === "BR" ? loose.shift() : null;
-    const kept = [answered, boxed, loose && firstAfter, looseBreak, ...(loose || [])].filter(Boolean);
+    const kept = [answered, boxed, remover, loose && firstAfter, looseBreak, ...(loose || [])].filter(Boolean);
     // anything else isn't part of the drawn page, so it stays MFL's
     if (others.some((frm) => !kept.includes(frm)) || after.some((node) => !kept.includes(node) && (node.nodeType === 1 || clean(node.textContent)))) {
         return false;
@@ -284,7 +398,10 @@ export function restyleReply(doc = document) {
 
     const header = doc.createElement("div");
     header.className = "fuad-reply-head";
-    header.innerHTML = subject
+    const topicName = subject && clean(subject.value).replace(/^Re:\s*/i, "");
+    header.innerHTML = editing
+        ? `<a href="${esc(up.getAttribute("href"))}">‹ ${esc(topicName || "Back to the topic")}</a><h2>Edit post</h2>`
+        : subject
         ? `<a href="${esc(up.getAttribute("href"))}">‹ Message board</a><h2>New topic</h2>`
         : `<a href="${esc(up.getAttribute("href"))}">‹ ${esc(topic || "Back to the topic")}</a><h2>Reply</h2>`;
     let answeredCard = null;
@@ -304,7 +421,7 @@ export function restyleReply(doc = document) {
     }
     const fields = doc.createElement("div");
     fields.className = "fuad-reply-form";
-    fields.innerHTML = `${subject ? '<label class="fuad-reply-text fuad-reply-subject"><span class="fuad-label">Subject</span></label>' : ""}<div class="fuad-reply-formats" role="group" aria-label="Formatting"></div><label class="fuad-reply-text fuad-reply-body"><span class="fuad-label">${subject ? "Message" : "Your reply"}</span></label><div class="fuad-reply-buttons"></div>`;
+    fields.innerHTML = `${subject ? '<label class="fuad-reply-text fuad-reply-subject"><span class="fuad-label">Subject</span></label>' : ""}<div class="fuad-reply-formats" role="group" aria-label="Formatting"></div><label class="fuad-reply-text fuad-reply-body"><span class="fuad-label">${subject || editing ? "Message" : "Your reply"}</span></label><div class="fuad-reply-buttons"></div>`;
     if (subject) {
         fields.querySelector(".fuad-reply-subject").append(subject);
     }
@@ -313,18 +430,45 @@ export function restyleReply(doc = document) {
         button.dataset.format = label;
         fields.querySelector(".fuad-reply-formats").append(button);
     });
+    wireFormats(formats.map(({button}) => button), body);
     fields.querySelector(".fuad-reply-body").append(body);
     const buttons = fields.querySelector(".fuad-reply-buttons");
     if (notify) {
+        // the reply's post, the topic's board or the edited post, so a choice applies only to its own form
+        const formId = [...form.querySelectorAll("input[type=hidden][name=pid], input[type=hidden][name=bid]")].map((input) => input.value).join(" ");
+        try {
+            const kept = JSON.parse(window.sessionStorage.getItem(NOTIFY_KEY) || "null");
+            window.sessionStorage.removeItem(NOTIFY_KEY);
+            if (previewNodes && kept && kept.form === formId && Date.now() - kept.at < NOTIFY_FOR) {
+                notify.checked = kept.checked;
+            }
+        } catch (error) {
+            // storage is blocked: MFL's ticked box comes back
+        }
+        if (preview) {
+            preview.addEventListener("click", () => {
+                try {
+                    window.sessionStorage.setItem(NOTIFY_KEY, JSON.stringify({form: formId, checked: notify.checked, at: Date.now()}));
+                } catch (error) {
+                    // storage is blocked: MFL's ticked box comes back
+                }
+            });
+        }
         const label = doc.createElement("label");
         label.className = "fuad-reply-notify";
         label.append(notify, " Email me replies");
         buttons.append(label);
     }
-    preview.classList.add("fuad-reply-preview");
     post.classList.add("fuad-reply-post");
+    if (editing) {
+        post.value = "Save";
+    }
     // Post stays the form's first button, so Enter in Subject posts as on MFL's page; CSS shows Preview first
-    buttons.append(post, preview);
+    buttons.append(post);
+    if (preview) {
+        preview.classList.add("fuad-reply-preview");
+        buttons.append(preview);
+    }
     fields.append(...form.querySelectorAll("input[type=hidden]"));
 
     form.replaceChildren(fields);
@@ -333,6 +477,19 @@ export function restyleReply(doc = document) {
     if (answeredCard) {
         form.before(answeredCard);
         answered.remove();
+    }
+    if (remover) {
+        // MFL's note and button; the button keeps MFL's confirm and the form its hidden fields
+        const card = doc.createElement("div");
+        card.className = "fuad-reply-delete";
+        card.innerHTML = `<span class="fuad-label">Delete post</span><p></p><div class="fuad-reply-buttons"></div>`;
+        card.querySelector("p").textContent = clean([...removeNote.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join(" "));
+        removeButton.value = "Delete post";
+        removeButton.classList.add("fuad-reply-preview");
+        card.querySelector(".fuad-reply-buttons").append(removeButton);
+        card.append(...remover.querySelectorAll("input[type=hidden]"));
+        remover.replaceChildren(card);
+        remover.classList.add("fuad-compose");
     }
     if (previewCard) {
         form.before(previewCard);
@@ -359,7 +516,9 @@ const SIDE_CONTENT = {
     user_options: "form[action='user_options.pl']",
     forum_search: "form.sea"
 };
-const BAR_LINKS = {message_add: "New message"};
+const BAR_LINKS = {message_add: "New message", message_delete: "Delete all read"};
+// a bulk delete goes under the tables as a quiet link, away from New message
+const QUIET_LINKS = ["message_delete"];
 
 // true when one of the board's side pages (`mb/message_list.pl` …) was restyled: MFL's bar and up
 // arrow become a back link and a title, its forms and tables stay
@@ -378,7 +537,7 @@ export function restyleSidePage(page, boardHref, doc = document) {
     }
     const links = [...table.querySelectorAll("a.messageboardlink[href]")].map((link) => {
         const name = (link.getAttribute("href").match(/^(\w+)\.pl/) || [])[1];
-        return {href: link.getAttribute("href"), text: BAR_LINKS[name] || clean(link.textContent)};
+        return {href: link.getAttribute("href"), text: BAR_LINKS[name] || clean(link.textContent), quiet: QUIET_LINKS.includes(name)};
     });
     const toMessages = up && /^message_list\.pl/.test(up.getAttribute("href"));
     const header = doc.createElement("div");
@@ -388,7 +547,18 @@ export function restyleSidePage(page, boardHref, doc = document) {
             <a class="fuad-side-back" href="${esc(toMessages ? up.getAttribute("href") : boardHref)}">‹ ${toMessages ? "Messages" : "Message board"}</a>
             <h2>${esc(title)}</h2>
         </div>
-        ${links.map((link) => `<a class="fuad-chip" href="${esc(link.href)}">${esc(link.text)}</a>`).join("")}`;
+        ${links.filter((link) => !link.quiet).map((link) => `<a class="fuad-chip" href="${esc(link.href)}">${esc(link.text)}</a>`).join("")}`;
+    const quiet = links.filter((link) => link.quiet);
+    if (quiet.length) {
+        const foot = doc.createElement("p");
+        foot.className = "fuad-side-foot";
+        foot.innerHTML = quiet.map((link) => `<a href="${esc(link.href)}">${esc(link.text)}</a>`).join("");
+        container.append(foot);
+    }
+    const body = doc.querySelector("form.msa textarea[name=body]");
+    if (body) {
+        wireFormats([...doc.querySelectorAll("form.msa button.tbt")], body);
+    }
     nav.before(header);
     table.classList.add("fuad-topic-bar");
     doc.documentElement.classList.add("fuad-side");
