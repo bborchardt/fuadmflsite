@@ -3464,6 +3464,10 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 .fuad-side body form.msa .ccl > textarea,
 .fuad-side body form.msa .reportnavigation { flex: 0 0 100%; box-sizing: border-box; max-width: 100%; }
 
+.fuad-side body form.msa .ccl > select,
+.fuad-side body form.msa .ccl > input[type="text"],
+.fuad-side body form.msa .ccl > textarea { padding: 8px 10px !important; }
+
 .fuad-side body form.msa .ccl > input[type="text"] { min-height: 44px; margin-bottom: 8px; }
 
 /* a reply's recipient is MFL's bold name, not a menu */
@@ -3476,6 +3480,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 .fuad-side body form.msa button.tbt {
     width: auto;
     min-width: 44px;
+    margin: 0;
     height: 36px;
     padding: 0 10px;
     border: 1px solid var(--fuad-field);
