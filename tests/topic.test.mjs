@@ -11,6 +11,7 @@ test("a post's date drops the seconds, the time zone and the year", () => {
 test("the topic bar gives the topic's name and views", () => {
     assert.deepEqual(topicTitle("Topic Fuad Reveiz Fan Club Dynasty League Message Board / Free Agent Contracts (103 hits)"), {title: "Free Agent Contracts", hits: 103});
     assert.deepEqual(topicTitle("Topic Board / Rules (1,204 hits)"), {title: "Rules", hits: 1204});
+    assert.deepEqual(topicTitle("Topic Board / Rules (Page 2) (1,204 hits)"), {title: "Rules", hits: 1204});
     assert.equal(topicTitle("Something else"), null);
 });
 

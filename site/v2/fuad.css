@@ -3225,7 +3225,7 @@ body a.fuad-board-topic {
     body a.fuad-board-topic:hover { color: var(--fuad-lime); }
 }
 
-.fuad-board-pages { display: flex; justify-content: center; gap: 4px; font-size: 15px; font-weight: 600; }
+.fuad-board-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 15px; font-weight: 600; }
 
 .fuad-board-pages a,
 .fuad-board-pages span { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 6px; box-sizing: border-box; text-decoration: none; }
@@ -3441,6 +3441,19 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     .fuad-side-head { flex-direction: row; flex-wrap: nowrap; align-items: flex-start; }
     .fuad-side-head a.fuad-chip { margin-top: 6px; }
 }
+
+/* MFL's "Form Error" box on the board's forms, as v2's error panel */
+.fuad-reply body div.frm.err,
+.fuad-side body div.frm.err { margin: 0; padding: 10px 14px; border: 0; border-radius: 10px; background: var(--fuad-bad-tint); color: var(--fuad-text); }
+
+.fuad-reply body div.frm.err .hcl,
+.fuad-side body div.frm.err .hcl { display: none; }
+
+.fuad-reply body div.frm.err .ccl,
+.fuad-side body div.frm.err .ccl { padding: 0; border: 0; font-size: 15px; text-align: left; }
+
+.fuad-reply body div.frm.err p,
+.fuad-side body div.frm.err p { margin: 0; color: var(--fuad-text); }
 
 /* ---- Moves › Add (ui/add.js): drawn over MFL's Add/Drop page, whose form stays underneath ---- */
 
