@@ -460,6 +460,8 @@ body .pagebody button {
     padding: 0 18px;
     font-weight: 600;
     cursor: pointer;
+    /* MFL's skin paints a red glow inside its buttons */
+    box-shadow: none;
 }
 
 @media (hover: hover) {
@@ -468,6 +470,7 @@ body .pagebody button {
     body .pagebody button:hover {
         background: var(--fuad-lime-hover);
         color: var(--fuad-on-lime);
+        box-shadow: none;
     }
 }
 
@@ -1467,7 +1470,8 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-panel,
 #fuad-league .fuad-panel,
-#fuad-rosters .fuad-panel {
+#fuad-rosters .fuad-panel,
+#fuad-topics .fuad-panel {
     background: var(--fuad-panel);
     border: 1px solid var(--fuad-hairline);
     border-radius: 18px;
@@ -1516,7 +1520,8 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-chip,
 #fuad-league .fuad-chip,
-#fuad-rosters .fuad-chip {
+#fuad-rosters .fuad-chip,
+#fuad-topics .fuad-chip {
     position: relative;
     height: 32px;
     padding: 0 12px;
@@ -1534,25 +1539,30 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-rows,
 #fuad-league .fuad-rows,
-#fuad-rosters .fuad-rows { list-style: none; margin: 0; padding: 0; }
+#fuad-rosters .fuad-rows,
+#fuad-topics .fuad-rows { list-style: none; margin: 0; padding: 0; }
 
 .fuad-rows > li { margin: 0; border-top: 1px solid var(--fuad-rule); }
 
 #fuad-home .fuad-row-text,
 #fuad-league .fuad-row-text,
-#fuad-rosters .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+#fuad-rosters .fuad-row-text,
+#fuad-topics .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 
 #fuad-home .fuad-row-title,
 #fuad-league .fuad-row-title,
-#fuad-rosters .fuad-row-title { font-weight: 600; font-size: 15px; }
+#fuad-rosters .fuad-row-title,
+#fuad-topics .fuad-row-title { font-weight: 600; font-size: 15px; }
 
 #fuad-home .fuad-meta,
 #fuad-league .fuad-meta,
-#fuad-rosters .fuad-meta { line-height: 1.3; }
+#fuad-rosters .fuad-meta,
+#fuad-topics .fuad-meta { line-height: 1.3; }
 
 #fuad-home .fuad-empty,
 #fuad-league .fuad-empty,
-#fuad-rosters .fuad-empty { margin: 0; padding: 8px 0 12px; }
+#fuad-rosters .fuad-empty,
+#fuad-topics .fuad-empty { margin: 0; padding: 8px 0 12px; }
 
 #fuad-home .fuad-alert {
     display: grid;
@@ -3170,6 +3180,67 @@ body .fuad-post-team a { color: var(--fuad-text); font-weight: 700; font-size: 1
     .fuad-post-who { flex-direction: column; gap: 0; }
 }
 
+/* ---- The board's topic list (ui/topic.js): Home's Message board card, every topic ---- */
+
+.fuad-board body span.nav,
+.fuad-board body #withmenus > :not(#fuad-topics) { display: none !important; }
+
+.fuad-board body #withmenus { max-width: 860px; padding: 16px 0 24px; text-align: left; }
+
+#fuad-topics { display: flex; flex-direction: column; gap: 14px; }
+
+#fuad-topics .fuad-topic-head { align-items: center; margin-bottom: 0; }
+
+#fuad-topics a.fuad-chip { display: inline-flex; align-items: center; text-decoration: none; }
+
+.fuad-board-links { display: flex; gap: 18px; font-size: 14px; font-weight: 600; }
+
+/* each link's own 44 px tap area */
+.fuad-board-links a { display: inline-flex; align-items: center; min-height: 44px; margin: -8px 0; text-decoration: none; }
+
+#fuad-topics .fuad-panel { padding: 4px 16px; }
+
+#fuad-topics .fuad-rows > li:first-child { border-top: 0; }
+
+/* dot, title and who started it, then the last post's day; body a beats MFL's a:link */
+body a.fuad-board-topic {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 10px 0;
+    box-sizing: border-box;
+    color: var(--fuad-text);
+    text-decoration: none;
+}
+
+.fuad-board-topic.fuad-unread::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--fuad-lime); }
+
+.fuad-board-topic .fuad-row-text { grid-column: 2; }
+
+.fuad-board-topic > .fuad-meta { white-space: nowrap; }
+
+@media (hover: hover) {
+    body a.fuad-board-topic:hover { color: var(--fuad-lime); }
+}
+
+.fuad-board-pages { display: flex; justify-content: center; gap: 4px; font-size: 15px; font-weight: 600; }
+
+.fuad-board-pages a,
+.fuad-board-pages span { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 6px; box-sizing: border-box; text-decoration: none; }
+
+.fuad-board-pages span { color: var(--fuad-text); }
+
+.fuad-unread-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 48em) {
+    .fuad-board body #withmenus { padding-top: 6px; }
+    #fuad-topics .fuad-topic-head { flex-direction: row; flex-wrap: nowrap; align-items: flex-start; }
+    #fuad-topics a.fuad-chip { margin-top: 2px; }
+    #fuad-topics .fuad-panel { padding: 0 14px; }
+}
+
 /* ---- The board's reply page (ui/topic.js): the post being answered, then the form ---- */
 
 .fuad-reply-head { display: flex; flex-direction: column; }
@@ -3179,7 +3250,7 @@ body .fuad-post-team a { color: var(--fuad-text); font-weight: 700; font-size: 1
 body .fuad-reply-head h2 { margin: 0; padding: 0; font-size: 34px; line-height: 1.1; text-transform: none; text-align: left; }
 
 .fuad-reply-to,
-.fuad-reply body form.rpl {
+.fuad-reply body form.fuad-compose {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -3235,6 +3306,20 @@ body .fuad-reply-text textarea {
 
 body .fuad-reply-text textarea:focus { border-color: var(--fuad-lime); }
 
+body .fuad-reply-subject input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: var(--fuad-page);
+    color: var(--fuad-text);
+    font: 400 var(--fuad-read-size) var(--fuad-body);
+}
+
+body .fuad-reply-subject input:focus { border-color: var(--fuad-lime); }
+
 .fuad-reply-buttons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 16px; }
 
 .fuad-reply-notify { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; color: var(--fuad-soft); }
@@ -3250,18 +3335,88 @@ body .fuad-reply-buttons input[type="submit"] {
     cursor: pointer;
 }
 
-body .fuad-reply-buttons input.fuad-reply-preview { background: var(--fuad-quiet); color: var(--fuad-text); font-weight: 600; }
+body .fuad-reply-buttons input.fuad-reply-preview { order: 1; background: var(--fuad-quiet); color: var(--fuad-text); font-weight: 600; }
 
-body .fuad-reply-buttons input.fuad-reply-post { background: var(--fuad-lime); color: var(--fuad-on-lime); font-weight: 700; }
+body .fuad-reply-buttons input.fuad-reply-post { order: 2; background: var(--fuad-lime); color: var(--fuad-on-lime); font-weight: 700; }
 
 @media (max-width: 48em) {
     body .fuad-reply-head h2 { font-size: 28px; }
     .fuad-reply-to,
-    .fuad-reply body form.rpl { padding: 12px 14px; }
+    .fuad-reply body form.fuad-compose { padding: 12px 14px; }
     .fuad-reply-notify { flex-basis: 100%; }
     /* the six chips share one row */
     body .fuad-reply-formats button.tbt { flex: 1 1 auto; min-width: 0; padding: 0 8px; }
     body .fuad-reply-text textarea { height: 170px; }
+}
+
+/* ---- The board's side pages (ui/topic.js): Messages, Options, Search under v2's heading ---- */
+
+.fuad-side body span.nav,
+.fuad-side body .fuad-topic-bar,
+.fuad-side body #withmenus > br,
+.fuad-side body #withmenus table.report > caption,
+.fuad-side body form.msa .hcl,
+.fuad-side body form.msa button.tbt:has(img),
+.fuad-side body form.msa br { display: none !important; }
+
+.fuad-side body #withmenus { display: flex; flex-direction: column; gap: 14px; max-width: 860px; padding: 16px 0 24px; text-align: left; }
+
+.fuad-side body #withmenus table.report { width: 100%; margin: 0; }
+
+.fuad-side-head { align-items: center; }
+
+body .fuad-side-back { display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
+
+.fuad-side-head a.fuad-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 9px;
+    background: var(--fuad-quiet);
+    color: var(--fuad-text);
+    font: 600 13px var(--fuad-body);
+    text-decoration: none;
+}
+
+.fuad-side body form.msa .frm { padding: 14px 16px; border: 1px solid var(--fuad-hairline); border-radius: 16px; background: var(--fuad-panel); }
+
+/* New message: the reply form's fields and chips, on MFL's own markup */
+.fuad-side body form.msa .ccl { border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; }
+
+.fuad-side body form.msa .ccl > select,
+.fuad-side body form.msa .ccl > input[type="text"],
+.fuad-side body form.msa .ccl > textarea,
+.fuad-side body form.msa .reportnavigation { flex: 0 0 100%; box-sizing: border-box; max-width: 100%; }
+
+.fuad-side body form.msa .ccl > input[type="text"] { min-height: 44px; margin-bottom: 8px; }
+
+.fuad-side body form.msa .ccl > textarea { height: 200px; margin: 4px 0 8px; font: 400 var(--fuad-read-size) / var(--fuad-read-leading) var(--fuad-body); }
+
+.fuad-side body form.msa .reportnavigation { margin-bottom: 8px; font-size: 13px; color: var(--fuad-muted); text-align: left; }
+
+.fuad-side body form.msa button.tbt {
+    min-width: 44px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fuad-text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.fuad-side body form.msa input[name="preview"] { order: 1; background: var(--fuad-quiet); color: var(--fuad-text); }
+
+.fuad-side body form.msa input[name="add"] { order: 2; }
+
+.fuad-side body form.msa input[type="submit"] { min-height: 44px; border-radius: 12px; font-size: 16px; }
+
+@media (max-width: 48em) {
+    .fuad-side body #withmenus { padding-top: 6px; }
+    .fuad-side-head { flex-direction: row; flex-wrap: nowrap; align-items: flex-start; }
+    .fuad-side-head a.fuad-chip { margin-top: 6px; }
 }
 
 /* ---- Moves › Add (ui/add.js): drawn over MFL's Add/Drop page, whose form stays underneath ---- */

@@ -244,10 +244,14 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
-    // the message board's topic and reply pages: MFL's, restyled
-    const boardPage = (window.location.pathname.match(/\/mb\/(topic_show|post_add)\.pl$/) || [])[1];
+    // the message board's pages: MFL's, restyled
+    const boardPage = (window.location.pathname.match(/\/mb\/(\w+)\.pl$/) || [])[1];
     if (context && boardPage) {
-        await import("./topic.js").then(({restyleReply, restyleTopic}) => (boardPage === "post_add" ? restyleReply() : restyleTopic())).catch((error) => {
+        const boardHref = `${window.location.origin}/${context.season}/options?L=${context.leagueId}&O=28`;
+        await import("./topic.js").then((board) => {
+            const restyle = {board_show: board.restyleBoard, topic_show: board.restyleTopic, post_add: board.restyleReply, topic_add: board.restyleReply}[boardPage];
+            return restyle ? restyle() : board.restyleSidePage(boardPage, boardHref);
+        }).catch((error) => {
             console.error("[fuad] couldn't restyle the message board page:", error);
             onTrouble();
         });
