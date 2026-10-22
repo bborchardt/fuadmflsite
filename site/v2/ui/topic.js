@@ -18,7 +18,8 @@ export function shortDate(text) {
 // "… Message Board / Free Agent Contracts (1,204 hits)" → {title, hits}
 export function topicTitle(text) {
     const match = clean(text).match(/\/\s*(.+?)\s*\(([\d,]+) hits?\)\s*$/);
-    return match ? {title: match[1], hits: Number(match[2].replace(/,/g, ""))} : null;
+    // a long topic's later pages add "(Page 2)", which v2's page numbers show
+    return match ? {title: match[1].replace(/\s*\(Page \d+\)$/i, ""), hits: Number(match[2].replace(/,/g, ""))} : null;
 }
 
 const plural = (count, word) => `${count.toLocaleString("en-US")} ${word}${count === 1 ? "" : "s"}`;
@@ -55,7 +56,7 @@ function readPost(post) {
 
 // the card, with MFL's own team link, avatar and text moved into it
 function card(parts) {
-    const article = document.createElement("article");
+    const article = parts.post.ownerDocument.createElement("article");
     article.className = "fuad-post";
     article.innerHTML = `
         <div class="fuad-post-head">
@@ -79,9 +80,13 @@ export function restyleTopic(doc = document) {
     const posts = [...doc.querySelectorAll("div.frm.pst[id^='pid']")].map(readPost);
     const bars = [...doc.querySelectorAll("th.messageboardbar")].map((th) => th.closest("table"));
     const nav = doc.querySelector("span.nav");
-    if (!posts.length || posts.some((parts) => !parts) || !bars.length || bars.some((table) => !table) || !nav) {
+    // a long topic's page numbers, in MFL's topic bar (which is hidden)
+    const pln = doc.querySelector("table td > span.pln");
+    const pager = pln ? readPager(pln) : {pages: [], prev: null, next: null};
+    if (!posts.length || posts.some((parts) => !parts) || !bars.length || bars.some((table) => !table) || !nav || !pager) {
         return false;
     }
+    const paged = pager.pages.length > 1;
     const bar = doc.querySelector("th.messageboardbar");
     const topic = topicTitle(bar.textContent);
     const link = (test) => {
@@ -93,7 +98,7 @@ export function restyleTopic(doc = document) {
     header.innerHTML = `
         <div class="fuad-topic-title">
             <h2>${esc(topic ? topic.title : clean(bar.textContent))}</h2>
-            <span class="fuad-meta">${plural(posts.length, "post")}${topic ? ` · ${plural(topic.hits, "view")}` : ""}</span>
+            <span class="fuad-meta">${[paged ? "" : plural(posts.length, "post"), topic ? plural(topic.hits, "view") : ""].filter(Boolean).join(" · ")}</span>
         </div>
         <nav class="fuad-topic-nav" aria-label="Topics">
             ${link("dir=prev") ? `<a href="${esc(link("dir=prev"))}">‹ Previous</a>` : ""}
@@ -107,6 +112,9 @@ export function restyleTopic(doc = document) {
         post.style.setProperty("--fuad-depth", String(depthOf(post)));
         post.replaceChildren(cards[index]);
     });
+    if (paged) {
+        nav.parentElement.insertAdjacentHTML("beforeend", pagerNav(pager));
+    }
     doc.documentElement.classList.add("fuad-topic");
     return true;
 }
@@ -162,6 +170,16 @@ function readPager(pln) {
         }
     }
     return {pages, prev, next};
+}
+
+// the page numbers as v2 draws them, under a topic list or a topic's posts
+function pagerNav(pager) {
+    return `
+        <nav class="fuad-board-pages" aria-label="Pages">
+            ${pager.prev ? `<a href="${esc(pager.prev)}">‹ Previous page</a>` : ""}
+            ${pager.pages.map((page) => (page.href ? `<a href="${esc(page.href)}">${esc(page.number)}</a>` : `<span aria-current="page">${esc(page.number)}</span>`)).join("")}
+            ${pager.next ? `<a href="${esc(pager.next)}">Next page ›</a>` : ""}
+        </nav>`;
 }
 
 // true when the board's topic list (MFL's `mb/board_show.pl`) was redrawn. MFL's table and bar stay
@@ -220,12 +238,7 @@ export function restyleBoard(doc = document) {
                 </a></li>`).join("")}</ul>`
                 : '<p class="fuad-muted fuad-empty">No topics yet.</p>'}
         </div>
-        ${pager.pages.length > 1 ? `
-        <nav class="fuad-board-pages" aria-label="Pages">
-            ${pager.prev ? `<a href="${esc(pager.prev)}">‹ Previous</a>` : ""}
-            ${pager.pages.map((page) => (page.href ? `<a href="${esc(page.href)}">${esc(page.number)}</a>` : `<span aria-current="page">${esc(page.number)}</span>`)).join("")}
-            ${pager.next ? `<a href="${esc(pager.next)}">Next ›</a>` : ""}
-        </nav>` : ""}`;
+        ${pager.pages.length > 1 ? pagerNav(pager) : ""}`;
     options.before(board);
     doc.documentElement.classList.add("fuad-board");
     return true;
@@ -333,8 +346,8 @@ function wireFormats(buttons, body) {
     });
 }
 
-// MFL draws Preview's page with "Email me replies" ticked again; the member's choice is kept here
-// for the one page after Preview
+// MFL draws Preview's page, and a form error's, with "Email me replies" ticked again; the member's
+// choice is kept here for the one page after Preview or Post
 const NOTIFY_KEY = "fuad.board.notify";
 const NOTIFY_FOR = 10 * 60 * 1000;
 
@@ -372,6 +385,8 @@ export function restyleReply(doc = document) {
         return tag && FORMATS[tag] ? {button, label: FORMATS[tag]} : null;
     }).filter(Boolean);
     const others = [...doc.querySelectorAll("div.frm")].filter((frm) => !form.contains(frm) && !(remover && remover.contains(frm)));
+    // MFL's "Form Error" box ("Text is empty."), above the page
+    const formError = others.find((frm) => frm.matches("div.frm.err"));
     const heading = (frm) => clean((frm.querySelector(".hcl") || {}).textContent);
     const answered = others.find((frm) => /^In Response to/i.test(heading(frm)));
     // Preview's copy of the post: a reply's in a box after the form, a new topic's loose after it
@@ -384,7 +399,7 @@ export function restyleReply(doc = document) {
     const loose = subject && firstAfter && firstAfter.tagName === "B" && /^Preview$/i.test(clean(firstAfter.textContent))
         ? after.slice(after.indexOf(firstAfter) + 1) : null;
     const looseBreak = loose && loose[0] && loose[0].tagName === "BR" ? loose.shift() : null;
-    const kept = [answered, boxed, remover, loose && firstAfter, looseBreak, ...(loose || [])].filter(Boolean);
+    const kept = [formError, answered, boxed, remover, loose && firstAfter, looseBreak, ...(loose || [])].filter(Boolean);
     // anything else isn't part of the drawn page, so it stays MFL's
     if (others.some((frm) => !kept.includes(frm)) || after.some((node) => !kept.includes(node) && (node.nodeType === 1 || clean(node.textContent)))) {
         return false;
@@ -439,21 +454,19 @@ export function restyleReply(doc = document) {
         try {
             const kept = JSON.parse(window.sessionStorage.getItem(NOTIFY_KEY) || "null");
             window.sessionStorage.removeItem(NOTIFY_KEY);
-            if (previewNodes && kept && kept.form === formId && Date.now() - kept.at < NOTIFY_FOR) {
+            if ((previewNodes || formError) && kept && kept.form === formId && Date.now() - kept.at < NOTIFY_FOR) {
                 notify.checked = kept.checked;
             }
         } catch (error) {
             // storage is blocked: MFL's ticked box comes back
         }
-        if (preview) {
-            preview.addEventListener("click", () => {
-                try {
-                    window.sessionStorage.setItem(NOTIFY_KEY, JSON.stringify({form: formId, checked: notify.checked, at: Date.now()}));
-                } catch (error) {
-                    // storage is blocked: MFL's ticked box comes back
-                }
-            });
-        }
+        [post, preview].filter(Boolean).forEach((button) => button.addEventListener("click", () => {
+            try {
+                window.sessionStorage.setItem(NOTIFY_KEY, JSON.stringify({form: formId, checked: notify.checked, at: Date.now()}));
+            } catch (error) {
+                // storage is blocked: MFL's ticked box comes back
+            }
+        }));
         const label = doc.createElement("label");
         label.className = "fuad-reply-notify";
         label.append(notify, " Email me replies");
@@ -474,6 +487,9 @@ export function restyleReply(doc = document) {
     form.replaceChildren(fields);
     form.classList.add("fuad-compose");
     form.before(header);
+    if (formError) {
+        header.after(formError);
+    }
     if (answeredCard) {
         form.before(answeredCard);
         answered.remove();
@@ -509,7 +525,7 @@ export function restyleReply(doc = document) {
 
 // the board's side pages, each titled as v2 names it; Send Message's form goes back to Messages
 const SIDE_PAGES = {message_list: "Messages", message_add: "New message", user_options: "Options", forum_search: "Search"};
-// what each page holds when MFL draws it as v2 has seen it; a preview or error page doesn't match
+// what each page holds when MFL draws it as v2 has seen it; a preview page doesn't match
 const SIDE_CONTENT = {
     message_list: "table.report",
     message_add: "form.msa",
@@ -531,7 +547,8 @@ export function restyleSidePage(page, boardHref, doc = document) {
     const container = table && table.parentElement;
     // a reply to a private message follows its form with the message it answers
     const answered = (child) => page === "message_add" && child.matches("div.frm.msg") && /^In Response to/i.test(clean((child.querySelector(".hcl") || {}).textContent));
-    const expected = (child) => child === nav || child === table || child.tagName === "BR" || child.matches(SIDE_CONTENT[page])
+    const formError = page === "message_add" ? container && container.querySelector(":scope > div.frm.err") : null;
+    const expected = (child) => child === nav || child === table || child === formError || child.tagName === "BR" || child.matches(SIDE_CONTENT[page])
         || (page === "forum_search" && child.matches("table.report.nocaption")) || answered(child);
     if (!title || !table || !nav || !container || !container.querySelector(`:scope > ${SIDE_CONTENT[page]}`)
         || [...container.childNodes].some((node) => (node.nodeType === 1 ? !expected(node) : clean(node.textContent)))) {
@@ -564,6 +581,9 @@ export function restyleSidePage(page, boardHref, doc = document) {
         wireFormats([...doc.querySelectorAll("form.msa button.tbt")], body);
     }
     nav.before(header);
+    if (formError) {
+        nav.before(formError);
+    }
     // the message being answered first, as on the board's Reply page
     const answering = [...container.children].find(answered);
     if (answering) {
