@@ -529,8 +529,10 @@ export function restyleSidePage(page, boardHref, doc = document) {
     const nav = doc.querySelector("span.nav");
     const up = nav && nav.querySelector("a[href]");
     const container = table && table.parentElement;
+    // a reply to a private message follows its form with the message it answers
+    const answered = (child) => page === "message_add" && child.matches("div.frm.msg") && /^In Response to/i.test(clean((child.querySelector(".hcl") || {}).textContent));
     const expected = (child) => child === nav || child === table || child.tagName === "BR" || child.matches(SIDE_CONTENT[page])
-        || (page === "forum_search" && child.matches("table.report.nocaption"));
+        || (page === "forum_search" && child.matches("table.report.nocaption")) || answered(child);
     if (!title || !table || !nav || !container || !container.querySelector(`:scope > ${SIDE_CONTENT[page]}`)
         || [...container.childNodes].some((node) => (node.nodeType === 1 ? !expected(node) : clean(node.textContent)))) {
         return false;
@@ -540,12 +542,14 @@ export function restyleSidePage(page, boardHref, doc = document) {
         return {href: link.getAttribute("href"), text: BAR_LINKS[name] || clean(link.textContent), quiet: QUIET_LINKS.includes(name)};
     });
     const toMessages = up && /^message_list\.pl/.test(up.getAttribute("href"));
+    const mid = doc.querySelector("form.msa input[type=hidden][name=mid]");
+    const replying = Boolean(mid && mid.value && mid.value !== "0");
     const header = doc.createElement("div");
     header.className = "fuad-topic-head fuad-side-head";
     header.innerHTML = `
         <div class="fuad-topic-title">
             <a class="fuad-side-back" href="${esc(toMessages ? up.getAttribute("href") : boardHref)}">‹ ${toMessages ? "Messages" : "Message board"}</a>
-            <h2>${esc(title)}</h2>
+            <h2>${esc(replying ? "Reply" : title)}</h2>
         </div>
         ${links.filter((link) => !link.quiet).map((link) => `<a class="fuad-chip" href="${esc(link.href)}">${esc(link.text)}</a>`).join("")}`;
     const quiet = links.filter((link) => link.quiet);
@@ -560,6 +564,11 @@ export function restyleSidePage(page, boardHref, doc = document) {
         wireFormats([...doc.querySelectorAll("form.msa button.tbt")], body);
     }
     nav.before(header);
+    // the message being answered first, as on the board's Reply page
+    const answering = [...container.children].find(answered);
+    if (answering) {
+        container.querySelector(":scope > form.msa").before(answering);
+    }
     table.classList.add("fuad-topic-bar");
     doc.documentElement.classList.add("fuad-side");
     return true;
