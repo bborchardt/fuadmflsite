@@ -29,3 +29,12 @@ What the daily job did, newest last.
 - 2026-10-21 13:08 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
 - 2026-10-21 13:08 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
 - 2026-10-21 13:08 UTC: Charged $1 to Smooth City Styles! for Rashod Bateman (1yrs@2, 10/20), and reset the player to $1 / 0 years.
+- 2026-10-22 13:08 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
+- 2026-10-22 13:08 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
+- 2026-10-22 13:08 UTC: Charged $5 to The Obliterators  for Justin Joly (5yrs@1, 10/21), and reset the player to $1 / 0 years.
+- 2026-10-22 13:08 UTC: Charged $4 to Golden Ratio for Brashard Smith (4yrs@1, 10/21), and reset the player to $1 / 0 years.
+- 2026-10-22 13:08 UTC: Charged $1 to We Made a Kicker for Cooper Rush (1yrs@1, 10/21), and reset the player to $1 / 0 years.
+- 2026-10-22 13:08 UTC: Set Tommy Tremble to 1 year (no length stated: the default).
+- 2026-10-22 13:08 UTC: Set Chris Boswell to 1 year (post "Boswell: 1 Year").
+- 2026-10-22 13:08 UTC: Set Jason Myers to 1 year (blind bid comment "Myers: 1 Year").
+- 2026-10-22 13:08 UTC: Set Dameon Pierce to 1 year (blind bid comment "1 Year").
