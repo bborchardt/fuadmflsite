@@ -545,11 +545,14 @@ export function restyleSidePage(page, boardHref, doc = document) {
     const nav = doc.querySelector("span.nav");
     const up = nav && nav.querySelector("a[href]");
     const container = table && table.parentElement;
-    // a reply to a private message follows its form with the message it answers
-    const answered = (child) => page === "message_add" && child.matches("div.frm.msg") && /^In Response to/i.test(clean((child.querySelector(".hcl") || {}).textContent));
+    // a reply to a private message follows its form with the message it answers, and Preview with
+    // its copy of the message
+    const boxHeading = (child) => clean((child.querySelector(":scope > .hcl") || {}).textContent);
+    const answered = (child) => page === "message_add" && child.matches("div.frm.msg") && /^In Response to/i.test(boxHeading(child));
+    const shown = (child) => page === "message_add" && child.matches("div.frm") && /^Preview$/i.test(boxHeading(child));
     const formError = page === "message_add" ? container && container.querySelector(":scope > div.frm.err") : null;
     const expected = (child) => child === nav || child === table || child === formError || child.tagName === "BR" || child.matches(SIDE_CONTENT[page])
-        || (page === "forum_search" && child.matches("table.report.nocaption")) || answered(child);
+        || (page === "forum_search" && child.matches("table.report.nocaption")) || answered(child) || shown(child);
     if (!title || !table || !nav || !container || !container.querySelector(`:scope > ${SIDE_CONTENT[page]}`)
         || [...container.childNodes].some((node) => (node.nodeType === 1 ? !expected(node) : clean(node.textContent)))) {
         return false;
@@ -584,11 +587,12 @@ export function restyleSidePage(page, boardHref, doc = document) {
     if (formError) {
         nav.before(formError);
     }
-    // the message being answered first, as on the board's Reply page
-    const answering = [...container.children].find(answered);
-    if (answering) {
-        container.querySelector(":scope > form.msa").before(answering);
-    }
+    // the message being answered, then Preview's copy, above the form, as on the board's Reply page
+    const msa = container.querySelector(":scope > form.msa");
+    [...[...container.children].filter(answered), ...[...container.children].filter(shown)].forEach((box) => {
+        box.classList.add("fuad-side-card");
+        msa.before(box);
+    });
     table.classList.add("fuad-topic-bar");
     doc.documentElement.classList.add("fuad-side");
     return true;
