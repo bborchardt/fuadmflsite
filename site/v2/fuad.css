@@ -1917,7 +1917,13 @@ body #fuad-home select {
 #fuad-rosters .fuad-week-name { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; }
 
 #fuad-league .fuad-cards,
-#fuad-rosters .fuad-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 16px; align-items: stretch; }
+#fuad-rosters .fuad-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
+
+/* two columns once the cards get 420px each; ui/league.js reads the same width (TWO_COLUMNS) */
+@media (min-width: 57.01em) {
+    #fuad-league .fuad-cards,
+    #fuad-rosters .fuad-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 #fuad-league .fuad-card,
 #fuad-rosters .fuad-card {
@@ -1931,9 +1937,13 @@ body #fuad-home select {
 #fuad-league .fuad-card-mine,
 #fuad-rosters .fuad-card-mine { background: var(--fuad-raised); border-color: var(--fuad-raised-edge); }
 
-/* an opened game moves to the top, across both columns */
+/* an opened game spans the row; with two columns it moves to the top, in one it stays where it was tapped */
 #fuad-league .fuad-card-open,
-#fuad-rosters .fuad-card-open { grid-column: 1 / -1; order: -1; }
+#fuad-rosters .fuad-card-open { grid-column: 1 / -1; }
+@media (min-width: 57.01em) {
+    #fuad-league .fuad-card-open,
+    #fuad-rosters .fuad-card-open { order: -1; }
+}
 
 #fuad-league .fuad-card-head,
 #fuad-rosters .fuad-card-head {
@@ -2166,7 +2176,7 @@ body #fuad-home select {
    his name, his projection under his points */
 @media (max-width: 48em) {
     #fuad-league .fuad-cards,
-    #fuad-rosters .fuad-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    #fuad-rosters .fuad-cards { gap: 12px; }
     #fuad-league .fuad-face-name,
     #fuad-rosters .fuad-face-name { font-size: 14px; }
     #fuad-league .fuad-face-score,
