@@ -734,6 +734,10 @@ body [tabindex]:focus-visible {
     font-weight: 600;
 }
 
+@media (hover: hover) {
+    #fuad-frame .fuad-menu-button:hover { background: var(--fuad-raised); }
+}
+
 .fuad-brand {
     display: flex;
     flex-direction: column;
@@ -808,6 +812,10 @@ body [tabindex]:focus-visible {
     color: var(--fuad-on-lime) !important;
     font-weight: 700;
     font-size: 15px;
+}
+
+@media (hover: hover) {
+    .fuad-login:hover { background: var(--fuad-lime-hover); }
 }
 
 /* view segments: the selected one lime with a bar under it, the fill subtle */
@@ -1169,6 +1177,7 @@ body [tabindex]:focus-visible {
 
 @media (hover: hover) {
     .fuad-layer .fuad-button-outline:hover { background: var(--fuad-lime-tint); }
+    .fuad-layer .fuad-button:not(.fuad-button-quiet):not(.fuad-button-outline):hover { background: var(--fuad-lime-hover); }
 }
 
 .fuad-switch { display: flex; align-items: center; gap: 10px; font-size: 14px; }
@@ -1763,6 +1772,12 @@ body #fuad-home select {
 #fuad-league .fuad-cta:disabled,
 #fuad-rosters .fuad-cta:disabled { opacity: 0.6; cursor: default; }
 
+@media (hover: hover) {
+    #fuad-home .fuad-cta:not(:disabled):hover,
+    #fuad-league .fuad-cta:not(:disabled):hover,
+    #fuad-rosters .fuad-cta:not(:disabled):hover { background: var(--fuad-lime-hover); }
+}
+
 #fuad-home .fuad-topic-form { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--fuad-rule); }
 
 #fuad-home .fuad-topic-form[hidden] { display: none; }
@@ -2045,6 +2060,11 @@ body #fuad-home select {
 
 #fuad-league .fuad-ln-meta.fuad-live,
 #fuad-rosters .fuad-ln-meta.fuad-live { color: var(--fuad-lime); }
+
+@media (hover: hover) {
+    #fuad-league .fuad-ln:hover .fuad-ln-name,
+    #fuad-rosters .fuad-ln:hover .fuad-ln-name { color: var(--fuad-lime); }
+}
 
 #fuad-league .fuad-ln-b .fuad-ln-pos,
 #fuad-rosters .fuad-ln-b .fuad-ln-pos { order: 3; }
@@ -2592,10 +2612,18 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-filter[aria-pressed="true"] { background: var(--fuad-text); border-color: var(--fuad-text); color: var(--fuad-page); }
 
+@media (hover: hover) {
+    #fuad-rosters .fuad-filter:not([aria-pressed="true"]):hover { background: var(--fuad-raised); }
+}
+
 /* a sort heading reads like the others; its 44 px tap area is invisible */
 #fuad-rosters .fuad-sort { position: relative; display: inline; margin: 0; padding: 0; border: 0; background: none; line-height: inherit; vertical-align: baseline; height: auto; min-height: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; white-space: nowrap; cursor: pointer; }
 
 #fuad-rosters .fuad-sort::after { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }
+
+@media (hover: hover) {
+    #fuad-rosters .fuad-sort:hover { color: var(--fuad-text); }
+}
 
 #fuad-rosters .fuad-quiet-link { padding: 0; border: 0; background: none; color: var(--fuad-lime); font: inherit; font-weight: 600; cursor: pointer; }
 
@@ -2623,6 +2651,10 @@ body #fuad-home select {
 }
 
 #fuad-rosters .fuad-tag-tile[aria-expanded="true"] { border-color: var(--fuad-lime); }
+
+@media (hover: hover) {
+    #fuad-rosters .fuad-tag-tile:hover { background: var(--fuad-quiet); }
+}
 
 #fuad-rosters .fuad-tag-price { font-family: var(--fuad-display); font-weight: 700; font-size: 24px; font-variant-numeric: tabular-nums; }
 
@@ -2959,6 +2991,11 @@ body #fuad-home select {
 }
 
 #fuad-lineup .fuad-save:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); cursor: default; }
+
+@media (hover: hover) {
+    #fuad-lineup .fuad-button:hover,
+    #fuad-lineup .fuad-save:not(:disabled):hover { background: var(--fuad-lime-hover); }
+}
 
 .fuad-lineup-on.fuad-framed body { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 
@@ -3343,6 +3380,10 @@ body .fuad-reply-buttons input.fuad-reply-preview { order: 1; background: var(--
 
 body .fuad-reply-buttons input.fuad-reply-post { order: 2; background: var(--fuad-lime); color: var(--fuad-on-lime); font-weight: 700; }
 
+@media (hover: hover) {
+    body .fuad-reply-buttons input.fuad-reply-post:hover { background: var(--fuad-lime-hover); }
+}
+
 @media (max-width: 48em) {
     body .fuad-reply-head h2 { font-size: 28px; }
     .fuad-reply-to,
@@ -3636,6 +3677,14 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-add .fuad-add-start:disabled,
 #fuad-add .fuad-add-submit:disabled,
 .fuad-add-layer .fuad-add-submit:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+@media (hover: hover) {
+    #fuad-add .fuad-button:hover,
+    #fuad-add .fuad-cta:not(:disabled):hover,
+    #fuad-add .fuad-add-start:not(:disabled):hover,
+    #fuad-add .fuad-add-submit:not(:disabled):hover,
+    .fuad-add-layer .fuad-add-submit:not(:disabled):hover { background: var(--fuad-lime-hover); }
+}
 
 /* cap used, now → after */
 #fuad-add .fuad-add-cap,
@@ -4135,6 +4184,9 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     }
     #fuad-add .fuad-add-row-action::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
     #fuad-add .fuad-add-row-action:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+    @media (hover: hover) {
+        #fuad-add .fuad-add-row-action:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    }
 }
 
 .fuad-add-layer { display: flex; align-items: flex-start; justify-content: center; padding: 120px 24px 24px; box-sizing: border-box; overflow-y: auto; }
@@ -4368,6 +4420,11 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 }
 
 #fuad-drop .fuad-drop-go:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+@media (hover: hover) {
+    #fuad-drop .fuad-button:hover,
+    #fuad-drop .fuad-drop-go:not(:disabled):hover { background: var(--fuad-lime-hover); }
+}
 
 #fuad-drop .fuad-tag {
     padding: 0 6px;
@@ -4637,6 +4694,11 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 }
 
 #fuad-ir .fuad-ir-save:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+@media (hover: hover) {
+    #fuad-ir .fuad-button:hover,
+    #fuad-ir .fuad-ir-save:not(:disabled):hover { background: var(--fuad-lime-hover); }
+}
 
 #fuad-ir .fuad-ir-columns {
     padding: 0 8px 6px;
@@ -4952,6 +5014,11 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 }
 
 #fuad-trades .fuad-trades-go:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
+
+@media (hover: hover) {
+    #fuad-trades .fuad-button:hover,
+    #fuad-trades .fuad-trades-go:not(:disabled):hover { background: var(--fuad-lime-hover); }
+}
 
 #fuad-trades .fuad-trades-quiet { min-height: 44px; padding: 0 14px; border: 1px solid var(--fuad-raised-edge); background: var(--fuad-quiet); }
 
