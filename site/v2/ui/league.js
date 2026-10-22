@@ -144,6 +144,7 @@ function drawScores(mount, data) {
     let timer = null;
     // who starts, per week, and when MFL was last asked
     const lineups = new Map();
+    const twoColumns = window.matchMedia(TWO_COLUMNS);
     mount.innerHTML = `
         <div class="fuad-scores-bar">
             <div class="fuad-weekpicker">
@@ -211,7 +212,7 @@ function drawScores(mount, data) {
             const index = Number(button.closest(".fuad-card").dataset.card);
             // with two columns one game opens at a time and moves to the top; in one the others stay
             // open and an opened one stays put, so nothing above a tapped game moves
-            if (window.matchMedia(TWO_COLUMNS).matches) {
+            if (twoColumns.matches) {
                 state.open = new Set(open.has(index) ? [] : [index]);
             } else {
                 state.open = new Set(open);
