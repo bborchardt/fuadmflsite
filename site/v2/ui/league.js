@@ -138,7 +138,7 @@ function seasonMarkup({lastRegular, rows, names, current, live, title, line}) {
 function drawScores(mount, data) {
     const {context, viewer, exp, feed, before, names: namesFor} = data;
     const currentWeek = before ? 1 : Number(window.liveScoringWeek) || 1;
-    const state = {week: currentWeek, season: false, open: null, bench: new Set()};
+    const state = {week: currentWeek, season: false, open: null, bench: new Set(), oneColumn: false};
     let timer = null;
     // who starts, per week, and when MFL was last asked
     const lineups = new Map();
@@ -205,17 +205,17 @@ function drawScores(mount, data) {
         body.innerHTML = cards.length
             ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview)})).join("")}</div>`
             : '<p class="fuad-muted fuad-empty">No games this week.</p>';
-        // in one column (phones, and tablets the 420px cards don't fit twice) the other games stay
-        // open and an opened one stays put, so nothing above a tapped game moves; with two, one
-        // game opens at a time and moves to the top
         const grid = body.querySelector(".fuad-cards");
-        const oneColumn = Boolean(grid) && getComputedStyle(grid).gridTemplateColumns.split(" ").length === 1;
         if (grid) {
-            grid.classList.toggle("fuad-cards-one", oneColumn);
+            grid.classList.toggle("fuad-cards-one", state.oneColumn);
         }
         body.querySelectorAll(".fuad-card-head").forEach((button) => button.addEventListener("click", () => {
             const index = Number(button.closest(".fuad-card").dataset.card);
-            if (oneColumn) {
+            // in one column (phones, and tablets the 420px cards don't fit twice) the other games
+            // stay open and an opened one stays put, so nothing above a tapped game moves; with two,
+            // one game opens at a time and moves to the top. Read now, while the grid is on screen.
+            state.oneColumn = getComputedStyle(grid).gridTemplateColumns.split(" ").length === 1;
+            if (state.oneColumn) {
                 state.open = new Set(open);
                 state.open[open.has(index) ? "delete" : "add"](index);
             } else {
@@ -231,7 +231,10 @@ function drawScores(mount, data) {
             const index = Number(button.closest(".fuad-card").dataset.card);
             state.bench[state.bench.has(index) ? "delete" : "add"](index);
             draw(shown);
-            body.querySelector(`[data-card="${index}"] [data-bench]`).focus();
+            const again = body.querySelector(`[data-card="${index}"] [data-bench]`);
+            if (again) {
+                again.focus();
+            }
         }));
         body.querySelectorAll("[data-player]").forEach((button) => button.addEventListener("click", () => {
             if (typeof window.launch_player_modal === "function") {
