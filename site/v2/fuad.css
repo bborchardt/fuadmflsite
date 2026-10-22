@@ -3263,6 +3263,10 @@ body .fuad-reply-head h2 { margin: 0; padding: 0; font-size: 34px; line-height: 
 
 .fuad-reply-form { display: flex; flex-direction: column; gap: 12px; }
 
+.fuad-reply-delete { display: flex; flex-direction: column; gap: 6px; }
+
+.fuad-reply-delete p { margin: 0 0 6px; font-size: 14px; line-height: 1.4; color: var(--fuad-soft); }
+
 .fuad-reply-formats { display: flex; flex-wrap: wrap; gap: 6px; }
 
 body .fuad-reply-formats button.tbt {
@@ -3364,6 +3368,14 @@ body .fuad-reply-buttons input.fuad-reply-post { order: 2; background: var(--fua
 .fuad-side body #withmenus table.report { width: 100%; margin: 0; }
 
 .fuad-side-head { align-items: center; }
+
+body .fuad-side-foot { margin: 0; font-size: 14px; }
+
+body .fuad-side-foot a { display: inline-flex; align-items: center; min-height: 44px; color: var(--fuad-muted); text-decoration: none; }
+
+@media (hover: hover) {
+    body .fuad-side-foot a:hover { color: var(--fuad-text); }
+}
 
 body .fuad-side-back { display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
 
