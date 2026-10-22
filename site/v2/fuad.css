@@ -2167,6 +2167,9 @@ body #fuad-home select {
 @media (max-width: 48em) {
     #fuad-league .fuad-cards,
     #fuad-rosters .fuad-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    /* one column: an opened game stays where it was tapped */
+    #fuad-league .fuad-card-open,
+    #fuad-rosters .fuad-card-open { order: 0; }
     #fuad-league .fuad-face-name,
     #fuad-rosters .fuad-face-name { font-size: 14px; }
     #fuad-league .fuad-face-score,
