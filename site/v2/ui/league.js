@@ -20,6 +20,8 @@ const MINUTE = 60 * 1000;
 const LIVE_POLL = 40 * 1000;
 // who starts can change until each game kicks off
 const LINEUP_POLL = 5 * MINUTE;
+// Scores' cards in two columns (fuad.css)
+const TWO_COLUMNS = "(min-width: 57.01em)";
 
 export const VIEWS = ["scores", "standings", "power", "winners"];
 
@@ -138,10 +140,11 @@ function seasonMarkup({lastRegular, rows, names, current, live, title, line}) {
 function drawScores(mount, data) {
     const {context, viewer, exp, feed, before, names: namesFor} = data;
     const currentWeek = before ? 1 : Number(window.liveScoringWeek) || 1;
-    const state = {week: currentWeek, season: false, open: null, bench: false};
+    const state = {week: currentWeek, season: false, open: null, bench: new Set()};
     let timer = null;
     // who starts, per week, and when MFL was last asked
     const lineups = new Map();
+    const twoColumns = window.matchMedia(TWO_COLUMNS);
     mount.innerHTML = `
         <div class="fuad-scores-bar">
             <div class="fuad-weekpicker">
@@ -201,27 +204,35 @@ function drawScores(mount, data) {
 
     const draw = (shown) => {
         const {cards, names} = shown;
-        const openIndex = state.open === null ? cards.findIndex((card) => card.mine && !shown.preview) : state.open;
+        const open = state.open || new Set(shown.preview ? [] : cards.flatMap((card, i) => (card.mine ? [i] : [])));
         body.innerHTML = cards.length
-            ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: i === openIndex && !shown.preview, benchOpen: state.bench, preview: Boolean(shown.preview)})).join("")}</div>`
+            ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview)})).join("")}</div>`
             : '<p class="fuad-muted fuad-empty">No games this week.</p>';
         body.querySelectorAll(".fuad-card-head").forEach((button) => button.addEventListener("click", () => {
             const index = Number(button.closest(".fuad-card").dataset.card);
-            state.open = index === openIndex ? -1 : index;
+            // with two columns one game opens at a time and moves to the top; in one the others stay
+            // open and an opened one stays put, so nothing above a tapped game moves
+            if (twoColumns.matches) {
+                state.open = new Set(open.has(index) ? [] : [index]);
+            } else {
+                state.open = new Set(open);
+                state.open[open.has(index) ? "delete" : "add"](index);
+            }
             draw(shown);
             const again = body.querySelector(`[data-card="${index}"] .fuad-card-head`);
             if (again) {
                 again.focus();
             }
         }));
-        const bench = body.querySelector("[data-bench]");
-        if (bench) {
-            bench.addEventListener("click", () => {
-                state.bench = !state.bench;
-                draw(shown);
-                body.querySelector("[data-bench]").focus();
-            });
-        }
+        body.querySelectorAll("[data-bench]").forEach((button) => button.addEventListener("click", () => {
+            const index = Number(button.closest(".fuad-card").dataset.card);
+            state.bench[state.bench.has(index) ? "delete" : "add"](index);
+            draw(shown);
+            const again = body.querySelector(`[data-card="${index}"] [data-bench]`);
+            if (again) {
+                again.focus();
+            }
+        }));
         body.querySelectorAll("[data-player]").forEach((button) => button.addEventListener("click", () => {
             if (typeof window.launch_player_modal === "function") {
                 window.launch_player_modal(context.leagueId, button.dataset.player);
@@ -341,6 +352,7 @@ function drawScores(mount, data) {
         }
         state.week = Math.min(lastWeek(), Math.max(1, state.week + Number(step.dataset.step)));
         state.open = null;
+        state.bench = new Set();
         showWeek();
     });
     const seasonButton = mount.querySelector("[data-season]");
