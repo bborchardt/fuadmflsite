@@ -3316,8 +3316,11 @@ body .fuad-reply-head h2 { margin: 0; padding: 0; font-size: 34px; line-height: 
 
 .fuad-reply-formats { display: flex; flex-wrap: wrap; gap: 6px; }
 
+/* MFL's board sheet fixes the chips at 40 px, too narrow for Image and Video */
 body .fuad-reply-formats button.tbt {
+    width: auto;
     min-width: 44px;
+    margin: 0;
     min-height: 36px;
     height: 36px;
     padding: 0 10px;
@@ -3346,7 +3349,7 @@ body .fuad-reply-text textarea {
     width: 100%;
     /* MFL asks for 13 rows; about 7 leaves Post in view */
     height: 200px;
-    padding: 10px 12px;
+    padding: 10px 12px !important;
     border: 1px solid var(--fuad-field);
     border-radius: 10px;
     background: var(--fuad-page);
@@ -3361,7 +3364,7 @@ body .fuad-reply-subject input {
     box-sizing: border-box;
     width: 100%;
     min-height: 44px;
-    padding: 0 12px;
+    padding: 0 12px !important;
     border: 1px solid var(--fuad-field);
     border-radius: 10px;
     background: var(--fuad-page);
@@ -3379,7 +3382,8 @@ body .fuad-reply-subject input:focus { border-color: var(--fuad-lime); }
 
 body .fuad-reply-buttons input[type="submit"] {
     min-height: 44px;
-    padding: 0 20px;
+    /* !important, as MFL's 3 px on every field is */
+    padding: 0 20px !important;
     border: 0;
     border-radius: 12px;
     font-size: 16px;
@@ -3470,6 +3474,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 .fuad-side body form.msa .reportnavigation { margin-bottom: 8px; font-size: 13px; color: var(--fuad-muted); text-align: left; }
 
 .fuad-side body form.msa button.tbt {
+    width: auto;
     min-width: 44px;
     height: 36px;
     padding: 0 10px;
@@ -3485,7 +3490,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 .fuad-side body form.msa input[name="add"] { order: 2; }
 
-.fuad-side body form.msa input[type="submit"] { min-height: 44px; border-radius: 12px; font-size: 16px; }
+.fuad-side body form.msa input[type="submit"] { min-height: 44px; padding: 0 20px !important; border-radius: 12px; font-size: 16px; }
 
 @media (max-width: 48em) {
     .fuad-side body #withmenus { padding-top: 6px; }
