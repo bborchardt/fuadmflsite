@@ -3392,14 +3392,14 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 }
 
 .fuad-side body form.msa .frm,
-.fuad-side body div.frm.msg { padding: 14px 16px; border: 1px solid var(--fuad-hairline); border-radius: 16px; background: var(--fuad-panel); }
+.fuad-side body div.fuad-side-card { padding: 14px 16px; border: 1px solid var(--fuad-hairline); border-radius: 16px; background: var(--fuad-panel); }
 
-/* the message a reply answers, labelled as the board's Reply page labels it */
-.fuad-side body div.frm.msg .hcl { padding: 0 0 6px; border: 0; background: none; color: var(--fuad-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; text-align: left; }
+/* the message a reply answers and Preview's copy, labelled as the board's Reply page labels them */
+.fuad-side body div.fuad-side-card .hcl { padding: 0 0 6px; border: 0; background: none; color: var(--fuad-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; text-align: left; }
 
-.fuad-side body div.frm.msg .hcl .htt { font-weight: 600; }
+.fuad-side body div.fuad-side-card .hcl .htt { font-weight: 600; }
 
-.fuad-side body div.frm.msg .ccl { padding: 0; border: 0; font-size: var(--fuad-read-size); line-height: var(--fuad-read-leading); color: var(--fuad-text); text-align: left; }
+.fuad-side body div.fuad-side-card .ccl { padding: 0; border: 0; font-size: var(--fuad-read-size); line-height: var(--fuad-read-leading); color: var(--fuad-text); text-align: left; }
 
 /* New message: the reply form's fields and chips, on MFL's own markup */
 .fuad-side body form.msa .ccl { border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; }
