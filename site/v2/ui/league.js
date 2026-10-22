@@ -20,6 +20,8 @@ const MINUTE = 60 * 1000;
 const LIVE_POLL = 40 * 1000;
 // who starts can change until each game kicks off
 const LINEUP_POLL = 5 * MINUTE;
+// Scores' cards in two columns (fuad.css)
+const TWO_COLUMNS = "(min-width: 57.01em)";
 
 export const VIEWS = ["scores", "standings", "power", "winners"];
 
@@ -138,7 +140,7 @@ function seasonMarkup({lastRegular, rows, names, current, live, title, line}) {
 function drawScores(mount, data) {
     const {context, viewer, exp, feed, before, names: namesFor} = data;
     const currentWeek = before ? 1 : Number(window.liveScoringWeek) || 1;
-    const state = {week: currentWeek, season: false, open: null, bench: new Set(), oneColumn: false};
+    const state = {week: currentWeek, season: false, open: null, bench: new Set()};
     let timer = null;
     // who starts, per week, and when MFL was last asked
     const lineups = new Map();
@@ -205,21 +207,15 @@ function drawScores(mount, data) {
         body.innerHTML = cards.length
             ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview)})).join("")}</div>`
             : '<p class="fuad-muted fuad-empty">No games this week.</p>';
-        const grid = body.querySelector(".fuad-cards");
-        if (grid) {
-            grid.classList.toggle("fuad-cards-one", state.oneColumn);
-        }
         body.querySelectorAll(".fuad-card-head").forEach((button) => button.addEventListener("click", () => {
             const index = Number(button.closest(".fuad-card").dataset.card);
-            // in one column (phones, and tablets the 420px cards don't fit twice) the other games
-            // stay open and an opened one stays put, so nothing above a tapped game moves; with two,
-            // one game opens at a time and moves to the top. Read now, while the grid is on screen.
-            state.oneColumn = getComputedStyle(grid).gridTemplateColumns.split(" ").length === 1;
-            if (state.oneColumn) {
+            // with two columns one game opens at a time and moves to the top; in one the others stay
+            // open and an opened one stays put, so nothing above a tapped game moves
+            if (window.matchMedia(TWO_COLUMNS).matches) {
+                state.open = new Set(open.has(index) ? [] : [index]);
+            } else {
                 state.open = new Set(open);
                 state.open[open.has(index) ? "delete" : "add"](index);
-            } else {
-                state.open = new Set(open.has(index) ? [] : [index]);
             }
             draw(shown);
             const again = body.querySelector(`[data-card="${index}"] .fuad-card-head`);
