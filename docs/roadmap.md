@@ -1180,7 +1180,7 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
   week picker. Each team on a card shows its projection and win probability ("proj 112.3 · 74% to
   win") before and during games; the footer, players playing / to play and minutes left per side;
   the open lineups, each starter's live stat line and projection.
-  **Best** (the commissioner, 23 Oct 2026; drawn on canvas row 18, not built): a "Best" button
+  **Best** (the commissioner, 23 Oct 2026; drawn on canvas row 18; built in PR #61, ties to the players who started): a "Best" button
   between the week picker and Season (Season stays rightmost, so turning it on leaves Season where it
   was; it fits at 320 px, "Optimal" doesn't) swaps every card to the two best lineups, live scoring
   left as it is: the best score big, "actual 116.9" under it, the lineup the best one with players
