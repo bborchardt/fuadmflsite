@@ -156,7 +156,8 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   week's injury report for a day, today's for 5 minutes on a game day and an hour otherwise; the
   week's results for an hour; rosters, adjustments, transactions, free agents, pending bids and
   trades, and the message board for 2 minutes, which a move made in v2 clears; MFL's League History
-  pages until the next week's results or a week, League Champions for a day. So a move made on
+  pages until the next week's results or a week, League Champions for a day; a processed bid run,
+  for good. So a move made on
   MFL's own pages, or by another team, can take 2 minutes to show. Moves' checks and who starts in
   League › Scores always ask MFL.
 - After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel

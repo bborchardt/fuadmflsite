@@ -341,7 +341,8 @@ function asset(id, players, teamName) {
 
 const list = (items) => items.length <= 2 ? items.join(" and ") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 
-// The league's latest adds, bids won, IR moves and trades, newest first: [{kind, team, what, at}]
+// The league's latest adds, bids won, IR moves and trades, newest first: [{kind, team, what, at}],
+// a won bid with its `bid` ({period, player, team}) for the run's other bids
 export function recentMoves(transactions, {players, franchises, limit = RECENT_MOVES}) {
     const teamName = (id) => (franchises.get(id) || {teamName: `Team ${id}`}).teamName;
     const named = (list_) => list(list_.map((id) => asset(id, players, teamName)));
@@ -351,6 +352,7 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
         const team = teamName(transaction.franchise);
         let kind = null;
         let what = "";
+        let extra = {};
         if (transaction.type === "FREE_AGENT" || transaction.type === "WAIVER") {
             const [added, dropped] = transaction.type === "WAIVER"
                 ? [ids(transaction.added), ids(transaction.dropped)]
@@ -361,6 +363,8 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
             const [added, bid, dropped] = String(transaction.transaction || "").split("|");
             kind = "Bid";
             what = [`won ${named(ids(added).slice(0, 1))} for $${Number(bid) || 0}`, ids(dropped).length && `dropped ${named(ids(dropped).slice(0, 1))}`].filter(Boolean).join(", ");
+            // the run is MFL's processed waivers period, the transaction's time (docs/mfl.md)
+            extra = {bid: {period: at, player: ids(added)[0] || "", team: transaction.franchise}};
         } else if (transaction.type === "IR") {
             const off = ids(transaction.activated);
             const on = ids(transaction.deactivated);
@@ -371,7 +375,7 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
             what = `traded ${named(ids(transaction.franchise1_gave_up))} to ${teamName(transaction.franchise2)} for ${named(ids(transaction.franchise2_gave_up))}`;
         }
         if (kind && what) {
-            moves.push({kind, team, what, at, when: dayText(at)});
+            moves.push({kind, team, what, at, when: dayText(at), ...extra});
         }
     }
     return moves.sort((a, b) => b.at - a.at).slice(0, limit);
