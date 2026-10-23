@@ -92,18 +92,9 @@ export function titles(champions, career, renumbered = RENUMBERED) {
     return won;
 }
 
-const wlt = ({w, l, t}) => `${w}–${l}${t ? `–${t}` : ""}`;
-
-// "All-time · Golden Ratio 13–8" (the leader's wins first), "All-time · 9–9", or "" if they've never
-// met; `vs` is `self`'s record against `other`
-export function seriesLine(vs, {self, other}) {
-    if (!vs || vs.w + vs.l + vs.t === 0) {
-        return "";
-    }
-    if (vs.w === vs.l) {
-        return `All-time · ${wlt(vs)}`;
-    }
-    return vs.w > vs.l ? `All-time · ${self} ${wlt(vs)}` : `All-time · ${other} ${wlt({w: vs.l, l: vs.w, t: vs.t})}`;
+// "You vs them 8–13–0", the viewer's record against a team, or "" if they've never met
+export function versusLine(vs) {
+    return vs && vs.w + vs.l + vs.t > 0 ? `You vs them ${vs.w}–${vs.l}–${vs.t}` : "";
 }
 
 // "All-time 93–67–3 · since 2016 · Champion 2020, 2022", or "" without a career record
