@@ -216,3 +216,12 @@ test("a short line takes the full name when a claim of the same surname joins th
         ["Marvin Harrison Jr.: 2 years", "Fehoko: 1 year"]);
     assert.deepEqual(fullNameLines(["Harrison: 2 years"], "Fehoko, Simi", ["Harrison Jr., Marvin"]), ["Harrison: 2 years"]);
 });
+
+test("the Watching chip shows only the watched free agents, with the position and search still applied", () => {
+    const player = (id, name, pos) => ({id, name, mflName: name, pos, proj: 0, pts: 0, mark: ""});
+    const agents = [player("1", "Ann Able", "RB"), player("2", "Bo Best", "WR"), player("3", "Cy Cole", "RB")];
+    const ids = (rows) => rows.map((row) => row.player.id);
+    assert.deepEqual(ids(freeAgentRows(agents, {sort: "name", watched: new Set(["1", "2"])})), ["1", "2"]);
+    assert.deepEqual(ids(freeAgentRows(agents, {sort: "name", pos: "RB", watched: new Set(["1", "2"])})), ["1"]);
+    assert.deepEqual(ids(freeAgentRows(agents, {sort: "name"})), ["1", "2", "3"]);
+});

@@ -13,6 +13,7 @@ import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {contractTopic} from "./home-model.js";
+import {watchList} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
 import {
     LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, bidsLeft, blockedText, changeTone, checkAdd, checkBid, claimKey,
@@ -227,7 +228,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     }
 
     const state = {
-        data: null, failed: false, screen: "home", compose: null, q: "", pos: "ALL", sort: "proj",
+        data: null, failed: false, screen: "home", compose: null, q: "", pos: "ALL", watching: false, sort: "proj",
         open: null, flash: flash && flash.highlight, done: flash && flash.done, error: (flash && flash.error) || "", busy: false
     };
     const layer = document.createElement("div");
@@ -235,6 +236,19 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     layer.hidden = true;
     document.body.append(layer);
     let closeDialog = null;
+    // the member's watch list (watch.js), for the Watching chip; a star in the player popup changes it
+    let watched = null;
+    watchList(context).then((list) => {
+        watched = list;
+        if (state.data) {
+            render();
+        }
+    }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
+    window.addEventListener("fuad-watch", () => {
+        if (state.watching && state.data) {
+            render();
+        }
+    });
 
     // ---- the model for what's drawn ----
 
@@ -385,7 +399,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     }
 
     function chipsMarkup() {
-        return `<div class="fuad-add-chips" role="group" aria-label="Position">${["ALL"].concat(POSITIONS).map((pos) => `<button type="button" class="fuad-add-pos" data-act="pos" data-pos="${pos}" aria-pressed="${state.pos === pos}">${pos === "ALL" ? "All" : pos}</button>`).join("")}</div>`;
+        return `<div class="fuad-add-chips" role="group" aria-label="Position">${["ALL"].concat(POSITIONS).map((pos) => `<button type="button" class="fuad-add-pos" data-act="pos" data-pos="${pos}" aria-pressed="${state.pos === pos}">${pos === "ALL" ? "All" : pos}</button>`).join("")}${
+            watched ? `<button type="button" class="fuad-add-pos" data-act="watching" aria-pressed="${state.watching}">Watching</button>` : ""}</div>`;
     }
 
     function searchMarkup() {
@@ -394,7 +409,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     function rows() {
         return freeAgentRows(lists.add, {blocked: droppedByTeam(state.data.league.players, franchiseId, now()), text: state.q, pos: state.pos, sort: state.sort,
-            bids: runsLeft()});
+            bids: runsLeft(), watched: state.watching ? watched : null});
     }
 
     function phonePlayers() {
@@ -1030,6 +1045,10 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             break;
         case "pos":
             state.pos = target.dataset.pos;
+            render();
+            break;
+        case "watching":
+            state.watching = !state.watching;
             render();
             break;
         case "sort":

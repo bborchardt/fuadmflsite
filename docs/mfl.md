@@ -91,6 +91,11 @@ MFL documents little of this.
   Commissioner", `logout?L=<league>&BECOME=0000`; presumably `BECOME=<team>` goes the other way (not
   yet seen).
 
+- **My Watch List** (a member's own): the `myWatchList` export lists it, and the `myWatchList` import
+  changes it (`ADD` or `REMOVE`, comma-separated player ids, posted as the owner), answering
+  `<status>OK</status>`. The export's player entries are assumed to be `{"id": …}` like other exports;
+  not yet seen with a list in it.
+
 ## Waivers and the message board
 
 - **Blind bid comments** appear only on the logged-in Previously Processed Waivers page
