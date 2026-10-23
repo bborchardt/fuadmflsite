@@ -208,6 +208,9 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(kinds("Contracts executed", "Final Cut Down", "Contract year ends - last cut", "Rookie draft"), [null, "cut", "rollover", "draft"]);
     // the cut-down naming contract years is still the cut-down; a trade deadline of the commissioner's is the deadline
     assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Trade deadline"), ["cut", null, "trades"]);
+    // the commissioner's own deadline, however it's written, stands in for the season's
+    const own = calendarDates({event: [{type: "CUSTOM", title: "TRADE DEADLINE - 11pm", start_time: "1795000000", happens: ""}]});
+    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["TRADE DEADLINE - 11pm"]);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
