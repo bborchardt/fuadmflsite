@@ -28,9 +28,10 @@ const CHEVRON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" str
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>';
 
-// a link in MFL's own menu, found by its text, so a page MFL moves still opens
+// a link in MFL's own menu, found by its text, so a page MFL moves still opens; MFL joins the
+// words with non-breaking spaces ("League&nbsp;Calendar")
 function mflPage(pattern) {
-    const link = [...document.querySelectorAll(".myfantasyleague_menu a[href]")].find((a) => pattern.test(a.textContent.trim()));
+    const link = [...document.querySelectorAll(".myfantasyleague_menu a[href]")].find((a) => pattern.test(a.textContent.replace(/\s+/g, " ").trim()));
     return link ? link.href : null;
 }
 
