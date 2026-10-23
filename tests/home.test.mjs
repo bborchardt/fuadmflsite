@@ -59,6 +59,16 @@ test("my alerts: invalid bids block, otherwise the deadline", () => {
     const fine = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run,
         groups: pendingGroups({blindBidWaiverRequest: [{round: "1", addsDrops: "1_1_"}, {round: "2", addsDrops: "2_1_"}]})});
     assert.deepEqual(fine.map((a) => [a.title, a.detail]), [["2 blind bids pending", "They process Wed Oct 21, 11:00 p.m. CT · Add"]]);
+    // the first run close by is the pending bids' alert, not one of its own
+    const first = {what: "First blind bids", when: "Wed Oct 21, 11:00 p.m.", soon: true, kind: "bids"};
+    const withBids = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run, coming: [first],
+        groups: pendingGroups({blindBidWaiverRequest: {round: "1", addsDrops: "1_1_"}})});
+    assert.deepEqual(withBids.map((a) => a.title), ["1 blind bid pending"]);
+    assert.deepEqual(myAlerts({league, franchiseId: "0001", phase: "season", links, now, coming: [first]}).map((a) => a.title), ["First blind bids"]);
+    // invalid bids don't say when, so the first run keeps its own
+    const invalid = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run, coming: [first],
+        groups: pendingGroups({blindBidWaiverRequest: {round: "1", addsDrops: "1_5_"}})});
+    assert.deepEqual(invalid.map((a) => a.title), ["Current bids invalid", "First blind bids"]);
 });
 
 test("my alerts: the team's own violations, with where to fix them", () => {
@@ -116,11 +126,15 @@ test("my alerts: a free agent add's contract length, as read from the board", ()
 test("my alerts: trade offers and dates within three days", () => {
     const alerts = myAlerts({league: leagueOf([team("0001", "Me")]), franchiseId: "0001", phase: "season", links, now,
         trades: [{from: "The Obliterators", summary: "Herbert for Hurts", expires: at("2026-10-23T12:00:00-05:00")}],
-        coming: [{what: "Trade deadline", when: "Wed Nov 25 · Week 12 kickoff", soon: false}, {what: "Final cut-down", when: "Sun Oct 18", soon: true}]});
+        coming: [{what: "Trade deadline", when: "Wed Nov 25 · Week 12 kickoff", soon: false}, {what: "Final cut-down", when: "Sun Oct 18", soon: true, kind: "cut"},
+            {what: "Draft", when: "Sun Oct 18, 6:00 p.m.", soon: true, kind: "draft"}, {what: "Contract year ends", when: "Mon Oct 19, 3:00 p.m.", soon: true, kind: "rollover"}]});
     assert.deepEqual(alerts.map((a) => [a.title, a.detail]), [
         ["Trade offer from The Obliterators", "Herbert for Hurts · expires Fri Oct 23 · Trades"],
-        ["Final cut-down", "Sun Oct 18"]
+        ["Final cut-down", "Sun Oct 18 · Drop"],
+        ["Draft", "Sun Oct 18, 6:00 p.m."],
+        ["Contract year ends", "Mon Oct 19, 3:00 p.m. · Cut by then for the penalty to clear before next season · Drop"]
     ]);
+    assert.equal(alerts[1].href, links.drop);
 });
 
 test("between the draft and the cut-down: lengths to post and the roster limits", () => {
@@ -186,8 +200,31 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
     // logged out there's no calendar, but the season's own dates show
     assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin", "Championship week"]);
-    // the cut-down two days away is soon
-    assert.equal(comingUp({dates, kickoffs, now: 1788842700 - 2 * 86400}).find((d) => d.what.startsWith("Final")).soon, true);
+    // two days ahead, the cut-down, the deadline, free agency closing and the rollover are to-dos for
+    // My alerts; week 1, the playoffs, the championship and trades reopening stay in Coming up
+    const soon = (what, at) => comingUp({dates, kickoffs, now: at - 2 * 86400}).find((d) => d.what === what).soon;
+    assert.equal(soon("Final Cut Down/Contract Length Deadline", 1788842700), true);
+    assert.equal(soon("Trade deadline", kickoffs.get(12)), true);
+    assert.equal(soon("Free agency closes", at("2027-01-10T12:00:00-06:00")), true);
+    assert.equal(soon("Week 1 kickoff", kickoffs.get(1)), false);
+    assert.equal(soon("Playoffs begin", kickoffs.get(15)), false);
+    assert.equal(soon("Championship week", kickoffs.get(17)), false);
+    assert.equal(soon("Trades reopen", at("2027-01-06T12:00:00-06:00")), false);
+    assert.equal(soon("Contract Year Ends - Lengths Reduced by 1", 1804798800), true);
+    assert.equal(soon("Rookie/Franchise Player Salaries Calculated for Next Year", kickoffs.get(12)), false);
+    // a title is read for its words: "cut" or "draft" inside another word doesn't count, and a
+    // rollover that mentions cutting is still the rollover
+    const kinds = (...titles) => calendarDates({event: titles.map((title) => ({type: "CUSTOM", title, start_time: "1800000000", happens: ""}))}).map((d) => d.kind);
+    assert.deepEqual(kinds("Contracts executed", "Final Cut Down", "Contract year ends - last cut", "Rookie draft"), [null, "cut", "rollover", "draft"]);
+    // the cut-down naming contract years is still the cut-down; only MFL's own trade event is the
+    // deadline, so a commissioner's other deadline doesn't hide the season's
+    assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Keeper trade deadline"), ["cut", null, null]);
+    const spring = calendarDates({event: [{type: "CUSTOM", title: "Keeper trade deadline", start_time: "1776000000", happens: ""}]});
+    assert.deepEqual(comingUp({dates: spring, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["Trade deadline"]);
+    // one the commissioner calls just "Trade deadline", in any case, stands in for the season's
+    const own = calendarDates({event: [{type: "CUSTOM", title: "TRADE DEADLINE", start_time: "1795000000", happens: ""}]});
+    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => /trade/i.test(d.what)).map((d) => [d.what, d.at, d.kind]), [["TRADE DEADLINE", 1795000000, "trades"]]);
+    assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
 test("the next blind bid run repeats weekly from the first", () => {

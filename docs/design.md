@@ -72,9 +72,9 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
 
 - **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
 - **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
-  calendar event titled with "cut") until week 17 is over; the daily job, without the calendar,
-  from week 1's kickoff. Going over 30 voids the move, as going over the cap does; under 23 must be
-  fixed but voids nothing.
+  calendar event with a word starting "cut" in its title, unless it says "contract year end(s)")
+  until week 17 is over; the daily job, without the calendar, from week 1's kickoff. Going over 30
+  voids the move, as going over the cap does; under 23 must be fixed but voids nothing.
 - **Injured reserve:** only players the NFL lists on IR (and its variants). One who comes off must
   move back to the active roster.
 - **Anti-tanking:** starting an injured (IR or Out) or suspended player is flagged in weeks 1–14,
