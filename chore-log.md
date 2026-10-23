@@ -38,3 +38,6 @@ What the daily job did, newest last.
 - 2026-10-22 13:08 UTC: Set Chris Boswell to 1 year (post "Boswell: 1 Year").
 - 2026-10-22 13:08 UTC: Set Jason Myers to 1 year (blind bid comment "Myers: 1 Year").
 - 2026-10-22 13:08 UTC: Set Dameon Pierce to 1 year (blind bid comment "1 Year").
+- 2026-10-23 12:49 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
+- 2026-10-23 12:49 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
+- 2026-10-23 12:49 UTC: Charged $2 to Not 100% A Dick for Jaylen Wright (2yrs@1, 10/22), and reset the player to $1 / 0 years.
