@@ -206,6 +206,8 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     // rollover that mentions cutting is still the rollover
     const kinds = (...titles) => calendarDates({event: titles.map((title) => ({type: "CUSTOM", title, start_time: "1800000000", happens: ""}))}).map((d) => d.kind);
     assert.deepEqual(kinds("Contracts executed", "Final Cut Down", "Contract year ends - last cut", "Rookie draft"), [null, "cut", "rollover", "draft"]);
+    // the cut-down naming contract years is still the cut-down; a trade deadline of the commissioner's is the deadline
+    assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Trade deadline"), ["cut", null, "trades"]);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
