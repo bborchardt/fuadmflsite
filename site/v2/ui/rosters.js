@@ -11,6 +11,7 @@ import {pageFetch} from "./page-fetch.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
+import {watchList} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
 import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
 import {
@@ -416,7 +417,21 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             });
         },
         players: (mount) => {
-            const state = {positions: [], years: [], owners: [], text: "", sort: null, direction: null};
+            const state = {positions: [], years: [], owners: [], watching: false, text: "", sort: null, direction: null};
+            // the member's watch list (watch.js) for the Watching chip; a star in the player popup changes it
+            let watched = null;
+            let redrawn = () => {};
+            if (viewer) {
+                watchList(context).then((list) => {
+                    watched = list;
+                    redrawn();
+                }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
+                window.addEventListener("fuad-watch", () => {
+                    if (state.watching) {
+                        redrawn();
+                    }
+                });
+            }
             drawPanel(mount, {
                 what: "players", rows: 12,
                 load: async () => {
@@ -473,11 +488,12 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     const redraw = () => {
                         chips.innerHTML = chipRow("Position", POSITION_CHIPS, state.positions, "positions")
                             + chipRow("Years left", yearChips, state.years, "years")
-                            + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners") : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"));
-                        const shown = sortPlayers(filterPlayers(pool, {...state, viewer}), state.sort, state.direction);
+                            + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners") : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"))
+                            + (watched ? `<div class="fuad-chip-row-group" role="group" aria-label="Watch list"><button type="button" class="fuad-filter" aria-pressed="${state.watching}" data-chip="watching" data-value="Watching">Watching</button></div>` : "");
+                        const shown = sortPlayers(filterPlayers(pool, {...state, viewer, watched: state.watching ? watched : null}), state.sort, state.direction);
                         tbody.innerHTML = shown.map((player) => `<tr class="${player.owner && player.owner === viewer ? "fuad-row-mine" : ""}">${columns.map(([key]) => cell(player, key)).join("")}</tr>`).join("");
                         none.hidden = shown.length > 0;
-                        none.querySelector("button").hidden = !(state.positions.length || state.years.length || state.owners.length);
+                        none.querySelector("button").hidden = !(state.positions.length || state.years.length || state.owners.length || state.watching);
                         body.querySelectorAll(".fuad-sort").forEach((button) => {
                             const on = button.dataset.sort === state.sort;
                             button.closest("th").setAttribute("aria-sort", on ? (state.direction > 0 ? "ascending" : "descending") : "none");
@@ -490,6 +506,12 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     });
                     body.addEventListener("click", (event) => {
                         const chip = event.target.closest("[data-chip]");
+                        if (chip && chip.dataset.chip === "watching") {
+                            state.watching = !state.watching;
+                            redraw();
+                            body.querySelector('[data-chip="watching"]').focus();
+                            return;
+                        }
                         if (chip) {
                             const list = state[chip.dataset.chip];
                             const value = chip.dataset.value;
@@ -517,9 +539,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             state.positions.length = 0;
                             state.years.length = 0;
                             state.owners.length = 0;
+                            state.watching = false;
                             redraw();
                         }
                     });
+                    redrawn = redraw;
                     redraw();
                 }
             });

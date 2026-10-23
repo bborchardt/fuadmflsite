@@ -12,10 +12,12 @@ import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
+import {setWatched, watchList} from "./watch.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const CAP_AGE = 2 * 60 * 1000;
 
+const STAR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9z"></path></svg>';
 const CLOSE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 
 const money = (amount) => `$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
@@ -217,6 +219,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek,
 }
 
 export function installPopup({context, franchiseId}) {
+    const member = Boolean(franchiseId && franchiseId !== "0000");
     const mflModal = window.launch_player_modal;
     const teamNames = new Map(Object.values(window.franchiseDatabase || {}).map((team) => [team.id, team.name]));
     const players = new Map();
@@ -236,11 +239,39 @@ export function installPopup({context, franchiseId}) {
                     <h2 id="fuad-popup-name">${esc(nameFromLink(label) || "Player")}</h2>
                     <span class="fuad-meta fuad-popup-meta"></span>
                 </div>
+                ${member ? `<button type="button" class="fuad-watch" aria-pressed="false" aria-label="Watch" hidden>${STAR}</button>` : ""}
                 <button type="button" class="fuad-close" data-close aria-label="Close">${CLOSE_ICON}</button>
             </div>
+            <p class="fuad-meta fuad-watch-note" role="status"></p>
             <div class="fuad-popup-body"></div>
         </section>`;
         const close = openDialog(layer, {opener});
+        // the member's watch list: a star by the name, shown once the list is known
+        const star = layer.querySelector(".fuad-watch");
+        if (star) {
+            const note = layer.querySelector(".fuad-watch-note");
+            const show = (on) => {
+                star.setAttribute("aria-pressed", String(on));
+                star.setAttribute("aria-label", on ? "Watching" : "Watch");
+            };
+            watchList(context).then((list) => {
+                show(list.has(playerId));
+                star.hidden = false;
+            }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
+            star.addEventListener("click", () => {
+                const on = star.getAttribute("aria-pressed") !== "true";
+                show(on);
+                star.disabled = true;
+                note.textContent = "";
+                setWatched(context, playerId, on).catch((error) => {
+                    console.warn("[fuad] couldn't update the watch list:", error);
+                    show(!on);
+                    note.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a minute." : "Couldn't update your watch list.";
+                }).finally(() => {
+                    star.disabled = false;
+                });
+            });
+        }
         const dialog = layer.querySelector(".fuad-popup");
         drawPanel(layer.querySelector(".fuad-popup-body"), {
             what: "this player",

@@ -190,3 +190,11 @@ test("before the draft, a team's picks in it come from the board: held ones numb
     const held = board.flatMap((round) => round.picks).filter((pick) => pick.team === "0007");
     assert.match(boardSummary("0007", board), new RegExp(`^${held.length}`));
 });
+
+test("Players' Watching chip keeps only the watched players, with the other chips still applied", () => {
+    const pool = [{id: "1", name: "Ann", position: "RB", owner: "0001"}, {id: "2", name: "Bo", position: "WR", fa: true}, {id: "3", name: "Cy", position: "RB", owner: "0002"}];
+    const ids = (list) => list.map((player) => player.id);
+    assert.deepEqual(ids(filterPlayers(pool, {watched: new Set(["2", "3"])})), ["2", "3"]);
+    assert.deepEqual(ids(filterPlayers(pool, {watched: new Set(["2", "3"]), positions: ["RB"]})), ["3"]);
+    assert.deepEqual(ids(filterPlayers(pool, {})), ["1", "2", "3"]);
+});

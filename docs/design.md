@@ -126,6 +126,10 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   Processed Waivers pages with v2's view over them. Other bids count only claims MFL tried, one per
   team at its highest; a win with no won-bid transaction for that team and player shows "Voided",
   since the commissioner voids a bid by removing the player and deleting its transaction.
+- **Watch list** (v2's player popup, Moves › Add and Rosters › Players, `ui/watch.js`): MFL's own My
+  Watch List, so it follows a member across devices and MFL's app, read with its export and changed with
+  its import from the member's own page. A star in the popup changes it; a Watching chip filters Add's
+  free agents and Rosters › Players to it.
 - **League history** (v2's League and Rosters, `ui/history-model.js`, display only): a title belongs
   to today's team holding the champion's franchise number, if MFL links that team to that year;
   franchise numbers MFL moved are listed in `RENUMBERED`.
