@@ -43,7 +43,7 @@ export function homePhase({now, week1, seasonOver, drafted, cutDown}) {
 }
 
 // The commissioner's own dates and MFL's, one-off only, and the end of MFL's weekly waiver lock:
-// `{what, at, week}` with `at` in seconds. The trade deadline and other week-numbered events take
+// `{what, at, week, kind}` with `at` in seconds and `kind` naming the ones members act by. The trade deadline and other week-numbered events take
 // that week's first kickoff (`kickoffs`).
 export function calendarDates(calendar, kickoffs = new Map()) {
     const dates = [];
@@ -71,8 +71,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         const week = start > 0 && start < 100 ? start : null;
         const at = week ? kickoffs.get(week) : start;
         if (at) {
-            // the rollover is the last cut whose penalty clears before the new year
-            const kind = event.type === "TRADE" ? "trades" : /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : /contract year/i.test(title) ? "rollover" : null;
+            const kind = event.type === "TRADE" ? "trades" : /contract year/i.test(title) ? "rollover" : /\bcut/i.test(title) ? "cut" : /\bdraft/i.test(title) ? "draft" : null;
             dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind});
         }
         if (at && event.type === "TRADE" && Number(event.end_time) > at) {
@@ -85,7 +84,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 // the event whose name contains "cut" (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the dates still ahead, soonest first; `soon` is a to-do close enough for My alerts. Without the calendar (logged out) the season's own
+// Coming up: the dates still ahead, soonest first, `soon` when a to-do is close enough for My alerts. Without the calendar (logged out) the season's own
 // dates still show: week 1, the trade deadline, the playoffs and the championship.
 export function comingUp({dates, kickoffs = new Map(), now}) {
     const all = dates.slice();
@@ -257,8 +256,11 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         push(tones.lime, "⇄", `Trade offer from ${trade.from}`, [trade.summary, trade.expires && `expires ${dayText(trade.expires)}`].filter(Boolean).join(" · "), links.trades, "Trades");
     }
 
+    const where = {trades: [links.trades, "Trades"], adds: [links.add, "Add"], bids: [links.add, "Add"], cut: [links.drop, "Drop"], rollover: [links.drop, "Drop"]};
     for (const date of coming.filter((entry) => entry.soon)) {
-        push(tones.orange, "!", date.what, date.when, null);
+        // the rollover is the last cut whose penalty clears before the new season
+        const why = date.kind === "rollover" ? "Cut by then for the penalty to clear before next season" : "";
+        push(tones.orange, "!", date.what, [date.when, why].filter(Boolean).join(" · "), ...(where[date.kind] || []));
     }
     return alerts;
 }
