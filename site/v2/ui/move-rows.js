@@ -28,14 +28,12 @@ export function bidRuns({season, leagueId}) {
 // won bid shows the run's other bids only `withBids` (logged in)
 export function moveRows({context, players, teams, withBids}) {
     const bidRun = bidRuns(context);
-    // one read per run however many rows show it
+    // one read per run however many rows show it; one that fails isn't asked again until the page
+    // reloads, as All moves draws its rows again on every filter
     const runs = new Map();
     const runOf = (period) => {
         if (!runs.has(period)) {
-            runs.set(period, bidRun(period).catch((error) => {
-                runs.delete(period);
-                throw error;
-            }));
+            runs.set(period, bidRun(period));
         }
         return runs.get(period);
     };
@@ -47,7 +45,7 @@ export function moveRows({context, players, teams, withBids}) {
         const [groups, known] = await Promise.all([runOf(bid.period), players()]);
         const player = known.get(bid.player);
         const bids = player ? otherBids(groups, player.fullName, bid.team) : [];
-        return bids.length ? `Also bid: ${bids.map((entry) => `${teams.get(entry.team) || `Team ${entry.team}`} $${entry.amount}`).join(" · ")}` : "";
+        return bids.length ? `Also bid: ${bids.map((entry) => `${(teams.get(entry.team) || `Team ${entry.team}`).trim()} $${entry.amount}`).join(" · ")}` : "";
     };
 
     return {
@@ -67,7 +65,13 @@ export function moveRows({context, players, teams, withBids}) {
                 alsoLine(bid).then((text) => {
                     lines.set(keyOf(bid), text);
                     line.textContent = text;
-                }, (error) => console.warn("[fuad] couldn't load the run's other bids:", error));
+                }, (error) => {
+                    // the row goes without the line; the warning once
+                    if (!lines.has(keyOf(bid))) {
+                        lines.set(keyOf(bid), "");
+                        console.warn("[fuad] couldn't load the run's other bids:", error);
+                    }
+                });
             });
         }
     };
