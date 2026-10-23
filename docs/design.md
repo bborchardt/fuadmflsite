@@ -117,6 +117,9 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   until he is. Who can go on IR, and whose game has started, is MFL's own page's say.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
+- **League history** (v2's League and Rosters, `ui/history-model.js`, display only): a title belongs
+  to today's team holding the champion's franchise number, if MFL links that team to that year;
+  franchise numbers MFL moved are listed in `RENUMBERED`.
 - **Playoff seeds and payouts** (v2's League, `ui/league-model.js`, display only): the division
   winners are seeds 1–2, the other four the best all-play records, ties by standings order (1.1–1.3);
   $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),
@@ -152,7 +155,8 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   (`ui/page-fetch.js`): the NFL schedule, the league's settings and the calendar for a day; last
   week's injury report for a day, today's for 5 minutes on a game day and an hour otherwise; the
   week's results for an hour; rosters, adjustments, transactions, free agents, pending bids and
-  trades, and the message board for 2 minutes, which a move made in v2 clears. So a move made on
+  trades, and the message board for 2 minutes, which a move made in v2 clears; MFL's League History
+  pages until the next week's results or a week, League Champions for a day. So a move made on
   MFL's own pages, or by another team, can take 2 minutes to show. Moves' checks and who starts in
   League › Scores always ask MFL.
 - After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel
