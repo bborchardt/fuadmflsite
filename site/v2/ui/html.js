@@ -5,6 +5,9 @@ export function esc(value) {
     return String(value === undefined || value === null ? "" : value).replace(/[&<>"'`=]/g, (c) => entities[c]);
 }
 
+// MFL's text with its runs of spaces, non-breaking ones too ("League&nbsp;Calendar"), as one space
+export const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
+
 export function rowStriper() {
     let odd = false;
     return () => {
