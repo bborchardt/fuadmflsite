@@ -12,8 +12,8 @@ import {gameStates, readProjections, readRules, readStats} from "./live-scoring.
 import {careers, champions} from "./history.js";
 import {titles} from "./history-model.js";
 import {
-    POSITION_ORDER, allPlayRecords, gameText, money, pairLines, playoffPicture, playoffPlaces, positionPoints, powerFacts,
-    readPowerPage, recordText, scoreCards, standings, teamSeason, weekState, winnings, winningsLine
+    POSITION_ORDER, allPlayRecords, bestCard, gameText, money, pairLines, playoffPicture, playoffPlaces, positionPoints, powerFacts,
+    readPowerPage, recordText, scoreCards, standings, starterLimits, teamSeason, weekState, winnings, winningsLine
 } from "./league-model.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -58,7 +58,8 @@ function namesOf(league) {
 
 function teamHead(team, {names, viewer, leader, side, started, preview}) {
     const tone = leader === null || leader === side ? "" : " fuad-trailing";
-    const projection = team.projected !== null ? `proj ${team.projected.toFixed(1)}` : team.done && team.started ? "Final" : "";
+    const projection = team.actual !== undefined ? `actual ${team.actual.toFixed(1)}`
+        : team.projected !== null ? `proj ${team.projected.toFixed(1)}` : team.done && team.started ? "Final" : "";
     return `<span class="fuad-face fuad-face-${side ? "right" : "left"}${tone}">
         <span class="fuad-face-name${team.id === viewer ? " fuad-face-mine" : ""}">${esc(names.get(team.id) || team.id)}</span>
         <span class="fuad-face-score">${started ? esc(team.score.toFixed(1)) : preview ? "" : "—"}</span>
@@ -87,12 +88,15 @@ function lineCells(line, side, {bench = false} = {}) {
     }
     const state = line.ir ? "IR" : gameText(line.game, kickoffText);
     const live = line.game.state === "playing" ? " fuad-live" : "";
-    const projected = !bench && typeof line.projected === "number" && line.game.state !== "over" ? line.projected.toFixed(1) : "";
+    // no projections in Best's lineups (`tag` set)
+    const projected = !bench && line.tag === undefined && typeof line.projected === "number" && line.game.state !== "over" ? line.projected.toFixed(1) : "";
+    // Best's marks: "in" off the bench, "started" left out
+    const tag = line.tag ? ` <span class="fuad-ln-tag fuad-ln-tag-${esc(line.tag)}">${esc(line.tag)}</span>` : "";
     const player = `<button type="button" class="fuad-ln fuad-ln-${side}" data-player="${esc(line.id)}">
             <span class="fuad-ln-pos">${esc(line.position)}</span>
             <span class="fuad-ln-name"><span class="fuad-short">${esc(shortName(line.name))}</span><span class="fuad-full">${esc(line.name)}</span></span>
-            <span class="fuad-ln-meta fuad-ln-desk${live}">${esc([state, line.line].filter(Boolean).join(" · "))}</span>
-            <span class="fuad-ln-meta fuad-ln-phone${live}">${esc([line.position, state, line.line].filter(Boolean).join(" · "))}</span>
+            <span class="fuad-ln-meta fuad-ln-desk${live}">${esc([state, line.line].filter(Boolean).join(" · "))}${tag}</span>
+            <span class="fuad-ln-meta fuad-ln-phone${live}">${esc([line.position, state, line.line].filter(Boolean).join(" · "))}${tag}</span>
         </button>`;
     const points = `<span class="fuad-ln-pts fuad-ln-pts-${side}">${esc(pts(line.points))}<span class="fuad-ln-proj">${esc(projected)}</span></span>`;
     return side === "a" ? player + points : points + player;
@@ -102,13 +106,13 @@ function lineupGrid(pairs, options) {
     return `<div class="fuad-lineup">${pairs.map(([a, b]) => `${lineCells(a, "a", options)}${lineCells(b, "b", options)}`).join("")}</div>`;
 }
 
-function cardMarkup(card, i, {names, viewer, open, benchOpen, preview}) {
+function cardMarkup(card, i, {names, viewer, open, benchOpen, preview, best = false}) {
     const [a, b] = card.teams;
     // once either side has a game going, both show points
     const started = card.teams.some((team) => team.started);
     const leader = started && b && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
-    const live = card.teams.some((team) => team.playing);
-    const showBar = a.chance !== null && b;
+    const live = !best && card.teams.some((team) => team.playing);
+    const showBar = !best && a.chance !== null && b;
     const head = b
         ? `<span class="fuad-faces">${teamHead(a, {names, viewer, leader, side: 0, started, preview})}${teamHead(b, {names, viewer, leader, side: 1, started, preview})}</span>
            ${showBar ? `<span class="fuad-card-middle">${winBar(card.teams)}</span>` : ""}
@@ -142,29 +146,38 @@ function seasonMarkup({lastRegular, rows, names, current, live, title, line}) {
 function drawScores(mount, data) {
     const {context, viewer, exp, feed, before, names: namesFor} = data;
     const currentWeek = before ? 1 : Number(window.liveScoringWeek) || 1;
-    const state = {week: currentWeek, season: false, open: null, bench: new Set()};
+    // `best`: each side's best lineup in place of its own (kept across weeks; off in Season)
+    const state = {week: currentWeek, season: false, best: false, open: null, bench: new Set()};
     let timer = null;
     // who starts, per week, and when MFL was last asked
     const lineups = new Map();
     const twoColumns = window.matchMedia(TWO_COLUMNS);
     mount.innerHTML = `
-        <div class="fuad-scores-bar">
+        <div class="fuad-scores-bar${before ? "" : " fuad-scores-toggles"}">
             <div class="fuad-weekpicker">
                 <button type="button" class="fuad-step" data-step="-1" aria-label="Previous week">‹</button>
                 <div class="fuad-week-label" aria-live="polite"><span class="fuad-week-name"></span><span class="fuad-week-state fuad-label"></span></div>
                 <button type="button" class="fuad-step" data-step="1" aria-label="Next week">›</button>
             </div>
             <div class="fuad-season-title" hidden><span class="fuad-week-name"></span><span class="fuad-label"></span></div>
-            ${viewer && !before ? '<button type="button" class="fuad-toggle" aria-pressed="false" data-season>Season</button>' : ""}
+            ${before ? "" : `<div class="fuad-bar-toggles">
+                <button type="button" class="fuad-toggle" aria-pressed="false" data-best disabled>Best</button>
+                ${viewer ? '<button type="button" class="fuad-toggle" aria-pressed="false" data-season>Season</button>' : ""}
+            </div>`}
         </div>
         <div class="fuad-scores-body"></div>`;
     const body = mount.querySelector(".fuad-scores-body");
     const picker = mount.querySelector(".fuad-weekpicker");
+    const bestButton = mount.querySelector("[data-best]");
+    // Best once the week's first game has kicked off, whoever plays in it
+    const canBest = (shown) => Boolean(shown && !shown.preview && shown.limits && shown.limits.count
+        && shown.cards.some((card) => card.teams.some((team) => team.starters.concat(team.bench).some((line) => ["playing", "over"].includes(line.game.state)))));
+    let lastShown = null;
     const lastWeek = () => Math.max(currentWeek, data.lastScheduled || currentWeek);
 
     // what a week shows: its cards, from the lineups and the stats feed
     const loadWeek = async (week, {fresh = false} = {}) => {
-        const [names, players, rules] = await Promise.all([namesFor(), data.players(), data.rules()]);
+        const [names, players, rules, limits] = await Promise.all([namesFor(), data.players(), data.rules(), data.league().then(starterLimits, () => null)]);
         const nflSchedule = await exp("nflSchedule", {W: week}, {base: API_BASE, optional: true});
         if (before || week > currentWeek) {
             const schedule = await data.schedule();
@@ -201,14 +214,17 @@ function drawScores(mount, data) {
         ]);
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
         const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || []});
-        return {cards, names, games, state: weekState(cards, games, weekday)};
+        return {cards, names, games, limits, state: weekState(cards, games, weekday)};
     };
 
     const draw = (shown) => {
-        const {cards, names} = shown;
+        lastShown = shown;
+        const best = state.best && canBest(shown);
+        const {names} = shown;
+        const cards = best ? shown.cards.map((card) => bestCard(card, shown.limits)) : shown.cards;
         const open = state.open || new Set(shown.preview ? [] : cards.flatMap((card, i) => (card.mine ? [i] : [])));
         body.innerHTML = cards.length
-            ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview)})).join("")}</div>`
+            ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview), best})).join("")}</div>`
             : '<p class="fuad-muted fuad-empty">No games this week.</p>';
         body.querySelectorAll(".fuad-card-head").forEach((button) => button.addEventListener("click", () => {
             const index = Number(button.closest(".fuad-card").dataset.card);
@@ -248,6 +264,10 @@ function drawScores(mount, data) {
         stateLine.textContent = shown ? shown.state.text : "";
         stateLine.classList.toggle("fuad-live", Boolean(shown && shown.state.live));
         picker.querySelector('[data-step="-1"]').disabled = state.week <= 1;
+        if (bestButton) {
+            bestButton.disabled = !canBest(shown);
+            bestButton.setAttribute("aria-pressed", String(state.best && canBest(shown)));
+        }
         picker.querySelector('[data-step="1"]').disabled = state.week >= lastWeek();
     };
 
@@ -357,12 +377,27 @@ function drawScores(mount, data) {
         state.bench = new Set();
         showWeek();
     });
+    if (bestButton) {
+        bestButton.addEventListener("click", () => {
+            state.best = !state.best;
+            bestButton.setAttribute("aria-pressed", String(state.best));
+            if (lastShown) {
+                draw(lastShown);
+            }
+        });
+    }
     const seasonButton = mount.querySelector("[data-season]");
     if (seasonButton) {
         seasonButton.addEventListener("click", () => {
             state.season = !state.season;
             seasonButton.setAttribute("aria-pressed", String(state.season));
             picker.hidden = state.season;
+            // the rest of the bar goes with the week picker; Season leaves Best off
+            if (bestButton) {
+                bestButton.hidden = state.season;
+                state.best = false;
+                bestButton.setAttribute("aria-pressed", "false");
+            }
             if (state.season) {
                 showSeason();
             } else {
