@@ -435,7 +435,11 @@ export function bestCard(card, limits) {
         const starters = pool.filter((line) => ids.has(line.id)).map((line) => ({...line, tag: line.starter ? "" : "in"})).sort(byPosition);
         const bench = team.starters.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: "started"}))
             .concat(team.bench.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: ""})));
-        return {...team, actual: team.score, score: starters.reduce((sum, line) => sum + (line.points || 0), 0), starters, bench};
+        return {
+            ...team, actual: team.score, score: starters.reduce((sum, line) => sum + (line.points || 0), 0), starters, bench,
+            // a bench player's game can be the only one played (Thursday night)
+            started: starters.some((line) => line.game.state === "playing" || line.game.state === "over")
+        };
     })};
 }
 
