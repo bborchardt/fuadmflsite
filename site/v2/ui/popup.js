@@ -12,7 +12,7 @@ import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
-import {setWatched, watchList} from "./watch.js";
+import {setWatched, watchList, watchState} from "./watch.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const CAP_AGE = 2 * 60 * 1000;
@@ -255,7 +255,10 @@ export function installPopup({context, franchiseId}) {
                 star.setAttribute("aria-label", on ? "Watching" : "Watch");
             };
             watchList(context).then((list) => {
-                show(list.has(playerId));
+                // a change still on its way to MFL shows as made, and waits before another
+                const {on, waiting} = watchState(list, playerId);
+                show(on);
+                star.disabled = waiting;
                 star.hidden = false;
             }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
             star.addEventListener("click", () => {

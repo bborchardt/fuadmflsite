@@ -13,7 +13,7 @@ import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {contractTopic} from "./home-model.js";
-import {watchList} from "./watch.js";
+import {watchList, whenPopupClosed} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
 import {
     LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, bidsLeft, blockedText, changeTone, checkAdd, checkBid, claimKey,
@@ -246,7 +246,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
     window.addEventListener("fuad-watch", () => {
         if (state.watching && state.data) {
-            render();
+            whenPopupClosed(render);
         }
     });
 
