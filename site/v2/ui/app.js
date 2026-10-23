@@ -183,7 +183,8 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     const context = pageContext();
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
-    // Lineup, Add, Drop, IR and Trades draw over MFL's page: it's hidden from the start, so it doesn't show while their
+    // Lineup, Add, Drop, IR, Trades, All moves and All bids draw over MFL's page: it's hidden from the
+    // start, so it doesn't show while their
     // code loads (the commissioner's view stays MFL's)
     const over = (className) => {
         if (window.franchise_id !== "0000") {
@@ -240,6 +241,28 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             context, franchiseId, loginHref: loginLink(context), addHref: viewLinks(context, franchiseId)("Moves", "Add")
         })).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Trades:", error);
+            onTrouble();
+        });
+        return false;
+    }
+    // Home's All moves and All bids: MFL's Transactions and Processed Waivers pages
+    if (context && here.path === "options" && here.option === "03") {
+        const shown = over("fuad-all-moves-on");
+        await import("./all-moves.js").then(({drawAllMoves}) => drawAllMoves({context, franchiseId: window.franchise_id || null})).catch(shown).catch((error) => {
+            console.error("[fuad] couldn't draw All moves:", error);
+            onTrouble();
+        });
+        return false;
+    }
+    if (context && (here.path === "processed_waivers" || (here.path === "options" && here.option === "76"))) {
+        const shown = over("fuad-all-bids-on");
+        await import("./all-moves.js").then(({drawAllBids}) => {
+            // a page v2 can't read (logged out, or changed) stays MFL's
+            if (!drawAllBids({context, franchiseId: window.franchise_id || null})) {
+                document.documentElement.classList.remove("fuad-all-bids-on");
+            }
+        }).catch(shown).catch((error) => {
+            console.error("[fuad] couldn't draw All bids:", error);
             onTrouble();
         });
         return false;

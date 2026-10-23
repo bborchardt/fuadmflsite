@@ -98,7 +98,11 @@ MFL documents little of this.
   `BBID_WAIVER` transaction's timestamp. A conditional bid lists several players, of which MFL awards
   the first it can. Players without an NFL team show as "FA*". Every logged-in member sees every
   team's requests there, losing bids included; a group shows again for each step MFL took through
-  it.
+  it, its "Player Added" cell naming the claim it was given and "Reason Not Granted" each claim it
+  turned down ("Is Not Available": taken; "Cannot Be Dropped Because Is Not On Franchise"; "Player
+  Is Locked"). Claims after the one a group was given were never tried. A logged-out request gets
+  no waiver table. The page's `select[name=PERIOD]` lists the season's runs, newest first, in a GET
+  form. A bid the commissioner voids keeps its "Player Added" here; only its transaction goes.
 - **Processing** (MFL's blind bidding help; not yet seen happen): bids league-wide from the highest
   dollar amount down; within a group the first valid claim wins; groups have no priority. A claim
   whose drop is already gone (won by another group) is invalid, so a drop shared by two groups can't
