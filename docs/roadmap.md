@@ -17,6 +17,9 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
   Alerts once for preseason noise.
 - Each season, once it's set: add the final cut-down date to MFL's league calendar as an event
   whose name contains "cut" (e.g. "Final cut-down"), so v2's Home can show it and date its alerts.
+- For League › Winners' Champions band: on MFL's League Awards setup, put each League Champion
+  owner's first name in the award's Comments (2008 on), first checking the form allows it; then
+  each season, once the champion is crowned, see that the award is there and add the name.
 
 ## v2: the redesign
 
@@ -1182,6 +1185,13 @@ their reasons and no hunt list, while Scores carries the playoff games.
   are over, each prize names its winner ("1st · 55% · Smooth City Styles! · $329.91") and counts
   in the team's total, a Playoffs column on desktop and the grey line on phones (review, 17 Oct
   2026).
+- **Champions** (the commissioner, 23 Oct 2026; not drawn or built): a band after the prizes listing
+  every League Champion, newest first, back to 2008, from MFL's League Awards page (`options?O=202`),
+  each with that year's team name and the owner's first name from the award's Comments (the
+  commissioner's to-do; a year without one shows the team alone). MFL keeps no past owners in its
+  exports and the awards are typed text, not linked to franchises. No all-time head-to-head or team
+  titles: years of owner turnover make MFL's historical franchise links impractical and the records
+  not very meaningful.
 - **Before the season** (a phase Tweak on row 7; review, 17 Oct 2026): the new site has no games
   until week 1, so Scores shows week 1's matchups and kickoffs once MFL's schedule is set (until
   then the week picker's "Week 1 · Thu Sep 10"), with no scores, projections or lineups; Standings,
@@ -1223,7 +1233,8 @@ saves little.
 
 ## Optional, later
 
-- A small public league-history site (records, champions, bylaws), only after v2 is the default.
+- A small public league-history site (records, bylaws), only after v2 is the default; champions are
+  in League › Winners.
 - **Optimal lineup in Scores** (after the build; the commissioner, 18 Oct 2026): what each team's
   best lineup would have scored, as MFL's live scoring page offers. For finished weeks
   `weeklyResults` already has each team's `optimal` starters and `opt_pts`.
