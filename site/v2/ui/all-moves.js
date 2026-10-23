@@ -10,7 +10,7 @@ import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {recentMoves} from "./home-model.js";
-import {moveRows, yearsText} from "./move-rows.js";
+import {moveRows} from "./move-rows.js";
 import {readBidRun, runPlayers} from "./bids-model.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -18,6 +18,7 @@ const KINDS = [["All", null], ["Adds", "Add"], ["Drops", "Drop"], ["Bids", "Bid"
 const CHEVRON_DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
 const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+const yearsText = (years) => (years ? ` · ${years} yr${years === 1 ? "" : "s"}` : "");
 
 // today's teams by id, from MFL's page
 function teamNames() {
@@ -73,7 +74,7 @@ export function drawAllMoves({context, franchiseId}) {
     const teams = teamNames();
     const state = {team: "", kind: null};
     const known = () => players(context.season);
-    const rows = moveRows({context, players: known, teams, expandable: Boolean(franchiseId), id: "all"});
+    const rows = moveRows({context, players: known, teams, withBids: Boolean(franchiseId)});
     mount.innerHTML = `${head("All moves", "", franchiseId ? {text: "All bids", href: allBidsHref(context)} : null)}
         <div class="fuad-moves-filters">
             <label class="fuad-select"><span class="fuad-hidden">Team</span><select data-team>
@@ -98,9 +99,9 @@ export function drawAllMoves({context, franchiseId}) {
         });
         const body = list.querySelector(".fuad-panel-body");
         body.innerHTML = days.length
-            ? days.map((day, i) => `<div class="fuad-moves-day" data-day="${i}"><h3 class="fuad-label">${esc(day.when)}</h3>${rows.markup(day.moves, {when: false, group: `-${i}`})}</div>`).join("")
+            ? days.map((day, i) => `<div class="fuad-moves-day" data-day="${i}"><h3 class="fuad-label">${esc(day.when)}</h3>${rows.markup(day.moves, {when: false})}</div>`).join("")
             : '<p class="fuad-muted fuad-empty">No moves.</p>';
-        days.forEach((day, i) => rows.wire(body.querySelector(`[data-day="${i}"]`), day.moves));
+        days.forEach((day, i) => rows.fill(body.querySelector(`[data-day="${i}"]`), day.moves));
     };
 
     mount.querySelector("[data-team]").addEventListener("change", (event) => {
