@@ -27,8 +27,10 @@ MFL documents little of this.
   its pages.
 - **The calendar export** needs a logged-in member. Each `event` has `id`, `type` (`CUSTOM` for the
   commissioner's own, `TRADE`, `WAIVER_BBID`, `WAIVER_LOCK`), `title` (empty on MFL's own),
-  `start_time` and `end_time` in seconds, and `happens` (a weekday, `17`, for repeating ones). The
-  trade deadline's `start_time` is its week, `12`, not a time.
+  `start_time` and `end_time` in seconds, and `happens`: for a weekly event, how many weeks it
+  repeats after the first (the form's "each week for the next N weeks"), empty for one time only.
+  The trade deadline's `start_time` is its week, `12`, not a time; its `end_time` is when trades
+  reopen.
 - **Renewal:** MFL keeps past seasons' sites and copies home page messages forward. The league renews
   in mid-March or later, never on a fixed date.
 
