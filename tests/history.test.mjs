@@ -56,8 +56,8 @@ test("a renumbered team's old number credits today's team, and its new number th
 });
 
 test("the viewer's record against a team, or nothing if they've never met", () => {
-    assert.equal(versusLine({w: 8, l: 13, t: 0}), "You vs them 8–13–0");
-    assert.equal(versusLine({w: 0, l: 0, t: 1}), "You vs them 0–0–1");
+    assert.equal(versusLine({w: 8, l: 13, t: 0}), "Your record vs them 8–13–0");
+    assert.equal(versusLine({w: 0, l: 0, t: 1}), "Your record vs them 0–0–1");
     assert.equal(versusLine({w: 0, l: 0, t: 0}), "");
     assert.equal(versusLine(undefined), "");
 });
