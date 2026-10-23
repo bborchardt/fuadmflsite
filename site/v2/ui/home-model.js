@@ -341,7 +341,8 @@ function asset(id, players, teamName) {
 
 const list = (items) => items.length <= 2 ? items.join(" and ") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 
-// The league's latest adds, bids won, IR moves and trades, newest first: [{kind, team, what, at}],
+// The league's latest adds, bids won, IR moves and trades, newest first: [{kind, team, teamIds, what,
+// at}] (`teamIds` both sides of a trade),
 // a won bid with its `bid` ({period, player, team}) for the run's other bids
 export function recentMoves(transactions, {players, franchises, limit = RECENT_MOVES}) {
     const teamName = (id) => (franchises.get(id) || {teamName: `Team ${id}`}).teamName;
@@ -375,7 +376,8 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
             what = `traded ${named(ids(transaction.franchise1_gave_up))} to ${teamName(transaction.franchise2)} for ${named(ids(transaction.franchise2_gave_up))}`;
         }
         if (kind && what) {
-            moves.push({kind, team, what, at, when: dayText(at), ...extra});
+            const teamIds = [transaction.franchise, transaction.type === "TRADE" ? transaction.franchise2 : null].filter(Boolean);
+            moves.push({kind, team, teamIds, what, at, when: dayText(at), ...extra});
         }
     }
     return moves.sort((a, b) => b.at - a.at).slice(0, limit);

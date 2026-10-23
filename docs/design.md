@@ -117,6 +117,10 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   until he is. Who can go on IR, and whose game has started, is MFL's own page's say.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
+- **All moves and All bids** (v2's Home, `ui/all-moves.js`, display only): MFL's Transactions and
+  Processed Waivers pages with v2's view over them. Other bids count only claims MFL tried, one per
+  team at its highest; a win with no won-bid transaction for that team and player shows "Voided",
+  since the commissioner voids a bid by removing the player and deleting its transaction.
 - **League history** (v2's League and Rosters, `ui/history-model.js`, display only): a title belongs
   to today's team holding the champion's franchise number, if MFL links that team to that year;
   franchise numbers MFL moved are listed in `RENUMBERED`.

@@ -29,8 +29,9 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
         return built ? `${base}/home/${leagueId}${viewHash(sectionName, viewName)}` : href;
     };
     const all = [
-        // the message board's pages (`mb/…`) are reached from Home
-        {name: "Home", href: tab("Main"), match: {tabs: ["Main"], paths: ["mb"]}},
+        // the message board's pages (`mb/…`), All moves (Transactions) and All bids (Processed Waivers) are
+        // reached from Home
+        {name: "Home", href: tab("Main"), match: {tabs: ["Main"], paths: ["mb", "processed_waivers"], options: ["03", "76"]}},
         {name: "Lineup", href: page("lineup"), match: {paths: ["lineup"], options: ["02"]}},
         {name: "Moves", views: [
             {name: "Add", href: page("add_drop"), match: {paths: ["add_drop"], options: ["255"]}},

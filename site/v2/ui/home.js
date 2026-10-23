@@ -16,7 +16,7 @@ import {
 } from "./home-model.js";
 import {draftPicked} from "./context.js";
 import {moduleTopics, readChat, tradeOffers} from "./home-feeds.js";
-import {otherBids, readBidRun} from "./bids-model.js";
+import {moveRows} from "./move-rows.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const CHAT_POLL = 15 * 1000;
@@ -425,53 +425,11 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     });
 
     const allMoves = mflPage(/^transactions$/i);
-    // a won bid opens to the run's other bids, from MFL's processed waivers page, which needs a login;
-    // a run that's processed doesn't change, so it's kept
-    const bidRun = (period) => cached(`fuad.bids.${context.season}.${period}`, 365 * DAY, async () => {
-        const response = await pageFetch(`${base}/processed_waivers?LEAGUE_ID=${context.leagueId}&PERIOD=${encodeURIComponent(period)}`, {credentials: "include"});
-        if (!response.ok) {
-            throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
-        }
-        const groups = readBidRun(await response.text());
-        if (!groups) {
-            throw new Error("MFL's processed waivers page has no waiver table");
-        }
-        return groups;
-    });
-    const bidsOpen = new Set();
-    const bidsShown = new Map();
-    const bidKey = (bid) => `${bid.period}-${bid.player}`;
-    const bidsMarkup = async (bid) => {
-        const [groups, built] = await Promise.all([bidRun(bid.period), league()]);
-        const player = built.players.get(bid.player);
-        const bids = player ? otherBids(groups, player.fullName, bid.team) : [];
-        return bids.length
-            ? `<ul class="fuad-bid-list">${bids.map((entry) => `<li><span>${esc(teams.get(entry.team) || `Team ${entry.team}`)}</span><span class="fuad-bid-amount">$${entry.amount}${entry.years ? ` · ${entry.years} yr${entry.years === 1 ? "" : "s"}` : ""}</span></li>`).join("")}</ul>`
-            : '<p class="fuad-meta">No other bids</p>';
-    };
-    const showBids = (row, bid) => {
-        const box = row.querySelector(".fuad-bids");
-        const key = bidKey(bid);
-        if (bidsShown.has(key)) {
-            box.innerHTML = bidsShown.get(key);
-            return;
-        }
-        box.innerHTML = '<p class="fuad-meta">Loading…</p>';
-        bidsMarkup(bid).then((markup) => {
-            bidsShown.set(key, markup);
-            if (row.isConnected) {
-                box.innerHTML = markup;
-            }
-        }, (error) => {
-            console.warn("[fuad] couldn't load the run's other bids:", error);
-            if (row.isConnected) {
-                box.innerHTML = `<p class="fuad-meta">${error.status === 429 ? "MFL asked us to wait. Try again in a minute." : "Couldn't load the other bids."}</p>`;
-            }
-        });
-    };
+    const allBids = mflPage(/^processed waivers$/i) || `${base}/processed_waivers?L=${context.leagueId}`;
+    const rows = moveRows({context, players: () => league().then((built) => built.players), teams, expandable: loggedIn, id: "recent"});
     drawPanel(panels.recent, {
         heading: "Recent moves",
-        actions: allMoves ? `<a href="${esc(allMoves)}">All moves</a>` : "",
+        actions: [allMoves && `<a href="${esc(allMoves)}">All moves</a>`, loggedIn && `<a href="${esc(allBids)}">All bids</a>`].filter(Boolean).join(""),
         what: "recent moves",
         key: `fuad.home.recent.${context.season}`,
         rows: 5,
@@ -480,33 +438,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             return recentMoves(built.raw.transactions, {players: built.players, franchises: built.franchises});
         },
         render: (moves, body) => {
-            const text = (move) => `<span class="fuad-row-text"><span><strong>${esc(move.team)}</strong> ${esc(move.what)}</span><span class="fuad-meta">${esc(move.when)}</span></span>`;
-            const row = (move, i) => {
-                if (!(move.bid && loggedIn)) {
-                    return `<li class="fuad-move"><span class="fuad-label">${esc(move.kind)}</span>${text(move)}</li>`;
-                }
-                const open = bidsOpen.has(bidKey(move.bid));
-                return `<li class="fuad-move fuad-move-bid" data-move="${i}"><span class="fuad-label">${esc(move.kind)}</span>
-                    <button type="button" class="fuad-move-toggle" aria-expanded="${open}" aria-controls="fuad-bids-${i}">${text(move)}<span class="fuad-move-chev" aria-hidden="true">${CHEVRON}</span></button>
-                    <div class="fuad-bids" id="fuad-bids-${i}"${open ? "" : " hidden"}></div></li>`;
-            };
-            body.innerHTML = moves.length ? `<ul class="fuad-rows">${moves.map(row).join("")}</ul>` : '<p class="fuad-muted fuad-empty">No moves yet.</p>';
-            body.querySelectorAll(".fuad-move-bid").forEach((item) => {
-                const bid = moves[Number(item.dataset.move)].bid;
-                const toggle = item.querySelector(".fuad-move-toggle");
-                if (bidsOpen.has(bidKey(bid))) {
-                    showBids(item, bid);
-                }
-                toggle.addEventListener("click", () => {
-                    const open = toggle.getAttribute("aria-expanded") !== "true";
-                    toggle.setAttribute("aria-expanded", String(open));
-                    item.querySelector(".fuad-bids").hidden = !open;
-                    bidsOpen[open ? "add" : "delete"](bidKey(bid));
-                    if (open) {
-                        showBids(item, bid);
-                    }
-                });
-            });
+            body.innerHTML = moves.length ? rows.markup(moves) : '<p class="fuad-muted fuad-empty">No moves yet.</p>';
+            rows.wire(body, moves);
         }
     });
 
