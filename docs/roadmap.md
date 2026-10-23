@@ -549,6 +549,13 @@ the roadmap on its branch with what changed and what's next.
 - **MFL's pages are restyled, not rebuilt,** by v2's stylesheet: the message board's topic and
   reply pages and the fallback pages (Lineup and Moves draw v2's own controls over MFL's forms). **Risk:** this styles MFL's markup; if MFL changes it, the look degrades but MFL's
   controls still work.
+- **Watch list** (the commissioner, 23 Oct 2026; not drawn or built): MFL's own watch list (My
+  Franchise › My Watch List), so it follows a member across devices and MFL's app. A ☆ by the
+  name in the player popup, wherever it opens (★ when watched), and a "Watching" chip in Moves ›
+  Add and Rosters › Players. Reading it is one small read; how MFL's form adds and removes a player
+  is still to be seen in the clone (no fallback to a browser-only list). Built with it: the popup's
+  owner match ignores spaces around team names (MFL stores "The Obliterators " with one, so his
+  players showed Add, not Propose a trade).
 - **A player popup everywhere:** a player name opens it in one click, so a member can research
   a player where they're deciding on him; where a row's tap already does something (a phone
   checkbox row, a free agent to pick, an alert), the popup is reached another way or not at all,
