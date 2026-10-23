@@ -2483,6 +2483,24 @@ body #fuad-home select {
 #fuad-league .fuad-pot-total,
 #fuad-rosters .fuad-pot-total { font-weight: 700; border-top-color: var(--fuad-hairline); }
 
+/* Champions: a list on phones, tiles across on desktop */
+#fuad-league .fuad-champions > li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 40px; font-size: 15px; }
+
+@media (min-width: 48.01em) {
+    #fuad-league .fuad-champions { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; padding-bottom: 6px; }
+    /* ol: over the shared room around highlighted rows, further down */
+    #fuad-league ol.fuad-champions > li { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; margin: 0; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--fuad-page); line-height: 1.25; overflow-wrap: anywhere; }
+    #fuad-league ol.fuad-champions > li.fuad-row-mine { background: var(--fuad-raised); }
+}
+
+/* Scores: an open game's all-time series; the team pages' all-time record */
+#fuad-league .fuad-series { margin: 4px 0 2px; }
+
+#fuad-league .fuad-series:empty,
+#fuad-rosters .fuad-history:empty { display: none; }
+
+#fuad-rosters .fuad-history { margin: 0; }
+
 /* desktop: the places stacked, centered beside the pot */
 @media (min-width: 48.01em) {
     #fuad-league .fuad-prize-columns,
@@ -2785,6 +2803,7 @@ body #fuad-home select {
 #fuad-league .fuad-hunt > li,
 #fuad-league .fuad-power-list > li,
 #fuad-league .fuad-season-row,
+#fuad-league .fuad-champions > li,
 #fuad-rosters .fuad-order > li,
 #fuad-rosters .fuad-board-picks > li,
 #fuad-rosters .fuad-team-list > li { margin-left: -8px; margin-right: -8px; padding-left: 8px; padding-right: 8px; border-radius: 8px; }

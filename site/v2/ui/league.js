@@ -9,6 +9,8 @@ import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {clock, dayText} from "./home-model.js";
 import {gameStates, readProjections, readRules, readStats} from "./live-scoring.js";
+import {careers, champions, series} from "./history.js";
+import {seriesLine, titles} from "./history-model.js";
 import {
     POSITION_ORDER, allPlayRecords, gameText, money, pairLines, playoffPicture, playoffPlaces, positionPoints, powerFacts,
     readPowerPage, recordText, scoreCards, standings, teamSeason, weekState, winnings, winningsLine
@@ -100,7 +102,7 @@ function lineupGrid(pairs, options) {
     return `<div class="fuad-lineup">${pairs.map(([a, b]) => `${lineCells(a, "a", options)}${lineCells(b, "b", options)}`).join("")}</div>`;
 }
 
-function cardMarkup(card, i, {names, viewer, open, benchOpen, preview}) {
+function cardMarkup(card, i, {names, viewer, open, benchOpen, preview, series = ""}) {
     const [a, b] = card.teams;
     // once either side has a game going, both show points
     const started = card.teams.some((team) => team.started);
@@ -114,6 +116,7 @@ function cardMarkup(card, i, {names, viewer, open, benchOpen, preview}) {
         : `<span class="fuad-faces">${teamHead(a, {names, viewer, leader, side: 0, started, preview})}</span>`;
     const body = open && b ? `
         <div class="fuad-card-body">
+            <p class="fuad-meta fuad-series" data-series="${esc(`${a.id}-${b.id}`)}">${esc(series)}</p>
             ${lineupGrid(pairLines(a.starters, b.starters))}
             <button type="button" class="fuad-bench-toggle" aria-expanded="${benchOpen}" data-bench>${benchOpen ? "Hide bench" : "Show bench"}</button>
             ${benchOpen ? `<div class="fuad-bench">${lineupGrid(pairLines(a.bench, b.bench), {bench: true})}</div>` : ""}
@@ -206,8 +209,18 @@ function drawScores(mount, data) {
         const {cards, names} = shown;
         const open = state.open || new Set(shown.preview ? [] : cards.flatMap((card, i) => (card.mine ? [i] : [])));
         body.innerHTML = cards.length
-            ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview)})).join("")}</div>`
+            ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !shown.preview, benchOpen: state.bench.has(i), preview: Boolean(shown.preview),
+                series: card.teams[1] ? data.seriesText(card.teams[0].id, card.teams[1].id) : ""})).join("")}</div>`
             : '<p class="fuad-muted fuad-empty">No games this week.</p>';
+        // an open game's all-time series, once its page arrives
+        body.querySelectorAll("[data-series]").forEach((line) => {
+            if (!line.textContent) {
+                const [a, b] = line.dataset.series.split("-");
+                data.series(a, b, names).then((text) => {
+                    line.textContent = text;
+                });
+            }
+        });
         body.querySelectorAll(".fuad-card-head").forEach((button) => button.addEventListener("click", () => {
             const index = Number(button.closest(".fuad-card").dataset.card);
             // with two columns one game opens at a time and moves to the top; in one the others stay
@@ -518,6 +531,18 @@ function winnersMarkup(result, {viewer, final}) {
         </section>`;
 }
 
+// ---- Champions ----
+
+// every year's champion under that year's name; the viewer's own titles highlighted
+function championsMarkup(list, mine) {
+    return `<section class="fuad-panel" aria-labelledby="fuad-champions">
+        <h2 class="fuad-panel-heading" id="fuad-champions">Champions</h2>
+        <ol class="fuad-rows fuad-champions">${list.map((champion) => `<li${mine.includes(champion.year) ? ' class="fuad-row-mine"' : ""}>
+            <span class="fuad-meta">${champion.year}</span><span class="fuad-row-title">${esc(champion.name)}</span>
+        </li>`).join("")}</ol>
+    </section>`;
+}
+
 // ---- The section ----
 
 function wireToggles(root) {
@@ -605,6 +630,27 @@ export function drawLeague({context, franchiseId}) {
         }
         return projected.get(week);
     };
+    // a game's all-time series, or "" if they've never met or it can't be had: read from the page of
+    // the viewer's team when they play in it, kept as text so Scores' refreshes draw it at once
+    const seriesTexts = new Map();
+    const seriesRead = new Map();
+    const seriesOf = (a, b, names) => {
+        const key = `${a}-${b}`;
+        if (!seriesRead.has(key)) {
+            const [self, other] = b === viewer ? [b, a] : [a, b];
+            seriesRead.set(key, series(context, self).then(
+                (page) => seriesLine(page[other], {self: (names.get(self) || self).trim(), other: (names.get(other) || other).trim()}),
+                (error) => {
+                    console.warn("[fuad] couldn't load the all-time series:", error);
+                    return "";
+                }
+            ).then((text) => {
+                seriesTexts.set(key, text);
+                return text;
+            }));
+        }
+        return seriesRead.get(key);
+    };
     const leagueOf = (year) => exp("league", {}, {year});
     const namesFor = (year = season) => leagueOf(year).catch(() => null).then(namesOf);
     // the season shown in Standings, Power and Winners: this one, or last one's final before week 1
@@ -626,7 +672,8 @@ export function drawLeague({context, franchiseId}) {
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0);
             return drawScores(mount, {
                 context, viewer, exp, feed, before, lastScheduled, lastRegular: Number(window.standingsEndWeek) || 14,
-                names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season)
+                names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),
+                series: seriesOf, seriesText: (a, b) => seriesTexts.get(`${a}-${b}`) || ""
             });
         },
         standings: async (mount) => {
@@ -695,7 +742,23 @@ export function drawLeague({context, franchiseId}) {
         winners: async (mount) => {
             const year = await shownSeason();
             const final = year !== season ? String(year) : "";
-            drawPanel(mount, {
+            mount.innerHTML = '<div class="fuad-winners-panel"></div><div class="fuad-champions-panel"></div>';
+            const championsMount = mount.lastElementChild;
+            drawPanel(championsMount, {
+                what: "the champions", rows: 6,
+                load: async () => {
+                    const list = await champions(context);
+                    // highlighting the viewer's titles is a nicety: without the careers, none
+                    const career = viewer ? await careers(context).catch(() => null) : null;
+                    return {list, mine: (viewer && titles(list, career)[viewer]) || []};
+                },
+                render: ({list, mine}, body) => {
+                    championsMount.classList.remove("fuad-panel");
+                    body.innerHTML = championsMarkup(list, mine);
+                }
+            });
+            const winnersMount = mount.firstElementChild;
+            drawPanel(winnersMount, {
                 what: "winnings", key: `fuad.league.winners.${year}`, maxAge: 10 * MINUTE, rows: 10,
                 load: async () => {
                     const [settings, accounting, ytd, standing, brackets] = await Promise.all([
@@ -720,7 +783,7 @@ export function drawLeague({context, franchiseId}) {
                     return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, names});
                 },
                 render: (result, body) => {
-                    mount.classList.remove("fuad-panel");
+                    winnersMount.classList.remove("fuad-panel");
                     body.innerHTML = winnersMarkup(result, {viewer, final});
                 }
             });

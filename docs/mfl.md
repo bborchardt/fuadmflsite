@@ -59,6 +59,15 @@ MFL documents little of this.
   counting through the playoff weeks (2025's champion: 128-25, paid on the regular season's 102-24).
 - **The Power Rank page** (`options?O=101`, no export) is a `table.report`, a row per team with the
   team in `a.franchise_<id>` and each figure in a classed cell (`power_rank`, `all_play_w`, …).
+- **The League History pages** (no exports, public) go back to 2008 through the commissioner's
+  historical franchise links (Link Historical Franchises), which MFL doesn't publish; past league ids
+  differ (34866 in 2013). League Champions (`options?O=194`) lists each year under a
+  `<th colspan="2">` with the champion's that-year name and a link holding that year's franchise
+  number. Career Records (`O=208`) has a row per current team (`franchise_<id>`): W, L, T and the
+  seasons linked to it. All-Time Series Records (`O=171&FID=<id>`) has a row per current opponent
+  with a total, plus Defunct Franchises; a year not linked is starred. Each table's name is in MFL's
+  menu too, so a reader looks for its `<caption><span>`. Franchise numbers moved when teams left:
+  Golden Ratio was 0009 through 2020, 0005 since 2021.
 - **`playoffBracket` with `BRACKET_ID`** has `playoffRound`s of `playoffGame`s, each side's
   `franchise_id`, `points` and `seed` (or `winner_of_game` / `loser_of_game`); `playoffBrackets`
   names them (Championship, 3rd Place Game). `schedule` covers the regular season only.
