@@ -117,6 +117,11 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   until he is. Who can go on IR, and whose game has started, is MFL's own page's say.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
   agent add; none in time means 1 year.
+- **Best in League › Scores** (`bestLineup`, `bestCard` in `ui/league-model.js`, display only): each
+  side's best lineup by MFL's own method (its live scoring page's `get_best_lineup`) on the points so
+  far, from the league's lineup rules; it gives MFL's recorded best score for every team in weeks
+  1–5 of 2026. Ties go to the players who started (MFL breaks them by name), so the lineup changes
+  only for points. Players on IR can't start. Off until the week's first kickoff.
 - **All moves and All bids** (v2's Home, `ui/all-moves.js`, display only): MFL's Transactions and
   Processed Waivers pages with v2's view over them. Other bids count only claims MFL tried, one per
   team at its highest; a win with no won-bid transaction for that team and player shows "Voided",

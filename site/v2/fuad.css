@@ -1907,6 +1907,26 @@ body #fuad-home select {
 #fuad-league .fuad-scores-bar > .fuad-toggle,
 #fuad-rosters .fuad-scores-bar > .fuad-toggle { margin-left: auto; }
 
+/* Best and Season; Season stays at the right when the rest of the bar hides */
+#fuad-league .fuad-bar-toggles { display: flex; gap: 4px; margin-left: auto; }
+
+#fuad-league .fuad-toggle:disabled { color: var(--fuad-faint); cursor: default; }
+
+/* Best's marks on a player's grey line: off the bench, or a starter left out */
+#fuad-league .fuad-ln-tag { display: inline-block; margin: 0 2px; padding: 0 5px; border-radius: 5px; font-size: 12px; font-weight: 700; line-height: 16px; }
+
+#fuad-league .fuad-ln-tag-in { background: rgba(74, 222, 128, 0.14); color: var(--fuad-good); }
+
+#fuad-league .fuad-ln-tag-started { background: var(--fuad-quiet); color: var(--fuad-soft); }
+
+/* narrow phones: the week picker, Best and Season in one row down to 320 px */
+@media (max-width: 26.24em) {
+    #fuad-league .fuad-scores-bar { gap: 4px; }
+    /* the week takes only its width; a long state ("Sun kickoff") wraps under it */
+    #fuad-league .fuad-scores-bar .fuad-week-label { min-width: 0; max-width: 72px; text-align: center; }
+    #fuad-league .fuad-bar-toggles .fuad-toggle { padding: 0 8px; }
+}
+
 #fuad-league .fuad-weekpicker,
 #fuad-rosters .fuad-weekpicker { display: flex; align-items: center; gap: 4px; }
 
