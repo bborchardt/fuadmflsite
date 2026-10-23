@@ -10,15 +10,15 @@ const CLAIM = /^Add (.+) (\S+) ([A-Za-z]{1,4}) for \$([\d.]+) and drop (.+)$/;
 // "5yrs", "5 years.", "2 yr"
 const YEARS = /\b([1-5])\s*-?\s*(?:yrs?|years?)\b/i;
 
-// [{team, claims: [{name, amount}], comment}], one per group, in the page's order; a group MFL lists
-// again as it works through the run counts once. null if the page has no waiver table.
+// [{team, claims: [{name, amount}], comment, awarded}], one per group in the page's order, `awarded`
+// the index of the claim MFL gave the group, or null. MFL lists a group again for each step it took
+// through it; that counts once. null if the page has no waiver table.
 export function readBidRun(html) {
     const table = /<table[^>]*class="report[^"]*"[^>]*>([\s\S]*?)<\/table>/i.exec(String(html || ""));
     if (!table || !/Original Waiver Request/i.test(table[1])) {
         return null;
     }
-    const seen = new Set();
-    const groups = [];
+    const groups = new Map();
     for (const row of table[1].match(/<tr\b[\s\S]*?<\/tr>/gi) || []) {
         const cells = row.match(/<td\b[^>]*>[\s\S]*?<\/td>/gi) || [];
         const team = cells.length >= 5 && (/franchise_(\d{4})/.exec(cells[1]) || [])[1];
@@ -29,13 +29,20 @@ export function readBidRun(html) {
         const claims = lines.map((line) => CLAIM.exec(line)).filter(Boolean).map((match) => ({name: match[1], amount: Number(match[4])}));
         const at = lines.findIndex((line) => /^Comments:/.test(line));
         const comment = at < 0 ? "" : [lines[at].replace(/^Comments:\s*/, ""), ...lines.slice(at + 1)].join("\n").trim();
+        if (!claims.length) {
+            continue;
+        }
         const key = `${team}|${JSON.stringify(claims)}|${comment}`;
-        if (claims.length && !seen.has(key)) {
-            seen.add(key);
-            groups.push({team, claims, comment});
+        const group = groups.get(key) || {team, claims, comment, awarded: null};
+        groups.set(key, group);
+        // "Marks, Woody HOU RB ($5.00)", or "None"
+        const added = (/^(.+) \S+ [A-Za-z]{1,4} \(\$/.exec(text(cells[2])) || [])[1];
+        const index = added ? claims.findIndex((claim) => claim.name === added) : -1;
+        if (index >= 0) {
+            group.awarded = index;
         }
     }
-    return groups;
+    return [...groups.values()];
 }
 
 // the years a group's comment gives a claim: with one claim, the comment's; with several, the line
@@ -54,13 +61,25 @@ export function yearsFor(group, index) {
     return naming ? read(naming) : null;
 }
 
-// the other teams' bids on a player the run awarded to `winner`, highest first: [{team, amount, years}].
-// `name` as MFL writes it ("Marks, Woody") or as v2 shows it ("Woody Marks").
+// the bids MFL tried: a group's claims up to the one it was awarded, every claim if none
+const tried = (group) => group.claims.slice(0, group.awarded === null ? group.claims.length : group.awarded + 1);
+
+// the other teams' bids on a player the run awarded to `winner`, highest first: [{team, amount, years}],
+// one per team, its highest (a team may name a player in several groups). A claim behind the one its
+// group won was never tried, so it isn't a bid that lost. `name` as MFL writes it ("Marks, Woody") or
+// as v2 shows it ("Woody Marks").
 export function otherBids(groups, name, winner) {
     const wanted = displayName(name);
-    return (groups || []).filter((group) => group.team !== winner).flatMap((group) => group.claims
-        .map((claim, index) => ({claim, index}))
-        .filter(({claim}) => displayName(claim.name) === wanted)
-        .map(({claim, index}) => ({team: group.team, amount: claim.amount, years: yearsFor(group, index)})))
-        .sort((a, b) => b.amount - a.amount);
+    const best = new Map();
+    for (const group of groups || []) {
+        if (group.team === winner) {
+            continue;
+        }
+        tried(group).forEach((claim, index) => {
+            if (displayName(claim.name) === wanted && !(best.has(group.team) && best.get(group.team).amount >= claim.amount)) {
+                best.set(group.team, {team: group.team, amount: claim.amount, years: yearsFor(group, index)});
+            }
+        });
+    }
+    return [...best.values()].sort((a, b) => b.amount - a.amount);
 }
