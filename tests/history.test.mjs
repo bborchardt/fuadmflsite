@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {historyLine, readCareer, readChampions, readSeries, seriesLine, titles} from "../site/v2/ui/history-model.js";
+import {historyLine, readCareer, readChampions, readSeries, titles, versusLine} from "../site/v2/ui/history-model.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
@@ -55,13 +55,11 @@ test("a renumbered team's old number credits today's team, and its new number th
     assert.deepEqual(titles(champions, career, []), {"0005": [2019, 2021]});
 });
 
-test("the series line names the leader, or just the record when even", () => {
-    const names = {self: "Golden Ratio", other: "All Hands on Beck"};
-    assert.equal(seriesLine({w: 8, l: 13, t: 0}, names), "All-time · All Hands on Beck 13–8");
-    assert.equal(seriesLine({w: 17, l: 3, t: 0}, names), "All-time · Golden Ratio 17–3");
-    assert.equal(seriesLine({w: 0, l: 0, t: 1}, names), "All-time · 0–0–1");
-    assert.equal(seriesLine({w: 0, l: 0, t: 0}, names), "");
-    assert.equal(seriesLine(undefined, names), "");
+test("the viewer's record against a team, or nothing if they've never met", () => {
+    assert.equal(versusLine({w: 8, l: 13, t: 0}), "You vs them 8–13–0");
+    assert.equal(versusLine({w: 0, l: 0, t: 1}), "You vs them 0–0–1");
+    assert.equal(versusLine({w: 0, l: 0, t: 0}), "");
+    assert.equal(versusLine(undefined), "");
 });
 
 test("a team's history line: record, first season, titles", () => {
