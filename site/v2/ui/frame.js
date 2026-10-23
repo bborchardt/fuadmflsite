@@ -2,7 +2,7 @@
 // the five sections, the current section's views, the team sheet and the player popup. MFL's own
 // menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
 
-import {esc, initials} from "./html.js";
+import {clean, esc, initials} from "./html.js";
 import {REBUILT, locate, pageOf, sections, storedTabs} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
@@ -23,8 +23,6 @@ const MENU_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" s
 const BACK_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>';
 const CLOSE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 const SEARCH_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>';
-
-const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
 
 // MFL's own league menu, in its groups, for the site menu
 export function mflMenu(doc = document) {
