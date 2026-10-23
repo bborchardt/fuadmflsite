@@ -1166,14 +1166,17 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
   all-time series, "All-time · Golden Ratio 13–8" ("All-time · 9–9" even, none if they've never
   met), from MFL's All-Time Series page for one of them (`options?O=171&FID=…`), read when the card
   opens and kept a week (23 Oct 2026, not drawn or built).
-  **Best lineup** (the commissioner, 23 Oct 2026; to build, design being chosen on canvas row 18):
-  what each team's best lineup scored, for finished weeks and "so far" while games are on. A adds
-  "Final · best 146.3" under each team, "best" tags on bench players in it, "Best lineup would have
-  won: 146.3–127.4", and live "Best lineup so far"; B adds an Optimal button beside Season that
-  swaps the cards to the best lineups ("actual 116.9" under the score, "in" tags). Finished weeks
-  from `weeklyResults` (`opt_pts`, `optimal`, in the YTD export Standings already reads); live
-  with MFL's own method from `mfl_live_scoring.js` (`get_best_lineup`: the roster by points so far,
-  each position's minimum, then up to its maximum, 10 starters) on the feeds Scores already polls. From `liveScoring` with DETAILS
+  **Best** (the commissioner, 23 Oct 2026; drawn on canvas row 18, not built): a "Best" button
+  between the week picker and Season (Season stays rightmost, so turning it on leaves Season where it
+  was; it fits at 320 px, "Optimal" doesn't) swaps every card to the two best lineups, live scoring
+  left as it is: the best score big, "actual 116.9" under it, the lineup the best one with players
+  off the bench tagged green "in" on the grey line under the name (a tag beside the name wrapped it);
+  Bench lists the rest, actual starters tagged grey "started". IR players aren't counted (MFL's own
+  method uses the active roster). Off before the week's first kickoff (disabled, so the bar doesn't
+  shift), live from then as "so far", kept on across weeks; Season turns it off. Finished weeks from
+  `weeklyResults` (`opt_pts`, `optimal`, in the YTD export Standings already reads); live with MFL's
+  own method from `mfl_live_scoring.js` (`get_best_lineup`: the roster by points so far, each
+  position's minimum, then up to its maximum, 10 starters) on the feeds Scores already polls. From `liveScoring` with DETAILS
   (team and player scores, game seconds left, playing / to play, stat lines; refreshed every 30–60 s
   during games only), `projectedScores` (FantasySharks-based) and `schedule`; win probability from
   MFL's own `mfl_win_prob.js` (400 simulations of the remaining games from projected stats), run on
