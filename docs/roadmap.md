@@ -1091,8 +1091,9 @@ the columns' bottoms meet; review, 17 Oct 2026):
    message, posted with MFL's `messageBoard` import); replies on the topic's own page.
 5. **Recent moves:** the league's latest transactions, the home for them now that Moves has no
    Recent view (review, 17 Oct 2026): the last 10, won blind bids with their amounts, and "All
-   moves" to MFL's transactions page (18 Oct 2026). A won blind bid's row opens to the run's other bids on that
-   player, highest first, each team with its amount and the years in its comment, from MFL's
+   moves" to MFL's transactions page (18 Oct 2026). A won blind bid shows the run's other bids on that player as one
+   grey line, "Also bid: So your saying there's a chance? $3 · Not 100% A Dick $2", amounts only
+   (years on All bids), no line when no one else bid (PR #60, replacing a row that opened), from MFL's
    Processed Waivers page (members see every team's bids; the daily job's reader), read once per
    run (the commissioner, 23 Oct 2026; PR #58). No "lost to" alert: the row says it. Only bids MFL
    tried count (a group's claims up to the one it won; all if none), one per team at its highest.
@@ -1100,7 +1101,7 @@ the columns' bottoms meet; review, 17 Oct 2026):
    and "All bids" in Recent moves' head open MFL's own Transactions (`options?O=03`) and Processed
    Waivers (`processed_waivers?PERIOD=`) pages, restyled by v2 full screen (no dialogs; Home lit in
    the sections). All moves: the season's moves by day in Recent moves' rows, a team filter and kind
-   chips (All · Adds · Drops · Bids · Trades · IR), won bids opening as on Home. All bids: a run
+   chips (All · Adds · Drops · Bids · Trades · IR), won bids with their "Also bid" line as on Home. All bids: a run
    picker (MFL's own list of runs), a block per player bid on, the winner first ("Won") then the
    other tried bids, one per team at its highest, with years; a player no one got shows "Not
    awarded" with MFL's reason in a few words ("drop already gone", "locked"); a win the page shows
