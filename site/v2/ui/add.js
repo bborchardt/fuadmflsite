@@ -240,7 +240,12 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
     // adds close with free agency, though the season runs to week 17's end
-    const phase = () => (freeAgencyOver({calendar: state.data.calendar, freeAgents: lists.add, now: now()}) ? "over" : movesPhase(state.data.facts));
+    const phase = () => {
+        const season = movesPhase(state.data.facts);
+        return freeAgencyOver({phase: season, calendar: state.data.calendar, now: now()}) ? "over" : season;
+    };
+    // whether a bid placed now still has a run to process it
+    const runsLeft = () => bidsLeft(movesPhase(state.data.facts), state.data.calendar, now());
     // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
     const checks = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : phase());
     const now = () => Date.now() / 1000;
@@ -389,7 +394,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     function rows() {
         return freeAgentRows(lists.add, {blocked: droppedByTeam(state.data.league.players, franchiseId, now()), text: state.q, pos: state.pos, sort: state.sort,
-            bids: bidsLeft(state.data.calendar, now())});
+            bids: runsLeft()});
     }
 
     function phonePlayers() {
@@ -805,8 +810,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             return;
         }
         // free agency may have closed, or the last bid run passed, while the move was being made
-        if (!c.editing && (addsClosed(phase()) || (c.kind === "bid" && !bidsLeft(state.data.calendar, now())))) {
-            state.error = c.kind === "bid" ? "No blind bid runs are left this season." : "Free agency has closed for the season.";
+        if (addsClosed(phase()) || (c.kind === "bid" && !runsLeft())) {
+            state.error = addsClosed(phase()) ? "Free agency has closed for the season." : "No blind bid runs are left this season.";
             render();
             return;
         }
@@ -868,6 +873,12 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         }
         const {group, claim} = found;
         const who = surname(claim.addMfl);
+        // a copied or moved bid would wait for a run that won't come; removing one is always fine
+        if (act !== "remove" && !runsLeft()) {
+            state.error = "No blind bid runs are left this season.";
+            render();
+            return;
+        }
         await run(act === "remove" ? `remove your bid on ${who}` : act === "copy" ? `copy your bid on ${who} to group ${round}` : `move your bid on ${who}`, async () => {
             if (act === "up" || act === "down") {
                 const link = claimLink(act === "up" ? "MOVE_UP" : "MOVE_DOWN", key);
