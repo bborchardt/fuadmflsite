@@ -706,8 +706,9 @@ team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career 
 franchises; 23 Oct 2026, not drawn or built), and its titles: "All-time 93–67–3 · since 2016 ·
 Champion 2020, 2022". A title goes to the current team with the champion's
 franchise number (MFL's League Champions page) when Career Records links that team to that season;
-renumberings, rare (teams leaving), are exceptions in code, now one: 2020 (franchise 0009 then) is
-Golden Ratio's (0005). Checked against all 18 seasons with the commissioner: Smooth City Styles!
+renumberings, rare (teams leaving), are noted in code as the change, now one: Golden Ratio was 0009
+through 2020, 0005 since 2021. Reads, each when its view opens: All-Time Series per opened card and
+Career Records and League Champions for Rosters and Winners, each about 7 KB and kept a week. Checked against all 18 seasons with the commissioner: Smooth City Styles!
 2013, 2025; Golden Ratio 2020, 2022; Not 100% A Dick 2018, 2021; All Hands on Beck 2015, 2019; So your
 saying there's a chance? 2024; the other nine went to owners who left. Every Rosters table puts the contract beside the name.
 Players is every rostered player in one table (Player, then the
