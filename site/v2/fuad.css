@@ -1656,6 +1656,25 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-move strong { font-weight: 600; }
 
+/* a won bid opens to the run's other bids */
+#fuad-home .fuad-move-toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+
+#fuad-home .fuad-move-toggle .fuad-row-text { min-width: 0; }
+
+#fuad-home .fuad-move-chev { flex: none; padding-top: 2px; color: var(--fuad-muted); transition: transform 0.15s; }
+
+#fuad-home .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev { transform: rotate(90deg); }
+
+#fuad-home .fuad-bids { grid-column: 2; }
+
+#fuad-home .fuad-bids > p { margin: 4px 0 0; }
+
+#fuad-home .fuad-bid-list { list-style: none; margin: 4px 0 0; padding: 0; }
+
+#fuad-home .fuad-bid-list li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--fuad-soft); }
+
+#fuad-home .fuad-bid-amount { flex: none; font-variant-numeric: tabular-nums; }
+
 #fuad-home .fuad-date { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; }
 
 #fuad-home .fuad-date .fuad-meta { font-size: 14px; text-align: right; }

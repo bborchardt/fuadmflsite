@@ -96,7 +96,9 @@ MFL documents little of this.
 - **Blind bid comments** appear only on the logged-in Previously Processed Waivers page
   (`/<season>/processed_waivers?LEAGUE_ID=…&PERIOD=…`), one page per waiver run; the period id is the
   `BBID_WAIVER` transaction's timestamp. A conditional bid lists several players, of which MFL awards
-  the first it can. Players without an NFL team show as "FA*".
+  the first it can. Players without an NFL team show as "FA*". Every logged-in member sees every
+  team's requests there, losing bids included; a group shows again for each step MFL took through
+  it.
 - **Processing** (MFL's blind bidding help; not yet seen happen): bids league-wide from the highest
   dollar amount down; within a group the first valid claim wins; groups have no priority. A claim
   whose drop is already gone (won by another group) is invalid, so a drop shared by two groups can't
