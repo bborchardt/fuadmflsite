@@ -426,7 +426,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     const allMoves = mflPage(/^transactions$/i);
     const allBids = mflPage(/^processed waivers$/i) || `${base}/processed_waivers?L=${context.leagueId}`;
-    const rows = moveRows({context, players: () => league().then((built) => built.players), teams, expandable: loggedIn, id: "recent"});
+    const rows = moveRows({context, players: () => league().then((built) => built.players), teams, withBids: loggedIn});
     drawPanel(panels.recent, {
         heading: "Recent moves",
         actions: [allMoves && `<a href="${esc(allMoves)}">All moves</a>`, loggedIn && `<a href="${esc(allBids)}">All bids</a>`].filter(Boolean).join(""),
@@ -439,7 +439,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         },
         render: (moves, body) => {
             body.innerHTML = moves.length ? rows.markup(moves) : '<p class="fuad-muted fuad-empty">No moves yet.</p>';
-            rows.wire(body, moves);
+            rows.fill(body, moves);
         }
     });
 
