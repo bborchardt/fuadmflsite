@@ -33,8 +33,8 @@ function phoneRow(player, on) {
                 <span class="fuad-lineup-name"><span>${esc(player.name)}</span>${tag(player)}</span>
                 <span class="fuad-meta">${esc([player.nfl, oppText(player)].filter(Boolean).join(" · "))}</span>
             </span>
-            <span class="fuad-lineup-proj"><span class="${player.proj ? "" : "fuad-muted"}">${esc(pts(player.proj || 0))}</span><span class="fuad-meta">proj</span></span>
         </button>
+        <span class="fuad-lineup-proj"><span class="${player.proj ? "" : "fuad-muted"}">${esc(pts(player.proj || 0))}</span><span class="fuad-meta">proj</span></span>
     </div>`;
 }
 

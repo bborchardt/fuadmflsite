@@ -2928,10 +2928,10 @@ body #fuad-home select {
 #fuad-lineup .fuad-lineup-list > .fuad-band:first-child { margin-top: 8px; }
 
 /* phones: a strip the row's height around the check starts or benches him, wide enough not to
-   miss; the rest of the row opens the popup */
+   miss; his name and the line under it open the popup, as on Scores, and his projection does nothing */
 #fuad-lineup .fuad-lineup-row {
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(0, 1fr) auto;
     min-height: 56px;
     border-top: 1px solid var(--fuad-rule);
 }
@@ -2951,12 +2951,11 @@ body #fuad-home select {
 #fuad-lineup .fuad-lineup-toggle:disabled { cursor: default; opacity: 1; }
 
 #fuad-lineup .fuad-lineup-open {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
+    display: flex;
     align-items: center;
+    min-width: 0;
     min-height: 0;
-    padding: 6px 4px 6px 2px;
+    padding: 6px 0 6px 2px;
     border: 0;
     border-radius: 0;
     background: transparent;
@@ -2970,7 +2969,7 @@ body #fuad-home select {
 
 #fuad-lineup .fuad-lineup-name { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-weight: 600; overflow-wrap: anywhere; }
 
-#fuad-lineup .fuad-lineup-proj { display: flex; flex-direction: column; align-items: flex-end; }
+#fuad-lineup .fuad-lineup-proj { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding: 0 4px 0 10px; }
 
 #fuad-lineup .fuad-lineup-proj > span:first-child { font: 700 20px var(--fuad-display); font-variant-numeric: tabular-nums; }
 
