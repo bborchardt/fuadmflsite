@@ -2784,6 +2784,7 @@ body #fuad-home select {
 #fuad-league .fuad-seeds > li,
 #fuad-league .fuad-hunt > li,
 #fuad-league .fuad-power-list > li,
+#fuad-league .fuad-season-row,
 #fuad-rosters .fuad-order > li,
 #fuad-rosters .fuad-board-picks > li,
 #fuad-rosters .fuad-team-list > li { margin-left: -8px; margin-right: -8px; padding-left: 8px; padding-right: 8px; border-radius: 8px; }
