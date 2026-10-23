@@ -92,9 +92,9 @@ export function titles(champions, career, renumbered = RENUMBERED) {
     return won;
 }
 
-// "You vs them 8–13–0", the viewer's record against a team, or "" if they've never met
+// "Your record vs them 8–13–0", the viewer's record against a team, or "" if they've never met
 export function versusLine(vs) {
-    return vs && vs.w + vs.l + vs.t > 0 ? `You vs them ${vs.w}–${vs.l}–${vs.t}` : "";
+    return vs && vs.w + vs.l + vs.t > 0 ? `Your record vs them ${vs.w}–${vs.l}–${vs.t}` : "";
 }
 
 // "All-time 93–67–3 · since 2016 · Champion 2020, 2022", or "" without a career record
