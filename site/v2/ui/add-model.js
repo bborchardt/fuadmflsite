@@ -5,7 +5,7 @@
 import {asArray} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {clock, dayText, nextWeekly} from "./home-model.js";
+import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
 
 // the bylaws' contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
@@ -102,6 +102,31 @@ export function addPhase({started, over, drafted}) {
 
 // once free agency closes the next adds are the next draft's, on the next season's site
 export const addsClosed = (phase) => phase === "closed" || phase === "over";
+
+// free agency's end and the last bid run, worked out once per calendar
+const ends = new WeakMap();
+const waiverEnds = (calendar) => {
+    if (!calendar) {
+        return {closes: null, lastBid: null};
+    }
+    if (!ends.has(calendar)) {
+        ends.set(calendar, {closes: freeAgencyEnd(calendar), lastBid: lastBidRun(calendar)});
+    }
+    return ends.get(calendar);
+};
+
+// whether a blind bid placed now still has a run to process it
+export const bidsLeft = (calendar, now) => {
+    const {lastBid} = waiverEnds(calendar);
+    return lastBid === null || now <= lastBid;
+};
+
+// Free agency is over at the last waiver lock (or a bid run after it), or once no bid run is left
+// and no free agent can be added outright
+export function freeAgencyOver({calendar, freeAgents, now}) {
+    const {closes} = waiverEnds(calendar);
+    return Boolean(closes && now >= closes) || (!bidsLeft(calendar, now) && !freeAgents.some((player) => !bidOnly(player)));
+}
 
 // "Sunday noon", "Wednesday 11 p.m."
 const weekdayTime = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "long", timeZone: "America/Chicago"})} ${timeText(seconds)}`;
@@ -379,13 +404,15 @@ export const changeTone = (amount) => (amount > 0 ? "bad" : amount < 0 ? "good" 
 export const usedTone = (from, to) => (to > SALARY_CAP ? "bad" : to < from ? "good" : "");
 
 // Free agents for the list, MFL's projection first. `blocked` is droppedByTeam's map.
-export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos = "ALL", sort = "proj"}) {
+export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos = "ALL", sort = "proj", bids = true}) {
     const query = normalized(text);
     const rows = freeAgents
         .filter((player) => (pos === "ALL" || player.pos === pos) && (!query || normalized(player.name).includes(query)))
         .map((player) => {
             const until = blocked.get(player.id);
-            return {player, bid: bidOnly(player), off: Boolean(until), why: until ? reAddText(until) : player.mark === "!" ? "Game started" : ""};
+            // with no bid run left, a bid-only player can't be had
+            const late = !bids && bidOnly(player);
+            return {player, bid: bidOnly(player), off: Boolean(until) || late, why: until ? reAddText(until) : player.mark === "!" ? "Game started" : late ? "No bid runs left" : ""};
         });
     const by = {
         proj: (a, b) => (b.player.proj || 0) - (a.player.proj || 0) || (b.player.pts || 0) - (a.player.pts || 0),

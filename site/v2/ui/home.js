@@ -446,7 +446,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         heading: "Coming up",
         actions: calendarHref ? `<a href="${esc(calendarHref)}">Calendar</a>` : "",
         what: "coming up",
-        key: `fuad.home.coming.${context.season}.${loggedIn ? "member" : "guest"}`,
+        key: `fuad.home.dates.${context.season}.${loggedIn ? "member" : "guest"}`,
         // every date, a to-do close by in My alerts too, so a date never depends on My alerts loading
         load: coming,
         render: (list, body) => {

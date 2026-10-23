@@ -157,10 +157,16 @@ export function weeklyAfter(first, now, repeats = Infinity) {
     }
 }
 
-// MFL's weekly event of a type after `now`: the first, repeated weekly as often as it says
+// MFL's weekly event of a type after `now`, each repeated weekly as often as it says
 export function nextWeekly(calendar, type, now) {
-    const [event] = weeklyEvents(calendar, [type]);
-    return event ? weeklyAfter(Number(event.start_time), now, Number(event.happens) || 0) : null;
+    const next = weeklyEvents(calendar, [type]).map((event) => weeklyAfter(Number(event.start_time), now, Number(event.happens) || 0)).filter(Boolean);
+    return next.length ? Math.min(...next) : null;
+}
+
+// the last blind bid run on the calendar, null without one
+export function lastBidRun(calendar) {
+    const runs = weeklyEvents(calendar, ["WAIVER_BBID"]);
+    return runs.length ? Math.max(...runs.map(lastRun)) : null;
 }
 
 // MFL's next blind bid run

@@ -12,11 +12,11 @@ import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
-import {contractTopic, freeAgencyEnd} from "./home-model.js";
+import {contractTopic} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
 import {
-    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
-    commentLines, copyTargets, cutLater, fullNameLines, isLengthLine, dropGroups, droppedByTeam, freeAgentRows, groupViews, injuryText, lengthLine, lineFor, maxBid,
+    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, bidsLeft, blockedText, changeTone, checkAdd, checkBid, claimKey,
+    commentLines, copyTargets, cutLater, fullNameLines, isLengthLine, dropGroups, droppedByTeam, freeAgencyOver, freeAgentRows, groupViews, injuryText, lengthLine, lineFor, maxBid,
     firstLast, projection, readPlayerLists, rewriteComment, signed, surname, teamState, usedTone, yearsIn
 } from "./add-model.js";
 
@@ -239,11 +239,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     // ---- the model for what's drawn ----
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
-    // adds close with free agency, at the last waiver lock, though the season runs to week 17's end
-    const phase = () => {
-        const closes = freeAgencyEnd(state.data.calendar);
-        return closes && now() >= closes ? "over" : movesPhase(state.data.facts);
-    };
+    // adds close with free agency, though the season runs to week 17's end
+    const phase = () => (freeAgencyOver({calendar: state.data.calendar, freeAgents: lists.add, now: now()}) ? "over" : movesPhase(state.data.facts));
     // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
     const checks = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : phase());
     const now = () => Date.now() / 1000;
@@ -391,7 +388,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     }
 
     function rows() {
-        return freeAgentRows(lists.add, {blocked: droppedByTeam(state.data.league.players, franchiseId, now()), text: state.q, pos: state.pos, sort: state.sort});
+        return freeAgentRows(lists.add, {blocked: droppedByTeam(state.data.league.players, franchiseId, now()), text: state.q, pos: state.pos, sort: state.sort,
+            bids: bidsLeft(state.data.calendar, now())});
     }
 
     function phonePlayers() {
@@ -804,6 +802,12 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         const c = state.compose;
         const checks = composeChecks();
         if (!checks.fits || c.drop === undefined) {
+            return;
+        }
+        // free agency may have closed, or the last bid run passed, while the move was being made
+        if (!c.editing && (addsClosed(phase()) || (c.kind === "bid" && !bidsLeft(state.data.calendar, now())))) {
+            state.error = c.kind === "bid" ? "No blind bid runs are left this season." : "Free agency has closed for the season.";
+            render();
             return;
         }
         const fa = freeAgent(c.add) || {mflName: names(c.add).mflName};

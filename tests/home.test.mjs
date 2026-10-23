@@ -242,6 +242,9 @@ test("the next blind bid run repeats weekly from the first", () => {
     const once = {event: calendar.event.map((event) => (event.type === "WAIVER_BBID" ? {...event, happens: ""} : event))};
     assert.equal(nextBidRun(once, 1789012800 - 10), 1789012800);
     assert.equal(nextBidRun(once, 1789012800 + 10), null);
+    // a one-off run listed first doesn't end the weekly one
+    const both = {event: [{type: "WAIVER_BBID", start_time: "1788000000", happens: ""}, ...calendar.event]};
+    assert.equal(nextBidRun(both, now), at("2026-10-21T23:00:00-05:00"));
     // free agency closes at the last waiver lock, Sun Jan 10 here
     assert.equal(freeAgencyEnd(calendar), at("2027-01-10T12:00:00-06:00"));
     assert.equal(freeAgencyEnd({event: calendar.event.filter((event) => event.type !== "WAIVER_LOCK")}), null);
