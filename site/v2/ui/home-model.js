@@ -95,14 +95,15 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 // the event with a word starting "cut" in its name (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the dates still ahead, soonest first, `soon` when a to-do is close enough for My alerts. Without the calendar (logged out) the season's own
-// dates still show: week 1, the trade deadline, the playoffs and the championship.
+// Coming up: the dates still ahead, soonest first, `soon` when a to-do is close enough for My
+// alerts. Without the calendar (logged out) the season's own dates still show: week 1, the trade
+// deadline, the playoffs and the championship.
 export function comingUp({dates, kickoffs = new Map(), now}) {
     const all = dates.slice();
     if (kickoffs.get(1)) {
         all.push({what: "Week 1 kickoff", at: kickoffs.get(1), week: 1});
     }
-    if (!all.some((date) => date.kind === "trades") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
+    if (!all.some((date) => date.kind === "trades" || date.what === "Trade deadline") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
         all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK, kind: "trades"});
     }
     if (kickoffs.get(PLAYOFFS_START_WEEK)) {

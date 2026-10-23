@@ -211,6 +211,9 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Keeper trade deadline"), ["cut", null, null]);
     const spring = calendarDates({event: [{type: "CUSTOM", title: "Keeper trade deadline", start_time: "1776000000", happens: ""}]});
     assert.deepEqual(comingUp({dates: spring, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["Trade deadline"]);
+    // one the commissioner calls "Trade deadline" stands in for the season's, as a date only
+    const own = calendarDates({event: [{type: "CUSTOM", title: "Trade deadline", start_time: "1795000000", happens: ""}]});
+    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => /trade/i.test(d.what)).map((d) => [d.what, d.at, d.kind]), [["Trade deadline", 1795000000, null]]);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
