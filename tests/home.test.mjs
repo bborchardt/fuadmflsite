@@ -206,11 +206,11 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     // rollover that mentions cutting is still the rollover
     const kinds = (...titles) => calendarDates({event: titles.map((title) => ({type: "CUSTOM", title, start_time: "1800000000", happens: ""}))}).map((d) => d.kind);
     assert.deepEqual(kinds("Contracts executed", "Final Cut Down", "Contract year ends - last cut", "Rookie draft"), [null, "cut", "rollover", "draft"]);
-    // the cut-down naming contract years is still the cut-down; a trade deadline of the commissioner's is the deadline
-    assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Trade deadline"), ["cut", null, "trades"]);
-    // the commissioner's own deadline, however it's written, stands in for the season's
-    const own = calendarDates({event: [{type: "CUSTOM", title: "TRADE DEADLINE - 11pm", start_time: "1795000000", happens: ""}]});
-    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["TRADE DEADLINE - 11pm"]);
+    // the cut-down naming contract years is still the cut-down; only MFL's own trade event is the
+    // deadline, so a commissioner's other deadline doesn't hide the season's
+    assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Keeper trade deadline"), ["cut", null, null]);
+    const spring = calendarDates({event: [{type: "CUSTOM", title: "Keeper trade deadline", start_time: "1776000000", happens: ""}]});
+    assert.deepEqual(comingUp({dates: spring, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["Trade deadline"]);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
