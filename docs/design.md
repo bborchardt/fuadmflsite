@@ -96,7 +96,8 @@ They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new ver
   already over a limit stay "Current bids invalid" until fixed, without blocking a move that leaves
   them as they are. Over 30 active in season no adds at all, and under 23 no add drops an active
   player (10.5); a player the team dropped can't be re-added for 48 hours (9.4). Adds are closed
-  before the draft and after week 17. The roster limits here, in Drop, Trades and IR apply from the
+  before the draft and once free agency closes (the calendar's last waiver lock, or a bid run after
+  it) or week 17 is over, whichever is first. The roster limits here, in Drop, Trades and IR apply from the
   cut-down date.
 - **Moves › Drop** (v2, `ui/drop-model.js`) blocks a cut whose penalty takes cap used past the
   cap, or further past it, with every pending group's costliest claim counted (a claim dropping the

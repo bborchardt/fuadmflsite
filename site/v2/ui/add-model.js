@@ -5,7 +5,7 @@
 import {asArray} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {clock, dayText, weeklyAfter} from "./home-model.js";
+import {clock, dayText, nextWeekly} from "./home-model.js";
 
 // the bylaws' contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
@@ -100,15 +100,8 @@ export function addPhase({started, over, drafted}) {
     return drafted ? "preseason" : "closed";
 }
 
-// after week 17 the next adds are the next draft's, on the next season's site
+// once free agency closes the next adds are the next draft's, on the next season's site
 export const addsClosed = (phase) => phase === "closed" || phase === "over";
-
-// the next time after `now` of one of MFL's weekly calendar events (WAIVER_BBID, WAIVER_LOCK), in
-// seconds: its first time, repeated weekly
-export function nextWeekly(calendar, type, now) {
-    const event = asArray(calendar && calendar.event).find((entry) => entry.type === type && Number(entry.start_time) > 1e9);
-    return event ? weeklyAfter(Number(event.start_time), now) : null;
-}
 
 // "Sunday noon", "Wednesday 11 p.m."
 const weekdayTime = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "long", timeZone: "America/Chicago"})} ${timeText(seconds)}`;

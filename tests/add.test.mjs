@@ -45,6 +45,10 @@ test("the banner: the window is open while MFL lets any free agent be added outr
     assert.equal(banner({phase: "preseason", freeAgents: locked, calendar, now: august}).text, "Blind bids only until Wed Sep 9, 11 p.m. CT");
     assert.deepEqual(banner({phase: "closed", freeAgents: add, calendar, now: august}), {kind: "closed", text: "Adds open after the draft."});
     assert.deepEqual(banner({phase: "over", freeAgents: add, calendar, now: sunday}), {kind: "closed", text: "Adds open after the draft."});
+    // after the last bid run (Wed Jan 6), the window runs to the last lock (Sun Jan 10)
+    const lastWeek = Date.parse("2027-01-08T12:00:00-06:00") / 1000;
+    assert.equal(banner({phase: "season", freeAgents: add, calendar, now: lastWeek}).text, "Free agent window open until Sunday noon CT");
+    assert.equal(banner({phase: "season", freeAgents: locked, calendar, now: lastWeek}).text, "Blind bids only");
 });
 
 // the clone's team: $293 used, 30 active

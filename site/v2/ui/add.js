@@ -12,7 +12,7 @@ import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
-import {contractTopic} from "./home-model.js";
+import {contractTopic, freeAgencyEnd} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
 import {
     LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, blockedText, changeTone, checkAdd, checkBid, claimKey,
@@ -239,7 +239,11 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     // ---- the model for what's drawn ----
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
-    const phase = () => movesPhase(state.data.facts);
+    // adds close with free agency, at the last waiver lock, though the season runs to week 17's end
+    const phase = () => {
+        const closes = freeAgencyEnd(state.data.calendar);
+        return closes && now() >= closes ? "over" : movesPhase(state.data.facts);
+    };
     // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
     const checks = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : phase());
     const now = () => Date.now() / 1000;
