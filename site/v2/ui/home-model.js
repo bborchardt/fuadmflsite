@@ -46,22 +46,26 @@ export function homePhase({now, week1, seasonOver, drafted, cutDown}) {
 // that week's first kickoff (`kickoffs`).
 export function calendarDates(calendar, kickoffs = new Map()) {
     const dates = [];
-    for (const event of asArray(calendar && calendar.event)) {
+    const events = asArray(calendar && calendar.event);
+    // `happens` is how many weeks a weekly event repeats after the first
+    const lastRun = (event) => weeksLater(Number(event.start_time), Number(event.happens) || 0);
+    const waivers = events.filter((event) => ["WAIVER_LOCK", "WAIVER_BBID"].includes(event.type) && Number(event.start_time) > 1e9);
+    // free agency ends with the last time free agents go on waivers, or the last bid run after it
+    if (waivers.some((event) => event.type === "WAIVER_LOCK")) {
+        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun))});
+    }
+    for (const event of events) {
         const start = Number(event.start_time);
         if (event.type === "WAIVER_BBID" && start > 1e9) {
             dates.push({what: "First blind bids", at: start, kind: "bids"});
             continue;
         }
-        // putting free agents on waivers for the last time, with no bid run after it, ends free agency
-        if (event.type === "WAIVER_LOCK" && start > 1e9) {
-            dates.push({what: "Free agency closes", at: weeksLater(start, Number(event.happens) || 0)});
-            continue;
-        }
-        if (event.type === "TRADE" && Number(event.end_time) > 1e9) {
-            dates.push({what: "Trades reopen", at: Number(event.end_time)});
-        }
         if (event.happens || !["CUSTOM", "TRADE"].includes(event.type)) {
             continue;
+        }
+        const end = Number(event.end_time);
+        if (event.type === "TRADE" && end > 1e9 && end > (kickoffs.get(start) || 0)) {
+            dates.push({what: "Trades reopen", at: end});
         }
         const title = event.type === "TRADE" ? "Trade deadline" : String(event.title || "").trim();
         if (!title) {
