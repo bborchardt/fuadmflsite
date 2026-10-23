@@ -1096,7 +1096,7 @@ the columns' bottoms meet; review, 17 Oct 2026):
    Processed Waivers page (members see every team's bids; the daily job's reader), read once per
    run (the commissioner, 23 Oct 2026; PR #58). No "lost to" alert: the row says it. Only bids MFL
    tried count (a group's claims up to the one it won; all if none), one per team at its highest.
-   **All moves and All bids** (decided 23 Oct 2026; drawn on canvas row 19, not built): "All moves"
+   **All moves and All bids** (decided 23 Oct 2026; drawn on canvas row 19; built in PR #59): "All moves"
    and "All bids" in Recent moves' head open MFL's own Transactions (`options?O=03`) and Processed
    Waivers (`processed_waivers?PERIOD=`) pages, restyled by v2 full screen (no dialogs; Home lit in
    the sections). All moves: the season's moves by day in Recent moves' rows, a team filter and kind
