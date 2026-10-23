@@ -1258,7 +1258,8 @@ saves little.
 Looked at in MFL's menus and left there (23 Oct 2026): rule-vote polls (voted at the draft), Trade
 Bait (unused), Player Ranks, ADP and AAV, Top Adds/Drops, Points Allowed, Who Should I Start,
 Projected Stats, Injury Report (v2 shows status and expected return), Starting Lineups, Weekly
-Summary, Franchise Summary, articles, trash-talk videos and the NFL and survivor pools.
+Summary, Franchise Summary, articles, trash-talk videos, the NFL and survivor pools, Fantasy Depth
+Charts (the commissioner: not needed) and Fantasy Recaps and Previews (canned text).
 
 ## Reference: bylaws v2 relies on
 
