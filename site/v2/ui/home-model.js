@@ -7,8 +7,9 @@ import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 
 const DAY = 24 * 60 * 60;
-// a date this close moves from Coming up into My alerts
+// a date members act by moves from Coming up into My alerts this close to it
 export const SOON_DAYS = 3;
+const TO_DO = new Set(["draft", "cut", "bids", "trades", "adds"]);
 export const RECENT_MOVES = 10;
 export const TOPICS = 5;
 
@@ -52,7 +53,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
     const waivers = events.filter((event) => ["WAIVER_LOCK", "WAIVER_BBID"].includes(event.type) && Number(event.start_time) > 1e9);
     // free agency ends with the last time free agents go on waivers, or the last bid run after it
     if (waivers.some((event) => event.type === "WAIVER_LOCK")) {
-        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun))});
+        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun)), kind: "adds"});
     }
     for (const event of events) {
         const start = Number(event.start_time);
@@ -70,7 +71,8 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         const week = start > 0 && start < 100 ? start : null;
         const at = week ? kickoffs.get(week) : start;
         if (at) {
-            dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind: /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : null});
+            const kind = event.type === "TRADE" ? "trades" : /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : null;
+            dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind});
         }
         if (at && event.type === "TRADE" && Number(event.end_time) > at) {
             dates.push({what: "Trades reopen", at: Number(event.end_time)});
@@ -82,7 +84,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 // the event whose name contains "cut" (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the dates still ahead, soonest first. Without the calendar (logged out) the season's own
+// Coming up: the dates still ahead, soonest first; `soon` is a to-do close enough for My alerts. Without the calendar (logged out) the season's own
 // dates still show: week 1, the trade deadline, the playoffs and the championship.
 export function comingUp({dates, kickoffs = new Map(), now}) {
     const all = dates.slice();
@@ -91,7 +93,7 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
         all.push({what: "Week 1 kickoff", at: kickoffs.get(1), week: 1});
     }
     if (!has("Trade deadline") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
-        all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK});
+        all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK, kind: "trades"});
     }
     if (kickoffs.get(PLAYOFFS_START_WEEK)) {
         all.push({what: "Playoffs begin", at: kickoffs.get(PLAYOFFS_START_WEEK), week: PLAYOFFS_START_WEEK});
@@ -103,7 +105,7 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
     const draftAhead = all.some((date) => date.kind === "draft" && date.at > now);
     return all.filter((date) => date.at > now && !(draftAhead && date.kind === "bids"))
         .sort((a, b) => a.at - b.at)
-        .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at), soon: date.at - now <= SOON_DAYS * DAY}));
+        .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at), soon: TO_DO.has(date.kind) && date.at - now <= SOON_DAYS * DAY}));
 }
 
 // Central time's offset from UTC at a moment, in seconds (−18000 in daylight time)

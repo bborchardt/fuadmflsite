@@ -447,7 +447,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         actions: calendarHref ? `<a href="${esc(calendarHref)}">Calendar</a>` : "",
         what: "coming up",
         key: `fuad.home.coming.${context.season}.${loggedIn ? "member" : "guest"}`,
-        // a date within a few days is in My alerts instead
+        // a to-do within a few days is in My alerts instead
         load: async () => (await coming()).filter((date) => !member || !date.soon),
         render: (list, body) => {
             body.innerHTML = list.length
