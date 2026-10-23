@@ -165,11 +165,19 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
         ["Free agency closes", "Sun Jan 10, 12:00 p.m.", false],
         ["Contract Year Ends - Lengths Reduced by 1", "Thu Mar 11, 3:00 p.m.", false]
     ]);
-    // 16 more weeks ends it on Sun Jan 3; a lock that happens one time only ends it then
+    // 16 more weeks ends it on Sun Jan 3; a lock that happens one time only ends it then, unless a
+    // bid run comes after it; a second lock gives no second date
     const lock = calendar.event.find((event) => event.type === "WAIVER_LOCK");
-    const closes = (happens) => calendarDates({event: [{...lock, happens}]}).map((d) => d.at);
-    assert.deepEqual(closes("16"), [at("2027-01-03T12:00:00-06:00")]);
-    assert.deepEqual(closes(""), [at("2026-09-13T12:00:00-05:00")]);
+    const bids = calendar.event.find((event) => event.type === "WAIVER_BBID");
+    const closes = (...events) => calendarDates({event: events}).filter((d) => d.what === "Free agency closes").map((d) => d.at);
+    assert.deepEqual(closes({...lock, happens: "16"}, {...bids, happens: "16"}), [at("2027-01-03T12:00:00-06:00")]);
+    assert.deepEqual(closes({...lock, happens: ""}), [at("2026-09-13T12:00:00-05:00")]);
+    assert.deepEqual(closes({...lock, happens: "16"}, {...bids, happens: "17"}), [at("2027-01-06T23:00:00-06:00")]);
+    assert.deepEqual(closes({...lock, happens: "16"}, {...lock, happens: ""}), [at("2027-01-03T12:00:00-06:00")]);
+    // no bid run on its own, and no reopening before the deadline
+    assert.deepEqual(closes(bids), []);
+    const trade = calendar.event.find((event) => event.type === "TRADE");
+    assert.deepEqual(calendarDates({event: [{...trade, end_time: String(at("2026-11-01T12:00:00-06:00"))}]}, kickoffs).map((d) => d.what), ["Trade deadline"]);
     // before the draft: draft day, the cut-down, week 1 (the first blind bids follow the draft)
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
     // after the draft: the cut-down, the first blind bids, week 1
