@@ -429,9 +429,8 @@ body .homepagecolumn #brief_standings h3 {
 
 /* ---- Forms ---- */
 
-body .pagebody input[type="text"],
-body .pagebody input[type="number"],
-body .pagebody input[type="password"],
+/* one class and two elements: enough to outrank MFL's rule, low enough for v2's own field rules */
+body .pagebody input:where([type="text"], [type="number"], [type="password"]),
 body .pagebody select,
 body .pagebody textarea {
     background: var(--fuad-page);
@@ -466,8 +465,7 @@ body .pagebody button {
 }
 
 /* MFL's 3 px !important reaches its input buttons, not v2's buttons */
-body .pagebody input[type="button"],
-body .pagebody input[type="submit"] { padding: 0 18px !important; }
+body .pagebody input:where([type="button"], [type="submit"]) { padding: 0 18px !important; }
 
 @media (hover: hover) {
     body input[type="button"]:hover,
@@ -4055,7 +4053,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     width: 72px;
     height: auto;
     margin: 0;
-    padding: 0;
+    padding: 0 !important;
     border: 0;
     outline: 0;
     background: transparent;
