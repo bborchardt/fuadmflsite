@@ -221,7 +221,7 @@ tried in the beta (the commissioner's team only) before the next.
      replacing v1's violations panel, which v2 no longer has.
    - Recent moves keeps the current home page's last 10, a steadier size than a span of days, with
      "All moves" to MFL's transactions page; won blind bids read "won X for $N, dropped Y". This
-     settles its follow-up; who lost a bid stays on MFL's processed waivers page.
+     settles its follow-up; the other bids show when a won bid's row is opened (below).
    - Contract-length reminders are the member's own only; until step 6 their tap opens the
      contract topic (else the board), not Moves › Add.
    - Alerts link to MFL's own pages (Lineup, Add/Drop, Trades, IR) until their steps rebuild them.
@@ -1079,7 +1079,10 @@ the columns' bottoms meet; review, 17 Oct 2026):
    message, posted with MFL's `messageBoard` import); replies on the topic's own page.
 5. **Recent moves:** the league's latest transactions, the home for them now that Moves has no
    Recent view (review, 17 Oct 2026): the last 10, won blind bids with their amounts, and "All
-   moves" to MFL's transactions page (18 Oct 2026).
+   moves" to MFL's transactions page (18 Oct 2026). A won blind bid's row opens to the run's other bids on that
+   player, highest first, each team with its amount and the years in its comment, from MFL's
+   Processed Waivers page (members see every team's bids; the daily job's reader), read once per
+   run (the commissioner, 23 Oct 2026; not drawn or built). No "lost to" alert: the row says it.
 6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
    draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
    the last few days before one, it shows in My alerts instead.
@@ -1244,6 +1247,11 @@ saves little.
 - **Optimal lineup in Scores** (after the build; the commissioner, 18 Oct 2026): what each team's
   best lineup would have scored, as MFL's live scoring page offers. For finished weeks
   `weeklyResults` already has each team's `optimal` starters and `opt_pts`.
+
+Looked at in MFL's menus and left there (23 Oct 2026): rule-vote polls (voted at the draft), Trade
+Bait (unused), Player Ranks, ADP and AAV, Top Adds/Drops, Points Allowed, Who Should I Start,
+Projected Stats, Injury Report (v2 shows status and expected return), Starting Lineups, Weekly
+Summary, Franchise Summary, articles, trash-talk videos and the NFL and survivor pools.
 
 ## Reference: bylaws v2 relies on
 
