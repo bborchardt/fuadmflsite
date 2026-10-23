@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readYears} from "../site/v2/lib/contract-years.js";
 import {
-    addBlock, banner, checkAdd, checkBid, commentLines, copyTargets, droppedByTeam, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
+    addBlock, banner, bidsLeft, checkAdd, checkBid, commentLines, copyTargets, droppedByTeam, freeAgencyOver, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
     readMarks, readPlayerLists, rewriteComment, surname, yearsIn
 } from "../site/v2/ui/add-model.js";
 
@@ -49,6 +49,14 @@ test("the banner: the window is open while MFL lets any free agent be added outr
     const lastWeek = Date.parse("2027-01-08T12:00:00-06:00") / 1000;
     assert.equal(banner({phase: "season", freeAgents: add, calendar, now: lastWeek}).text, "Free agent window open until Sunday noon CT");
     assert.equal(banner({phase: "season", freeAgents: locked, calendar, now: lastWeek}).text, "Blind bids only");
+    // free agency is over at the last lock, or sooner once no bid run is left and none can be added outright
+    assert.equal(freeAgencyOver({calendar, freeAgents: add, now: sunday}), false);
+    assert.equal(freeAgencyOver({calendar, freeAgents: add, now: lastWeek}), false);
+    assert.equal(freeAgencyOver({calendar, freeAgents: locked, now: lastWeek}), true);
+    assert.equal(freeAgencyOver({calendar, freeAgents: add, now: Date.parse("2027-01-10T12:00:00-06:00") / 1000}), true);
+    assert.equal(bidsLeft(calendar, sunday), true);
+    assert.equal(bidsLeft(calendar, lastWeek), false);
+    assert.equal(freeAgencyOver({calendar: null, freeAgents: locked, now: lastWeek}), false);
 });
 
 // the clone's team: $293 used, 30 active
@@ -146,6 +154,9 @@ test("a re-add is blocked for 48 hours after the team's own drop (9.4)", () => {
     const rows = freeAgentRows([{id: "a", name: "A A", mflName: "A, A", mark: "#", pos: "WR", proj: 2}, {id: "c", name: "C C", mflName: "C, C", mark: null, pos: "WR", proj: 5}], {blocked});
     assert.deepEqual(rows.map((row) => [row.player.id, row.off, row.why]), [["c", false, ""], ["a", true, "Dropped by you · bid from Sun 3:12 p.m."]]);
     assert.equal(droppedByTeam(players, "0001", dropped + 49 * 3600).size, 0);
+    // with no bid run left, a bid-only player is off
+    const late = freeAgentRows([{id: "a", name: "A A", mflName: "A, A", mark: "#", pos: "WR", proj: 2}, {id: "c", name: "C C", mflName: "C, C", mark: null, pos: "WR", proj: 5}], {bids: false});
+    assert.deepEqual(late.map((row) => [row.player.id, row.off, row.why]), [["c", false, ""], ["a", true, "No bid runs left"]]);
 });
 
 test("each claim writes a named line the job's reader gives back to the right player", () => {
