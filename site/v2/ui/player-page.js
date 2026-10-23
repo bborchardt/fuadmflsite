@@ -105,10 +105,22 @@ function injury(value) {
     return match && match[1] && !/^(none|healthy|-)$/i.test(match[1]) ? {status: match[1], detail: match[2] || ""} : null;
 }
 
-// the owning team's name, or "" for a free agent, whom MFL lists as "FA (Locked)" or the like with
-// the contract he was dropped with
+// the owning team's name as MFL's team list has it ("The Obliterators " there, with a space), or ""
+// for a free agent, whom MFL lists as "FA (Locked)" or the like with the contract he was dropped with
 export function ownerOf(owner, teamNames) {
-    return teamNames.includes(owner) ? owner : "";
+    return teamNames.find((name) => name.trim() === String(owner || "").trim()) || "";
+}
+
+// The id of the team holding a player, or null: from the rosters (`holders`, player id → team id)
+// when they could be read, since the player page's owner line doesn't always match a team's name
+// (Smooth City Styles! didn't for a logged-in member); else from that line. `teamNames` maps ids
+// to names.
+export function holderOf(player, holders, teamNames) {
+    if (holders) {
+        return holders.get(player.id) || null;
+    }
+    const named = ownerOf(player.owner, [...teamNames.values()]);
+    return named ? ([...teamNames].find(([, name]) => name === named) || [])[0] || null : null;
 }
 
 // null when the page isn't a player page MFL still draws the way this expects

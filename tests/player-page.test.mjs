@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {ownerOf, readArticle, readPlayerPage, text} from "../site/v2/ui/player-page.js";
+import {holderOf, ownerOf, readArticle, readPlayerPage, text} from "../site/v2/ui/player-page.js";
 import {clockText} from "../site/v2/ui/panel.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -55,4 +55,18 @@ test("a free agent has no owner, whatever MFL writes for him", () => {
     assert.equal(ownerOf("Golden Ratio", teams), "Golden Ratio");
     assert.equal(ownerOf("FA (Locked)", teams), "");
     assert.equal(ownerOf("Free Agent", teams), "");
+});
+
+test("MFL's team list may have spaces around a name the player page doesn't", () => {
+    assert.equal(ownerOf("The Obliterators", ["The Obliterators ", "Golden Ratio"]), "The Obliterators ");
+});
+
+test("the team holding a player comes from the rosters, the player page's owner line only without them", () => {
+    const teamNames = new Map([["0003", "The Obliterators "], ["0004", "Smooth City Styles!"]]);
+    const holders = new Map([["14782", "0004"]]);
+    // an owner line that isn't a team's name, as a logged-in member's page had for Smooth City Styles!
+    assert.equal(holderOf({id: "14782", owner: "Smooth City Styles! (something else)"}, holders, teamNames), "0004");
+    assert.equal(holderOf({id: "99999", owner: "Free Agent"}, holders, teamNames), null);
+    assert.equal(holderOf({id: "11222", owner: "The Obliterators"}, null, teamNames), "0003");
+    assert.equal(holderOf({id: "99999", owner: "FA (Locked)"}, null, teamNames), null);
 });

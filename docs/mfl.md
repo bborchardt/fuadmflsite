@@ -18,7 +18,9 @@ MFL documents little of this.
 - **Rosters by week** keep membership but report today's salary: a player cut later reads $1.
 - **The player page** (`player?L=<league>&P=<id>`, public) has in one request what the exports spread
   over many (`playerScores` takes one week per request): the biography (height and weight, born and
-  age, college, drafted, experience, jersey), the status (owner as "Team - S" or "- NS", injury as
+  age, college, drafted, experience, jersey), the status (owner as "Team - S" or "- NS" logged out,
+  though it didn't match the team's name for a logged-in member, so v2 takes the owner from the
+  rosters; MFL's team list can have spaces around a name, as "The Obliterators "; injury as
   "Out (Ankle)", expected return, bye, salary, contract year), the latest five headlines linking to
   `view_news_article?L=<league>&ID=<article>`, and the season by week (`#player_stats_table`: points,
   opponent as "at Colts" or "vs Saints", "Bye", and the week's lineup status with an injury mark such
