@@ -11,7 +11,7 @@ import {pageFetch} from "./page-fetch.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
-import {watchList} from "./watch.js";
+import {watchList, whenPopupClosed} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
 import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
 import {
@@ -428,7 +428,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
                 window.addEventListener("fuad-watch", () => {
                     if (state.watching) {
-                        redrawn();
+                        whenPopupClosed(redrawn);
                     }
                 });
             }
@@ -543,7 +543,19 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             redraw();
                         }
                     });
-                    redrawn = redraw;
+                    // a redraw from outside (the list arriving, a star changed) keeps focus on the chip or
+                    // player it was on
+                    redrawn = () => {
+                        const active = document.activeElement;
+                        const chip = active && active.dataset && active.dataset.chip ? `[data-chip="${active.dataset.chip}"][data-value="${CSS.escape(active.dataset.value || "")}"]` : null;
+                        const player = active && active.dataset && active.dataset.player ? `[data-player="${CSS.escape(active.dataset.player)}"]` : null;
+                        const had = (chip || player) && body.contains(active);
+                        redraw();
+                        const again = had && body.querySelector(chip || player);
+                        if (again) {
+                            again.focus();
+                        }
+                    };
                     redraw();
                 }
             });
