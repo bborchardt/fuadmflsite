@@ -442,6 +442,11 @@ body .pagebody textarea {
     font-size: 16px;
 }
 
+/* a table of fields under column headings, and fields in a line of text, stay compact */
+body .pagebody :where(table:has(th) td) > input:where([type="text"], [type="number"], [type="password"]),
+body .pagebody :where(table:has(th) td) > select,
+body .pagebody :where(td:has(> input[type="text"] ~ input[type="text"])) > input:where([type="text"]) { padding: 4px 6px !important; }
+
 body .pagebody input:focus,
 body .pagebody select:focus,
 body .pagebody textarea:focus {
