@@ -256,3 +256,11 @@ test("a best card: the best score, the actual one, players off the bench in, sta
     // the IR player can't start, though he scored most
     assert.deepEqual(team.bench.map((entry) => [entry.id, entry.tag]), [["r1", "started"], ["q2", ""]]);
 });
+
+test("a best lineup counts as started when a player brought in has played, though no starter has", () => {
+    const line = (id, position, points, starter, state) => ({id, position, points, starter, name: id, sortName: id, team: "BUF", game: {state}});
+    const limits = {count: 1, limits: {RB: [1, 1]}};
+    const card = {teams: [{id: "0001", score: 0, started: false, starters: [line("r1", "RB", null, true, "scheduled")], bench: [line("r2", "RB", 30, false, "over")]}]};
+    const [team] = bestCard(card, limits).teams;
+    assert.deepEqual([team.score, team.actual, team.started, team.starters[0].id], [30, 0, true, "r2"]);
+});
