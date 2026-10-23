@@ -703,7 +703,10 @@ per draft year, listing each round's pick (2027 numbered where today's order dec
 in orange, "Traded to …" greyed). Teams is the ledger as a table, in cap used like My team (used now
 with a bar; next year's picks held, "8 · 3 1sts", "4 · no 1st", plain 5 greyed; used each later
 season; roster count; least used first). A team opens in My team's layout with "Propose a trade",
-its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts (no cut columns). Every Rosters table puts the contract beside the name.
+its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts (no cut columns). A team's page (and My team) also shows the
+team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career Records page
+(`options?O=208`, one read for every team, kept a week; the commissioner has linked MFL's historical
+franchises; 23 Oct 2026, not drawn or built). Every Rosters table puts the contract beside the name.
 Players is every rostered player in one table (Player, then the
 contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last) under the filter chips, in a scroll box, salary first; clicking Player,
 Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: every panel full width, so none sits beside one of a different height: franchise
@@ -1145,7 +1148,10 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
   cards for the member's schedule (results, then opponents; weeks 15–17 playoffs) and hides the
   week picker. Each team on a card shows its projection and win probability ("proj 112.3 · 74% to
   win") before and during games; the footer, players playing / to play and minutes left per side;
-  the open lineups, each starter's live stat line and projection. From `liveScoring` with DETAILS
+  the open lineups, each starter's live stat line and projection. An open card adds the two teams'
+  all-time series, "All-time · Golden Ratio 13–8" ("All-time · 9–9" even, none if they've never
+  met), from MFL's All-Time Series page for one of them (`options?O=171&FID=…`), read when the card
+  opens and kept a week (23 Oct 2026, not drawn or built). From `liveScoring` with DETAILS
   (team and player scores, game seconds left, playing / to play, stat lines; refreshed every 30–60 s
   during games only), `projectedScores` (FantasySharks-based) and `schedule`; win probability from
   MFL's own `mfl_win_prob.js` (400 simulations of the remaining games from projected stats), run on
@@ -1189,9 +1195,7 @@ their reasons and no hunt list, while Scores carries the playoff games.
   every League Champion, newest first, back to 2008, from MFL's League Awards page (`options?O=202`),
   each with that year's team name and the owner's first name from the award's Comments (the
   commissioner's to-do; a year without one shows the team alone). MFL keeps no past owners in its
-  exports and the awards are typed text, not linked to franchises. No all-time head-to-head or team
-  titles: years of owner turnover make MFL's historical franchise links impractical and the records
-  not very meaningful.
+  exports and the awards are typed text, not linked to franchises. No team titles.
 - **Before the season** (a phase Tweak on row 7; review, 17 Oct 2026): the new site has no games
   until week 1, so Scores shows week 1's matchups and kickoffs once MFL's schedule is set (until
   then the week picker's "Week 1 · Thu Sep 10"), with no scores, projections or lineups; Standings,
