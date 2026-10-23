@@ -150,21 +150,32 @@ test("the phase: before the draft, draft to cut-down, preseason, season, over", 
 
 test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     const {calendar} = fixture("calendar.json");
-    const kickoffs = new Map([[1, at("2026-09-10T19:20:00-05:00")], [12, at("2026-11-25T19:00:00-06:00")], [15, at("2026-12-17T19:15:00-06:00")]]);
+    const kickoffs = new Map([[1, at("2026-09-10T19:20:00-05:00")], [12, at("2026-11-25T19:00:00-06:00")], [15, at("2026-12-17T19:15:00-06:00")],
+        [17, at("2026-12-31T19:15:00-06:00")]]);
     const dates = calendarDates(calendar, kickoffs);
     assert.equal(cutDownDate(dates), 1788842700);
-    // in season: the deadline, the commissioner's same-day event and the playoffs
-    assert.deepEqual(comingUp({dates, kickoffs, now}).slice(0, 3).map((d) => [d.what, d.when, d.soon]), [
+    // in season, every date left: the waiver lock repeats for 17 more weeks after Sun Sep 13, so
+    // free agency closes Sun Jan 10, still at noon CT
+    assert.deepEqual(comingUp({dates, kickoffs, now}).map((d) => [d.what, d.when, d.soon]), [
         ["Trade deadline", "Wed Nov 25 · Week 12 kickoff", false],
         ["Rookie/Franchise Player Salaries Calculated for Next Year", "Wed Nov 25 · Week 12 kickoff", false],
-        ["Playoffs begin", "Thu Dec 17 · Week 15 kickoff", false]
+        ["Playoffs begin", "Thu Dec 17 · Week 15 kickoff", false],
+        ["Championship week", "Thu Dec 31 · Week 17 kickoff", false],
+        ["Trades reopen", "Wed Jan 6, 12:00 p.m.", false],
+        ["Free agency closes", "Sun Jan 10, 12:00 p.m.", false],
+        ["Contract Year Ends - Lengths Reduced by 1", "Thu Mar 11, 3:00 p.m.", false]
     ]);
+    // 16 more weeks ends it on Sun Jan 3; a lock that happens one time only ends it then
+    const lock = calendar.event.find((event) => event.type === "WAIVER_LOCK");
+    const closes = (happens) => calendarDates({event: [{...lock, happens}]}).map((d) => d.at);
+    assert.deepEqual(closes("16"), [at("2027-01-03T12:00:00-06:00")]);
+    assert.deepEqual(closes(""), [at("2026-09-13T12:00:00-05:00")]);
     // before the draft: draft day, the cut-down, week 1 (the first blind bids follow the draft)
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
     // after the draft: the cut-down, the first blind bids, week 1
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
     // logged out there's no calendar, but the season's own dates show
-    assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin"]);
+    assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin", "Championship week"]);
     // the cut-down two days away is soon
     assert.equal(comingUp({dates, kickoffs, now: 1788842700 - 2 * 86400}).find((d) => d.what.startsWith("Final")).soon, true);
 });

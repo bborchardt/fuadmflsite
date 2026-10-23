@@ -9,6 +9,7 @@ export const ROSTER_MAX = 30;
 export const ROSTER_CHECK_LAST_WEEK = 17;
 export const INJURY_CHECK_LAST_WEEK = 14;
 export const PLAYOFFS_START_WEEK = 15;
+export const CHAMPIONSHIP_WEEK = 17;
 
 export const FRANCHISE_PLAYER_COUNT = 5;
 
