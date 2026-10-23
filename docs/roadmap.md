@@ -17,9 +17,6 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
   Alerts once for preseason noise.
 - Each season, once it's set: add the final cut-down date to MFL's league calendar as an event
   whose name contains "cut" (e.g. "Final cut-down"), so v2's Home can show it and date its alerts.
-- For League › Winners' Champions band: on MFL's League Awards setup, put each League Champion
-  owner's first name in the award's Comments (2008 on), first checking the form allows it; then
-  each season, once the champion is crowned, see that the award is there and add the name.
 
 ## v2: the redesign
 
@@ -706,7 +703,15 @@ season; roster count; least used first). A team opens in My team's layout with "
 its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts (no cut columns). A team's page (and My team) also shows the
 team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career Records page
 (`options?O=208`, one read for every team, kept a week; the commissioner has linked MFL's historical
-franchises; 23 Oct 2026, not drawn or built). Every Rosters table puts the contract beside the name.
+franchises; 23 Oct 2026, not drawn or built), and its titles: "All-time 93–67–3 · since 2016 ·
+Champion 2020, 2022". MFL doesn't publish the links, and franchise numbers moved before 2021 (Golden
+Ratio was 0009 in 2020, 0005 now), so titles through 2025 are a list in code, confirmed by the
+commissioner: Smooth City Styles! 2013, 2025; Golden Ratio 2020, 2022; Not 100% A Dick 2018, 2021;
+All Hands on Beck 2015, 2019; So your saying there's a chance? 2024 (the other nine went to owners who
+left). From 2026, a title goes to the current team with the champion's franchise number (from
+League Champions) if Career Records links it to that season and its record that season (All-Time
+Series' yearly total) matches the champion's (Season Records, `options?O=204`); otherwise it's left
+off, so a renumbering can drop a title but not misplace one. Every Rosters table puts the contract beside the name.
 Players is every rostered player in one table (Player, then the
 contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last) under the filter chips, in a scroll box, salary first; clicking Player,
 Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: every panel full width, so none sits beside one of a different height: franchise
@@ -1192,10 +1197,8 @@ their reasons and no hunt list, while Scores carries the playoff games.
   in the team's total, a Playoffs column on desktop and the grey line on phones (review, 17 Oct
   2026).
 - **Champions** (the commissioner, 23 Oct 2026; not drawn or built): a band after the prizes listing
-  every League Champion, newest first, back to 2008, from MFL's League Awards page (`options?O=202`),
-  each with that year's team name and the owner's first name from the award's Comments (the
-  commissioner's to-do; a year without one shows the team alone). MFL keeps no past owners in its
-  exports and the awards are typed text, not linked to franchises. No team titles.
+  every League Champion, newest first, back to 2008, with that year's team name, from MFL's League
+  Champions page (`options?O=194`). No owner names: MFL keeps no past owners where v2 can read them.
 - **Before the season** (a phase Tweak on row 7; review, 17 Oct 2026): the new site has no games
   until week 1, so Scores shows week 1's matchups and kickoffs once MFL's schedule is set (until
   then the week picker's "Week 1 · Thu Sep 10"), with no scores, projections or lineups; Standings,
