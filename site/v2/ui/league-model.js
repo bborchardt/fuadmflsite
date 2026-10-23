@@ -373,6 +373,67 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
     return cards.sort((a, b) => Number(b.mine) - Number(a.mine));
 }
 
+// The league's lineup rules from MFL's `league` export: {count, limits: {QB: [1, 2], …}}
+export function starterLimits(league) {
+    const starters = league && league.starters;
+    const limits = {};
+    asArray(starters && starters.position).forEach((position) => {
+        const [min, max] = String(position.limit || "").split("-").map(Number);
+        limits[position.name] = [min || 0, Number.isFinite(max) ? max : min || 0];
+    });
+    return {count: Number(starters && starters.count) || 0, limits};
+}
+
+// MFL's best lineup, as its live scoring page works it out (`get_best_lineup`): the roster ranked by
+// points so far (no NFL team or a bye last), each position's minimum filled first, then up to its
+// maximum, `count` in all, less any minimum the roster can't fill. The ids of the lineup. Ties go to
+// the lines marked `starter`, where MFL goes by name and ranks no points yet below 0: the same score,
+// with the lineup changed only for points.
+export function bestLineup(lines, {count, limits}) {
+    // no points yet counts as none, so a bench player on 0 doesn't replace a starter yet to play
+    const last = (line) => [!line.team || /^FA/.test(line.team) ? 1 : 0, line.game && line.game.state === "bye" ? 1 : 0];
+    const ranked = lines.slice().sort((a, b) => {
+        const [x, y] = [last(a), last(b)];
+        for (let i = 0; i < x.length; i++) {
+            if (x[i] !== y[i]) {
+                return x[i] - y[i];
+            }
+        }
+        return (b.points || 0) - (a.points || 0) || Number(Boolean(b.starter)) - Number(Boolean(a.starter)) || String(a.name).localeCompare(String(b.name));
+    });
+    const held = {};
+    lines.forEach((line) => {
+        held[line.position] = (held[line.position] || 0) + 1;
+    });
+    const room = count - Object.entries(limits).reduce((short, [position, [min]]) => short + Math.max(0, min - (held[position] || 0)), 0);
+    const got = {};
+    const chosen = new Set();
+    for (const stage of [0, 1]) {
+        for (const line of ranked) {
+            const [min, max] = limits[line.position] || [0, 0];
+            if (!chosen.has(line.id) && chosen.size < room && (got[line.position] || 0) < (stage === 0 ? min : max)) {
+                chosen.add(line.id);
+                got[line.position] = (got[line.position] || 0) + 1;
+            }
+        }
+    }
+    return chosen;
+}
+
+// A score card with each side's best lineup in place of the one it started: the best score, `actual`
+// the score it got; players off the bench tagged "in", starters left out tagged "started" on the bench.
+// Players on IR can't start.
+export function bestCard(card, limits) {
+    return {...card, teams: card.teams.map((team) => {
+        const pool = team.starters.concat(team.bench.filter((line) => !line.ir));
+        const ids = bestLineup(pool, limits);
+        const starters = pool.filter((line) => ids.has(line.id)).map((line) => ({...line, tag: line.starter ? "" : "in"})).sort(byPosition);
+        const bench = team.starters.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: "started"}))
+            .concat(team.bench.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: ""})));
+        return {...team, actual: team.score, score: starters.reduce((sum, line) => sum + (line.points || 0), 0), starters, bench};
+    })};
+}
+
 // the starters side by side, paired by order (flex spots let the two sides' shapes differ)
 export function pairLines(a, b) {
     return Array.from({length: Math.max(a.length, b.length)}, (_, i) => [a[i] || null, b[i] || null]);

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {gameStates, readProjections, readRules, readStats, scoreStats, statLine, winProbability} from "../site/v2/ui/live-scoring.js";
 import {
+    bestCard, bestLineup, starterLimits,
     allPlayRecords, pairLines, recordText, playoffPicture, playoffPlaces, positionPoints, powerFacts, readPowerPage, scoreCards, standings, teamSeason,
     weekState, weeklyWinners, winnings, winningsLine
 } from "../site/v2/ui/league-model.js";
@@ -223,4 +224,35 @@ test("the feed's stray carriage returns don't reach the values", () => {
     assert.deepEqual(stats.players.get("12860"), {DIF: "7", EA: "1", EP: "1"});
     assert.equal(stats.teams.get("HOU").QUARTER, "");
     assert.equal(stats.updated, 1792332659);
+});
+
+test("the best lineup is MFL's: week 5's every team at MFL's own best score", () => {
+    const limits = starterLimits(fixture("league-settings.json").league);
+    assert.deepEqual(limits, {count: 10, limits: {QB: [1, 2], RB: [1, 3], WR: [2, 5], TE: [1, 3], PK: [1, 1]}});
+    const players = new Map(fixture("players-league.json").players.player.map((player) => [player.id, player]));
+    const teams = fixture("weekly-results-w5.json").weeklyResults.matchup.flatMap((matchup) => matchup.franchise);
+    for (const team of teams) {
+        const lines = team.player.map((entry) => {
+            const info = players.get(entry.id);
+            const scored = entry.score !== undefined && entry.score !== "";
+            return {id: entry.id, position: info.position, team: info.team, name: info.name, points: scored ? Number(entry.score) : null, game: {state: scored ? "over" : "bye"}};
+        });
+        const ids = bestLineup(lines, limits);
+        const total = lines.filter((line) => ids.has(line.id)).reduce((sum, line) => sum + line.points, 0);
+        assert.equal(Math.round(total * 100) / 100, Number(team.opt_pts), `team ${team.id}`);
+        assert.equal(ids.size, 10);
+    }
+});
+
+test("a best card: the best score, the actual one, players off the bench in, starters left out on the bench", () => {
+    const line = (id, position, points, starter, extra = {}) => ({id, position, points, starter, name: id, sortName: id, team: "BUF", game: {state: "over"}, ...extra});
+    const limits = {count: 2, limits: {QB: [1, 1], RB: [1, 1]}};
+    const card = {mine: true, teams: [{id: "0001", score: 15, starters: [line("q1", "QB", 10, true), line("r1", "RB", 5, true)],
+        bench: [line("r2", "RB", 12, false), line("q2", "QB", 30, false, {ir: true})]}]};
+    const [team] = bestCard(card, limits).teams;
+    assert.equal(team.actual, 15);
+    assert.equal(team.score, 22);
+    assert.deepEqual(team.starters.map((entry) => [entry.id, entry.tag]), [["q1", ""], ["r2", "in"]]);
+    // the IR player can't start, though he scored most
+    assert.deepEqual(team.bench.map((entry) => [entry.id, entry.tag]), [["r1", "started"], ["q2", ""]]);
 });
