@@ -238,6 +238,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         }
     }
 
+    let bidsTimed = false;
     if (groups.length) {
         const projected = projectBids(franchise, groups, league.players);
         if (projected.overCap || projected.overRoster) {
@@ -245,6 +246,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
                 ? `If all high bids win: cap used ${money(franchise.capTotal)} → ${money(projected.cap)}`
                 : `If all high bids win: ${franchise.numPlayers} → ${projected.roster} active`, links.add, "Add");
         } else {
+            bidsTimed = Boolean(bidRun);
             push(tones.orange, "$", `${plural(projected.bids, "blind bid")} pending`, bidRun ? `They process ${whenText(bidRun)} CT` : "", links.add, "Add");
         }
     }
@@ -267,8 +269,8 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         push(tones.lime, "⇄", `Trade offer from ${trade.from}`, [trade.summary, trade.expires && `expires ${dayText(trade.expires)}`].filter(Boolean).join(" · "), links.trades, "Trades");
     }
 
-    // pending bids already say when they process
-    for (const date of coming.filter((entry) => entry.soon && !(entry.kind === "bids" && groups.length))) {
+    // pending bids that say when they process stand in for the first run
+    for (const date of coming.filter((entry) => entry.soon && !(entry.kind === "bids" && bidsTimed))) {
         const {page, where, why} = TO_DO.get(date.kind) || {};
         push(tones.orange, "!", date.what, [date.when, why].filter(Boolean).join(" · "), links[page], where);
     }

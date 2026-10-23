@@ -65,6 +65,10 @@ test("my alerts: invalid bids block, otherwise the deadline", () => {
         groups: pendingGroups({blindBidWaiverRequest: {round: "1", addsDrops: "1_1_"}})});
     assert.deepEqual(withBids.map((a) => a.title), ["1 blind bid pending"]);
     assert.deepEqual(myAlerts({league, franchiseId: "0001", phase: "season", links, now, coming: [first]}).map((a) => a.title), ["First blind bids"]);
+    // invalid bids don't say when, so the first run keeps its own
+    const invalid = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run, coming: [first],
+        groups: pendingGroups({blindBidWaiverRequest: {round: "1", addsDrops: "1_5_"}})});
+    assert.deepEqual(invalid.map((a) => a.title), ["Current bids invalid", "First blind bids"]);
 });
 
 test("my alerts: the team's own violations, with where to fix them", () => {
