@@ -15,6 +15,9 @@ league rules and MFL's quirks are on master: `README.md`, `docs/design.md`, `doc
     reminder reading it.
 - At renewal (mid-March 2027 or later): confirm the job follows the new site, and look at League
   Alerts once for preseason noise.
+- At renewal, and whenever a team leaves: check MFL's Career Records (League History) still links
+  every team to its past seasons; if a franchise was renumbered, its change goes into v2's
+  `RENUMBERED` (`ui/history-model.js`), so its titles stay with it.
 - Each season, once it's set: add the final cut-down date to MFL's league calendar as an event
   whose name contains "cut" (e.g. "Final cut-down"), so v2's Home can show it and date its alerts.
 
@@ -710,7 +713,7 @@ season; roster count; least used first). A team opens in My team's layout with "
 its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts (no cut columns). A team's page (and My team) also shows the
 team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career Records page
 (`options?O=208`, one read for every team, kept a week; the commissioner has linked MFL's historical
-franchises; 23 Oct 2026, not drawn or built), and its titles: "All-time 93–67–3 · since 2016 ·
+franchises; 23 Oct 2026; built in PR #56, the line under the team's name), and its titles: "All-time 93–67–3 · since 2016 ·
 Champion 2020, 2022". A title goes to the current team with the champion's
 franchise number (MFL's League Champions page) when Career Records links that team to that season;
 renumberings, rare (teams leaving), are noted in code as the change, now one: Golden Ratio was 0009
@@ -1165,7 +1168,7 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
   the open lineups, each starter's live stat line and projection. An open card adds the two teams'
   all-time series, "All-time · Golden Ratio 13–8" ("All-time · 9–9" even, none if they've never
   met), from MFL's All-Time Series page for one of them (`options?O=171&FID=…`), read when the card
-  opens and kept a week (23 Oct 2026, not drawn or built).
+  opens and kept until the next week's results or a week (23 Oct 2026; built in PR #56).
   **Best** (the commissioner, 23 Oct 2026; drawn on canvas row 18, not built): a "Best" button
   between the week picker and Season (Season stays rightmost, so turning it on leaves Season where it
   was; it fits at 320 px, "Optimal" doesn't) swaps every card to the two best lineups, live scoring
@@ -1216,7 +1219,8 @@ their reasons and no hunt list, while Scores carries the playoff games.
   are over, each prize names its winner ("1st · 55% · Smooth City Styles! · $329.91") and counts
   in the team's total, a Playoffs column on desktop and the grey line on phones (review, 17 Oct
   2026).
-- **Champions** (the commissioner, 23 Oct 2026; not drawn or built): a band after the prizes listing
+- **Champions** (the commissioner, 23 Oct 2026; built in PR #56, a list on phones, six tiles across
+  on desktop, the viewer's titles highlighted): a band after the prizes listing
   every League Champion, newest first, back to 2008, with that year's team name, from MFL's League
   Champions page (`options?O=194`). No owner names: MFL keeps no past owners where v2 can read them.
 - **Before the season** (a phase Tweak on row 7; review, 17 Oct 2026): the new site has no games
