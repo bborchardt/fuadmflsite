@@ -59,6 +59,12 @@ test("my alerts: invalid bids block, otherwise the deadline", () => {
     const fine = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run,
         groups: pendingGroups({blindBidWaiverRequest: [{round: "1", addsDrops: "1_1_"}, {round: "2", addsDrops: "2_1_"}]})});
     assert.deepEqual(fine.map((a) => [a.title, a.detail]), [["2 blind bids pending", "They process Wed Oct 21, 11:00 p.m. CT · Add"]]);
+    // the first run close by is the pending bids' alert, not one of its own
+    const first = {what: "First blind bids", when: "Wed Oct 21, 11:00 p.m.", soon: true, kind: "bids"};
+    const withBids = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run, coming: [first],
+        groups: pendingGroups({blindBidWaiverRequest: {round: "1", addsDrops: "1_1_"}})});
+    assert.deepEqual(withBids.map((a) => a.title), ["1 blind bid pending"]);
+    assert.deepEqual(myAlerts({league, franchiseId: "0001", phase: "season", links, now, coming: [first]}).map((a) => a.title), ["First blind bids"]);
 });
 
 test("my alerts: the team's own violations, with where to fix them", () => {
@@ -211,9 +217,9 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Keeper trade deadline"), ["cut", null, null]);
     const spring = calendarDates({event: [{type: "CUSTOM", title: "Keeper trade deadline", start_time: "1776000000", happens: ""}]});
     assert.deepEqual(comingUp({dates: spring, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["Trade deadline"]);
-    // one the commissioner calls "Trade deadline" stands in for the season's, as a date only
-    const own = calendarDates({event: [{type: "CUSTOM", title: "Trade deadline", start_time: "1795000000", happens: ""}]});
-    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => /trade/i.test(d.what)).map((d) => [d.what, d.at, d.kind]), [["Trade deadline", 1795000000, null]]);
+    // one the commissioner calls just "Trade deadline", in any case, stands in for the season's
+    const own = calendarDates({event: [{type: "CUSTOM", title: "TRADE DEADLINE", start_time: "1795000000", happens: ""}]});
+    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => /trade/i.test(d.what)).map((d) => [d.what, d.at, d.kind]), [["TRADE DEADLINE", 1795000000, "trades"]]);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
