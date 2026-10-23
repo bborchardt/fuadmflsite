@@ -20,7 +20,7 @@ const TO_DO = new Map([
     ["trades", {page: "trades", where: "Trades"}]
 ]);
 // a commissioner's event's kind from its title, the first that matches
-const TITLE_KINDS = [[/contract year ends?\b/i, "rollover"], [/\bcut/i, "cut"], [/\bdraft/i, "draft"]];
+const TITLE_KINDS = [[/^trade deadline$/i, "trades"], [/contract year ends?\b/i, "rollover"], [/\bcut/i, "cut"], [/\bdraft/i, "draft"]];
 const titleKind = (title) => (TITLE_KINDS.find(([pattern]) => pattern.test(title)) || [])[1] || null;
 export const RECENT_MOVES = 10;
 export const TOPICS = 5;
@@ -103,7 +103,7 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
     if (kickoffs.get(1)) {
         all.push({what: "Week 1 kickoff", at: kickoffs.get(1), week: 1});
     }
-    if (!all.some((date) => date.kind === "trades" || date.what === "Trade deadline") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
+    if (!all.some((date) => date.kind === "trades") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
         all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK, kind: "trades"});
     }
     if (kickoffs.get(PLAYOFFS_START_WEEK)) {
@@ -267,7 +267,8 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         push(tones.lime, "⇄", `Trade offer from ${trade.from}`, [trade.summary, trade.expires && `expires ${dayText(trade.expires)}`].filter(Boolean).join(" · "), links.trades, "Trades");
     }
 
-    for (const date of coming.filter((entry) => entry.soon)) {
+    // pending bids already say when they process
+    for (const date of coming.filter((entry) => entry.soon && !(entry.kind === "bids" && groups.length))) {
         const {page, where, why} = TO_DO.get(date.kind) || {};
         push(tones.orange, "!", date.what, [date.when, why].filter(Boolean).join(" · "), links[page], where);
     }
