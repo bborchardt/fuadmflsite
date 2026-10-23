@@ -1670,42 +1670,12 @@ body [tabindex]:focus-visible {
 #fuad-all-moves .fuad-move strong,
 #fuad-all-bids .fuad-move strong { font-weight: 600; }
 
-/* a won bid opens to the run's other bids */
-#fuad-home .fuad-move-toggle,
-#fuad-all-moves .fuad-move-toggle,
-#fuad-all-bids .fuad-move-toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* a won bid's line of the run's other bids */
+#fuad-home .fuad-also,
+#fuad-all-moves .fuad-also { display: block; margin-top: 2px; font-size: 13px; color: var(--fuad-muted); }
 
-#fuad-home .fuad-move-toggle .fuad-row-text,
-#fuad-all-moves .fuad-move-toggle .fuad-row-text,
-#fuad-all-bids .fuad-move-toggle .fuad-row-text { min-width: 0; }
-
-#fuad-home .fuad-move-chev,
-#fuad-all-moves .fuad-move-chev,
-#fuad-all-bids .fuad-move-chev { flex: none; padding-top: 2px; color: var(--fuad-muted); transition: transform 0.15s; }
-
-#fuad-home .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev,
-#fuad-all-moves .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev,
-#fuad-all-bids .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev { transform: rotate(90deg); }
-
-#fuad-home .fuad-bids,
-#fuad-all-moves .fuad-bids,
-#fuad-all-bids .fuad-bids { grid-column: 2; }
-
-#fuad-home .fuad-bids > p,
-#fuad-all-moves .fuad-bids > p,
-#fuad-all-bids .fuad-bids > p { margin: 4px 0 0; }
-
-#fuad-home .fuad-bid-list,
-#fuad-all-moves .fuad-bid-list,
-#fuad-all-bids .fuad-bid-list { list-style: none; margin: 4px 0 0; padding: 0; }
-
-#fuad-home .fuad-bid-list li,
-#fuad-all-moves .fuad-bid-list li,
-#fuad-all-bids .fuad-bid-list li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--fuad-soft); }
-
-#fuad-home .fuad-bid-amount,
-#fuad-all-moves .fuad-bid-amount,
-#fuad-all-bids .fuad-bid-amount { flex: none; font-variant-numeric: tabular-nums; }
+#fuad-home .fuad-also:empty,
+#fuad-all-moves .fuad-also:empty { display: none; }
 
 #fuad-home .fuad-date { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; }
 
