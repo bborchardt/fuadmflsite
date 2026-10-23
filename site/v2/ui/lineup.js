@@ -24,14 +24,18 @@ const oppText = (player) => (player.onBye ? "bye week" : player.opp);
 
 function phoneRow(player, on) {
     const starting = on.has(player.id);
-    return `<button type="button" class="fuad-lineup-row" data-toggle="${esc(player.id)}" aria-pressed="${starting}"${player.locked ? " disabled" : ""}>
-        <span class="fuad-check" aria-hidden="true">${CHECK}</span>
-        <span class="fuad-lineup-who">
-            <span class="fuad-lineup-name"><span>${esc(player.name)}</span>${tag(player)}</span>
-            <span class="fuad-meta">${esc([player.nfl, oppText(player)].filter(Boolean).join(" · "))}</span>
-        </span>
-        <span class="fuad-lineup-proj"><span class="${player.proj ? "" : "fuad-muted"}">${esc(pts(player.proj || 0))}</span><span class="fuad-meta">proj</span></span>
-    </button>`;
+    return `<div class="fuad-lineup-row">
+        <button type="button" class="fuad-lineup-toggle" data-toggle="${esc(player.id)}" aria-pressed="${starting}" aria-label="Start ${esc(player.name)}"${player.locked ? " disabled" : ""}>
+            <span class="fuad-check" aria-hidden="true">${CHECK}</span>
+        </button>
+        <button type="button" class="fuad-lineup-open" data-player="${esc(player.id)}" aria-haspopup="dialog">
+            <span class="fuad-lineup-who">
+                <span class="fuad-lineup-name"><span>${esc(player.name)}</span>${tag(player)}</span>
+                <span class="fuad-meta">${esc([player.nfl, oppText(player)].filter(Boolean).join(" · "))}</span>
+            </span>
+            <span class="fuad-lineup-proj"><span class="${player.proj ? "" : "fuad-muted"}">${esc(pts(player.proj || 0))}</span><span class="fuad-meta">proj</span></span>
+        </button>
+    </div>`;
 }
 
 function deskRow(player, on) {
@@ -197,7 +201,8 @@ export async function drawLineup({context, franchiseId, loginHref, irHref}) {
     const state = {page, on: startersOf(page), base: startersOf(page), irHref, report: null, saved: false, saving: false, stale: false, error: ""};
     const render = () => {
         const focused = document.activeElement && mount.contains(document.activeElement) ? document.activeElement : null;
-        const again = focused && (focused.dataset.toggle ? `[data-toggle="${focused.dataset.toggle}"].${focused.classList[0]}` : focused.classList.contains("fuad-save") ? ".fuad-save" : null);
+        const key = focused && ["toggle", "player"].find((name) => focused.dataset[name]);
+        const again = key ? `[data-${key}="${CSS.escape(focused.dataset[key])}"].${focused.classList[0]}` : focused && focused.classList.contains("fuad-save") ? ".fuad-save" : null;
         draw(mount, state);
         const target = again && mount.querySelector(again);
         if (target) {

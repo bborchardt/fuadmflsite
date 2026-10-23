@@ -2916,28 +2916,48 @@ body #fuad-home select {
 
 /* locked (a bye, or a game that has started): grey, not lime, since it can't be tapped; a starter
    keeps his check, a bench player shows a dash */
-#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="true"] .fuad-check,
+#fuad-lineup .fuad-lineup-toggle:disabled[aria-pressed="true"] .fuad-check,
 #fuad-lineup .fuad-check:disabled[aria-pressed="true"] { border-color: var(--fuad-locked); background: var(--fuad-locked); color: var(--fuad-text); }
 
-#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check,
+#fuad-lineup .fuad-lineup-toggle:disabled[aria-pressed="false"] .fuad-check,
 #fuad-lineup .fuad-check:disabled[aria-pressed="false"] { border-color: transparent; }
 
-#fuad-lineup .fuad-lineup-row:disabled[aria-pressed="false"] .fuad-check::before,
+#fuad-lineup .fuad-lineup-toggle:disabled[aria-pressed="false"] .fuad-check::before,
 #fuad-lineup .fuad-check:disabled[aria-pressed="false"]::before { content: ""; width: 10px; height: 2px; border-radius: 1px; background: var(--fuad-faint); }
 
 #fuad-lineup .fuad-lineup-list > .fuad-band:first-child { margin-top: 8px; }
 
-/* phones: the whole row starts or benches him */
+/* phones: a strip the row's height around the check starts or benches him, wide enough not to
+   miss; the rest of the row opens the popup */
 #fuad-lineup .fuad-lineup-row {
     display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) auto;
+    grid-template-columns: 48px minmax(0, 1fr);
+    min-height: 56px;
+    border-top: 1px solid var(--fuad-rule);
+}
+
+#fuad-lineup .fuad-lineup-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+#fuad-lineup .fuad-lineup-toggle:disabled { cursor: default; opacity: 1; }
+
+#fuad-lineup .fuad-lineup-open {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: center;
-    width: 100%;
-    min-height: 56px;
-    padding: 6px 4px;
+    min-height: 0;
+    padding: 6px 4px 6px 2px;
     border: 0;
-    border-top: 1px solid var(--fuad-rule);
     border-radius: 0;
     background: transparent;
     color: var(--fuad-text);
@@ -2945,9 +2965,6 @@ body #fuad-home select {
     text-align: left;
     cursor: pointer;
 }
-
-#fuad-lineup .fuad-lineup-row:disabled { cursor: default; opacity: 1; }
-
 
 #fuad-lineup .fuad-lineup-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 
