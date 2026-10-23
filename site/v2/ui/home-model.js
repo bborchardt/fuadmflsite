@@ -143,7 +143,7 @@ export function freeAgencyEnd(calendar) {
 
 // The first time after `now` of an event repeated weekly from `first`, `repeats` times after it;
 // null once the last has passed
-export function weeklyAfter(first, now, repeats = Infinity) {
+export function weeklyAfter(first, now, repeats) {
     let weeks = Math.max(0, Math.floor((now - first) / (7 * DAY)));
     for (;;) {
         if (weeks > repeats) {

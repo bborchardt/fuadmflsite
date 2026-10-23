@@ -49,14 +49,16 @@ test("the banner: the window is open while MFL lets any free agent be added outr
     const lastWeek = Date.parse("2027-01-08T12:00:00-06:00") / 1000;
     assert.equal(banner({phase: "season", freeAgents: add, calendar, now: lastWeek}).text, "Free agent window open until Sunday noon CT");
     assert.equal(banner({phase: "season", freeAgents: locked, calendar, now: lastWeek}).text, "Blind bids only");
-    // free agency is over at the last lock, or sooner once no bid run is left and none can be added outright
-    assert.equal(freeAgencyOver({calendar, freeAgents: add, now: sunday}), false);
-    assert.equal(freeAgencyOver({calendar, freeAgents: add, now: lastWeek}), false);
-    assert.equal(freeAgencyOver({calendar, freeAgents: locked, now: lastWeek}), true);
-    assert.equal(freeAgencyOver({calendar, freeAgents: add, now: Date.parse("2027-01-10T12:00:00-06:00") / 1000}), true);
-    assert.equal(bidsLeft(calendar, sunday), true);
-    assert.equal(bidsLeft(calendar, lastWeek), false);
-    assert.equal(freeAgencyOver({calendar: null, freeAgents: locked, now: lastWeek}), false);
+    // free agency is over at the last lock; bids once the last run has passed
+    const closes = Date.parse("2027-01-10T12:00:00-06:00") / 1000;
+    assert.equal(freeAgencyOver({phase: "season", calendar, now: lastWeek}), false);
+    assert.equal(freeAgencyOver({phase: "season", calendar, now: closes}), true);
+    assert.equal(freeAgencyOver({phase: "season", calendar: null, now: closes}), false);
+    assert.equal(bidsLeft("season", calendar, sunday), true);
+    assert.equal(bidsLeft("season", calendar, lastWeek), false);
+    // before the season the calendar may still be last season's
+    assert.equal(freeAgencyOver({phase: "preseason", calendar, now: closes}), false);
+    assert.equal(bidsLeft("preseason", calendar, closes), true);
 });
 
 // the clone's team: $293 used, 30 active

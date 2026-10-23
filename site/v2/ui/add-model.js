@@ -115,17 +115,17 @@ const waiverEnds = (calendar) => {
     return ends.get(calendar);
 };
 
-// whether a blind bid placed now still has a run to process it
-export const bidsLeft = (calendar, now) => {
+// whether a blind bid placed now still has a run to process it (in season, as above)
+export const bidsLeft = (phase, calendar, now) => {
     const {lastBid} = waiverEnds(calendar);
-    return lastBid === null || now <= lastBid;
+    return phase !== "season" || lastBid === null || now <= lastBid;
 };
 
-// Free agency is over at the last waiver lock (or a bid run after it), or once no bid run is left
-// and no free agent can be added outright
-export function freeAgencyOver({calendar, freeAgents, now}) {
+// Free agency is over at the last waiver lock, or a bid run after it. Only in season: until the
+// commissioner sets the new season's dates, the calendar may still hold last season's.
+export function freeAgencyOver({phase, calendar, now}) {
     const {closes} = waiverEnds(calendar);
-    return Boolean(closes && now >= closes) || (!bidsLeft(calendar, now) && !freeAgents.some((player) => !bidOnly(player)));
+    return phase === "season" && Boolean(closes && now >= closes);
 }
 
 // "Sunday noon", "Wednesday 11 p.m."
@@ -412,7 +412,7 @@ export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos =
             const until = blocked.get(player.id);
             // with no bid run left, a bid-only player can't be had
             const late = !bids && bidOnly(player);
-            return {player, bid: bidOnly(player), off: Boolean(until) || late, why: until ? reAddText(until) : player.mark === "!" ? "Game started" : late ? "No bid runs left" : ""};
+            return {player, bid: bidOnly(player), off: Boolean(until) || late, why: until ? reAddText(until) : late ? "No bid runs left" : player.mark === "!" ? "Game started" : ""};
         });
     const by = {
         proj: (a, b) => (b.player.proj || 0) - (a.player.proj || 0) || (b.player.pts || 0) - (a.player.pts || 0),
