@@ -7,7 +7,7 @@ import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 
 const DAY = 24 * 60 * 60;
-// a date members act by moves from Coming up into My alerts this close to it
+// a date members act by is also in My alerts this close to it
 export const SOON_DAYS = 3;
 // the dates members act by, each with the page they act on; the rollover is the last cut whose
 // penalty clears before the new season
