@@ -10,8 +10,8 @@ import {cached, storage} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
-import {careers, champions} from "./history.js";
-import {historyLine, titles} from "./history-model.js";
+import {careers, champions, series} from "./history.js";
+import {historyLine, titles, versusLine} from "./history-model.js";
 import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
 import {
     FIRST_DIRECTION, SCALE_PICKS, boardPicksOf, byeWeeks, contractYears, dollars, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf,
@@ -348,15 +348,20 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     <h2 class="fuad-team-name">${esc(sheet.name)}</h2>
                     ${viewer && !own ? `<a class="fuad-cta" href="${esc(actions.trade(teamId))}">Propose a trade</a>` : ""}
                 </div>` : ""}
-                <p class="fuad-meta fuad-history" data-history></p>
+                <div class="fuad-meta fuad-history" data-history></div>
                 ${capPanel(sheet)}
                 ${rosterTable(sheet, {cut: own, pointsLabel: live ? "Pts" : `${season - 1} pts`})}
                 <div class="fuad-picks-mount">${picksPanels(picks, {nextYear: season + 1, live})}</div>`;
-                // the team's all-time record and titles; the record alone if the champions can't be had
-                Promise.all([careers(context), champions(context).catch(() => null)]).then(([career, list]) => {
-                    const line = body.querySelector("[data-history]");
-                    if (line) {
-                        line.textContent = historyLine(career[teamId], titles(list, career)[teamId]);
+                // the team's all-time record and titles (the record alone if the champions can't be had),
+                // then on another team's page the viewer's record against it, from the viewer's series
+                Promise.all([
+                    careers(context), champions(context).catch(() => null),
+                    viewer && !own ? series(context, viewer).catch(() => null) : null
+                ]).then(([career, list, mine]) => {
+                    const history = body.querySelector("[data-history]");
+                    if (history) {
+                        history.innerHTML = [historyLine(career[teamId], titles(list, career)[teamId]), versusLine(mine && mine[teamId])]
+                            .filter(Boolean).map((line) => `<span>${esc(line)}</span>`).join("");
                     }
                 }).catch((error) => console.warn("[fuad] couldn't load the team's history:", error));
                 // next year's pick numbers once the order is known (it needs the standings)
