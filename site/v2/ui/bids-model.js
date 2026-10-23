@@ -10,8 +10,9 @@ const CLAIM = /^Add (.+) (\S+) ([A-Za-z]{1,4}) for \$([\d.]+) and drop (.+)$/;
 // "5yrs", "5 years.", "2 yr"
 const YEARS = /\b([1-5])\s*-?\s*(?:yrs?|years?)\b/i;
 
-// [{team, claims: [{name, amount}], comment, awarded}], one per group in the page's order, `awarded`
-// the index of the claim MFL gave the group, or null. MFL lists a group again for each step it took
+// [{team, claims: [{name, nfl, position, amount}], comment, awarded, refused}], one per group in the
+// page's order: `awarded` the index of the claim MFL gave the group, or null; `refused` MFL's reason
+// for each claim it turned down, by name. MFL lists a group again for each step it took
 // through it; that counts once. null if the page has no waiver table.
 export function readBidRun(html) {
     const table = /<table[^>]*class="report[^"]*"[^>]*>([\s\S]*?)<\/table>/i.exec(String(html || ""));
@@ -26,15 +27,22 @@ export function readBidRun(html) {
             continue;
         }
         const lines = cells[4].replace(/<br\s*\/?>/gi, "\n").split("\n").map(text).filter(Boolean);
-        const claims = lines.map((line) => CLAIM.exec(line)).filter(Boolean).map((match) => ({name: match[1], amount: Number(match[4])}));
+        const claims = lines.map((line) => CLAIM.exec(line)).filter(Boolean).map((match) => ({name: match[1], nfl: match[2], position: match[3], amount: Number(match[4])}));
         const at = lines.findIndex((line) => /^Comments:/.test(line));
         const comment = at < 0 ? "" : [lines[at].replace(/^Comments:\s*/, ""), ...lines.slice(at + 1)].join("\n").trim();
         if (!claims.length) {
             continue;
         }
         const key = `${team}|${JSON.stringify(claims)}|${comment}`;
-        const group = groups.get(key) || {team, claims, comment, awarded: null};
+        const group = groups.get(key) || {team, claims, comment, awarded: null, refused: {}};
         groups.set(key, group);
+        // "Marks, Woody HOU RB Cannot Be Added Because Is Not Available.", one line per claim refused
+        cells[5].replace(/<br\s*\/?>/gi, "\n").split("\n").map(text).forEach((line) => {
+            const refused = /^(.+?) \S+ [A-Za-z]{1,4} Cannot Be Added Because (.+?)\.?$/i.exec(line);
+            if (refused) {
+                group.refused[refused[1]] = refused[2];
+            }
+        });
         // "Marks, Woody HOU RB ($5.00)", or "None"
         const added = (/^(.+) \S+ [A-Za-z]{1,4} \(\$/.exec(text(cells[2])) || [])[1];
         const index = added ? claims.findIndex((claim) => claim.name === added) : -1;
@@ -82,4 +90,52 @@ export function otherBids(groups, name, winner) {
         });
     }
     return [...best.values()].sort((a, b) => b.amount - a.amount);
+}
+
+// MFL's reason a claim was turned down, in a few words
+export function reasonText(reason) {
+    const said = String(reason || "");
+    if (/not available/i.test(said)) {
+        return "taken";
+    }
+    if (/cannot be dropped/i.test(said)) {
+        return "drop already gone";
+    }
+    if (/locked/i.test(said)) {
+        return "locked";
+    }
+    return said.toLowerCase();
+}
+
+// A run as a block per player MFL tried a bid on: [{name, nfl, position, won, bids}], the players
+// won first (highest winning bid first), then those no one got. `won` is {team, amount, years} or null;
+// `bids` the others, one per team at its highest tried bid, each with MFL's `reason` when no one got
+// the player.
+export function runPlayers(groups) {
+    const players = new Map();
+    for (const group of groups || []) {
+        tried(group).forEach((claim, index) => {
+            const key = displayName(claim.name);
+            const player = players.get(key) || {name: claim.name, nfl: claim.nfl, position: claim.position, won: null, bids: []};
+            players.set(key, player);
+            const bid = {team: group.team, amount: claim.amount, years: yearsFor(group, index), reason: reasonText(group.refused[claim.name])};
+            if (group.awarded === index) {
+                player.won = bid;
+            } else {
+                player.bids.push(bid);
+            }
+        });
+    }
+    return [...players.values()].map((player) => {
+        const best = new Map();
+        player.bids
+            .filter((bid) => !(player.won && bid.team === player.won.team))
+            .forEach((bid) => {
+                if (!(best.has(bid.team) && best.get(bid.team).amount >= bid.amount)) {
+                    best.set(bid.team, bid);
+                }
+            });
+        const bids = [...best.values()].sort((a, b) => b.amount - a.amount).map((bid) => (player.won ? {...bid, reason: ""} : bid));
+        return {...player, won: player.won && {...player.won, reason: ""}, bids};
+    }).sort((a, b) => (b.won ? b.won.amount : -1) - (a.won ? a.won.amount : -1) || b.bids.length - a.bids.length);
 }

@@ -1478,7 +1478,9 @@ body [tabindex]:focus-visible {
 #fuad-home .fuad-panel,
 #fuad-league .fuad-panel,
 #fuad-rosters .fuad-panel,
-#fuad-topics .fuad-panel {
+#fuad-topics .fuad-panel,
+#fuad-all-moves .fuad-panel,
+#fuad-all-bids .fuad-panel {
     background: var(--fuad-panel);
     border: 1px solid var(--fuad-hairline);
     border-radius: 18px;
@@ -1547,14 +1549,18 @@ body [tabindex]:focus-visible {
 #fuad-home .fuad-rows,
 #fuad-league .fuad-rows,
 #fuad-rosters .fuad-rows,
-#fuad-topics .fuad-rows { list-style: none; margin: 0; padding: 0; }
+#fuad-topics .fuad-rows,
+#fuad-all-moves .fuad-rows,
+#fuad-all-bids .fuad-rows { list-style: none; margin: 0; padding: 0; }
 
 .fuad-rows > li { margin: 0; border-top: 1px solid var(--fuad-rule); }
 
 #fuad-home .fuad-row-text,
 #fuad-league .fuad-row-text,
 #fuad-rosters .fuad-row-text,
-#fuad-topics .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+#fuad-topics .fuad-row-text,
+#fuad-all-moves .fuad-row-text,
+#fuad-all-bids .fuad-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 
 #fuad-home .fuad-row-title,
 #fuad-league .fuad-row-title,
@@ -1569,7 +1575,9 @@ body [tabindex]:focus-visible {
 #fuad-home .fuad-empty,
 #fuad-league .fuad-empty,
 #fuad-rosters .fuad-empty,
-#fuad-topics .fuad-empty { margin: 0; padding: 8px 0 12px; }
+#fuad-topics .fuad-empty,
+#fuad-all-moves .fuad-empty,
+#fuad-all-bids .fuad-empty { margin: 0; padding: 8px 0 12px; }
 
 #fuad-home .fuad-alert {
     display: grid;
@@ -1650,30 +1658,54 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-topic .fuad-meta { white-space: nowrap; }
 
-#fuad-home .fuad-move { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; }
+#fuad-home .fuad-move,
+#fuad-all-moves .fuad-move,
+#fuad-all-bids .fuad-move { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; }
 
-#fuad-home .fuad-move .fuad-label { padding-top: 2px; }
+#fuad-home .fuad-move .fuad-label,
+#fuad-all-moves .fuad-move .fuad-label,
+#fuad-all-bids .fuad-move .fuad-label { padding-top: 2px; }
 
-#fuad-home .fuad-move strong { font-weight: 600; }
+#fuad-home .fuad-move strong,
+#fuad-all-moves .fuad-move strong,
+#fuad-all-bids .fuad-move strong { font-weight: 600; }
 
 /* a won bid opens to the run's other bids */
-#fuad-home .fuad-move-toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+#fuad-home .fuad-move-toggle,
+#fuad-all-moves .fuad-move-toggle,
+#fuad-all-bids .fuad-move-toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 
-#fuad-home .fuad-move-toggle .fuad-row-text { min-width: 0; }
+#fuad-home .fuad-move-toggle .fuad-row-text,
+#fuad-all-moves .fuad-move-toggle .fuad-row-text,
+#fuad-all-bids .fuad-move-toggle .fuad-row-text { min-width: 0; }
 
-#fuad-home .fuad-move-chev { flex: none; padding-top: 2px; color: var(--fuad-muted); transition: transform 0.15s; }
+#fuad-home .fuad-move-chev,
+#fuad-all-moves .fuad-move-chev,
+#fuad-all-bids .fuad-move-chev { flex: none; padding-top: 2px; color: var(--fuad-muted); transition: transform 0.15s; }
 
-#fuad-home .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev { transform: rotate(90deg); }
+#fuad-home .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev,
+#fuad-all-moves .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev,
+#fuad-all-bids .fuad-move-toggle[aria-expanded="true"] .fuad-move-chev { transform: rotate(90deg); }
 
-#fuad-home .fuad-bids { grid-column: 2; }
+#fuad-home .fuad-bids,
+#fuad-all-moves .fuad-bids,
+#fuad-all-bids .fuad-bids { grid-column: 2; }
 
-#fuad-home .fuad-bids > p { margin: 4px 0 0; }
+#fuad-home .fuad-bids > p,
+#fuad-all-moves .fuad-bids > p,
+#fuad-all-bids .fuad-bids > p { margin: 4px 0 0; }
 
-#fuad-home .fuad-bid-list { list-style: none; margin: 4px 0 0; padding: 0; }
+#fuad-home .fuad-bid-list,
+#fuad-all-moves .fuad-bid-list,
+#fuad-all-bids .fuad-bid-list { list-style: none; margin: 4px 0 0; padding: 0; }
 
-#fuad-home .fuad-bid-list li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--fuad-soft); }
+#fuad-home .fuad-bid-list li,
+#fuad-all-moves .fuad-bid-list li,
+#fuad-all-bids .fuad-bid-list li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--fuad-soft); }
 
-#fuad-home .fuad-bid-amount { flex: none; font-variant-numeric: tabular-nums; }
+#fuad-home .fuad-bid-amount,
+#fuad-all-moves .fuad-bid-amount,
+#fuad-all-bids .fuad-bid-amount { flex: none; font-variant-numeric: tabular-nums; }
 
 #fuad-home .fuad-date { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; }
 
@@ -1840,7 +1872,9 @@ body #fuad-home select {
 #fuad-rosters .fuad-panel-body > .fuad-panel + .fuad-panel { margin-top: 16px; }
 
 #fuad-league .fuad-muted,
-#fuad-rosters .fuad-muted { color: var(--fuad-muted); }
+#fuad-rosters .fuad-muted,
+#fuad-all-moves .fuad-muted,
+#fuad-all-bids .fuad-muted { color: var(--fuad-muted); }
 
 #fuad-league .fuad-good,
 #fuad-rosters .fuad-good { color: var(--fuad-good); }
@@ -1872,7 +1906,9 @@ body #fuad-home select {
 #fuad-rosters .fuad-row-mine .fuad-row-title { font-weight: 700; }
 
 #fuad-league .fuad-tag-lime,
-#fuad-rosters .fuad-tag-lime { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+#fuad-rosters .fuad-tag-lime,
+#fuad-all-moves .fuad-tag-lime,
+#fuad-all-bids .fuad-tag-lime { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
 
 #fuad-league button,
 #fuad-rosters button { font-family: var(--fuad-body); }
@@ -1907,7 +1943,9 @@ body #fuad-home select {
 #fuad-league .fuad-step,
 #fuad-league .fuad-toggle,
 #fuad-rosters .fuad-step,
-#fuad-rosters .fuad-toggle {
+#fuad-rosters .fuad-toggle,
+#fuad-all-moves .fuad-step,
+#fuad-all-bids .fuad-step {
     min-width: 44px;
     height: 44px;
     border: 0;
@@ -1919,7 +1957,9 @@ body #fuad-home select {
 }
 
 #fuad-league .fuad-step:disabled,
-#fuad-rosters .fuad-step:disabled { color: var(--fuad-faint); cursor: default; }
+#fuad-rosters .fuad-step:disabled,
+#fuad-all-moves .fuad-step:disabled,
+#fuad-all-bids .fuad-step:disabled { color: var(--fuad-faint); cursor: default; }
 
 #fuad-league .fuad-toggle,
 #fuad-rosters .fuad-toggle { padding: 0 14px; font: 600 14px var(--fuad-body); }
@@ -1928,10 +1968,14 @@ body #fuad-home select {
 #fuad-rosters .fuad-toggle[aria-pressed="true"] { background: var(--fuad-text); color: var(--fuad-page); }
 
 #fuad-league .fuad-week-label,
-#fuad-rosters .fuad-week-label { min-width: 116px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+#fuad-rosters .fuad-week-label,
+#fuad-all-moves .fuad-week-label,
+#fuad-all-bids .fuad-week-label { min-width: 116px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
 
 #fuad-league .fuad-week-name,
-#fuad-rosters .fuad-week-name { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; }
+#fuad-rosters .fuad-week-name,
+#fuad-all-moves .fuad-week-name,
+#fuad-all-bids .fuad-week-name { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; }
 
 #fuad-league .fuad-cards,
 #fuad-rosters .fuad-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
@@ -2635,10 +2679,14 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-chips-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-#fuad-rosters .fuad-chip-row-group { display: flex; flex-wrap: wrap; gap: 6px; }
+#fuad-rosters .fuad-chip-row-group,
+#fuad-all-moves .fuad-chip-row-group,
+#fuad-all-bids .fuad-chip-row-group { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* a chip: off, a field-bordered outline; on, white with dark text */
-#fuad-rosters .fuad-filter {
+#fuad-rosters .fuad-filter,
+#fuad-all-moves .fuad-filter,
+#fuad-all-bids .fuad-filter {
     position: relative;
     flex: none;
     height: 32px;
@@ -2651,12 +2699,18 @@ body #fuad-home select {
     cursor: pointer;
 }
 
-#fuad-rosters .fuad-filter::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+#fuad-rosters .fuad-filter::after,
+#fuad-all-moves .fuad-filter::after,
+#fuad-all-bids .fuad-filter::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 
-#fuad-rosters .fuad-filter[aria-pressed="true"] { background: var(--fuad-text); border-color: var(--fuad-text); color: var(--fuad-page); }
+#fuad-rosters .fuad-filter[aria-pressed="true"],
+#fuad-all-moves .fuad-filter[aria-pressed="true"],
+#fuad-all-bids .fuad-filter[aria-pressed="true"] { background: var(--fuad-text); border-color: var(--fuad-text); color: var(--fuad-page); }
 
 @media (hover: hover) {
-    #fuad-rosters .fuad-filter:not([aria-pressed="true"]):hover { background: var(--fuad-raised); }
+    #fuad-rosters .fuad-filter:not([aria-pressed="true"]):hover,
+#fuad-all-moves .fuad-filter:not([aria-pressed="true"]):hover,
+#fuad-all-bids .fuad-filter:not([aria-pressed="true"]):hover { background: var(--fuad-raised); }
 }
 
 /* a sort heading reads like the others; its 44 px tap area is invisible */
@@ -5331,4 +5385,104 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-ir .fuad-num,
     #fuad-ir .fuad-mid,
     #fuad-trades .fuad-num { text-align: center; }
+}
+
+/* ---- All moves and All bids: MFL's Transactions and Processed Waivers pages with v2's view over them ---- */
+
+.fuad-all-moves-on body .pagebody > :not(#fuad-all-moves),
+.fuad-all-bids-on body .pagebody > :not(#fuad-all-bids) { display: none !important; }
+
+.fuad-all-moves-on body .pagebody,
+.fuad-all-bids-on body .pagebody { overflow: visible; }
+
+/* hidden wins over MFL's page styles */
+#fuad-all-moves [hidden],
+#fuad-all-bids [hidden] { display: none !important; }
+
+#fuad-all-moves,
+#fuad-all-bids {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0 24px;
+    font-family: var(--fuad-body);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--fuad-text);
+    text-align: left;
+}
+
+.fuad-page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+
+.fuad-page-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+body .fuad-page-title h2 { margin: 0; padding: 0; border: 0; background: none; color: var(--fuad-text); font-family: var(--fuad-display); font-size: 34px; font-weight: 700; line-height: 1.1; text-align: left; text-transform: none; }
+
+.fuad-page-link { flex: none; display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
+
+#fuad-all-moves .fuad-moves-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+#fuad-all-moves .fuad-select { position: relative; display: flex; align-items: center; width: 280px; max-width: 100%; }
+
+body #fuad-all-moves .fuad-select select { width: 100%; height: 44px; padding: 0 36px 0 12px !important; border: 1px solid var(--fuad-field); border-radius: 10px; background: var(--fuad-page); color: var(--fuad-text); font: 15px var(--fuad-body); appearance: none; -webkit-appearance: none; }
+
+#fuad-all-moves .fuad-select svg { position: absolute; right: 12px; color: var(--fuad-muted); pointer-events: none; }
+
+#fuad-all-moves .fuad-moves-day > .fuad-label { display: block; margin: 14px 0 2px; text-align: left; }
+
+#fuad-all-moves .fuad-moves-day:first-child > .fuad-label { margin-top: 4px; }
+
+#fuad-all-bids .fuad-run-picker { display: flex; align-items: center; gap: 4px; }
+
+#fuad-all-bids .fuad-run-picker .fuad-week-label { min-width: 160px; }
+
+#fuad-all-bids a.fuad-step { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+#fuad-all-bids span.fuad-step { visibility: hidden; }
+
+#fuad-all-bids .fuad-run-player { padding-bottom: 8px; }
+
+#fuad-all-bids .fuad-run-who { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 6px; }
+
+body #fuad-all-bids .fuad-run-who h3 { margin: 0; padding: 0; border: 0; background: none; color: var(--fuad-text); font-family: var(--fuad-body); font-size: 17px; font-weight: 700; text-transform: none; text-align: left; }
+
+#fuad-all-bids .fuad-run-bids { list-style: none; margin: 0; padding: 0; }
+
+#fuad-all-bids .fuad-run-bids > li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; margin: 0; padding: 0; border-top: 1px solid var(--fuad-rule); color: var(--fuad-soft); }
+
+#fuad-all-bids .fuad-run-bids > li.fuad-run-won,
+#fuad-all-bids .fuad-run-bids > li.fuad-run-none { margin: 0 -10px; padding: 0 10px; border: 0; border-radius: 8px; background: var(--fuad-raised); }
+
+#fuad-all-bids .fuad-run-won .fuad-run-team,
+#fuad-all-bids .fuad-run-won .fuad-run-amount { color: var(--fuad-text); font-weight: 700; }
+
+#fuad-all-bids .fuad-run-team { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+#fuad-all-bids .fuad-run-amount { flex: none; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+#fuad-all-bids .fuad-run-amount .fuad-meta { font-weight: 500; }
+
+#fuad-all-bids .fuad-tag { padding: 0 6px; font-size: 12px; line-height: 18px; border-radius: 5px; }
+
+#fuad-all-bids .fuad-tag-muted { background: var(--fuad-quiet); color: var(--fuad-soft); }
+
+/* desktop: a player per band, the bids as tiles across */
+@media (min-width: 48.01em) {
+    #fuad-all-bids .fuad-run-player { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; padding: 14px 16px; }
+    #fuad-all-bids .fuad-run-who { flex-direction: column; align-items: flex-start; gap: 2px; padding-top: 4px; }
+    #fuad-all-bids .fuad-run-bids { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    #fuad-all-bids .fuad-run-bids > li,
+    #fuad-all-bids .fuad-run-bids > li.fuad-run-won,
+    #fuad-all-bids .fuad-run-bids > li.fuad-run-none { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; margin: 0; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--fuad-page); line-height: 1.25; }
+    #fuad-all-bids .fuad-run-bids > li.fuad-run-won,
+    #fuad-all-bids .fuad-run-bids > li.fuad-run-none { background: var(--fuad-raised); }
+    #fuad-all-bids .fuad-run-team { flex-wrap: wrap; overflow-wrap: anywhere; font-size: 14px; }
+    #fuad-all-bids .fuad-run-amount { font-family: var(--fuad-display); font-size: 22px; font-weight: 700; }
+    #fuad-all-bids .fuad-run-amount .fuad-meta { font-family: var(--fuad-body); font-size: 13px; }
+}
+
+@media (max-width: 48em) {
+    body .fuad-page-title h2 { font-size: 28px; }
+    #fuad-all-moves .fuad-select { width: 100%; }
+    #fuad-all-bids .fuad-run-picker { justify-content: center; }
 }
