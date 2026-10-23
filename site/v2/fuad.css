@@ -1921,9 +1921,9 @@ body #fuad-home select {
 
 /* narrow phones: the week picker, Best and Season in one row down to 320 px */
 @media (max-width: 26.24em) {
-    #fuad-league .fuad-scores-bar { gap: 4px; }
+    #fuad-league .fuad-scores-toggles { gap: 4px; }
     /* the week takes only its width; a long state ("Sun kickoff") wraps under it */
-    #fuad-league .fuad-scores-bar .fuad-week-label { min-width: 0; max-width: 72px; text-align: center; }
+    #fuad-league .fuad-scores-toggles .fuad-week-label { min-width: 0; max-width: 72px; text-align: center; }
     #fuad-league .fuad-bar-toggles .fuad-toggle { padding: 0 8px; }
 }
 

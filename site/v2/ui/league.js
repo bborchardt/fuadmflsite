@@ -153,7 +153,7 @@ function drawScores(mount, data) {
     const lineups = new Map();
     const twoColumns = window.matchMedia(TWO_COLUMNS);
     mount.innerHTML = `
-        <div class="fuad-scores-bar">
+        <div class="fuad-scores-bar${before ? "" : " fuad-scores-toggles"}">
             <div class="fuad-weekpicker">
                 <button type="button" class="fuad-step" data-step="-1" aria-label="Previous week">‹</button>
                 <div class="fuad-week-label" aria-live="polite"><span class="fuad-week-name"></span><span class="fuad-week-state fuad-label"></span></div>
@@ -169,9 +169,9 @@ function drawScores(mount, data) {
     const body = mount.querySelector(".fuad-scores-body");
     const picker = mount.querySelector(".fuad-weekpicker");
     const bestButton = mount.querySelector("[data-best]");
-    // Best once the week's first game has kicked off
+    // Best once the week's first game has kicked off, whoever plays in it
     const canBest = (shown) => Boolean(shown && !shown.preview && shown.limits && shown.limits.count
-        && shown.cards.some((card) => card.teams.some((team) => team.started)));
+        && shown.cards.some((card) => card.teams.some((team) => team.starters.concat(team.bench).some((line) => ["playing", "over"].includes(line.game.state)))));
     let lastShown = null;
     const lastWeek = () => Math.max(currentWeek, data.lastScheduled || currentWeek);
 
