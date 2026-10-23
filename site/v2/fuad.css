@@ -1143,7 +1143,7 @@ body [tabindex]:focus-visible {
 
 .fuad-menu-none { margin: 6px 0 0; font-size: 14px; }
 
-/* the team sheet: drops from the button on desktop, slides up on phones */
+/* the team sheet: drops from the button */
 .fuad-sheet {
     position: absolute;
     top: 64px;
@@ -1218,17 +1218,7 @@ body [tabindex]:focus-visible {
 
 @media (max-width: 48em) {
     .fuad-grabber { display: block; }
-    .fuad-sheet {
-        top: auto;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        width: auto;
-        padding: 10px 16px calc(32px + env(safe-area-inset-bottom, 0px));
-        border-radius: 22px 22px 0 0;
-        box-shadow: 0 -8px 32px var(--fuad-shadow);
-    }
-    .fuad-sheet h2 { font-size: 26px; }
+    .fuad-sheet { right: 16px; width: min(340px, calc(100% - 32px)); }
     .fuad-drawer { width: min(330px, calc(100% - 48px)); border-radius: 0 22px 22px 0; }
 }
 
