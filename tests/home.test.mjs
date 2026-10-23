@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 import {pendingGroups, projectBids} from "../site/v2/lib/bids.js";
 import {playersFromExport} from "../site/v2/lib/league.js";
 import {
-    boardTopics, calendarDates, comingUp, contractTopic, cutDownDate, homePhase, leagueAlerts, lineupProblems,
+    boardTopics, calendarDates, comingUp, contractTopic, cutDownDate, freeAgencyEnd, homePhase, leagueAlerts, lineupProblems,
     myAlerts, nextBidRun, recentMoves
 } from "../site/v2/ui/home-model.js";
 import {moduleTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";
@@ -236,6 +236,18 @@ test("the next blind bid run repeats weekly from the first", () => {
     // still 11 p.m. CT once daylight time ends (Nov 1)
     assert.equal(nextBidRun(calendar, at("2026-11-26T12:00:00-06:00")), at("2026-12-02T23:00:00-06:00"));
     assert.equal(nextBidRun(calendar, at("2026-12-02T22:30:00-06:00")), at("2026-12-02T23:00:00-06:00"));
+    // 17 more weeks after the first: the last run is Wed Jan 6, then none
+    assert.equal(nextBidRun(calendar, at("2027-01-01T12:00:00-06:00")), at("2027-01-06T23:00:00-06:00"));
+    assert.equal(nextBidRun(calendar, at("2027-01-07T12:00:00-06:00")), null);
+    const once = {event: calendar.event.map((event) => (event.type === "WAIVER_BBID" ? {...event, happens: ""} : event))};
+    assert.equal(nextBidRun(once, 1789012800 - 10), 1789012800);
+    assert.equal(nextBidRun(once, 1789012800 + 10), null);
+    // a one-off run listed first doesn't end the weekly one
+    const both = {event: [{type: "WAIVER_BBID", start_time: "1788000000", happens: ""}, ...calendar.event]};
+    assert.equal(nextBidRun(both, now), at("2026-10-21T23:00:00-05:00"));
+    // free agency closes at the last waiver lock, Sun Jan 10 here
+    assert.equal(freeAgencyEnd(calendar), at("2027-01-10T12:00:00-06:00"));
+    assert.equal(freeAgencyEnd({event: calendar.event.filter((event) => event.type !== "WAIVER_LOCK")}), null);
 });
 
 test("recent moves: the latest 10 adds, bids, IR moves and trades, as saved 4 Oct 2026", () => {
