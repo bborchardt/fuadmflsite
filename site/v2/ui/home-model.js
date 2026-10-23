@@ -7,7 +7,7 @@ import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 
 const DAY = 24 * 60 * 60;
-// a date members act by moves from Coming up into My alerts this close to it
+// a date members act by is also in My alerts this close to it
 export const SOON_DAYS = 3;
 // the dates members act by, each with the page they act on; the rollover is the last cut whose
 // penalty clears before the new season
@@ -60,12 +60,9 @@ export function homePhase({now, week1, seasonOver, drafted, cutDown}) {
 export function calendarDates(calendar, kickoffs = new Map()) {
     const dates = [];
     const events = asArray(calendar && calendar.event);
-    // `happens` is how many weeks a weekly event repeats after the first
-    const lastRun = (event) => weeksLater(Number(event.start_time), Number(event.happens) || 0);
-    const waivers = events.filter((event) => ["WAIVER_LOCK", "WAIVER_BBID"].includes(event.type) && Number(event.start_time) > 1e9);
-    // free agency ends with the last time free agents go on waivers, or the last bid run after it
-    if (waivers.some((event) => event.type === "WAIVER_LOCK")) {
-        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun)), kind: "adds"});
+    const closes = freeAgencyEnd(calendar);
+    if (closes) {
+        dates.push({what: "Free agency closes", at: closes, kind: "adds"});
     }
     for (const event of events) {
         const start = Number(event.start_time);
@@ -133,10 +130,25 @@ const weeksLater = (first, weeks) => {
     return plain + centralOffset(first) - centralOffset(plain);
 };
 
-// The first time after `now` of an event repeated weekly from `first`
-export function weeklyAfter(first, now) {
+// MFL's weekly calendar events with a time: `happens` is how many weeks one repeats after the first
+const weeklyEvents = (calendar, types) => asArray(calendar && calendar.event).filter((event) => types.includes(event.type) && Number(event.start_time) > 1e9);
+const lastRun = (event) => weeksLater(Number(event.start_time), Number(event.happens) || 0);
+
+// Free agency ends with the last time free agents go on waivers, or the last bid run after it;
+// null without a waiver lock on the calendar
+export function freeAgencyEnd(calendar) {
+    const waivers = weeklyEvents(calendar, ["WAIVER_LOCK", "WAIVER_BBID"]);
+    return waivers.some((event) => event.type === "WAIVER_LOCK") ? Math.max(...waivers.map(lastRun)) : null;
+}
+
+// The first time after `now` of an event repeated weekly from `first`, `repeats` times after it;
+// null once the last has passed
+export function weeklyAfter(first, now, repeats) {
     let weeks = Math.max(0, Math.floor((now - first) / (7 * DAY)));
     for (;;) {
+        if (weeks > repeats) {
+            return null;
+        }
         const at = weeksLater(first, weeks);
         if (at > now) {
             return at;
@@ -145,11 +157,20 @@ export function weeklyAfter(first, now) {
     }
 }
 
-// MFL's weekly blind bid run after `now`: the first run, repeated weekly
-export function nextBidRun(calendar, now) {
-    const event = asArray(calendar && calendar.event).find((entry) => entry.type === "WAIVER_BBID" && Number(entry.start_time) > 1e9);
-    return event ? weeklyAfter(Number(event.start_time), now) : null;
+// MFL's weekly event of a type after `now`, each repeated weekly as often as it says
+export function nextWeekly(calendar, type, now) {
+    const next = weeklyEvents(calendar, [type]).map((event) => weeklyAfter(Number(event.start_time), now, Number(event.happens) || 0)).filter(Boolean);
+    return next.length ? Math.min(...next) : null;
 }
+
+// the last blind bid run on the calendar, null without one
+export function lastBidRun(calendar) {
+    const runs = weeklyEvents(calendar, ["WAIVER_BBID"]);
+    return runs.length ? Math.max(...runs.map(lastRun)) : null;
+}
+
+// MFL's next blind bid run
+export const nextBidRun = (calendar, now) => nextWeekly(calendar, "WAIVER_BBID", now);
 
 // The viewer's starters this week that can't play: out, on IR, suspended, on a bye or with no NFL
 // team. `kickoffs` maps NFL teams to this week's kickoff (a team missing is on a bye); a game that

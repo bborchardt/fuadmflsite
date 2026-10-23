@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readYears} from "../site/v2/lib/contract-years.js";
 import {
-    addBlock, banner, checkAdd, checkBid, commentLines, copyTargets, droppedByTeam, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
+    addBlock, banner, bidsLeft, checkAdd, checkBid, commentLines, copyTargets, droppedByTeam, freeAgencyOver, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
     readMarks, readPlayerLists, rewriteComment, surname, yearsIn
 } from "../site/v2/ui/add-model.js";
 
@@ -45,6 +45,20 @@ test("the banner: the window is open while MFL lets any free agent be added outr
     assert.equal(banner({phase: "preseason", freeAgents: locked, calendar, now: august}).text, "Blind bids only until Wed Sep 9, 11 p.m. CT");
     assert.deepEqual(banner({phase: "closed", freeAgents: add, calendar, now: august}), {kind: "closed", text: "Adds open after the draft."});
     assert.deepEqual(banner({phase: "over", freeAgents: add, calendar, now: sunday}), {kind: "closed", text: "Adds open after the draft."});
+    // after the last bid run (Wed Jan 6), the window runs to the last lock (Sun Jan 10)
+    const lastWeek = Date.parse("2027-01-08T12:00:00-06:00") / 1000;
+    assert.equal(banner({phase: "season", freeAgents: add, calendar, now: lastWeek}).text, "Free agent window open until Sunday noon CT");
+    assert.equal(banner({phase: "season", freeAgents: locked, calendar, now: lastWeek}).text, "Blind bids only");
+    // free agency is over at the last lock; bids once the last run has passed
+    const closes = Date.parse("2027-01-10T12:00:00-06:00") / 1000;
+    assert.equal(freeAgencyOver({phase: "season", calendar, now: lastWeek}), false);
+    assert.equal(freeAgencyOver({phase: "season", calendar, now: closes}), true);
+    assert.equal(freeAgencyOver({phase: "season", calendar: null, now: closes}), false);
+    assert.equal(bidsLeft("season", calendar, sunday), true);
+    assert.equal(bidsLeft("season", calendar, lastWeek), false);
+    // before the season the calendar may still be last season's
+    assert.equal(freeAgencyOver({phase: "preseason", calendar, now: closes}), false);
+    assert.equal(bidsLeft("preseason", calendar, closes), true);
 });
 
 // the clone's team: $293 used, 30 active
@@ -142,6 +156,9 @@ test("a re-add is blocked for 48 hours after the team's own drop (9.4)", () => {
     const rows = freeAgentRows([{id: "a", name: "A A", mflName: "A, A", mark: "#", pos: "WR", proj: 2}, {id: "c", name: "C C", mflName: "C, C", mark: null, pos: "WR", proj: 5}], {blocked});
     assert.deepEqual(rows.map((row) => [row.player.id, row.off, row.why]), [["c", false, ""], ["a", true, "Dropped by you · bid from Sun 3:12 p.m."]]);
     assert.equal(droppedByTeam(players, "0001", dropped + 49 * 3600).size, 0);
+    // with no bid run left, a bid-only player is off
+    const late = freeAgentRows([{id: "a", name: "A A", mflName: "A, A", mark: "#", pos: "WR", proj: 2}, {id: "c", name: "C C", mflName: "C, C", mark: null, pos: "WR", proj: 5}], {bids: false});
+    assert.deepEqual(late.map((row) => [row.player.id, row.off, row.why]), [["c", false, ""], ["a", true, "No bid runs left"]]);
 });
 
 test("each claim writes a named line the job's reader gives back to the right player", () => {
