@@ -714,7 +714,9 @@ its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts
 team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career Records page
 (`options?O=208`, one read for every team, kept a week; the commissioner has linked MFL's historical
 franchises; 23 Oct 2026; built in PR #56, the line under the team's name), and its titles: "All-time 93–67–3 · since 2016 ·
-Champion 2020, 2022". A title goes to the current team with the champion's
+Champion 2020, 2022"; another team's page adds the viewer's record against it,
+"You vs them 13–8–0", from the viewer's All-Time Series page (`options?O=171&FID=…`; moved there
+from Scores' open games, where it unbalanced the card, 23 Oct 2026). A title goes to the current team with the champion's
 franchise number (MFL's League Champions page) when Career Records links that team to that season;
 renumberings, rare (teams leaving), are noted in code as the change, now one: Golden Ratio was 0009
 through 2020, 0005 since 2021. Reads, each when its view opens: All-Time Series per opened card and
@@ -1165,10 +1167,7 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
   cards for the member's schedule (results, then opponents; weeks 15–17 playoffs) and hides the
   week picker. Each team on a card shows its projection and win probability ("proj 112.3 · 74% to
   win") before and during games; the footer, players playing / to play and minutes left per side;
-  the open lineups, each starter's live stat line and projection. An open card adds the two teams'
-  all-time series, "All-time · Golden Ratio 13–8" ("All-time · 9–9" even, none if they've never
-  met), from MFL's All-Time Series page for one of them (`options?O=171&FID=…`), read when the card
-  opens and kept until the next week's results or a week (23 Oct 2026; built in PR #56).
+  the open lineups, each starter's live stat line and projection.
   **Best** (the commissioner, 23 Oct 2026; drawn on canvas row 18, not built): a "Best" button
   between the week picker and Season (Season stays rightmost, so turning it on leaves Season where it
   was; it fits at 320 px, "Optimal" doesn't) swaps every card to the two best lineups, live scoring
