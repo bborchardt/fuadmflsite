@@ -116,11 +116,15 @@ test("my alerts: a free agent add's contract length, as read from the board", ()
 test("my alerts: trade offers and dates within three days", () => {
     const alerts = myAlerts({league: leagueOf([team("0001", "Me")]), franchiseId: "0001", phase: "season", links, now,
         trades: [{from: "The Obliterators", summary: "Herbert for Hurts", expires: at("2026-10-23T12:00:00-05:00")}],
-        coming: [{what: "Trade deadline", when: "Wed Nov 25 · Week 12 kickoff", soon: false}, {what: "Final cut-down", when: "Sun Oct 18", soon: true}]});
+        coming: [{what: "Trade deadline", when: "Wed Nov 25 · Week 12 kickoff", soon: false}, {what: "Final cut-down", when: "Sun Oct 18", soon: true, kind: "cut"},
+            {what: "Draft", when: "Sun Oct 18, 6:00 p.m.", soon: true, kind: "draft"}, {what: "Contract year ends", when: "Mon Oct 19, 3:00 p.m.", soon: true, kind: "rollover"}]});
     assert.deepEqual(alerts.map((a) => [a.title, a.detail]), [
         ["Trade offer from The Obliterators", "Herbert for Hurts · expires Fri Oct 23 · Trades"],
-        ["Final cut-down", "Sun Oct 18"]
+        ["Final cut-down", "Sun Oct 18 · Drop"],
+        ["Draft", "Sun Oct 18, 6:00 p.m."],
+        ["Contract year ends", "Mon Oct 19, 3:00 p.m. · Cut by then for the penalty to clear before next season · Drop"]
     ]);
+    assert.equal(alerts[1].href, links.drop);
 });
 
 test("between the draft and the cut-down: lengths to post and the roster limits", () => {
@@ -198,6 +202,10 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.equal(soon("Trades reopen", at("2027-01-06T12:00:00-06:00")), false);
     assert.equal(soon("Contract Year Ends - Lengths Reduced by 1", 1804798800), true);
     assert.equal(soon("Rookie/Franchise Player Salaries Calculated for Next Year", kickoffs.get(12)), false);
+    // a title is read for its words: "cut" or "draft" inside another word doesn't count, and a
+    // rollover that mentions cutting is still the rollover
+    const kinds = (...titles) => calendarDates({event: titles.map((title) => ({type: "CUSTOM", title, start_time: "1800000000", happens: ""}))}).map((d) => d.kind);
+    assert.deepEqual(kinds("Contracts executed", "Final Cut Down", "Contract year ends - last cut", "Rookie draft"), [null, "cut", "rollover", "draft"]);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
