@@ -4,7 +4,7 @@ import {asArray, nflCode} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
-import {INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
+import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 
 const DAY = 24 * 60 * 60;
 // a date this close moves from Coming up into My alerts
@@ -41,11 +41,20 @@ export function homePhase({now, week1, seasonOver, drafted, cutDown}) {
     return cutDown && now >= cutDown ? "preseason" : "before-cut";
 }
 
-// The commissioner's own dates and MFL's, one-off only: `{what, at, week}` with `at` in seconds.
-// The trade deadline and other week-numbered events take that week's first kickoff (`kickoffs`).
+// The commissioner's own dates and MFL's, one-off only, and the end of MFL's weekly waiver lock:
+// `{what, at, week}` with `at` in seconds. The trade deadline and other week-numbered events take
+// that week's first kickoff (`kickoffs`).
 export function calendarDates(calendar, kickoffs = new Map()) {
     const dates = [];
-    for (const event of asArray(calendar && calendar.event)) {
+    const events = asArray(calendar && calendar.event);
+    // `happens` is how many weeks a weekly event repeats after the first
+    const lastRun = (event) => weeksLater(Number(event.start_time), Number(event.happens) || 0);
+    const waivers = events.filter((event) => ["WAIVER_LOCK", "WAIVER_BBID"].includes(event.type) && Number(event.start_time) > 1e9);
+    // free agency ends with the last time free agents go on waivers, or the last bid run after it
+    if (waivers.some((event) => event.type === "WAIVER_LOCK")) {
+        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun))});
+    }
+    for (const event of events) {
         const start = Number(event.start_time);
         if (event.type === "WAIVER_BBID" && start > 1e9) {
             dates.push({what: "First blind bids", at: start, kind: "bids"});
@@ -63,6 +72,9 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         if (at) {
             dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind: /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : null});
         }
+        if (at && event.type === "TRADE" && Number(event.end_time) > at) {
+            dates.push({what: "Trades reopen", at: Number(event.end_time)});
+        }
     }
     return dates;
 }
@@ -70,8 +82,8 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 // the event whose name contains "cut" (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the one-off dates still ahead, soonest first (the panel shows a few). Without the calendar (logged out) the season's own dates
-// still show: week 1, the trade deadline and the playoffs.
+// Coming up: the dates still ahead, soonest first. Without the calendar (logged out) the season's own
+// dates still show: week 1, the trade deadline, the playoffs and the championship.
 export function comingUp({dates, kickoffs = new Map(), now}) {
     const all = dates.slice();
     const has = (what) => all.some((date) => date.what === what);
@@ -83,6 +95,9 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
     }
     if (kickoffs.get(PLAYOFFS_START_WEEK)) {
         all.push({what: "Playoffs begin", at: kickoffs.get(PLAYOFFS_START_WEEK), week: PLAYOFFS_START_WEEK});
+    }
+    if (kickoffs.get(CHAMPIONSHIP_WEEK)) {
+        all.push({what: "Championship week", at: kickoffs.get(CHAMPIONSHIP_WEEK), week: CHAMPIONSHIP_WEEK});
     }
     // the first blind bids follow the draft, so before it they aren't yet worth a line
     const draftAhead = all.some((date) => date.kind === "draft" && date.at > now);
@@ -98,13 +113,18 @@ const centralOffset = (seconds) => {
     return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) / 1000 - Math.floor(seconds / 60) * 60;
 };
 
-// The first time after `now` of an event repeated weekly from `first`, at the same Central clock
-// time: MFL's weekly runs stay at 11 p.m. CT when daylight time ends
+// `weeks` after `first` at the same Central clock time: MFL's weekly runs stay at 11 p.m. CT when
+// daylight time ends
+const weeksLater = (first, weeks) => {
+    const plain = first + weeks * 7 * DAY;
+    return plain + centralOffset(first) - centralOffset(plain);
+};
+
+// The first time after `now` of an event repeated weekly from `first`
 export function weeklyAfter(first, now) {
     let weeks = Math.max(0, Math.floor((now - first) / (7 * DAY)));
     for (;;) {
-        const plain = first + weeks * 7 * DAY;
-        const at = plain + centralOffset(first) - centralOffset(plain);
+        const at = weeksLater(first, weeks);
         if (at > now) {
             return at;
         }
