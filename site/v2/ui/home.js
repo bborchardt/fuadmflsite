@@ -447,8 +447,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         actions: calendarHref ? `<a href="${esc(calendarHref)}">Calendar</a>` : "",
         what: "coming up",
         key: `fuad.home.coming.${context.season}.${loggedIn ? "member" : "guest"}`,
-        // a to-do within a few days is in My alerts instead
-        load: async () => (await coming()).filter((date) => !member || !date.soon),
+        // every date, a to-do close by in My alerts too, so a date never depends on My alerts loading
+        load: coming,
         render: (list, body) => {
             body.innerHTML = list.length
                 ? `<ul class="fuad-rows">${list.map((date) => `<li class="fuad-date"><span class="fuad-row-title">${esc(date.what)}</span><span class="fuad-meta">${esc(date.when)}</span></li>`).join("")}</ul>`
