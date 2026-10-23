@@ -63,10 +63,6 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         if (event.happens || !["CUSTOM", "TRADE"].includes(event.type)) {
             continue;
         }
-        const end = Number(event.end_time);
-        if (event.type === "TRADE" && end > 1e9 && end > (kickoffs.get(start) || 0)) {
-            dates.push({what: "Trades reopen", at: end});
-        }
         const title = event.type === "TRADE" ? "Trade deadline" : String(event.title || "").trim();
         if (!title) {
             continue;
@@ -75,6 +71,9 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         const at = week ? kickoffs.get(week) : start;
         if (at) {
             dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind: /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : null});
+        }
+        if (at && event.type === "TRADE" && Number(event.end_time) > at) {
+            dates.push({what: "Trades reopen", at: Number(event.end_time)});
         }
     }
     return dates;

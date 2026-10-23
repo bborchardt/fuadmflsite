@@ -178,6 +178,8 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(closes(bids), []);
     const trade = calendar.event.find((event) => event.type === "TRADE");
     assert.deepEqual(calendarDates({event: [{...trade, end_time: String(at("2026-11-01T12:00:00-06:00"))}]}, kickoffs).map((d) => d.what), ["Trade deadline"]);
+    // nor without the deadline's kickoff
+    assert.deepEqual(calendarDates({event: [trade]}).map((d) => d.what), []);
     // before the draft: draft day, the cut-down, week 1 (the first blind bids follow the draft)
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
     // after the draft: the cut-down, the first blind bids, week 1
