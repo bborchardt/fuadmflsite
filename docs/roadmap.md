@@ -715,7 +715,7 @@ team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career 
 (`options?O=208`, one read for every team, kept a week; the commissioner has linked MFL's historical
 franchises; 23 Oct 2026; built in PR #56, the line under the team's name), and its titles: "All-time 93–67–3 · since 2016 ·
 Champion 2020, 2022"; another team's page adds the viewer's record against it,
-"You vs them 13–8–0", from the viewer's All-Time Series page (`options?O=171&FID=…`; moved there
+"Your record vs them 13–8–0", from the viewer's All-Time Series page (`options?O=171&FID=…`; moved there
 from Scores' open games, where it unbalanced the card, 23 Oct 2026). A title goes to the current team with the champion's
 franchise number (MFL's League Champions page) when Career Records links that team to that season;
 renumberings, rare (teams leaving), are noted in code as the change, now one: Golden Ratio was 0009
