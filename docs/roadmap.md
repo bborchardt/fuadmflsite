@@ -1094,7 +1094,18 @@ the columns' bottoms meet; review, 17 Oct 2026):
    moves" to MFL's transactions page (18 Oct 2026). A won blind bid's row opens to the run's other bids on that
    player, highest first, each team with its amount and the years in its comment, from MFL's
    Processed Waivers page (members see every team's bids; the daily job's reader), read once per
-   run (the commissioner, 23 Oct 2026; not drawn or built). No "lost to" alert: the row says it.
+   run (the commissioner, 23 Oct 2026; PR #58). No "lost to" alert: the row says it. Only bids MFL
+   tried count (a group's claims up to the one it won; all if none), one per team at its highest.
+   **All moves and All bids** (decided 23 Oct 2026; drawn on canvas row 19, not built): "All moves"
+   and "All bids" in Recent moves' head open MFL's own Transactions (`options?O=03`) and Processed
+   Waivers (`processed_waivers?PERIOD=`) pages, restyled by v2 full screen (no dialogs; Home lit in
+   the sections). All moves: the season's moves by day in Recent moves' rows, a team filter and kind
+   chips (All · Adds · Drops · Bids · Trades · IR), won bids opening as on Home. All bids: a run
+   picker (MFL's own list of runs), a block per player bid on, the winner first ("Won") then the
+   other tried bids, one per team at its highest, with years; a player no one got shows "Not
+   awarded" with MFL's reason in a few words ("drop already gone", "locked"); a win the page shows
+   with no matching won-bid transaction shows "Voided" (the commissioner voids a bid by removing the
+   player and deleting its transaction, so it also drops out of Recent moves and All moves).
 6. **Coming up:** the next two or three one-off league dates (trade deadline, playoffs, rookie
    draft), from MFL's `calendar` export, routine weekly events left out; links to MFL's calendar. In
    the last few days before one, it shows in My alerts instead.
