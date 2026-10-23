@@ -65,7 +65,6 @@ function teamSheet({team, member, setup, logout, become, franchiseId}) {
     const switchTo = become && become.getAttribute("href");
     return `
     <section class="fuad-sheet" role="dialog" aria-modal="true" aria-labelledby="fuad-sheet-title">
-        <span class="fuad-grabber" aria-hidden="true"></span>
         <div class="fuad-dialog-head">
             <h2 id="fuad-sheet-title">${esc(team ? team.name : "Commissioner")}</h2>
             <button type="button" class="fuad-close" data-close aria-label="Close">${CLOSE_ICON}</button>
@@ -192,6 +191,8 @@ export function drawFrame({context, storage}) {
     if (teamButton) {
         const sheetLayer = root.querySelector(".fuad-sheet-layer");
         teamButton.addEventListener("click", () => {
+            // the phone header's height varies with its context line
+            sheetLayer.firstElementChild.style.top = `${Math.round(teamButton.getBoundingClientRect().bottom) + 8}px`;
             teamButton.setAttribute("aria-expanded", "true");
             openDialog(sheetLayer, {onClose: () => teamButton.setAttribute("aria-expanded", "false")});
         });
