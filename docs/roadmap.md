@@ -704,14 +704,12 @@ its table built for spotting trade targets: Player, Salary, Years, NFL, Bye, Pts
 team's all-time record, "All-time 93–67–3 · since 2016", from MFL's Career Records page
 (`options?O=208`, one read for every team, kept a week; the commissioner has linked MFL's historical
 franchises; 23 Oct 2026, not drawn or built), and its titles: "All-time 93–67–3 · since 2016 ·
-Champion 2020, 2022". MFL doesn't publish the links, and franchise numbers moved before 2021 (Golden
-Ratio was 0009 in 2020, 0005 now), so titles through 2025 are a list in code, confirmed by the
-commissioner: Smooth City Styles! 2013, 2025; Golden Ratio 2020, 2022; Not 100% A Dick 2018, 2021;
-All Hands on Beck 2015, 2019; So your saying there's a chance? 2024 (the other nine went to owners who
-left). From 2026, a title goes to the current team with the champion's franchise number (from
-League Champions) if Career Records links it to that season and its record that season (All-Time
-Series' yearly total) matches the champion's (Season Records, `options?O=204`); otherwise it's left
-off, so a renumbering can drop a title but not misplace one. Every Rosters table puts the contract beside the name.
+Champion 2020, 2022". A title goes to the current team with the champion's
+franchise number (MFL's League Champions page) when Career Records links that team to that season;
+renumberings, rare (teams leaving), are exceptions in code, now one: 2020 (franchise 0009 then) is
+Golden Ratio's (0005). Checked against all 18 seasons with the commissioner: Smooth City Styles!
+2013, 2025; Golden Ratio 2020, 2022; Not 100% A Dick 2018, 2021; All Hands on Beck 2015, 2019; So your
+saying there's a chance? 2024; the other nine went to owners who left. Every Rosters table puts the contract beside the name.
 Players is every rostered player in one table (Player, then the
 contract, Salary and Years, beside the name; then Pos, NFL, Bye, Pts, and the owning team last) under the filter chips, in a scroll box, salary first; clicking Player,
 Bye, Pts, Salary or Years sorts by it (again to reverse); names open the player popup. Draft on desktop: every panel full width, so none sits beside one of a different height: franchise
