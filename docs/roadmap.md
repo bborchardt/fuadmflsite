@@ -1165,7 +1165,15 @@ PA, Strk) with the Playoff picture below it, full width, seeds and the hunt list
   the open lineups, each starter's live stat line and projection. An open card adds the two teams'
   all-time series, "All-time · Golden Ratio 13–8" ("All-time · 9–9" even, none if they've never
   met), from MFL's All-Time Series page for one of them (`options?O=171&FID=…`), read when the card
-  opens and kept a week (23 Oct 2026, not drawn or built). From `liveScoring` with DETAILS
+  opens and kept a week (23 Oct 2026, not drawn or built).
+  **Best lineup** (the commissioner, 23 Oct 2026; to build, design being chosen on canvas row 18):
+  what each team's best lineup scored, for finished weeks and "so far" while games are on. A adds
+  "Final · best 146.3" under each team, "best" tags on bench players in it, "Best lineup would have
+  won: 146.3–127.4", and live "Best lineup so far"; B adds an Optimal button beside Season that
+  swaps the cards to the best lineups ("actual 116.9" under the score, "in" tags). Finished weeks
+  from `weeklyResults` (`opt_pts`, `optimal`, in the YTD export Standings already reads); live
+  with MFL's own method from `mfl_live_scoring.js` (`get_best_lineup`: the roster by points so far,
+  each position's minimum, then up to its maximum, 10 starters) on the feeds Scores already polls. From `liveScoring` with DETAILS
   (team and player scores, game seconds left, playing / to play, stat lines; refreshed every 30–60 s
   during games only), `projectedScores` (FantasySharks-based) and `schedule`; win probability from
   MFL's own `mfl_win_prob.js` (400 simulations of the remaining games from projected stats), run on
@@ -1251,9 +1259,6 @@ saves little.
 
 - A small public league-history site (records, bylaws), only after v2 is the default; champions are
   in League › Winners.
-- **Optimal lineup in Scores** (after the build; the commissioner, 18 Oct 2026): what each team's
-  best lineup would have scored, as MFL's live scoring page offers. For finished weeks
-  `weeklyResults` already has each team's `optimal` starters and `opt_pts`.
 
 Looked at in MFL's menus and left there (23 Oct 2026): rule-vote polls (voted at the draft), Trade
 Bait (unused), Player Ranks, ADP and AAV, Top Adds/Drops, Points Allowed, Who Should I Start,
