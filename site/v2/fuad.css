@@ -2493,13 +2493,10 @@ body #fuad-home select {
     #fuad-league ol.fuad-champions > li.fuad-row-mine { background: var(--fuad-raised); }
 }
 
-/* Scores: an open game's all-time series; the team pages' all-time record */
-#fuad-league .fuad-series { margin: 4px 0 2px; }
+/* the team pages' all-time record, and the viewer's against the team */
+#fuad-rosters .fuad-history { display: flex; flex-direction: column; gap: 2px; }
 
-#fuad-league .fuad-series:empty,
 #fuad-rosters .fuad-history:empty { display: none; }
-
-#fuad-rosters .fuad-history { margin: 0; }
 
 /* desktop: the places stacked, centered beside the pot */
 @media (min-width: 48.01em) {
