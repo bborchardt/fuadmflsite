@@ -4,7 +4,7 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {pendingGroups} from "../lib/bids.js";
-import {TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
+import {CHAMPIONSHIP_WEEK, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -24,8 +24,6 @@ const CHAT_IDLE = 2 * 60 * 60 * 1000;
 // phones show the newest messages in the page, with no box of their own to trap a swipe; the rest
 // are on MFL's chat page
 const PHONE_CHAT = 10;
-// Coming up's dates
-const COMING_ROWS = 3;
 const CHEVRON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>';
@@ -326,7 +324,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     // the calendar needs a login; logged out, Coming up keeps the season's own dates
     const calendar = loggedIn ? exp("calendar", {}, {optional: true}) : Promise.resolve(null);
     const dates = calendar.then(async (found) => {
-        const weeks = new Set([1, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK]);
+        const weeks = new Set([1, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK, CHAMPIONSHIP_WEEK]);
         asArray(found && found.event).map((event) => Number(event.start_time)).filter((n) => n > 0 && n < 100).forEach((n) => weeks.add(n));
         const times = await kickoffs(context.season, [...weeks]);
         return {calendar: found, kickoffs: times, dates: calendarDates(found, times)};
@@ -443,15 +441,14 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         }
     });
 
-    const calendarHref = mflPage(/^calendar$/i);
+    const calendarHref = mflPage(/^(league )?calendar$/i);
     drawPanel(panels.coming, {
         heading: "Coming up",
         actions: calendarHref ? `<a href="${esc(calendarHref)}">Calendar</a>` : "",
         what: "coming up",
         key: `fuad.home.coming.${context.season}.${loggedIn ? "member" : "guest"}`,
-        rows: COMING_ROWS,
         // a date within a few days is in My alerts instead
-        load: async () => (await coming()).filter((date) => !member || !date.soon).slice(0, COMING_ROWS),
+        load: async () => (await coming()).filter((date) => !member || !date.soon),
         render: (list, body) => {
             body.innerHTML = list.length
                 ? `<ul class="fuad-rows">${list.map((date) => `<li class="fuad-date"><span class="fuad-row-title">${esc(date.what)}</span><span class="fuad-meta">${esc(date.when)}</span></li>`).join("")}</ul>`
