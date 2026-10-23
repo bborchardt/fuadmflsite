@@ -3,10 +3,10 @@
 // except opened from Rosters (`window.fuadOpenPlayer`), where it offers the move that fits: Drop
 // and IR for the member's own, Propose a trade for another team's, Add for a free agent.
 
-import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {capPenalty} from "../lib/rules.js";
-import {NFL_TEAMS, ownerOf, readArticle, readPlayerPage} from "./player-page.js";
+import {NFL_TEAMS, holderOf, readArticle, readPlayerPage} from "./player-page.js";
 import {openDialog} from "./dialog.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -41,11 +41,25 @@ async function page(url) {
     return response.text();
 }
 
+// the page's own league load, when it has one (page-fetch.js)
+function leagueExport({season, leagueId}, type) {
+    return fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
+}
+
+// player id → the team holding him (holderOf), or null when the rosters can't be had
+function holders(context) {
+    return leagueExport(context, "rosters")
+        .then((rosters) => new Map(asArray(rosters.franchise).flatMap((team) => asArray(team.player).map((player) => [player.id, team.id]))))
+        .catch((error) => {
+            console.warn("[fuad] couldn't load the rosters for the popup:", error);
+            return null;
+        });
+}
+
 // the viewer's cap used, for "Cut now"; kept a couple of minutes, since it's only shown, not checked
-function capUsed({season, leagueId}, franchiseId) {
-    const host = window.location.origin;
-    // the page's own league load, when it has one (page-fetch.js)
-    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
+function capUsed(context, franchiseId) {
+    const {season} = context;
+    const league = (type) => leagueExport(context, type);
     return cached(`fuad.capUsed.${season}.${franchiseId}`, CAP_AGE, async () => {
         const [players, leagueInfo, rosters, salaryAdjustments, transactions, freeAgents] = await Promise.all([
             cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
@@ -132,9 +146,9 @@ function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
 }
 
 function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek, actions = null}) {
-    const ownerName = ownerOf(player.owner, [...teamNames.values()]);
-    const mine = Boolean(franchiseId && ownerName && teamNames.get(franchiseId) === ownerName);
-    const ownerId = ownerName ? ([...teamNames].find(([, name]) => name === ownerName) || [])[0] || null : null;
+    const ownerId = holderOf(player, player.holders, teamNames);
+    const ownerName = ownerId ? teamNames.get(ownerId) || "" : "";
+    const mine = Boolean(franchiseId && ownerId === franchiseId);
     const links = {moreNews: `${window.location.origin}/${context.season}/news_articles?L=${context.leagueId}&PLAYERS=${player.id}&DAYS=7`};
     const injured = player.injury
         ? `<p class="fuad-popup-injury"><span class="fuad-tag fuad-tag-${injuryTone(player.injury.status)}">${esc(player.injury.status)}${player.injury.detail ? ` · ${esc(player.injury.detail)}` : ""}</span>${player.expectedReturn ? `<span class="fuad-meta">Expected back ${esc(player.expectedReturn.replace(/,\s*\d{4}$/, ""))}</span>` : ""}</p>`
@@ -232,17 +246,16 @@ export function installPopup({context, franchiseId}) {
             what: "this player",
             rows: 6,
             load: async () => {
-                if (players.has(playerId)) {
-                    return players.get(playerId);
+                const held = holders(context);
+                if (!players.has(playerId)) {
+                    const player = readPlayerPage(await page(`${window.location.origin}/${context.season}/player?L=${context.leagueId}&P=${encodeURIComponent(playerId)}`));
+                    if (!player) {
+                        return {unreadable: true};
+                    }
+                    player.id = playerId;
+                    players.set(playerId, player);
                 }
-                const html = await page(`${window.location.origin}/${context.season}/player?L=${context.leagueId}&P=${encodeURIComponent(playerId)}`);
-                const player = readPlayerPage(html);
-                if (!player) {
-                    return {unreadable: true};
-                }
-                player.id = playerId;
-                players.set(playerId, player);
-                return player;
+                return {...players.get(playerId), holders: await held};
             },
             render: (player, body) => {
                 if (player.unreadable) {
