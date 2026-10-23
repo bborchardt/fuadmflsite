@@ -5,7 +5,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {pendingGroups} from "../lib/bids.js";
 import {CHAMPIONSHIP_WEEK, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
-import {esc} from "./html.js";
+import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {forget, mflFetch, pageFetch} from "./page-fetch.js";
@@ -30,7 +30,7 @@ const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke
 
 // a link in MFL's own menu, found by its text, so a page MFL moves still opens
 function mflPage(pattern) {
-    const link = [...document.querySelectorAll(".myfantasyleague_menu a[href]")].find((a) => pattern.test(a.textContent.trim()));
+    const link = [...document.querySelectorAll(".myfantasyleague_menu a[href]")].find((a) => pattern.test(clean(a.textContent)));
     return link ? link.href : null;
 }
 
