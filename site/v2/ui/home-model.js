@@ -9,7 +9,7 @@ import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_M
 const DAY = 24 * 60 * 60;
 // a date members act by moves from Coming up into My alerts this close to it
 export const SOON_DAYS = 3;
-const TO_DO = new Set(["draft", "cut", "bids", "trades", "adds"]);
+const TO_DO = new Set(["draft", "cut", "bids", "trades", "adds", "rollover"]);
 export const RECENT_MOVES = 10;
 export const TOPICS = 5;
 
@@ -71,7 +71,8 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         const week = start > 0 && start < 100 ? start : null;
         const at = week ? kickoffs.get(week) : start;
         if (at) {
-            const kind = event.type === "TRADE" ? "trades" : /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : null;
+            // the rollover is the last cut whose penalty clears before the new year
+            const kind = event.type === "TRADE" ? "trades" : /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : /contract year/i.test(title) ? "rollover" : null;
             dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind});
         }
         if (at && event.type === "TRADE" && Number(event.end_time) > at) {

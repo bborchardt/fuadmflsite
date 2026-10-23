@@ -186,8 +186,8 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
     // logged out there's no calendar, but the season's own dates show
     assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin", "Championship week"]);
-    // two days ahead, the cut-down, the deadline and free agency closing are to-dos for My alerts;
-    // week 1, the playoffs, the championship and trades reopening stay in Coming up
+    // two days ahead, the cut-down, the deadline, free agency closing and the rollover are to-dos for
+    // My alerts; week 1, the playoffs, the championship and trades reopening stay in Coming up
     const soon = (what, at) => comingUp({dates, kickoffs, now: at - 2 * 86400}).find((d) => d.what === what).soon;
     assert.equal(soon("Final Cut Down/Contract Length Deadline", 1788842700), true);
     assert.equal(soon("Trade deadline", kickoffs.get(12)), true);
@@ -196,7 +196,8 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.equal(soon("Playoffs begin", kickoffs.get(15)), false);
     assert.equal(soon("Championship week", kickoffs.get(17)), false);
     assert.equal(soon("Trades reopen", at("2027-01-06T12:00:00-06:00")), false);
-    assert.equal(soon("Contract Year Ends - Lengths Reduced by 1", 1804798800), false);
+    assert.equal(soon("Contract Year Ends - Lengths Reduced by 1", 1804798800), true);
+    assert.equal(soon("Rookie/Franchise Player Salaries Calculated for Next Year", kickoffs.get(12)), false);
     assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
