@@ -7,8 +7,21 @@ import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 
 const DAY = 24 * 60 * 60;
-// a date this close moves from Coming up into My alerts
+// a date members act by moves from Coming up into My alerts this close to it
 export const SOON_DAYS = 3;
+// the dates members act by, each with the page they act on; the rollover is the last cut whose
+// penalty clears before the new season
+const TO_DO = new Map([
+    ["draft", {}],
+    ["cut", {page: "drop", where: "Drop"}],
+    ["rollover", {page: "drop", where: "Drop", why: "Cut by then for the penalty to clear before next season"}],
+    ["bids", {page: "add", where: "Add"}],
+    ["adds", {page: "add", where: "Add"}],
+    ["trades", {page: "trades", where: "Trades"}]
+]);
+// a commissioner's event's kind from its title, the first that matches
+const TITLE_KINDS = [[/^trade deadline$/i, "trades"], [/contract year ends?\b/i, "rollover"], [/\bcut/i, "cut"], [/\bdraft/i, "draft"]];
+const titleKind = (title) => (TITLE_KINDS.find(([pattern]) => pattern.test(title)) || [])[1] || null;
 export const RECENT_MOVES = 10;
 export const TOPICS = 5;
 
@@ -42,8 +55,8 @@ export function homePhase({now, week1, seasonOver, drafted, cutDown}) {
 }
 
 // The commissioner's own dates and MFL's, one-off only, and the end of MFL's weekly waiver lock:
-// `{what, at, week}` with `at` in seconds. The trade deadline and other week-numbered events take
-// that week's first kickoff (`kickoffs`).
+// `{what, at, week, kind}` with `at` in seconds and `kind` naming the ones members act by. The trade
+// deadline and other week-numbered events take that week's first kickoff (`kickoffs`).
 export function calendarDates(calendar, kickoffs = new Map()) {
     const dates = [];
     const events = asArray(calendar && calendar.event);
@@ -52,7 +65,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
     const waivers = events.filter((event) => ["WAIVER_LOCK", "WAIVER_BBID"].includes(event.type) && Number(event.start_time) > 1e9);
     // free agency ends with the last time free agents go on waivers, or the last bid run after it
     if (waivers.some((event) => event.type === "WAIVER_LOCK")) {
-        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun))});
+        dates.push({what: "Free agency closes", at: Math.max(...waivers.map(lastRun)), kind: "adds"});
     }
     for (const event of events) {
         const start = Number(event.start_time);
@@ -70,7 +83,7 @@ export function calendarDates(calendar, kickoffs = new Map()) {
         const week = start > 0 && start < 100 ? start : null;
         const at = week ? kickoffs.get(week) : start;
         if (at) {
-            dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind: /cut/i.test(title) ? "cut" : /draft/i.test(title) ? "draft" : null});
+            dates.push({what: title.charAt(0).toUpperCase() + title.slice(1), at, week, kind: event.type === "TRADE" ? "trades" : titleKind(title)});
         }
         if (at && event.type === "TRADE" && Number(event.end_time) > at) {
             dates.push({what: "Trades reopen", at: Number(event.end_time)});
@@ -79,19 +92,19 @@ export function calendarDates(calendar, kickoffs = new Map()) {
     return dates;
 }
 
-// the event whose name contains "cut" (the commissioner's to-do)
+// the event with a word starting "cut" in its name (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the dates still ahead, soonest first. Without the calendar (logged out) the season's own
-// dates still show: week 1, the trade deadline, the playoffs and the championship.
+// Coming up: the dates still ahead, soonest first, `soon` when a to-do is close enough for My
+// alerts. Without the calendar (logged out) the season's own dates still show: week 1, the trade
+// deadline, the playoffs and the championship.
 export function comingUp({dates, kickoffs = new Map(), now}) {
     const all = dates.slice();
-    const has = (what) => all.some((date) => date.what === what);
     if (kickoffs.get(1)) {
         all.push({what: "Week 1 kickoff", at: kickoffs.get(1), week: 1});
     }
-    if (!has("Trade deadline") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
-        all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK});
+    if (!all.some((date) => date.kind === "trades") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
+        all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK, kind: "trades"});
     }
     if (kickoffs.get(PLAYOFFS_START_WEEK)) {
         all.push({what: "Playoffs begin", at: kickoffs.get(PLAYOFFS_START_WEEK), week: PLAYOFFS_START_WEEK});
@@ -103,7 +116,7 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
     const draftAhead = all.some((date) => date.kind === "draft" && date.at > now);
     return all.filter((date) => date.at > now && !(draftAhead && date.kind === "bids"))
         .sort((a, b) => a.at - b.at)
-        .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at), soon: date.at - now <= SOON_DAYS * DAY}));
+        .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at), soon: TO_DO.has(date.kind) && date.at - now <= SOON_DAYS * DAY}));
 }
 
 // Central time's offset from UTC at a moment, in seconds (−18000 in daylight time)
@@ -225,6 +238,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         }
     }
 
+    let bidsTimed = false;
     if (groups.length) {
         const projected = projectBids(franchise, groups, league.players);
         if (projected.overCap || projected.overRoster) {
@@ -232,6 +246,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
                 ? `If all high bids win: cap used ${money(franchise.capTotal)} → ${money(projected.cap)}`
                 : `If all high bids win: ${franchise.numPlayers} → ${projected.roster} active`, links.add, "Add");
         } else {
+            bidsTimed = Boolean(bidRun);
             push(tones.orange, "$", `${plural(projected.bids, "blind bid")} pending`, bidRun ? `They process ${whenText(bidRun)} CT` : "", links.add, "Add");
         }
     }
@@ -254,8 +269,10 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         push(tones.lime, "⇄", `Trade offer from ${trade.from}`, [trade.summary, trade.expires && `expires ${dayText(trade.expires)}`].filter(Boolean).join(" · "), links.trades, "Trades");
     }
 
-    for (const date of coming.filter((entry) => entry.soon)) {
-        push(tones.orange, "!", date.what, date.when, null);
+    // pending bids that say when they process stand in for the first run
+    for (const date of coming.filter((entry) => entry.soon && !(entry.kind === "bids" && bidsTimed))) {
+        const {page, where, why} = TO_DO.get(date.kind) || {};
+        push(tones.orange, "!", date.what, [date.when, why].filter(Boolean).join(" · "), links[page], where);
     }
     return alerts;
 }
