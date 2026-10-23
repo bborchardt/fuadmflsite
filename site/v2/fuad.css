@@ -438,7 +438,8 @@ body .pagebody textarea {
     color: var(--fuad-text);
     border: 1px solid var(--fuad-field);
     border-radius: 10px;
-    padding: 8px 10px;
+    /* !important, as MFL's 3 px on every field is */
+    padding: 8px 10px !important;
     font-size: 16px;
 }
 
@@ -463,6 +464,10 @@ body .pagebody button {
     /* MFL's skin paints a red glow inside its buttons */
     box-shadow: none;
 }
+
+/* MFL's 3 px !important reaches its input buttons, not v2's buttons */
+body .pagebody input[type="button"],
+body .pagebody input[type="submit"] { padding: 0 18px !important; }
 
 @media (hover: hover) {
     body input[type="button"]:hover,
@@ -1722,17 +1727,17 @@ body [tabindex]:focus-visible {
     font: 16px var(--fuad-body);
 }
 
-#fuad-home select { flex: 1; min-width: 0; width: 100%; padding: 0 10px; font-size: 15px; }
+#fuad-home select { flex: 1; min-width: 0; width: 100%; font-size: 15px; }
 
-/* skins pad their own fields and can load after this sheet, so the side padding is set outright: the
-   text off the edges, and room for the dropdown's arrow */
-body #fuad-home input:not([type="checkbox"]),
-body #fuad-home textarea { padding-left: 12px !important; padding-right: 12px !important; }
+/* skins pad their own fields and can load after this sheet, so the padding is set outright: the text
+   off the edges, and room for the dropdown's arrow */
+body #fuad-home input:not([type="checkbox"]) { padding: 0 12px !important; }
+
+body #fuad-home textarea { padding: 10px 12px !important; }
 
 /* the browser's own arrow ignores padding and hugs the edge, so the dropdown draws its own */
 body #fuad-home select {
-    padding-left: 12px !important;
-    padding-right: 36px !important;
+    padding: 0 36px 0 12px !important;
     -webkit-appearance: none;
     appearance: none;
     background-image: linear-gradient(45deg, transparent 50%, var(--fuad-muted) 50%), linear-gradient(135deg, var(--fuad-muted) 50%, transparent 50%);
@@ -1743,7 +1748,7 @@ body #fuad-home select {
 
 #fuad-home .fuad-chat-form input { flex: 1; min-width: 0; }
 
-#fuad-home textarea { padding: 10px 12px; line-height: 1.4; resize: vertical; }
+#fuad-home textarea { line-height: 1.4; resize: vertical; }
 
 #fuad-home input:focus,
 #fuad-home select:focus,
@@ -2590,7 +2595,7 @@ body #fuad-home select {
     width: 100%;
     min-height: 44px;
     margin-bottom: 14px;
-    padding: 0 12px;
+    padding: 0 12px !important;
     border: 1px solid var(--fuad-field);
     border-radius: 10px;
     background: var(--fuad-page);
@@ -3853,7 +3858,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     min-width: 0;
     height: auto;
     margin: 0;
-    padding: 0;
+    padding: 0 !important;
     border: 0;
     outline: 0;
     background: transparent;
