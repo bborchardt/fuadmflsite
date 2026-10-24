@@ -190,9 +190,12 @@ export function playerPool(league, {freeAgents, points, projections, byes, names
 
 // The chips: position, years left and owner rows, each a set (empty = All). In the offseason the
 // years row has FA (no contract: RFAs and UFAs), and the owner row says which.
-export function filterPlayers(pool, {positions = [], years = [], owners = [], text = "", viewer = null}) {
+export function filterPlayers(pool, {positions = [], years = [], owners = [], text = "", viewer = null, watched = null}) {
     const term = text.trim().toLowerCase();
     return pool.filter((player) => {
+        if (watched && !watched.has(player.id)) {
+            return false;
+        }
         if (positions.length && !positions.includes(player.position)) {
             return false;
         }

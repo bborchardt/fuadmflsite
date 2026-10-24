@@ -1279,7 +1279,30 @@ body [tabindex]:focus-visible {
 
 .fuad-popup-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 
-.fuad-popup-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fuad-popup-title { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+/* the member's watch list: a star by the close button, filled when watched */
+.fuad-layer .fuad-watch { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: none; color: var(--fuad-soft); cursor: pointer; }
+
+.fuad-layer .fuad-watch[aria-pressed="true"] { color: var(--fuad-lime); }
+
+.fuad-layer .fuad-watch[aria-pressed="true"] svg { fill: currentColor; }
+
+.fuad-layer .fuad-watch[hidden] { display: none; }
+
+.fuad-watch-note { margin: 4px 0 0; }
+
+.fuad-watch-note:empty { display: none; }
+
+/* the Watching chips: a star, filled when on */
+#fuad-rosters .fuad-filter.fuad-star-chip,
+#fuad-add .fuad-add-pos.fuad-star-chip { display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; }
+
+#fuad-rosters .fuad-star-chip svg,
+#fuad-add .fuad-star-chip svg { display: block; }
+
+#fuad-rosters .fuad-star-chip[aria-pressed="true"] svg,
+#fuad-add .fuad-star-chip[aria-pressed="true"] svg { fill: currentColor; }
 
 .fuad-popup h2 { font-size: 36px; line-height: 1.05; }
 
@@ -4261,6 +4284,8 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-add .fuad-add-free-head .fuad-add-search { width: 300px; height: 44px; background: var(--fuad-raised); }
     #fuad-add .fuad-add-free-head .fuad-add-search input { font-size: 15px; }
     #fuad-add .fuad-add-free-head .fuad-add-pos { flex: none; min-width: 48px; height: 36px; background: var(--fuad-quiet); }
+    /* a pressed chip keeps its light background over the quiet one */
+    #fuad-add .fuad-add-free-head .fuad-add-pos[aria-pressed="true"] { background: var(--fuad-text); }
     #fuad-add .fuad-add-fa-table { min-width: 900px; }
     #fuad-add .fuad-add-fa-line {
         display: grid;
