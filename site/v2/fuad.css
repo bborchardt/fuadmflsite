@@ -1294,6 +1294,16 @@ body [tabindex]:focus-visible {
 
 .fuad-watch-note:empty { display: none; }
 
+/* the Watching chips: a star, filled when on */
+#fuad-rosters .fuad-filter.fuad-star-chip,
+#fuad-add .fuad-add-pos.fuad-star-chip { display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; }
+
+#fuad-rosters .fuad-star-chip svg,
+#fuad-add .fuad-star-chip svg { display: block; }
+
+#fuad-rosters .fuad-star-chip[aria-pressed="true"] svg,
+#fuad-add .fuad-star-chip[aria-pressed="true"] svg { fill: currentColor; }
+
 .fuad-popup h2 { font-size: 36px; line-height: 1.05; }
 
 .fuad-popup-meta { font-size: 14px; }

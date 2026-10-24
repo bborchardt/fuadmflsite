@@ -13,7 +13,7 @@ import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
 import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
 import {contractTopic} from "./home-model.js";
-import {watchList, whenPopupClosed} from "./watch.js";
+import {STAR, watchList, whenPopupClosed} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
 import {
     LENGTHS, MAX_GROUPS, POSITIONS, addBlock, addsClosed, banner, bidsLeft, blockedText, changeTone, checkAdd, checkBid, claimKey,
@@ -400,7 +400,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     function chipsMarkup() {
         return `<div class="fuad-add-chips" role="group" aria-label="Position">${["ALL"].concat(POSITIONS).map((pos) => `<button type="button" class="fuad-add-pos" data-act="pos" data-pos="${pos}" aria-pressed="${state.pos === pos}">${pos === "ALL" ? "All" : pos}</button>`).join("")}${
-            watched ? `<button type="button" class="fuad-add-pos" data-act="watching" aria-pressed="${state.watching}">Watching</button>` : ""}</div>`;
+            watched ? `<button type="button" class="fuad-add-pos fuad-star-chip" data-act="watching" aria-pressed="${state.watching}" aria-label="Watching" title="Watching">${STAR}</button>` : ""}</div>`;
     }
 
     function searchMarkup() {

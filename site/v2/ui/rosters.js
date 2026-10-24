@@ -11,7 +11,7 @@ import {pageFetch} from "./page-fetch.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
-import {watchList, whenPopupClosed} from "./watch.js";
+import {STAR, watchList, whenPopupClosed} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
 import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
 import {
@@ -110,11 +110,18 @@ function picksPanels(years, {nextYear, live}) {
 const POSITION_CHIPS = ["All", ...POSITIONS.map((position) => position.code)];
 const OWNER_CHIPS = ["All", "Mine", "Other teams", "Free agents"];
 
-function chipRow(label, names, chosen, key) {
+// on phones, so the Owner row has room for the Watching star
+const SHORT_CHIPS = {"Other teams": "Others", "Free agents": "FAs"};
+
+// `extra`: more chips at the row's end (the Watching star after the owners)
+function chipRow(label, names, chosen, key, extra = "") {
     return `<div class="fuad-chip-row-group" role="group" aria-label="${esc(label)}">${names.map((name) => {
         const on = name === "All" ? !chosen.length : chosen.includes(name);
-        return `<button type="button" class="fuad-filter" aria-pressed="${on}" data-chip="${esc(key)}" data-value="${esc(name)}">${esc(name)}</button>`;
-    }).join("")}</div>`;
+        const text = SHORT_CHIPS[name]
+            ? `<span class="fuad-desktop-only">${esc(name)}</span><span class="fuad-phone-only" aria-hidden="true">${esc(SHORT_CHIPS[name])}</span>`
+            : esc(name);
+        return `<button type="button" class="fuad-filter" aria-pressed="${on}" data-chip="${esc(key)}" data-value="${esc(name)}"${SHORT_CHIPS[name] ? ` aria-label="${esc(name)}"` : ""}>${text}</button>`;
+    }).join("")}${extra}</div>`;
 }
 
 // ---- Draft ----
@@ -488,8 +495,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     const redraw = () => {
                         chips.innerHTML = chipRow("Position", POSITION_CHIPS, state.positions, "positions")
                             + chipRow("Years left", yearChips, state.years, "years")
-                            + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners") : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"))
-                            + (watched ? `<div class="fuad-chip-row-group" role="group" aria-label="Watch list"><button type="button" class="fuad-filter" aria-pressed="${state.watching}" data-chip="watching" data-value="Watching">Watching</button></div>` : "");
+                            + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners", watched ? `<button type="button" class="fuad-filter fuad-star-chip" aria-pressed="${state.watching}" data-chip="watching" data-value="Watching" aria-label="Watching" title="Watching">${STAR}</button>` : "")
+                                : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"));
                         const shown = sortPlayers(filterPlayers(pool, {...state, viewer, watched: state.watching ? watched : null}), state.sort, state.direction);
                         tbody.innerHTML = shown.map((player) => `<tr class="${player.owner && player.owner === viewer ? "fuad-row-mine" : ""}">${columns.map(([key]) => cell(player, key)).join("")}</tr>`).join("");
                         none.hidden = shown.length > 0;
