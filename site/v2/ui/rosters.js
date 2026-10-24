@@ -118,9 +118,9 @@ function chipRow(label, names, chosen, key, extra = "") {
     return `<div class="fuad-chip-row-group" role="group" aria-label="${esc(label)}">${names.map((name) => {
         const on = name === "All" ? !chosen.length : chosen.includes(name);
         const text = SHORT_CHIPS[name]
-            ? `<span class="fuad-desktop-only">${esc(name)}</span><span class="fuad-phone-only" aria-hidden="true">${esc(SHORT_CHIPS[name])}</span>`
+            ? `<span class="fuad-desktop-only">${esc(name)}</span><span class="fuad-phone-only">${esc(SHORT_CHIPS[name])}</span>`
             : esc(name);
-        return `<button type="button" class="fuad-filter" aria-pressed="${on}" data-chip="${esc(key)}" data-value="${esc(name)}"${SHORT_CHIPS[name] ? ` aria-label="${esc(name)}"` : ""}>${text}</button>`;
+        return `<button type="button" class="fuad-filter" aria-pressed="${on}" data-chip="${esc(key)}" data-value="${esc(name)}">${text}</button>`;
     }).join("")}${extra}</div>`;
 }
 
