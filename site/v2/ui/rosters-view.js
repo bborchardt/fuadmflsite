@@ -169,12 +169,17 @@ export function scalePanel() {
 
 // ---- A team's page and Teams ----
 
-// a team in My team's layout. `fromTeams`: opened from Teams, with the way back; `tradeHref`:
-// Propose a trade, on another team's page for a member logged in
-export function teamMarkup({sheet, picks, live, own, fromTeams, tradeHref, season}) {
+// the way back from a team's page: Back to where it was opened from, else Teams
+export function backLink(history) {
+    return history ? '<a class="fuad-back" href="#rosters-teams" data-back>‹ Back</a>' : '<a class="fuad-back" href="#rosters-teams">‹ Teams</a>';
+}
+
+// a team in My team's layout. `fromTeams`: under Teams, with the way back (`backHistory`: Back to
+// another view); `tradeHref`: Propose a trade, on another team's page for a member logged in
+export function teamMarkup({sheet, picks, live, own, fromTeams, backHistory = false, tradeHref, season}) {
     return `
 ${fromTeams ? `<div class="fuad-team-head">
-    <a class="fuad-back" href="#rosters-teams">‹ Teams</a>
+    ${backLink(backHistory)}
     <h2 class="fuad-team-name">${esc(sheet.name)}</h2>
     ${tradeHref ? `<a class="fuad-cta" href="${esc(tradeHref)}">Propose a trade</a>` : ""}
 </div>` : ""}
