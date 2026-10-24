@@ -240,7 +240,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-trades-on");
         await import("./trades.js").then(({drawTrades}) => drawTrades({
-            context, franchiseId, loginHref: loginLink(context), addHref: viewLinks(context, franchiseId)("Moves", "Add")
+            context, franchiseId, loginHref: loginLink(context), addHref: viewLinks(context, franchiseId)("Moves", "Add"), teamHref: teamLink(viewLinks(context, franchiseId))
         })).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Trades:", error);
             onTrouble();

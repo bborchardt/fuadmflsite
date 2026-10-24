@@ -5038,6 +5038,13 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-trades .fuad-trades-from strong { color: var(--fuad-text); font-weight: 600; overflow-wrap: anywhere; }
 
+/* the offer's team links to its page, white as its name was */
+#fuad-trades .fuad-trades-from a { color: inherit; }
+
+@media (hover: hover) {
+    #fuad-trades .fuad-trades-from a:hover { color: var(--fuad-lime); }
+}
+
 #fuad-trades .fuad-trades-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
 
 #fuad-trades .fuad-trades-sides > div { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
