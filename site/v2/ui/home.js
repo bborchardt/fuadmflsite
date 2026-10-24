@@ -2,23 +2,21 @@
 // Coming up, each panel loading on its own (ui/panel.js). MFL's tabs stay on the page underneath,
 // shown again for a home page tab that isn't Home.
 
-import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pendingGroups} from "../lib/bids.js";
 import {CHAMPIONSHIP_WEEK, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
-import {cached} from "./store.js";
 import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, cutDownDate, dayText, homePhase, leagueAlerts,
     lineupProblems, myAlerts, nextBidRun, recentMoves
 } from "./home-model.js";
-import {draftPicked} from "./context.js";
+import {draftPicked, kickoffAt} from "./context.js";
 import {moduleTopics, readChat, tradeOffers} from "./home-feeds.js";
 import {moveRows} from "./move-rows.js";
 
-const DAY = 24 * 60 * 60 * 1000;
 const CHAT_POLL = 15 * 1000;
 // MFL's own chat stops polling after about two hours without posting
 const CHAT_IDLE = 2 * 60 * 60 * 1000;
@@ -51,10 +49,7 @@ function fetcher({season, leagueId}, {fresh = false} = {}) {
 
 // the weeks' first kickoffs, in seconds, cached for a day; a week MFL hasn't scheduled is left out
 async function kickoffs(season, weeks) {
-    const found = await Promise.all(weeks.map((week) => cached(`fuad.kickoff.${season}.${week}`, DAY, async () => {
-        const date = await weekKickoff(season, week, {fetchImpl: pageFetch});
-        return date ? date.getTime() / 1000 : null;
-    }).catch(() => null)));
+    const found = await Promise.all(weeks.map((week) => kickoffAt(season, week).catch(() => null)));
     return new Map(weeks.map((week, i) => [week, found[i]]).filter(([, at]) => at));
 }
 

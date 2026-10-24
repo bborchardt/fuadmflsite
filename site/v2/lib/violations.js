@@ -2,7 +2,7 @@
 
 import {INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_CHECK_LAST_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
 import {contractDeadline, windowClosed} from "./adds.js";
-import {weekEnd, weekKickoff} from "./mfl.js";
+import {displayName, weekEnd, weekKickoff} from "./mfl.js";
 
 // MFL reports week 17 all offseason, so the season's phase comes from its NFL schedule. A schedule
 // MFL hasn't published counts as not yet.
@@ -19,8 +19,6 @@ export async function seasonPhase(season, now, options) {
         seasonOver: Boolean(end) && now >= end
     };
 }
-
-const displayName = (name) => String(name).split(",").reverse().map((part) => part.trim()).join(" ");
 
 // the NFL's IR and its variants (IR-R, IR-PUP, IR-NFI)
 export const onNflIR = (player) => /^IR/.test(player.injuryStatus || "");

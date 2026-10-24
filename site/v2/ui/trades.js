@@ -4,8 +4,9 @@
 // back before the page shows the result. MFL's forms stay in the page underneath; anything v2
 // can't read leaves MFL's page.
 
-import {API_BASE, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
+import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {TRADE_DEADLINE_WEEK} from "../lib/rules.js";
+import {kickoffAt} from "./context.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
@@ -33,10 +34,10 @@ async function loadGames(context, calendar) {
     const [thisWeek, nextWeek, deadline] = await Promise.all([
         week ? schedule(week) : null,
         week ? schedule(week + 1) : null,
-        weekKickoff(context.season, deadlineWeek(calendar, TRADE_DEADLINE_WEEK), {fetchImpl: pageFetch}).catch(() => null)
+        kickoffAt(context.season, deadlineWeek(calendar, TRADE_DEADLINE_WEEK)).catch(() => null)
     ]);
     const teams = teamKickoffs(thisWeek);
-    return {teams, all: [...teams.values(), ...teamKickoffs(nextWeek).values()], deadline: deadline ? deadline.getTime() / 1000 : null};
+    return {teams, all: [...teams.values(), ...teamKickoffs(nextWeek).values()], deadline};
 }
 
 export async function drawTrades({context, franchiseId, loginHref, addHref}) {

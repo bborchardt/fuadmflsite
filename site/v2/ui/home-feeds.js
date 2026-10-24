@@ -2,6 +2,7 @@
 // saved copies.
 
 import {asArray} from "../lib/mfl.js";
+import {ORDINAL} from "./home-model.js";
 
 const entities = {amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'"};
 const decode = (text) => String(text || "").replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (whole, code) => {
@@ -46,7 +47,6 @@ export function moduleTopics(links) {
         .filter((topic) => topic.id && topic.title);
 }
 
-const ORDINAL = ["", "1st", "2nd", "3rd", "4th", "5th"];
 const surname = (player) => String(player.fullName).split(" ").slice(1).join(" ") || player.fullName;
 
 function assets(list, players) {

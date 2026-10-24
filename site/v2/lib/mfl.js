@@ -8,9 +8,10 @@ export function asArray(value) {
     return Array.isArray(value) ? value : [value];
 }
 
+// "Jackson, Lamar" → "Lamar Jackson"
 export function displayName(mflName) {
-    const parts = String(mflName).split(",");
-    return parts.length < 2 ? parts[0] : parts[1].trim() + " " + parts[0];
+    const [last, first] = String(mflName).split(",").map((part) => part.trim());
+    return first ? `${first} ${last}` : last;
 }
 
 // MFL's team codes where they differ from the usual ones ("KCC" for "KC")

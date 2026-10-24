@@ -2,10 +2,11 @@
 // Draft, each under its own # (`#rosters-teams/0004` for one team) and loaded the first time it shows.
 // Names open the player popup with its Rosters actions (popup.js).
 
-import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached, storage} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
+import {beforeWeek1} from "./context.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
@@ -72,20 +73,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     };
 
     // before week 1: MFL's page says so once a week is done; else week 1's kickoff; in season on error
-    const beforeSeason = once(async () => {
-        if (Number(window.completedWeek) > 0 || Number(window.liveScoringWeek) > 1) {
-            return false;
-        }
-        try {
-            const kickoff = await cached(`fuad.kickoff.${season}.1`, DAY, async () => {
-                const date = await weekKickoff(season, 1, {fetchImpl: pageFetch});
-                return date ? date.getTime() / 1000 : null;
-            });
-            return !kickoff || Date.now() / 1000 < kickoff;
-        } catch (error) {
-            return false;
-        }
-    });
+    const beforeSeason = once(() => beforeWeek1(season));
     // the league model with every team's contracts, cap and penalties (lib/league.js), from the
     // page's own load
     const league = once(async () => {
