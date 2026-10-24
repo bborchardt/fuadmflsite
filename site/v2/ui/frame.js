@@ -227,6 +227,9 @@ export function drawFrame({context, storage}) {
             title.textContent = screen.title;
         }
     };
+    if (window.fuadDetourScreen) {
+        window.fuadDetour(window.fuadDetourScreen);
+    }
 
     loadContext(context)
         .then((line) => {

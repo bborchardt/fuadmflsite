@@ -25,14 +25,14 @@ function teamNames() {
     return new Map(Object.values(window.franchiseDatabase || {}).filter((team) => team.id && team.id !== "0000").map((team) => [team.id, String(team.name).trim()]));
 }
 
-// a link in MFL's own menu, found by its text
-function menuLink(pattern) {
-    const link = [...document.querySelectorAll("a[href]")].find((a) => pattern.test(a.textContent.replace(/\s+/g, " ").trim()));
-    return link ? link.href : null;
+// Home's screens: on phones Back goes to Home, not through the bid runs paged since. The frame may
+// still be loading, so it also picks the screen up from `fuadDetourScreen` when it's drawn.
+function detour(title, homeHref) {
+    window.fuadDetourScreen = {title, onBack: () => window.location.assign(homeHref)};
+    if (window.fuadDetour) {
+        window.fuadDetour(window.fuadDetourScreen);
+    }
 }
-
-const allBidsHref = ({season, leagueId}) => menuLink(/^processed waivers$/i) || `${window.location.origin}/${season}/processed_waivers?L=${leagueId}`;
-const allMovesHref = ({season, leagueId}) => menuLink(/^transactions$/i) || `${window.location.origin}/${season}/options?L=${leagueId}&O=03`;
 
 function players(season) {
     return cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player}))
@@ -54,16 +54,15 @@ function mountOn(id, className) {
     return mount;
 }
 
-function head(title, meta, link) {
+function head(title, meta) {
     return `<div class="fuad-page-head">
         <div class="fuad-page-title"><h2>${esc(title)}</h2><span class="fuad-meta" data-meta>${esc(meta)}</span></div>
-        ${link ? `<a class="fuad-page-link" href="${esc(link.href)}">${esc(link.text)} ›</a>` : ""}
     </div>`;
 }
 
 // ---- All moves ----
 
-export function drawAllMoves({context, franchiseId}) {
+export function drawAllMoves({context, franchiseId, homeHref}) {
     if (franchiseId === "0000") {
         return;
     }
@@ -75,7 +74,8 @@ export function drawAllMoves({context, franchiseId}) {
     const state = {team: "", kind: null};
     const known = () => players(context.season);
     const rows = moveRows({context, players: known, teams, withBids: Boolean(franchiseId)});
-    mount.innerHTML = `${head("All moves", "", franchiseId ? {text: "All bids", href: allBidsHref(context)} : null)}
+    detour("All moves", homeHref);
+    mount.innerHTML = `${head("All moves", "")}
         <div class="fuad-moves-filters">
             <label class="fuad-select"><span class="fuad-hidden">Team</span><select data-team>
                 <option value="">All teams</option>${[...teams].sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${esc(id)}">${esc(name)}</option>`).join("")}
@@ -172,7 +172,7 @@ function playerBlock(player, teams, {isVoided}) {
 }
 
 // Resolves to false, leaving MFL's page, when the page isn't one v2 can read (logged out, or changed)
-export function drawAllBids({context, franchiseId}) {
+export function drawAllBids({context, franchiseId, homeHref}) {
     if (franchiseId === "0000") {
         return false;
     }
@@ -209,7 +209,7 @@ export function drawAllBids({context, franchiseId}) {
     const earlier = runHref(options[at + 1]);
     const later = runHref(options[at - 1]);
     const draw = (gone = new Set()) => {
-        mount.innerHTML = `${head("All bids", plural(options.length, "bid run"), {text: "All moves", href: allMovesHref(context)})}
+        mount.innerHTML = `${head("All bids", plural(options.length, "bid run"))}
             <div class="fuad-run-picker">
                 ${earlier ? `<a class="fuad-step" href="${esc(earlier)}" aria-label="Earlier run">‹</a>` : '<span class="fuad-step" aria-hidden="true"></span>'}
                 <div class="fuad-week-label"><span class="fuad-week-name">${esc(label.day)}</span><span class="fuad-label">${esc([label.time, plural(bids, "bid")].filter(Boolean).join(" · "))}</span></div>
@@ -224,5 +224,6 @@ export function drawAllBids({context, franchiseId}) {
             draw(gone);
         }
     }).catch((error) => console.warn("[fuad] couldn't check the run for voided bids:", error));
+    detour("All bids", homeHref);
     return true;
 }
