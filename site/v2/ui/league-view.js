@@ -130,7 +130,7 @@ export function cardsMarkup(cards, {names, viewer, open, bench, preview, best}) 
 
 // ---- Standings ----
 
-export function standingsMarkup(divisions, {viewer, final}) {
+export function standingsMarkup(divisions, {viewer, final, teamHref}) {
     const head = `<tr><th scope="col" class="fuad-num"><span class="fuad-hidden">Rank</span></th><th scope="col">Team</th><th scope="col" class="fuad-num">W-L-T</th>
         <th scope="col" class="fuad-num fuad-wide">Pct</th><th scope="col" class="fuad-num">GB</th><th scope="col" class="fuad-num fuad-wide">Div</th>
         <th scope="col" class="fuad-num fuad-wide">All-play</th><th scope="col" class="fuad-num">PF</th><th scope="col" class="fuad-num fuad-wide">Avg PF</th>
@@ -142,7 +142,7 @@ export function standingsMarkup(divisions, {viewer, final}) {
             <div class="fuad-table-scroll"><table class="fuad-table fuad-standings">
                 <thead>${head}</thead>
                 <tbody>${division.rows.map((row) => `<tr${row.id === viewer ? ' class="fuad-row-mine"' : ""}>
-                    <td class="fuad-num fuad-muted">${row.rank}</td><th scope="row" class="fuad-team">${esc(row.name)}</th>
+                    <td class="fuad-num fuad-muted">${row.rank}</td><th scope="row" class="fuad-team"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></th>
                     <td class="fuad-num">${esc(`${row.h2h.w}-${row.h2h.l}-${row.h2h.t}`)}</td><td class="fuad-num fuad-wide">${esc(row.pct)}</td>
                     <td class="fuad-num fuad-muted">${esc(row.gamesBack)}</td><td class="fuad-num fuad-wide">${esc(row.divisionRecord)}</td>
                     <td class="fuad-num fuad-wide">${esc(recordText(row.allPlay))}</td><td class="fuad-num">${esc(row.pf.toFixed(1))}</td>
