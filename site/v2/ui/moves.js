@@ -1,11 +1,13 @@
 // What Moves' pages share: the team's data as their checks need it, fresh where the cap and roster
-// limits depend on it, and posting MFL's own forms and links from the page.
+// limits depend on it, posting MFL's own forms and links from the page, and the lines a move leaves.
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingGroups} from "../lib/bids.js";
+import {SALARY_CAP} from "../lib/rules.js";
+import {esc} from "./html.js";
 import {cached} from "./store.js";
-import {forget, mflFetch, pageFetch} from "./page-fetch.js";
+import {forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
 import {calendarDates, cutDownDate} from "./home-model.js";
@@ -120,4 +122,41 @@ export function movesPhase(facts, now = Date.now()) {
         over: Boolean(facts.seasonEnd && now >= facts.seasonEnd),
         drafted: facts.draftKnown === false || facts.drafted !== false
     });
+}
+
+// ---- what Moves' screens show ----
+
+export const WIDE = "(min-width: 48.01em)";
+export const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
+export const money = (amount) => `$${Math.round(amount * 100) / 100}`;
+// cap used over the cap, or within $10 of it
+export const capTone = (amount) => (amount > SALARY_CAP ? "fuad-bad" : amount > SALARY_CAP - 10 ? "fuad-caution" : "");
+
+// What a move leaves for after MFL's page reloads (`key` is the screen's): read once, {} when none
+export function takeFlash(key) {
+    try {
+        const flash = JSON.parse(window.sessionStorage.getItem(key) || "null");
+        window.sessionStorage.removeItem(key);
+        return flash || {};
+    } catch (error) {
+        return {};
+    }
+}
+
+export function leaveFlash(key, flash) {
+    try {
+        window.sessionStorage.setItem(key, JSON.stringify(flash));
+    } catch (error) {
+        // storage is blocked: the reload just shows the page as MFL has it
+    }
+}
+
+export const doneLine = (text) => `<p class="fuad-move-status" role="status">${CHECK}<span>${esc(text)}</span></p>`;
+export const alertLine = (text) => `<p class="fuad-move-alert" role="alert">${esc(text)}</p>`;
+
+// The data a screen's checks need couldn't load (`failed` is "busy" while MFL asks us to wait):
+// Retry, off until the wait is over, or MFL's own page
+export function failedBox(what, failed) {
+    const busy = failed === "busy";
+    return `<div class="fuad-move-alert fuad-move-failed" role="alert"><span>Couldn’t check ${what}.${busy ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry" data-act="retry"${busy && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-move-retry" data-act="mfl">MFL’s page</button></span></div>`;
 }
