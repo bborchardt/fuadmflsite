@@ -338,15 +338,13 @@ body .eventablerow th {
 body th a:link,
 body th a:visited { color: var(--fuad-muted); }
 
-body .report td { padding: 8px 10px; }
+body .report td { padding: 8px 10px; border: 0; box-shadow: none; color: inherit; }
 
 body .oddtablerow,
 body .eventablerow {
     background: transparent none;
     color: var(--fuad-text) !important;
 }
-
-body .report td { border: 0; box-shadow: none; color: inherit; }
 
 /* lines under rows, not over them: a line over the first row doubled the header row's, or sat
    under the heading of a table without one */
@@ -949,10 +947,10 @@ body [tabindex]:focus-visible {
     font-size: 13px;
     font-weight: 600;
     text-align: left;
+    position: relative;
 }
 
 /* the link's tap area reaches into the header around it */
-#fuad-frame .fuad-detour-link { position: relative; }
 #fuad-frame .fuad-detour-link::after { content: ""; position: absolute; left: -6px; right: -6px; top: -14px; bottom: -14px; }
 
 @media (min-width: 48.01em) {
@@ -1452,14 +1450,13 @@ body [tabindex]:focus-visible {
 
 /* ---- Home (ui/home.js): rebuilt on the home page in place of its Main tab ---- */
 
-/* MFL's page stays underneath for the home page's other tabs */
-#fuad-home { display: none; }
-
 .fuad-home-on #fuad-home { display: block; }
 
 .fuad-home-on body .pagebody > :not(#fuad-home) { display: none !important; }
 
+/* MFL's page stays underneath for the home page's other tabs */
 #fuad-home {
+    display: none;
     padding: 8px 0 24px;
     font-family: var(--fuad-body);
     font-size: 15px;
@@ -1832,9 +1829,6 @@ body #fuad-home select {
 
 /* ---- League (ui/league.js) and Rosters (ui/rosters.js), rebuilt on the home page ---- */
 
-#fuad-league,
-#fuad-rosters { display: none; }
-
 .fuad-league-on #fuad-league,
 .fuad-rosters-on #fuad-rosters { display: block; }
 
@@ -1843,6 +1837,7 @@ body #fuad-home select {
 
 #fuad-league,
 #fuad-rosters {
+    display: none;
     padding: 8px 0 24px;
     font-family: var(--fuad-body);
     font-size: 15px;
@@ -2164,9 +2159,6 @@ body #fuad-home select {
 #fuad-league .fuad-ln-pts,
 #fuad-rosters .fuad-ln-pts { display: grid; grid-template-columns: 40px 44px; align-items: center; gap: 0 8px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; text-align: right; }
 
-#fuad-league .fuad-ln-pts-b,
-#fuad-rosters .fuad-ln-pts-b { grid-template-columns: 44px 40px; text-align: left; }
-
 #fuad-league .fuad-ln-pts-a .fuad-ln-proj,
 #fuad-rosters .fuad-ln-pts-a .fuad-ln-proj { grid-column: 1; grid-row: 1; }
 
@@ -2178,7 +2170,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-ln-pts-a { padding-right: 12px; border-right: 1px solid var(--fuad-raised-edge); }
 
 #fuad-league .fuad-ln-pts-b,
-#fuad-rosters .fuad-ln-pts-b { padding-left: 2px; }
+#fuad-rosters .fuad-ln-pts-b { grid-template-columns: 44px 40px; padding-left: 2px; text-align: left; }
 
 #fuad-league .fuad-ln-proj,
 #fuad-rosters .fuad-ln-proj { font-size: 13px; font-weight: 500; color: var(--fuad-muted); }
@@ -3205,10 +3197,9 @@ body #fuad-home select {
     }
 
     #fuad-lineup .fuad-lineup-band { display: block; padding-bottom: 4px; }
-    #fuad-lineup .fuad-lineup-line .fuad-check { width: 28px; height: 28px; border-radius: 14px; cursor: pointer; }
+    #fuad-lineup .fuad-lineup-line .fuad-check { position: relative; width: 28px; height: 28px; border-radius: 14px; cursor: pointer; }
     #fuad-lineup .fuad-lineup-line .fuad-check:disabled { cursor: default; }
     /* the drawn check stays small; its tap area fills the cell */
-    #fuad-lineup .fuad-lineup-line .fuad-check { position: relative; }
     #fuad-lineup .fuad-lineup-line .fuad-check::after { content: ""; position: absolute; inset: -9px; }
     #fuad-lineup .fuad-num { text-align: right; font-variant-numeric: tabular-nums; }
     #fuad-lineup .fuad-lineup-projected { font: 700 18px var(--fuad-display); }
@@ -4190,8 +4181,6 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     font: 700 28px var(--fuad-display);
 }
 
-.fuad-add-layer .fuad-add-amount { background: var(--fuad-raised); }
-
 #fuad-add .fuad-add-amount:focus-within,
 .fuad-add-layer .fuad-add-amount:focus-within { border-color: var(--fuad-lime); }
 
@@ -4400,7 +4389,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 .fuad-add-layer .fuad-add-step { width: 46px; height: 46px; font-size: 22px; }
 
-.fuad-add-layer .fuad-add-amount { height: 46px; font-size: 24px; }
+.fuad-add-layer .fuad-add-amount { height: 46px; background: var(--fuad-raised); font-size: 24px; }
 
 .fuad-add-layer .fuad-add-amount input { width: 64px; font-size: 26px; }
 
