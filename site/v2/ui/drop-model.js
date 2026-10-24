@@ -4,7 +4,8 @@
 
 import {projectBids} from "../lib/bids.js";
 import {ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {args, dropGroups, firstLast, projection, readMarks} from "./add-model.js";
+import {args, dropGroups, firstLast, isIR, projection, readMarks} from "./add-model.js";
+import {cents} from "./format.js";
 
 // MFL's roster list on the Drop Players page (`playerDatabaseObj["picker"]`), from the page's
 // script text: each player's id and MFL's mark (`!` once his game has started)
@@ -20,8 +21,6 @@ export function readRoster(html) {
     return players;
 }
 
-const isIR = (player) => player && player.status === "INJURED_RESERVE";
-
 // A drop's checks: {fits, why, cap: {from, to}} for `drop` (a player id). Cap used takes his
 // penalty for his salary; a pending claim dropping him too counts as no drop after it. Blocked when
 // that takes cap used past the cap, or further past it, with every group's costliest claim; in
@@ -31,7 +30,7 @@ export function checkDrop(team, {drop, phase}) {
     const dropped = team.players.get(drop);
     const franchise = {
         ...team.franchise,
-        capTotal: Math.round((team.franchise.capTotal - dropped.salary + dropped.capPenalty) * 100) / 100,
+        capTotal: cents(team.franchise.capTotal - dropped.salary + dropped.capPenalty),
         numPlayers: team.franchise.numPlayers - (isIR(dropped) ? 0 : 1)
     };
     const groups = team.groups.map((group) => ({

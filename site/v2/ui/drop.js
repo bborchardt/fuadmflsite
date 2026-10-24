@@ -7,11 +7,12 @@ import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {
-    Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, money, movesPhase, refusal,
+    Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, movesPhase, refusal,
     rosterIds, send, takeFlash
 } from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
+import {money} from "./format.js";
 import {contractYears} from "./rosters-model.js";
 
 const FLASH_KEY = "fuad.dropFlash";

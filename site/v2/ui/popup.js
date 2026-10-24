@@ -13,16 +13,13 @@ import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
 import {setWatched, watchList, watchState} from "./watch.js";
+import {cents, money, ordinal, yearsText} from "./format.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const CAP_AGE = 2 * 60 * 1000;
 
 const STAR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9z"></path></svg>';
 const CLOSE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
-
-const money = (amount) => `$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
-const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;
-const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
 
 // Out, IR and suspended read as over a limit; doubtful and questionable as caution
 function injuryTone(status) {
@@ -176,7 +173,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek,
             if (used === null) {
                 return;
             }
-            const after = Math.round((used - player.salary + capPenalty(player.years, player.salary)) * 100) / 100;
+            const after = cents(used - player.salary + capPenalty(player.years, player.salary));
             const tone = after < used ? "fuad-good" : after > used ? "fuad-bad" : "";
             cut.innerHTML = ` · cap used ${money(used)} → <strong class="${tone}">${money(after)}</strong>`;
         }).catch((error) => console.warn("[fuad] couldn't load cap used for the popup:", error));

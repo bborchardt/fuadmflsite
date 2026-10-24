@@ -10,10 +10,11 @@
 import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
-import {alertLine, capTone, doneLine, failedBox, money} from "./moves.js";
+import {alertLine, capTone, doneLine, failedBox} from "./moves.js";
 import {changeTone, signed} from "./add-model.js";
 import {contractYears} from "./rosters-model.js";
 import {dropChoices, irBlockText} from "./ir-model.js";
+import {money} from "./format.js";
 
 const tone = (name) => (name ? ` fuad-${name}` : "");
 

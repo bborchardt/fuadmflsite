@@ -6,17 +6,15 @@
 import {GAME_HOURS, asArray} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {POSITIONS, firstLast, projection, surname} from "./add-model.js";
+import {POSITIONS, firstLast, isIR, projection, surname} from "./add-model.js";
 import {clock, dayText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
+import {cents, money} from "./format.js";
 
 const CT = "America/Chicago";
 const HOUR = 3600;
 // how close to a traded player's kickoff accepting warns that lineups need fixing
 export const KICKOFF_WARNING_HOURS = 3;
-
-const round2 = (amount) => Math.round(amount * 100) / 100;
-const isIR = (player) => Boolean(player && player.status === "INJURED_RESERVE");
 
 // ---- MFL's pages ----
 
@@ -172,11 +170,10 @@ export function assetView(id, {league, mflNames, holder, names, season}) {
         id, pick: false, player,
         name: player.fullName,
         surname: surname(mfl || player.fullName),
-        meta: [player.nflPosition, player.team, player.rfa ? "" : `$${round2(player.salary)}`, contractYears(player)].filter(Boolean).join(" · "),
+        meta: [player.nflPosition, player.team, player.rfa ? "" : money(player.salary), contractYears(player)].filter(Boolean).join(" · "),
         ir: isIR(player)
     };
 }
-
 
 // ---- what a trade does ----
 
@@ -191,7 +188,7 @@ export function tradeEffect(league, {mine, theirs, give, get}) {
     const active = (list) => list.filter((player) => !isIR(player)).length;
     const side = (franchise, losing, gaining) => ({
         franchise,
-        cap: {from: franchise.capTotal, to: round2(franchise.capTotal - salary(losing) + salary(gaining))},
+        cap: {from: franchise.capTotal, to: cents(franchise.capTotal - salary(losing) + salary(gaining))},
         active: {from: franchise.numPlayers, to: franchise.numPlayers - active(losing) + active(gaining)}
     });
     return {mine: side(league.franchises.get(mine), out, back), theirs: side(league.franchises.get(theirs), back, out)};
@@ -210,8 +207,6 @@ export function bidsAfter(team, effect, give) {
     const roster = after.overRoster && after.roster > before.roster ? after.roster : null;
     return cap || roster ? {cap, roster} : null;
 }
-
-const money = (amount) => `$${round2(amount)}`;
 
 // Why the trade can't be made, naming the limit, or null: either team over the cap after it (10.3).
 // A team already over may trade its way back under, not stay over (the commissioner's ruling).

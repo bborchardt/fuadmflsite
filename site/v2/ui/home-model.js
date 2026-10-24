@@ -5,6 +5,7 @@ import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
+import {money, plural} from "./format.js";
 
 const DAY = 24 * 60 * 60;
 // a date members act by is also in My alerts this close to it
@@ -34,8 +35,6 @@ export const clock = (seconds) => new Date(seconds * 1000).toLocaleTimeString("e
 // "Thu Oct 8, 7:42 p.m."
 export const whenText = (seconds) => `${dayText(seconds)}, ${clock(seconds)}`;
 const lastName = (player) => String(player.fullName).split(" ").slice(1).join(" ") || player.fullName;
-const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
-const money = (amount) => `$${Math.round(amount * 100) / 100}`;
 
 const tones = {red: "red", orange: "orange", lime: "lime"};
 
@@ -323,7 +322,7 @@ export function leagueAlerts(league, franchiseId, {now, cutDown = null} = {}) {
 }
 
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
-const ORDINAL = ["", "1st", "2nd", "3rd", "4th", "5th"];
+export const ORDINAL = ["", "1st", "2nd", "3rd", "4th", "5th"];
 
 // "Spencer Shrader (IND PK)"; a draft pick "2027 1st (Golden Ratio)"
 function asset(id, players, teamName) {

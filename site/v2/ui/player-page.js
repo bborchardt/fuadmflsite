@@ -2,6 +2,8 @@
 // hold in one request each what the player popup shows. If MFL changes their markup, the reader
 // returns null and the popup leaves the player to MFL's own.
 
+import {displayName} from "../lib/mfl.js";
+
 export const NFL_TEAMS = {
     ARI: "Arizona Cardinals", ATL: "Atlanta Falcons", BAL: "Baltimore Ravens", BUF: "Buffalo Bills",
     CAR: "Carolina Panthers", CHI: "Chicago Bears", CIN: "Cincinnati Bengals", CLE: "Cleveland Browns",
@@ -32,12 +34,6 @@ export function text(markup) {
         })
         .replace(/\s+/g, " ")
         .trim();
-}
-
-// "Jackson, Lamar" → "Lamar Jackson"
-export function displayName(mflName) {
-    const [last, first] = String(mflName).split(",").map((part) => part.trim());
-    return first ? `${first} ${last}` : last;
 }
 
 // the table whose class or id contains `marker`, up to its end
