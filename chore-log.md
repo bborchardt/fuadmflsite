@@ -41,3 +41,5 @@ What the daily job did, newest last.
 - 2026-10-23 12:49 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
 - 2026-10-23 12:49 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
 - 2026-10-23 12:49 UTC: Charged $2 to Not 100% A Dick for Jaylen Wright (2yrs@1, 10/22), and reset the player to $1 / 0 years.
+- 2026-10-24 12:11 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
+- 2026-10-24 12:11 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
