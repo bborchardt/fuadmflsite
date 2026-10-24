@@ -252,6 +252,10 @@ test("contract years: what can't be read is left for the commissioner, never gue
     const entries = contractEntries(result);
     assert.ok(entries.some((entry) => /^Contract years: Chris Olave: .*Left for the commissioner\.$/.test(entry)), entries.join("\n"));
     assert.ok(!imports(result).some((data) => /id="300"/.test(data.DATA)));
+    const hedged = run({scenario: {exports: withAdds(league(), {post: "Olave: 3 or 4 years"}), waivers: waiversPage("")}, env: {...LOGIN, CONTRACT_YEARS: "apply"}});
+    assert.ok(contractEntries(hedged).some((entry) => /^Contract years: Chris Olave: .*more than one length\. Left for the commissioner\.$/.test(entry)),
+        contractEntries(hedged).join("\n"));
+    assert.ok(!imports(hedged).some((data) => /id="300"/.test(data.DATA)));
     // a bid without a comment takes the default length
     assert.ok(entries.includes("Set Jaylen Waddle to 1 year (no length stated: the default)."), entries.join("\n"));
     const missing = run({scenario: {exports: withAdds(league()), waivers: '<a href="#">Logout</a><table class="report"><tr><th>Original Waiver Request</th></tr></table>'}, env: LOGIN});
