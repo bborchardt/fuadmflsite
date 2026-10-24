@@ -59,6 +59,15 @@ const YEARS = /(\$\s*)?(?<![\d.,-])\b(\d+|one|two|three|four|five)\s*-?\s*(?:yea
 const SENTENCE_END = /(?<=\b[A-Za-z]{3,}|\d)\.\s|[\n;!?]/;
 // words that can sit beside a bare count: "1 year contract please"
 const FILLER = new Set(["a", "for", "each", "both", "the", "contract", "length", "deal", "please", "pls", "thanks", "thx", "on", "of", "him"]);
+// a second count offered beside one: "3 or 4 years", "2 years, maybe 5"; "$1/1 year" is a salary
+const HEDGE_BEFORE = /(?<![$\d.])\b(?:[1-5]|one|two|three|four|five)\s*(?:or|to|\/)\s*$/i;
+const HEDGE_AFTER = /^[\s,]*(?:or|maybe|to|\/|possibly|perhaps)\s*(?:[1-5]|one|two|three|four|five)\b(?![\d.,])/i;
+// "2 years or 3 years": both counts are offered
+const HEDGE_BETWEEN = /^[\s,]*(?:or|maybe|possibly|perhaps|to|\/)\s*$/i;
+// a count that takes back the one before it: "3 years, no wait 4 years", or without its "years":
+// "3 years, no wait 4"
+const CORRECTION = /\b(?:no|nope|wait|actually|sorry|correction|oops|instead|meant|mean|change|changed|rather|scratch that|make (?:it|that))\b/i;
+const CORRECTED_AFTER = /^[\s,.;!-]*(?:no|nope|wait|actually|correction|oops|instead|i mean|i meant|rather|scratch that|changed my mind|make (?:it|that))\b[\s,]*(?:(?:wait|make (?:it|that)|it'?s)[\s,]*)*(?:[1-5]|one|two|three|four|five)(?=\s*(?:[.!,;)]|$))/i;
 
 export function yearMentions(text) {
     const mentions = [];
@@ -81,15 +90,19 @@ function bare(text, mention) {
 // A count belongs to the player named just before it ("Wilson 2yrs") or after it ("3 years for
 // Wilson"). A bare count ("1yr") belongs to the only candidate; with `bareForAll`, to every
 // candidate (a conditional bid, of which only one is won). `unplaced` counts name nobody the job
-// recognizes: a typo or a nickname.
+// recognizes: a typo or a nickname. `corrections` are unplaced counts worded as taking back the one
+// before.
 export function readYears(text, candidates, {allowBare = true, bareForAll = false, known = []} = {}) {
     const years = new Map();
     const problems = [];
     const unplaced = [];
+    const corrections = [];
     const others = known.filter((player) => !candidates.some((candidate) => candidate.playerId === player.playerId));
     const mentions = yearMentions(text);
-    const set = (candidate, count) => {
-        if (count < MIN_YEARS || count > MAX_YEARS) {
+    const set = (candidate, count, hedged = false) => {
+        if (hedged) {
+            problems.push(`"${text.trim()}" gives ${candidate.name} more than one length`);
+        } else if (count < MIN_YEARS || count > MAX_YEARS) {
             problems.push(`${count} years for ${candidate.name} is outside ${MIN_YEARS}-${MAX_YEARS}`);
         } else if (years.has(candidate.playerId) && years.get(candidate.playerId) !== count) {
             problems.push(`it gives ${candidate.name} both ${years.get(candidate.playerId)} and ${count} years`);
@@ -109,7 +122,7 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
         } else {
             problems.push(`"${text.trim()}" gives ${counts.join(", ")} years for ${candidates.map((candidate) => candidate.name).join(" and ")}`);
         }
-        return {years, problems, unplaced};
+        return {years, problems, unplaced, corrections};
     }
     mentions.forEach((mention, i) => {
         // a name pairs with a count in the same sentence: "Got Hill. Been here 5 years" isn't Hill's.
@@ -118,6 +131,9 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
         const onlyCount = normalize(sentences[sentences.length - 1]).split(" ").filter(Boolean).every((word) => FILLER.has(word));
         const before = sentences.slice(onlyCount ? -2 : -1).join(" ");
         const after = text.slice(mention.end, i + 1 < mentions.length ? mentions[i + 1].start : text.length);
+        const between = text.slice(i ? mentions[i - 1].end : 0, mention.start);
+        const hedged = HEDGE_BEFORE.test(between) || HEDGE_AFTER.test(after) || CORRECTED_AFTER.test(after)
+            || (i > 0 && HEDGE_BETWEEN.test(between)) || HEDGE_BETWEEN.test(i + 1 < mentions.length ? after : "x");
         let who = named(before, candidates, others);
         if (who && !who.length) {
             // "3 years for Wilson": a name in the same sentence, or a list the count introduces
@@ -136,17 +152,21 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
             problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
         } else if (!who.length && !isBare) {
             unplaced.push(mention.years);
+            const sentences = between.split(SENTENCE_END);
+            if (i && CORRECTION.test(sentences[sentences.length - 1])) {
+                corrections.push(mention.years);
+            }
         } else if (who.length === 1) {
-            set(who[0], mention.years);
+            set(who[0], mention.years, hedged);
         } else if (who.length > 1 && who.every((player) => candidates.includes(player))
             && /\b(each|both)\b/i.test(before + " " + after)) {
             // "2 years each: Ginn, Dissly, Edwards"
-            who.forEach((candidate) => set(candidate, mention.years));
+            who.forEach((candidate) => set(candidate, mention.years, hedged));
         } else if (who.length > 1) {
             problems.push(`"${text.trim()}" doesn't say which of ${who.map((candidate) => candidate.name).join(" and ")} gets ${mention.years} years`);
         }
     });
-    return {years, problems, unplaced};
+    return {years, problems, unplaced, corrections};
 }
 
 const decode = (text) => String(text)
@@ -193,6 +213,15 @@ export function teamPlayers({rosters, players}) {
 
 const label = (name) => name.split(",").reverse().map((part) => part.trim()).join(" ");
 
+// counts taking back the add's, when no other add (`others`) is left for them to be about
+function retracted(read, add, others) {
+    const years = read.years.get(add.playerId);
+    if (years === undefined || !others.every((other) => read.years.has(other.playerId))) {
+        return [];
+    }
+    return read.corrections.filter((count) => count !== years && count >= MIN_YEARS && count <= MAX_YEARS);
+}
+
 // returns {years, source}, {problem}, or null when the post isn't about the add. `others` are the
 // team's other adds made by then, which the post may be about instead.
 function readPost(add, post, team, others) {
@@ -202,6 +231,10 @@ function readPost(add, post, team, others) {
     const own = read.problems.filter((problem) => problem.includes(add.name));
     if (own.length) {
         return {problem: own.map((problem) => `post: ${problem}`).join("; ")};
+    }
+    const taken = retracted(read, add, others);
+    if (taken.length) {
+        return {problem: `post "${body.trim()}" gives more than one length: ${[read.years.get(add.playerId), ...taken].join(" and ")} years`};
     }
     if (read.years.has(add.playerId)) {
         return {years: read.years.get(add.playerId), source: `post "${body.trim()}"`};
@@ -237,6 +270,10 @@ function decideOne(add, {pending, posts, bidRequests, teams, contractDeadline}) 
         const own = read.problems.filter((problem) => problem.includes(add.name));
         if (own.length) {
             return {flag: `${label(add.name)}: ${own.map((problem) => `blind bid comment: ${problem}`).join("; ")}`};
+        }
+        const taken = retracted(read, add, candidates.filter((candidate) => candidate.playerId !== add.playerId));
+        if (taken.length) {
+            return {flag: `${label(add.name)}: blind bid comment "${request.comment.trim()}" gives more than one length: ${[read.years.get(add.playerId), ...taken].join(" and ")} years`};
         }
         if (!read.years.has(add.playerId)) {
             // problems about the bid's other players don't explain this one's missing length

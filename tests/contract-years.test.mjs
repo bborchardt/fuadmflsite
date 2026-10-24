@@ -172,6 +172,32 @@ test("the latest post in the window about an add decides, so owners can correct 
     assert.match(result.flags[0], /gives Keenum, Case both 3 and 2 years/);
 });
 
+test("a post or bid offering more than one length flags, rather than pick one", () => {
+    const decide = (body, adds = [add("6", "0008", "FREE_AGENT")]) => decideYears({adds, posts: [post("0008", body)], bidRequests: [], teams});
+    for (const body of ["Keenum: 3 or 4 years", "Keenum 3/4 yrs", "Keenum for 2 years, maybe 5", "Keenum 3 years, no wait 4 years",
+        "Keenum 3 years. Actually make it 4 years", "Keenum 2 years or 3", "Keenum 2 years or 3 years", "Keenum 3 years, no wait 4",
+        "Keenum 3 years. Changed my mind, 4 years"]) {
+        const result = decide(body);
+        assert.deepEqual(result.contracts, [], body);
+        assert.match(result.flags[0], /^Case Keenum: post.* more than one length/, body);
+    }
+    // a salary beside the length, a length beside a teammate's, and a misspelt other add's count aren't
+    // a second length
+    assert.equal(decide("Keenum - $1/1 year.").contracts[0].years, 1);
+    assert.equal(decide("Keenum 3 years\nBrazzell 2 years").contracts[0].years, 3);
+    for (const body of ["Keenum 3 years to 2028", "Keenum 2 years. I mean he's only got 2 years left", "Keenum 1 year / Brazzell 2 years",
+        "Keenum 2 years, no 2 ways about it", "Keenum 1 year. No, 5 bucks was too much"]) {
+        assert.deepEqual(decide(body).flags, [], body);
+    }
+    const both = decide("Keenum 3 years, sorry, Cameronn 2 years", [add("6", "0008", "FREE_AGENT"), add("11", "0008", "FREE_AGENT")]);
+    assert.equal(both.contracts[0].years, 3);
+    assert.match(both.flags[0], /^Josh Cameron: /);
+    const bidResult = decideYears({adds: [add("6", "0008", "BBID_WAIVER")], posts: [], teams, bidRequests: [bid("0008", ["Keenum, Case"], "Keenum 3 or 4 years")]});
+    assert.match(bidResult.flags[0], /blind bid comment: "Keenum 3 or 4 years" gives Keenum, Case more than one length/);
+    const corrected = decideYears({adds: [add("6", "0008", "BBID_WAIVER")], posts: [], teams, bidRequests: [bid("0008", ["Keenum, Case"], "Keenum 3 years, sorry, 4 years")]});
+    assert.match(corrected.flags[0], /blind bid comment "Keenum 3 years, sorry, 4 years" gives more than one length: 3 and 4 years/);
+});
+
 test("a missing bid and an impossible length are flagged, not guessed", () => {
     const decide = (adds, posts, bidRequests) => decideYears({adds, posts, bidRequests, teams});
     let result = decide([add("6", "0008", "BBID_WAIVER")], [], []);
