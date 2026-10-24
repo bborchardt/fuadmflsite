@@ -5430,6 +5430,14 @@ body #fuad-all-moves .fuad-select select { width: 100%; height: 44px; padding: 0
 
 #fuad-all-bids .fuad-run-who { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 6px; }
 
+#fuad-all-bids .fuad-name { position: relative; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+
+#fuad-all-bids .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
+
+@media (hover: hover) {
+    #fuad-all-bids .fuad-name:hover { color: var(--fuad-lime); }
+}
+
 body #fuad-all-bids .fuad-run-who h3 { margin: 0; padding: 0; border: 0; background: none; color: var(--fuad-text); font-family: var(--fuad-body); font-size: 17px; font-weight: 700; text-transform: none; text-align: left; }
 
 #fuad-all-bids .fuad-run-bids { list-style: none; margin: 0; padding: 0; }
