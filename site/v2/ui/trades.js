@@ -462,11 +462,14 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
         state.failed = false;
         render();
         try {
-            state.data = await loadData(context, franchiseId, {more: ["pendingTrades"]});
-            if (!state.data.league.franchises.get(franchiseId) || (proposal && !state.data.league.franchises.get(proposal.partner))) {
+            const data = await loadData(context, franchiseId, {more: ["pendingTrades"]});
+            if (!data.league.franchises.get(franchiseId) || (proposal && !data.league.franchises.get(proposal.partner))) {
                 throw new Error("the teams aren't in the rosters");
             }
-            state.games = await loadGames(context, state.data.calendar);
+            // the screens read both, so neither is kept until both are in: a redraw meanwhile (Back,
+            // a phone turned) still shows the placeholder
+            state.games = await loadGames(context, data.calendar);
+            state.data = data;
         } catch (error) {
             console.warn("[fuad] couldn't load Trades:", error);
             state.data = null;
