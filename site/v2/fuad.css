@@ -3756,7 +3756,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     padding: 12px 14px;
     border-radius: 12px;
     background: rgba(74, 222, 128, 0.1);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
 }
 
@@ -3768,8 +3768,30 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-add .fuad-add-status-warn svg { color: var(--fuad-caution); }
 
-#fuad-add .fuad-add-alert,
-.fuad-add-layer .fuad-add-alert {
+/* Moves' shared lines (ui/moves.js): a move's done line, its errors, and data that couldn't load */
+#fuad-drop .fuad-move-status,
+#fuad-ir .fuad-move-status,
+#fuad-trades .fuad-move-status {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(74, 222, 128, 0.1);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+#fuad-drop .fuad-move-status svg,
+#fuad-ir .fuad-move-status svg,
+#fuad-trades .fuad-move-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
+
+#fuad-add .fuad-move-alert,
+.fuad-add-layer .fuad-move-alert,
+#fuad-drop .fuad-move-alert,
+#fuad-ir .fuad-move-alert,
+#fuad-trades .fuad-move-alert {
     margin: 0;
     padding: 12px 14px;
     border-radius: 12px;
@@ -3780,15 +3802,31 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     line-height: 1.4;
 }
 
-#fuad-add .fuad-add-alert strong,
-.fuad-add-layer .fuad-add-alert strong { color: var(--fuad-bad); }
+#fuad-add .fuad-move-alert strong,
+.fuad-add-layer .fuad-move-alert strong,
+#fuad-drop .fuad-move-alert strong,
+#fuad-ir .fuad-move-alert strong,
+#fuad-trades .fuad-move-alert strong { color: var(--fuad-bad); }
 
-#fuad-add .fuad-add-failed { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
+#fuad-add .fuad-move-failed,
+#fuad-drop .fuad-move-failed,
+#fuad-ir .fuad-move-failed,
+#fuad-trades .fuad-move-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
 
-#fuad-add .fuad-add-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+#fuad-add .fuad-move-failed-buttons,
+#fuad-drop .fuad-move-failed-buttons,
+#fuad-ir .fuad-move-failed-buttons,
+#fuad-trades .fuad-move-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 
-#fuad-add .fuad-add-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); color: var(--fuad-text); }
-#fuad-add .fuad-add-retry:disabled { color: var(--fuad-faint); cursor: default; }
+#fuad-add .fuad-move-retry,
+#fuad-drop .fuad-move-retry,
+#fuad-ir .fuad-move-retry,
+#fuad-trades .fuad-move-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
+
+#fuad-add .fuad-move-retry:disabled,
+#fuad-drop .fuad-move-retry:disabled,
+#fuad-ir .fuad-move-retry:disabled,
+#fuad-trades .fuad-move-retry:disabled { color: var(--fuad-faint); }
 
 #fuad-add .fuad-cta,
 #fuad-add .fuad-add-start,
@@ -4439,40 +4477,6 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     font-weight: 700;
 }
 
-#fuad-drop .fuad-drop-status {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(74, 222, 128, 0.1);
-    font-size: 15px;
-    font-weight: 600;
-}
-
-#fuad-drop .fuad-drop-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
-
-#fuad-drop .fuad-drop-alert {
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--fuad-bad-tint);
-    color: #FFB3B3;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-#fuad-drop .fuad-drop-alert strong { color: var(--fuad-bad); }
-
-#fuad-drop .fuad-drop-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
-
-#fuad-drop .fuad-drop-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-
-#fuad-drop .fuad-drop-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
-#fuad-drop .fuad-drop-retry:disabled { color: var(--fuad-faint); }
-
 /* where the team stands, as IR's bar shows it */
 #fuad-drop .fuad-drop-bar {
     display: flex;
@@ -4545,7 +4549,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-drop .fuad-drop-cut strong.fuad-good { color: var(--fuad-good); }
 #fuad-drop .fuad-drop-cut strong.fuad-bad { color: var(--fuad-bad); }
 
-#fuad-drop .fuad-drop-review .fuad-drop-alert { flex-basis: 100%; }
+#fuad-drop .fuad-drop-review .fuad-move-alert { flex-basis: 100%; }
 
 /* the screen's own action: filled lime (red is kept for limits) */
 #fuad-drop .fuad-drop-go {
@@ -4683,43 +4687,9 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     font-weight: 700;
 }
 
-#fuad-ir .fuad-ir-status {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(74, 222, 128, 0.1);
-    font-size: 15px;
-    font-weight: 600;
-}
-
-#fuad-ir .fuad-ir-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
-
-#fuad-ir .fuad-ir-alert {
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--fuad-bad-tint);
-    color: #FFB3B3;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-#fuad-ir .fuad-ir-alert strong { color: var(--fuad-bad); }
-
 #fuad-ir .fuad-ir-must { color: var(--fuad-text); font-size: 15px; font-weight: 500; }
 
 #fuad-ir .fuad-ir-must a { white-space: nowrap; }
-
-#fuad-ir .fuad-ir-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
-
-#fuad-ir .fuad-ir-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-
-#fuad-ir .fuad-ir-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
-#fuad-ir .fuad-ir-retry:disabled { color: var(--fuad-faint); }
 
 #fuad-ir .fuad-ir-group { padding: 12px 14px 4px; }
 
@@ -4988,40 +4958,6 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     font-weight: 700;
 }
 
-#fuad-trades .fuad-trades-status {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(74, 222, 128, 0.1);
-    font-size: 15px;
-    font-weight: 600;
-}
-
-#fuad-trades .fuad-trades-status svg { flex: none; margin-top: 1px; color: var(--fuad-good); }
-
-#fuad-trades .fuad-trades-alert {
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--fuad-bad-tint);
-    color: #FFB3B3;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-#fuad-trades .fuad-trades-alert strong { color: var(--fuad-bad); }
-
-#fuad-trades .fuad-trades-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; color: var(--fuad-text); font-size: 15px; }
-
-#fuad-trades .fuad-trades-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-
-#fuad-trades .fuad-trades-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-bad); }
-#fuad-trades .fuad-trades-retry:disabled { color: var(--fuad-faint); }
-
 /* notices: red for a limit, orange for caution, grey for a plain fact */
 #fuad-trades .fuad-trades-notice {
     margin: 10px 0 0;
@@ -5115,7 +5051,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-trades .fuad-trades-reply,
 #fuad-trades .fuad-trades-message { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
-#fuad-trades .fuad-trades-answer > .fuad-trades-alert { margin-top: 10px; }
+#fuad-trades .fuad-trades-answer > .fuad-move-alert { margin-top: 10px; }
 
 #fuad-trades textarea,
 #fuad-trades input[type="date"],
@@ -5330,7 +5266,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-trades .fuad-trades-answer { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--fuad-raised-edge); }
     #fuad-trades .fuad-trades-answer > * { margin-top: 0; }
     #fuad-trades .fuad-trades-answer > .fuad-trades-notice,
-    #fuad-trades .fuad-trades-answer > .fuad-trades-alert { flex-basis: 100%; }
+    #fuad-trades .fuad-trades-answer > .fuad-move-alert { flex-basis: 100%; }
     #fuad-trades .fuad-trades-choices { display: flex; }
     #fuad-trades .fuad-trades-choice { min-width: 96px; padding: 0 14px; }
     #fuad-trades .fuad-trades-reply { flex: 1; flex-direction: row; flex-wrap: wrap; align-items: flex-end; min-width: 240px; }
@@ -5339,7 +5275,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-trades .fuad-trades-open { flex-direction: row; align-items: center; justify-content: space-between; }
 
     #fuad-trades .fuad-trades-sent { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto auto; gap: 8px 16px; align-items: center; padding: 12px 16px; }
-    #fuad-trades .fuad-trades-sent > .fuad-trades-alert { grid-column: 1 / -1; }
+    #fuad-trades .fuad-trades-sent > .fuad-move-alert { grid-column: 1 / -1; }
     #fuad-trades .fuad-trades-withdraw { justify-content: flex-end; margin-top: 0; }
 
     #fuad-trades .fuad-trades-partners { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
