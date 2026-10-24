@@ -11,6 +11,7 @@ import {pageFetch} from "./page-fetch.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
+import {STAR, watchList, whenPopupClosed} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
 import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
 import {
@@ -109,11 +110,18 @@ function picksPanels(years, {nextYear, live}) {
 const POSITION_CHIPS = ["All", ...POSITIONS.map((position) => position.code)];
 const OWNER_CHIPS = ["All", "Mine", "Other teams", "Free agents"];
 
-function chipRow(label, names, chosen, key) {
+// on phones, so the Owner row has room for the Watching star
+const SHORT_CHIPS = {"Other teams": "Others", "Free agents": "FAs"};
+
+// `extra`: more chips at the row's end (the Watching star after the owners)
+function chipRow(label, names, chosen, key, extra = "") {
     return `<div class="fuad-chip-row-group" role="group" aria-label="${esc(label)}">${names.map((name) => {
         const on = name === "All" ? !chosen.length : chosen.includes(name);
-        return `<button type="button" class="fuad-filter" aria-pressed="${on}" data-chip="${esc(key)}" data-value="${esc(name)}">${esc(name)}</button>`;
-    }).join("")}</div>`;
+        const text = SHORT_CHIPS[name]
+            ? `<span class="fuad-desktop-only">${esc(name)}</span><span class="fuad-phone-only">${esc(SHORT_CHIPS[name])}</span>`
+            : esc(name);
+        return `<button type="button" class="fuad-filter" aria-pressed="${on}" data-chip="${esc(key)}" data-value="${esc(name)}">${text}</button>`;
+    }).join("")}${extra}</div>`;
 }
 
 // ---- Draft ----
@@ -416,7 +424,21 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             });
         },
         players: (mount) => {
-            const state = {positions: [], years: [], owners: [], text: "", sort: null, direction: null};
+            const state = {positions: [], years: [], owners: [], watching: false, text: "", sort: null, direction: null};
+            // the member's watch list (watch.js) for the Watching chip; a star in the player popup changes it
+            let watched = null;
+            let redrawn = () => {};
+            if (viewer) {
+                watchList(context).then((list) => {
+                    watched = list;
+                    redrawn();
+                }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
+                window.addEventListener("fuad-watch", () => {
+                    if (state.watching) {
+                        whenPopupClosed(redrawn);
+                    }
+                });
+            }
             drawPanel(mount, {
                 what: "players", rows: 12,
                 load: async () => {
@@ -473,11 +495,12 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     const redraw = () => {
                         chips.innerHTML = chipRow("Position", POSITION_CHIPS, state.positions, "positions")
                             + chipRow("Years left", yearChips, state.years, "years")
-                            + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners") : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"));
-                        const shown = sortPlayers(filterPlayers(pool, {...state, viewer}), state.sort, state.direction);
+                            + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners", watched ? `<button type="button" class="fuad-filter fuad-star-chip" aria-pressed="${state.watching}" data-chip="watching" data-value="Watching" aria-label="Watching" title="Watching">${STAR}</button>` : "")
+                                : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"));
+                        const shown = sortPlayers(filterPlayers(pool, {...state, viewer, watched: state.watching ? watched : null}), state.sort, state.direction);
                         tbody.innerHTML = shown.map((player) => `<tr class="${player.owner && player.owner === viewer ? "fuad-row-mine" : ""}">${columns.map(([key]) => cell(player, key)).join("")}</tr>`).join("");
                         none.hidden = shown.length > 0;
-                        none.querySelector("button").hidden = !(state.positions.length || state.years.length || state.owners.length);
+                        none.querySelector("button").hidden = !(state.positions.length || state.years.length || state.owners.length || state.watching);
                         body.querySelectorAll(".fuad-sort").forEach((button) => {
                             const on = button.dataset.sort === state.sort;
                             button.closest("th").setAttribute("aria-sort", on ? (state.direction > 0 ? "ascending" : "descending") : "none");
@@ -490,6 +513,12 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     });
                     body.addEventListener("click", (event) => {
                         const chip = event.target.closest("[data-chip]");
+                        if (chip && chip.dataset.chip === "watching") {
+                            state.watching = !state.watching;
+                            redraw();
+                            body.querySelector('[data-chip="watching"]').focus();
+                            return;
+                        }
                         if (chip) {
                             const list = state[chip.dataset.chip];
                             const value = chip.dataset.value;
@@ -517,9 +546,24 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             state.positions.length = 0;
                             state.years.length = 0;
                             state.owners.length = 0;
+                            state.watching = false;
                             redraw();
                         }
                     });
+                    // a redraw from outside (the list arriving, a star changed) keeps focus on the chip or
+                    // player it was on
+                    redrawn = () => {
+                        const active = document.activeElement;
+                        const chip = active && active.dataset && active.dataset.chip ? `[data-chip="${active.dataset.chip}"][data-value="${CSS.escape(active.dataset.value || "")}"]` : null;
+                        const player = active && active.dataset && active.dataset.player ? `[data-player="${CSS.escape(active.dataset.player)}"]` : null;
+                        const had = (chip || player) && body.contains(active);
+                        redraw();
+                        // a player no longer on the list leaves focus on the Watching chip
+                        const again = had && (body.querySelector(chip || player) || body.querySelector('[data-chip="watching"]'));
+                        if (again) {
+                            again.focus();
+                        }
+                    };
                     redraw();
                 }
             });

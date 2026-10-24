@@ -404,10 +404,10 @@ export const changeTone = (amount) => (amount > 0 ? "bad" : amount < 0 ? "good" 
 export const usedTone = (from, to) => (to > SALARY_CAP ? "bad" : to < from ? "good" : "");
 
 // Free agents for the list, MFL's projection first. `blocked` is droppedByTeam's map.
-export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos = "ALL", sort = "proj", bids = true}) {
+export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos = "ALL", sort = "proj", bids = true, watched = null}) {
     const query = normalized(text);
     const rows = freeAgents
-        .filter((player) => (pos === "ALL" || player.pos === pos) && (!query || normalized(player.name).includes(query)))
+        .filter((player) => (pos === "ALL" || player.pos === pos) && (!query || normalized(player.name).includes(query)) && (!watched || watched.has(player.id)))
         .map((player) => {
             const until = blocked.get(player.id);
             // with no bid run left, a bid-only player can't be had
