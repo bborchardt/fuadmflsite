@@ -70,8 +70,10 @@ function capUsed(context, franchiseId) {
     });
 }
 
-function tile(label, value) {
-    return `<div class="fuad-tile"><span class="fuad-label">${esc(label)}</span><span class="fuad-tile-value">${esc(value)}</span></div>`;
+// `href` makes the value a link, closing the popup: to the team page it's over, the # doesn't change
+function tile(label, value, href = "") {
+    const text = href ? `<a href="${esc(href)}" data-close>${esc(value)}</a>` : esc(value);
+    return `<div class="fuad-tile"><span class="fuad-label">${esc(label)}</span><span class="fuad-tile-value">${text}</span></div>`;
 }
 
 function weeksSection(player, season, currentWeek) {
@@ -144,7 +146,7 @@ function actionButtons(player, {mine, ownerId, actions, franchiseId}) {
     return shown.length ? `<div class="fuad-popup-actions">${shown.map(([label, href]) => `<a class="fuad-button fuad-button-outline" href="${esc(href)}">${esc(label)}</a>`).join("")}</div>` : "";
 }
 
-function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek, actions = null}) {
+function drawPlayer(body, player, {context, franchiseId, teamNames, teamHref, currentWeek, actions = null}) {
     const ownerId = holderOf(player, player.holders, teamNames);
     const ownerName = ownerId ? teamNames.get(ownerId) || "" : "";
     const mine = Boolean(franchiseId && ownerId === franchiseId);
@@ -153,7 +155,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek,
         ? `<p class="fuad-popup-injury"><span class="fuad-tag fuad-tag-${injuryTone(player.injury.status)}">${esc(player.injury.status)}${player.injury.detail ? ` · ${esc(player.injury.detail)}` : ""}</span>${player.expectedReturn ? `<span class="fuad-meta">Expected back ${esc(player.expectedReturn.replace(/,\s*\d{4}$/, ""))}</span>` : ""}</p>`
         : "";
     const contract = ownerName ? [
-        tile("Owner", mine ? "Yours" : ownerName),
+        mine ? tile("Owner", "Yours") : tile("Owner", ownerName, teamHref(ownerId)),
         tile("Salary", player.salary === null ? "—" : money(player.salary)),
         tile("Years", player.years === null ? "—" : yearsText(player.years))
     ] : [tile("Owner", "Free agent"), tile("Salary", "—"), tile("Years", "—")];
@@ -215,7 +217,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek,
     });
 }
 
-export function installPopup({context, franchiseId}) {
+export function installPopup({context, franchiseId, teamHref}) {
     const member = Boolean(franchiseId && franchiseId !== "0000");
     const mflModal = window.launch_player_modal;
     const teamNames = new Map(Object.values(window.franchiseDatabase || {}).map((team) => [team.id, team.name]));
@@ -310,7 +312,7 @@ export function installPopup({context, franchiseId}) {
                 }
                 dialog.querySelector("h2").textContent = player.name;
                 dialog.querySelector(".fuad-popup-meta").textContent = [player.position, NFL_TEAMS[player.team] || player.team, player.jersey && `#${player.jersey}`].filter(Boolean).join(" · ");
-                drawPlayer(body, player, {context, franchiseId, teamNames, currentWeek: Number(window.liveScoringWeek) || 0, actions});
+                drawPlayer(body, player, {context, franchiseId, teamNames, teamHref, currentWeek: Number(window.liveScoringWeek) || 0, actions});
             }
         });
     }
