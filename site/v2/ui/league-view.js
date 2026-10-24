@@ -178,7 +178,7 @@ export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt, teamHref}
 
 // ---- Power ----
 
-export function powerMarkup(teams, {viewer, final}) {
+export function powerMarkup(teams, {viewer, final, teamHref}) {
     const top = Math.max(...teams.map((team) => team.power), 1);
     const bar = (team) => `<span class="fuad-power-bar" aria-hidden="true"><span class="${team.id === viewer ? "fuad-bar-mine" : ""}" style="width: ${Math.round(team.power / top * 100)}%"></span></span>`;
     const heading = `<h2 class="fuad-panel-heading">Power rankings${final ? ` · ${esc(final)} final` : ""}</h2>`;
@@ -194,7 +194,7 @@ export function powerMarkup(teams, {viewer, final}) {
     const desktop = `<div class="fuad-table-scroll fuad-desktop-only"><table class="fuad-table fuad-power">
         <thead><tr><th scope="col" class="fuad-num"><span class="fuad-hidden">Rank</span></th><th scope="col">Team</th><th scope="col">Power</th>${columns.map((name) => `<th scope="col" class="fuad-num">${name}</th>`).join("")}</tr></thead>
         <tbody>${teams.map((team, i) => `<tr${team.id === viewer ? ' class="fuad-row-mine"' : ""}>
-            <td class="fuad-num fuad-muted">${i + 1}</td><th scope="row" class="fuad-team">${esc(team.name)}</th>
+            <td class="fuad-num fuad-muted">${i + 1}</td><th scope="row" class="fuad-team"><a href="${esc(teamHref(team.id))}">${esc(team.name)}</a></th>
             <td><span class="fuad-power-cell">${bar(team)}<span class="fuad-power-score">${esc(team.power.toFixed(2))}</span></span></td>
             ${[team.pf, team.possible, team.efficiency, team.bench, team.high, team.low, team.allPlay, team.couldaWon, team.wouldaLost, team.alternate].map((value) => `<td class="fuad-num">${esc(value)}</td>`).join("")}
         </tr>`).join("")}</tbody>
