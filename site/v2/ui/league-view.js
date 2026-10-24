@@ -89,13 +89,13 @@ function cardMarkup(card, i, {names, viewer, open, benchOpen, preview, best = fa
     </article>`;
 }
 
-export function seasonMarkup({lastRegular, endWeek, rows, names, current, live, title, line}) {
+export function seasonMarkup({lastRegular, endWeek, rows, names, current, live, title, line, teamHref}) {
     const tone = (result) => (/^Live/.test(result) ? "fuad-live" : /^W/.test(result) ? "fuad-good" : /^L/.test(result) ? "fuad-bad-text" : "fuad-muted");
     return `<section class="fuad-panel" aria-label="Your season">
         <div class="fuad-panel-head"><h2 class="fuad-panel-heading">${esc(title)}</h2><span class="fuad-meta">${esc(line)}</span></div>
         <ul class="fuad-rows">${rows.map((row) => {
             const result = row.week === current && live ? live : row.result || (row.week === current ? "This week" : "");
-            return `<li class="fuad-season-row${row.week === current ? " fuad-row-mine" : ""}"><span class="fuad-meta">W${row.week}</span><span>${esc(names.get(row.opponent) || "")}</span><span class="${tone(result)}">${esc(result)}</span></li>`;
+            return `<li class="fuad-season-row${row.week === current ? " fuad-row-mine" : ""}"><span class="fuad-meta">W${row.week}</span><span>${row.opponent ? `<a href="${esc(teamHref(row.opponent))}">${esc(names.get(row.opponent) || "")}</a>` : ""}</span><span class="${tone(result)}">${esc(result)}</span></li>`;
         }).join("")}
             <li class="fuad-season-row fuad-season-end"><span class="fuad-meta"></span><span class="fuad-muted">Weeks ${lastRegular + 1}–${endWeek}</span><span class="fuad-muted">Playoffs</span></li>
         </ul>
