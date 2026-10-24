@@ -3,7 +3,7 @@
 // menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
 
 import {clean, esc, initials} from "./html.js";
-import {REBUILT, locate, pageOf, sections, storedTabs} from "./nav.js";
+import {REBUILT, locate, pageOf, sections, storedTabs, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
@@ -239,5 +239,6 @@ export function drawFrame({context, storage}) {
         })
         .catch((error) => console.warn("[fuad] couldn't tell the week:", error));
 
-    installPopup({context, franchiseId});
+    const rosters = all.find((section) => section.name === "Rosters");
+    installPopup({context, franchiseId, teamHref: teamLinks(rosters.views.find((view) => view.name === "Teams").href)});
 }
