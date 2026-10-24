@@ -194,7 +194,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 },
                 render: (rows, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");
-                    body.innerHTML = positionsMarkup(rows, {viewer});
+                    body.innerHTML = positionsMarkup(rows, {viewer, teamHref});
                 }
             });
         },

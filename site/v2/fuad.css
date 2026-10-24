@@ -2665,9 +2665,13 @@ body #fuad-home select {
 #fuad-league .fuad-row-mine .fuad-team a,
 #fuad-league .fuad-row-mine .fuad-row-title a { font-weight: 700; }
 
+/* the chart's names keep their own weight: bold only for the viewer */
+#fuad-league .fuad-position-name a { color: var(--fuad-text); }
+
 @media (hover: hover) {
     #fuad-league .fuad-team a:hover,
-    #fuad-league .fuad-row-title a:hover { color: var(--fuad-lime); }
+    #fuad-league .fuad-row-title a:hover,
+    #fuad-league .fuad-position-name a:hover { color: var(--fuad-lime); }
 }
 
 /* Players: the find box and chips, then the table; on desktop it scrolls inside itself */

@@ -202,7 +202,7 @@ export function powerMarkup(teams, {viewer, final, teamHref}) {
     return `<section class="fuad-panel">${heading}${phone}${desktop}</section>`;
 }
 
-export function positionsMarkup(rows, {viewer}) {
+export function positionsMarkup(rows, {viewer, teamHref}) {
     const top = Math.max(...rows.map((row) => row.total), 1);
     const legend = `<span class="fuad-legend">${POSITION_ORDER.map((position) => `<span><span class="fuad-swatch fuad-pos-${position.toLowerCase()}" aria-hidden="true"></span>${position}</span>`).join("")}</span>`;
     return `<section class="fuad-panel fuad-positions">
@@ -213,7 +213,7 @@ export function positionsMarkup(rows, {viewer}) {
         <div id="fuad-positions-body">
             ${legend}
             <ul class="fuad-position-rows">${rows.map((row) => `<li>
-                <span class="fuad-position-name${row.id === viewer ? " fuad-strong" : ""}">${esc(row.name)}</span>
+                <span class="fuad-position-name${row.id === viewer ? " fuad-strong" : ""}"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></span>
                 <span class="fuad-position-total">${row.total}</span>
                 <span class="fuad-stack" style="width: ${Math.round(row.total / top * 100)}%" aria-hidden="true">${row.parts.map((part) => `<span class="fuad-pos-${part.position.toLowerCase()}" style="flex: ${part.points} 1 0">${part.points}</span>`).join("")}</span>
                 <span class="fuad-position-values">${row.parts.map((part) => `${part.position} ${part.points}`).join(" · ")}</span>
