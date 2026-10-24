@@ -551,7 +551,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         const player = active && active.dataset && active.dataset.player ? `[data-player="${CSS.escape(active.dataset.player)}"]` : null;
                         const had = (chip || player) && body.contains(active);
                         redraw();
-                        const again = had && body.querySelector(chip || player);
+                        // a player no longer on the list leaves focus on the Watching chip
+                        const again = had && (body.querySelector(chip || player) || body.querySelector('[data-chip="watching"]'));
                         if (again) {
                             again.focus();
                         }
