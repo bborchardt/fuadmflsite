@@ -154,16 +154,16 @@ function drawScores(mount, data) {
     const twoColumns = window.matchMedia(TWO_COLUMNS);
     mount.innerHTML = `
         <div class="fuad-scores-bar${before ? "" : " fuad-scores-toggles"}">
+            ${before ? "" : `<div class="fuad-bar-toggles">
+                ${viewer ? '<button type="button" class="fuad-toggle" aria-pressed="false" data-season>Season</button>' : ""}
+                <button type="button" class="fuad-toggle" aria-pressed="false" data-best disabled>Best</button>
+            </div>`}
             <div class="fuad-weekpicker">
                 <button type="button" class="fuad-step" data-step="-1" aria-label="Previous week">‹</button>
                 <div class="fuad-week-label" aria-live="polite"><span class="fuad-week-name"></span><span class="fuad-week-state fuad-label"></span></div>
                 <button type="button" class="fuad-step" data-step="1" aria-label="Next week">›</button>
             </div>
             <div class="fuad-season-title" hidden><span class="fuad-week-name"></span><span class="fuad-label"></span></div>
-            ${before ? "" : `<div class="fuad-bar-toggles">
-                <button type="button" class="fuad-toggle" aria-pressed="false" data-best disabled>Best</button>
-                ${viewer ? '<button type="button" class="fuad-toggle" aria-pressed="false" data-season>Season</button>' : ""}
-            </div>`}
         </div>
         <div class="fuad-scores-body"></div>`;
     const body = mount.querySelector(".fuad-scores-body");
