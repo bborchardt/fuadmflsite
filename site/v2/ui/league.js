@@ -182,7 +182,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 },
                 render: (teams, body) => {
                     mount.firstElementChild.classList.remove("fuad-panel");
-                    body.innerHTML = powerMarkup(teams, {viewer, final});
+                    body.innerHTML = powerMarkup(teams, {viewer, final, teamHref});
                 }
             });
             drawPanel(mount.lastElementChild, {
