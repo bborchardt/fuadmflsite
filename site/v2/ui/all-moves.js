@@ -62,7 +62,7 @@ function head(title, meta) {
 
 // ---- All moves ----
 
-export function drawAllMoves({context, franchiseId, homeHref}) {
+export function drawAllMoves({context, franchiseId, homeHref, teamHref}) {
     if (franchiseId === "0000") {
         return;
     }
@@ -73,7 +73,7 @@ export function drawAllMoves({context, franchiseId, homeHref}) {
     const teams = teamNames();
     const state = {team: "", kind: null};
     const known = () => players(context.season);
-    const rows = moveRows({context, players: known, teams, withBids: Boolean(franchiseId)});
+    const rows = moveRows({context, players: known, teams, teamHref, withBids: Boolean(franchiseId)});
     detour("All moves", homeHref);
     mount.innerHTML = `${head("All moves", "")}
         <div class="fuad-moves-filters">
@@ -153,26 +153,26 @@ async function voided(context, period, list) {
     return new Set(list.filter((player) => player.won && !wins.has(`${player.won.team}|${displayName(player.name)}`)).map((player) => player.name));
 }
 
-function bidItem(bid, teams, {won = false, tag = ""} = {}) {
+function bidItem(bid, teams, teamHref, {won = false, tag = ""} = {}) {
     return `<li class="${won ? "fuad-run-won" : ""}">
-        <span class="fuad-run-team">${esc(teams.get(bid.team) || `Team ${bid.team}`)}${tag}</span>
+        <span class="fuad-run-team"><a href="${esc(teamHref(bid.team))}">${esc(teams.get(bid.team) || `Team ${bid.team}`)}</a>${tag}</span>
         <span class="fuad-run-amount">$${bid.amount}<span class="fuad-meta">${esc(yearsText(bid.years))}${bid.reason ? ` · ${esc(bid.reason)}` : ""}</span></span>
     </li>`;
 }
 
-function playerBlock(player, teams, {isVoided}) {
+function playerBlock(player, teams, teamHref, {isVoided}) {
     const count = (player.won ? 1 : 0) + player.bids.length;
     const top = player.won
-        ? bidItem(player.won, teams, {won: true, tag: isVoided ? '<span class="fuad-tag fuad-tag-muted">Voided</span>' : '<span class="fuad-tag fuad-tag-lime">Won</span>'})
+        ? bidItem(player.won, teams, teamHref, {won: true, tag: isVoided ? '<span class="fuad-tag fuad-tag-muted">Voided</span>' : '<span class="fuad-tag fuad-tag-lime">Won</span>'})
         : '<li class="fuad-run-none"><span class="fuad-muted">Not awarded</span></li>';
     return `<section class="fuad-panel fuad-run-player">
         <div class="fuad-run-who"><h3>${esc(displayName(player.name))}</h3><span class="fuad-meta">${esc([player.position, player.nfl, plural(count, "bid")].join(" · "))}</span></div>
-        <ul class="fuad-run-bids">${top}${player.bids.map((bid) => bidItem(bid, teams)).join("")}</ul>
+        <ul class="fuad-run-bids">${top}${player.bids.map((bid) => bidItem(bid, teams, teamHref)).join("")}</ul>
     </section>`;
 }
 
 // Resolves to false, leaving MFL's page, when the page isn't one v2 can read (logged out, or changed)
-export function drawAllBids({context, franchiseId, homeHref}) {
+export function drawAllBids({context, franchiseId, homeHref, teamHref}) {
     if (franchiseId === "0000") {
         return false;
     }
@@ -215,7 +215,7 @@ export function drawAllBids({context, franchiseId, homeHref}) {
                 <div class="fuad-week-label"><span class="fuad-week-name">${esc(label.day)}</span><span class="fuad-label">${esc([label.time, plural(bids, "bid")].filter(Boolean).join(" · "))}</span></div>
                 ${later ? `<a class="fuad-step" href="${esc(later)}" aria-label="Later run">›</a>` : '<span class="fuad-step" aria-hidden="true"></span>'}
             </div>
-            ${list.length ? list.map((player) => playerBlock(player, teams, {isVoided: gone.has(player.name)})).join("") : '<section class="fuad-panel"><p class="fuad-muted fuad-empty">No bids in this run.</p></section>'}`;
+            ${list.length ? list.map((player) => playerBlock(player, teams, teamHref, {isVoided: gone.has(player.name)})).join("") : '<section class="fuad-panel"><p class="fuad-muted fuad-empty">No bids in this run.</p></section>'}`;
     };
     draw();
     // voided bids once the transactions arrive; without them the run shows as MFL has it

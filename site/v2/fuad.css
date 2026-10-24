@@ -1690,6 +1690,17 @@ body [tabindex]:focus-visible {
 #fuad-all-moves .fuad-move strong,
 #fuad-all-bids .fuad-move strong { font-weight: 600; }
 
+/* a move's or a bid's team links to its page, in the row's own colour */
+#fuad-home .fuad-move a,
+#fuad-all-moves .fuad-move a,
+#fuad-all-bids .fuad-run-team a { color: inherit; text-decoration: none; }
+
+@media (hover: hover) {
+    #fuad-home .fuad-move a:hover,
+    #fuad-all-moves .fuad-move a:hover,
+    #fuad-all-bids .fuad-run-team a:hover { color: var(--fuad-lime); }
+}
+
 /* a won bid's line of the run's other bids */
 #fuad-home .fuad-also,
 #fuad-all-moves .fuad-also { display: block; margin-top: 2px; font-size: 13px; color: var(--fuad-muted); }

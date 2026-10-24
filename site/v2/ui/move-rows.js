@@ -24,9 +24,9 @@ export function bidRuns({season, leagueId}) {
     });
 }
 
-// `players()` resolves to v2's players (for a bid's player's name), `teams` maps team ids to names; a
-// won bid shows the run's other bids only `withBids` (logged in)
-export function moveRows({context, players, teams, withBids}) {
+// `players()` resolves to v2's players (for a bid's player's name), `teams` maps team ids to names,
+// `teamHref(id)` is a team's page; a won bid shows the run's other bids only `withBids` (logged in)
+export function moveRows({context, players, teams, teamHref, withBids}) {
     const bidRun = bidRuns(context);
     // one read per run however many rows show it; one that fails isn't asked again until the page
     // reloads, as All moves draws its rows again on every filter
@@ -52,7 +52,7 @@ export function moveRows({context, players, teams, withBids}) {
         // `when` adds each move's day under it (Home; All moves heads each day instead)
         markup(moves, {when = true} = {}) {
             return `<ul class="fuad-rows">${moves.map((move, i) => `<li class="fuad-move"><span class="fuad-label">${esc(move.kind)}</span>
-                <span class="fuad-row-text"><span><strong>${esc(move.team)}</strong> ${esc(move.what)}</span>${when ? `<span class="fuad-meta">${esc(move.when)}</span>` : ""}${
+                <span class="fuad-row-text"><span><strong><a href="${esc(teamHref(move.teamIds[0]))}">${esc(move.team)}</a></strong> ${esc(move.what)}</span>${when ? `<span class="fuad-meta">${esc(move.when)}</span>` : ""}${
                 move.bid && withBids ? `<span class="fuad-also" data-move="${i}">${esc(lines.get(keyOf(move.bid)) || "")}</span>` : ""}</span></li>`).join("")}</ul>`;
         },
         // after `markup(moves)` is in `container`: each won bid's line once its run arrives
