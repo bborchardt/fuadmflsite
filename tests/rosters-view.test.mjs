@@ -23,6 +23,7 @@ test("a team's page: your own with the cut columns, another's with the way back 
     assert.match(own, /If the season ended today/);
     const other = teamMarkup({sheet, picks, live: false, own: false, fromTeams: true, tradeHref: "/trade?x", season: 2026});
     assert.match(other, /<a class="fuad-back" href="#rosters-teams">‹ Teams<\/a>/);
+    assert.match(teamMarkup({sheet, picks, live: false, own: false, fromTeams: true, backHistory: true, tradeHref: null, season: 2026}), /<a class="fuad-back" href="#rosters-teams" data-back>‹ Back<\/a>/);
     assert.match(other, /<a class="fuad-cta" href="\/trade\?x">Propose a trade<\/a>/);
     assert.doesNotMatch(other, /Cut penalty/);
     // before week 1, last season's points
