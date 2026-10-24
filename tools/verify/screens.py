@@ -89,7 +89,9 @@ SEEDS = {
     "trades": [["ask", "withdraw"]],
     "trades-offer": [["answer"], ["answer", "comment", "send-answer"], [("answer", "reject", 0), "send-answer"],
                      [("answer", "counter", 0), "comment", "send-answer"]],
-    "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["toIR", "drop", "save"]],
+    # a box ticked and unticked again, which no first-of-each-kind chain does
+    "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["toIR", "drop", "save"],
+           [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
 }
 
 EXPORTS = {
