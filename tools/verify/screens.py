@@ -73,6 +73,8 @@ SCREENS = {
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
     "rosters": (f"/2026/home/{LEAGUE}#rosters-players", {}),
     "rosters-teams": (f"/2026/home/{LEAGUE}#rosters-teams", {}),
+    "rosters-my-team": (f"/2026/home/{LEAGUE}#rosters-my-team", {}),
+    "rosters-draft": (f"/2026/home/{LEAGUE}#rosters-draft", {}),
 }
 
 # Paths into a screen's deeper states, as data-act names (one that isn't there is skipped), from which
