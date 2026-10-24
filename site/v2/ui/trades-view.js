@@ -7,7 +7,7 @@
 //   now         seconds; phase: movesPhase; limits: whether the roster limits hold; closed: past
 //               the deadline
 //   wide        the desktop layout; addHref: Add's page; listUrl: the Trades list;
-//               proposeUrl(partner): the proposal page with that team
+//               proposeUrl(partner): the proposal page with that team; teamHref(id): a team's page
 
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
@@ -99,7 +99,7 @@ function offerCard(v, offer) {
     const line = (item) => assetLine(v, item);
     return `<article class="fuad-trades-card" aria-label="Offer from ${esc(partnerName)}">
     ${state.stillOpen === offer.id ? `<div class="fuad-trades-notice fuad-trades-caution fuad-trades-open" role="alert"><span><strong>Your counter was sent,</strong> but this offer is still open.</span><button type="button" class="fuad-trades-quiet" data-act="reject-now" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>${busy ? "Rejecting…" : "Reject it"}</button></div>` : ""}
-    <div class="fuad-trades-from"><span>From <strong>${esc(partnerName)}</strong></span>${offer.expires ? `<span>expires ${esc(expiresText(offer.expires))}</span>` : ""}</div>
+    <div class="fuad-trades-from"><span>From <strong><a href="${esc(v.teamHref(offer.partner))}">${esc(partnerName)}</a></strong></span>${offer.expires ? `<span>expires ${esc(expiresText(offer.expires))}</span>` : ""}</div>
     ${offer.comment ? `<p class="fuad-trades-comment">“${esc(offer.comment)}”</p>` : ""}
     <div class="fuad-trades-sides">
         <div><span class="fuad-label">You get</span>${gets.map(line).join("") || '<span class="fuad-meta">Nothing</span>'}</div>
@@ -134,7 +134,7 @@ function sentCard(v, offer) {
     const asking = state.asking === offer.id;
     const failure = state.failure[offer.id];
     return `<article class="fuad-trades-card fuad-trades-sent" aria-label="Offer to ${esc(nameOf(v, offer.partner))}">
-    <span class="fuad-trades-from"><span>To <strong>${esc(nameOf(v, offer.partner))}</strong></span></span>
+    <span class="fuad-trades-from"><span>To <strong><a href="${esc(v.teamHref(offer.partner))}">${esc(nameOf(v, offer.partner))}</a></strong></span></span>
     <span class="fuad-trades-moves"><span><strong>You give</strong> ${esc(assetList(gives))}</span><span><strong>You get</strong> ${esc(assetList(gets))}</span>${offer.comment ? `<span class="fuad-meta">“${esc(offer.comment)}”</span>` : ""}</span>
     <span class="fuad-meta fuad-trades-expires">${offer.expires ? `expires ${esc(expiresText(offer.expires))}` : ""}</span>
     <span class="fuad-trades-withdraw">${asking
