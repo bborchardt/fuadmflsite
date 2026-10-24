@@ -71,6 +71,8 @@ SCREENS = {
     "lineup": (f"/2026/lineup?L={LEAGUE}", {}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
+    "power": (f"/2026/home/{LEAGUE}#league-power", {}),
+    "winners": (f"/2026/home/{LEAGUE}#league-winners", {}),
     "rosters": (f"/2026/home/{LEAGUE}#rosters-players", {}),
     "rosters-teams": (f"/2026/home/{LEAGUE}#rosters-teams", {}),
     "rosters-my-team": (f"/2026/home/{LEAGUE}#rosters-my-team", {}),
