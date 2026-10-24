@@ -6,8 +6,12 @@
 import {exportUrl} from "../lib/mfl.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 
+// the Watching chips' star (filled by fuad.css when pressed)
+export const STAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9z"></path></svg>';
+
 let loading = null;
-// changes MFL hasn't answered yet, player id → {on: whether he'll be watched, done: settles when MFL answers}
+// changes MFL hasn't answered yet, player id → {on: whether he'll be watched, done: resolves when MFL
+// answers, to the error if it refused}
 const pending = new Map();
 
 // The ids in MFL's answer: a list of players or one (`{"id": …}` or a bare id), or the ids as one
@@ -42,7 +46,7 @@ export function watchList({season, leagueId}) {
 }
 
 // whether a player is watched, counting a change MFL hasn't answered yet; `done`, when one is waiting,
-// settles once MFL answers it
+// resolves once MFL answers it, to the error if it refused
 export function watchState(list, playerId) {
     const change = pending.get(String(playerId));
     return change ? {on: change.on, done: change.done} : {on: list.has(String(playerId)), done: null};
@@ -58,7 +62,7 @@ export function setWatched(context, playerId, on) {
             pending.delete(id);
         }
     });
-    change.done = sent.catch(() => {});
+    change.done = sent.then(() => null, (error) => error);
     pending.set(id, change);
     return sent;
 }

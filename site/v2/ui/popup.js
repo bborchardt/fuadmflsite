@@ -261,10 +261,13 @@ export function installPopup({context, franchiseId}) {
                 star.hidden = false;
                 if (done) {
                     star.disabled = true;
-                    done.then(() => {
+                    done.then((error) => {
                         if (star.isConnected) {
                             show(list.has(playerId));
                             star.disabled = false;
+                            if (error) {
+                                note.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a minute." : "Couldn't update your watch list.";
+                            }
                         }
                     });
                 }
