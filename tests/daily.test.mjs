@@ -42,6 +42,32 @@ function league({alphaSalary = 100} = {}) {
     };
 }
 
+// an hour before DROPPED, so each add's hour to post its length has closed by MID_SEASON
+const ADDED = DROPPED - 3600;
+
+// `exports` with two adds waiting for a length: Beta picked up Olave as a free agent and posted
+// "Olave: 3 years"; Alpha won Waddle by blind bid, its comment on MFL's processed waivers page
+function withAdds(exports, {post = "Olave: 3 years"} = {}) {
+    const rosters = structuredClone(exports.rosters);
+    rosters.franchise[1].player.push({id: "300", salary: "1", contractYear: "0", status: "ROSTER"});
+    rosters.franchise[0].player.push({id: "301", salary: "4", contractYear: "0", status: "ROSTER"});
+    return {
+        ...exports,
+        players: {player: [...exports.players.player, {id: "300", name: "Olave, Chris", position: "WR", team: "NOS"}, {id: "301", name: "Waddle, Jaylen", position: "WR", team: "MIA"}]},
+        rosters,
+        transactions: {transaction: [
+            ...exports.transactions.transaction,
+            {type: "FREE_AGENT", franchise: "0002", transaction: "300,|", timestamp: String(ADDED)},
+            {type: "BBID_WAIVER", franchise: "0001", transaction: "301,|4.00|", timestamp: String(ADDED)}
+        ]},
+        messageBoard: {thread: [{id: "7001", lastPostTime: String(ADDED + 600)}]},
+        messageBoardThread: {post: post ? [{franchise: "0002", postTime: String(ADDED + 600), body: post}] : []}
+    };
+}
+const waiversPage = (comment) => `<a href="#">Logout</a><table class="report"><tr><th>Original Waiver Request</th></tr>
+<tr><td>1</td><td><a class="franchise_0001" href="#">Alpha</a></td><td>Waddle, Jaylen MIA WR ($4.00)</td><td>None</td>
+<td>Add Waddle, Jaylen MIA WR for $4.00 and drop None<br />Submitted Fri Oct 23 9:00:00 a.m. CT 2026<br />${comment ? `Comments: ${comment}<br />` : ""}</td><td></td></tr></table>`;
+
 const dirs = [];
 after(() => dirs.forEach((dir) => rmSync(dir, {recursive: true, force: true})));
 
@@ -193,4 +219,55 @@ test("v2's lib, should RULES_VERSION name it, runs the same day the same way", (
     assert.equal(v2.status, v1.status, v2.stderr);
     assert.deepEqual(v2.entries, v1.entries);
     assert.deepEqual(imports(v2), imports(v1));
+});
+
+const contractEntries = (result) => result.entries.filter((entry) => /Contract years|would set|^Set /.test(entry));
+
+test("contract years: a posted length and a bid comment's, logged in a dry run and set when applied", () => {
+    const day = {scenario: {exports: withAdds(league()), waivers: waiversPage("2 years")}, env: LOGIN};
+    const dry = run(day);
+    assert.equal(dry.status, 0, dry.stderr);
+    assert.deepEqual(contractEntries(dry), [
+        "Dry run: would set Jaylen Waddle to 2 years (blind bid comment \"2 years\").",
+        "Dry run: would set Chris Olave to 3 years (post \"Olave: 3 years\")."
+    ]);
+    // the bid's own week's page, by its period
+    assert.ok(dry.requests.some((request) => request.url.endsWith(`/processed_waivers?LEAGUE_ID=48571&PERIOD=${ADDED}`)));
+    assert.deepEqual(imports(dry), []);
+    const applied = run({...day, env: {...LOGIN, CONTRACT_YEARS: "apply"}});
+    const posted = imports(applied);
+    assert.deepEqual(posted.map((data) => data.TYPE), ["salaries"]);
+    assert.equal(posted[0].APPEND, "1");
+    // each at the salary MFL has, so only the years change
+    assert.match(posted[0].DATA, /<player id="301" salary="4" contractYear="2"\/><player id="300" salary="1" contractYear="3"\/>/);
+    assert.deepEqual(contractEntries(applied), [
+        "Set Jaylen Waddle to 2 years (blind bid comment \"2 years\").",
+        "Set Chris Olave to 3 years (post \"Olave: 3 years\")."
+    ]);
+});
+
+test("contract years: what can't be read is left for the commissioner, never guessed", () => {
+    const result = run({scenario: {exports: withAdds(league(), {post: "Olave: 3 years\nOlave: 4 years"}), waivers: waiversPage("")}, env: {...LOGIN, CONTRACT_YEARS: "apply"}});
+    assert.equal(result.status, 1);
+    const entries = contractEntries(result);
+    assert.ok(entries.some((entry) => /^Contract years: Chris Olave: .*Left for the commissioner\.$/.test(entry)), entries.join("\n"));
+    assert.ok(!imports(result).some((data) => /id="300"/.test(data.DATA)));
+    // a bid without a comment takes the default length
+    assert.ok(entries.includes("Set Jaylen Waddle to 1 year (no length stated: the default)."), entries.join("\n"));
+    const missing = run({scenario: {exports: withAdds(league()), waivers: '<a href="#">Logout</a><table class="report"><tr><th>Original Waiver Request</th></tr></table>'}, env: LOGIN});
+    assert.ok(missing.entries.includes("Contract years: Jaylen Waddle: its blind bid isn't on MFL's processed waivers page, so its comment couldn't be read. Left for the commissioner."), missing.entries.join("\n"));
+});
+
+test("contract years: held for a team over the cap, and none set without the login or a readable bids page", () => {
+    const over = run({scenario: {exports: withAdds(league({alphaSalary: 290})), waivers: waiversPage("2 years")}, env: LOGIN});
+    assert.ok(over.entries.includes("Contract years: Waddle, Jaylen held, since the team is over the cap or the roster limit. Left for the commissioner."), over.entries.join("\n"));
+    assert.ok(contractEntries(over).some((entry) => /would set Chris Olave/.test(entry)));
+    const anonymous = run({scenario: {exports: withAdds(league())}});
+    assert.ok(anonymous.entries.includes("Contract years: 2 added player(s) are waiting for contract years, but reading the bids and the message board needs the commissioner login, so none were set."), anonymous.entries.join("\n"));
+    const loggedOut = run({scenario: {exports: withAdds(league()), waivers: "<p>Login</p>"}, env: LOGIN});
+    assert.ok(loggedOut.entries.some((entry) => /^Contract years: MFL's processed waivers for period \d+ came back logged out/.test(entry)), loggedOut.entries.join("\n"));
+    // still inside the hour: decided at the next run
+    const early = run({scenario: {exports: withAdds(league())}, now: new Date((ADDED + 1800) * 1000).toISOString()});
+    assert.deepEqual(contractEntries(early), []);
+    assert.match(early.stdout, /2 add\(s\) still in their posting window will be decided at the next run\./);
 });
