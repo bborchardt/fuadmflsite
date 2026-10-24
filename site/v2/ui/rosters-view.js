@@ -116,13 +116,15 @@ export function tagsPanel(view, year) {
     </section>`;
 }
 
+const teamLink = (id, name) => `<a href="#rosters-teams/${esc(id)}">${esc(name)}</a>`;
+
 export function orderPanel(order, year, {final}) {
     return `<section class="fuad-panel" aria-labelledby="fuad-order">
         <h2 class="fuad-panel-heading" id="fuad-order">${year} draft order</h2>
         ${final ? "" : '<p class="fuad-meta fuad-if">If the season ended today</p>'}
         <ol class="fuad-rows fuad-order">${order.map((row) => `<li>
             <span class="fuad-seed">${row.pick || ""}</span>
-            <span class="fuad-row-text"><span class="fuad-row-title">${esc(row.name)}</span><span class="fuad-meta">${esc(row.why)}</span>
+            <span class="fuad-row-text"><span class="fuad-row-title">${teamLink(row.id, row.name)}</span><span class="fuad-meta">${esc(row.why)}</span>
                 ${row.traded.map((line) => `<span class="fuad-caution fuad-traded">${esc(line)}</span>`).join("")}</span>
         </li>`).join("")}</ol>
     </section>`;
@@ -136,8 +138,8 @@ export function boardPanel(board, {year, viewer, before, open}) {
             <ul class="fuad-rows fuad-board-picks" id="fuad-round-${round.round}"${open(round.round) ? "" : " hidden"}>${round.picks.map((pick) => `<li class="${pick.team === viewer ? "fuad-row-mine" : ""}">
                 <span class="fuad-meta">${esc(pick.number)}</span>
                 ${before
-                    ? `<span class="fuad-row-text"><span class="fuad-row-title">${esc(pick.teamName)}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span><span class="fuad-meta">${esc(scaleRange(pick.overall))}</span>`
-                    : `<span class="fuad-row-text"><span class="fuad-row-title">${pick.player ? `<button type="button" class="fuad-name" data-player="${esc(pick.player.id)}">${esc(pick.player.name)}</button> <span class="fuad-meta">${esc(pick.player.position)}</span>` : "—"}</span><span class="fuad-meta">${esc(pick.teamName)}</span></span><span class="fuad-num">${pick.salary === null ? "—" : esc(money(pick.salary))}</span>`}
+                    ? `<span class="fuad-row-text"><span class="fuad-row-title">${teamLink(pick.team, pick.teamName)}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span><span class="fuad-meta">${esc(scaleRange(pick.overall))}</span>`
+                    : `<span class="fuad-row-text"><span class="fuad-row-title">${pick.player ? `<button type="button" class="fuad-name" data-player="${esc(pick.player.id)}">${esc(pick.player.name)}</button> <span class="fuad-meta">${esc(pick.player.position)}</span>` : "—"}</span><span class="fuad-meta">${teamLink(pick.team, pick.teamName)}</span></span><span class="fuad-num">${pick.salary === null ? "—" : esc(money(pick.salary))}</span>`}
             </li>`).join("")}</ul>
         </div>`).join("")}</div>
     </section>`;

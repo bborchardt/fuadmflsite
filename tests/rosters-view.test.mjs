@@ -98,15 +98,17 @@ test("Draft: before the draft the viewer's picks and the board; after it next ye
     assert.match(before, /<span class="fuad-pick-number">1\.02<\/span>\s*<span class="fuad-row-text"><span>[^<]*<\/span><span class="fuad-caution">from Kings<\/span>/);
     // every round open before the draft
     assert.equal((before.match(/aria-expanded="true" aria-controls="fuad-round-/g) || []).length, 2);
+    assert.match(before, /<span class="fuad-row-title"><a href="#rosters-teams\/0002">Kings<\/a><\/span>/);
     assert.doesNotMatch(before, /draft order/);
     assert.match(before, /Rookie scale/);
     const done = [round(1, [pick("0002", "1.01", {player: {id: "9", name: "Ashton Jeanty", position: "RB"}, salary: 8})]), round(2, [pick("0001", "2.01")])];
-    const order = {rows: [{pick: 1, name: "Kings", why: "worst record", traded: []}], final: false};
+    const order = {rows: [{pick: 1, id: "0002", name: "Kings", why: "worst record", traded: []}], final: false};
     const phone = draftMarkup({board: done, before: false, tags, order, viewer: "0001", season: 2026, phone: true});
     assert.match(phone, /2027 draft order/);
     assert.doesNotMatch(phone, /Your 2026 picks/);
     assert.match(phone, /data-player="9">Ashton Jeanty<\/button> <span class="fuad-meta">RB<\/span>/);
-    assert.match(phone, /<span class="fuad-num">\$8<\/span>/);
+    assert.match(phone, /<span class="fuad-row-title"><a href="#rosters-teams\/0002">Kings<\/a><\/span><span class="fuad-meta">worst record/);
+    assert.match(phone, /<span class="fuad-meta"><a href="#rosters-teams\/0002">Kings<\/a><\/span><\/span><span class="fuad-num">\$8<\/span>/);
     // in season the rounds start closed on phones, open on desktop
     assert.equal((phone.match(/aria-expanded="false" aria-controls="fuad-round-/g) || []).length, 2);
     const desk = draftMarkup({board: done, before: false, tags, order, viewer: "0001", season: 2026, phone: false});
