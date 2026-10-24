@@ -91,7 +91,7 @@ function draw(mount, state) {
             ${byPos.map((group) => `<div class="fuad-lineup-band" role="row"><span role="cell" class="fuad-band">${group.head}</span></div>${group.players.map((player) => deskRow(player, on)).join("")}`).join("")}
         </div></div>
     </section>
-    ${page.ir.length ? `<p class="fuad-lineup-ir fuad-meta">On IR: ${esc(page.ir.join(", "))} · <a href="${esc(irHref)}">IR</a></p>` : ""}
+    ${page.ir.length ? `<p class="fuad-lineup-ir fuad-meta">On IR: ${esc(page.ir.join(", "))} · <a href="${esc(irHref)}">Manage IR</a></p>` : ""}
     <section class="fuad-save-bar" aria-label="Save">
         <span class="fuad-save-count${status.starting === page.total ? "" : " fuad-bad"}">${status.starting} of ${page.total} starting</span>
         <span class="fuad-save-line${status.ok ? " fuad-muted" : " fuad-bad"}">${esc(status.line)}</span>
