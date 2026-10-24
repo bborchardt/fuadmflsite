@@ -241,7 +241,7 @@ export function drawScores(mount, data) {
             },
             render: (value, inner) => {
                 panelMount.classList.remove("fuad-panel");
-                inner.innerHTML = seasonMarkup({lastRegular: data.lastRegular, endWeek: Number(window.endWeek) || 17, rows: value.rows, names: new Map(value.names), current: currentWeek, live: value.live, title: `${context.season} season`, line: value.line});
+                inner.innerHTML = seasonMarkup({lastRegular: data.lastRegular, endWeek: Number(window.endWeek) || 17, rows: value.rows, names: new Map(value.names), current: currentWeek, live: value.live, title: `${context.season} season`, line: value.line, teamHref: data.teamHref});
             }
         });
     };
