@@ -43,7 +43,7 @@ export function drawScores(mount, data) {
     const lastWeek = () => Math.max(currentWeek, data.lastScheduled || currentWeek);
 
     // what a week shows: its cards, from the lineups and the stats feed
-    const loadWeek = async (week, {fresh = false} = {}) => {
+    const loadWeek = async (week) => {
         const [names, players, rules, limits] = await Promise.all([namesFor(), data.players(), data.rules(), data.league().then(starterLimits, () => null)]);
         const nflSchedule = await exp("nflSchedule", {W: week}, {base: API_BASE, optional: true});
         if (before || week > currentWeek) {
