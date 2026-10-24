@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {gameStates, readProjections, readRules, readStats, scoreStats, statLine, winProbability} from "../site/v2/ui/live-scoring.js";
+import {gameStates, readProjections, readRules, readStats, scoreStats, statLine} from "../site/v2/ui/live-scoring.js";
 import {
     bestCard, bestLineup, starterLimits,
     allPlayRecords, pairLines, recordText, playoffPicture, playoffPlaces, positionPoints, powerFacts, readPowerPage, scoreCards, standings, teamSeason,
