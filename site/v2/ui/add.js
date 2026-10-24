@@ -11,7 +11,10 @@ import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog} from "./dialog.js";
-import {Refused, failedLine, freshPending, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {
+    CHECK, Refused, WIDE, alertLine, failedBox, failedLine, freshPending, leaveFlash, limitsApply, loadData, money, movesPhase, refusal, rosterIds,
+    send, takeFlash
+} from "./moves.js";
 import {contractTopic} from "./home-model.js";
 import {STAR, watchList, whenPopupClosed} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
@@ -22,11 +25,9 @@ import {
 } from "./add-model.js";
 
 const FLASH_KEY = "fuad.addFlash";
-const WIDE = "(min-width: 48.01em)";
 // the board topic a length post starts when the league has none with "contract" in its name
 const NEW_TOPIC = "Contract lengths";
 
-const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 const NOTICE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"></path></svg>';
 const PLUS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>';
 const ARROW = '<svg class="fuad-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="to"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
@@ -36,7 +37,6 @@ const DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke
 const SEARCH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>';
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 
-const money = (amount) => `$${Math.round(amount * 100) / 100}`;
 const tone = (name) => (name ? ` fuad-${name}` : "");
 
 // ---- MFL's page ----
@@ -219,17 +219,11 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     show();
 
     const wide = window.matchMedia(WIDE);
-    let flash = null;
-    try {
-        flash = JSON.parse(window.sessionStorage.getItem(FLASH_KEY) || "null");
-        window.sessionStorage.removeItem(FLASH_KEY);
-    } catch (error) {
-        // storage is blocked: no line after the reload
-    }
+    const flash = takeFlash(FLASH_KEY);
 
     const state = {
         data: null, failed: false, screen: "home", compose: null, q: "", pos: "ALL", watching: false, sort: "proj",
-        open: null, flash: flash && flash.highlight, done: flash && flash.done, error: (flash && flash.error) || "", busy: false
+        open: null, flash: flash.highlight, done: flash.done, error: flash.error || "", busy: false
     };
     const layer = document.createElement("div");
     layer.className = "fuad-layer fuad-add-layer";
@@ -334,7 +328,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         }
         // a move being composed shows its failure beside it
         if (state.error && !state.compose) {
-            parts.push(`<p class="fuad-add-alert" role="alert">${esc(state.error)}</p>`);
+            parts.push(alertLine(state.error));
         }
         return parts.join("");
     }
@@ -344,7 +338,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         const p = projection(t);
         const invalid = groupsShown.length && (p.overCap || p.overRoster);
         const rosterChanges = p.roster !== t.franchise.numPlayers;
-        return `${invalid ? '<p class="fuad-add-alert" role="alert">Current bids invalid</p>' : ""}
+        return `${invalid ? '<p class="fuad-move-alert" role="alert">Current bids invalid</p>' : ""}
         <section class="fuad-panel fuad-add-projected" aria-label="Projected">
             ${capLine("Projected cap", "If all high bids win", t.franchise.capTotal, p.cap)}
             ${rosterChanges ? `<div class="fuad-add-cap fuad-add-roster"><span class="fuad-add-cap-label"><span>Projected roster</span></span><span class="fuad-add-cap-value"><span>${t.franchise.numPlayers}</span>${ARROW}<span class="${p.overRoster ? "fuad-bad" : ""}">${p.roster}</span></span></div>` : ""}
@@ -392,7 +386,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             ${bidsPeriod && !block ? `<button type="button" class="fuad-add-more" data-act="start" data-round="${group.round}">+ Add a claim to group ${group.round}</button>` : ""}
         </section>`).join("");
         return `${bannerMarkup()}${statusMarkup()}
-        ${block ? `<p class="fuad-add-alert" role="alert">${esc(overLimitText())}</p>` : ""}
+        ${block ? `<p class="fuad-move-alert" role="alert">${esc(overLimitText())}</p>` : ""}
         ${b.kind === "window" ? `<button type="button" class="fuad-add-start" data-act="start"${block ? " disabled" : ""}>${PLUS}Add a player</button>` : ""}
         ${bidsPeriod || shown.length ? `${projectionMarkup(shown)}${groupCards}` : ""}
         ${bidsPeriod && canStart ? `<button type="button" class="fuad-add-new-group" data-act="start" data-round="${nextRound()}">+ Start group ${nextRound()}</button>` : ""}`;
@@ -506,8 +500,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
                     : `Add ${surname(fa.mflName)} now · posts “${line}”`;
         return `${groupSummary}${picks}${wide.matches ? groupChips : ""}${bidField}${lengths}
         <section class="fuad-add-total">${cap}</section>
-        ${blocked ? `<p class="fuad-add-alert" role="alert">${esc(blockText)}</p>` : ""}
-        ${state.error ? `<p class="fuad-add-alert" role="alert">${esc(state.error)}</p>` : ""}
+        ${blocked ? `<p class="fuad-move-alert" role="alert">${esc(blockText)}</p>` : ""}
+        ${state.error ? alertLine(state.error) : ""}
         <button type="button" class="fuad-add-submit" data-act="submit"${ready ? "" : " disabled"}>${esc(label)}</button>`;
     }
 
@@ -523,7 +517,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             <div class="fuad-add-bids-head">
                 <h2 id="fuad-add-bids">Pending bids</h2>
                 <div class="fuad-add-bids-totals">
-                    ${invalid ? '<span class="fuad-add-alert fuad-add-alert-inline" role="alert">Current bids invalid</span>' : ""}
+                    ${invalid ? '<span class="fuad-move-alert fuad-add-alert-inline" role="alert">Current bids invalid</span>' : ""}
                     ${capLine("Projected cap", "If all high bids win", t.franchise.capTotal, p.cap)}
                     ${rosterChanges ? `<div class="fuad-add-cap"><span class="fuad-add-cap-label"><span>Projected roster</span></span><span class="fuad-add-cap-value"><span>${t.franchise.numPlayers}</span>${ARROW}<span class="${p.overRoster ? "fuad-bad" : ""}">${p.roster}</span></span></div>` : ""}
                 </div>
@@ -552,7 +546,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         const window_ = b.kind === "window";
         const head = (key, label, cls = "") => `<button type="button" class="fuad-add-sort${cls}" data-act="sort" data-sort="${key}" aria-pressed="${state.sort === key}">${label}${state.sort === key ? (key === "name" ? " ↑" : " ↓") : ""}</button>`;
         return `<div class="fuad-add-desk-top">${bannerMarkup()}</div>${statusMarkup()}
-        ${block ? `<p class="fuad-add-alert" role="alert">${esc(overLimitText())}</p>` : ""}
+        ${block ? `<p class="fuad-move-alert" role="alert">${esc(overLimitText())}</p>` : ""}
         ${bidsTable}
         <section class="fuad-panel fuad-add-free" aria-labelledby="fuad-add-free">
             <div class="fuad-add-free-head"><h2 id="fuad-add-free">Free agents</h2>${searchMarkup()}${chipsMarkup()}</div>
@@ -609,7 +603,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             : null;
         if (!state.data) {
             mount.innerHTML = state.failed
-                ? `${statusMarkup()}<div class="fuad-add-alert fuad-add-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-add-failed-buttons"><button type="button" class="fuad-add-retry" data-act="retry"${state.failed === "busy" && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-add-retry" data-act="mfl">MFL’s page</button></span></div>
+                ? `${statusMarkup()}${failedBox("your cap", state.failed)}
                     <button type="button" class="fuad-add-start" disabled>${PLUS}Add a player</button>`
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
@@ -733,11 +727,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     // Shows the result after MFL's page reloads: back to Add's own entry first, so Back from it
     // leaves the page rather than landing on a finished move's screens
     function reloadWith(next) {
-        try {
-            window.sessionStorage.setItem(FLASH_KEY, JSON.stringify(next));
-        } catch (error) {
-            // storage is blocked: the reload just shows the page as MFL has it
-        }
+        leaveFlash(FLASH_KEY, next);
         const url = `${window.location.origin}/${context.season}/add_drop?L=${encodeURIComponent(context.leagueId)}`;
         if (depth > 0 && !wide.matches) {
             window.addEventListener("popstate", () => window.location.replace(url), {once: true});

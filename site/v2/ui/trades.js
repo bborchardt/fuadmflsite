@@ -5,11 +5,14 @@
 // can't read leaves MFL's page.
 
 import {API_BASE, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
-import {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
+import {ROSTER_MAX, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, failedLine, freshTrades, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {
+    Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, freshTrades, leaveFlash, limitsApply, loadData, money, movesPhase, refusal,
+    rosterIds, send, takeFlash
+} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {dayText, whenText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
@@ -20,37 +23,14 @@ import {
 } from "./trades-model.js";
 
 const FLASH_KEY = "fuad.tradesFlash";
-const WIDE = "(min-width: 48.01em)";
 
-const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 const BACK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>';
 
-const money = (amount) => `$${Math.round(amount * 100) / 100}`;
 const now = () => Math.floor(Date.now() / 1000);
 // a line ending in a team's name: "Offer sent to Smooth City Styles!" takes no second stop
 const stop = (text) => (/[.!?]$/.test(text) ? text : `${text}.`);
 
-// cap used's tone: red over the cap, orange within $10 of it
-const capTone = (amount) => (amount > SALARY_CAP ? "fuad-bad" : amount > SALARY_CAP - 10 ? "fuad-caution" : "");
 const activeTone = (count, limits) => (limits && count > ROSTER_MAX ? "fuad-caution" : "");
-
-function readFlash() {
-    try {
-        const flash = JSON.parse(window.sessionStorage.getItem(FLASH_KEY) || "null");
-        window.sessionStorage.removeItem(FLASH_KEY);
-        return flash || {};
-    } catch (error) {
-        return {};
-    }
-}
-
-function saveFlash(flash) {
-    try {
-        window.sessionStorage.setItem(FLASH_KEY, JSON.stringify(flash));
-    } catch (error) {
-        // storage is blocked: the page just shows the trades as MFL has them
-    }
-}
 
 // The week's games and the deadline, from the NFL schedule (kept a day): the kickoffs of this week
 // and next, each NFL team's this week, and the deadline's kickoff
@@ -105,7 +85,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
     show();
 
     const wide = window.matchMedia(WIDE);
-    const flash = readFlash();
+    const flash = takeFlash(FLASH_KEY);
     const listUrl = `${window.location.origin}/${context.season}/options?L=${encodeURIComponent(context.leagueId)}&O=05`;
     const proposeUrl = (partner) => `${listUrl}&FRANCHISE=${franchiseId},${partner}`;
     const state = {
@@ -130,9 +110,9 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
 
     function statusMarkup() {
         return [
-            state.done ? `<p class="fuad-trades-status" role="status">${CHECK}<span>${esc(state.done)}</span></p>` : "",
+            state.done ? doneLine(state.done) : "",
             state.note ? `<p class="fuad-trades-notice fuad-trades-plain" role="status">${esc(state.note)}</p>` : "",
-            state.error ? `<p class="fuad-trades-alert" role="alert">${esc(state.error)}</p>` : ""
+            state.error ? alertLine(state.error) : ""
         ].join("");
     }
 
@@ -148,7 +128,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
     }
 
     function failedMarkup() {
-        return `${statusMarkup()}<div class="fuad-trades-alert fuad-trades-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-trades-failed-buttons"><button type="button" class="fuad-trades-retry" data-act="retry"${state.failed === "busy" && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-trades-retry" data-act="mfl">MFL’s page</button></span></div>`;
+        return `${statusMarkup()}${failedBox("your cap", state.failed)}`;
     }
 
     // a player opens the popup: on phones his whole line, on desktop his name
@@ -201,7 +181,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
                     <textarea id="fuad-reply-${esc(offer.id)}" rows="2" data-act="comment" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>${esc(state.comment[offer.id] || "")}</textarea>
                     <button type="button" class="fuad-trades-go" data-act="send-answer" data-id="${esc(offer.id)}"${busy || (answer === "accept" && blocked) ? " disabled" : ""}>${busy ? (answer === "accept" ? "Accepting…" : "Rejecting…") : answer === "accept" ? "Accept trade" : "Reject trade"}</button>
                 </div>` : ""}
-                ${failure ? `<p class="fuad-trades-alert" role="alert">${esc(failure)}</p>` : ""}
+                ${failure ? alertLine(failure) : ""}
             </div>
         </article>`;
     }
@@ -219,7 +199,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             <span class="fuad-trades-withdraw">${asking
                 ? `<span class="fuad-trades-ask">Withdraw this offer?</span><button type="button" class="fuad-trades-quiet" data-act="keep" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>Keep</button><button type="button" class="fuad-trades-go" data-act="withdraw" data-id="${esc(offer.id)}"${busy ? " disabled" : ""}>${busy ? "Withdrawing…" : "Withdraw"}</button>`
                 : `<button type="button" class="fuad-trades-quiet" data-act="ask" data-id="${esc(offer.id)}">Withdraw</button>`}</span>
-            ${failure ? `<p class="fuad-trades-alert" role="alert">${esc(failure)}</p>` : ""}
+            ${failure ? alertLine(failure) : ""}
         </article>`;
     }
 
@@ -338,7 +318,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
             <div class="fuad-trades-message">
                 <label class="fuad-meta" for="fuad-trades-msg">Message (optional)</label>
                 <textarea id="fuad-trades-msg" rows="2" data-act="message"${state.busy ? " disabled" : ""}>${esc(state.message)}</textarea>
-                ${state.error ? `<p class="fuad-trades-alert" role="alert">${esc(state.error)}</p>` : ""}
+                ${state.error ? alertLine(state.error) : ""}
                 <button type="button" class="fuad-trades-go fuad-trades-send" data-act="send"${off ? " disabled" : ""}>${state.busy ? "Sending…" : label}</button>
             </div>`;
     }
@@ -449,7 +429,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref}) {
     // Back to the proposal page's own entry first, so Back from the result leaves it rather than
     // landing on a finished proposal's steps
     const reloadList = (next) => {
-        saveFlash(next);
+        leaveFlash(FLASH_KEY, next);
         if (proposal && state.depth > 0) {
             window.addEventListener("popstate", () => window.location.replace(listUrl), {once: true});
             window.history.go(-state.depth);

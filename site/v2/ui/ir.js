@@ -8,7 +8,10 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, failedLine, limitsApply, loadData, refusal, rosterStatuses, send} from "./moves.js";
+import {
+    Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, money, refusal, rosterStatuses,
+    send, takeFlash
+} from "./moves.js";
 import {changeTone, signed, teamState} from "./add-model.js";
 import {contractYears} from "./rosters-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
@@ -18,13 +21,8 @@ const FLASH_KEY = "fuad.irFlash";
 // second between requests)
 const READS = 3;
 const READ_GAP = 1500;
-const WIDE = "(min-width: 48.01em)";
 
-const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
-
-const money = (amount) => `$${Math.round(amount * 100) / 100}`;
 const tone = (name) => (name ? ` fuad-${name}` : "");
-const capTone = (cap) => (cap > SALARY_CAP ? "fuad-bad" : cap > SALARY_CAP - 10 ? "fuad-caution" : "");
 
 export async function drawIR({context, franchiseId, loginHref, dropHref}) {
     const body = document.querySelector(".pagebody");
@@ -60,17 +58,11 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
     show();
 
     const wide = window.matchMedia(WIDE);
-    let flash = null;
-    try {
-        flash = JSON.parse(window.sessionStorage.getItem(FLASH_KEY) || "null");
-        window.sessionStorage.removeItem(FLASH_KEY);
-    } catch (error) {
-        // storage is blocked: no line after the reload
-    }
+    const flash = takeFlash(FLASH_KEY);
     const state = {
         data: null, report: null, failed: false, busy: false,
         toIR: new Set(), activate: new Set(), drop: null,
-        done: flash && flash.done, error: (flash && flash.error) || ""
+        done: flash.done, error: flash.error || ""
     };
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
@@ -106,16 +98,16 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
     function statusMarkup() {
         const parts = [];
         if (state.done) {
-            parts.push(`<p class="fuad-ir-status" role="status">${CHECK}<span>${esc(state.done)}</span></p>`);
+            parts.push(doneLine(state.done));
         }
         if (state.error) {
-            parts.push(`<p class="fuad-ir-alert" role="alert">${esc(state.error)}</p>`);
+            parts.push(alertLine(state.error));
         }
         return parts.join("");
     }
 
     function mustMarkup() {
-        return musts().map((row) => `<p class="fuad-ir-alert fuad-ir-must" role="alert"><strong>${esc(row.player.fullName)} must come off IR:</strong> the NFL no longer lists him.${row.off && row.entry.locked ? " His game has started, so he can be activated once it clears." : ""}${dropHref ? ` <a href="${esc(`${dropHref}#player-${row.player.playerId}`)}">Drop him instead</a>` : ""}</p>`).join("");
+        return musts().map((row) => `<p class="fuad-move-alert fuad-ir-must" role="alert"><strong>${esc(row.player.fullName)} must come off IR:</strong> the NFL no longer lists him.${row.off && row.entry.locked ? " His game has started, so he can be activated once it clears." : ""}${dropHref ? ` <a href="${esc(`${dropHref}#player-${row.player.playerId}`)}">Drop him instead</a>` : ""}</p>`).join("");
     }
 
     function barMarkup(result) {
@@ -221,7 +213,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
             ? `[data-act="${active.dataset.act}"][data-id="${active.dataset.id || ""}"]` : null;
         if (!state.data) {
             mount.innerHTML = state.failed
-                ? `${statusMarkup()}<div class="fuad-ir-alert fuad-ir-failed" role="alert"><span>Couldn’t check your roster and cap.${state.failed === "busy" ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-ir-failed-buttons"><button type="button" class="fuad-ir-retry" data-act="retry"${state.failed === "busy" && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-ir-retry" data-act="mfl">MFL’s page</button></span></div>`
+                ? `${statusMarkup()}${failedBox("your roster and cap", state.failed)}`
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
         }
@@ -245,11 +237,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
 
     // Shows the result after MFL's page reloads
     function reloadWith(next) {
-        try {
-            window.sessionStorage.setItem(FLASH_KEY, JSON.stringify(next));
-        } catch (error) {
-            // storage is blocked: the reload just shows the page as MFL has it
-        }
+        leaveFlash(FLASH_KEY, next);
         window.location.replace(window.location.pathname + window.location.search);
     }
 
