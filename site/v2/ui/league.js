@@ -159,7 +159,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 render: (value, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");
                     const title = final ? `${final} playoff seeds` : value.inPlayoffs ? "Playoff seeds" : "Playoff picture";
-                    body.innerHTML = pictureMarkup(value.picture, {viewer, title, showHunt: !value.inPlayoffs});
+                    body.innerHTML = pictureMarkup(value.picture, {viewer, title, showHunt: !value.inPlayoffs, teamHref});
                 }
             });
         },
