@@ -5423,13 +5423,11 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     text-align: left;
 }
 
-.fuad-page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.fuad-page-head { display: flex; align-items: flex-end; gap: 12px; }
 
 .fuad-page-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
 body .fuad-page-title h2 { margin: 0; padding: 0; border: 0; background: none; color: var(--fuad-text); font-family: var(--fuad-display); font-size: 34px; font-weight: 700; line-height: 1.1; text-align: left; text-transform: none; }
-
-.fuad-page-link { flex: none; display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
 
 #fuad-all-moves .fuad-moves-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 
