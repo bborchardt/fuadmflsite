@@ -85,17 +85,17 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
         ],
         prizes: [{place: "1st", share: 0.6, amount: 300, team: null}], pot: 600, potEntries: [], weeklyTotal: 30, allPlayPaid: 27.75, forPlayoffs: 542.25
     };
-    const html = winnersMarkup(result, {viewer: "0001", final: ""});
+    const html = winnersMarkup(result, {viewer: "0001", final: "", teamHref: (id) => `#rosters-teams/${id}`});
     assert.match(html, /Won so far<\/h2><p class="fuad-meta fuad-if">If the season ended today/);
     assert.match(html, /<li class="fuad-won fuad-row-mine">/);
     assert.match(html, /<td class="fuad-num">1, 4<\/td>/);
     // no Playoffs column until a prize has its team
     assert.doesNotMatch(html, />Playoffs<\/th>/);
     assert.match(html, /Weekly points · 2 × \$15/);
-    const final = winnersMarkup({...result, prizes: [{place: "1st", share: 0.6, amount: 300, team: "0001"}], rows: [{...result.rows[0], prize: {place: "1st", amount: 300}}]}, {viewer: "0001", final: "2025"});
+    const final = winnersMarkup({...result, prizes: [{place: "1st", share: 0.6, amount: 300, team: "0001"}], rows: [{...result.rows[0], prize: {place: "1st", amount: 300}}]}, {viewer: "0001", final: "2025", teamHref: (id) => `#rosters-teams/${id}`});
     assert.match(final, /2025 payouts<\/h2>/);
     assert.doesNotMatch(final, /If the season ended today/);
     assert.match(final, />Playoffs<\/th>/);
-    assert.match(final, /<span class="fuad-prize-team">Mine<\/span>/);
+    assert.match(final, /<span class="fuad-prize-team"><a href="#rosters-teams\/0001">Mine<\/a><\/span>/);
     assert.match(championsMarkup([{year: 2024, name: "Mine"}, {year: 2023, name: "Kings"}], [2024]), /<li class="fuad-row-mine">\s*<span class="fuad-meta">2024<\/span>/);
 });
