@@ -10,6 +10,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   exports it reads, or its flags silently stop.
 - Members include older iPhones: a syntax error (e.g. regex lookbehind, Safari 16.4+) in a module
   `fuad.js` imports statically breaks every tab. Load such code with a dynamic `import()`.
+  `npm run lint` keeps `site/` within ES2020 (iOS 14); newer browser APIs and CSS it can't see, so
+  keep those to touches that can fail quietly.
 - MFL throttles by machine and doesn't say how much: test against saved exports, make one live run
   at the end, and never send the job's registered User-Agent from a dev machine.
 - Changes in MFL's header or tab messages are made by the commissioner by hand: give the exact lines
