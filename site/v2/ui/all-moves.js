@@ -11,7 +11,7 @@ import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {recentMoves} from "./home-model.js";
 import {moveRows} from "./move-rows.js";
-import {readBidRun, runPlayers} from "./bids-model.js";
+import {playerIdOf, readBidRun, runPlayers} from "./bids-model.js";
 import {plural} from "./format.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -142,8 +142,9 @@ function runLabel(text) {
 
 // the bids MFL awarded that have no won-bid transaction for that team and player: the commissioner
 // voided them, deleting the transaction (docs/design.md)
-async function voided(context, period, list) {
-    const [found, known] = await Promise.all([transactions(context), players(context.season)]);
+// `players_`: the players export's promise, shared with the popup's ids
+async function voided(context, period, list, players_) {
+    const [found, known] = await Promise.all([transactions(context), players_]);
     const wins = new Set([].concat(found && found.transaction || [])
         .filter((transaction) => transaction.type === "BBID_WAIVER" && Number(transaction.timestamp) === Number(period))
         .map((transaction) => {
@@ -160,13 +161,14 @@ function bidItem(bid, teams, teamHref, {won = false, tag = ""} = {}) {
     </li>`;
 }
 
-function playerBlock(player, teams, teamHref, {isVoided}) {
+// `id`: the player's, opening the popup; null leaves the name as text
+function playerBlock(player, teams, teamHref, {isVoided, id}) {
     const count = (player.won ? 1 : 0) + player.bids.length;
     const top = player.won
         ? bidItem(player.won, teams, teamHref, {won: true, tag: isVoided ? '<span class="fuad-tag fuad-tag-muted">Voided</span>' : '<span class="fuad-tag fuad-tag-lime">Won</span>'})
         : '<li class="fuad-run-none"><span class="fuad-muted">Not awarded</span></li>';
     return `<section class="fuad-panel fuad-run-player">
-        <div class="fuad-run-who"><h3>${esc(displayName(player.name))}</h3><span class="fuad-meta">${esc([player.position, player.nfl, plural(count, "bid")].join(" · "))}</span></div>
+        <div class="fuad-run-who"><h3>${id ? `<button type="button" class="fuad-name" data-player="${esc(id)}">${esc(displayName(player.name))}</button>` : esc(displayName(player.name))}</h3><span class="fuad-meta">${esc([player.position, player.nfl, plural(count, "bid")].join(" · "))}</span></div>
         <ul class="fuad-run-bids">${top}${player.bids.map((bid) => bidItem(bid, teams, teamHref)).join("")}</ul>
     </section>`;
 }
@@ -208,22 +210,41 @@ export function drawAllBids({context, franchiseId, homeHref, teamHref}) {
     // the list is newest first: earlier runs further down
     const earlier = runHref(options[at + 1]);
     const later = runHref(options[at - 1]);
-    const draw = (gone = new Set()) => {
+    // drawn again as the voided bids and the players' ids arrive
+    let gone = new Set();
+    let ids = new Map();
+    const draw = () => {
         mount.innerHTML = `${head("All bids", plural(options.length, "bid run"))}
             <div class="fuad-run-picker">
                 ${earlier ? `<a class="fuad-step" href="${esc(earlier)}" aria-label="Earlier run">‹</a>` : '<span class="fuad-step" aria-hidden="true"></span>'}
                 <div class="fuad-week-label"><span class="fuad-week-name">${esc(label.day)}</span><span class="fuad-label">${esc([label.time, plural(bids, "bid")].filter(Boolean).join(" · "))}</span></div>
                 ${later ? `<a class="fuad-step" href="${esc(later)}" aria-label="Later run">›</a>` : '<span class="fuad-step" aria-hidden="true"></span>'}
             </div>
-            ${list.length ? list.map((player) => playerBlock(player, teams, teamHref, {isVoided: gone.has(player.name)})).join("") : '<section class="fuad-panel"><p class="fuad-muted fuad-empty">No bids in this run.</p></section>'}`;
+            ${list.length ? list.map((player) => playerBlock(player, teams, teamHref, {isVoided: gone.has(player.name), id: ids.get(player.name) || null})).join("") : '<section class="fuad-panel"><p class="fuad-muted fuad-empty">No bids in this run.</p></section>'}`;
     };
     draw();
+    // one read of the players: `cached` doesn't share a load still on its way
+    const known = players(context.season);
     // voided bids once the transactions arrive; without them the run shows as MFL has it
-    voided(context, period, list).then((gone) => {
-        if (gone.size) {
-            draw(gone);
+    voided(context, period, list, known).then((found) => {
+        if (found.size) {
+            gone = found;
+            draw();
         }
     }).catch((error) => console.warn("[fuad] couldn't check the run for voided bids:", error));
+    // a name opens the player popup once v2 knows his id
+    known.then((found) => {
+        ids = new Map(list.map((player) => [player.name, playerIdOf(player, found)]).filter(([, id]) => id));
+        if (ids.size) {
+            draw();
+        }
+    }).catch((error) => console.warn("[fuad] couldn't load the players for the popup:", error));
+    mount.addEventListener("click", (event) => {
+        const name = event.target.closest("[data-player]");
+        if (name && typeof window.fuadOpenPlayer === "function") {
+            window.fuadOpenPlayer(name.dataset.player, {opener: name});
+        }
+    });
     detour("All bids", homeHref);
     return true;
 }

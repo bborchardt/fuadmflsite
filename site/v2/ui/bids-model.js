@@ -107,6 +107,16 @@ export function reasonText(reason) {
     return said.toLowerCase();
 }
 
+// A run's player ({name, nfl, position}, MFL's page has no id) in v2's players by id: the one of that
+// name and position, the NFL team only telling two apart, as he may have moved since. Null unless
+// exactly one.
+export function playerIdOf(player, known) {
+    const name = displayName(player.name);
+    const named = [...known.values()].filter((entry) => entry.fullName === name && entry.nflPosition === player.position);
+    const found = named.length > 1 ? named.filter((entry) => entry.team === player.nfl) : named;
+    return found.length === 1 ? found[0].playerId : null;
+}
+
 // A run as a block per player MFL tried a bid on: [{name, nfl, position, won, bids}], the players
 // won first (highest winning bid first), then those no one got. `won` is {team, amount, years} or null;
 // `bids` the others, one per team at its highest tried bid, each with MFL's `reason` when no one got
