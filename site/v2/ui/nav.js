@@ -33,18 +33,18 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
         // reached from Home
         {name: "Home", href: tab("Main"), match: {tabs: ["Main"], paths: ["mb", "processed_waivers"], options: ["03", "76"]}},
         {name: "Lineup", href: page("lineup"), match: {paths: ["lineup"], options: ["02"]}},
-        {name: "Moves", views: [
-            {name: "Add", href: page("add_drop"), match: {paths: ["add_drop"], options: ["255"]}},
-            {name: "Drop", href: option("257"), match: {options: ["257"]}},
-            {name: "Trades", href: option("05"), match: {paths: ["trade_offer", "trade_response"], options: ["05"]}},
-            {name: "IR", href: option("18"), match: {paths: ["ir"], options: ["18"]}}
-        ]},
         {name: "League", views: [
             {name: "Scores", href: page("ajax_ls"), match: {paths: ["ajax_ls"], options: ["22", "15"]}},
             {name: "Standings", href: tab("Standings"), match: {paths: ["standings"], tabs: ["Standings"]}},
             {name: "Power", href: option("101"), match: {options: ["101"]}},
             // MFL has no page for it, so it shows once v2 draws it
             {name: "Winners", href: null, match: {}}
+        ]},
+        {name: "Moves", views: [
+            {name: "Add", href: page("add_drop"), match: {paths: ["add_drop"], options: ["255"]}},
+            {name: "Drop", href: option("257"), match: {options: ["257"]}},
+            {name: "Trades", href: option("05"), match: {paths: ["trade_offer", "trade_response"], options: ["05"]}},
+            {name: "IR", href: option("18"), match: {paths: ["ir"], options: ["18"]}}
         ]},
         {name: "Rosters", views: [
             // logged out there's no team of your own, so Rosters opens on Teams
