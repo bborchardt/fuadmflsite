@@ -16,7 +16,7 @@ import {
     FIRST_DIRECTION, boardPicksOf, byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf, playerPool, playoffFinish, pointsById,
     sortPlayers, teamSheets
 } from "./rosters-model.js";
-import {draftMarkup, historyMarkup, picksPanels, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "./rosters-view.js";
+import {backLink, draftMarkup, historyMarkup, picksPanels, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "./rosters-view.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -130,6 +130,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
 
     // names open the popup with the Rosters actions; toggles open and close in place
     root.addEventListener("click", (event) => {
+        if (event.target.closest(".fuad-back[data-back]")) {
+            event.preventDefault();
+            window.history.back();
+            return;
+        }
         const row = event.target.closest("tr[data-href]");
         if (row && !event.target.closest("a, button")) {
             window.location.hash = row.dataset.href;
@@ -177,7 +182,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             render: ({sheet, picks, live}, body) => {
                 const own = teamId === viewer;
                 mount.classList.remove("fuad-panel");
-                body.innerHTML = teamMarkup({sheet, picks, live, own, fromTeams, tradeHref: fromTeams && viewer && !own ? actions.trade(teamId) : null, season});
+                body.innerHTML = teamMarkup({sheet, picks, live, own, fromTeams, backHistory, tradeHref: fromTeams && viewer && !own ? actions.trade(teamId) : null, season});
                 // the team's all-time record and titles (the record alone if the champions can't be had),
                 // then on another team's page the viewer's record against it, from the viewer's series
                 Promise.all([
@@ -353,6 +358,40 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         }
     };
 
+    // a team's page opened from another view (Standings, a Home alert) goes Back there; from Teams,
+    // or with nothing to go back to (a new tab), to Teams. The # before this one is the frame's;
+    // none means the page just loaded, from the referrer if it's the league's. Decided on arrival
+    // and kept on the history entry: returning by the browser's Back or Forward, the # left isn't
+    // the one this entry was opened from.
+    let backHistory = false;
+    const cameFromElsewhere = () => {
+        const state = window.history.state;
+        if (state && typeof state.fuadBack === "boolean") {
+            return state.fuadBack;
+        }
+        const found = openedFromElsewhere();
+        // Safari throws past ~100 a short while: the page still draws, deciding again next time
+        try {
+            window.history.replaceState({...state, fuadBack: found}, "");
+        } catch (error) {
+            console.warn("[fuad] couldn't keep the team page's way back:", error);
+        }
+        return found;
+    };
+    const openedFromElsewhere = () => {
+        if (window.history.length < 2) {
+            return false;
+        }
+        if (window.fuadLastHash !== undefined) {
+            return window.fuadLastHash !== "#rosters-teams";
+        }
+        try {
+            return new URL(document.referrer).origin === window.location.origin;
+        } catch (error) {
+            return false;
+        }
+    };
+
     const drawn = new Map();
     let visible = null;
     const show = () => {
@@ -376,6 +415,14 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             return;
         }
         const mount = root.querySelector(`[data-view="${route.view}"]`);
+        if (route.view === "teams" && route.team) {
+            backHistory = cameFromElsewhere();
+            // the same team again isn't redrawn: its way back changes in place
+            const link = mount.querySelector(".fuad-back");
+            if (link) {
+                link.outerHTML = backLink(backHistory);
+            }
+        }
         // a team's page and the list share Teams' mount: each change redraws it
         if (drawn.get(route.view) !== key) {
             drawn.set(route.view, key);
