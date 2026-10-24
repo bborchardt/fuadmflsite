@@ -1989,7 +1989,7 @@ body #fuad-home select {
 #fuad-league .fuad-cards,
 #fuad-rosters .fuad-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
 
-/* two columns once the cards get 420px each; ui/league.js reads the same width (TWO_COLUMNS) */
+/* two columns once the cards get 420px each; ui/scores.js reads the same width (TWO_COLUMNS) */
 @media (min-width: 57.01em) {
     #fuad-league .fuad-cards,
     #fuad-rosters .fuad-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
