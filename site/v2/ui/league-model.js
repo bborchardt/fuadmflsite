@@ -5,6 +5,7 @@
 import {asArray} from "../lib/mfl.js";
 import {text} from "./player-page.js";
 import {scoreStats, statLine, winProbability} from "./live-scoring.js";
+import {cents} from "./format.js";
 
 export const PLAYOFF_TEAMS = 6;
 export const WEEKLY_PRIZE = 15;
@@ -187,7 +188,8 @@ export function weeklyWinners(weeklyResults, lastRegularWeek) {
         .filter((week) => week.teams.length);
 }
 
-export const money = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+// Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00")
+export const ledger = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
 // The places once the playoffs are played: 1st and 2nd from the championship's last game, 3rd from
 // the 3rd place game. `brackets` are the `playoffBracket` exports; a tie goes to the higher seed
@@ -234,11 +236,11 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
     });
     const weeklyTotal = lastRegularWeek * WEEKLY_PRIZE;
     const allPlayPaid = teams.reduce((sum, team) => sum + team.allPlay, 0);
-    const forPlayoffs = Math.round((pot - weeklyTotal - allPlayPaid) * 100) / 100;
+    const forPlayoffs = cents(pot - weeklyTotal - allPlayPaid);
     const prizes = PRIZE_SHARES.map((share, i) => ({
         place: ["1st", "2nd", "3rd"][i],
         share,
-        amount: Math.round(forPlayoffs * share * 100) / 100,
+        amount: cents(forPlayoffs * share),
         team: places ? places[i] : null
     }));
     const prizeOf = (id) => prizes.find((prize) => prize.team === id) || null;
@@ -253,11 +255,11 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
 export function winningsLine(row) {
     const parts = [];
     if (row.weeks.length) {
-        parts.push(`Week${row.weeks.length > 1 ? "s" : ""} ${row.weeks.join(", ")} ${money(row.weekly)}`);
+        parts.push(`Week${row.weeks.length > 1 ? "s" : ""} ${row.weeks.join(", ")} ${ledger(row.weekly)}`);
     }
-    parts.push(`${row.record} all-play${row.allPlay ? ` ${money(row.allPlay)}` : ""}`);
+    parts.push(`${row.record} all-play${row.allPlay ? ` ${ledger(row.allPlay)}` : ""}`);
     if (row.prize) {
-        parts.push(`${row.prize.place} ${money(row.prize.amount)}`);
+        parts.push(`${row.prize.place} ${ledger(row.prize.amount)}`);
     }
     return parts.join(" · ");
 }

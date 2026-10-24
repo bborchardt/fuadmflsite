@@ -9,8 +9,8 @@ import {MIN_INJURY_REPORT} from "../lib/league.js";
 import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {onNflIR} from "../lib/violations.js";
 import {projection} from "./add-model.js";
+import {cents} from "./format.js";
 
-const round2 = (amount) => Math.round(amount * 100) / 100;
 const IR = "INJURED_RESERVE";
 
 const playerId = (link) => (String(link.getAttribute("href")).match(/launch_player_modal\(\s*'[^']*'\s*,\s*'(\d+)'/) || [])[1];
@@ -101,7 +101,7 @@ export function checkIR(team, {toIR = [], activate = [], drop = null, limits}) {
     const moved = team.franchise.numPlayers - toIR.length + activate.length;
     const franchise = {
         ...team.franchise,
-        capTotal: round2(team.franchise.capTotal - (dropped ? dropped.salary - dropped.capPenalty : 0)),
+        capTotal: cents(team.franchise.capTotal - (dropped ? dropped.salary - dropped.capPenalty : 0)),
         numPlayers: moved - (dropped ? 1 : 0)
     };
     const groups = team.groups.map((group) => ({round: group.round, claims: group.claims.map((claim) => (drop && claim.drop === drop ? {...claim, drop: null} : claim))}));
@@ -162,7 +162,7 @@ export function dropChoices(team, page, {toIR, activate, limits}) {
         }
         const check = checkIR(team, {toIR, activate, drop: entry.id, limits});
         const why = !entry.drop ? (entry.locked ? "Game started" : "Can’t drop") : check.why === "over cap" ? "over cap" : "";
-        return {player, penalty: player.capPenalty, capChange: round2(player.capPenalty - player.salary), off: Boolean(why), why};
+        return {player, penalty: player.capPenalty, capChange: cents(player.capPenalty - player.salary), off: Boolean(why), why};
     }).filter(Boolean)
         .sort((a, b) => a.penalty - b.penalty || a.player.salary - b.player.salary || a.player.fullName.localeCompare(b.player.fullName));
 }

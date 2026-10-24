@@ -2,22 +2,14 @@
 // live until this season's trade deadline, then this season's snapshot. Shared by the Contracts tab
 // and Rosters › Draft.
 
-import {weekKickoff} from "../lib/mfl.js";
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
 import {franchisePhase, readSnapshot, snapshotFileName} from "../lib/franchise.js";
-import {cached} from "./store.js";
-import {pageFetch} from "./page-fetch.js";
-
-const DAY = 24 * 60 * 60 * 1000;
+import {kickoffAt} from "./context.js";
 
 // null until MFL publishes the schedule
 async function kickoffs(season) {
-    const times = await cached(`fuad.kickoffs.${season}`, DAY, async () => {
-        const [start, deadline] = await Promise.all([PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK].map((week) =>
-            weekKickoff(season, week, {fetchImpl: pageFetch})));
-        return {start: start && start.getTime(), deadline: deadline && deadline.getTime()};
-    });
-    return {start: times.start && new Date(times.start), deadline: times.deadline && new Date(times.deadline)};
+    const [start, deadline] = await Promise.all([PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK].map((week) => kickoffAt(season, week)));
+    return {start: start && new Date(start * 1000), deadline: deadline && new Date(deadline * 1000)};
 }
 
 async function loadSnapshot(season, dataBase) {

@@ -8,6 +8,7 @@ import {dayText} from "./home-model.js";
 import {gameStates, readStats} from "./live-scoring.js";
 import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
+import {ordinal} from "./format.js";
 
 const MINUTE = 60 * 1000;
 // MFL's live scoring page reads its stats feed this often
@@ -19,7 +20,6 @@ const TWO_COLUMNS = "(min-width: 57.01em)";
 
 const weekday = (seconds) => dayText(seconds).split(" ")[0];
 export const two = (week) => String(week).padStart(2, "0");
-const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
 
 // `data`: what league.js loads for the section (exports, feeds, names, the season's facts); `showing()`
 // whether Scores is the view on screen

@@ -2,10 +2,10 @@
 // warnings say about a choice of starters. No exports: the page has everything it shows.
 
 import {displayName} from "../lib/mfl.js";
+import {clean} from "./html.js";
 
 export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "PK"];
 
-const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
 const number = (value) => {
     const parsed = parseFloat(clean(value));
     return Number.isFinite(parsed) ? parsed : null;
