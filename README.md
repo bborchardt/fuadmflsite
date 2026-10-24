@@ -51,6 +51,9 @@ would do until they're switched on.
   on the real site.
 - `uv run --no-project --with playwright python tools/verify/verify.py compare --local v1` renders the
   live league page with and without your working copy and compares every area.
+- `uv run --no-project --with playwright python tools/verify/screens.py compare` uses v2's screens,
+  loaded from pages saved from the clone league with no MFL requests, on master and on your working
+  copy, and lists every step whose HTML or moves to MFL differ.
 
 ## What's where
 
@@ -62,7 +65,7 @@ would do until they're switched on.
 | `mfl/` | What goes in MFL's home page messages |
 | `jobs/` | The daily job (`.github/workflows/daily.yml` runs `jobs/daily.mjs`) |
 | `tests/` | Unit tests |
-| `tools/` | Local preview server and the live-page comparison |
+| `tools/` | Local preview server, the live-page comparison, and the offline comparison of v2's screens with its saved pages |
 | `docs/` | [Design decisions](docs/design.md) and [MFL facts](docs/mfl.md) |
 
 The `league-data` branch holds what the job writes: franchise salary snapshots and its chore log.
