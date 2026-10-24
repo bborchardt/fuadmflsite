@@ -2817,6 +2817,15 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-board-picks > li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 44px; padding: 4px 0; }
 
+/* a pick's or the order's team links to its page, in the row's own colour */
+#fuad-rosters .fuad-order a,
+#fuad-rosters .fuad-board-picks a { color: inherit; }
+
+@media (hover: hover) {
+    #fuad-rosters .fuad-order a:hover,
+    #fuad-rosters .fuad-board-picks a:hover { color: var(--fuad-lime); }
+}
+
 #fuad-rosters .fuad-my-picks > li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; }
 
 @media (max-width: 48em) {
