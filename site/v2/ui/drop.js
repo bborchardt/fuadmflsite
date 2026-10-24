@@ -6,18 +6,18 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, failedLine, limitsApply, loadData, movesPhase, refusal, rosterIds, send} from "./moves.js";
+import {
+    Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, money, movesPhase, refusal,
+    rosterIds, send, takeFlash
+} from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
 import {contractYears} from "./rosters-model.js";
 
 const FLASH_KEY = "fuad.dropFlash";
-const WIDE = "(min-width: 48.01em)";
 
-const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
 const CHEVRON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
-const money = (amount) => `$${Math.round(amount * 100) / 100}`;
 const tone = (name) => (name ? ` fuad-${name}` : "");
 
 // MFL's Drop Players form: one player at a time is posted in place
@@ -73,14 +73,8 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     show();
 
     const wide = window.matchMedia(WIDE);
-    let flash = null;
-    try {
-        flash = JSON.parse(window.sessionStorage.getItem(FLASH_KEY) || "null");
-        window.sessionStorage.removeItem(FLASH_KEY);
-    } catch (error) {
-        // storage is blocked: no line after the reload
-    }
-    const state = {data: null, failed: false, open: null, done: flash && flash.done, error: (flash && flash.error) || "", busy: false};
+    const flash = takeFlash(FLASH_KEY);
+    const state = {data: null, failed: false, open: null, done: flash.done, error: flash.error || "", busy: false};
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
     // in season once the roster limits hold, from the cut-down date (2.5)
@@ -92,22 +86,21 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     function statusMarkup() {
         const parts = [];
         if (state.done) {
-            parts.push(`<p class="fuad-drop-status" role="status">${CHECK}<span>${esc(state.done)}</span></p>`);
+            parts.push(doneLine(state.done));
         }
         // a cut being reviewed shows its failure beside it
         if (state.error && !state.open) {
-            parts.push(`<p class="fuad-drop-alert" role="alert">${esc(state.error)}</p>`);
+            parts.push(alertLine(state.error));
         }
         return parts.join("");
     }
 
     function capBar() {
         const franchise = team().franchise;
-        const capTone = franchise.capTotal > SALARY_CAP ? "fuad-bad" : franchise.capTotal > SALARY_CAP - 10 ? "fuad-caution" : "";
         // no roster limits before the season (2.5)
         const season = phase() === "season";
         const figure = (label, value, tone, most) => `<span class="fuad-drop-figure"><span class="fuad-muted">${label}</span> <strong class="${tone}">${esc(value)}</strong>${most ? ` <span class="fuad-muted">of ${esc(most)}</span>` : ""}</span>`;
-        return `<div class="fuad-drop-bar">${figure("Active", String(franchise.numPlayers), season && franchise.numPlayers > ROSTER_MAX ? "fuad-bad" : "", season ? String(ROSTER_MAX) : "")}${figure("Cap used", money(franchise.capTotal), capTone, `$${SALARY_CAP}`)}</div>`;
+        return `<div class="fuad-drop-bar">${figure("Active", String(franchise.numPlayers), season && franchise.numPlayers > ROSTER_MAX ? "fuad-bad" : "", season ? String(ROSTER_MAX) : "")}${figure("Cap used", money(franchise.capTotal), capTone(franchise.capTotal), `$${SALARY_CAP}`)}</div>`;
     }
 
     function review(row) {
@@ -115,7 +108,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         const to = checkDrop(team(), {drop: row.player.playerId, phase: phase()}).cap.to;
         return `<div class="fuad-drop-review" id="fuad-drop-review-${esc(row.player.playerId)}">
             <span class="fuad-drop-cut">Cut now: <strong>${esc(money(row.penalty))} penalty</strong> · cap used ${esc(money(from))} → <strong class="${tone(usedTone(from, to)).trim()}">${esc(money(to))}</strong></span>
-            ${state.error ? `<p class="fuad-drop-alert" role="alert">${esc(state.error)}</p>` : ""}
+            ${state.error ? alertLine(state.error) : ""}
             <button type="button" class="fuad-drop-go" data-act="drop" data-id="${esc(row.player.playerId)}"${state.busy ? " disabled" : ""}>${state.busy ? "Dropping…" : `Drop ${esc(surname(state.data.mflNames.get(row.player.playerId) || row.player.fullName))}`}</button>
         </div>`;
     }
@@ -162,7 +155,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
             ? `[data-act="${active.dataset.act}"][data-id="${active.dataset.id}"]` : null;
         if (!state.data) {
             mount.innerHTML = state.failed
-                ? `${statusMarkup()}<div class="fuad-drop-alert fuad-drop-failed" role="alert"><span>Couldn’t check your cap.${state.failed === "busy" ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-drop-failed-buttons"><button type="button" class="fuad-drop-retry" data-act="retry"${state.failed === "busy" && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-drop-retry" data-act="mfl">MFL’s page</button></span></div>`
+                ? `${statusMarkup()}${failedBox("your cap", state.failed)}`
                 : `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
         }
@@ -179,11 +172,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
 
     // Shows the result after MFL's page reloads
     function reloadWith(next) {
-        try {
-            window.sessionStorage.setItem(FLASH_KEY, JSON.stringify(next));
-        } catch (error) {
-            // storage is blocked: the reload just shows the page as MFL has it
-        }
+        leaveFlash(FLASH_KEY, next);
         window.location.replace(window.location.pathname + window.location.search);
     }
 
