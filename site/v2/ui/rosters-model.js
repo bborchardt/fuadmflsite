@@ -4,6 +4,8 @@
 
 import {asArray} from "../lib/mfl.js";
 import {POSITIONS, SALARY_CAP, positionOrder, rookieSalary} from "../lib/rules.js";
+import {cents, money, yearsText} from "./format.js";
+import {dayText} from "./home-model.js";
 
 export const SEASONS_SHOWN = 5;
 export const ROUNDS = 5;
@@ -12,13 +14,9 @@ export const SCALE_PICKS = 10;
 // cap used within this much of the cap reads as tight
 export const TIGHT = 10;
 
-export const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;
 // a rostered player's years as every view writes them: "2 yrs", the commissioner's "RFA" (no salary
 // shown), or "length due" (draft day or an add's hour; lib/league.js markContracts)
 export const contractYears = (player) => (player.years > 0 ? yearsText(player.years) : player.lengthDue ? "length due" : "RFA");
-export const dollars = (value) => `$${Number.isInteger(value) ? value : Number(value).toFixed(2)}`;
-
-const centralDate = (seconds) => new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", timeZone: "America/Chicago"}).replace(",", "");
 
 // `byes` is the `nflByeWeeks` export, `points` the `playerScores` export (W=YTD)
 export function byeWeeks(nflByeWeeks) {
@@ -45,7 +43,7 @@ function readAdjustment(adjustment) {
     }
     return {
         who,
-        when: Number(adjustment.timestamp) ? centralDate(Number(adjustment.timestamp)) : "",
+        when: Number(adjustment.timestamp) ? dayText(Number(adjustment.timestamp)) : "",
         terms,
         amount: Number(adjustment.amount) || 0
     };
@@ -58,7 +56,7 @@ export function penaltiesOf(team, salaryAdjustments) {
         .map(readAdjustment);
     // a cut already charged is in MFL's adjustments, not owed again
     const pending = (team.pendingDroppedPlayers || []).filter((player) => player.capPenalty > 0 && !player.penaltyCharged)
-        .map((player) => ({who: player.fullName, when: "", terms: `${yearsText(player.years)} left at ${dollars(player.salary)} · not yet charged`, amount: player.capPenalty}));
+        .map((player) => ({who: player.fullName, when: "", terms: `${yearsText(player.years)} left at ${money(player.salary)} · not yet charged`, amount: player.capPenalty}));
     return charged.concat(pending);
 }
 
@@ -68,7 +66,7 @@ export function usedBySeason(team, rosteredPlayers, season) {
     const players = rosteredPlayers.filter((player) => player.franchise === team);
     return Array.from({length: SEASONS_SHOWN}, (_, k) => {
         const used = k === 0 ? team.capTotal : players.filter((player) => player.years > k).reduce((sum, player) => sum + player.salary, 0);
-        const rounded = Math.round(used * 100) / 100;
+        const rounded = cents(used);
         return {season: season + k, used: rounded, tight: SALARY_CAP - rounded < TIGHT};
     });
 }
@@ -88,7 +86,7 @@ export function rosterGroups(team, rosteredPlayers, {byes, points}) {
         ir: player.status === "INJURED_RESERVE",
         nflIr: /^IR/.test(player.injuryStatus || ""),
         cutPenalty: player.capPenalty,
-        capAfterCut: Math.round((team.capTotal - player.salary + player.capPenalty) * 100) / 100
+        capAfterCut: cents(team.capTotal - player.salary + player.capPenalty)
     }));
     const groups = new Map();
     for (const player of players.sort((a, b) => positionOrder(a.position) - positionOrder(b.position) || b.salary - a.salary || b.years - a.years || a.name.localeCompare(b.name))) {
@@ -100,7 +98,7 @@ export function rosterGroups(team, rosteredPlayers, {byes, points}) {
     return [...groups].map(([position, list]) => ({
         position,
         players: list,
-        salary: Math.round(list.reduce((sum, player) => sum + player.salary, 0) * 100) / 100
+        salary: cents(list.reduce((sum, player) => sum + player.salary, 0))
     }));
 }
 
@@ -141,12 +139,12 @@ export function picksSummary(teamId, futureDraftPicks, year) {
 export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, points, season, names, board = null}) {
     return [...league.franchises.values()].map((team) => {
         const penalties = penaltiesOf(team, salaryAdjustments);
-        const penaltyTotal = Math.round(penalties.reduce((sum, penalty) => sum + penalty.amount, 0) * 100) / 100;
+        const penaltyTotal = cents(penalties.reduce((sum, penalty) => sum + penalty.amount, 0));
         return {
             id: team.franchiseId,
             name: names.get(team.franchiseId) || team.teamName,
             capUsed: team.capTotal,
-            salaries: Math.round((team.capTotal - penaltyTotal) * 100) / 100,
+            salaries: cents(team.capTotal - penaltyTotal),
             penaltyTotal,
             tight: SALARY_CAP - team.capTotal < TIGHT,
             active: team.numPlayers,

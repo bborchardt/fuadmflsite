@@ -5,7 +5,8 @@ import {POSITIONS, SALARY_CAP, franchiseSalary, rookieSalary} from "../lib/rules
 import {esc} from "./html.js";
 import {STAR} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
-import {SCALE_PICKS, contractYears, dollars, drafted, scaleRange, scaleText} from "./rosters-model.js";
+import {SCALE_PICKS, contractYears, drafted, scaleRange, scaleText} from "./rosters-model.js";
+import {money} from "./format.js";
 
 const pts = (value) => (Number(value) || 0).toFixed(1);
 
@@ -16,8 +17,8 @@ export function capPanel(sheet) {
         <div class="fuad-cap-figures">
             <div class="fuad-cap-figure">
                 <span class="fuad-label">Cap used</span>
-                <span class="fuad-cap-big"><span class="${sheet.tight ? "fuad-caution" : ""}">${esc(dollars(sheet.capUsed))}</span><span class="fuad-meta"> of $${SALARY_CAP}</span></span>
-                <span class="fuad-meta">${esc(dollars(sheet.salaries))} salaries + ${esc(dollars(sheet.penaltyTotal))} penalties</span>
+                <span class="fuad-cap-big"><span class="${sheet.tight ? "fuad-caution" : ""}">${esc(money(sheet.capUsed))}</span><span class="fuad-meta"> of $${SALARY_CAP}</span></span>
+                <span class="fuad-meta">${esc(money(sheet.salaries))} salaries + ${esc(money(sheet.penaltyTotal))} penalties</span>
             </div>
             <div class="fuad-cap-figure">
                 <span class="fuad-label">Active</span>
@@ -27,7 +28,7 @@ export function capPanel(sheet) {
         </div>
         <div class="fuad-cap-seasons">
             <span class="fuad-label">Used by season</span>
-            <ol class="fuad-season-boxes">${sheet.seasons.map((season) => `<li><span class="fuad-meta">’${String(season.season).slice(2)}</span><span class="${season.tight ? "fuad-caution" : ""}">${esc(dollars(season.used))}</span></li>`).join("")}</ol>
+            <ol class="fuad-season-boxes">${sheet.seasons.map((season) => `<li><span class="fuad-meta">’${String(season.season).slice(2)}</span><span class="${season.tight ? "fuad-caution" : ""}">${esc(money(season.used))}</span></li>`).join("")}</ol>
         </div>
     </section>`;
 }
@@ -41,9 +42,9 @@ export function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
             <button type="button" class="fuad-name" data-player="${esc(row.id)}">${esc(row.name)}</button>${row.ir ? ' <span class="fuad-tag">IR</span>' : ""}
             <span class="fuad-meta fuad-phone-only">${esc(`${row.nfl || "FA"} · bye ${row.bye || "—"} · ${pts(row.points)} pts`)}</span>
         </th>
-        <td class="fuad-num">${row.rfa ? "—" : esc(dollars(row.salary))}</td>
+        <td class="fuad-num">${row.rfa ? "—" : esc(money(row.salary))}</td>
         <td class="fuad-num fuad-muted">${esc(contractYears(row))}</td>
-        ${cut ? `<td class="fuad-num fuad-wide">${row.cutPenalty ? esc(dollars(row.cutPenalty)) : "—"}</td><td class="fuad-num fuad-wide">${esc(dollars(row.capAfterCut))}</td>` : ""}
+        ${cut ? `<td class="fuad-num fuad-wide">${row.cutPenalty ? esc(money(row.cutPenalty)) : "—"}</td><td class="fuad-num fuad-wide">${esc(money(row.capAfterCut))}</td>` : ""}
         <td class="fuad-mid fuad-wide">${esc(row.nfl || "FA")}</td><td class="fuad-num fuad-wide">${esc(row.bye || "—")}</td><td class="fuad-num fuad-wide">${esc(pts(row.points))}</td>
     </tr>`;
     const head = `<tr><th scope="col">Player</th><th scope="col" class="fuad-num">Salary</th><th scope="col" class="fuad-num">Years</th>
@@ -51,13 +52,13 @@ export function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
         <th scope="col" class="fuad-mid fuad-wide">NFL</th><th scope="col" class="fuad-num fuad-wide">Bye</th><th scope="col" class="fuad-num fuad-wide">${esc(pointsLabel)}</th></tr>`;
     // a group's band, with the space above it as its own row (a table row takes no margin)
     const band = (name, note, total) => `<tr class="fuad-band-gap" aria-hidden="true"><td colspan="${columns}"></td></tr>
-        <tr class="fuad-group"><th scope="rowgroup"><span class="fuad-band-pos">${esc(name)}</span><span>${esc(note)}</span></th><td class="fuad-num">${esc(dollars(total))}</td><td colspan="${columns - 2}"></td></tr>`;
+        <tr class="fuad-group"><th scope="rowgroup"><span class="fuad-band-pos">${esc(name)}</span><span>${esc(note)}</span></th><td class="fuad-num">${esc(money(total))}</td><td colspan="${columns - 2}"></td></tr>`;
     const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
     const penalties = sheet.penalties.length ? `<tbody>
         ${band("Penalties", count(sheet.penalties.length, "penalty", "penalties"), sheet.penaltyTotal)}
         ${sheet.penalties.map((penalty) => `<tr>
             <th scope="row" class="fuad-team">${esc(penalty.who)}<span class="fuad-meta">${esc([penalty.when && `Cut ${penalty.when}`, penalty.terms].filter(Boolean).join(" · "))}</span></th>
-            <td class="fuad-num">${esc(dollars(penalty.amount))}</td><td colspan="${columns - 2}"></td>
+            <td class="fuad-num">${esc(money(penalty.amount))}</td><td colspan="${columns - 2}"></td>
         </tr>`).join("")}
     </tbody>` : "";
     return `<section class="fuad-panel" aria-label="Roster">
@@ -111,7 +112,7 @@ export function tagsPanel(view, year) {
         <div class="fuad-tags" role="group" aria-label="Tag prices">${tags.map((tag, i) => `<button type="button" class="fuad-tag-tile" aria-expanded="false" aria-controls="fuad-tag-${i}">
             <span class="fuad-label">${esc(tag.position)}</span><span class="fuad-tag-price">$${tag.price}</span>
         </button>`).join("")}</div>
-        ${tags.map((tag, i) => `<ol class="fuad-tag-top" id="fuad-tag-${i}" hidden>${tag.top.map((player) => `<li><span>${esc(player.fullName)}</span><span class="fuad-meta">${esc(dollars(player.salary))}</span></li>`).join("")}</ol>`).join("")}
+        ${tags.map((tag, i) => `<ol class="fuad-tag-top" id="fuad-tag-${i}" hidden>${tag.top.map((player) => `<li><span>${esc(player.fullName)}</span><span class="fuad-meta">${esc(money(player.salary))}</span></li>`).join("")}</ol>`).join("")}
     </section>`;
 }
 
@@ -136,7 +137,7 @@ export function boardPanel(board, {year, viewer, before, open}) {
                 <span class="fuad-meta">${esc(pick.number)}</span>
                 ${before
                     ? `<span class="fuad-row-text"><span class="fuad-row-title">${esc(pick.teamName)}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span><span class="fuad-meta">${esc(scaleRange(pick.overall))}</span>`
-                    : `<span class="fuad-row-text"><span class="fuad-row-title">${pick.player ? `<button type="button" class="fuad-name" data-player="${esc(pick.player.id)}">${esc(pick.player.name)}</button> <span class="fuad-meta">${esc(pick.player.position)}</span>` : "—"}</span><span class="fuad-meta">${esc(pick.teamName)}</span></span><span class="fuad-num">${pick.salary === null ? "—" : esc(dollars(pick.salary))}</span>`}
+                    : `<span class="fuad-row-text"><span class="fuad-row-title">${pick.player ? `<button type="button" class="fuad-name" data-player="${esc(pick.player.id)}">${esc(pick.player.name)}</button> <span class="fuad-meta">${esc(pick.player.position)}</span>` : "—"}</span><span class="fuad-meta">${esc(pick.teamName)}</span></span><span class="fuad-num">${pick.salary === null ? "—" : esc(money(pick.salary))}</span>`}
             </li>`).join("")}</ul>
         </div>`).join("")}</div>
     </section>`;
@@ -197,7 +198,7 @@ export function teamsMarkup(list, {viewer, season}) {
     return `<section class="fuad-panel" aria-label="Teams by cap used">
     <ul class="fuad-rows fuad-team-list fuad-phone-only">${list.map((team) => `<li class="${team.id === viewer ? "fuad-row-mine" : ""}">
         <a class="fuad-team-row" href="#rosters-teams/${esc(team.id)}">
-            <span class="fuad-team-line"><span class="fuad-row-title">${esc(team.name)}</span><span class="fuad-figure ${team.tight ? "fuad-caution" : ""}">${esc(dollars(team.capUsed))}</span></span>
+            <span class="fuad-team-line"><span class="fuad-row-title">${esc(team.name)}</span><span class="fuad-figure ${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span>
             ${capBar(team, viewer)}
             <span class="fuad-meta">${team.picksYear} picks ${esc(team.picksLine)} · ${team.active} / 30${team.ir ? ` + ${team.ir} IR` : ""}</span>
         </a></li>`).join("")}</ul>
@@ -206,9 +207,9 @@ export function teamsMarkup(list, {viewer, season}) {
             ${later.map((entry) => `<th scope="col" class="fuad-num">’${String(entry.season).slice(2)}</th>`).join("")}<th scope="col" class="fuad-num">Roster</th><th scope="col"><span class="fuad-hidden">Open</span></th></tr></thead>
         <tbody>${list.map((team) => `<tr class="fuad-row-link${team.id === viewer ? " fuad-row-mine" : ""}" data-href="#rosters-teams/${esc(team.id)}">
             <th scope="row" class="fuad-team"><a href="#rosters-teams/${esc(team.id)}">${esc(team.name)}</a></th>
-            <td><span class="fuad-power-cell">${capBar(team, viewer)}<span class="${team.tight ? "fuad-caution" : ""}">${esc(dollars(team.capUsed))}</span></span></td>
+            <td><span class="fuad-power-cell">${capBar(team, viewer)}<span class="${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span></td>
             <td class="fuad-num">${esc(team.picksLine)}</td>
-            ${team.seasons.slice(1).map((entry) => `<td class="fuad-num ${entry.tight ? "fuad-caution" : "fuad-muted"}">${esc(dollars(entry.used))}</td>`).join("")}
+            ${team.seasons.slice(1).map((entry) => `<td class="fuad-num ${entry.tight ? "fuad-caution" : "fuad-muted"}">${esc(money(entry.used))}</td>`).join("")}
             <td class="fuad-num">${team.active} / 30${team.ir ? ` + ${team.ir}` : ""}</td>
             <td class="fuad-chevron" aria-hidden="true">›</td>
         </tr>`).join("")}</tbody>
@@ -251,7 +252,7 @@ function playerCell(player, key, {phoneKeys, before}) {
     const phone = onPhone(key, phoneKeys);
     switch (key) {
         case "name": {
-            const contract = player.fa ? "Free agent" : player.rfa ? "RFA" : `${before ? "" : `${dollars(player.salary)} · `}${contractYears(player)}`;
+            const contract = player.fa ? "Free agent" : player.rfa ? "RFA" : `${before ? "" : `${money(player.salary)} · `}${contractYears(player)}`;
             return `<th scope="row" class="fuad-team"><button type="button" class="fuad-name" data-player="${esc(player.id)}">${esc(player.name)}</button>
     <span class="fuad-meta fuad-phone-only">${esc([player.position, player.nfl, contract, player.fa ? "" : player.ownerName].filter(Boolean).join(" · "))}</span></th>`;
         }
@@ -260,7 +261,7 @@ function playerCell(player, key, {phoneKeys, before}) {
         case "bye": return `<td class="fuad-num${phone}">${esc(player.bye || "—")}</td>`;
         case "projected": return `<td class="fuad-num${phone}">${player.projected === null ? "—" : esc(player.projected.toFixed(1))}</td>`;
         case "points": return `<td class="fuad-num${phone}">${esc(pts(player.points))}</td>`;
-        case "salary": return `<td class="fuad-num${phone}">${player.salary === null ? "—" : esc(dollars(player.salary))}</td>`;
+        case "salary": return `<td class="fuad-num${phone}">${player.salary === null ? "—" : esc(money(player.salary))}</td>`;
         case "years": return player.fa && !before ? `<td class="fuad-num fuad-muted${phone}">—</td>` : `<td class="fuad-num${phone}">${player.fa ? "UFA" : player.rfa ? "RFA" : esc(contractYears(player))}</td>`;
         default: return `<td class="${phone}">${esc(player.ownerName)}</td>`;
     }

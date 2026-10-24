@@ -12,7 +12,7 @@
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
-import {alertLine, capTone, doneLine, failedBox, money} from "./moves.js";
+import {alertLine, capTone, doneLine, failedBox} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {dayText, whenText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
@@ -20,6 +20,7 @@ import {
     assetList, assetView, bidsAfter, blockReason, ctParts, expiresText, expiryChoices, kickoffText, lockedText, offersOf, pickGroups, pickedSummary,
     rosterNotices, throughGames, tradeEffect
 } from "./trades-model.js";
+import {money} from "./format.js";
 
 const BACK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>';
 

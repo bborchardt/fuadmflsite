@@ -5,9 +5,7 @@
 // v2's heading. MFL's own nodes move into v2's markup, so its links, fields and buttons keep working;
 // the page is marked only once it's done, so a page v2 can't read stays as MFL drew it.
 
-import {esc, initials} from "./html.js";
-
-const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
+import {clean, esc, initials} from "./html.js";
 
 // "Wed Sep 9 11:11:12 p.m. CT 2026" → "Wed Sep 9 · 11:11 p.m."
 export function shortDate(text) {

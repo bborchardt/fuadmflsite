@@ -13,7 +13,7 @@ const WAIT_KEY = "fuad.mflWait";
 const WAIT = 30 * 1000;
 const MOVES_KEPT = 2 * MINUTE;
 
-const centralDate = (date) => date.toLocaleDateString("en-CA", {timeZone: "America/Chicago"});
+export const centralDate = (date) => date.toLocaleDateString("en-CA", {timeZone: "America/Chicago"});
 
 // whether this week's NFL schedule has a game today; unknown counts as a game day
 export function gameToday(schedule, now) {

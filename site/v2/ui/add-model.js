@@ -6,6 +6,7 @@ import {asArray} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
+import {cents, money} from "./format.js";
 
 // the bylaws' contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
@@ -260,7 +261,7 @@ function projectWith(team, {add = null, without = null} = {}) {
 
 export const projection = (team) => projectBids(team.franchise, team.groups, team.players);
 
-const isIR = (player) => player && player.status === "INJURED_RESERVE";
+export const isIR = (player) => Boolean(player && player.status === "INJURED_RESERVE");
 
 // Why the team can't add anyone now, or null. Outside the limits only moves toward them are allowed
 // (10.5): over 30 active in season, no adds at all.
@@ -325,7 +326,7 @@ export function checkAdd(team, {cost, drop, phase}) {
     const frees = dropped ? dropped.salary - dropped.capPenalty : 0;
     const franchise = {
         ...team.franchise,
-        capTotal: Math.round((team.franchise.capTotal + cost - frees) * 100) / 100,
+        capTotal: cents(team.franchise.capTotal + cost - frees),
         numPlayers: team.franchise.numPlayers + (dropped && !isIR(dropped) ? 0 : 1)
     };
     // a pending claim dropping the same player can't drop him after this: it counts as no drop
@@ -394,8 +395,8 @@ export const cutLater = (salary, years) => capPenalty(years, salary);
 
 // a signed cap change: "+$5" (cap used goes up), "−$40" (down), "$0"
 export function signed(amount) {
-    const rounded = Math.round(amount * 100) / 100;
-    return rounded > 0 ? `+$${rounded}` : rounded < 0 ? `−$${-rounded}` : "$0";
+    const rounded = cents(amount);
+    return rounded > 0 ? `+${money(rounded)}` : rounded < 0 ? `−${money(-rounded)}` : "$0";
 }
 
 export const changeTone = (amount) => (amount > 0 ? "bad" : amount < 0 ? "good" : "");
