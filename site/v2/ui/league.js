@@ -130,7 +130,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             const lastScheduled = await schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0);
             return drawScores(mount, {
-                context, viewer, exp, feed, before, lastScheduled, lastRegular: Number(window.standingsEndWeek) || 14,
+                context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14,
                 names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),
                 showing: () => document.documentElement.classList.contains("fuad-league-on") && viewOf(window.location.hash) === "scores"
             });

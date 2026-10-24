@@ -68,13 +68,13 @@ test("Scores' bar: Season for a member, Best for anyone, neither before week 1",
 
 test("Season: each week's result in its tone, this week live, and the playoffs' weeks after", () => {
     const rows = [{week: 1, opponent: "0002", result: "W 120.0–99.5"}, {week: 2, opponent: "0003", result: "L 80.0–90.0"}, {week: 3, opponent: "0004", result: ""}];
-    const html = seasonMarkup({lastRegular: 14, endWeek: 17, rows, names, current: 3, live: "Live 50.0–40.0", title: "2026 season", line: "2-1-0 · West 1st"});
+    const html = seasonMarkup({lastRegular: 14, endWeek: 17, rows, names, current: 3, live: "Live 50.0–40.0", title: "2026 season", line: "2-1-0 · West 1st", teamHref: (id) => `#rosters-teams/${id}`});
     assert.match(html, /<span class="fuad-good">W 120\.0–99\.5<\/span>/);
     assert.match(html, /<span class="fuad-bad-text">L 80\.0–90\.0<\/span>/);
-    assert.match(html, /<li class="fuad-season-row fuad-row-mine"><span class="fuad-meta">W3<\/span><span>Rivals<\/span><span class="fuad-live">Live 50\.0–40\.0<\/span>/);
+    assert.match(html, /<li class="fuad-season-row fuad-row-mine"><span class="fuad-meta">W3<\/span><span><a href="#rosters-teams\/0004">Rivals<\/a><\/span><span class="fuad-live">Live 50\.0–40\.0<\/span>/);
     assert.match(html, /Weeks 15–17<\/span><span class="fuad-muted">Playoffs/);
     assert.match(html, /2-1-0 · West 1st/);
-    assert.match(seasonMarkup({lastRegular: 14, endWeek: 17, rows, names, current: 3, live: "", title: "", line: ""}), /<span class="fuad-muted">This week<\/span>/);
+    assert.match(seasonMarkup({lastRegular: 14, endWeek: 17, rows, names, current: 3, live: "", title: "", line: "", teamHref: (id) => `#rosters-teams/${id}`}), /<span class="fuad-muted">This week<\/span>/);
 });
 
 test("Winners: so far in season, payouts once final; the viewer's row and titles marked", () => {
