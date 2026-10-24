@@ -3,3 +3,4 @@
 # franchise snapshots live on the league-data branch; the publish workflow copies them in
 site/data/
 __pycache__/
+.DS_Store
