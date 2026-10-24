@@ -44,6 +44,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
     name changes yearly
   - the latest post within the hour decides, so owners can correct a length; a later unreadable
     post flags rather than keep the earlier length
+  - a post or comment that offers a player more than one length ("3 or 4 years", "3 years, no
+    wait 4") flags; a correction belongs in its own post
   - a last name is ambiguous only with another add waiting for years, not a player under contract
   - nothing stated in time: 1 year, applied on sight; the commissioner adjusts by hand for leniency
   - anything unclear is flagged, never defaulted
