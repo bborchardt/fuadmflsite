@@ -14,6 +14,7 @@ which are answered from the saved pages, never sent.
 
 compare  records --base (a git ref, default master) and the working copy, and lists every step whose
          HTML or moves differ. A refactor should show none; a visible change shows up as a review list.
+         Runs of whitespace count as one space, as the browser draws them, so markup may be reindented.
 record   writes one version's record, from the working copy or --ref.
 
 It sees HTML and moves, not CSS: a style change needs its own check. The site menu, team sheet and
@@ -406,6 +407,11 @@ def record(refs, only=None):
     return found
 
 
+# as the browser draws it: a run of whitespace is one space (v2 has no <pre>)
+def drawn(html):
+    return re.sub(r"\s+", " ", html or "")
+
+
 def compare(base, head):
     differ = 0
     for key in sorted(set(base) | set(head)):
@@ -415,7 +421,7 @@ def compare(base, head):
             print(f"\n## {key}: only in {'head' if a is None else 'base'}")
             continue
         for part in ["html", "posts", "errors"]:
-            if a[part] != b[part]:
+            if (drawn(a[part]) != drawn(b[part])) if part == "html" else a[part] != b[part]:
                 differ += 1
                 print(f"\n## {key}: {part} differs")
                 left = a[part] if isinstance(a[part], str) else json.dumps(a[part], indent=1)

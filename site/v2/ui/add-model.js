@@ -453,3 +453,51 @@ export function copyTargets(team, {round, claim, rounds, phase}) {
         return {round: target, isNew: target === next, off: taken || !result.fits, why: taken ? "" : result.why};
     });
 }
+
+// A move being composed ({add, drop, round, bid, years, editing, kind}; `drop` is undefined until
+// picked, null for none): checkBid's or checkAdd's answer, with the bid as typed and the most it can
+// be. `freeAgent` is the player's entry on MFL's page, whose salary an immediate add costs.
+export function composeCheck(team, compose, {phase, freeAgent}) {
+    const c = compose;
+    if (c.kind === "bid") {
+        const bid = Math.max(0, parseInt(c.bid, 10) || 0);
+        const result = checkBid(team, {round: c.round, claim: {add: c.add, bid, drop: c.drop || null}, without: c.editing, phase});
+        const max = maxBid(team, {round: c.round, drop: c.drop || null, without: c.editing});
+        // the same claim twice in a group would read back as made even if MFL refused it
+        const twice = !c.editing && c.drop !== undefined && team.groups.some((group) => group.round === c.round
+            && group.claims.some((claim) => claim.add === c.add && (claim.drop || null) === (c.drop || null)));
+        const why = twice ? "already in this group" : result.why;
+        return {...result, why, bid, max, tooHigh: bid > max, fits: result.fits && !twice && bid <= max && bid >= 1};
+    }
+    return {...checkAdd(team, {cost: freeAgent ? freeAgent.salary || 1 : 1, drop: c.drop || null, phase}), bid: null};
+}
+
+// The composed move's checks with `drop` as its drop, for the drop list
+export function dropCheck(team, compose, drop, {phase, freeAgent}) {
+    if (compose.kind === "bid") {
+        return checkBid(team, {round: compose.round, claim: {add: compose.add, bid: 1, drop}, without: compose.editing, phase});
+    }
+    return checkAdd(team, {cost: freeAgent ? freeAgent.salary || 1 : 1, drop, phase});
+}
+
+// where each player is already dropped in a group other than `round`
+export function usedDrops(team, round) {
+    const used = new Map();
+    for (const group of team.groups) {
+        if (group.round !== round) {
+            group.claims.filter((claim) => claim.drop).forEach((claim) => used.set(claim.drop, group.round));
+        }
+    }
+    return used;
+}
+
+// a claim of groupViews' by its key, with its group, or null
+export function findClaim(groups, key) {
+    for (const group of groups) {
+        const found = group.claims.find((claim) => claim.key === key);
+        if (found) {
+            return {group, claim: found};
+        }
+    }
+    return null;
+}

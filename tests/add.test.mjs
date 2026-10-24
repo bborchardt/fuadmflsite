@@ -2,8 +2,8 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readYears} from "../site/v2/lib/contract-years.js";
 import {
-    addBlock, banner, bidsLeft, checkAdd, checkBid, commentLines, copyTargets, droppedByTeam, freeAgencyOver, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
-    readMarks, readPlayerLists, rewriteComment, surname, yearsIn
+    addBlock, banner, bidsLeft, checkAdd, checkBid, commentLines, composeCheck, copyTargets, dropCheck, findClaim, droppedByTeam, freeAgencyOver, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
+    readMarks, readPlayerLists, rewriteComment, surname, usedDrops, yearsIn
 } from "../site/v2/ui/add-model.js";
 
 // MFL's Add/Drop page script, as saved from the clone on 18 Oct 2026
@@ -224,4 +224,45 @@ test("the Watching chip shows only the watched free agents, with the position an
     assert.deepEqual(ids(freeAgentRows(agents, {sort: "name", watched: new Set(["1", "2"])})), ["1", "2"]);
     assert.deepEqual(ids(freeAgentRows(agents, {sort: "name", pos: "RB", watched: new Set(["1", "2"])})), ["1"]);
     assert.deepEqual(ids(freeAgentRows(agents, {sort: "name"})), ["1", "2", "3"]);
+});
+
+test("a composed bid: its amount as typed, its max, and the same claim twice in a group blocked", () => {
+    const team = teamOf({active: 29, groups: [{round: 1, claims: [{add: "x", bid: 2, drop: "olave"}]}]});
+    const bid = {add: "x", drop: "olave", round: 1, bid: "2", years: 1, editing: null, kind: "bid"};
+    const twice = composeCheck(team, bid, {phase: "season"});
+    assert.equal(twice.fits, false);
+    assert.equal(twice.why, "already in this group");
+    // an edit of that claim is the claim itself, and another drop makes it another claim
+    assert.equal(composeCheck(team, {...bid, editing: "1_x_2_olave"}, {phase: "season"}).fits, true);
+    assert.equal(composeCheck(team, {...bid, drop: null}, {phase: "season"}).fits, true);
+    // until the drop is picked it can't be a copy of one
+    assert.equal(composeCheck(team, {...bid, drop: undefined}, {phase: "season"}).why, null);
+    // only the other groups count against a claim's max, and there are none: $300 − $293 = $7
+    const over = composeCheck(team, {...bid, add: "y", drop: null, bid: "8"}, {phase: "season"});
+    assert.deepEqual([over.bid, over.max, over.tooHigh, over.fits], [8, 7, true, false]);
+    const empty = composeCheck(team, {...bid, add: "y", drop: null, bid: ""}, {phase: "season"});
+    assert.deepEqual([empty.bid, empty.why, empty.fits], [0, "Bids start at $1.", false]);
+});
+
+test("a composed add costs the free agent's salary on MFL's page, $1 when it isn't listed", () => {
+    const team = teamOf({cap: 296, active: 28});
+    const add = {add: "x", drop: null, round: null, bid: "1", years: 1, editing: null, kind: "add"};
+    assert.deepEqual(composeCheck(team, add, {phase: "season", freeAgent: {salary: 4}}), {...checkAdd(team, {cost: 4, drop: null, phase: "season"}), bid: null});
+    assert.equal(composeCheck(team, add, {phase: "season", freeAgent: {salary: 5}}).why, "over cap");
+    assert.equal(composeCheck(team, add, {phase: "season"}).fits, true);
+    // each drop on the list is checked as the move's drop
+    assert.equal(dropCheck(team, add, "lamar", {phase: "season", freeAgent: {salary: 5}}).fits, true);
+    assert.equal(dropCheck(teamOf({active: 22}), {...add, kind: "bid", round: 1}, "olave", {phase: "season"}).why, "under roster minimum");
+});
+
+test("the drop list names the other groups that already drop a player", () => {
+    const team = teamOf({groups: [
+        {round: 1, claims: [{add: "x", bid: 1, drop: "olave"}]},
+        {round: 2, claims: [{add: "y", bid: 1, drop: "lamar"}, {add: "z", bid: 1, drop: null}]}
+    ]});
+    assert.deepEqual([...usedDrops(team, 1)], [["lamar", 2]]);
+    assert.deepEqual([...usedDrops(team, 3)], [["olave", 1], ["lamar", 2]]);
+    const groups = [{round: 2, claims: [{key: "a"}, {key: "b"}]}];
+    assert.deepEqual(findClaim(groups, "b"), {group: groups[0], claim: {key: "b"}});
+    assert.equal(findClaim(groups, "c"), null);
 });
