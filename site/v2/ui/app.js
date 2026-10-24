@@ -145,6 +145,12 @@ function viewLinks(context, franchiseId) {
     };
 }
 
+// a team's page under Teams, rebuilt or MFL's
+function teamLink(view) {
+    const teams = view("Rosters", "Teams");
+    return (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`);
+}
+
 function loginLink(context) {
     const login = [...document.querySelectorAll(".myfantasyleague_menu a[href], .pageheader a[href]")].find((a) => /^log\s*in$/i.test(a.textContent.trim()));
     return login ? login.href : `${window.location.origin}/${context.season}/login?L=${context.leagueId}`;
@@ -155,7 +161,6 @@ function loginLink(context) {
 function startHome(context, league, {beta, inBeta}) {
     const franchiseId = window.franchise_id || null;
     const view = viewLinks(context, franchiseId);
-    const teams = view("Rosters", "Teams");
     return import("./home.js").then(({drawHome}) => drawHome({
         context,
         franchiseId,
@@ -167,8 +172,7 @@ function startHome(context, league, {beta, inBeta}) {
             drop: view("Moves", "Drop"),
             ir: view("Moves", "IR"),
             trades: view("Moves", "Trades"),
-            // a team's page under Teams, rebuilt or MFL's
-            team: (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`)
+            team: teamLink(view)
         },
         loginHref: loginLink(context),
         inBeta,
@@ -317,7 +321,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             });
         whenShown("fuad-league-on")
             .then(() => import("./league.js"))
-            .then(({drawLeague}) => drawLeague({context, franchiseId: window.franchise_id || null}))
+            .then(({drawLeague}) => drawLeague({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))}))
             .catch((error) => {
                 console.error("[fuad] couldn't draw League:", error);
                 onTrouble();

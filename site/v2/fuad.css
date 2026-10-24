@@ -2658,7 +2658,14 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-figure { flex: none; font-family: var(--fuad-display); font-weight: 700; font-size: 18px; }
 
+#fuad-league .fuad-team a,
 #fuad-rosters .fuad-teams .fuad-team a { color: var(--fuad-text); font-weight: 600; }
+
+#fuad-league .fuad-row-mine .fuad-team a { font-weight: 700; }
+
+@media (hover: hover) {
+    #fuad-league .fuad-team a:hover { color: var(--fuad-lime); }
+}
 
 /* Players: the find box and chips, then the table; on desktop it scrolls inside itself */
 #fuad-rosters .fuad-players { padding-bottom: 12px; }

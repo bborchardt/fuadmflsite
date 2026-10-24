@@ -57,7 +57,7 @@ function wireToggles(root) {
     });
 }
 
-export function drawLeague({context, franchiseId}) {
+export function drawLeague({context, franchiseId, teamHref}) {
     const viewer = franchiseId && franchiseId !== "0000" ? franchiseId : null;
     const host = window.location.origin;
     const season = context.season;
@@ -151,7 +151,7 @@ export function drawLeague({context, franchiseId}) {
                 what: "standings", key: `fuad.league.standings.${year}`, maxAge: 2 * MINUTE, rows: 10, load: shared,
                 render: (value, body) => {
                     mount.firstElementChild.classList.remove("fuad-panel");
-                    body.innerHTML = standingsMarkup(value.divisions, {viewer, final});
+                    body.innerHTML = standingsMarkup(value.divisions, {viewer, final, teamHref});
                 }
             });
             drawPanel(mount.lastElementChild, {
