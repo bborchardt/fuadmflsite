@@ -2665,15 +2665,17 @@ body #fuad-home select {
 #fuad-league .fuad-row-mine .fuad-team a,
 #fuad-league .fuad-row-mine .fuad-row-title a { font-weight: 700; }
 
-/* these names keep their own weight: the chart's bold only for the viewer, a prize's semibold */
+/* these names keep their own weight: the chart's bold only for the viewer, a prize's semibold, Season's opponents regular */
 #fuad-league .fuad-position-name a,
-#fuad-league .fuad-prize-team a { color: var(--fuad-text); }
+#fuad-league .fuad-prize-team a,
+#fuad-league .fuad-season-row a { color: var(--fuad-text); }
 
 @media (hover: hover) {
     #fuad-league .fuad-team a:hover,
     #fuad-league .fuad-row-title a:hover,
     #fuad-league .fuad-position-name a:hover,
-    #fuad-league .fuad-prize-team a:hover { color: var(--fuad-lime); }
+    #fuad-league .fuad-prize-team a:hover,
+    #fuad-league .fuad-season-row a:hover { color: var(--fuad-lime); }
 }
 
 /* Players: the find box and chips, then the table; on desktop it scrolls inside itself */
