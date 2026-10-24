@@ -153,7 +153,7 @@ export function standingsMarkup(divisions, {viewer, final, teamHref}) {
         </section>`).join("");
 }
 
-export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt}) {
+export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt, teamHref}) {
     const lastSeed = seeds.length;
     return `<section class="fuad-panel" aria-labelledby="fuad-playoff-picture">
         <h2 class="fuad-panel-heading" id="fuad-playoff-picture">${esc(title)}</h2>
@@ -162,14 +162,14 @@ export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt}) {
                 <h3 class="fuad-label fuad-subhead">Seeds</h3>
                 <ol class="fuad-rows fuad-seeds">${seeds.map((seed) => `<li${seed.team.id === viewer ? ' class="fuad-row-mine"' : ""}>
                     <span class="fuad-seed">${seed.seed}</span>
-                    <span class="fuad-row-text"><span class="fuad-seed-name"><span class="fuad-row-title">${esc(seed.team.name)}</span>${seed.bye ? '<span class="fuad-tag fuad-tag-lime">Bye</span>' : ""}</span></span>
+                    <span class="fuad-row-text"><span class="fuad-seed-name"><span class="fuad-row-title"><a href="${esc(teamHref(seed.team.id))}">${esc(seed.team.name)}</a></span>${seed.bye ? '<span class="fuad-tag fuad-tag-lime">Bye</span>' : ""}</span></span>
                     <span class="fuad-meta fuad-seed-why">${esc(seed.why)}</span>
                 </li>`).join("")}</ol>
             </div>
             ${showHunt && hunt.length ? `<div>
                 <h3 class="fuad-label fuad-subhead">In the hunt · all-play games back of seed ${lastSeed}</h3>
                 <ul class="fuad-rows fuad-hunt">${hunt.map((entry) => `<li${entry.team.id === viewer ? ' class="fuad-row-mine"' : ""}>
-                    <span class="fuad-row-title">${esc(entry.team.name)}</span><span class="fuad-meta">${esc(entry.record)} all-play</span><span class="fuad-hunt-back">${esc(entry.back)}</span>
+                    <span class="fuad-row-title"><a href="${esc(teamHref(entry.team.id))}">${esc(entry.team.name)}</a></span><span class="fuad-meta">${esc(entry.record)} all-play</span><span class="fuad-hunt-back">${esc(entry.back)}</span>
                 </li>`).join("")}</ul>
             </div>` : ""}
         </div>
