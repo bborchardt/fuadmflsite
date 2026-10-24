@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {otherBids, readBidRun, reasonText, runPlayers, yearsFor} from "../site/v2/ui/bids-model.js";
+import {otherBids, playerIdOf, readBidRun, reasonText, runPlayers, yearsFor} from "../site/v2/ui/bids-model.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
@@ -88,4 +88,18 @@ test("a player no one got shows each bid with MFL's reason, in a few words", () 
     assert.deepEqual(runPlayers(groups), [{name: "Rush, Cooper", nfl: "DAL", position: "QB", won: null, bids: [{team: "0004", amount: 1, years: null, reason: "drop already gone"}]}]);
     assert.equal(reasonText("Is Not Available"), "taken");
     assert.equal(reasonText("Player Is Locked"), "locked");
+});
+
+test("a run's player by name and position, his NFL team only telling two apart; none unless exactly one", () => {
+    const known = new Map([
+        ["1", {playerId: "1", fullName: "Woody Marks", nflPosition: "RB", team: "HOU"}],
+        ["2", {playerId: "2", fullName: "Mike Williams", nflPosition: "WR", team: "PIT"}],
+        ["3", {playerId: "3", fullName: "Mike Williams", nflPosition: "WR", team: "NYJ"}],
+        ["4", {playerId: "4", fullName: "Mike Williams", nflPosition: "TE", team: "NYJ"}]
+    ]);
+    // moved since the bid: still found
+    assert.equal(playerIdOf({name: "Marks, Woody", nfl: "FA", position: "RB"}, known), "1");
+    assert.equal(playerIdOf({name: "Williams, Mike", nfl: "NYJ", position: "WR"}, known), "3");
+    assert.equal(playerIdOf({name: "Williams, Mike", nfl: "FA", position: "WR"}, known), null);
+    assert.equal(playerIdOf({name: "Rush, Cooper", nfl: "DAL", position: "QB"}, known), null);
 });
