@@ -4284,6 +4284,8 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-add .fuad-add-free-head .fuad-add-search { width: 300px; height: 44px; background: var(--fuad-raised); }
     #fuad-add .fuad-add-free-head .fuad-add-search input { font-size: 15px; }
     #fuad-add .fuad-add-free-head .fuad-add-pos { flex: none; min-width: 48px; height: 36px; background: var(--fuad-quiet); }
+    /* a pressed chip keeps its light background over the quiet one */
+    #fuad-add .fuad-add-free-head .fuad-add-pos[aria-pressed="true"] { background: var(--fuad-text); }
     #fuad-add .fuad-add-fa-table { min-width: 900px; }
     #fuad-add .fuad-add-fa-line {
         display: grid;
