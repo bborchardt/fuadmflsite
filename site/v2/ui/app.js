@@ -12,7 +12,7 @@ import {renderCommish} from "./commish.js";
 import {renderLinks} from "./links.js";
 import {cached, storage} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
-import {REBUILT, pageOf, sections, storedTabs} from "./nav.js";
+import {REBUILT, pageOf, sections, storedTabs, teamLinks} from "./nav.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -145,10 +145,8 @@ function viewLinks(context, franchiseId) {
     };
 }
 
-// a team's page under Teams, rebuilt or MFL's
 function teamLink(view) {
-    const teams = view("Rosters", "Teams");
-    return (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`);
+    return teamLinks(view("Rosters", "Teams"));
 }
 
 function loginLink(context) {
