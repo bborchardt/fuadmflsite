@@ -38,7 +38,7 @@ function viewOf({state = {}, league = leagueOf(), proposal = null, closed = fals
         },
         franchiseId: "0001", season: 2026, names: new Map([["0001", "Mine"], ["0002", "Pat's Team"]]), proposal, partners: [{id: "0001"}, {id: "0002"}],
         now: NOW, phase: "season", limits: true, closed, wide: true, addHref: "/add", listUrl: "/trades",
-        proposeUrl: (partner) => `/trades&FRANCHISE=0001,${partner}`, ...rest
+        proposeUrl: (partner) => `/trades&FRANCHISE=0001,${partner}`, teamHref: (id) => `/home#rosters-teams/${id}`, ...rest
     };
 }
 
@@ -64,6 +64,9 @@ test("an offer that would put the member over the cap can't be accepted, only re
 test("the member's own offers: Withdraw asks first, and Withdrawing… while it goes", () => {
     const html = listMarkup(viewOf());
     assert.match(html, /<strong>You give<\/strong> Tyler Higbee<\/span><span><strong>You get<\/strong> nothing/);
+    // each offer's team links to its page
+    assert.match(html, /From <strong><a href="\/home#rosters-teams\/0002">Pat&#x27;s Team<\/a><\/strong>/);
+    assert.match(html, /To <strong><a href="\/home#rosters-teams\/0002">Pat&#x27;s Team<\/a><\/strong>/);
     assert.match(button(html, "ask")[0], />Withdraw</);
     const asking = listMarkup(viewOf({state: {asking: "12", busy: "12"}}));
     assert.match(asking, /Withdraw this offer\?/);
