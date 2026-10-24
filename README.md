@@ -46,8 +46,8 @@ would do until they're switched on.
 
 ## Developing
 
-- `npm test` runs the unit tests (Node 24+); after `npm ci`, `npm run lint` checks that what runs in
-  members' browsers stays within ES2020 (Safari since iOS 14).
+- `npm test` runs the unit tests (Node 24+); after `npm ci`, `npm run lint` runs ESLint's standard
+  rules and checks that what runs in members' browsers stays within ES2020 (Safari since iOS 14).
 - `python3 tools/dev-server.py`, then `?fuadPreview=local` on a league page, runs your working copy
   on the real site.
 - `uv run --no-project --with playwright python tools/verify/verify.py compare --local v1` renders the
