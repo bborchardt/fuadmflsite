@@ -7,7 +7,7 @@ import {exportUrl} from "../lib/mfl.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 
 let loading = null;
-// changes MFL hasn't answered yet, player id → whether he'll be watched
+// changes MFL hasn't answered yet, player id → {on: whether he'll be watched, done: settles when MFL answers}
 const pending = new Map();
 
 // The ids in MFL's answer: a list of players or one (`{"id": …}` or a bare id), or the ids as one
@@ -41,49 +41,66 @@ export function watchList({season, leagueId}) {
     return loading;
 }
 
-// whether a player is watched, counting a change MFL hasn't answered yet, and whether one is waiting
-export const watchState = (list, playerId) => ({
-    on: pending.has(String(playerId)) ? pending.get(String(playerId)) : list.has(String(playerId)),
-    waiting: pending.has(String(playerId))
-});
+// whether a player is watched, counting a change MFL hasn't answered yet; `done`, when one is waiting,
+// settles once MFL answers it
+export function watchState(list, playerId) {
+    const change = pending.get(String(playerId));
+    return change ? {on: change.on, done: change.done} : {on: list.has(String(playerId)), done: null};
+}
 
 // puts a player on the list or takes him off; throws if MFL doesn't say OK. Not through pageFetch,
 // which answers the same address once a page.
-export async function setWatched({season, leagueId}, playerId, on) {
+export function setWatched(context, playerId, on) {
     const id = String(playerId);
-    pending.set(id, on);
-    try {
-        const response = await mflFetch(`${window.location.origin}/${season}/import`, {
-            method: "POST",
-            credentials: "include",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: new URLSearchParams({TYPE: "myWatchList", L: leagueId, [on ? "ADD" : "REMOVE"]: id})
-        });
-        const answer = await response.text();
-        if (!response.ok || !/<status\b[^>]*>\s*OK\s*<\/status>/i.test(answer)) {
-            throw Object.assign(new Error(`MFL didn't update the watch list: ${(/<error>([^<]*)<\/error>/.exec(answer) || [])[1] || `HTTP ${response.status}`}`), {status: response.status});
+    const change = {on, done: null};
+    const sent = send(context, id, on).finally(() => {
+        if (pending.get(id) === change) {
+            pending.delete(id);
         }
-        const list = await watchList({season, leagueId});
-        list[on ? "add" : "delete"](id);
-    } finally {
-        pending.delete(id);
+    });
+    change.done = sent.catch(() => {});
+    pending.set(id, change);
+    return sent;
+}
+
+async function send({season, leagueId}, id, on) {
+    const response = await mflFetch(`${window.location.origin}/${season}/import`, {
+        method: "POST",
+        credentials: "include",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: new URLSearchParams({TYPE: "myWatchList", L: leagueId, [on ? "ADD" : "REMOVE"]: id})
+    });
+    const answer = await response.text();
+    if (!response.ok || !/<status\b[^>]*>\s*OK\s*<\/status>/i.test(answer)) {
+        throw Object.assign(new Error(`MFL didn't update the watch list: ${(/<error>([^<]*)<\/error>/.exec(answer) || [])[1] || `HTTP ${response.status}`}`), {status: response.status});
     }
+    const list = await watchList({season, leagueId});
+    list[on ? "add" : "delete"](id);
     window.dispatchEvent(new CustomEvent("fuad-watch", {detail: {playerId: id, on}}));
 }
 
 // `redraw` now, or once the player popup closes: redrawing under it would take away the row it opened
-// from, and with it where focus and a phone's scroll return to
+// from, and with it where focus and a phone's scroll return to. Each redraw runs once however many
+// changes asked for it.
+const waiting = new Set();
+let watcher = null;
 export function whenPopupClosed(redraw) {
     const layer = document.querySelector(".fuad-popup-layer");
     if (!layer || layer.hidden) {
         redraw();
         return;
     }
-    const watcher = new MutationObserver(() => {
-        if (layer.hidden) {
-            watcher.disconnect();
-            redraw();
-        }
-    });
-    watcher.observe(layer, {attributes: true, attributeFilter: ["hidden"]});
+    waiting.add(redraw);
+    if (!watcher) {
+        watcher = new MutationObserver(() => {
+            if (layer.hidden) {
+                watcher.disconnect();
+                watcher = null;
+                const due = [...waiting];
+                waiting.clear();
+                due.forEach((run) => run());
+            }
+        });
+        watcher.observe(layer, {attributes: true, attributeFilter: ["hidden"]});
+    }
 }

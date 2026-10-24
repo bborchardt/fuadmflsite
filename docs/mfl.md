@@ -93,8 +93,8 @@ MFL documents little of this.
 
 - **My Watch List** (a member's own): the `myWatchList` export lists it, and the `myWatchList` import
   changes it (`ADD` or `REMOVE`, comma-separated player ids, posted as the owner), answering
-  `<status>OK</status>`. The export's player entries are assumed to be `{"id": …}` like other exports;
-  not yet seen with a list in it.
+  `<status>OK</status>`. The export, with one player: `{"myWatchList":{"player":{"id":"15727"}}}` (seen
+  in the clone, 23 Oct 2026); several come as a list, as in other exports.
 
 ## Waivers and the message board
 

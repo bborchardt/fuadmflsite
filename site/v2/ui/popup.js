@@ -255,11 +255,19 @@ export function installPopup({context, franchiseId}) {
                 star.setAttribute("aria-label", on ? "Watching" : "Watch");
             };
             watchList(context).then((list) => {
-                // a change still on its way to MFL shows as made, and waits before another
-                const {on, waiting} = watchState(list, playerId);
+                // a change still on its way to MFL shows as made, and waits for MFL's answer
+                const {on, done} = watchState(list, playerId);
                 show(on);
-                star.disabled = waiting;
                 star.hidden = false;
+                if (done) {
+                    star.disabled = true;
+                    done.then(() => {
+                        if (star.isConnected) {
+                            show(list.has(playerId));
+                            star.disabled = false;
+                        }
+                    });
+                }
             }, (error) => console.warn("[fuad] couldn't load the watch list:", error));
             star.addEventListener("click", () => {
                 const on = star.getAttribute("aria-pressed") !== "true";
