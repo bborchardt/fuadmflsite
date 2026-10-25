@@ -319,7 +319,11 @@ async function leagueState() {
     const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries});
     // if the season's phase can't be told, skip the league rules rather than flag the offseason
     try {
-        Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}));
+        // v2's lib reads the playoff and championship weeks from the league export (v1's has them fixed)
+        if ("weeks" in built && !built.weeks) {
+            throw new Error("the league export gives no last regular season week or end week");
+        }
+        Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}, built.weeks));
     } catch (error) {
         needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
         built.seasonOver = null;

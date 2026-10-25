@@ -2,7 +2,7 @@
 // and the kickoffs the sections go by.
 
 import {asArray, exportUrl, fetchExport, weekEnd, weekKickoff} from "../lib/mfl.js";
-import {ROSTER_CHECK_LAST_WEEK} from "../lib/rules.js";
+import {seasonWeeks} from "../lib/rules.js";
 import {cached} from "./store.js";
 import {centralDate, pageFetch} from "./page-fetch.js";
 
@@ -66,7 +66,10 @@ export function seasonFacts({season, leagueId}) {
         const week1Promise = weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
         const [week1, seasonEnd, draftResults, calendar] = await Promise.all([
             week1Promise,
-            weekEnd(season, ROSTER_CHECK_LAST_WEEK, {fetchImpl: pageFetch}).catch(() => null),
+            league("league").then((info) => {
+                const weeks = seasonWeeks(info);
+                return weeks ? weekEnd(season, weeks.championship, {fetchImpl: pageFetch}) : null;
+            }).catch(() => null),
             // only before week 1 does the draft matter
             week1Promise.then((date) => (date && Date.now() >= date.getTime() ? null : league("draftResults"))),
             league("calendar")

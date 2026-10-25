@@ -1,7 +1,7 @@
 {
   "salaryCap": 300,
   "roster": { "min": 23, "max": 30 },
-  "weeks": { "tradeDeadline": 12, "playoffsStart": 15, "championship": 17 },
+  "weeks": { "tradeDeadline": 12 },
   "franchiseTag": { "averageOfTop": 5 },
   "rookieScale": {
     "firstPick": { "QB": 6, "RB": 10, "WR": 10, "TE": 4, "PK": 1 },

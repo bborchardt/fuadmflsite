@@ -16,11 +16,13 @@ const links = {lineup: "L", add: "A", drop: "D", ir: "I", trades: "T", contracts
 const player = (playerId, fullName, extra = {}) => ({playerId, fullName, salary: 0, capPenalty: 0, years: 0, status: "ROSTER", team: "KC", ...extra});
 const team = (franchiseId, teamName, extra = {}) => ({franchiseId, teamName, capTotal: 250, numPlayers: 26, unchargedPenalty: 0, lineup: [], irPlayers: [], signedPlayers: [], ...extra});
 const leagueOf = (franchises, players = [], extra = {}) => ({
-    week: "6", started: true, seasonOver: false, tankingOver: false, injuryReportKnown: true, pendingAdds: [],
+    week: "6", weeks: WEEKS, started: true, seasonOver: false, tankingOver: false, injuryReportKnown: true, pendingAdds: [],
     franchises: new Map(franchises.map((f) => [f.franchiseId, f])),
     players: new Map(players.map((p) => [p.playerId, p])),
     ...extra
 });
+// this league's season (MFL's `league` export): playoffs from week 15, the championship in week 17
+const WEEKS = {playoffsStart: 15, championship: 17};
 const now = at("2026-10-17T12:00:00-05:00");
 const titles = (alerts) => alerts.map((alert) => alert.title);
 
@@ -170,7 +172,7 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.equal(cutDownDate(dates), 1788842700);
     // in season, every date left: the waiver lock repeats for 17 more weeks after Sun Sep 13, so
     // free agency closes Sun Jan 10, still at noon CT
-    assert.deepEqual(comingUp({dates, kickoffs, now}).map((d) => [d.what, d.when, d.soon]), [
+    assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, now}).map((d) => [d.what, d.when, d.soon]), [
         ["Trade deadline", "Wed Nov 25 · Week 12 kickoff", false],
         ["Rookie/Franchise Player Salaries Calculated for Next Year", "Wed Nov 25 · Week 12 kickoff", false],
         ["Playoffs begin", "Thu Dec 17 · Week 15 kickoff", false],
@@ -195,14 +197,14 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     // nor without the deadline's kickoff
     assert.deepEqual(calendarDates({event: [trade]}).map((d) => d.what), []);
     // before the draft: draft day, the cut-down, week 1 (the first blind bids follow the draft)
-    assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
+    assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
     // after the draft: the cut-down, the first blind bids, week 1
-    assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
+    assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
     // the week's waiver cycle: the next bid run, which opens the free agent window, and the lock
     // that closes it, in order among the season's dates; none of them a My alerts to-do
-    const cycle = (when) => comingUp({dates, kickoffs, calendar, now: when}).filter((d) => !d.kind && /^(Blind|Free agent)/.test(d.what))
+    const cycle = (when) => comingUp({dates, kickoffs, weeks: WEEKS, calendar, now: when}).filter((d) => !d.kind && /^(Blind|Free agent)/.test(d.what))
         .map((d) => [d.what, d.when, d.detail || "", d.soon]);
-    assert.deepEqual(comingUp({dates, kickoffs, calendar, now}).slice(0, 3).map((d) => d.what), ["Free agent window closes", "Blind bids process", "Trade deadline"]);
+    assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, calendar, now}).slice(0, 3).map((d) => d.what), ["Free agent window closes", "Blind bids process", "Trade deadline"]);
     assert.deepEqual(cycle(now), [
         ["Free agent window closes", "Sun Oct 18, 12:00 p.m.", "then blind bids only", false],
         ["Blind bids process", "Wed Oct 21, 11:00 p.m.", "then the free agent window opens", false]
@@ -213,12 +215,12 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(cycle(at("2027-01-04T12:00:00-06:00")), [["Blind bids process", "Wed Jan 6, 11:00 p.m.", "then the free agent window opens", false]]);
     // after the last run, only "Free agency closes" is left
     assert.deepEqual(cycle(at("2027-01-07T12:00:00-06:00")), []);
-    assert.deepEqual(comingUp({dates, kickoffs, calendar, now: at("2027-01-07T12:00:00-06:00")}).map((d) => d.what), ["Free agency closes", "Contract Year Ends - Lengths Reduced by 1"]);
+    assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, calendar, now: at("2027-01-07T12:00:00-06:00")}).map((d) => d.what), ["Free agency closes", "Contract Year Ends - Lengths Reduced by 1"]);
     // logged out there's no calendar, but the season's own dates show
-    assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin", "Championship week"]);
+    assert.deepEqual(comingUp({dates: [], kickoffs, weeks: WEEKS, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin", "Championship week"]);
     // two days ahead, the cut-down, the deadline, free agency closing and the rollover are to-dos for
     // My alerts; week 1, the playoffs, the championship and trades reopening stay in Coming up
-    const soon = (what, at) => comingUp({dates, kickoffs, now: at - 2 * 86400}).find((d) => d.what === what).soon;
+    const soon = (what, at) => comingUp({dates, kickoffs, weeks: WEEKS, now: at - 2 * 86400}).find((d) => d.what === what).soon;
     assert.equal(soon("Final Cut Down/Contract Length Deadline", 1788842700), true);
     assert.equal(soon("Trade deadline", kickoffs.get(12)), true);
     assert.equal(soon("Free agency closes", at("2027-01-10T12:00:00-06:00")), true);
@@ -236,11 +238,11 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     // deadline, so a commissioner's other deadline doesn't hide the season's
     assert.deepEqual(kinds("Final Cut Down/Contract Year Deadline", "Post contract years", "Keeper trade deadline"), ["cut", null, null]);
     const spring = calendarDates({event: [{type: "CUSTOM", title: "Keeper trade deadline", start_time: "1776000000", happens: ""}]});
-    assert.deepEqual(comingUp({dates: spring, kickoffs, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["Trade deadline"]);
+    assert.deepEqual(comingUp({dates: spring, kickoffs, weeks: WEEKS, now}).filter((d) => d.kind === "trades").map((d) => d.what), ["Trade deadline"]);
     // one the commissioner calls just "Trade deadline", in any case, stands in for the season's
     const own = calendarDates({event: [{type: "CUSTOM", title: "TRADE DEADLINE", start_time: "1795000000", happens: ""}]});
-    assert.deepEqual(comingUp({dates: own, kickoffs, now}).filter((d) => /trade/i.test(d.what)).map((d) => [d.what, d.at, d.kind]), [["TRADE DEADLINE", 1795000000, "trades"]]);
-    assert.equal(comingUp({dates: [], kickoffs, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
+    assert.deepEqual(comingUp({dates: own, kickoffs, weeks: WEEKS, now}).filter((d) => /trade/i.test(d.what)).map((d) => [d.what, d.at, d.kind]), [["TRADE DEADLINE", 1795000000, "trades"]]);
+    assert.equal(comingUp({dates: [], kickoffs, weeks: WEEKS, now: kickoffs.get(12) - 2 * 86400})[0].soon, true);
 });
 
 test("the next blind bid run repeats weekly from the first", () => {

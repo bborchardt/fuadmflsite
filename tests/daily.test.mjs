@@ -29,7 +29,7 @@ function league({alphaSalary = 100} = {}) {
     const rosters = {franchise: [{id: "0001", player: roster("A", 100)}, {id: "0002", player: roster("B", 200)}]};
     return {
         players: {player: players},
-        league: {franchises: {franchise: [{id: "0001", name: "Alpha"}, {id: "0002", name: "Beta"}]}},
+        league: {lastRegularSeasonWeek: "14", endWeek: "17", franchises: {franchise: [{id: "0001", name: "Alpha"}, {id: "0002", name: "Beta"}]}},
         rosters,
         salaryAdjustments: {},
         transactions: {transaction: [
