@@ -117,7 +117,10 @@ export function drawScores(mount, data) {
     body.addEventListener("click", (event) => {
         const player = event.target.closest("[data-player]");
         if (player && body.contains(player)) {
-            if (typeof window.launch_player_modal === "function") {
+            // MFL's own popup, should v2's frame (which installs v2's) not have drawn
+            if (typeof window.fuadOpenPlayer === "function") {
+                window.fuadOpenPlayer(player.dataset.player, {opener: player});
+            } else if (typeof window.launch_player_modal === "function") {
                 window.launch_player_modal(context.leagueId, player.dataset.player);
             }
             return;
