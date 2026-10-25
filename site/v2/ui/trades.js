@@ -19,6 +19,7 @@ import {
 import {
     closedMarkup, controlSelector, deskProposal, expiryOptions, listMarkup, loadingMarkup, phoneProposal, proposalCheck, stepTitle
 } from "./trades-view.js";
+import {replaceEntry} from "./dialog.js";
 
 const FLASH_KEY = "fuad.tradesFlash";
 
@@ -146,12 +147,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref, team
     // landing on a finished proposal's steps
     const reloadList = (next) => {
         leaveFlash(FLASH_KEY, next);
-        if (proposal && state.depth > 0) {
-            window.addEventListener("popstate", () => window.location.replace(listUrl), {once: true});
-            window.history.go(-state.depth);
-        } else {
-            window.location.replace(listUrl);
-        }
+        replaceEntry(listUrl, proposal ? state.depth : 0);
     };
 
     // after a failure: if MFL's trades changed anyway, the page reloads to show them
@@ -307,6 +303,10 @@ export async function drawTrades({context, franchiseId, loginHref, addHref, team
             return;
         }
         const entry = (event.state && event.state.fuadTrade) || {step: "give", editing: false, depth: 0};
+        // Back that only closed a dialog over this step
+        if ((entry.depth || 0) === state.depth && entry.step === state.step && entry.editing === state.editing) {
+            return;
+        }
         state.step = entry.step;
         state.editing = entry.editing;
         state.depth = entry.depth || 0;

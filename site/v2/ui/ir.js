@@ -11,6 +11,7 @@ import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, refusal, r
 import {teamState} from "./add-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 import {controlSelector, irMarkup, loadingMarkup, moveCount} from "./ir-view.js";
+import {replaceEntry} from "./dialog.js";
 
 const FLASH_KEY = "fuad.irFlash";
 // reading the roster back after a save: how many times, and how far apart (MFL asks for about a
@@ -108,7 +109,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
     // Shows the result after MFL's page reloads
     function reloadWith(next) {
         leaveFlash(FLASH_KEY, next);
-        window.location.replace(window.location.pathname + window.location.search);
+        replaceEntry(window.location.pathname + window.location.search);
     }
 
     // What MFL made of a save: the IR page it answered with, as the roster now stands, else the
