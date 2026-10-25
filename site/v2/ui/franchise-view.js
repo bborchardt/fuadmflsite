@@ -1,6 +1,5 @@
 // Franchise salaries as the league uses them now: last season's deadline snapshot until week 1,
-// live until this season's trade deadline, then this season's snapshot. Shared by the Contracts tab
-// and Rosters › Draft.
+// live until this season's trade deadline, then this season's snapshot, for Rosters › Draft.
 
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
 import {franchisePhase, readSnapshot, snapshotFileName} from "../lib/franchise.js";

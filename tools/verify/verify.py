@@ -10,7 +10,9 @@ compare  Renders the live league home page twice: as published, and with the ver
          Contracts views, calculator, rookie and franchise tables, Commish forms as guest and
          as commissioner, Links) and reports differences, JavaScript errors and load times.
          Before a release that should look the same, expect "no differences". For a version
-         that changes the page on purpose, read the differences as a review list.
+         that changes the page on purpose, read the differences as a review list. These are
+         v1's areas: v2 draws none of them (its screens are checked by screens.py), so neither
+         command finishes with --local v2.
 
 phases   Renders the working copy with the browser clock set to dates in each franchise
          salary phase (before week 1, live, after the deadline) plus a season whose NFL
