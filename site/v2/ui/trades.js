@@ -14,7 +14,7 @@ import {
     Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterIds, send, takeFlash
 } from "./moves.js";
 import {
-    answerFields, ctSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
+    answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
 } from "./trades-model.js";
 import {
     closedMarkup, controlSelector, deskProposal, expiryOptions, listMarkup, loadingMarkup, phoneProposal, proposalCheck, stepTitle
@@ -404,7 +404,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref, team
     function pickTime() {
         const date = mount.querySelector("[data-act=date]").value.split("-").map(Number);
         const hour = Number(mount.querySelector("[data-act=hour]").value);
-        const at = date.length === 3 ? ctSeconds({year: date[0], month: date[1] - 1, day: date[2], hour}) : null;
+        const at = date.length === 3 ? zoneSeconds({year: date[0], month: date[1] - 1, day: date[2], hour}) : null;
         if (at) {
             state.expires = at;
             state.expKey = null;

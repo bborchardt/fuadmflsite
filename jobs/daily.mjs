@@ -3,12 +3,13 @@
 // Environment:
 //   DATA_DIR                    checkout of the league-data branch (required)
 //   MFL_USERNAME, MFL_PASSWORD  commissioner login; without them the job reads public data only
-//   MFL_LEAGUE_ID               default 48571
-//   MFL_HOST                    league host, default https://www44.myfantasyleague.com
+//   MFL_LEAGUE_ID               the league's id (required)
+//   MFL_HOST                    the league's host, as https://www44.myfantasyleague.com (required)
 //   MFL_USER_AGENT              optional; set it if the client is registered with MFL
 //   SEASON                      default: the newest season the league has a site for
 //   RULES_VERSION               which site version's league logic to use, default v2
-//   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
+//   PAGES_DATA_URL              published snapshots, default the repository's GitHub Pages data/
+//   GITHUB_REPOSITORY           set by GitHub Actions ("owner/name"); names the Pages address and the job
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
 //   GITHUB_STEP_SUMMARY         set by GitHub Actions; receives this run's chore log entries, shown on
 //                               the run's page (GitHub's failure email links to it)
@@ -39,14 +40,25 @@ if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
 }
 const dataDir = resolve(process.env.DATA_DIR);
-const leagueId = process.env.MFL_LEAGUE_ID || "48571";
-const host = process.env.MFL_HOST || "https://www44.myfantasyleague.com";
+if (!process.env.MFL_LEAGUE_ID || !process.env.MFL_HOST) {
+    throw new Error("MFL_LEAGUE_ID and MFL_HOST must name the league (the repository variables of the same names)");
+}
+const leagueId = process.env.MFL_LEAGUE_ID;
+const host = process.env.MFL_HOST.replace(/\/+$/, "");
+const repo = process.env.GITHUB_REPOSITORY || "";
+const [owner = "", repoName = ""] = repo.split("/");
 const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
 let season;
-const userAgent = process.env.MFL_USER_AGENT || "fuadmflsite-daily-chores (github.com/bborchardt/fuadmflsite)";
+const userAgent = process.env.MFL_USER_AGENT || `${repoName || "league-site"}-daily-chores${repo ? ` (github.com/${repo})` : ""}`;
 // after login these carry the commissioner's session cookie: never send them anywhere else
 const mflHeaders = {"User-Agent": userAgent};
-const pagesData = process.env.PAGES_DATA_URL || "https://bborchardt.github.io/fuadmflsite/data/";
+// a repository named owner.github.io publishes at the site's root
+const pagesData = process.env.PAGES_DATA_URL || (repo
+    ? `https://${owner.toLowerCase()}.github.io/${repoName.toLowerCase() === `${owner.toLowerCase()}.github.io` ? "" : `${repoName}/`}data/`
+    : null);
+if (!pagesData) {
+    throw new Error("PAGES_DATA_URL must be set outside GitHub Actions");
+}
 const LATE_AFTER_DAYS = 7;
 const applyDropPenalties = process.env.DROP_PENALTIES === "apply";
 const applyContractYears = process.env.CONTRACT_YEARS === "apply";

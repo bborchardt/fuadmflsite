@@ -8,6 +8,7 @@ import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
 import {cents, money} from "./format.js";
 import settings from "../lib/settings.js";
+import {TIME_ZONE, ZONE} from "../lib/zone.js";
 
 // the league's contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
@@ -130,7 +131,7 @@ export function freeAgencyOver({phase, calendar, now}) {
 }
 
 // "Sunday noon", "Wednesday 11 p.m."
-const weekdayTime = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "long", timeZone: "America/Chicago"})} ${timeText(seconds)}`;
+const weekdayTime = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "long", timeZone: TIME_ZONE})} ${timeText(seconds)}`;
 const timeText = (seconds) => {
     const text = clock(seconds).replace(":00", "");
     return text === "12 p.m." ? "noon" : text;
@@ -145,11 +146,11 @@ export function banner({phase, freeAgents, calendar, now}) {
     const open = freeAgents.some((player) => !bidOnly(player));
     if (open) {
         const lock = nextWeekly(calendar, "WAIVER_LOCK", now);
-        return {kind: "window", text: `Free agent window open${lock ? ` until ${weekdayTime(lock)} CT` : ""}`};
+        return {kind: "window", text: `Free agent window open${lock ? ` until ${weekdayTime(lock)} ${ZONE}` : ""}`};
     }
     const run = nextWeekly(calendar, "WAIVER_BBID", now);
     // before week 1 the first run is a date to name
-    const until = !run ? "" : phase === "preseason" ? ` until ${dayText(run)}, ${timeText(run)} CT` : ` until ${weekdayTime(run)} CT`;
+    const until = !run ? "" : phase === "preseason" ? ` until ${dayText(run)}, ${timeText(run)} ${ZONE}` : ` until ${weekdayTime(run)} ${ZONE}`;
     return {kind: "bids", text: `Blind bids only${until}`};
 }
 
@@ -169,7 +170,7 @@ export function droppedByTeam(players, franchiseId, now) {
     return blocked;
 }
 
-export const reAddText = (seconds) => `Dropped by you · bid from ${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", timeZone: "America/Chicago"})} ${clock(seconds)}`;
+export const reAddText = (seconds) => `Dropped by you · bid from ${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", timeZone: TIME_ZONE})} ${clock(seconds)}`;
 
 // MFL's `pendingWaivers` comment, its line breaks mangled to `br/`
 export const commentLines = (comment) => String(comment || "").split(/\s*(?:<br\s*\/?>|br\/|\r?\n)\s*/).map((line) => line.trim()).filter(Boolean);

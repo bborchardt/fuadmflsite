@@ -4,6 +4,7 @@
 // (`keepFor`), so the next page reuses them instead of asking MFL again.
 
 import {storage} from "./store.js";
+import {TIME_ZONE} from "../lib/zone.js";
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -13,7 +14,7 @@ const WAIT_KEY = "fuad.mflWait";
 const WAIT = 30 * 1000;
 const MOVES_KEPT = 2 * MINUTE;
 
-export const centralDate = (date) => date.toLocaleDateString("en-CA", {timeZone: "America/Chicago"});
+export const leagueDate = (date) => date.toLocaleDateString("en-CA", {timeZone: TIME_ZONE});
 
 // whether this week's NFL schedule has a game today; unknown counts as a game day
 export function gameToday(schedule, now) {
@@ -21,7 +22,7 @@ export function gameToday(schedule, now) {
         return true;
     }
     const matchups = [].concat(schedule.matchup || []);
-    return matchups.some((matchup) => Number(matchup.kickoff) > 0 && centralDate(new Date(Number(matchup.kickoff) * 1000)) === centralDate(now));
+    return matchups.some((matchup) => Number(matchup.kickoff) > 0 && leagueDate(new Date(Number(matchup.kickoff) * 1000)) === leagueDate(now));
 }
 
 // How long an export may be kept, in ms (0: not kept). `liveWeek` is the week MFL's page is on;

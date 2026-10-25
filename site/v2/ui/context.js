@@ -4,7 +4,7 @@
 import {asArray, exportUrl, fetchExport, weekEnd, weekKickoff} from "../lib/mfl.js";
 import {seasonWeeks} from "../lib/rules.js";
 import {cached} from "./store.js";
-import {centralDate, pageFetch} from "./page-fetch.js";
+import {leagueDate, pageFetch} from "./page-fetch.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -30,7 +30,7 @@ export async function beforeWeek1(season) {
 
 // `week1` is week 1's first kickoff and `seasonEnd` when week 17's games are over (null until MFL
 // publishes the schedule); `drafted` whether the rookie draft's picks are in; `draftDays` the dates
-// (YYYY-MM-DD, Central) of calendar events named for the draft
+// (YYYY-MM-DD, in the league's zone) of calendar events named for the draft
 export function contextLine({now, week, week1, seasonEnd, drafted, draftDays = []}) {
     if (seasonEnd && now >= seasonEnd) {
         return "Season over";
@@ -38,7 +38,7 @@ export function contextLine({now, week, week1, seasonEnd, drafted, draftDays = [
     if (week1 && now >= week1) {
         return week ? `Week ${week}` : "";
     }
-    if (draftDays.includes(centralDate(now))) {
+    if (draftDays.includes(leagueDate(now))) {
         return "Draft day";
     }
     return drafted ? "Before week 1" : "Before the draft";
@@ -55,7 +55,7 @@ export function draftDays(calendar) {
         .map((event) => Number(event.start_time || event.startTime || event.start))
         // some events carry a week number there ("12" on the trade deadline)
         .filter((seconds) => seconds > 1e9)
-        .map((seconds) => centralDate(new Date(seconds * 1000)));
+        .map((seconds) => leagueDate(new Date(seconds * 1000)));
 }
 
 // cached for a day; a part that can't be read is left out rather than hold up the line

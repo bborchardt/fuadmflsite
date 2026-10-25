@@ -10,6 +10,7 @@
 //               proposeUrl(partner): the proposal page with that team; teamHref(id): a team's page
 
 import {ROSTER_MAX} from "../lib/rules.js";
+import {ZONE} from "../lib/zone.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
 import {alertLine, capTone, doneLine, failedBox} from "./moves.js";
@@ -17,7 +18,7 @@ import {teamState} from "./add-model.js";
 import {dayText, whenText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
 import {
-    assetList, assetView, bidsAfter, blockReason, ctParts, expiresText, expiryChoices, kickoffText, lockedText, offersOf, pickGroups, pickedSummary,
+    assetList, assetView, bidsAfter, blockReason, zoneParts, expiresText, expiryChoices, kickoffText, lockedText, offersOf, pickGroups, pickedSummary,
     rosterNotices, throughGames, tradeEffect
 } from "./trades-model.js";
 import {money} from "./format.js";
@@ -232,9 +233,9 @@ const isoDate = (parts) => `${parts.year}-${String(parts.month + 1).padStart(2, 
 function expiryMarkup(v) {
     const {state} = v;
     const choices = expiryOptions(v);
-    const parts = state.expires ? ctParts(state.expires) : null;
+    const parts = state.expires ? zoneParts(state.expires) : null;
     const date = parts ? isoDate(parts) : "";
-    const min = isoDate(ctParts(v.now));
+    const min = isoDate(zoneParts(v.now));
     const max = v.proposal.years.length ? `${Math.max(...v.proposal.years)}-12-31` : "";
     const hourLabel = (hour) => `${hour % 12 || 12}:00 ${hour < 12 ? "a.m." : "p.m."}`;
     const late = v.phase === "season" && state.expires && throughGames({expires: state.expires, kickoffs: state.games.all, now: v.now});
@@ -244,7 +245,7 @@ function expiryMarkup(v) {
         `<button type="button" class="fuad-chip" data-act="expiry" data-key="${choice.key}" aria-pressed="${state.expKey === choice.key}"${state.busy ? " disabled" : ""}>${esc(choice.name)}</button>`).join("")}</div>` : ""}
     <div class="fuad-trades-when">
         <label class="fuad-meta">Date<input type="date" data-act="date" value="${esc(date)}" min="${esc(min)}"${max ? ` max="${esc(max)}"` : ""}${state.busy ? " disabled" : ""}></label>
-        <label class="fuad-meta">Time (CT)<select data-act="hour"${state.busy ? " disabled" : ""}>${Array.from({length: 24}, (_, hour) =>
+        <label class="fuad-meta">Time (${ZONE})<select data-act="hour"${state.busy ? " disabled" : ""}>${Array.from({length: 24}, (_, hour) =>
             `<option value="${hour}"${parts && parts.hour === hour ? " selected" : ""}>${hourLabel(hour)}</option>`).join("")}</select></label>
     </div>
     ${state.expires && state.expires <= v.now ? '<p class="fuad-meta"><strong class="fuad-bad">Pick a later time:</strong> this one has passed.</p>' : ""}

@@ -1,8 +1,21 @@
 // Which version a page runs, kept apart from fuad.js so it can be tested. A beta choice holds only
 // while the header offers that version, so ending or promoting a beta needs no member action.
 
-export const PAGES_BASE = "https://bborchardt.github.io/fuadmflsite/";
 export const LOCAL_BASE = "http://localhost:8000/";
+const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1)[:/]/;
+
+// the repo's GitHub Pages address, above this version's folder. A local preview runs from
+// tools/dev-server.py, so it takes the address of the published fuad.js that handed it the page.
+export function pagesBase(url, doc) {
+    const above = new URL("../", url).href;
+    if (!LOCAL.test(above) || !doc) {
+        return above;
+    }
+    const published = [...doc.querySelectorAll("script[src]")].map((script) => script.src)
+        .find((src) => !LOCAL.test(src) && /\/v\d+\/fuad\.js$/.test(src));
+    return published ? published.replace(/v\d+\/fuad\.js$/, "") : above;
+}
+export const PAGES_BASE = pagesBase(import.meta.url, typeof document === "undefined" ? null : document);
 
 // only this repo's versions and localhost
 export function previewBase(choice, versionHere) {
@@ -17,7 +30,7 @@ export function previewBase(choice, versionHere) {
 }
 
 export function allowed(base) {
-    return /^https:\/\/bborchardt\.github\.io\/fuadmflsite\/v\d+\/$/.test(base)
+    return (base.startsWith(PAGES_BASE) && /^v\d+\/$/.test(base.slice(PAGES_BASE.length)))
         || /^http:\/\/(localhost|127\.0\.0\.1):\d+\/v\d+\/$/.test(base);
 }
 

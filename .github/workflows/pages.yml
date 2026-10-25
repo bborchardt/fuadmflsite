@@ -1,4 +1,4 @@
-# Publishes the site to GitHub Pages: https://bborchardt.github.io/fuadmflsite/
+# Publishes the site to GitHub Pages, at https://<owner>.github.io/<repository>/
 # Code comes from master's site/ folder, built by tools/build.mjs (v2 bundled into one minified
 # fuad.js); franchise snapshots come from the league-data branch's data/ folder and are published at
 # /fuadmflsite/data/.
