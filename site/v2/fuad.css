@@ -1730,7 +1730,7 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-date { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; }
 
-#fuad-home .fuad-date .fuad-meta { font-size: 14px; text-align: right; }
+#fuad-home .fuad-date > .fuad-meta { font-size: 14px; text-align: right; }
 
 /* chat: grows to about four messages, then scrolls inside itself, newest at the bottom */
 #fuad-home .fuad-home-chat.fuad-panel { padding-bottom: 16px; }

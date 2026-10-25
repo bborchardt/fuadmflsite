@@ -325,7 +325,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         const times = await kickoffs(context.season, [...weeks]);
         return {calendar: found, kickoffs: times, dates: calendarDates(found, times)};
     });
-    const coming = () => dates.then(({dates: list, kickoffs: times}) => comingUp({dates: list, kickoffs: times, now: nowSeconds()}));
+    const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times}) => comingUp({dates: list, kickoffs: times, calendar: found, now: nowSeconds()}));
 
     if (member) {
         drawPanel(panels.alerts, {
@@ -439,17 +439,15 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         }
     });
 
-    const calendarHref = mflPage(/^(league )?calendar$/i);
     drawPanel(panels.coming, {
         heading: "Coming up",
-        actions: calendarHref ? `<a href="${esc(calendarHref)}">Calendar</a>` : "",
         what: "coming up",
         key: `fuad.home.dates.${context.season}.${loggedIn ? "member" : "guest"}`,
         // every date, a to-do close by in My alerts too, so a date never depends on My alerts loading
         load: coming,
         render: (list, body) => {
             body.innerHTML = list.length
-                ? `<ul class="fuad-rows">${list.map((date) => `<li class="fuad-date"><span class="fuad-row-title">${esc(date.what)}</span><span class="fuad-meta">${esc(date.when)}</span></li>`).join("")}</ul>`
+                ? `<ul class="fuad-rows">${list.map((date) => `<li class="fuad-date"><span class="fuad-row-text"><span class="fuad-row-title">${esc(date.what)}</span>${date.detail ? `<span class="fuad-meta">${esc(date.detail)}</span>` : ""}</span><span class="fuad-meta">${esc(date.when)}</span></li>`).join("")}</ul>`
                 : '<p class="fuad-muted fuad-empty">Nothing on the calendar.</p>';
         }
     });
