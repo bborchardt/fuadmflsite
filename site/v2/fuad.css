@@ -2666,8 +2666,6 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-team-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 
-#fuad-rosters .fuad-back { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
-
 #fuad-rosters .fuad-team-name { flex: 1; margin: 0; font-family: var(--fuad-display); font-size: 26px; font-weight: 700; color: var(--fuad-text); text-transform: none; background: none; border: 0; padding: 0; }
 
 #fuad-rosters .fuad-team-row { display: flex; flex-direction: column; gap: 5px; padding: 10px 0; color: var(--fuad-text); }

@@ -196,10 +196,8 @@ export function drawFrame({context, storage}) {
         });
     }
 
-    // links to another home page tab only change the #, which MFL doesn't follow on its own.
-    // The # left is kept for a team's page, whose way back depends on where it was opened from.
-    window.addEventListener("hashchange", (event) => {
-        window.fuadLastHash = new URL(event.oldURL).hash;
+    // links to another home page tab only change the #, which MFL doesn't follow on its own
+    window.addEventListener("hashchange", () => {
         const index = (window.location.hash.match(/^#(\d+)$/) || [])[1];
         if (index !== undefined && typeof window.show_tab === "function" && document.getElementById(`tabcontent${index}`)) {
             window.show_tab(index);
