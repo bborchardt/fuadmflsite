@@ -99,6 +99,11 @@ test("roster notices (10.5): past 30 or under 23 only when the trade moves that 
         ["You’d have 22 active.", "Pat would have 31 active."]);
     // already over, and not more so; already under, and not less so
     assert.deepEqual(rosterNotices(effect({from: 32, to: 31}, {from: 21, to: 22}), {partnerName: "Pat"}), []);
+    // how soon is the bylaws' to say
+    assert.deepEqual(rosterNotices(effect({from: 30, to: 31}, {from: 24, to: 22}), {partnerName: "Pat"}).map((notice) => notice.text), [
+        "Allowed in a trade, but you must get back to 30, and you can’t set a lineup until you do.",
+        "They must add players to get back to 23."
+    ]);
     assert.equal(rosterNotices(effect({from: 30, to: 31}, {from: 23, to: 22}), {partnerName: "Pat", others: false}).length, 1);
 });
 

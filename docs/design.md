@@ -160,7 +160,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),
   never below $0 (1.6–1.7); what's left of the pot goes 55/30/15 (1.8). All-play counts weeks 1–14
   only, from the weekly results, since MFL's standings keep counting it through the playoffs. The
-  pot is the accounting's league-wide entries, or $100 × 10 teams before they're recorded.
+  pot is the accounting's league-wide entries; before they're recorded the prizes show their shares
+  without amounts.
 
 ## Ruled out
 
