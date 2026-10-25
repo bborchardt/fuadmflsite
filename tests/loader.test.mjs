@@ -82,7 +82,7 @@ test("v2 finds the repo's Pages address from where it runs; a local preview, fro
     assert.equal(PAGES_BASE, new URL("../site/", import.meta.url).href);
     assert.equal(pagesBase(`${PAGES}v2/fuad.js`, null), PAGES);
     assert.equal(pagesBase("https://friend.github.io/league/v2/loader.js", null), "https://friend.github.io/league/");
-    const {document} = parseHTML(`<script src="${PAGES}v1/fuad.js"></script><script src="http://localhost:8000/v2/fuad.js"></script>`);
+    const {document} = parseHTML(`<script src="${PAGES}v1/fuad.js?v=2"></script><script src="http://localhost:8000/v2/fuad.js"></script>`);
     assert.equal(pagesBase("http://localhost:8000/v2/loader.js", document), PAGES);
     assert.equal(pagesBase("http://localhost:8000/v2/loader.js", parseHTML("<p></p>").document), "http://localhost:8000/");
     assert.equal(previewBase("v3", "v2"), `${PAGES_BASE}v3/`);

@@ -11,7 +11,7 @@ export function pagesBase(url, doc) {
     if (!LOCAL.test(above) || !doc) {
         return above;
     }
-    const published = [...doc.querySelectorAll("script[src]")].map((script) => script.src)
+    const published = [...doc.querySelectorAll("script[src]")].map((script) => script.src.split(/[?#]/)[0])
         .find((src) => !LOCAL.test(src) && /\/v\d+\/fuad\.js$/.test(src));
     return published ? published.replace(/v\d+\/fuad\.js$/, "") : above;
 }
