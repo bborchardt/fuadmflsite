@@ -222,24 +222,22 @@ export function blockReason(effect, {partnerName, proposing}) {
     return null;
 }
 
-const OVER = "within 12 hours, before the next NFL game, or by the next blind-bid deadline, whichever comes first";
-const UNDER = "within 12 hours or before the next NFL game, whichever comes first";
-
-// The roster notices (10.5), while the limits apply: [{head, text}]. `others` adds the other team's.
+// The roster notices, while the limits apply: [{head, text}]. `others` adds the other team's. How
+// soon it must be fixed is the league's bylaws', so it isn't said here.
 export function rosterNotices(effect, {partnerName, others = true}) {
     const notices = [];
     const {mine, theirs} = effect;
     if (mine.active.to > ROSTER_MAX && mine.active.to > mine.active.from) {
-        notices.push({head: `You’d have ${mine.active.to} active.`, text: `Allowed in a trade, but you must get back to ${ROSTER_MAX} ${OVER}, and you can’t set a lineup until you do.`});
+        notices.push({head: `You’d have ${mine.active.to} active.`, text: `Allowed in a trade, but you must get back to ${ROSTER_MAX}, and you can’t set a lineup until you do.`});
     }
     if (mine.active.to < ROSTER_MIN && mine.active.to < mine.active.from) {
-        notices.push({head: `You’d have ${mine.active.to} active.`, text: `You must add players ${UNDER}.`});
+        notices.push({head: `You’d have ${mine.active.to} active.`, text: `You must add players to get back to ${ROSTER_MIN}.`});
     }
     if (others && theirs.active.to > ROSTER_MAX && theirs.active.to > theirs.active.from) {
-        notices.push({head: `${partnerName} would have ${theirs.active.to} active.`, text: `Allowed, but they must get back to ${ROSTER_MAX} ${OVER}.`});
+        notices.push({head: `${partnerName} would have ${theirs.active.to} active.`, text: `Allowed, but they must get back to ${ROSTER_MAX}.`});
     }
     if (others && theirs.active.to < ROSTER_MIN && theirs.active.to < theirs.active.from) {
-        notices.push({head: `${partnerName} would have ${theirs.active.to} active.`, text: `They must add players ${UNDER}.`});
+        notices.push({head: `${partnerName} would have ${theirs.active.to} active.`, text: `They must add players to get back to ${ROSTER_MIN}.`});
     }
     return notices;
 }

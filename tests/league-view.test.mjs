@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {cardsMarkup, championsMarkup, scoresFrame, seasonMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
+import {cardsMarkup, championsMarkup, positionsMarkup, scoresFrame, seasonMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
 
 const names = new Map([["0001", "Mine"], ["0002", "Kings"], ["0003", "Pat's Team"], ["0004", "Rivals"]]);
 const line = (id, name, points, game, extra = {}) => ({id, name, position: "WR", points, projected: 12.34, game, line: "", ...extra});
@@ -83,7 +83,7 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
             {id: "0001", name: "Mine", weeks: [1, 4], weekly: 30, record: "41-4", allPlay: 27.75, total: 57.75, prize: null},
             {id: "0002", name: "Kings", weeks: [], weekly: 0, record: "13-32", allPlay: 0, total: 0, prize: null}
         ],
-        prizes: [{place: "1st", share: 0.6, amount: 300, team: null}], pot: 600, potEntries: [], weeklyTotal: 30, allPlayPaid: 27.75, forPlayoffs: 542.25
+        prizes: [{place: "1st", share: 0.6, amount: 300, team: null}], pot: 600, potEntries: [], weeklyTotal: 30, weeklyPrize: 15, allPlayPaid: 27.75, forPlayoffs: 542.25
     };
     const html = winnersMarkup(result, {viewer: "0001", final: "", teamHref: (id) => `#rosters-teams/${id}`});
     assert.match(html, /Won so far<\/h2><p class="fuad-meta fuad-if">If the season ended today/);
@@ -92,6 +92,11 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
     // no Playoffs column until a prize has its team
     assert.doesNotMatch(html, />Playoffs<\/th>/);
     assert.match(html, /Weekly points · 2 × \$15/);
+    // before the commissioner records the pot: the shares, no amounts
+    const unknown = winnersMarkup({...result, pot: null, forPlayoffs: null, prizes: [{place: "1st", share: 0.6, amount: null, team: null}]}, {viewer: "0001", final: "", teamHref: (id) => `#rosters-teams/${id}`});
+    assert.match(unknown, /1st · 60%<\/span>\s*<\/div>/);
+    assert.match(unknown, /<dt>Pot<\/dt><dd class="fuad-muted">Not in MFL’s accounting yet<\/dd>/);
+    assert.match(unknown, /<dt>For the playoffs<\/dt><dd>—<\/dd>/);
     const final = winnersMarkup({...result, prizes: [{place: "1st", share: 0.6, amount: 300, team: "0001"}], rows: [{...result.rows[0], prize: {place: "1st", amount: 300}}]}, {viewer: "0001", final: "2025", teamHref: (id) => `#rosters-teams/${id}`});
     assert.match(final, /2025 payouts<\/h2>/);
     assert.doesNotMatch(final, /If the season ended today/);
@@ -104,4 +109,11 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
     assert.match(second, /<span class="fuad-prize-place">1st/);
     assert.match(second, /<span class="fuad-prize-place fuad-mine">2nd/);
     assert.match(championsMarkup([{year: 2024, name: "Mine"}, {year: 2023, name: "Kings"}], [2024]), /<li class="fuad-row-mine">\s*<span class="fuad-meta">2024<\/span>/);
+});
+
+test("starter points by position: this league's colors, two more for other positions, then grey", () => {
+    const parts = ["QB", "Def", "RB", "LB", "DB"].map((position) => ({position, points: 10}));
+    const html = positionsMarkup([{id: "0001", name: "Mine", parts, total: 50}], {viewer: "0001", teamHref: (id) => `#rosters-teams/${id}`});
+    const swatches = [...html.matchAll(/fuad-swatch (fuad-pos-[a-z0-9-]+)/g)].map((match) => match[1]);
+    assert.deepEqual(swatches, ["fuad-pos-qb", "fuad-pos-extra-1", "fuad-pos-rb", "fuad-pos-extra-2", "fuad-pos-other"]);
 });

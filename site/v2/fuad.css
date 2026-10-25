@@ -46,6 +46,9 @@
     --fuad-pos-wr: #199E70;
     --fuad-pos-te: #C98500;
     --fuad-pos-pk: #D55181;
+    --fuad-pos-extra-1: #008300;
+    --fuad-pos-extra-2: #9085E9;
+    --fuad-pos-other: #6E7681;
     --fuad-scrim: rgba(0, 0, 0, 0.6);
     --fuad-shadow: rgba(0, 0, 0, 0.5);
     --fuad-body: Barlow, system-ui, sans-serif;
@@ -2487,6 +2490,15 @@ body #fuad-home select {
 
 #fuad-league .fuad-pos-pk,
 #fuad-rosters .fuad-pos-pk { background: var(--fuad-pos-pk); }
+
+#fuad-league .fuad-pos-extra-1,
+#fuad-rosters .fuad-pos-extra-1 { background: var(--fuad-pos-extra-1); }
+
+#fuad-league .fuad-pos-extra-2,
+#fuad-rosters .fuad-pos-extra-2 { background: var(--fuad-pos-extra-2); }
+
+#fuad-league .fuad-pos-other,
+#fuad-rosters .fuad-pos-other { background: var(--fuad-pos-other); }
 
 #fuad-league .fuad-position-rows,
 #fuad-rosters .fuad-position-rows { list-style: none; margin: 0; padding: 0 0 10px; display: grid; grid-template-columns: minmax(150px, 260px) minmax(0, 1fr) 56px; gap: 8px 12px; align-items: center; font-size: 14px; }
