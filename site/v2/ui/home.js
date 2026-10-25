@@ -414,6 +414,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     const leagueShown = drawPanel(panels.league, {
         heading: "League alerts",
+        actions: `<a href="${esc(`${base}/options?L=${encodeURIComponent(context.leagueId)}&O=26`)}">Rules</a>`,
         what: "league alerts",
         key: `fuad.home.league.${context.season}.${franchiseId || "guest"}`,
         rows: 2,

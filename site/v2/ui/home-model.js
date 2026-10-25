@@ -266,7 +266,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         const unsigned = draftDayUnsigned(franchise);
         if (unsigned.length) {
             push(tones.orange, "Y", unsigned.length === 1 ? `Post a contract length for ${lastName(unsigned[0])}` : `Post contract lengths for ${unsigned.length} players`,
-                `Draft-day players need them ${byCut}; $5 a day late (12.6)`, links.contracts, "Message board");
+                `Draft-day players need them ${byCut}; $5 a day late`, links.contracts, "Message board");
         }
         if (franchise.numPlayers > ROSTER_MAX) {
             push(tones.orange, String(ROSTER_MAX), `Get to ${ROSTER_MAX} active ${byCut}`, `You have ${franchise.numPlayers}`, links.drop, "Drop");
@@ -277,7 +277,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
 
     if (lineup && phase === "season") {
         for (const {player, why} of lineup.problems) {
-            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, week <= INJURY_CHECK_LAST_WEEK ? "A loss won’t count toward draft order (13.2)" : "", links.lineup, "Lineup");
+            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, week <= INJURY_CHECK_LAST_WEEK ? "A loss won’t count toward draft order" : "", links.lineup, "Lineup");
         }
         const short = lineup.required - lineup.starters;
         if (short > 0) {
