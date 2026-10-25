@@ -19,8 +19,10 @@ The values below are this league's.
 | Setting | Value | Meaning |
 |---|---|---|
 | `weeks.tradeDeadline` | 12 | Franchise salaries are taken at this week's first kickoff. Trades close at MFL's own trade deadline (its calendar), or this week's first kickoff if MFL has none. |
-| `weeks.playoffsStart` | 15 | The first playoff week. The anti-tanking check covers the weeks before it. |
-| `weeks.championship` | 17 | The last week. The roster checks run until it's over. |
+
+The rest of the season's weeks are MFL's: the playoffs start after its last regular season week,
+and its last week is the championship. The anti-tanking check covers the regular season, and the
+roster checks run until the championship is over.
 
 ## Contracts
 

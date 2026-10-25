@@ -7,12 +7,14 @@ export const SALARY_CAP = settings.salaryCap;
 export const ROSTER_MIN = settings.roster.min;
 export const ROSTER_MAX = settings.roster.max;
 
-// MFL reports week 17 all offseason, so the roster and IR checks' end is timed from the NFL
-// schedule. Anti-tanking covers the regular season.
-export const PLAYOFFS_START_WEEK = settings.weeks.playoffsStart;
-export const CHAMPIONSHIP_WEEK = settings.weeks.championship;
-export const ROSTER_CHECK_LAST_WEEK = CHAMPIONSHIP_WEEK;
-export const INJURY_CHECK_LAST_WEEK = PLAYOFFS_START_WEEK - 1;
+// The season's weeks, from MFL's `league` export, which schedules the season by them: the playoffs
+// start after its last regular season week, and its last week is the championship. Null if MFL
+// doesn't say. The roster checks run through the championship, anti-tanking before the playoffs.
+export function seasonWeeks(league) {
+    const lastRegular = Number(league && league.lastRegularSeasonWeek);
+    const championship = Number(league && league.endWeek);
+    return lastRegular > 0 && championship > lastRegular ? {playoffsStart: lastRegular + 1, championship} : null;
+}
 
 export const FRANCHISE_PLAYER_COUNT = settings.franchiseTag.averageOfTop;
 

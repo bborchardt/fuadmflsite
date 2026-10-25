@@ -1,7 +1,7 @@
 // The league model from MFL exports, with no DOM or fetching, so the page and the daily job share it.
 
 import {asArray, displayName} from "./mfl.js";
-import {capPenalty, netCapSpace} from "./rules.js";
+import {capPenalty, netCapSpace, seasonWeeks} from "./rules.js";
 
 /** Fewer entries than this on today's NFL injury report means it didn't load properly. */
 export const MIN_INJURY_REPORT = 50;
@@ -211,7 +211,7 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
         franchise.capTotal = Math.round((franchise.salary + franchise.unchargedPenalty) * 100) / 100;
     }
 
-    return {players, franchises, rosteredPlayers, week, injuryReportKnown};
+    return {players, franchises, rosteredPlayers, week, weeks: seasonWeeks(league), injuryReportKnown};
 }
 
 // v2's pages only (the daily job doesn't call it): rostered players with no contract years are the

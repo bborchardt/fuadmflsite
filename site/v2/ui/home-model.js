@@ -4,7 +4,7 @@ import {asArray, nflCode} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
-import {CHAMPIONSHIP_WEEK, INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
+import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {money, plural} from "./format.js";
 
 const DAY = 24 * 60 * 60;
@@ -92,8 +92,9 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
 // The season's dates, soonest first, each with its `when`. Without the calendar (logged out) the
-// season's own dates still show: week 1, the trade deadline, the playoffs and the championship.
-function seasonDates({dates, kickoffs = new Map()}) {
+// season's own dates still show: week 1, the trade deadline, the playoffs and the championship
+// (`weeks`, seasonWeeks' in lib/rules.js).
+function seasonDates({dates, kickoffs = new Map(), weeks = null}) {
     const all = dates.slice();
     if (kickoffs.get(1)) {
         all.push({what: "Week 1 kickoff", at: kickoffs.get(1), week: 1});
@@ -101,11 +102,11 @@ function seasonDates({dates, kickoffs = new Map()}) {
     if (!all.some((date) => date.kind === "trades") && kickoffs.get(TRADE_DEADLINE_WEEK)) {
         all.push({what: "Trade deadline", at: kickoffs.get(TRADE_DEADLINE_WEEK), week: TRADE_DEADLINE_WEEK, kind: "trades"});
     }
-    if (kickoffs.get(PLAYOFFS_START_WEEK)) {
-        all.push({what: "Playoffs begin", at: kickoffs.get(PLAYOFFS_START_WEEK), week: PLAYOFFS_START_WEEK});
+    if (weeks && kickoffs.get(weeks.playoffsStart)) {
+        all.push({what: "Playoffs begin", at: kickoffs.get(weeks.playoffsStart), week: weeks.playoffsStart});
     }
-    if (kickoffs.get(CHAMPIONSHIP_WEEK)) {
-        all.push({what: "Championship week", at: kickoffs.get(CHAMPIONSHIP_WEEK), week: CHAMPIONSHIP_WEEK});
+    if (weeks && kickoffs.get(weeks.championship)) {
+        all.push({what: "Championship week", at: kickoffs.get(weeks.championship), week: weeks.championship});
     }
     return all.sort((a, b) => a.at - b.at)
         .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at)}));
@@ -134,8 +135,8 @@ function waiverCycle(calendar, now) {
 
 // Coming up: the dates still ahead and the week's waiver cycle, `soon` when a to-do is close enough
 // for My alerts
-export function comingUp({dates, kickoffs, calendar = null, now}) {
-    const all = seasonDates({dates: dates.concat(waiverCycle(calendar, now)), kickoffs});
+export function comingUp({dates, kickoffs, weeks = null, calendar = null, now}) {
+    const all = seasonDates({dates: dates.concat(waiverCycle(calendar, now)), kickoffs, weeks});
     // the first blind bids follow the draft, so before it they aren't yet worth a line
     const draftAhead = all.some((date) => date.kind === "draft" && date.at > now);
     return all.filter((date) => date.at > now && !(draftAhead && date.kind === "bids"))
@@ -277,7 +278,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
 
     if (lineup && phase === "season") {
         for (const {player, why} of lineup.problems) {
-            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, week <= INJURY_CHECK_LAST_WEEK ? "A loss won’t count toward draft order" : "", links.lineup, "Lineup");
+            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, league.weeks && week < league.weeks.playoffsStart ? "A loss won’t count toward draft order" : "", links.lineup, "Lineup");
         }
         const short = lineup.required - lineup.starters;
         if (short > 0) {
