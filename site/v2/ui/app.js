@@ -256,7 +256,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     // Home's All moves and All bids: MFL's Transactions and Processed Waivers pages
     if (context && here.path === "options" && here.option === "03") {
         const shown = over("fuad-all-moves-on");
-        await import("./all-moves.js").then(({drawAllMoves}) => drawn(drawAllMoves({context, franchiseId: window.franchise_id || null, homeHref: viewLinks(context, window.franchise_id || null)("Home"), teamHref: teamLink(viewLinks(context, window.franchise_id || null))}))).catch(shown).catch((error) => {
+        await import("./all-moves.js").then(({drawAllMoves}) => drawn(drawAllMoves({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))}))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw All moves:", error);
             onTrouble();
         });
@@ -266,7 +266,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const shown = over("fuad-all-bids-on");
         await import("./all-moves.js").then(({drawAllBids}) => {
             // a page v2 can't read (logged out, or changed) stays MFL's
-            if (!drawAllBids({context, franchiseId: window.franchise_id || null, homeHref: viewLinks(context, window.franchise_id || null)("Home"), teamHref: teamLink(viewLinks(context, window.franchise_id || null))})) {
+            if (!drawAllBids({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))})) {
                 document.documentElement.classList.remove("fuad-all-bids-on");
             }
             onDrawn();

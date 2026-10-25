@@ -205,18 +205,16 @@ export function drawFrame({context, storage}) {
         render();
     });
 
-    // A detour's screen (Moves › Add's drop step and review): on phones its name takes the context
-    // line's place and Back the menu's. `onTitle` makes the name a button (the player popup);
-    // `onBack` defaults to the browser's Back, since each screen is a history entry.
+    // A detour's screen (Moves › Add's drop step and review, a trade's steps): on phones its name takes the context
+    // line's place and Back the menu's: the browser's Back, since each screen is a history entry.
+    // `onTitle` makes the name a button (the player popup).
     const back = root.querySelector(".fuad-back");
     const detour = root.querySelector(".fuad-detour");
-    let onBack = null;
-    back.addEventListener("click", () => (onBack ? onBack() : window.history.back()));
+    back.addEventListener("click", () => window.history.back());
     window.fuadDetour = (screen) => {
         document.documentElement.classList.toggle("fuad-detouring", Boolean(screen));
         back.hidden = !screen;
         detour.hidden = !screen;
-        onBack = screen && screen.onBack ? screen.onBack : null;
         const title = detour.querySelector(".fuad-detour-title");
         if (!screen) {
             title.innerHTML = "";
@@ -227,9 +225,6 @@ export function drawFrame({context, storage}) {
             title.textContent = screen.title;
         }
     };
-    if (window.fuadDetourScreen) {
-        window.fuadDetour(window.fuadDetourScreen);
-    }
 
     loadContext(context)
         .then((line) => {
