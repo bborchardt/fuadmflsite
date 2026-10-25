@@ -156,10 +156,10 @@ function loginLink(context) {
 
 // v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
 // Home is the current view (`fuad-home-on`); MFL's tabs stay underneath for the other home page tabs.
-function startHome(context, league, {beta, inBeta}) {
+function startHome(context, league, {beta, inBeta, drawn}) {
     const franchiseId = window.franchise_id || null;
     const view = viewLinks(context, franchiseId);
-    return import("./home.js").then(({drawHome}) => drawHome({
+    return import("./home.js").then(({drawHome}) => drawn(drawHome({
         context,
         franchiseId,
         league,
@@ -175,14 +175,20 @@ function startHome(context, league, {beta, inBeta}) {
         loginHref: loginLink(context),
         inBeta,
         beta
-    }).shown);
+    }).shown));
 }
 
 // `beta` is the offer League Alerts invites the viewer to; null when this is the beta, whose
 // `inBeta` ({feedback}) gives League Alerts the way back. `onTrouble` is called when anything fails.
-// Resolves to whether League Alerts was drawn.
-export async function start({dataBase, beta = null, inBeta = null, onTrouble = () => {}}) {
+// `onDrawn` is called once the page's own view has first drawn (its placeholders at least), so the
+// cover can come off without MFL's page showing first. Resolves to whether League Alerts was drawn.
+export async function start({dataBase, beta = null, inBeta = null, onTrouble = () => {}, onDrawn = () => {}}) {
     const context = pageContext();
+    // each view draws its placeholders before its first wait, so they're in the page once it returns
+    const drawn = (value) => {
+        onDrawn();
+        return value;
+    };
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
     // Lineup, Add, Drop, IR, Trades, All moves and All bids draw over MFL's page: it's hidden from the
@@ -200,9 +206,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     if (context && (here.path === "lineup" || (here.path === "options" && here.option === "02"))) {
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-lineup-on");
-        await import("./lineup.js").then(({drawLineup}) => drawLineup({
+        await import("./lineup.js").then(({drawLineup}) => drawn(drawLineup({
             context, franchiseId, loginHref: loginLink(context), irHref: viewLinks(context, franchiseId)("Moves", "IR")
-        })).catch(shown).catch((error) => {
+        }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Lineup:", error);
             onTrouble();
         });
@@ -210,7 +216,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     }
     if (context && here.path === "add_drop") {
         const shown = over("fuad-add-on");
-        await import("./add.js").then(({drawAdd}) => drawAdd({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch(shown).catch((error) => {
+        await import("./add.js").then(({drawAdd}) => drawn(drawAdd({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)}))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Add:", error);
             onTrouble();
         });
@@ -218,7 +224,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     }
     if (context && here.path === "options" && here.option === "257") {
         const shown = over("fuad-drop-on");
-        await import("./drop.js").then(({drawDrop}) => drawDrop({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)})).catch(shown).catch((error) => {
+        await import("./drop.js").then(({drawDrop}) => drawn(drawDrop({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)}))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Drop:", error);
             onTrouble();
         });
@@ -227,9 +233,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     if (context && here.path === "options" && here.option === "18") {
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-ir-on");
-        await import("./ir.js").then(({drawIR}) => drawIR({
+        await import("./ir.js").then(({drawIR}) => drawn(drawIR({
             context, franchiseId, loginHref: loginLink(context), dropHref: viewLinks(context, franchiseId)("Moves", "Drop")
-        })).catch(shown).catch((error) => {
+        }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw IR:", error);
             onTrouble();
         });
@@ -239,9 +245,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     if (context && here.path === "options" && here.option === "05") {
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-trades-on");
-        await import("./trades.js").then(({drawTrades}) => drawTrades({
+        await import("./trades.js").then(({drawTrades}) => drawn(drawTrades({
             context, franchiseId, loginHref: loginLink(context), addHref: viewLinks(context, franchiseId)("Moves", "Add"), teamHref: teamLink(viewLinks(context, franchiseId))
-        })).catch(shown).catch((error) => {
+        }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Trades:", error);
             onTrouble();
         });
@@ -250,7 +256,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     // Home's All moves and All bids: MFL's Transactions and Processed Waivers pages
     if (context && here.path === "options" && here.option === "03") {
         const shown = over("fuad-all-moves-on");
-        await import("./all-moves.js").then(({drawAllMoves}) => drawAllMoves({context, franchiseId: window.franchise_id || null, homeHref: viewLinks(context, window.franchise_id || null)("Home"), teamHref: teamLink(viewLinks(context, window.franchise_id || null))})).catch(shown).catch((error) => {
+        await import("./all-moves.js").then(({drawAllMoves}) => drawn(drawAllMoves({context, franchiseId: window.franchise_id || null, homeHref: viewLinks(context, window.franchise_id || null)("Home"), teamHref: teamLink(viewLinks(context, window.franchise_id || null))}))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw All moves:", error);
             onTrouble();
         });
@@ -263,6 +269,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             if (!drawAllBids({context, franchiseId: window.franchise_id || null, homeHref: viewLinks(context, window.franchise_id || null)("Home"), teamHref: teamLink(viewLinks(context, window.franchise_id || null))})) {
                 document.documentElement.classList.remove("fuad-all-bids-on");
             }
+            onDrawn();
         }).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw All bids:", error);
             onTrouble();
@@ -304,25 +311,28 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         return loading;
     };
     const homeShown = document.getElementById("tabcontent0")
-        ? whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta})).catch((error) => {
+        ? whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn})).catch((error) => {
             console.error("[fuad] couldn't draw Home:", error);
+            onDrawn();
             return false;
         })
         : Promise.resolve(false);
     if (document.getElementById("tabcontent0")) {
         whenShown("fuad-rosters-on")
             .then(() => import("./rosters.js"))
-            .then(({drawRosters}) => drawRosters({context, franchiseId: window.franchise_id || null, dataBase, league}))
+            .then(({drawRosters}) => drawn(drawRosters({context, franchiseId: window.franchise_id || null, dataBase, league})))
             .catch((error) => {
                 console.error("[fuad] couldn't draw Rosters:", error);
                 onTrouble();
+                onDrawn();
             });
         whenShown("fuad-league-on")
             .then(() => import("./league.js"))
-            .then(({drawLeague}) => drawLeague({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))}))
+            .then(({drawLeague}) => drawn(drawLeague({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))})))
             .catch((error) => {
                 console.error("[fuad] couldn't draw League:", error);
                 onTrouble();
+                onDrawn();
             });
     }
 
