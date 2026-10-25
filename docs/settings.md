@@ -7,6 +7,13 @@ Like any rule change, changing one in a version members already run means a new 
 
 The values below are this league's.
 
+## The league
+
+| Setting | Value | Meaning |
+|---|---|---|
+| `wordmark` | "FUAD" | The league's short name, at the top of every page. |
+| `timeZone` | "CT" | MFL's Time Zone setting for the league: `"ET"`, `"CT"`, `"MT"` or `"PT"`. Times show in it, labelled with it. |
+
 ## Money and roster
 
 | Setting | Value | Meaning |
@@ -71,6 +78,17 @@ How many bid groups a team can have is MFL's ("Maximum Number of Conditional Bli
 | Setting | Value | Meaning |
 |---|---|---|
 | `renumberedFranchises` | 0009 → 0005 through 2020 | Franchise numbers MFL moved when teams left, so a past title goes to today's team: `was` is today's `now` up to and including `through`. Empty (`[]`) if no team ever moved. |
+
+## Where the league is
+
+Not in the file either:
+
+- The GitHub Pages address is where the site is published, from the repository's name.
+- MFL's header message loads the site: its `BASE` is that Pages address and its `MAIN` the version
+  every page runs.
+- The daily job's league is the repository variables `MFL_LEAGUE_ID` (the number in the league's
+  pages, `L=`) and `MFL_HOST` (the start of its pages' address, as `https://www44.myfantasyleague.com`).
+  Without them it stops before reading MFL.
 
 ## Read from MFL
 
