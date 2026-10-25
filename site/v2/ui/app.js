@@ -1,6 +1,6 @@
 // On pages other than the home page this does nothing; only the stylesheet applies.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {seasonPhase} from "../lib/violations.js";
@@ -45,6 +45,8 @@ async function loadLeague({season, leagueId}) {
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries", {fetchImpl: pageFetch}).catch(() => null);
     // if the season's phase can't be told, in-season checks are hidden rather than risk false alerts
     const leaguePromise = league("league");
+    // week 1's schedule needs no weeks, so it's asked for while the league export loads
+    weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
     const phasePromise = leaguePromise.then((info) => seasonPhase(season, new Date(), {fetchImpl: pageFetch}, seasonWeeks(info)))
         .catch(() => ({started: false, tankingOver: true, seasonOver: true}));
     // this season's rookies, whose cut costs nothing while their length is due; only before week 1

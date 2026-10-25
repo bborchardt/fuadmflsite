@@ -233,8 +233,8 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     const views = () => groupViews(team(), state.data.pending, names);
     const rounds = () => state.data.groups.map((group) => group.round);
     const nextRound = () => Math.max(0, ...rounds()) + 1;
-    // a new bid's group: a new one, or the last once MFL allows no more
-    const newBidRound = () => (rounds().length < state.data.maxGroups ? nextRound() : Math.max(...rounds()));
+    // a new bid's group: a new one; with one group allowed, that one
+    const newBidRound = () => (state.data.maxGroups === 1 && rounds().length ? 1 : nextRound());
     const theBanner = () => banner({phase: phase(), freeAgents: lists.add, calendar: state.data.calendar, now: now()});
     const freeAgent = (id) => lists.add.find((player) => player.id === id);
     const claimOf = (key) => findClaim(views(), key);

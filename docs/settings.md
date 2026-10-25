@@ -75,7 +75,9 @@ How many bid groups a team can have is MFL's ("Maximum Number of Conditional Bli
 ## Read from MFL
 
 These follow MFL's own settings, so they're not in the file: the teams, the divisions, the
-standings order, the scoring, the starting lineup's positions (their order is used throughout), the
+standings order, the scoring, the starting lineup's positions (in MFL's order on Add, Drop, Trades,
+Lineup, Scores, League's chart and Rosters › Players; team rosters, the franchise tag and the
+rookie scale follow `rookieScale.firstPick`'s), the
 season's weeks, the number of bid groups and the draft picks.
 
 ## Not supported yet

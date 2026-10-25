@@ -94,7 +94,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
 - **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
   calendar event with a word starting "cut" in its title, unless it says "contract year end(s)")
-  until week 17 is over; the daily job, without the calendar, from week 1's kickoff. Going over 30
+  until the championship week (MFL's last) is over; the daily job, without the calendar, from week
+  1's kickoff. Going over 30
   voids the move, as going over the cap does; under 23 must be fixed but voids nothing.
 - **Injured reserve:** only players the NFL lists on IR (and its variants). One who comes off must
   move back to the active roster.
@@ -118,7 +119,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   them as they are. Over 30 active in season no adds at all, and under 23 no add drops an active
   player (10.5); a player the team dropped can't be re-added for 48 hours (9.4). Adds are closed
   before the draft and once free agency closes (the calendar's last waiver lock, or a bid run after
-  it) or week 17 is over, whichever is first; after the last bid run, bid-only players can't be
+  it) or the championship week is over, whichever is first; after the last bid run, bid-only players can't be
   picked. The roster limits here, in Drop, Trades and IR apply from the
   cut-down date.
 - **Moves › Drop** (v2, `ui/drop-model.js`) blocks a cut whose penalty takes cap used past the
