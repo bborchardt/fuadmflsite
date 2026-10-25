@@ -12,7 +12,7 @@ import globals from "globals";
 
 export default [
     // the published snapshots, and MFL's own scripts saved for the screen harness
-    {ignores: ["site/data/", "tools/verify/screens/"]},
+    {ignores: ["site/data/", "tools/verify/screens/", "dist/"]},
     js.configs.recommended,
     {
         languageOptions: {ecmaVersion: "latest", sourceType: "module"},
