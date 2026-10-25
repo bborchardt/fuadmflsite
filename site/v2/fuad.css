@@ -2538,41 +2538,29 @@ body #fuad-home select {
 #fuad-league .fuad-won-total,
 #fuad-rosters .fuad-won-total { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
 
-#fuad-league .fuad-prize-columns,
-#fuad-rosters .fuad-prize-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 40px; align-items: start; padding-bottom: 10px; }
+#fuad-league .fuad-prize-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 40px; align-items: start; padding-bottom: 10px; }
 
-#fuad-league .fuad-prizes,
-#fuad-rosters .fuad-prizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+#fuad-league .fuad-prizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
-#fuad-league .fuad-prize,
-#fuad-rosters .fuad-prize { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--fuad-raised); min-width: 0; text-align: center; }
+#fuad-league .fuad-prize { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--fuad-raised); min-width: 0; text-align: center; }
 
-#fuad-league .fuad-prize-place,
-#fuad-rosters .fuad-prize-place { font-size: 13px; font-weight: 600; }
+#fuad-league .fuad-prize-place { font-size: 13px; font-weight: 600; }
 
-#fuad-league .fuad-prize-amount,
-#fuad-rosters .fuad-prize-amount { font-family: var(--fuad-display); font-weight: 700; font-size: 26px; font-variant-numeric: tabular-nums; }
+#fuad-league .fuad-prize-amount { font-family: var(--fuad-display); font-weight: 700; font-size: 26px; font-variant-numeric: tabular-nums; }
 
-#fuad-league .fuad-prize-team,
-#fuad-rosters .fuad-prize-team { font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+#fuad-league .fuad-prize-team { font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 
-#fuad-league .fuad-pot,
-#fuad-rosters .fuad-pot { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+#fuad-league .fuad-pot { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
 
-#fuad-league .fuad-pot div,
-#fuad-rosters .fuad-pot div { display: flex; justify-content: space-between; gap: 12px; }
+#fuad-league .fuad-pot div { display: flex; justify-content: space-between; gap: 12px; }
 
-#fuad-league .fuad-pot dd,
-#fuad-rosters .fuad-pot dd { margin: 0; }
+#fuad-league .fuad-pot dd { margin: 0; }
 
-#fuad-league .fuad-pot-line,
-#fuad-rosters .fuad-pot-line { min-height: 40px; align-items: center; border-top: 1px solid var(--fuad-rule); }
+#fuad-league .fuad-pot-line { min-height: 40px; align-items: center; border-top: 1px solid var(--fuad-rule); }
 
-#fuad-league .fuad-pot-entry,
-#fuad-rosters .fuad-pot-entry { padding: 0 0 4px 14px; font-size: 14px; color: var(--fuad-muted); }
+#fuad-league .fuad-pot-entry { padding: 0 0 4px 14px; font-size: 14px; color: var(--fuad-muted); }
 
-#fuad-league .fuad-pot-total,
-#fuad-rosters .fuad-pot-total { font-weight: 700; border-top-color: var(--fuad-hairline); }
+#fuad-league .fuad-pot-total { font-weight: 700; border-top-color: var(--fuad-hairline); }
 
 /* Champions: a list on phones, tiles across on desktop */
 #fuad-league .fuad-champions > li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 40px; font-size: 15px; }
@@ -2589,21 +2577,24 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-history:empty { display: none; }
 
-/* desktop: the places stacked, centered beside the pot */
+/* desktop: the pot under the heading, the places stacked beside it as wide rows filling its height;
+   the markup keeps the places first for phones */
 @media (min-width: 48.01em) {
-    #fuad-league .fuad-prize-columns,
-    #fuad-rosters .fuad-prize-columns { align-items: stretch; }
-    #fuad-league .fuad-prizes,
-    #fuad-rosters .fuad-prizes { grid-template-columns: minmax(0, 260px); justify-content: center; align-content: center; }
+    #fuad-league .fuad-prize-columns { align-items: stretch; }
+    #fuad-league .fuad-pot { grid-column: 1; grid-row: 1; }
+    #fuad-league .fuad-prizes { grid-column: 2; grid-row: 1; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
+    #fuad-league .fuad-prize { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "place amount" "team amount"; align-items: center; gap: 2px 16px; padding: 10px 16px; text-align: left; }
+    #fuad-league .fuad-prize-place { grid-area: place; align-self: end; }
+    #fuad-league .fuad-prize-team { grid-area: team; align-self: start; }
+    /* no team yet (the place and the amount only): the place centered on the amount */
+    #fuad-league .fuad-prize-place:nth-last-child(2) { grid-row: 1 / 3; align-self: center; }
+    #fuad-league .fuad-prize-amount { grid-area: amount; }
 }
 
 @media (max-width: 48em) {
-    #fuad-league .fuad-prize-columns,
-    #fuad-rosters .fuad-prize-columns { grid-template-columns: minmax(0, 1fr); }
-    #fuad-league .fuad-prize,
-    #fuad-rosters .fuad-prize { padding: 10px; }
-    #fuad-league .fuad-prize-amount,
-    #fuad-rosters .fuad-prize-amount { font-size: 22px; }
+    #fuad-league .fuad-prize-columns { grid-template-columns: minmax(0, 1fr); }
+    #fuad-league .fuad-prize { padding: 10px; }
+    #fuad-league .fuad-prize-amount { font-size: 22px; }
 }
 
 /* ---- Rosters (ui/rosters.js): My team, Teams, Players, Draft ---- */
