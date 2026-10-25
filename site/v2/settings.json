@@ -7,10 +7,13 @@
     "firstPick": { "QB": 6, "RB": 10, "WR": 10, "TE": 4, "PK": 1 },
     "dropPerPick": 0.20
   },
+  "rookieCutFreeUntilLengthSet": true,
   "cutPenalty": { "shareOfRemainingContract": 0.40, "minimumPerYear": 1 },
   "contracts": { "maxYears": 5, "defaultYears": 1, "postWithinHours": 1 },
   "adds": { "ownDropBidAfterHours": 48 },
-  "playoffs": { "teams": 6, "byes": 2 },
+  "antiTanking": true,
+  "playoffs": { "teams": 6, "divisionWinnersSeededFirst": true, "byes": 2, "wildcardsBy": "allPlay", "thirdPlaceGame": true },
+  "draftOrder": "playoffFinish",
   "payouts": { "weeklyHighScore": 15, "allPlayPerGameOver500": 0.75, "places": [0.55, 0.30, 0.15] },
   "renumberedFranchises": [{ "was": "0009", "now": "0005", "through": 2020 }]
 }

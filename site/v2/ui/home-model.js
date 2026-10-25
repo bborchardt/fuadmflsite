@@ -5,6 +5,7 @@ import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
+import settings from "../lib/settings.js";
 import {money, plural} from "./format.js";
 
 const DAY = 24 * 60 * 60;
@@ -278,7 +279,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
 
     if (lineup && phase === "season") {
         for (const {player, why} of lineup.problems) {
-            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, league.weeks && week < league.weeks.playoffsStart ? "A loss won’t count toward draft order" : "", links.lineup, "Lineup");
+            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, settings.antiTanking && league.weeks && week < league.weeks.playoffsStart ? "A loss won’t count toward draft order" : "", links.lineup, "Lineup");
         }
         const short = lineup.required - lineup.starters;
         if (short > 0) {

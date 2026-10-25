@@ -1,6 +1,7 @@
 // League Alerts' rules, shared with the daily job so the two flag the same things.
 
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
+import settings from "./settings.js";
 import {contractDeadline, windowClosed} from "./adds.js";
 import {displayName, weekEnd, weekKickoff} from "./mfl.js";
 
@@ -79,7 +80,7 @@ export function ruleViolations(league, {pendingAdds = [], readings = new Map(), 
             }
         }
         // before week 1's kickoff MFL's results can list week 1's lineups, which nobody has played
-        if (weeks && league.started !== false && !league.tankingOver && week < weeks.playoffsStart) {
+        if (settings.antiTanking && weeks && league.started !== false && !league.tankingOver && week < weeks.playoffsStart) {
             for (const player of franchise.lineup.filter((starter) => starter.injured)) {
                 push("injured-starter", franchise, `${franchise.teamName} started injured/suspended player ${player.fullName} in week ${league.week}!`);
             }

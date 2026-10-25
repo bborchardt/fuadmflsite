@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {ruleViolations as items} from "../site/v2/lib/violations.js";
+import leagueSettings from "../site/v2/lib/settings.js";
 
 const ruleViolations = (league, options) => items(league, options).map((item) => item.text);
 
@@ -42,6 +43,15 @@ test("injured or suspended starters (anti-tanking): regular season lineups, unti
     assert.deepEqual(ruleViolations(league("15", franchise("Risky", 250, 25, [injured]))), []);
     // week 14's lineup once week 15 has kicked off
     assert.deepEqual(ruleViolations({...league("14", franchise("Risky", 250, 25, [injured])), tankingOver: true}), []);
+});
+
+test("a league without the anti-tanking rule: no injured starter flags", () => {
+    leagueSettings.antiTanking = false;
+    try {
+        assert.deepEqual(ruleViolations(league("5", franchise("Risky", 250, 25, [injured]))), []);
+    } finally {
+        leagueSettings.antiTanking = true;
+    }
 });
 
 test("the weeks are the league's own: a 13-week regular season, the championship in week 16", () => {
