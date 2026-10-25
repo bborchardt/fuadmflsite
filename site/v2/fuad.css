@@ -615,6 +615,10 @@ body #tooltip.top:after { border-top-color: var(--fuad-raised) !important; }
 
 /* ---- v2's own pieces ---- */
 
+/* MFL's skin centers every heading; v2's start at the left unless a rule of its own says otherwise */
+body [id^="fuad"] h1, body [id^="fuad"] h2, body [id^="fuad"] h3, body [id^="fuad"] h4,
+body .fuad-layer h2, body .fuad-layer h3 { text-align: left; }
+
 /* A line of explanation above a group of tables, e.g. which franchise salaries are shown. */
 .fuad-note {
     margin: 0.75em 0.25em 0.25em;
