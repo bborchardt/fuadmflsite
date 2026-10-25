@@ -6,11 +6,12 @@ import {asArray} from "../lib/mfl.js";
 import {text} from "./player-page.js";
 import {scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {cents} from "./format.js";
+import settings from "../lib/settings.js";
 
-export const PLAYOFF_TEAMS = 6;
-export const WEEKLY_PRIZE = 15;
-export const ALL_PLAY_RATE = 0.75;
-export const PRIZE_SHARES = [0.55, 0.30, 0.15];
+export const PLAYOFF_TEAMS = settings.playoffs.teams;
+export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
+export const ALL_PLAY_RATE = settings.payouts.allPlayPerGameOver500;
+export const PRIZE_SHARES = settings.payouts.places;
 // a season's entry fees before the commissioner records them: $100 a team, 10 teams
 export const ENTRY_FEE = 100;
 export const TEAMS = 10;
@@ -83,9 +84,9 @@ export function allPlayRecords(weeklyResults, lastRegularWeek) {
     return records;
 }
 
-// Bylaws 1.1–1.3: the division winners are seeds 1–2; the other four are the best all-play
-// records, ties broken by the standings order. "In the hunt" is the rest, all-play games back of
-// the last seed.
+// Bylaws 1.1–1.3: the division winners are the first seeds, the top ones with byes; the rest are
+// the best all-play records, ties broken by the standings order. "In the hunt" is the rest,
+// all-play games back of the last seed.
 export function playoffPicture(divisions) {
     const all = divisions.flatMap((division) => division.rows.map((team) => ({...team, divisionName: division.name})));
     const byStandings = (a, b) => a.order - b.order;
@@ -95,9 +96,9 @@ export function playoffPicture(divisions) {
         .sort((a, b) => pct(b.allPlay) - pct(a.allPlay) || byStandings(a, b));
     const wildcards = rest.slice(0, PLAYOFF_TEAMS - winners.length);
     const seeds = [
-        ...winners.map((team) => ({team, why: `${team.divisionName} winner`, bye: true})),
-        ...wildcards.map((team) => ({team, why: `${recordText(team.allPlay)} all-play`, bye: false}))
-    ].map((seed, i) => ({...seed, seed: i + 1}));
+        ...winners.map((team) => ({team, why: `${team.divisionName} winner`})),
+        ...wildcards.map((team) => ({team, why: `${recordText(team.allPlay)} all-play`}))
+    ].map((seed, i) => ({...seed, seed: i + 1, bye: i < settings.playoffs.byes}));
     const last = wildcards[wildcards.length - 1];
     const hunt = rest.slice(wildcards.length).map((team) => {
         const back = last ? gamesBack(last.allPlay, team.allPlay) : 0;

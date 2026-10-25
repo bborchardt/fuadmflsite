@@ -1,35 +1,31 @@
-// A rule change means a new version, so past seasons keep the rules they were played under.
+// A rule change means a new version, so past seasons keep the rules they were played under. The
+// numbers are the league's settings (settings.json).
 
-export const SALARY_CAP = 300;
-export const ROSTER_MIN = 23;
-export const ROSTER_MAX = 30;
+import settings from "./settings.js";
+
+export const SALARY_CAP = settings.salaryCap;
+export const ROSTER_MIN = settings.roster.min;
+export const ROSTER_MAX = settings.roster.max;
 
 // MFL reports week 17 all offseason, so the roster and IR checks' end is timed from the NFL
-// schedule. Anti-tanking covers the regular season, weeks 1-14.
-export const ROSTER_CHECK_LAST_WEEK = 17;
-export const INJURY_CHECK_LAST_WEEK = 14;
-export const PLAYOFFS_START_WEEK = 15;
-export const CHAMPIONSHIP_WEEK = 17;
+// schedule. Anti-tanking covers the regular season.
+export const PLAYOFFS_START_WEEK = settings.weeks.playoffsStart;
+export const CHAMPIONSHIP_WEEK = settings.weeks.championship;
+export const ROSTER_CHECK_LAST_WEEK = CHAMPIONSHIP_WEEK;
+export const INJURY_CHECK_LAST_WEEK = PLAYOFFS_START_WEEK - 1;
 
-export const FRANCHISE_PLAYER_COUNT = 5;
+export const FRANCHISE_PLAYER_COUNT = settings.franchiseTag.averageOfTop;
 
 // the trade deadline, when franchise salaries are snapshotted, is this week's first kickoff
-export const TRADE_DEADLINE_WEEK = 12;
+export const TRADE_DEADLINE_WEEK = settings.weeks.tradeDeadline;
 
 // last season's franchise salaries apply until this week's first kickoff: a stand-in for the rookie
 // draft, held offline on no fixed date
 export const PREVIOUS_FRANCHISE_UNTIL_WEEK = 1;
 
-export const ROOKIE_PICKS_SHOWN = 15;
-export const ROOKIE_DECAY = 0.8;
+export const ROOKIE_DECAY = 1 - settings.rookieScale.dropPerPick;
 
-export const POSITIONS = [
-    {code: "QB", rookieBaseline: 6},
-    {code: "RB", rookieBaseline: 10},
-    {code: "WR", rookieBaseline: 10},
-    {code: "TE", rookieBaseline: 4},
-    {code: "PK", rookieBaseline: 1}
-];
+export const POSITIONS = Object.entries(settings.rookieScale.firstPick).map(([code, rookieBaseline]) => ({code, rookieBaseline}));
 
 const positionRank = new Map(POSITIONS.map((position, index) => [position.code, index]));
 
@@ -43,7 +39,7 @@ export function capPenalty(years, salary) {
     if (!(years > 0)) {
         return 0;
     }
-    return Math.max(Math.ceil(Math.max(1, 0.4 * salary * years)), years);
+    return Math.max(Math.ceil(Math.max(1, settings.cutPenalty.shareOfRemainingContract * salary * years)), years * settings.cutPenalty.minimumPerYear);
 }
 
 export function netCapSpace(years, salary) {

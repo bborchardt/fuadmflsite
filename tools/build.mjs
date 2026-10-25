@@ -5,7 +5,7 @@
 // holding an unbundled fuad.js from before (Pages caches for 10 minutes).
 //
 //   node tools/build.mjs [OUT]          OUT defaults to dist/
-import {cpSync, mkdirSync, rmSync} from "node:fs";
+import {cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {join, resolve} from "node:path";
 import {build} from "esbuild";
 
@@ -21,8 +21,14 @@ cpSync(join(REPO, "site"), out, {recursive: true, filter: (path) => !path.starts
 for (const version of BUNDLED) {
     const from = join(REPO, "site", version);
     const target = join(out, version);
+    // lib/settings.js reads settings.json through Node; published, it is the JSON itself. The bundle is
+    // built from the copy so it takes that one too.
+    const settings = join(from, "settings.json");
+    if (existsSync(settings)) {
+        writeFileSync(join(target, "lib", "settings.js"), `export default ${JSON.stringify(JSON.parse(readFileSync(settings, "utf8")))};\n`);
+    }
     await build({
-        entryPoints: [join(from, "fuad.js")],
+        entryPoints: [join(target, "fuad.js")],
         outfile: join(target, "fuad.js"),
         allowOverwrite: true,
         bundle: true,

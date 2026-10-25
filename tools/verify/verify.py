@@ -78,7 +78,12 @@ def serve_local(local):
         url = route.request.url.split("?")[0]
         rel = url.split("/fuadmflsite/", 1)[1].split("/", 1)[1]
         path = REPO / "site" / local / rel
-        if path.is_file():
+        settings = REPO / "site" / local / "settings.json"
+        if rel == "lib/settings.js" and settings.is_file():
+            # as tools/build.mjs publishes it: the JSON itself, which a browser can't read through Node
+            route.fulfill(status=200, body=f"export default {json.dumps(json.loads(settings.read_text()))};\n", headers={
+                "content-type": "text/javascript", "access-control-allow-origin": "*"})
+        elif path.is_file():
             route.fulfill(status=200, body=path.read_bytes(), headers={
                 "content-type": TYPES.get(path.suffix, "application/octet-stream"),
                 "access-control-allow-origin": "*"})
