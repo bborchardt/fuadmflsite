@@ -23,11 +23,11 @@
         var version = direct ? offer.version : MAIN;
 
         // hidden until the version has drawn (it shows the page again), so MFL's page doesn't show first;
-        // after 20 seconds, whatever is there shows. v1 draws only its own tabs, so it's hidden only while
+        // after 30 seconds, whatever is there shows. v1 draws only its own tabs, so it's hidden only while
         // a choice may hand the page on
         if (version !== "v1" || stored("fuad.beta") || stored("fuad.preview") || params.has("fuadBeta") || params.has("fuadPreview")) {
             root.classList.add("fuad-cloak");
-            setTimeout(function () { root.classList.remove("fuad-cloak"); }, 20000);
+            setTimeout(function () { root.classList.remove("fuad-cloak"); }, 30000);
         }
 
         var whenBody = function (then) {
