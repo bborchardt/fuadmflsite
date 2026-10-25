@@ -1737,12 +1737,30 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-chat-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
 
-#fuad-home .fuad-chat-older-link { display: inline-flex; align-items: center; min-height: 44px; margin: -8px 0 4px; font-size: 13px; font-weight: 600; }
+/* a heading action that acts on the card rather than leaving it: a button, looking like the
+   headings' text links */
+#fuad-home .fuad-panel-actions .fuad-text-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin: -12px 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--fuad-lime);
+    font: inherit;
+    cursor: pointer;
+}
 
-#fuad-home .fuad-chat-older-link[hidden] { display: none; }
+@media (hover: hover) {
+    #fuad-home .fuad-panel-actions .fuad-text-button:hover { background: none; color: var(--fuad-lime-hover); }
+}
+
+#fuad-home .fuad-panel-actions .fuad-text-button[hidden] { display: none; }
 
 @media (min-width: 48.01em) {
-    #fuad-home .fuad-chat-older-link { display: none; }
+    #fuad-home .fuad-panel-actions .fuad-chat-older-button { display: none; }
 }
 
 @media (max-width: 48em) {
