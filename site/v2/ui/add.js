@@ -9,7 +9,7 @@ import {exportUrl, fetchExport} from "../lib/mfl.js";
 import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {openDialog} from "./dialog.js";
+import {openDialog, replaceEntry} from "./dialog.js";
 import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterIds, send, takeFlash
 } from "./moves.js";
@@ -359,6 +359,10 @@ export async function drawAdd({context, franchiseId, loginHref}) {
 
     window.addEventListener("popstate", (event) => {
         const entry = event.state && event.state.fuadAdd ? event.state : null;
+        // Back that only closed a dialog over this screen
+        if ((entry ? entry.depth : 0) === depth && (entry ? entry.fuadAdd : "home") === state.screen) {
+            return;
+        }
         depth = entry ? entry.depth : 0;
         state.screen = entry ? entry.fuadAdd : "home";
         if (state.screen === "home" || state.screen === "players") {
@@ -380,12 +384,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     function reloadWith(next) {
         leaveFlash(FLASH_KEY, next);
         const url = `${window.location.origin}/${context.season}/add_drop?L=${encodeURIComponent(context.leagueId)}`;
-        if (depth > 0 && !wide.matches) {
-            window.addEventListener("popstate", () => window.location.replace(url), {once: true});
-            window.history.go(-depth);
-        } else {
-            window.location.replace(url);
-        }
+        replaceEntry(url, wide.matches ? 0 : depth);
     }
 
     // ---- composing ----
