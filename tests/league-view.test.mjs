@@ -97,6 +97,13 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
     assert.match(unknown, /1st · 60%<\/span>\s*<\/div>/);
     assert.match(unknown, /<dt>Pot<\/dt><dd class="fuad-muted">Not in MFL’s accounting yet<\/dd>/);
     assert.match(unknown, /<dt>For the playoffs<\/dt><dd>—<\/dd>/);
+    // a past season's: its places named, without amounts
+    const past = winnersMarkup({...result, pot: null, forPlayoffs: null, prizes: [{place: "1st", share: 0.6, amount: null, team: "0001"}],
+        rows: [{...result.rows[0], prize: {place: "1st", amount: null}}]}, {viewer: "0001", final: "2025", teamHref: (id) => `#rosters-teams/${id}`});
+    assert.match(past, /<td class="fuad-num">1st<\/td>/);
+    assert.match(past, /<dd class="fuad-muted">Not in MFL’s accounting<\/dd>/);
+    // a result saved before the weekly prize was in it
+    assert.match(winnersMarkup({...result, weeklyPrize: undefined}, {viewer: "0001", final: "", teamHref: (id) => `#rosters-teams/${id}`}), /Weekly points · 2 × \$15/);
     const final = winnersMarkup({...result, prizes: [{place: "1st", share: 0.6, amount: 300, team: "0001"}], rows: [{...result.rows[0], prize: {place: "1st", amount: 300}}]}, {viewer: "0001", final: "2025", teamHref: (id) => `#rosters-teams/${id}`});
     assert.match(final, /2025 payouts<\/h2>/);
     assert.doesNotMatch(final, /If the season ended today/);
