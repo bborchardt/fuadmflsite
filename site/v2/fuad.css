@@ -1402,15 +1402,6 @@ body [tabindex]:focus-visible {
 
 .fuad-news-body .fuad-panel-body { display: flex; flex-direction: column; gap: 10px; }
 
-.fuad-more {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--fuad-lime) !important;
-}
-
 .fuad-week {
     display: grid;
     grid-template-columns: 44px minmax(64px, auto) minmax(0, 1fr) 44px;
