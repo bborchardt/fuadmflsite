@@ -2,6 +2,7 @@
 // the five sections, the current section's views, the team sheet and the player popup. MFL's own
 // menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
 
+import settings from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
 import {REBUILT, locate, pageOf, sectionHref, sections, storedTabs, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
@@ -155,8 +156,8 @@ export function drawFrame({context, storage}) {
     <header class="fuad-top">
         <button type="button" class="fuad-back" aria-label="Back" hidden>${BACK_ICON}</button>
         <button type="button" class="fuad-menu-button" aria-label="Menu" aria-expanded="false" aria-haspopup="dialog">${MENU_ICON}<span class="fuad-menu-word" aria-hidden="true">Menu</span></button>
-        <a class="fuad-brand" href="${esc(all[0].href)}"><span class="fuad-wordmark">FUAD</span><span class="fuad-context"></span></a>
-        <span class="fuad-detour" hidden><span class="fuad-wordmark">FUAD</span><span class="fuad-detour-title"></span></span>
+        <a class="fuad-brand" href="${esc(all[0].href)}"><span class="fuad-wordmark">${esc(settings.wordmark)}</span><span class="fuad-context"></span></a>
+        <span class="fuad-detour" hidden><span class="fuad-wordmark">${esc(settings.wordmark)}</span><span class="fuad-detour-title"></span></span>
         <nav class="fuad-sections fuad-sections-top" aria-label="Sections"></nav>
         ${loggedIn
             ? `<button type="button" class="fuad-team" aria-label="${esc(team ? `${team.name}: your team` : "Commissioner")}" aria-haspopup="dialog">${esc(initials(team ? team.name : "Commissioner"))}</button>`

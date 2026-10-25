@@ -4,6 +4,7 @@ import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
 import settings from "./settings.js";
 import {contractDeadline, windowClosed} from "./adds.js";
 import {displayName, weekEnd, weekKickoff} from "./mfl.js";
+import {TIME_ZONE, ZONE} from "./zone.js";
 
 // MFL reports its last week all offseason, so the season's phase comes from its NFL schedule. A
 // schedule MFL hasn't published counts as not yet. `weeks` is seasonWeeks' (lib/rules.js); without
@@ -26,13 +27,13 @@ export async function seasonPhase(season, now, options, weeks) {
 export const onNflIR = (player) => /^IR/.test(player.injuryStatus || "");
 
 // as members see times on MFL: "9:42 PM CT"
-function centralTime(seconds) {
-    return new Date(seconds * 1000).toLocaleTimeString("en-US", {timeZone: "America/Chicago", hour: "numeric", minute: "2-digit"}) + " CT";
+function leagueTime(seconds) {
+    return `${new Date(seconds * 1000).toLocaleTimeString("en-US", {timeZone: TIME_ZONE, hour: "numeric", minute: "2-digit"})} ${ZONE}`;
 }
 
 // `reading` is contract-years.js's postReading, or none when the board couldn't be read
 function contractNotice(teamName, add, reading) {
-    const by = centralTime(contractDeadline(add));
+    const by = leagueTime(contractDeadline(add));
     const example = `"${String(add.name).split(",")[0].trim()}: 3 years"`;
     const added = `${teamName} added ${displayName(add.name)}`;
     if (reading && reading.state === "read") {

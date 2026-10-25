@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {
-    answerFields, assetView, bidsAfter, blockReason, ctParts, ctSeconds, deadlineWeek, expiryChoices, findOffer,
+    answerFields, assetView, bidsAfter, blockReason, zoneParts, zoneSeconds, deadlineWeek, expiryChoices, findOffer,
     kickoffText, lockedText, offersOf, pickedSummary, pickGroups, proposalFields, readPick, rosterNotices,
     teamKickoffs, throughGames, tradeEffect
 } from "../site/v2/ui/trades-model.js";
@@ -109,27 +109,27 @@ test("roster notices (10.5): past 30 or under 23 only when the trade moves that 
 
 test("Central time: a date and hour as MFL's form takes it, across the end of daylight saving (Nov 1, 2026)", () => {
     // noon on the Sunday before (CDT) and after (CST)
-    assert.equal(ctSeconds({year: 2026, month: 9, day: 25, hour: 12}), at(2026, 9, 25, 17));
-    assert.equal(ctSeconds({year: 2026, month: 10, day: 8, hour: 12}), at(2026, 10, 8, 18));
+    assert.equal(zoneSeconds({year: 2026, month: 9, day: 25, hour: 12}), at(2026, 9, 25, 17));
+    assert.equal(zoneSeconds({year: 2026, month: 10, day: 8, hour: 12}), at(2026, 10, 8, 18));
     // noon on the day itself is already CST
-    assert.equal(ctSeconds({year: 2026, month: 10, day: 1, hour: 12}), at(2026, 10, 1, 18));
+    assert.equal(zoneSeconds({year: 2026, month: 10, day: 1, hour: 12}), at(2026, 10, 1, 18));
     // 1 a.m. comes twice that night: the first, in CDT
-    assert.equal(ctSeconds({year: 2026, month: 10, day: 1, hour: 1}), at(2026, 10, 1, 6));
+    assert.equal(zoneSeconds({year: 2026, month: 10, day: 1, hour: 1}), at(2026, 10, 1, 6));
     // MFL's hour 0 is 12:00:01 a.m.
-    assert.equal(ctSeconds({year: 2026, month: 10, day: 1, hour: 0}), at(2026, 10, 1, 5) + 1);
+    assert.equal(zoneSeconds({year: 2026, month: 10, day: 1, hour: 0}), at(2026, 10, 1, 5) + 1);
     // 2 a.m. doesn't happen the night daylight saving starts
-    assert.equal(ctSeconds({year: 2027, month: 2, day: 14, hour: 2}), null);
-    assert.equal(ctSeconds({year: 2026, month: NaN, day: 1, hour: 1}), null);
+    assert.equal(zoneSeconds({year: 2027, month: 2, day: 14, hour: 2}), null);
+    assert.equal(zoneSeconds({year: 2026, month: NaN, day: 1, hour: 1}), null);
 });
 
 test("Central time: a moment's parts, a Thursday night game being Friday in UTC", () => {
-    assert.deepEqual(ctParts(at(2026, 9, 30, 0, 15)), {year: 2026, month: 9, day: 29, hour: 19, weekday: 4});
-    assert.deepEqual(ctParts(at(2026, 10, 1, 7)), {year: 2026, month: 10, day: 1, hour: 1, weekday: 0});
-    assert.deepEqual(ctParts(at(2026, 10, 1, 5)), {year: 2026, month: 10, day: 1, hour: 0, weekday: 0});
+    assert.deepEqual(zoneParts(at(2026, 9, 30, 0, 15)), {year: 2026, month: 9, day: 29, hour: 19, weekday: 4});
+    assert.deepEqual(zoneParts(at(2026, 10, 1, 7)), {year: 2026, month: 10, day: 1, hour: 1, weekday: 0});
+    assert.deepEqual(zoneParts(at(2026, 10, 1, 5)), {year: 2026, month: 10, day: 1, hour: 0, weekday: 0});
     // every hour of the week either side of the change reads back to itself
     for (let seconds = at(2026, 9, 28); seconds < at(2026, 10, 5); seconds += HOUR) {
-        const parts = ctParts(seconds);
-        const back = ctSeconds(parts);
+        const parts = zoneParts(seconds);
+        const back = zoneSeconds(parts);
         assert.equal(back - (parts.hour === 0 ? 1 : 0), seconds === at(2026, 10, 1, 7) ? at(2026, 10, 1, 6) : seconds,
             new Date(seconds * 1000).toISOString());
     }
@@ -179,7 +179,7 @@ test("the proposal posts MFL's hidden fields, both sides' boxes and the expiry i
         ["msg", "Lamar?"], ["Propose", "Propose Trade"]
     ]);
     // what it posts reads back as the moment chosen
-    assert.equal(ctSeconds({year: 2026, month: 10, day: 1, hour: 12}), SUNDAY);
+    assert.equal(zoneSeconds({year: 2026, month: 10, day: 1, hour: 12}), SUNDAY);
 });
 
 test("an answer posts the offer form's hidden fields, or the league and trade without one", () => {

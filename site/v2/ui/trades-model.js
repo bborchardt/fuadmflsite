@@ -10,8 +10,8 @@ import {firstLast, isIR, projection, surname} from "./add-model.js";
 import {clock, dayText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
 import {cents, money} from "./format.js";
+import {TIME_ZONE, zoneOffset} from "../lib/zone.js";
 
-const CT = "America/Chicago";
 const HOUR = 3600;
 // how close to a traded player's kickoff accepting warns that lineups need fixing
 export const KICKOFF_WARNING_HOURS = 3;
@@ -71,7 +71,7 @@ export function readProposal(doc, franchiseId) {
     if (!known) {
         return null;
     }
-    return {form, partner, mine: side(franchiseId), theirs: side(partner), expiry: ctSeconds(expiry), years};
+    return {form, partner, mine: side(franchiseId), theirs: side(partner), expiry: zoneSeconds(expiry), years};
 }
 
 // The proposal's fields as MFL's form posts them: `give` and `get` are checkbox values
@@ -84,7 +84,7 @@ export function proposalFields(form, {mine, partner, give, get, expires, message
     }
     give.forEach((id) => fields.append(`drop${mine}`, id));
     get.forEach((id) => fields.append(`drop${partner}`, id));
-    const parts = ctParts(expires);
+    const parts = zoneParts(expires);
     fields.set("TRADE_EXPIRES_MONTH", String(parts.month));
     fields.set("TRADE_EXPIRES_DAY", String(parts.day));
     fields.set("TRADE_EXPIRES_TIME", String(parts.hour).padStart(2, "0"));
@@ -299,25 +299,25 @@ export function kickoffText(assets, kickoffs, now) {
 
 // ---- expiry ----
 
-// a moment's date and hour in Central time: {year, month (0–11), day, hour, weekday (0 Sunday)}
-export function ctParts(seconds) {
-    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: CT, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", weekday: "short", hourCycle: "h23"})
+// a moment's date and hour in the league's zone: {year, month (0–11), day, hour, weekday (0 Sunday)}
+export function zoneParts(seconds) {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: TIME_ZONE, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", weekday: "short", hourCycle: "h23"})
         .formatToParts(new Date(seconds * 1000)).map((part) => [part.type, part.value]));
     return {year: Number(parts.year), month: Number(parts.month) - 1, day: Number(parts.day), hour: Number(parts.hour) % 24,
         weekday: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.weekday)};
 }
 
-// the moment a Central date and hour names, in seconds (MFL's form: month 0–11, hour 0–23; its
+// the moment a date and hour in the league's zone names, in seconds (MFL's form: month 0–11, hour 0–23; its
 // hour 0 is 12:00:01 a.m.)
-export function ctSeconds({year, month, day, hour}) {
+export function zoneSeconds({year, month, day, hour}) {
     if (![year, month, day, hour].every(Number.isFinite)) {
         return null;
     }
     const wanted = Date.UTC(year, month, day, hour) / 1000;
-    // Central is 5 or 6 hours behind UTC: try both, keep the one that reads back right
-    for (const offset of [5, 6]) {
-        const guess = wanted + offset * HOUR;
-        const back = ctParts(guess);
+    // the zone's offsets either side of a daylight change: try each, keep the one that reads back right
+    for (const offset of new Set([zoneOffset(wanted - 12 * HOUR), zoneOffset(wanted + 12 * HOUR)])) {
+        const guess = wanted - offset;
+        const back = zoneParts(guess);
         if (Date.UTC(back.year, back.month, back.day, back.hour) / 1000 === wanted) {
             return guess + (hour === 0 ? 1 : 0);
         }
@@ -333,7 +333,7 @@ const hourOf = (seconds) => seconds - (seconds % HOUR);
 export function expiryChoices({phase, kickoffs, mflDefault, now}) {
     const choices = [];
     if (phase === "season") {
-        const next = (weekday) => kickoffs.filter((kickoff) => kickoff > now && ctParts(kickoff).weekday === weekday).sort((a, b) => a - b)[0];
+        const next = (weekday) => kickoffs.filter((kickoff) => kickoff > now && zoneParts(kickoff).weekday === weekday).sort((a, b) => a - b)[0];
         const sunday = next(0);
         const thursday = next(4);
         // only while that hour is still ahead: within it, nothing MFL's form takes comes before kickoff

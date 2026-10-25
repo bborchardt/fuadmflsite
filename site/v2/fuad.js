@@ -2,12 +2,12 @@
 // which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
 import {pageContext, start} from "./ui/app.js";
-import {betaOffer, decide, offeredVersion, withParam} from "./loader.js";
+import {PAGES_BASE, betaOffer, decide, offeredVersion, withParam} from "./loader.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
 // snapshots are league data, not code: always read the published ones, even in a local preview
-const DATA_BASE = new URL("data/", "https://bborchardt.github.io/fuadmflsite/");
+const DATA_BASE = new URL("data/", PAGES_BASE);
 
 const here = new URL("./", import.meta.url).href;
 const versionHere = (here.match(/\/(v\d+)\/$/) || [])[1] || "v1";

@@ -60,6 +60,8 @@ jobs:
           DATA_DIR: league-data
           MFL_USERNAME: ${{ secrets.MFL_USERNAME }}
           MFL_PASSWORD: ${{ secrets.MFL_PASSWORD }}
+          MFL_LEAGUE_ID: ${{ vars.MFL_LEAGUE_ID }}
+          MFL_HOST: ${{ vars.MFL_HOST }}
           MFL_USER_AGENT: ${{ vars.MFL_USER_AGENT }}
           RULES_VERSION: ${{ vars.RULES_VERSION || 'v2' }}
           DROP_PENALTIES: ${{ vars.DROP_PENALTIES }}
