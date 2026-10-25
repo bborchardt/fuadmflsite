@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that a change to v2 leaves its screens as they were, without asking MFL anything.
 
-    uv run --no-project --with playwright python tools/verify/screens.py compare [--base master] [--only add,trades]
+    uv run --no-project --with playwright python tools/verify/screens.py compare [--base master] [--only add,trades] [--built]
     uv run --no-project --with playwright python tools/verify/screens.py record OUT.json [--ref master]
 
 Each screen loads from pages and exports saved from the clone league (tools/verify/screens/; the
@@ -12,8 +12,8 @@ into each move's review and post first. Each chain runs from a fresh load. After
 the HTML of v2's parts of the page and the moves the page made (POSTs, and GETs naming an ACTION),
 which are answered from the saved pages, never sent.
 
-compare  records --base (a git ref, default master) and the working copy, and lists every step whose
-         HTML or moves differ. A refactor should show none; a visible change shows up as a review list.
+compare  records --base (a git ref, default master) and the working copy (with --built, as Pages
+         publishes it: bundled by tools/build.mjs), and lists every step whose HTML or moves differ. A refactor should show none; a visible change shows up as a review list.
          Runs of whitespace count as one space, as the browser draws them, so markup may be reindented.
 record   writes one version's record, from the working copy or --ref.
 
@@ -29,6 +29,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -149,8 +150,18 @@ return Boolean(found);
 }"""
 
 
+BUILT = "built:"
+
+
+def build_working_copy():
+    """the working copy as Pages publishes it (tools/build.mjs: v2 bundled), as a ref Site reads"""
+    out = tempfile.mkdtemp(prefix="fuad-built-")
+    subprocess.run(["node", "tools/build.mjs", out], cwd=REPO, check=True, stdout=subprocess.DEVNULL)
+    return BUILT + out
+
+
 class Site:
-    """v2's files from the working copy, or from a git ref"""
+    """v2's files from the working copy, a git ref, or a build ("built:DIR")"""
 
     def __init__(self, ref=None):
         self.ref = ref
@@ -158,7 +169,10 @@ class Site:
 
     def read(self, path):
         if path not in self.cache:
-            if self.ref:
+            if self.ref and self.ref.startswith(BUILT):
+                local = Path(self.ref[len(BUILT):]) / path
+                self.cache[path] = local.read_bytes() if local.exists() else None
+            elif self.ref:
                 result = subprocess.run(["git", "show", f"{self.ref}:site/{path}"], cwd=REPO, capture_output=True)
                 self.cache[path] = result.stdout if result.returncode == 0 else None
             else:
@@ -446,6 +460,7 @@ def main():
     c = sub.add_parser("compare")
     c.add_argument("--base", default="master")
     c.add_argument("--only")
+    c.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
     r = sub.add_parser("record")
     r.add_argument("out")
     r.add_argument("--ref")
@@ -457,9 +472,10 @@ def main():
     if args.command == "record":
         Path(args.out).write_text(json.dumps(record([args.ref], only)[args.ref], indent=1))
         return
-    found = record([args.base, None], only)
-    print(f"base: {args.base}, head: the working copy")
-    sys.exit(1 if compare(found[args.base], found[None]) else 0)
+    head = build_working_copy() if args.built else None
+    found = record([args.base, head], only)
+    print(f"base: {args.base}, head: the working copy{', built' if args.built else ''}")
+    sys.exit(1 if compare(found[args.base], found[head]) else 0)
 
 
 if __name__ == "__main__":

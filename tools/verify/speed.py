@@ -2,7 +2,7 @@
 """How a v2 screen loads on a slow phone connection, from the saved pages, without asking MFL anything.
 
     uv run --no-project --with playwright python tools/verify/speed.py [--screens lineup,home] [--net slow]
-        [--path beta,direct] [--cache cold,stale] [--ref master] [--film DIR]
+        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--film DIR]
 
 Each request is answered from tools/verify/screens/ (as screens.py does) after the delay a phone
 connection would add: a round trip per request, a connection setup per host, and the response's
@@ -30,7 +30,7 @@ from urllib.parse import urlparse
 from playwright.async_api import async_playwright
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from screens import HOST, INIT, NOW, SCREENS, Mfl, Site  # noqa: E402
+from screens import HOST, INIT, NOW, SCREENS, Mfl, Site, build_working_copy  # noqa: E402
 
 # round trip (s), connection setup in round trips (DNS, TCP, TLS), link (bytes/s)
 NETS = {
@@ -60,6 +60,20 @@ PROBE = """
   };
   setInterval(tick, 50);
   document.addEventListener('readystatechange', tick);
+})();
+"""
+
+
+# a bundle's lookbehind regexes are `new RegExp` (tools/build.mjs); before Safari 16.4 they throw
+NO_LOOKBEHIND = """
+(() => {
+  const Native = RegExp;
+  const Patched = function (source, flags) {
+    if (/\\(\\?<[=!]/.test(String(source instanceof Native ? source.source : source))) throw new SyntaxError('Invalid regular expression: lookbehind');
+    return new Native(source, flags);
+  };
+  Patched.prototype = Native.prototype;
+  window.RegExp = Patched;
 })();
 """
 
@@ -107,7 +121,7 @@ def header_v1(html):
     return html.replace("fuadmflsite/v2/fuad.", "fuadmflsite/v1/fuad.")
 
 
-async def run(browser, site, name, net, path, cache, film):
+async def run(browser, site, name, net, path, cache, film, no_lookbehind=False):
     url, swaps = SCREENS[name]
     mfl = Mfl(site, swaps)
     link = Link(net)
@@ -115,6 +129,8 @@ async def run(browser, site, name, net, path, cache, film):
     await context.clock.set_fixed_time(swaps.get("now", NOW))
     await context.add_init_script(INIT)
     await context.add_init_script(PROBE)
+    if no_lookbehind:
+        await context.add_init_script(NO_LOOKBEHIND)
     if path == "beta":
         await context.add_init_script("try { localStorage.setItem('fuad.beta', 'v2'); } catch (e) {}")
 
@@ -196,10 +212,12 @@ async def main():
     parser.add_argument("--path", default="beta,direct")
     parser.add_argument("--cache", default="cold,stale")
     parser.add_argument("--ref", default=None, help="a git ref instead of the working copy")
+    parser.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
     parser.add_argument("--film", type=Path, default=None)
     parser.add_argument("--timeline", action="store_true")
+    parser.add_argument("--no-lookbehind", action="store_true", help="a regex with lookbehind throws, as before Safari 16.4")
     args = parser.parse_args()
-    site = Site(args.ref)
+    site = Site(build_working_copy() if args.built else args.ref)
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--host-resolver-rules=MAP * ~NOTFOUND"])
         print(f"{'screen':8} {'path':6} {'net':5} {'cache':5}  shows  mfl flash  drawn  requests   kB")
@@ -207,7 +225,7 @@ async def main():
             for net in args.net.split(","):
                 for path in args.path.split(","):
                     for cache in args.cache.split(","):
-                        r = await run(browser, site, name, net, path, cache, args.film)
+                        r = await run(browser, site, name, net, path, cache, args.film, args.no_lookbehind)
                         print(f"{name:8} {path:6} {net:5} {cache:5}  {r['shows']}  {r['mfl flash']}    {r['drawn']}  {r['requests']:8} {r['kB']:4}")
                         if args.timeline:
                             print("   ", r["timeline"])

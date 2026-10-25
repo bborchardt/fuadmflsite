@@ -9,10 +9,12 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "daily": "node jobs/daily.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build": "node tools/build.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",
+    "esbuild": "0.28.2",
     "eslint": "9.39.1",
     "eslint-plugin-es-x": "8.4.1",
     "globals": "15.15.0",
