@@ -88,7 +88,7 @@ function run({scenario = {}, env = {}, files = {"data/franchise-2025.json": SNAP
         encoding: "utf8",
         timeout: 60000,
         // nothing from the real environment: no login, no live league
-        env: {PATH: process.env.PATH, DATA_DIR: dataDir, NOW: now, FAKE_MFL: paths.fake, FAKE_MFL_LOG: paths.log, GITHUB_OUTPUT: paths.output, GITHUB_STEP_SUMMARY: paths.summary, ...env}
+        env: {PATH: process.env.PATH, DATA_DIR: dataDir, MFL_LEAGUE_ID: "48571", MFL_HOST: "https://www44.myfantasyleague.com", GITHUB_REPOSITORY: "bborchardt/fuadmflsite", NOW: now, FAKE_MFL: paths.fake, FAKE_MFL_LOG: paths.log, GITHUB_OUTPUT: paths.output, GITHUB_STEP_SUMMARY: paths.summary, ...env}
     });
     const read = (file) => (existsSync(file) ? readFileSync(file, "utf8") : "");
     const choreLog = read(join(dataDir, "chore-log.md"));
@@ -157,6 +157,14 @@ test("when the league's exports can't be read, the run fails but the snapshots a
     assert.equal(result.status, 1);
     assert.deepEqual(result.entries, ['League chores: Couldn\'t load rosters: HTTP 500']);
     assert.ok(result.requests.some((request) => request.url.startsWith("https://bborchardt.github.io/")));
+});
+
+test("the league is named by the repository's variables, never assumed", () => {
+    const result = run({env: {MFL_LEAGUE_ID: ""}});
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /MFL_LEAGUE_ID and MFL_HOST must name the league/);
+    assert.equal(result.requests.length, 0);
+    assert.equal(run({env: {MFL_HOST: "www44.myfantasyleague.com"}}).status, 1);
 });
 
 test("a refused login is flagged, and no penalty is charged without it", () => {

@@ -1,5 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {parseHTML} from "linkedom";
 import {betaOffer, decide, offeredVersion, previewBase, withParam} from "../site/v1/loader.js";
 
 const PAGES = "https://bborchardt.github.io/fuadmflsite/";
@@ -74,4 +75,19 @@ test("a developer preview wins over the beta, and one of the header's own versio
 test("links keep the page's own address and query", () => {
     assert.equal(withParam("https://www44.myfantasyleague.com/2026/home/48571?MODULE=MESSAGE3#0", "fuadBeta", "on"),
         "https://www44.myfantasyleague.com/2026/home/48571?MODULE=MESSAGE3&fuadBeta=on#0");
+});
+
+test("v2 finds the repo's Pages address from where it runs; a local preview, from the published fuad.js", async () => {
+    const {PAGES_BASE, allowed, pagesBase, previewBase} = await import("../site/v2/loader.js");
+    assert.equal(PAGES_BASE, new URL("../site/", import.meta.url).href);
+    assert.equal(pagesBase(`${PAGES}v2/fuad.js`, null), PAGES);
+    assert.equal(pagesBase("https://friend.github.io/league/v2/loader.js", null), "https://friend.github.io/league/");
+    const {document} = parseHTML(`<script src="${PAGES}v1/fuad.js?v=2"></script><script src="http://localhost:8000/v2/fuad.js"></script>`);
+    assert.equal(pagesBase("http://localhost:8000/v2/loader.js", document), PAGES);
+    assert.equal(pagesBase("http://localhost:8000/v2/loader.js", parseHTML("<p></p>").document), "http://localhost:8000/");
+    assert.equal(previewBase("v3", "v2"), `${PAGES_BASE}v3/`);
+    assert.ok(allowed(`${PAGES_BASE}v3/`));
+    assert.ok(allowed("http://localhost:8000/v2/"));
+    assert.ok(!allowed("https://elsewhere.github.io/fuadmflsite/v2/"));
+    assert.ok(!allowed(`${PAGES_BASE}v2/../x/`));
 });

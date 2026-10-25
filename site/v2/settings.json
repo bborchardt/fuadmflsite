@@ -1,4 +1,6 @@
 {
+  "wordmark": "FUAD",
+  "timeZone": "CT",
   "salaryCap": 300,
   "roster": { "min": 23, "max": 30 },
   "weeks": { "tradeDeadline": 12 },

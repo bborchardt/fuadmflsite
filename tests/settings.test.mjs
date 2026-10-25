@@ -53,3 +53,12 @@ test("from MFL's league export: the season's weeks and the league's positions", 
     assert.deepEqual(lineupPositions(null), Object.keys(file.rookieScale.firstPick));
     assert.deepEqual(withOthers(["QB", "RB"], ["RB", "Def", "QB", "Def"]), ["QB", "RB", "Def"]);
 });
+
+test("the time zone is one MFL shows, labelled as MFL labels it", async () => {
+    const {TIME_ZONE, ZONE, zoneOffset} = await import("../site/v2/lib/zone.js");
+    assert.ok(TIME_ZONE, `timeZone "${settings.timeZone}" is not ET, CT, MT or PT`);
+    assert.equal(ZONE, settings.timeZone);
+    // Central: daylight time in October, standard in December
+    assert.equal(zoneOffset(Date.UTC(2026, 9, 18, 17) / 1000), -5 * 3600);
+    assert.equal(zoneOffset(Date.UTC(2026, 11, 6, 18) / 1000), -6 * 3600);
+});
