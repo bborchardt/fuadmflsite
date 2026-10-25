@@ -95,14 +95,22 @@ function boot(beta) {
     if (inBeta) {
         document.documentElement.classList.add("fuad-beta");
     }
+    let drawn;
+    const viewDrawn = new Promise((resolve) => {
+        drawn = resolve;
+    });
     // loaded on its own, so a failure here leaves MFL's menus and the rest of the page working
     (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context, storage})) : Promise.resolve())
         .catch((error) => {
             console.error("[fuad] couldn't draw the frame:", error);
             onTrouble();
         })
+        // a view v2 draws over MFL's page (its fuad-…-on class, set by now) shows once it has drawn,
+        // so MFL's page doesn't show first
+        .then(() => (/\bfuad-[a-z-]+-on\b/.test(document.documentElement.className) ? viewDrawn : null))
         .then(reveal);
-    start({dataBase: DATA_BASE, beta, inBeta, onTrouble})
+    start({dataBase: DATA_BASE, beta, inBeta, onTrouble, onDrawn: drawn})
+        .finally(drawn)
         .then((alertsShown) => {
             // the home page without League Alerts would leave no way back
             if (!alertsShown && document.getElementById("tabcontent0")) {
