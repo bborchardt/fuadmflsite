@@ -91,10 +91,9 @@ export function calendarDates(calendar, kickoffs = new Map()) {
 // the event with a word starting "cut" in its name (the commissioner's to-do)
 export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
-// Coming up: the dates still ahead, soonest first, `soon` when a to-do is close enough for My
-// alerts. Without the calendar (logged out) the season's own dates still show: week 1, the trade
-// deadline, the playoffs and the championship.
-export function comingUp({dates, kickoffs = new Map(), now}) {
+// The season's dates, soonest first, each with its `when`. Without the calendar (logged out) the
+// season's own dates still show: week 1, the trade deadline, the playoffs and the championship.
+function seasonDates({dates, kickoffs = new Map()}) {
     const all = dates.slice();
     if (kickoffs.get(1)) {
         all.push({what: "Week 1 kickoff", at: kickoffs.get(1), week: 1});
@@ -108,11 +107,39 @@ export function comingUp({dates, kickoffs = new Map(), now}) {
     if (kickoffs.get(CHAMPIONSHIP_WEEK)) {
         all.push({what: "Championship week", at: kickoffs.get(CHAMPIONSHIP_WEEK), week: CHAMPIONSHIP_WEEK});
     }
+    return all.sort((a, b) => a.at - b.at)
+        .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at)}));
+}
+
+// The week's waiver cycle once the first blind bids have run: the next run, after which the free
+// agent window opens, and the next lock, which closes it. Free agency's last is "Free agency closes".
+function waiverCycle(calendar, now) {
+    const runs = weeklyEvents(calendar, ["WAIVER_BBID"]);
+    if (!runs.length || now < Math.min(...runs.map((event) => Number(event.start_time)))) {
+        return [];
+    }
+    const closes = freeAgencyEnd(calendar);
+    const run = nextBidRun(calendar, now);
+    const lock = nextWeekly(calendar, "WAIVER_LOCK", now);
+    const cycle = [];
+    if (run && run !== closes) {
+        const opens = Boolean(nextWeekly(calendar, "WAIVER_LOCK", run));
+        cycle.push({what: "Blind bids process", at: run, detail: opens ? "then the free agent window opens" : ""});
+    }
+    if (lock && lock !== closes) {
+        cycle.push({what: "Free agent window closes", at: lock, detail: run ? "then blind bids only" : ""});
+    }
+    return cycle;
+}
+
+// Coming up: the dates still ahead and the week's waiver cycle, `soon` when a to-do is close enough
+// for My alerts
+export function comingUp({dates, kickoffs, calendar = null, now}) {
+    const all = seasonDates({dates: dates.concat(waiverCycle(calendar, now)), kickoffs});
     // the first blind bids follow the draft, so before it they aren't yet worth a line
     const draftAhead = all.some((date) => date.kind === "draft" && date.at > now);
     return all.filter((date) => date.at > now && !(draftAhead && date.kind === "bids"))
-        .sort((a, b) => a.at - b.at)
-        .map((date) => ({...date, when: date.week && date.week !== 1 ? `${dayText(date.at)} · Week ${date.week} kickoff` : whenText(date.at), soon: TO_DO.has(date.kind) && date.at - now <= SOON_DAYS * DAY}));
+        .map((date) => ({...date, soon: TO_DO.has(date.kind) && date.at - now <= SOON_DAYS * DAY}));
 }
 
 // Central time's offset from UTC at a moment, in seconds (−18000 in daylight time)
