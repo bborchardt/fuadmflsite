@@ -25,15 +25,6 @@ function teamNames() {
     return new Map(Object.values(window.franchiseDatabase || {}).filter((team) => team.id && team.id !== "0000").map((team) => [team.id, String(team.name).trim()]));
 }
 
-// Home's screens: on phones Back goes to Home, not through the bid runs paged since. The frame may
-// still be loading, so it also picks the screen up from `fuadDetourScreen` when it's drawn.
-function detour(title, homeHref) {
-    window.fuadDetourScreen = {title, onBack: () => window.location.assign(homeHref)};
-    if (window.fuadDetour) {
-        window.fuadDetour(window.fuadDetourScreen);
-    }
-}
-
 function players(season) {
     return cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player}))
         .then(playersFromExport);
@@ -62,7 +53,7 @@ function head(title, meta) {
 
 // ---- All moves ----
 
-export function drawAllMoves({context, franchiseId, homeHref, teamHref}) {
+export function drawAllMoves({context, franchiseId, teamHref}) {
     if (franchiseId === "0000") {
         return;
     }
@@ -74,7 +65,6 @@ export function drawAllMoves({context, franchiseId, homeHref, teamHref}) {
     const state = {team: "", kind: null};
     const known = () => players(context.season);
     const rows = moveRows({context, players: known, teams, teamHref, withBids: Boolean(franchiseId)});
-    detour("All moves", homeHref);
     mount.innerHTML = `${head("All moves", "")}
         <div class="fuad-moves-filters">
             <label class="fuad-select"><span class="fuad-hidden">Team</span><select data-team>
@@ -175,7 +165,7 @@ function playerBlock(player, teams, teamHref, {isVoided, id}) {
 }
 
 // Resolves to false, leaving MFL's page, when the page isn't one v2 can read (logged out, or changed)
-export function drawAllBids({context, franchiseId, homeHref, teamHref}) {
+export function drawAllBids({context, franchiseId, teamHref}) {
     if (franchiseId === "0000") {
         return false;
     }
@@ -241,11 +231,18 @@ export function drawAllBids({context, franchiseId, homeHref, teamHref}) {
         }
     }).catch((error) => console.warn("[fuad] couldn't load the players for the popup:", error));
     mount.addEventListener("click", (event) => {
+        // another run takes this one's place in the history, so the browser's Back returns to Home
+        // rather than through every run paged since
+        const step = event.target.closest("a.fuad-step");
+        if (step && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) {
+            event.preventDefault();
+            window.location.replace(step.href);
+            return;
+        }
         const name = event.target.closest("[data-player]");
         if (name && typeof window.fuadOpenPlayer === "function") {
             window.fuadOpenPlayer(name.dataset.player, {opener: name});
         }
     });
-    detour("All bids", homeHref);
     return true;
 }
