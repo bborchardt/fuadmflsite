@@ -49,8 +49,13 @@ test("logged out, Rosters opens on Teams and has no My team", () => {
     assert.ok(!rosters.views.some((v) => v.name === "My team"));
 });
 
+test("Rules, over League Rules or League Settings, lives under Home", () => {
+    assert.deepEqual(at(`${base}/options?L=48571&O=26`), ["Home", null]);
+    assert.deepEqual(at(`${base}/options?L=48571&O=09`), ["Home", null]);
+});
+
 test("pages left to the site menu belong to no section", () => {
-    assert.equal(at(`${base}/options?L=48571&O=26`), null);
+    assert.equal(at(`${base}/options?L=48571&O=156`), null);
     assert.equal(at(`${base}/home/48571#4`), null);
 });
 

@@ -276,6 +276,21 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
+    // League Rules and League Settings: one Rules page over either (the commissioner's view stays MFL's)
+    if (context && here.path === "options" && (here.option === "09" || here.option === "26") && window.franchise_id !== "0000") {
+        const shown = over("fuad-rules-on");
+        await import("./rules.js").then(({drawRules}) => {
+            // a page v2 can't read (changed) stays MFL's
+            if (!drawRules({context, option: here.option})) {
+                document.documentElement.classList.remove("fuad-rules-on");
+            }
+            onDrawn();
+        }).catch(shown).catch((error) => {
+            console.error("[fuad] couldn't draw Rules:", error);
+            onTrouble();
+        });
+        return false;
+    }
     // the message board's pages: MFL's, restyled
     const boardPage = (window.location.pathname.match(/\/mb\/(\w+)\.pl$/) || [])[1];
     if (context && boardPage) {
