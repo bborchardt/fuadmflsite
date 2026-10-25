@@ -1,7 +1,9 @@
 // Adds waiting for a contract length. Shared by League Alerts and the daily job.
 
+import settings from "./settings.js";
+
 // league rule: a free agent or waiver add's length must be posted within this long of the add
-export const CONTRACT_WINDOW_HOURS = 1;
+export const CONTRACT_WINDOW_HOURS = settings.contracts.postWithinHours;
 
 export function contractDeadline(add) {
     return add.added + CONTRACT_WINDOW_HOURS * 3600;

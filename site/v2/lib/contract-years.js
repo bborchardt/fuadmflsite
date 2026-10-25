@@ -2,10 +2,11 @@
 // the two agree; the rules are in docs/design.md.
 
 import {contractDeadline as deadline} from "./adds.js";
+import settings from "./settings.js";
 
 export const MIN_YEARS = 1;
-export const MAX_YEARS = 5;
-export const DEFAULT_YEARS = 1;
+export const MAX_YEARS = settings.contracts.maxYears;
+export const DEFAULT_YEARS = settings.contracts.defaultYears;
 
 const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
 
@@ -52,22 +53,24 @@ function named(text, candidates, others = []) {
     return othersInFull.length || others.some((other) => hasWords(normalized, nameForms(other.name).surname)) ? null : [];
 }
 
-const NUMBER_WORDS = {one: 1, two: 2, three: 3, four: 4, five: 5};
+const NUMBER_WORDS = {one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10};
+// a count a member might offer, in figures or words, whatever the league's longest contract
+const COUNT = `(?:10|[1-9]|${Object.keys(NUMBER_WORDS).join("|")})`;
 // a count right after a digit, "." or "-" is part of something else: "1.5 years", "2-3 years"
-const YEARS = /(\$\s*)?(?<![\d.,-])\b(\d+|one|two|three|four|five)\s*-?\s*(?:years?|yrs?)\b/gi;
+const YEARS = new RegExp(`(\\$\\s*)?(?<![\\d.,-])\\b(\\d+|${Object.keys(NUMBER_WORDS).join("|")})\\s*-?\\s*(?:years?|yrs?)\\b`, "gi");
 // not after an initial or a short abbreviation: "D. Jones", "St. Brown", "Jr."
 const SENTENCE_END = /(?<=\b[A-Za-z]{3,}|\d)\.\s|[\n;!?]/;
 // words that can sit beside a bare count: "1 year contract please"
 const FILLER = new Set(["a", "for", "each", "both", "the", "contract", "length", "deal", "please", "pls", "thanks", "thx", "on", "of", "him"]);
 // a second count offered beside one: "3 or 4 years", "2 years, maybe 5"; "$1/1 year" is a salary
-const HEDGE_BEFORE = /(?<![$\d.])\b(?:[1-5]|one|two|three|four|five)\s*(?:or|to|\/)\s*$/i;
-const HEDGE_AFTER = /^[\s,]*(?:or|maybe|to|\/|possibly|perhaps)\s*(?:[1-5]|one|two|three|four|five)\b(?![\d.,])/i;
+const HEDGE_BEFORE = new RegExp(`(?<![$\\d.])\\b${COUNT}\\s*(?:or|to|\\/)\\s*$`, "i");
+const HEDGE_AFTER = new RegExp(`^[\\s,]*(?:or|maybe|to|\\/|possibly|perhaps)\\s*${COUNT}\\b(?![\\d.,])`, "i");
 // "2 years or 3 years": both counts are offered
 const HEDGE_BETWEEN = /^[\s,]*(?:or|maybe|possibly|perhaps|to|\/)\s*$/i;
 // a count that takes back the one before it: "3 years, no wait 4 years", or without its "years":
 // "3 years, no wait 4"
 const CORRECTION = /\b(?:no|nope|wait|actually|sorry|correction|oops|instead|meant|mean|change|changed|rather|scratch that|make (?:it|that))\b/i;
-const CORRECTED_AFTER = /^[\s,.;!-]*(?:no|nope|wait|actually|correction|oops|instead|i mean|i meant|rather|scratch that|changed my mind|make (?:it|that))\b[\s,]*(?:(?:wait|make (?:it|that)|it'?s)[\s,]*)*(?:[1-5]|one|two|three|four|five)(?=\s*(?:[.!,;)]|$))/i;
+const CORRECTED_AFTER = new RegExp(`^[\\s,.;!-]*(?:no|nope|wait|actually|correction|oops|instead|i mean|i meant|rather|scratch that|changed my mind|make (?:it|that))\\b[\\s,]*(?:(?:wait|make (?:it|that)|it'?s)[\\s,]*)*${COUNT}(?=\\s*(?:[.!,;)]|$))`, "i");
 
 export function yearMentions(text) {
     const mentions = [];

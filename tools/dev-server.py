@@ -13,6 +13,7 @@ leaves out, and turns off caching so every reload picks up your edits.
 """
 import functools
 import http.server
+import json
 from pathlib import Path
 
 SITE = Path(__file__).resolve().parent.parent / "site"
@@ -27,6 +28,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Private-Network", "true")
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
+
+    def do_GET(self):
+        # lib/settings.js reads settings.json through Node; a browser gets the JSON itself, as
+        # tools/build.mjs publishes it
+        path = self.path.split("?")[0]
+        settings = SITE / path.lstrip("/").removesuffix("lib/settings.js") / "settings.json"
+        if path.endswith("/lib/settings.js") and settings.is_file():
+            body = f"export default {json.dumps(json.loads(settings.read_text()))};\n".encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/javascript")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
 
 
 if __name__ == "__main__":
