@@ -25,8 +25,9 @@ would do until they're switched on.
 
 ## How to use it
 
-- **Switch versions:** the home page message on all pages loads one version (`site/v<N>/`). Edit
-  the version in it to switch, or back to revert. Past seasons keep the version they ended on.
+- **Switch versions:** the home page message on all pages ([`mfl/message-header.html`](mfl/message-header.html))
+  loads one version (`site/v<N>/`), its `MAIN`. Edit `MAIN` to switch, or back to revert. Past seasons
+  keep the version they ended on.
 - **Offer a beta:** add a line before that message's script, and League Alerts invites members to
   try it:
   ```html
@@ -61,6 +62,9 @@ would do until they're switched on.
   same saved pages over a simulated slow phone connection: when the page shows, how long MFL's own
   page shows first, and when v2's screen is drawn; `--built` times the bundle, `--no-lookbehind`
   makes lookbehind regexes throw, as on iPhones before iOS 16.4.
+- `uv run --no-project --with playwright python tools/verify/header.py --built` loads saved pages with
+  `mfl/message-header.html` as their header, in Chromium and WebKit, through each beta, fallback and
+  failure case, before the commissioner pastes it; `speed.py --header` times it.
 
 ## What's where
 
