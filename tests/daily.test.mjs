@@ -164,6 +164,7 @@ test("the league is named by the repository's variables, never assumed", () => {
     assert.equal(result.status, 1);
     assert.match(result.stderr, /MFL_LEAGUE_ID and MFL_HOST must name the league/);
     assert.equal(result.requests.length, 0);
+    assert.equal(run({env: {MFL_HOST: "www44.myfantasyleague.com"}}).status, 1);
 });
 
 test("a refused login is flagged, and no penalty is charged without it", () => {

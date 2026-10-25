@@ -40,8 +40,8 @@ if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
 }
 const dataDir = resolve(process.env.DATA_DIR);
-if (!process.env.MFL_LEAGUE_ID || !process.env.MFL_HOST) {
-    throw new Error("MFL_LEAGUE_ID and MFL_HOST must name the league (the repository variables of the same names)");
+if (!process.env.MFL_LEAGUE_ID || !/^https:\/\/[^/]+\/?$/.test(process.env.MFL_HOST || "")) {
+    throw new Error("MFL_LEAGUE_ID and MFL_HOST must name the league (the repository variables of the same names; MFL_HOST as https://www44.myfantasyleague.com)");
 }
 const leagueId = process.env.MFL_LEAGUE_ID;
 const host = process.env.MFL_HOST.replace(/\/+$/, "");
