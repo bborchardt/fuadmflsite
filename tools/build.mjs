@@ -1,8 +1,8 @@
 // Builds what GitHub Pages publishes: site/ as it is, except each version in BUNDLED, whose code
 // becomes one minified fuad.js (the parts loaded on demand still run only when asked for), and whose
-// fuad.css is minified. Its modules stay published too, for a page still holding an unbundled
-// fuad.js from before (Pages caches for 10 minutes). A slow phone then waits for one request instead
-// of one per module, level by level, and a stale cache re-checks one file.
+// fuad.css is minified. A slow phone then waits for one request instead of one per module, level by
+// level, and a stale cache re-checks one file. Its modules stay published too, for a page still
+// holding an unbundled fuad.js from before (Pages caches for 10 minutes).
 //
 //   node tools/build.mjs [OUT]          OUT defaults to dist/
 import {cpSync, mkdirSync, rmSync} from "node:fs";
