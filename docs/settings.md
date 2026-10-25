@@ -83,5 +83,5 @@ season's weeks, the number of bid groups and the draft picks.
 - **Team defenses and other positions in live scoring.** League › Scores skips the team lines in
   MFL's projections file, so a team defense shows no projection while games are on. The small
   minimum projections MFL adds exist in v2 for QB, RB, WR and TE only.
-- **Blind bids without conditional groups.** Moves › Add reads MFL's group choice on its add form;
-  a league with conditional blind bids turned off gets MFL's own Add/Drop page, restyled.
+- **Blind bids without conditional groups.** Moves › Add needs the group choice on MFL's add form,
+  which conditional blind bids give it; a form without one gets MFL's own Add/Drop page, restyled.
