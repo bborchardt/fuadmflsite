@@ -4,11 +4,12 @@
 
 import {displayName} from "../lib/mfl.js";
 import {text} from "./player-page.js";
+import {LENGTH_PATTERN} from "./add-model.js";
 
 // "Add Marks, Woody HOU RB for $5.00 and drop None"
 const CLAIM = /^Add (.+) (\S+) ([A-Za-z]{1,4}) for \$([\d.]+) and drop (.+)$/;
 // "5yrs", "5 years.", "2 yr"
-const YEARS = /\b([1-5])\s*-?\s*(?:yrs?|years?)\b/i;
+const YEARS = new RegExp(`\\b(${LENGTH_PATTERN})\\s*-?\\s*(?:yrs?|years?)\\b`, "i");
 
 // [{team, claims: [{name, nfl, position, amount}], comment, awarded, refused}], one per group in the
 // page's order: `awarded` the index of the claim MFL gave the group, or null; `refused` MFL's reason

@@ -4,9 +4,10 @@
 // No drawing or fetching here, so each can be checked against saved pages.
 
 import {text} from "./player-page.js";
+import settings from "../lib/settings.js";
 
 // Franchise numbers MFL moved when teams left: `was`, up to and including `through`, is today's `now`
-export const RENUMBERED = [{was: "0009", now: "0005", through: 2020}];
+export const RENUMBERED = settings.renumberedFranchises;
 
 const record = (value) => {
     const [w, l, t] = text(value).split("-").map(Number);

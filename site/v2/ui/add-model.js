@@ -7,14 +7,17 @@ import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
 import {cents, money} from "./format.js";
+import settings from "../lib/settings.js";
 
-// the bylaws' contract lengths (lib/contract-years.js has them too, but its regular expressions
+// the league's contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
-export const LENGTHS = [1, 2, 3, 4, 5];
+export const LENGTHS = Array.from({length: settings.contracts.maxYears}, (_, i) => i + 1);
+// one of them in a regular expression, the longest first so "10" isn't read as "1"
+export const LENGTH_PATTERN = `(?:${LENGTHS.slice().reverse().join("|")})`;
 // MFL's conditional bidding (`maxWaiverRounds`)
 export const MAX_GROUPS = 8;
-// bylaw 9.4: a player the team dropped can't be re-added for this long
-export const READD_HOURS = 48;
+// a player the team dropped can't be bid on by it for this long
+export const READD_HOURS = settings.adds.ownDropBidAfterHours;
 export const POSITIONS = ["QB", "RB", "WR", "TE", "PK"];
 
 const SUFFIXES = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
@@ -214,11 +217,13 @@ export function fullNameLines(lines, joining, otherNames) {
 }
 
 // a line as Add writes it ("Akins: 1 year"), rather than a member's own note
-export const isLengthLine = (line) => /^[^:\n]{1,60}:\s*[1-5]\s*years?$/i.test(String(line || "").trim());
+const LENGTH_LINE = new RegExp(`^[^:\\n]{1,60}:\\s*${LENGTH_PATTERN}\\s*years?$`, "i");
+export const isLengthLine = (line) => LENGTH_LINE.test(String(line || "").trim());
 
+const PLAIN_YEARS = new RegExp(`\\b(${LENGTH_PATTERN})\\s*(?:years?|yrs?)\\b`, "i");
 // a line's length, when it gives one plainly
 export function yearsIn(line) {
-    const found = String(line || "").match(/\b([1-5])\s*(?:years?|yrs?)\b/i);
+    const found = String(line || "").match(PLAIN_YEARS);
     return found ? Number(found[1]) : null;
 }
 
