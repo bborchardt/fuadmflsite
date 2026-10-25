@@ -1,9 +1,10 @@
 // On pages other than the home page this does nothing; only the stylesheet applies.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {seasonPhase} from "../lib/violations.js";
+import {seasonWeeks} from "../lib/rules.js";
 import {cached, storage} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {REBUILT, pageOf, sections, storedTabs, teamLinks} from "./nav.js";
@@ -43,11 +44,15 @@ async function loadLeague({season, leagueId}) {
     // today's report, for injured reserve eligibility; without it that check is skipped
     const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries", {fetchImpl: pageFetch}).catch(() => null);
     // if the season's phase can't be told, in-season checks are hidden rather than risk false alerts
-    const phasePromise = seasonPhase(season, new Date(), {fetchImpl: pageFetch}).catch(() => ({started: false, tankingOver: true, seasonOver: true}));
+    const leaguePromise = league("league");
+    // week 1's schedule needs no weeks, so it's asked for while the league export loads
+    weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
+    const phasePromise = leaguePromise.then((info) => seasonPhase(season, new Date(), {fetchImpl: pageFetch}, seasonWeeks(info)))
+        .catch(() => ({started: false, tankingOver: true, seasonOver: true}));
     // this season's rookies, whose cut costs nothing while their length is due; only before week 1
     const draftPromise = phasePromise.then((phase) => (phase.started ? null : league("draftResults"))).catch(() => null);
     const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase, draftResults] = await Promise.all([
-        playersPromise, league("league"), league("salaryAdjustments"), league("rosters"),
+        playersPromise, leaguePromise, league("salaryAdjustments"), league("rosters"),
         league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise, draftPromise
     ]);
     const built = buildLeague({

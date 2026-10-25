@@ -77,7 +77,7 @@ test("in season, no active drop at 23 active and no drop at all under 23", () =>
 
 test("the rows: by position, a started game's player off, a pending bid's drop noted", () => {
     const team = teamOf({groups: [{round: 2, claims: [{add: "x", bid: 1, drop: "olave"}]}]});
-    const groups = dropRows(team, {roster: [{id: "franklin", mark: "!"}, {id: "olave", mark: null}], phase: "season"});
+    const groups = dropRows(team, {roster: [{id: "franklin", mark: "!"}, {id: "olave", mark: null}], phase: "season", positions: ["QB", "RB", "WR", "TE", "PK"]});
     assert.deepEqual(groups.map((group) => group.pos), ["QB", "RB", "WR"]);
     const wr = groups.find((group) => group.pos === "WR").players;
     const franklin = wr.find((row) => row.player.playerId === "franklin");

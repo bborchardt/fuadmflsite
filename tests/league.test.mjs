@@ -167,7 +167,7 @@ test("MFL's Power Rank page: every team, by id, with the figures the tap shows",
 });
 
 test("starter points by position add up to each team's points for", () => {
-    const sums = positionPoints(fixture("weekly-results-ytd.json").allWeeklyResults, positions, names);
+    const sums = positionPoints(fixture("weekly-results-ytd.json").allWeeklyResults, positions, names, ["QB", "RB", "WR", "TE", "PK"]);
     const standing = new Map(fixture("league-standings.json").leagueStandings.franchise.map((team) => [team.id, Number(team.pf)]));
     assert.equal(sums.length, 10);
     for (const team of sums) {
@@ -263,4 +263,27 @@ test("a best lineup counts as started when a player brought in has played, thoug
     const card = {teams: [{id: "0001", score: 0, started: false, starters: [line("r1", "RB", null, true, "scheduled")], bench: [line("r2", "RB", 30, false, "over")]}]};
     const [team] = bestCard(card, limits).teams;
     assert.deepEqual([team.score, team.actual, team.started, team.starters[0].id], [30, 0, true, "r2"]);
+});
+
+test("other leagues' playoffs: wildcards by the standings, or no division winners seeded first", () => {
+    const team = (id, h2h, allPlay) => ({id, h2hwlt: h2h, all_play_wlt: allPlay, divwlt: "", pf: "1"});
+    const league = {divisions: {division: [{id: "00", name: "West"}, {id: "01", name: "East"}]}, franchises: {franchise: [
+        ...["A", "B", "C"].map((id) => ({id, division: "00"})), ...["D", "E", "F", "G", "H"].map((id) => ({id, division: "01"}))
+    ]}};
+    // MFL's standings order: A, D, B, E, C, F, G, H; C and G have the best all-play records after the winners
+    const rows = [team("A", "8-1-0", "50-20-0"), team("D", "7-2-0", "40-30-0"), team("B", "6-3-0", "30-40-0"), team("E", "5-4-0", "30-40-0"),
+        team("C", "4-5-0", "45-25-0"), team("F", "3-6-0", "20-50-0"), team("G", "2-7-0", "44-26-0"), team("H", "1-8-0", "10-60-0")];
+    const divisions = standings({franchise: rows}, league, new Map());
+    const byStandings = playoffPicture(divisions, {wildcardsBy: "standings"});
+    assert.deepEqual(byStandings.seeds.map((seed) => seed.team.id), ["A", "D", "B", "E", "C", "F"]);
+    assert.equal(byStandings.seeds[2].why, "6-3");
+    assert.deepEqual(byStandings.hunt.map((entry) => [entry.team.id, entry.back]), [["G", "1 back"], ["H", "2 back"]]);
+    // no division winners first: the six best all-play records
+    assert.deepEqual(playoffPicture(divisions, {winnersFirst: false}).seeds.map((seed) => seed.team.id), ["A", "C", "G", "D", "B", "E"]);
+});
+
+test("without a 3rd place game the places are the final's two", () => {
+    const brackets = [fixture("playoff-bracket-2025-1.json").playoffBracket, fixture("playoff-bracket-2025-2.json").playoffBracket];
+    assert.deepEqual(playoffPlaces(brackets), ["0004", "0001", "0005"]);
+    assert.deepEqual(playoffPlaces(brackets.slice(0, 1), {thirdPlaceGame: false}), ["0004", "0001"]);
 });

@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../site/v2/lib/league.js";
 import {SALARY_CAP} from "../site/v2/lib/rules.js";
+import leagueSettings from "../site/v2/lib/settings.js";
 import {playoffPicture, standings} from "../site/v2/ui/league-model.js";
 import {
     boardPicksOf, boardSummary, byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, penaltiesOf, pickNumbers, picksOf, picksSummary, playerPool,
-    contractYears, playoffFinish, pointsById, scaleRange, scaleText, sortPlayers, teamSheets
+    contractYears, playoffFinish, pointsById, scalePicks, scaleRange, scaleText, sortPlayers, teamSheets
 } from "../site/v2/ui/rosters-model.js";
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
@@ -72,7 +73,7 @@ test("draft picks: each round's own pick, picks from others, and own picks trade
 });
 
 test("the player pool: rostered players and free agents on an NFL team, filtered by the chips together", () => {
-    const pool = playerPool(league, {freeAgents: fixture("free-agents.json").freeAgents, points: context.points, projections: new Map(), byes: context.byes, names, offseason: false});
+    const pool = playerPool(league, {freeAgents: fixture("free-agents.json").freeAgents, points: context.points, projections: new Map(), byes: context.byes, names, offseason: false, positions: ["QB", "RB", "WR", "TE", "PK"]});
     const free = pool.filter((player) => player.fa);
     assert.ok(free.length > 100);
     assert.ok(free.every((player) => player.nfl && player.nfl !== "FA" && player.salary === null));
@@ -89,7 +90,7 @@ test("the player pool: rostered players and free agents on an NFL team, filtered
 });
 
 test("in the offseason a player without years left is a restricted free agent", () => {
-    const pool = playerPool(league, {freeAgents: null, points: new Map(), projections: new Map(), byes: new Map(), names, offseason: true});
+    const pool = playerPool(league, {freeAgents: null, points: new Map(), projections: new Map(), byes: new Map(), names, offseason: true, positions: ["QB", "RB", "WR", "TE", "PK"]});
     const rfas = pool.filter((player) => player.rfa);
     assert.ok(rfas.every((player) => player.salary === null && player.years === null));
     assert.deepEqual(filterPlayers(pool, {years: ["FA"]}).map((player) => player.id).sort(), rfas.map((player) => player.id).sort());
@@ -175,6 +176,15 @@ test("0-year contracts: an RFA at $0.01, a length due costing a 1-year cut, a ro
     // 12 × 0.4 × 1 = 4.8, rounded up
     assert.deepEqual([a, b, c].map((player) => player.capPenalty), [0, 5, 0]);
     assert.equal(contractYears({years: 2}), "2 yrs");
+    // a league whose rookies cost a cut like anyone's: the 1-year penalty, 6 × 0.4 rounded up
+    leagueSettings.rookieCutFreeUntilLengthSet = false;
+    try {
+        const again = buildLeague({players: playersFromExport(playersExport), league: settings, salaryAdjustments: fixture("salary-adjustments.json").salaryAdjustments, rosters, freeAgents: fixture("free-agents.json").freeAgents});
+        markContracts(again, draftedIds({draftUnit: {draftPick: [{player: rookie.id}]}}));
+        assert.equal(again.players.get(rookie.id).capPenalty, 3);
+    } finally {
+        leagueSettings.rookieCutFreeUntilLengthSet = true;
+    }
 });
 
 test("before the draft, a team's picks in it come from the board: held ones numbered, its own traded away", () => {
@@ -197,4 +207,26 @@ test("Players' Watching chip keeps only the watched players, with the other chip
     assert.deepEqual(ids(filterPlayers(pool, {watched: new Set(["2", "3"])})), ["2", "3"]);
     assert.deepEqual(ids(filterPlayers(pool, {watched: new Set(["2", "3"]), positions: ["RB"]})), ["3"]);
     assert.deepEqual(ids(filterPlayers(pool, {})), ["1", "2", "3"]);
+});
+
+test("other leagues: draft order by the standings alone, and a finish without a 3rd place game", () => {
+    const divisions = standings(fixture("league-standings.json").leagueStandings, settings, names);
+    const order = draftOrder(playoffPicture(divisions), {names, nextYear: 2027, by: "standings"});
+    const standingsOrder = fixture("league-standings.json").leagueStandings.franchise.map((team) => team.id);
+    assert.deepEqual(order.map((row) => row.id), standingsOrder.slice().reverse());
+    assert.deepEqual(order.map((row) => row.pick), Array.from({length: 10}, (_, i) => i + 1));
+    // the semifinal losers by seed, after the first round's
+    const finish = playoffFinish([fixture("playoff-bracket-2025-1.json").playoffBracket], {thirdPlaceGame: false});
+    assert.deepEqual(finish.slice(0, 2), ["0002", "0007"]);
+    assert.deepEqual(finish.slice(4), ["0001", "0004"]);
+    assert.deepEqual(new Set(finish.slice(2, 4)), new Set(["0009", "0005"]));
+});
+
+test("the scale table runs to the first pick paying $1 at every position; the rounds are MFL's", () => {
+    const rows = scalePicks();
+    assert.equal(rows.length, 10);
+    assert.equal(scaleText(rows.length), "$1 at every position");
+    assert.notEqual(scaleText(rows.length - 1), "$1 at every position");
+    const picks = {franchise: [{id: "0001", futureDraftPick: [1, 2, 3].map((round) => ({year: "2027", round: String(round), originalPickFor: "0001"}))}]};
+    assert.deepEqual(picksOf("0001", picks, {names: new Map(), nextYear: 2027})[0].rows.map((row) => row.round), [1, 2, 3]);
 });

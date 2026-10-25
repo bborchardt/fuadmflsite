@@ -255,7 +255,7 @@ test("the heads-up for accepting within 3 hours of a traded player's kickoff", (
 test("the proposal's lists: by position, costliest first, then picks; the picked summary", () => {
     const league = leagueOf();
     const assets = ["waller", "olave", "higbee", "lamar", "FP_0001_2027_1"].map((id) => assetView(id, {league, mflNames: new Map(), holder: "0001", names: new Map(), season: 2026}));
-    assert.deepEqual(pickGroups(assets).map((group) => [group.label, group.items.map((item) => item.id)]),
+    assert.deepEqual(pickGroups(assets, ["QB", "RB", "WR", "TE", "PK"]).map((group) => [group.label, group.items.map((item) => item.id)]),
         [["QB", ["lamar"]], ["WR", ["olave"]], ["TE", ["waller", "higbee"]], ["Draft picks", ["FP_0001_2027_1"]]]);
     assert.equal(pickedSummary(assets), "4 players ($61) + 1 pick");
     assert.equal(pickedSummary([]), "Nothing yet");

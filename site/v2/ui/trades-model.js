@@ -5,8 +5,8 @@
 
 import {GAME_HOURS, asArray} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
-import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {POSITIONS, firstLast, isIR, projection, surname} from "./add-model.js";
+import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib/rules.js";
+import {firstLast, isIR, projection, surname} from "./add-model.js";
 import {clock, dayText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
 import {cents, money} from "./format.js";
@@ -360,11 +360,11 @@ export const expiresText = (seconds) => `${dayText(seconds)}, ${clock(seconds)}`
 
 // ---- the proposal's lists ----
 
-// A side's assets for picking, by position, then its picks: [{label, items}]
-export function pickGroups(assets) {
+// A side's assets for picking, by position (the league's first, lib/rules.js lineupPositions), then
+// its picks: [{label, items}]
+export function pickGroups(assets, positions) {
     const players = assets.filter((asset) => !asset.pick);
-    const positions = POSITIONS.concat([...new Set(players.map((asset) => asset.player && asset.player.nflPosition))].filter((pos) => pos && !POSITIONS.includes(pos)));
-    const groups = positions.map((pos) => ({
+    const groups = withOthers(positions, players.map((asset) => asset.player && asset.player.nflPosition)).map((pos) => ({
         label: pos,
         items: players.filter((asset) => asset.player && asset.player.nflPosition === pos)
             .sort((a, b) => b.player.salary - a.player.salary || b.player.years - a.player.years || a.name.localeCompare(b.name))

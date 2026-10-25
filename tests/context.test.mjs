@@ -46,6 +46,7 @@ test("before week 1: its kickoff, the season's end, whether the draft is in, and
         nflSchedule1: schedule(WEEK1, WEEK1 + 3 * 86400),
         // week 17's last game ends 4 hours after its kickoff
         nflSchedule17: schedule(at("2027-01-03T18:00:00Z"), at("2027-01-03T21:25:00Z")),
+        league: {league: {lastRegularSeasonWeek: "14", endWeek: "17"}},
         draftResults: {draftResults: {draftUnit: {draftPick: [{round: "01", pick: "01", player: "16001"}, {round: "01", pick: "02", player: ""}]}}},
         calendar: {calendar: {event: [{title: "Rookie Draft", start_time: String(at("2026-05-02T23:00:00Z"))}, {title: "Trade deadline", start_time: "12"}]}}
     };

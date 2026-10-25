@@ -1,7 +1,8 @@
 // What Moves › Add draws, as HTML, from `v`: the screen's state and what add.js reads for it.
 //   state       add.js's state (data, compose, q, pos, watching, sort, open, flash, done, error, busy)
 //   team        teamState; phase: the checks' phase; banner: banner()'s answer
-//   groups      groupViews; rounds: the groups' rounds; nextRound: the round a new group takes
+//   groups      groupViews; rounds: the groups' rounds; nextRound: the round a new group takes;
+//               maxGroups: how many groups MFL allows; positions: the league's, in MFL's order
 //   lists       MFL's player lists (readPlayerLists); names(id): {mflName, name}
 //   wide        the desktop layout; watched: the watch list (a Set) once loaded, else null
 //   runsLeft    whether a bid placed now has a run left; now: seconds; franchiseId
@@ -14,7 +15,7 @@ import {CHECK, alertLine, failedBox} from "./moves.js";
 import {STAR} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
 import {
-    LENGTHS, MAX_GROUPS, POSITIONS, addBlock, blockedText, changeTone, composeCheck, copyTargets, cutLater, dropCheck, dropGroups, droppedByTeam,
+    LENGTHS, addBlock, blockedText, changeTone, composeCheck, copyTargets, cutLater, dropCheck, dropGroups, droppedByTeam,
     findClaim, freeAgentRows, injuryText, lengthLine, projection, signed, surname, usedDrops, usedTone
 } from "./add-model.js";
 import {money} from "./format.js";
@@ -105,7 +106,7 @@ function claimDetail(claim) {
 }
 
 function copyChips(v, group, claim) {
-    const targets = copyTargets(v.team, {round: group.round, claim, rounds: v.rounds, phase: v.phase});
+    const targets = copyTargets(v.team, {round: group.round, claim, rounds: v.rounds, maxGroups: v.maxGroups, phase: v.phase});
     return `<span class="fuad-meta">Copy to</span>${targets.map((target) => `<button type="button" class="fuad-add-chip" data-act="copy" data-key="${esc(claim.key)}" data-round="${target.round}"${target.off ? " disabled" : ""}>${target.isNew ? "new group" : "group"} ${target.round}${target.why ? ` · ${esc(target.why)}` : ""}</button>`).join("")}`;
 }
 
@@ -124,7 +125,7 @@ export function phoneHome(v) {
     const block = addBlock(v.team, {phase: v.phase});
     const shown = v.groups;
     const bidsPeriod = banner.kind === "bids";
-    const canStart = v.rounds.length < MAX_GROUPS && !block && !state.busy;
+    const canStart = v.rounds.length < v.maxGroups && !block && !state.busy;
     const groupCards = shown.map((group) => `<section class="fuad-panel fuad-add-group" aria-label="Group ${group.round}">
         <div class="fuad-add-group-head"><h2>Group ${group.round}</h2><span class="fuad-meta">max cap change <strong class="${tone(changeTone(group.max))}">${esc(signed(group.max))}</strong></span></div>
         ${group.claims.map((claim, i) => `<div class="fuad-add-claim${state.flash === claim.key ? " fuad-add-flash" : ""}">
@@ -149,7 +150,7 @@ export function phoneHome(v) {
 }
 
 function chipsMarkup(v) {
-    return `<div class="fuad-add-chips" role="group" aria-label="Position">${["ALL"].concat(POSITIONS).map((pos) => `<button type="button" class="fuad-add-pos" data-act="pos" data-pos="${pos}" aria-pressed="${v.state.pos === pos}">${pos === "ALL" ? "All" : pos}</button>`).join("")}${
+    return `<div class="fuad-add-chips" role="group" aria-label="Position">${["ALL"].concat(v.positions).map((pos) => `<button type="button" class="fuad-add-pos" data-act="pos" data-pos="${pos}" aria-pressed="${v.state.pos === pos}">${pos === "ALL" ? "All" : pos}</button>`).join("")}${
         v.watched ? `<button type="button" class="fuad-add-pos fuad-star-chip" data-act="watching" aria-pressed="${v.state.watching}" aria-label="Watching" title="Watching">${STAR}</button>` : ""}</div>`;
 }
 
@@ -178,7 +179,7 @@ export function dropList(v) {
     const check = (id) => dropCheck(v.team, c, id, {phase: v.phase, freeAgent: fa});
     const noDrop = check(null);
     const marks = new Map(v.lists.drop.map((player) => [player.id, player]));
-    const groups = dropGroups(v.team, {marks, check, immediate: c.kind === "add", usedIn: c.kind === "bid" ? usedDrops(v.team, c.round) : new Map()});
+    const groups = dropGroups(v.team, {marks, check, immediate: c.kind === "add", usedIn: c.kind === "bid" ? usedDrops(v.team, c.round) : new Map(), positions: v.positions});
     return `<button type="button" class="fuad-add-nodrop" data-act="pick-drop" data-id=""${noDrop.fits ? "" : " disabled"} aria-pressed="${c.drop === null}">
         <span>No drop</span><span class="fuad-meta">${esc(noDrop.fits ? "adds a player" : noDrop.why)}</span>
     </button>
@@ -214,8 +215,9 @@ export function reviewForm(v, {withPicks}) {
     const dropped = c.drop && team.players.get(c.drop);
     const dropChange = dropped ? dropped.capPenalty - dropped.salary : 0;
     const salary = bids ? check.bid : fa.salary || 1;
-    const groupChips = bids && !c.editing && (v.wide || v.banner.kind === "window")
-        ? `<div class="fuad-add-field"><span class="fuad-add-label">Group</span><div class="fuad-add-chips" role="group" aria-label="Group">${v.rounds.concat(v.rounds.length < MAX_GROUPS ? [v.nextRound] : []).map((round) => `<button type="button" class="fuad-add-chip" data-act="group" data-round="${round}" aria-pressed="${c.round === round}">${round === v.nextRound ? "New group" : "Group"} ${round}</button>`).join("")}</div></div>`
+    // with one group allowed there's nothing to choose
+    const groupChips = bids && !c.editing && v.maxGroups > 1 && (v.wide || v.banner.kind === "window")
+        ? `<div class="fuad-add-field"><span class="fuad-add-label">Group</span><div class="fuad-add-chips" role="group" aria-label="Group">${v.rounds.concat(v.rounds.length < v.maxGroups ? [v.nextRound] : []).map((round) => `<button type="button" class="fuad-add-chip" data-act="group" data-round="${round}" aria-pressed="${c.round === round}">${round === v.nextRound ? "New group" : "Group"} ${round}</button>`).join("")}</div></div>`
         : "";
     const groupSummary = bids && !v.wide ? `<section class="fuad-panel fuad-add-group-summary"><span class="fuad-add-group-title">Group ${c.round}</span>
         ${groupChips}

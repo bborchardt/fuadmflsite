@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {ruleViolations as items} from "../site/v2/lib/violations.js";
+import leagueSettings from "../site/v2/lib/settings.js";
 
 const ruleViolations = (league, options) => items(league, options).map((item) => item.text);
 
@@ -8,7 +9,9 @@ const franchise = (teamName, capTotal, numPlayers, lineup = [], unchargedPenalty
     ({teamName, capTotal, unchargedPenalty, numPlayers, lineup});
 const injured = {fullName: "Hurt Player", injured: true};
 const healthy = {fullName: "Fine Player", injured: false};
-const league = (week, ...franchises) => ({week, injuryReportKnown: true, franchises: new Map(franchises.map((f, i) => [String(i), f]))});
+// this league's season: 14 regular season weeks, the championship in week 17 (MFL's `league` export)
+const WEEKS = {playoffsStart: 15, championship: 17};
+const league = (week, ...franchises) => ({week, weeks: WEEKS, injuryReportKnown: true, franchises: new Map(franchises.map((f, i) => [String(i), f]))});
 
 test("over the salary cap, at any week", () => {
     for (const week of ["3", "17"]) {
@@ -40,6 +43,26 @@ test("injured or suspended starters (anti-tanking): regular season lineups, unti
     assert.deepEqual(ruleViolations(league("15", franchise("Risky", 250, 25, [injured]))), []);
     // week 14's lineup once week 15 has kicked off
     assert.deepEqual(ruleViolations({...league("14", franchise("Risky", 250, 25, [injured])), tankingOver: true}), []);
+});
+
+test("a league without the anti-tanking rule: no injured starter flags", () => {
+    leagueSettings.antiTanking = false;
+    try {
+        assert.deepEqual(ruleViolations(league("5", franchise("Risky", 250, 25, [injured]))), []);
+    } finally {
+        leagueSettings.antiTanking = true;
+    }
+});
+
+test("the weeks are the league's own: a 13-week regular season, the championship in week 16", () => {
+    const short = (week, ...franchises) => ({...league(week, ...franchises), weeks: {playoffsStart: 14, championship: 16}});
+    assert.deepEqual(ruleViolations(short("13", franchise("Risky", 250, 25, [injured]))), ["Risky started injured/suspended player Hurt Player in week 13!"]);
+    assert.deepEqual(ruleViolations(short("14", franchise("Risky", 250, 25, [injured]))), []);
+    assert.deepEqual(ruleViolations(short("16", franchise("Crowded", 250, 31))), ["Crowded is over the roster limit with 31 players!"]);
+    assert.deepEqual(ruleViolations(short("17", franchise("Crowded", 250, 31))), []);
+    // MFL didn't say: only the cap
+    assert.deepEqual(ruleViolations({...league("5", franchise("Crowded", 300.5, 31, [injured])), weeks: null}),
+        ["Crowded is over the salary cap with a total salary of 300.5!"]);
 });
 
 test("v2: no injured starters before week 1's kickoff, when MFL's results can list week 1's lineups", () => {
@@ -121,7 +144,7 @@ test("injured reserve eligibility reads today's injury report, not the results w
     const {buildLeague, playersFromExport} = await import("../site/v2/lib/league.js");
     const model = buildLeague({
         players: playersFromExport({player: [{id: "1", name: "Back, Healthy", position: "RB"}]}),
-        league: {franchises: {franchise: {id: "0001", name: "Alpha"}}},
+        league: {lastRegularSeasonWeek: "14", endWeek: "17", franchises: {franchise: {id: "0001", name: "Alpha"}}},
         rosters: {franchise: {id: "0001", player: {id: "1", status: "INJURED_RESERVE", salary: "1", contractYear: "1"}}},
         weeklyResults: {week: "5"},
         // last week's report had him on IR; today's doesn't
@@ -137,7 +160,7 @@ test("without today's injury report, or with a thin one, the IR check is skipped
     const {buildLeague, playersFromExport} = await import("../site/v2/lib/league.js");
     const build = (currentInjuries) => buildLeague({
         players: playersFromExport({player: [{id: "1", name: "Hurt, Still", position: "RB"}]}),
-        league: {franchises: {franchise: {id: "0001", name: "Alpha"}}},
+        league: {lastRegularSeasonWeek: "14", endWeek: "17", franchises: {franchise: {id: "0001", name: "Alpha"}}},
         rosters: {franchise: {id: "0001", player: {id: "1", status: "INJURED_RESERVE", salary: "1", contractYear: "1"}}},
         weeklyResults: {week: "5"},
         currentInjuries
@@ -159,7 +182,7 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
         const week = new URL(url).searchParams.get("W");
         return {ok: true, json: async () => ({nflSchedule: {matchup: (schedule[week] || []).map((kickoff) => ({kickoff}))}})};
     };
-    const phase = (iso) => seasonPhase(2026, new Date(iso), {fetchImpl});
+    const phase = (iso) => seasonPhase(2026, new Date(iso), {fetchImpl}, WEEKS);
     assert.deepEqual(await phase("2026-09-01T12:00:00Z"), {started: false, tankingOver: false, seasonOver: false});
     assert.deepEqual(await phase("2026-12-16T12:00:00Z"), {started: true, tankingOver: false, seasonOver: false});
     assert.deepEqual(await phase("2026-12-17T01:15:00Z"), {started: true, tankingOver: true, seasonOver: false});
@@ -168,5 +191,7 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
     assert.deepEqual(await phase("2027-01-05T05:15:00Z"), {started: true, tankingOver: true, seasonOver: true});
     // a schedule MFL hasn't published counts as not yet
     const unpublished = async () => ({ok: false, status: 404});
-    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}), {started: false, tankingOver: false, seasonOver: false});
+    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}, WEEKS), {started: false, tankingOver: false, seasonOver: false});
+    // without the league's weeks the playoffs and the end can't be told: the in-season checks are off
+    assert.deepEqual(await seasonPhase(2026, new Date("2026-10-01T00:00:00Z"), {fetchImpl}, null), {started: true, tankingOver: true, seasonOver: true});
 });

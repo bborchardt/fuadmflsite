@@ -4,8 +4,6 @@
 import {displayName} from "../lib/mfl.js";
 import {clean} from "./html.js";
 
-export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "PK"];
-
 const number = (value) => {
     const parsed = parseFloat(clean(value));
     return Number.isFinite(parsed) ? parsed : null;
@@ -154,7 +152,8 @@ export const rangeText = ([least, most]) => (least === most ? String(least) : `$
 // what the save bar says about `on` (a Set of player ids), and whether Save may send it: MFL takes no
 // partial lineup, so it must be full and within each position's limits
 export function lineupStatus({players, limits, total}, on) {
-    const counts = Object.fromEntries(POSITION_ORDER.filter((pos) => limits[pos]).map((pos) => [pos, 0]));
+    // every position MFL's page limits, in its order
+    const counts = Object.fromEntries(Object.keys(limits).map((pos) => [pos, 0]));
     for (const player of players) {
         if (on.has(player.id) && player.pos in counts) {
             counts[player.pos] += 1;

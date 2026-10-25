@@ -29,7 +29,7 @@ function viewOf({groups = [], state = {}, banner = {kind: "bids", text: "Blind b
     return {
         state: {data: {groups}, compose: null, q: "", pos: "ALL", watching: false, sort: "proj", open: null, flash: null, done: null, error: "", busy: false, ...state},
         team, phase: "season", banner, groups: groupViews(team, groups.map((group) => ({comment: "", ...group})), names), rounds,
-        nextRound: Math.max(0, ...rounds) + 1, lists, names, wide: false, watched: null, runsLeft: true, now: 0, franchiseId: "0001",
+        nextRound: Math.max(0, ...rounds) + 1, maxGroups: 8, positions: ["QB", "RB", "WR", "TE", "PK"], lists, names, wide: false, watched: null, runsLeft: true, now: 0, franchiseId: "0001",
         canMove: () => true, ...rest
     };
 }

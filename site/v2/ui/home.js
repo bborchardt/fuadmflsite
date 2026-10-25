@@ -4,7 +4,7 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pendingGroups} from "../lib/bids.js";
-import {CHAMPIONSHIP_WEEK, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK} from "../lib/rules.js";
+import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {forget, mflFetch, pageFetch} from "./page-fetch.js";
@@ -338,13 +338,13 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     // the calendar needs a login; logged out, Coming up keeps the season's own dates
     const calendar = loggedIn ? exp("calendar", {}, {optional: true}) : Promise.resolve(null);
-    const dates = calendar.then(async (found) => {
-        const weeks = new Set([1, TRADE_DEADLINE_WEEK, PLAYOFFS_START_WEEK, CHAMPIONSHIP_WEEK]);
+    const dates = Promise.all([calendar, exp("league", {}, {optional: true}).then(seasonWeeks)]).then(async ([found, season]) => {
+        const weeks = new Set([1, TRADE_DEADLINE_WEEK, ...(season ? [season.playoffsStart, season.championship] : [])]);
         asArray(found && found.event).map((event) => Number(event.start_time)).filter((n) => n > 0 && n < 100).forEach((n) => weeks.add(n));
         const times = await kickoffs(context.season, [...weeks]);
-        return {calendar: found, kickoffs: times, dates: calendarDates(found, times)};
+        return {calendar: found, kickoffs: times, weeks: season, dates: calendarDates(found, times)};
     });
-    const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times}) => comingUp({dates: list, kickoffs: times, calendar: found, now: nowSeconds()}));
+    const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times, weeks}) => comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}));
 
     if (member) {
         drawPanel(panels.alerts, {
