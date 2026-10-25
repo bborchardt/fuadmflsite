@@ -60,17 +60,23 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 
 - Previews and the beta swap the whole version in one browser, so the commissioner and members can
   try a version on the real site before it's switched in the header.
-- The header's version draws the beta's bar before handing over, so the way back never depends on
-  the beta's code; a beta that can't load or start falls back to the current site.
+- The header loads a member's stored beta itself, not through its own version: on a slow phone that
+  would be a second download before the beta's. A choice being made or changed (`?fuadBeta=`,
+  `?fuadPreview=`, a stored preview) still goes through the header's version, which decides.
+- A beta that can't load or start falls back to the header's version, with the bar that leads out of
+  the beta drawn by the header, so the way back never depends on the beta's code. When the header's
+  own version can't, members get MFL's own pages, not an older version, which would likely fail the
+  same way (Pages down, MFL changed) and cost another download.
 - League Alerts is the toggle both ways: it invites members to the beta, and in the beta it leads
   back to the classic site. A beta can hide the bar while it runs well, so v2 does, and shows it once
   anything fails, including a home page whose League Alerts couldn't be drawn.
 - A beta choice holds only while the header offers that version, so ending or promoting it needs no
   member action. Viewing as a team the offer leaves out (the commissioner as 0000) keeps the choice
   without loading the beta, so switching back needs no new opt-in.
-- The header hides the page while a stored beta or preview loads, for at most 10 seconds, so MFL's
-  page doesn't flash before the other version draws; whichever version runs shows it again, v2 once
-  its frame and any view it draws over MFL's page have first drawn.
+- The header hides the page behind "Loading…" whenever a version other than v1 may run (v1 draws
+  only its own tabs), for at most 20 seconds, so MFL's page doesn't show before the version draws;
+  whichever version runs shows it again, v2 once its frame and any view it draws over MFL's page have
+  first drawn.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`.
 
 ## League rules the code relies on
