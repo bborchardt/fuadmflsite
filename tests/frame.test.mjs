@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {locate, pageOf, sections, viewHash} from "../site/v2/ui/nav.js";
+import {locate, pageOf, sectionHref, sections, viewHash} from "../site/v2/ui/nav.js";
 import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
@@ -106,4 +106,16 @@ test("draft day from the league's calendar export, as saved 17 Oct 2026", () => 
     const {calendar} = JSON.parse(readFileSync(new URL("./fixtures/calendar.json", import.meta.url), "utf8"));
     // "draft" on Sep 6, 2026; the trade deadline's start_time is a week number, not a time
     assert.deepEqual(draftDays(calendar), ["2026-09-06"]);
+});
+
+test("a section's link returns to the view last seen in it; the section you're in, to its first", () => {
+    const league = all.find((s) => s.name === "League");
+    const view = (name) => league.views.find((v) => v.name === name).href;
+    assert.equal(sectionHref(league, "Rosters", {League: "Standings"}), view("Standings"));
+    assert.equal(sectionHref(league, "League", {League: "Standings"}), view("Scores"));
+    assert.equal(sectionHref(league, "Rosters", {}), view("Scores"));
+    // a view no longer offered (My team, logged out) falls back to the first
+    assert.equal(sectionHref(league, "Rosters", {League: "Gone"}), view("Scores"));
+    const home = all.find((s) => s.name === "Home");
+    assert.equal(sectionHref(home, "League", {Home: "Anything"}), home.href);
 });
