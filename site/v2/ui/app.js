@@ -3,13 +3,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
-import {franchiseTopSalaries} from "../lib/rules.js";
 import {seasonPhase} from "../lib/violations.js";
-import {makeSnapshot, snapshotFileName} from "../lib/franchise.js";
-import {franchiseView} from "./franchise-view.js";
-import {renderContracts} from "./contracts.js";
-import {renderCommish} from "./commish.js";
-import {renderLinks} from "./links.js";
 import {cached, storage} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {REBUILT, pageOf, sections, storedTabs, teamLinks} from "./nav.js";
@@ -30,33 +24,6 @@ export function pageContext(location = window.location) {
         homeUrl: `${location.origin}/${season}`,
         isCommish: window.franchise_id === "0000"
     };
-}
-
-function mounts() {
-    return {
-        contracts: document.getElementById("fuad-contracts"),
-        commish: document.getElementById("commishdiv"),
-        links: document.getElementById("fuadlinksdiv")
-    };
-}
-
-function showInMounts(found, className, message) {
-    for (const mount of [found.contracts, found.commish]) {
-        if (mount) {
-            mount.innerHTML = `<div class="${className}"></div>`;
-            mount.firstChild.textContent = message;
-        }
-    }
-}
-
-function snapshotStatus(view, season) {
-    if (view.phase === "final" && view.missing) {
-        return `The ${season} trade deadline has passed and no snapshot is published yet. The daily job normally takes it; if it hasn't run, commit the JSON below to the league-data branch as data/${snapshotFileName(season)} and the next morning's daily job publishes it.`;
-    }
-    if (view.phase === "final") {
-        return `The ${season} snapshot is published.`;
-    }
-    return `The daily job takes the ${season} snapshot after the trade deadline. The button shows what it would contain right now.`;
 }
 
 async function loadLeague({season, leagueId}) {
@@ -304,15 +271,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
-    const found = mounts();
-    const onHome = document.getElementById("tabcontent0") || found.contracts || found.commish || found.links;
-    if (!context || !onHome) {
+    if (!context || !document.getElementById("tabcontent0")) {
         return false;
     }
-    if (found.links) {
-        renderLinks(found.links, context);
-    }
-    showInMounts(found, "fuad-loading", "Loading league data…");
 
     // one load shared by every panel; a failed one is tried again by the next Retry
     let loading = null;
@@ -325,75 +286,26 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         }
         return loading;
     };
-    const homeShown = document.getElementById("tabcontent0")
-        ? whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn})).catch((error) => {
-            console.error("[fuad] couldn't draw Home:", error);
-            onDrawn();
-            return false;
-        })
-        : Promise.resolve(false);
-    if (document.getElementById("tabcontent0")) {
-        whenShown("fuad-rosters-on")
-            .then(() => import("./rosters.js"))
-            .then(({drawRosters}) => drawn(drawRosters({context, franchiseId: window.franchise_id || null, dataBase, league})))
-            .catch((error) => {
-                console.error("[fuad] couldn't draw Rosters:", error);
-                onTrouble();
-                onDrawn();
-            });
-        whenShown("fuad-league-on")
-            .then(() => import("./league.js"))
-            .then(({drawLeague}) => drawn(drawLeague({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))})))
-            .catch((error) => {
-                console.error("[fuad] couldn't draw League:", error);
-                onTrouble();
-                onDrawn();
-            });
-    }
-
-    let built;
-    try {
-        built = await league();
-    } catch (error) {
-        showInMounts(found, "fuad-error", `${error.message}. Try reloading the page.`);
-        onTrouble();
-        throw error;
-    }
-    const render = (what, mount, draw) => {
-        try {
-            draw();
-        } catch (error) {
-            console.error("[fuad]", error);
+    const homeShown = whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn})).catch((error) => {
+        console.error("[fuad] couldn't draw Home:", error);
+        onDrawn();
+        return false;
+    });
+    whenShown("fuad-rosters-on")
+        .then(() => import("./rosters.js"))
+        .then(({drawRosters}) => drawn(drawRosters({context, franchiseId: window.franchise_id || null, dataBase, league})))
+        .catch((error) => {
+            console.error("[fuad] couldn't draw Rosters:", error);
             onTrouble();
-            if (mount) {
-                mount.innerHTML = `<div class="fuad-error"></div>`;
-                mount.firstChild.textContent = `Couldn't show the ${what}: ${error.message}. Try reloading the page.`;
-            }
-        }
-    };
-
-    let view;
-    try {
-        view = await franchiseView(context.season, built, dataBase);
-    } catch (error) {
-        view = {topSalaries: franchiseTopSalaries(built.rosteredPlayers), phase: "live", note: `Projected franchise salaries (couldn't check the season calendar: ${error.message}).`};
-    }
-    if (found.contracts) {
-        render("Contracts tab", found.contracts, () =>
-            renderContracts(found.contracts, {league: built, season: context.season, franchise: view, storage}));
-    }
-    if (found.commish) {
-        render("Commish tab", found.commish, () => renderCommish(found.commish, {
-            ...context,
-            league: built,
-            // the rookie draft is held offline before week 1, so "previous" stands in for "before the draft"
-            beforeDraft: view.phase === "previous",
-            snapshotStatus: snapshotStatus(view, context.season),
-            snapshotJson: () => JSON.stringify(makeSnapshot(context.season, franchiseTopSalaries(built.rosteredPlayers), {
-                takenAt: new Date().toISOString(),
-                source: "Commish tab backup"
-            }), null, 2)
-        }));
-    }
+            onDrawn();
+        });
+    whenShown("fuad-league-on")
+        .then(() => import("./league.js"))
+        .then(({drawLeague}) => drawn(drawLeague({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))})))
+        .catch((error) => {
+            console.error("[fuad] couldn't draw League:", error);
+            onTrouble();
+            onDrawn();
+        });
     return homeShown;
 }
