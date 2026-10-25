@@ -102,7 +102,7 @@ test("lineup problems: out, IR, suspended, bye and no team; a started game is le
     const me = team("0001", "Me");
     const alerts = myAlerts({league: leagueOf([me]), franchiseId: "0001", phase: "season", links, now, lineup: {problems: problems.slice(2, 3), starters: 9, required: 10}});
     assert.deepEqual(alerts.map((a) => [a.title, a.detail]), [
-        ["Bye Guy is on a bye and in your lineup", "A loss won’t count toward draft order (13.2) · Lineup"],
+        ["Bye Guy is on a bye and in your lineup", "A loss won’t count toward draft order · Lineup"],
         ["Your lineup is 1 starter short", "Lineup"]
     ]);
     // the playoffs: no draft order consequence
@@ -143,7 +143,7 @@ test("between the draft and the cut-down: lengths to post and the roster limits"
     const cutDown = at("2026-09-07T22:00:00-05:00");
     const alerts = myAlerts({league: leagueOf([me], [], {started: false}), franchiseId: "0001", phase: "before-cut", links, now: at("2026-09-01T12:00:00-05:00"), cutDown});
     assert.deepEqual(alerts.map((a) => [a.title, a.detail]), [
-        ["Post contract lengths for 2 players", "Draft-day players need them by Mon Sep 7; $5 a day late (12.6) · Message board"],
+        ["Post contract lengths for 2 players", "Draft-day players need them by Mon Sep 7; $5 a day late · Message board"],
         ["Get to 30 active by Mon Sep 7", "You have 34 · Drop"]
     ]);
     // after the cut-down the limits hold (2.5): over 30 is a violation, fixed by dropping
