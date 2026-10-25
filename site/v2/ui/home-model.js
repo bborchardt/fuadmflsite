@@ -324,59 +324,72 @@ export function leagueAlerts(league, franchiseId, {now, cutDown = null} = {}) {
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
 export const ORDINAL = ["", "1st", "2nd", "3rd", "4th", "5th"];
 
-// "Spencer Shrader (IND PK)"; a draft pick "2027 1st (Golden Ratio)"
+// A move's line as parts: plain `{text}`, a player's name `{text, player}` (his id), a team's
+// `{text, team}`; `what` is the parts' text joined
+const plain = (text) => ({text});
+const joined = (pieces, between) => pieces.flatMap((piece, i) => (i ? [plain(between), ...piece] : piece));
+const textOf = (parts) => parts.map((part) => part.text).join("");
+
+// "Spencer Shrader (IND PK)", the name his part; a draft pick "2027 1st (Golden Ratio)"
 function asset(id, players, teamName) {
     const pick = id.match(/^FP_(\d{4})_(\d{4})_(\d+)$/);
     if (pick) {
-        return `${pick[2]} ${ORDINAL[Number(pick[3])] || `round ${pick[3]}`} (${teamName(pick[1])})`;
+        return [plain(`${pick[2]} ${ORDINAL[Number(pick[3])] || `round ${pick[3]}`} (${teamName(pick[1])})`)];
     }
     const current = id.match(/^DP_(\d+)_(\d+)$/);
     if (current) {
-        return `pick ${Number(current[1]) + 1}.${String(Number(current[2]) + 1).padStart(2, "0")}`;
+        return [plain(`pick ${Number(current[1]) + 1}.${String(Number(current[2]) + 1).padStart(2, "0")}`)];
     }
     const player = players.get(id);
-    return player ? `${player.fullName} (${[player.team && nflCode(player.team), player.nflPosition].filter(Boolean).join(" ")})` : `player ${id}`;
+    return player
+        ? [{text: player.fullName, player: id}, plain(` (${[player.team && nflCode(player.team), player.nflPosition].filter(Boolean).join(" ")})`)]
+        : [plain(`player ${id}`)];
 }
 
-const list = (items) => items.length <= 2 ? items.join(" and ") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+// "A and B", "A, B and C"
+const list = (items) => (items.length <= 2 ? joined(items, " and ") : [...joined(items.slice(0, -1), ", "), plain(" and "), ...items[items.length - 1]]);
 
 // The league's latest adds, bids won, IR moves and trades, newest first: [{kind, team, teamIds, what,
-// at}] (`teamIds` both sides of a trade),
+// parts, at}] (`teamIds` both sides of a trade, `parts` the line `what` reads, as above),
 // a won bid with its `bid` ({period, player, team}) for the run's other bids
 export function recentMoves(transactions, {players, franchises, limit = RECENT_MOVES}) {
     const teamName = (id) => (franchises.get(id) || {teamName: `Team ${id}`}).teamName;
     const named = (list_) => list(list_.map((id) => asset(id, players, teamName)));
+    // "added X", or nothing for no players
+    const clause = (before, list_, after = "") => (list_.length ? [plain(before), ...named(list_), ...(after ? [plain(after)] : [])] : null);
     const moves = [];
     for (const transaction of asArray(transactions && transactions.transaction)) {
         const at = Number(transaction.timestamp);
         const team = teamName(transaction.franchise);
         let kind = null;
-        let what = "";
+        let parts = [];
         let extra = {};
         if (transaction.type === "FREE_AGENT" || transaction.type === "WAIVER") {
             const [added, dropped] = transaction.type === "WAIVER"
                 ? [ids(transaction.added), ids(transaction.dropped)]
                 : String(transaction.transaction || "").split("|").map(ids);
             kind = added.length ? "Add" : "Drop";
-            what = [added.length && `added ${named(added)}`, dropped.length && `dropped ${named(dropped)}`].filter(Boolean).join(", ");
+            parts = joined([clause("added ", added), clause("dropped ", dropped)].filter(Boolean), ", ");
         } else if (transaction.type === "BBID_WAIVER") {
             const [added, bid, dropped] = String(transaction.transaction || "").split("|");
             kind = "Bid";
-            what = [`won ${named(ids(added).slice(0, 1))} for $${Number(bid) || 0}`, ids(dropped).length && `dropped ${named(ids(dropped).slice(0, 1))}`].filter(Boolean).join(", ");
+            parts = joined([[plain("won "), ...named(ids(added).slice(0, 1)), plain(` for $${Number(bid) || 0}`)], clause("dropped ", ids(dropped).slice(0, 1))].filter(Boolean), ", ");
             // the run is MFL's processed waivers period, the transaction's time (docs/mfl.md)
             extra = {bid: {period: at, player: ids(added)[0] || "", team: transaction.franchise}};
         } else if (transaction.type === "IR") {
             const off = ids(transaction.activated);
             const on = ids(transaction.deactivated);
             kind = "IR";
-            what = [on.length && `moved ${named(on)} to IR`, off.length && `moved ${named(off)} off IR`].filter(Boolean).join(", ");
+            parts = joined([clause("moved ", on, " to IR"), clause("moved ", off, " off IR")].filter(Boolean), ", ");
         } else if (transaction.type === "TRADE") {
             kind = "Trade";
-            what = `traded ${named(ids(transaction.franchise1_gave_up))} to ${teamName(transaction.franchise2)} for ${named(ids(transaction.franchise2_gave_up))}`;
+            parts = [plain("traded "), ...named(ids(transaction.franchise1_gave_up)), plain(" to "), {text: teamName(transaction.franchise2), team: transaction.franchise2},
+                plain(" for "), ...named(ids(transaction.franchise2_gave_up))];
         }
+        const what = textOf(parts);
         if (kind && what) {
             const teamIds = [transaction.franchise, transaction.type === "TRADE" ? transaction.franchise2 : null].filter(Boolean);
-            moves.push({kind, team, teamIds, what, at, when: dayText(at), ...extra});
+            moves.push({kind, team, teamIds, what, parts, at, when: dayText(at), ...extra});
         }
     }
     return moves.sort((a, b) => b.at - a.at).slice(0, limit);
