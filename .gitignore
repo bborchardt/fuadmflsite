@@ -5,3 +5,5 @@ site/data/
 __pycache__/
 .DS_Store
 node_modules/
+# what tools/build.mjs makes for Pages
+dist/

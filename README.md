@@ -48,16 +48,19 @@ would do until they're switched on.
 
 - `npm test` runs the unit tests (Node 24+); after `npm ci`, `npm run lint` runs ESLint's standard
   rules and checks that what runs in members' browsers stays within ES2020 (Safari since iOS 14).
+- `npm run build` makes `dist/` as GitHub Pages publishes it, v2 bundled into one minified file.
 - `python3 tools/dev-server.py`, then `?fuadPreview=local` on a league page, runs your working copy
-  on the real site.
+  on the real site, unbundled.
 - `uv run --no-project --with playwright python tools/verify/verify.py compare --local v1` renders the
   live league page with and without your working copy and compares every area.
 - `uv run --no-project --with playwright python tools/verify/screens.py compare` uses v2's screens,
   loaded from pages saved from the clone league with no MFL requests, on master and on your working
-  copy, and lists every step whose HTML or moves to MFL differ.
+  copy, and lists every step whose HTML or moves to MFL differ; `--built` uses the working copy as
+  Pages publishes it.
 - `uv run --no-project --with playwright python tools/verify/speed.py` times Lineup and Home from the
   same saved pages over a simulated slow phone connection: when the page shows, how long MFL's own
-  page shows first, and when v2's screen is drawn.
+  page shows first, and when v2's screen is drawn; `--built` times the bundle, `--no-lookbehind`
+  makes lookbehind regexes throw, as on iPhones before iOS 16.4.
 
 ## What's where
 
@@ -69,7 +72,7 @@ would do until they're switched on.
 | `mfl/` | What goes in MFL's home page messages |
 | `jobs/` | The daily job (`.github/workflows/daily.yml` runs `jobs/daily.mjs`) |
 | `tests/` | Unit tests |
-| `tools/` | Local preview server, the live-page comparison, and the offline comparison and timing of v2's screens with its saved pages |
+| `tools/` | The build for Pages, local preview server, the live-page comparison, and the offline comparison and timing of v2's screens with its saved pages |
 | `docs/` | [Design decisions](docs/design.md) and [MFL facts](docs/mfl.md) |
 
 The `league-data` branch holds what the job writes: franchise salary snapshots and its chore log.
