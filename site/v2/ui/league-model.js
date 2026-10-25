@@ -7,6 +7,7 @@ import {text} from "./player-page.js";
 import {scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {cents} from "./format.js";
 import settings from "../lib/settings.js";
+import {lineupPositions} from "../lib/rules.js";
 
 export const PLAYOFF_TEAMS = settings.playoffs.teams;
 export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
@@ -15,7 +16,6 @@ export const PRIZE_SHARES = settings.payouts.places;
 // a season's entry fees before the commissioner records them: $100 a team, 10 teams
 export const ENTRY_FEE = 100;
 export const TEAMS = 10;
-export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "PK"];
 
 const record = (wlt) => {
     const [w, l, t] = String(wlt || "0-0-0").split("-").map(Number);
@@ -84,25 +84,28 @@ export function allPlayRecords(weeklyResults, lastRegularWeek) {
     return records;
 }
 
-// Bylaws 1.1–1.3: the division winners are the first seeds, the top ones with byes; the rest are
-// the best all-play records, ties broken by the standings order. "In the hunt" is the rest,
-// all-play games back of the last seed.
-export function playoffPicture(divisions) {
+// The playoff seeds (settings.playoffs): the division winners first, if the league seeds them so, in
+// standings order; then the best all-play records, or the next teams in the standings, ties going
+// by the standings order. The top seeds have byes. "In the hunt" is the rest, games back of the last
+// seed by the same record.
+export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divisionWinnersSeededFirst, wildcardsBy = settings.playoffs.wildcardsBy} = {}) {
     const all = divisions.flatMap((division) => division.rows.map((team) => ({...team, divisionName: division.name})));
     const byStandings = (a, b) => a.order - b.order;
-    const winners = divisions.map((division) => division.rows[0]).filter(Boolean)
+    const winners = !winnersFirst ? [] : divisions.map((division) => division.rows[0]).filter(Boolean)
         .map((team) => all.find((row) => row.id === team.id)).sort(byStandings);
+    const allPlay = wildcardsBy === "allPlay";
+    const recordOf = (team) => (allPlay ? team.allPlay : team.h2h);
     const rest = all.filter((team) => !winners.includes(team))
-        .sort((a, b) => pct(b.allPlay) - pct(a.allPlay) || byStandings(a, b));
+        .sort((a, b) => (allPlay ? pct(b.allPlay) - pct(a.allPlay) : 0) || byStandings(a, b));
     const wildcards = rest.slice(0, PLAYOFF_TEAMS - winners.length);
     const seeds = [
         ...winners.map((team) => ({team, why: `${team.divisionName} winner`})),
-        ...wildcards.map((team) => ({team, why: `${recordText(team.allPlay)} all-play`}))
+        ...wildcards.map((team) => ({team, why: `${recordText(recordOf(team))}${allPlay ? " all-play" : ""}`}))
     ].map((seed, i) => ({...seed, seed: i + 1, bye: i < settings.playoffs.byes}));
     const last = wildcards[wildcards.length - 1];
     const hunt = rest.slice(wildcards.length).map((team) => {
-        const back = last ? gamesBack(last.allPlay, team.allPlay) : 0;
-        return {team, record: recordText(team.allPlay), back: back > 0 ? `${back} back` : "tied · out on standings"};
+        const back = last ? gamesBack(recordOf(last), recordOf(team)) : 0;
+        return {team, record: recordText(recordOf(team)), back: back > 0 ? `${back} back` : "tied · out on standings"};
     });
     return {seeds, hunt};
 }
@@ -150,13 +153,14 @@ export const powerFacts = (team) => [
 const weeksOf = (weeklyResults) => asArray(weeklyResults && (weeklyResults.weeklyResults || weeklyResults));
 
 // Starter points by position, the season so far: each week's starters (`weeklyResults` for YTD)
-// summed by the player's position, in team order of the total
-export function positionPoints(weeklyResults, positions, names) {
+// summed by the player's position, in team order of the total; `order` the league's positions
+// (lib/rules.js lineupPositions)
+export function positionPoints(weeklyResults, positions, names, order) {
     const totals = new Map();
     for (const week of weeksOf(weeklyResults)) {
         for (const matchup of asArray(week.matchup)) {
             for (const team of asArray(matchup.franchise)) {
-                const sums = totals.get(team.id) || Object.fromEntries(POSITION_ORDER.map((position) => [position, 0]));
+                const sums = totals.get(team.id) || Object.fromEntries(order.map((position) => [position, 0]));
                 for (const player of asArray(team.player)) {
                     const position = positions.get(player.id);
                     if (player.status === "starter" && position in sums) {
@@ -170,8 +174,8 @@ export function positionPoints(weeklyResults, positions, names) {
     return [...totals].map(([id, sums]) => ({
         id,
         name: names.get(id) || id,
-        parts: POSITION_ORDER.map((position) => ({position, points: Math.round(sums[position])})),
-        total: Math.round(POSITION_ORDER.reduce((sum, position) => sum + sums[position], 0))
+        parts: order.map((position) => ({position, points: Math.round(sums[position])})),
+        total: Math.round(order.reduce((sum, position) => sum + sums[position], 0))
     })).sort((a, b) => b.total - a.total);
 }
 
@@ -192,10 +196,19 @@ export function weeklyWinners(weeklyResults, lastRegularWeek) {
 // Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00")
 export const ledger = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
+// The brackets that decide the places, from MFL's `playoffBrackets` list: the championship's, and
+// the 3rd place game's if the league has one
+export const bracketCount = () => (settings.playoffs.thirdPlaceGame ? 2 : 1);
+export function placeBrackets(list) {
+    const champion = list.find((bracket) => /champion/i.test(bracket.bracketWinnerTitle || "")) || list[0];
+    const third = list.find((bracket) => /3rd/i.test(`${bracket.bracketWinnerTitle} ${bracket.name}`)) || list[1];
+    return settings.playoffs.thirdPlaceGame ? [champion, third] : [champion];
+}
+
 // The places once the playoffs are played: 1st and 2nd from the championship's last game, 3rd from
-// the 3rd place game. `brackets` are the `playoffBracket` exports; a tie goes to the higher seed
-// (bylaw 1.5), which MFL marks as the home side.
-export function playoffPlaces(brackets) {
+// the 3rd place game if the league has one. `brackets` are the `playoffBracket` exports; a tie goes
+// to the higher seed (bylaw 1.5), which MFL marks as the home side.
+export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thirdPlaceGame} = {}) {
     const lastGame = (bracket) => {
         const rounds = asArray(bracket && bracket.playoffRound);
         return rounds.length ? asArray(rounds[rounds.length - 1].playoffGame)[0] : null;
@@ -208,6 +221,9 @@ export function playoffPlaces(brackets) {
         return homeWins ? [game.home.franchise_id, game.away.franchise_id] : [game.away.franchise_id, game.home.franchise_id];
     };
     const final = decided(lastGame(brackets[0]));
+    if (!thirdPlaceGame) {
+        return final;
+    }
     const third = decided(lastGame(brackets[1]));
     return final && third ? [final[0], final[1], third[0]] : null;
 }
@@ -283,7 +299,11 @@ export function teamSeason(schedule, teamId) {
 
 // ---- Scores ----
 
-const byPosition = (a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || a.sortName.localeCompare(b.sortName);
+// lines by the league's positions (lib/rules.js lineupPositions), any other last, then by name
+const byPosition = (order) => {
+    const rank = (position) => (order.includes(position) ? order.indexOf(position) : order.length);
+    return (a, b) => rank(a.position) - rank(b.position) || a.sortName.localeCompare(b.sortName);
+};
 
 const minutes = (seconds) => Math.round(seconds / 60);
 
@@ -326,7 +346,8 @@ export function gameText(game, kickoffText) {
 // the viewer's first. Scores come from the feed with the league's rules, the way MFL's live page
 // keeps them current; `projections` (the projected stats feed) adds each side's projection and win
 // chance while anything is left to play. `rosters` adds the viewer's week's IR players to benches.
-export function scoreCards({live, players, stats, games, rules, projections = null, week, viewer = null, irOf = () => []}) {
+export function scoreCards({live, players, stats, games, rules, projections = null, week, viewer = null, irOf = () => [], order = lineupPositions(null)}) {
+    const sorted = byPosition(order);
     const cards = asArray(live && live.matchup).map((matchup) => {
         const sides = asArray(matchup.franchise).slice().sort((a, b) => Number(a.isHome) - Number(b.isHome));
         const built = sides.map((side) => {
@@ -335,10 +356,10 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
                 ...playerLine(entry, {players, stats, games, rules, ir: entry.status !== "starter" && irOf(side.id).includes(entry.id)}),
                 starter: entry.status === "starter"
             }));
-            const starters = lineup.filter((line) => line.starter).sort(byPosition);
+            const starters = lineup.filter((line) => line.starter).sort(sorted);
             const bench = lineup.filter((line) => !line.starter)
                 .concat(irOf(side.id).filter((id) => !lineup.some((line) => line.id === id)).map((id) => ({...playerLine({id}, {players, stats, games, rules, ir: true}), starter: false})))
-                .sort((a, b) => Number(a.ir) - Number(b.ir) || (b.points || 0) - (a.points || 0) || byPosition(a, b));
+                .sort((a, b) => Number(a.ir) - Number(b.ir) || (b.points || 0) - (a.points || 0) || sorted(a, b));
             const secondsLeft = starters.reduce((sum, line) => sum + (["playing"].includes(line.game.state) ? line.game.secondsLeft
                 : line.game.state === "scheduled" ? 3600 : 0), 0);
             return {
@@ -435,7 +456,7 @@ export function bestCard(card, limits) {
     return {...card, teams: card.teams.map((team) => {
         const pool = team.starters.concat(team.bench.filter((line) => !line.ir));
         const ids = bestLineup(pool, limits);
-        const starters = pool.filter((line) => ids.has(line.id)).map((line) => ({...line, tag: line.starter ? "" : "in"})).sort(byPosition);
+        const starters = pool.filter((line) => ids.has(line.id)).map((line) => ({...line, tag: line.starter ? "" : "in"})).sort(byPosition(Object.keys(limits.limits)));
         const bench = team.starters.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: "started"}))
             .concat(team.bench.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: ""})));
         return {

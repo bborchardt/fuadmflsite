@@ -138,10 +138,17 @@ test("copies go to another group or a new one, each checked first", () => {
         {round: 1, claims: [{add: "x", bid: 4, drop: null}]},
         {round: 2, claims: [{add: "z", bid: 1, drop: "olave"}]}
     ]});
-    const targets = copyTargets(team, {round: 1, claim: {add: "x", bid: 4, drop: null}, rounds: [1, 2], phase: "season"});
+    const targets = copyTargets(team, {round: 1, claim: {add: "x", bid: 4, drop: null}, rounds: [1, 2], maxGroups: 8, phase: "season"});
     // now $292 + $4 + $1 = $297; in group 2 its max grows by $3 to $300, and 30 active; a new group
     // 3 adds $4
     assert.deepEqual(targets, [{round: 2, isNew: false, off: false, why: null}, {round: 3, isNew: true, off: true, why: "over cap"}]);
+});
+
+test("a new group only while MFL allows another", () => {
+    const team = teamOf({cap: 250, active: 26, groups: [{round: 1, claims: [{add: "x", bid: 1, drop: null}]}, {round: 2, claims: [{add: "z", bid: 1, drop: null}]}]});
+    const claim = {add: "x", bid: 1, drop: null};
+    assert.deepEqual(copyTargets(team, {round: 1, claim, rounds: [1, 2], maxGroups: 2, phase: "season"}).map((target) => target.round), [2]);
+    assert.deepEqual(copyTargets(team, {round: 1, claim, rounds: [1, 2], maxGroups: 3, phase: "season"}).map((target) => target.round), [2, 3]);
 });
 
 test("a re-add is blocked for 48 hours after the team's own drop (9.4)", () => {

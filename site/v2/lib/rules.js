@@ -2,17 +2,20 @@
 // numbers are the league's settings (settings.json).
 
 import settings from "./settings.js";
+import {asArray} from "./mfl.js";
 
 export const SALARY_CAP = settings.salaryCap;
 export const ROSTER_MIN = settings.roster.min;
 export const ROSTER_MAX = settings.roster.max;
 
-// MFL reports week 17 all offseason, so the roster and IR checks' end is timed from the NFL
-// schedule. Anti-tanking covers the regular season.
-export const PLAYOFFS_START_WEEK = settings.weeks.playoffsStart;
-export const CHAMPIONSHIP_WEEK = settings.weeks.championship;
-export const ROSTER_CHECK_LAST_WEEK = CHAMPIONSHIP_WEEK;
-export const INJURY_CHECK_LAST_WEEK = PLAYOFFS_START_WEEK - 1;
+// The season's weeks, from MFL's `league` export, which schedules the season by them: the playoffs
+// start after its last regular season week, and its last week is the championship. Null if MFL
+// doesn't say. The roster checks run through the championship, anti-tanking before the playoffs.
+export function seasonWeeks(league) {
+    const lastRegular = Number(league && league.lastRegularSeasonWeek);
+    const championship = Number(league && league.endWeek);
+    return lastRegular > 0 && championship > lastRegular ? {playoffsStart: lastRegular + 1, championship} : null;
+}
 
 export const FRANCHISE_PLAYER_COUNT = settings.franchiseTag.averageOfTop;
 
@@ -26,6 +29,16 @@ export const PREVIOUS_FRANCHISE_UNTIL_WEEK = 1;
 export const ROOKIE_DECAY = 1 - settings.rookieScale.dropPerPick;
 
 export const POSITIONS = Object.entries(settings.rookieScale.firstPick).map(([code, rookieBaseline]) => ({code, rookieBaseline}));
+
+// The league's positions in MFL's order, from its `league` export's starting lineup; the rookie
+// scale's without it
+export function lineupPositions(league) {
+    const names = asArray(league && league.starters && league.starters.position).map((position) => position.name).filter(Boolean);
+    return names.length ? names : POSITIONS.map((position) => position.code);
+}
+
+// `positions` first, in their order, then any other a list has, as MFL lists them
+export const withOthers = (positions, found) => positions.concat([...new Set(found)].filter((pos) => pos && !positions.includes(pos)));
 
 const positionRank = new Map(POSITIONS.map((position, index) => [position.code, index]));
 

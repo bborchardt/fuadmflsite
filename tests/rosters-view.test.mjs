@@ -73,14 +73,14 @@ test("Players: the columns in season and before it, and each kind of player's co
 
 test("Players' chips: Mine and the Watching star only for a member logged in", () => {
     const state = {positions: ["QB"], years: [], owners: [], watching: true};
-    const member = playerChips(state, {yearChips: ["All", "1"], viewer: "0001", watched: new Set()});
+    const member = playerChips(state, {positions: ["QB", "RB", "WR", "TE", "PK"], yearChips: ["All", "1"], viewer: "0001", watched: new Set()});
     assert.match(member, /data-chip="positions" data-value="QB">QB/);
     assert.match(member, /aria-pressed="true" data-chip="positions" data-value="QB"/);
     assert.match(member, /aria-pressed="true" data-chip="years" data-value="All"/);
     assert.match(member, /data-value="Mine"/);
     assert.match(member, /data-chip="watching"/);
-    assert.doesNotMatch(playerChips(state, {yearChips: ["All"], viewer: "0001", watched: null}), /data-chip="watching"/);
-    const visitor = playerChips(state, {yearChips: ["All"], viewer: null, watched: null});
+    assert.doesNotMatch(playerChips(state, {positions: ["QB", "RB", "WR", "TE", "PK"], yearChips: ["All"], viewer: "0001", watched: null}), /data-chip="watching"/);
+    const visitor = playerChips(state, {positions: ["QB", "RB", "WR", "TE", "PK"], yearChips: ["All"], viewer: null, watched: null});
     assert.doesNotMatch(visitor, /data-value="Mine"/);
     // short names on phones
     assert.match(visitor, /<span class="fuad-desktop-only">Free agents<\/span><span class="fuad-phone-only">FAs<\/span>/);

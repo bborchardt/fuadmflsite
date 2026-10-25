@@ -5,12 +5,13 @@
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup} from "./panel.js";
 import {cached} from "./store.js";
+import {lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {beforeWeek1} from "./context.js";
 import {readProjections, readRules} from "./live-scoring.js";
 import {careers, champions} from "./history.js";
 import {titles} from "./history-model.js";
-import {allPlayRecords, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings} from "./league-model.js";
+import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings} from "./league-model.js";
 import {championsMarkup, pictureMarkup, positionsMarkup, powerMarkup, standingsMarkup, winnersMarkup} from "./league-view.js";
 import {drawScores, two} from "./scores.js";
 
@@ -190,7 +191,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 load: async () => {
                     const [ytd, settings, known] = await Promise.all([exp("weeklyResults", {W: "YTD"}, {year}), leagueOf(year), players()]);
                     const positions = new Map([...known].map(([id, player]) => [id, player.position]));
-                    return positionPoints(ytd, positions, namesOf(settings));
+                    return positionPoints(ytd, positions, namesOf(settings), lineupPositions(settings));
                 },
                 render: (rows, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");
@@ -233,10 +234,8 @@ export function drawLeague({context, franchiseId, teamHref}) {
                     const played = asArray(ytd && ytd.weeklyResults).some((week) => Number(week.week) === lastWeek
                         && asArray(week.matchup).some((matchup) => asArray(matchup.franchise).some((team) => team.score !== undefined && team.score !== "")));
                     const list = asArray(brackets && brackets.playoffBracket);
-                    if (played && list.length >= 2) {
-                        const champion = list.find((bracket) => /champion/i.test(bracket.bracketWinnerTitle || "")) || list[0];
-                        const third = list.find((bracket) => /3rd/i.test(`${bracket.bracketWinnerTitle} ${bracket.name}`)) || list[1];
-                        const results = await Promise.all([champion, third].map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {year, optional: true})));
+                    if (played && list.length >= bracketCount()) {
+                        const results = await Promise.all(placeBrackets(list).map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {year, optional: true})));
                         places = results.every(Boolean) ? playoffPlaces(results) : null;
                     }
                     return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, names});

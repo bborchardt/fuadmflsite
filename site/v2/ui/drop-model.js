@@ -58,7 +58,7 @@ export function bidDrops(groups) {
 
 // The roster by position, each player's penalty, cap change and whether he can go now. `roster` is
 // readRoster's list: a player whose game has started (MFL's `!`) can't be dropped until it clears.
-export function dropRows(team, {roster, phase}) {
+export function dropRows(team, {roster, phase, positions}) {
     const marks = new Map(roster.map((player) => [player.id, player]));
-    return dropGroups(team, {marks, check: (drop) => checkDrop(team, {drop, phase}), immediate: true, usedIn: bidDrops(team.groups)});
+    return dropGroups(team, {marks, check: (drop) => checkDrop(team, {drop, phase}), immediate: true, usedIn: bidDrops(team.groups), positions});
 }

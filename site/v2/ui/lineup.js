@@ -8,7 +8,7 @@ import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
-    POSITION_ORDER, applyInjuries, lineupForm, lineupStatus, lineupWarnings, rangeText, readLineupPage, sameLineup, tagOf
+    applyInjuries, lineupForm, lineupStatus, lineupWarnings, rangeText, readLineupPage, sameLineup, tagOf
 } from "./lineup-model.js";
 
 const CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
@@ -60,7 +60,7 @@ function slots(count, most, bad) {
 }
 
 function groups(page, on, status) {
-    return POSITION_ORDER.filter((pos) => page.limits[pos]).map((pos) => ({
+    return Object.keys(page.limits).map((pos) => ({
         pos,
         head: `<span class="fuad-band-pos">${pos}</span>${slots(status.counts[pos], page.limits[pos][1], status.broken.includes(pos))}<span class="fuad-band-note${status.broken.includes(pos) ? " fuad-bad" : ""}">start ${rangeText(page.limits[pos])}</span>`,
         players: page.players.filter((player) => player.pos === pos)

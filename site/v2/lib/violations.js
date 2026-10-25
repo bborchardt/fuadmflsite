@@ -1,22 +1,24 @@
 // League Alerts' rules, shared with the daily job so the two flag the same things.
 
-import {INJURY_CHECK_LAST_WEEK, PLAYOFFS_START_WEEK, ROSTER_CHECK_LAST_WEEK, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
+import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
+import settings from "./settings.js";
 import {contractDeadline, windowClosed} from "./adds.js";
 import {displayName, weekEnd, weekKickoff} from "./mfl.js";
 
-// MFL reports week 17 all offseason, so the season's phase comes from its NFL schedule. A schedule
-// MFL hasn't published counts as not yet.
-export async function seasonPhase(season, now, options) {
+// MFL reports its last week all offseason, so the season's phase comes from its NFL schedule. A
+// schedule MFL hasn't published counts as not yet. `weeks` is seasonWeeks' (lib/rules.js); without
+// it the playoffs and the season's end can't be told, so the in-season checks are off.
+export async function seasonPhase(season, now, options, weeks) {
     const [start, playoffs, end] = await Promise.all([
         weekKickoff(season, 1, options),
-        weekKickoff(season, PLAYOFFS_START_WEEK, options),
-        weekEnd(season, ROSTER_CHECK_LAST_WEEK, options)
+        weeks ? weekKickoff(season, weeks.playoffsStart, options) : null,
+        weeks ? weekEnd(season, weeks.championship, options) : null
     ]);
     return {
         // the injured reserve check starts with week 1's kickoff, whatever week MFL reports before it
         started: Boolean(start) && now >= start,
-        tankingOver: Boolean(playoffs) && now >= playoffs,
-        seasonOver: Boolean(end) && now >= end
+        tankingOver: !weeks || (Boolean(playoffs) && now >= playoffs),
+        seasonOver: !weeks || (Boolean(end) && now >= end)
     };
 }
 
@@ -50,8 +52,9 @@ function contractNotice(teamName, add, reading) {
 export function ruleViolations(league, {pendingAdds = [], readings = new Map(), now = Date.now() / 1000, cutDown = null} = {}) {
     const items = [];
     const week = Number(league.week);
-    // the IR check runs from week 1's kickoff until week 17 is over; otherwise only the cap
-    const rosterSeason = league.started !== false && !league.seasonOver && week <= ROSTER_CHECK_LAST_WEEK;
+    // the IR check runs from week 1's kickoff until the championship is over; otherwise only the cap
+    const weeks = league.weeks;
+    const rosterSeason = Boolean(weeks) && league.started !== false && !league.seasonOver && week <= weeks.championship;
     const limitsSeason = rosterSeason || (Boolean(cutDown) && now >= cutDown && !league.seasonOver);
     const push = (kind, franchise, text, warning = true) => items.push({kind, franchiseId: franchise.franchiseId, text, warning});
     for (const franchise of league.franchises.values()) {
@@ -77,7 +80,7 @@ export function ruleViolations(league, {pendingAdds = [], readings = new Map(), 
             }
         }
         // before week 1's kickoff MFL's results can list week 1's lineups, which nobody has played
-        if (league.started !== false && !league.tankingOver && week <= INJURY_CHECK_LAST_WEEK) {
+        if (settings.antiTanking && weeks && league.started !== false && !league.tankingOver && week < weeks.playoffsStart) {
             for (const player of franchise.lineup.filter((starter) => starter.injured)) {
                 push("injured-starter", franchise, `${franchise.teamName} started injured/suspended player ${player.fullName} in week ${league.week}!`);
             }
