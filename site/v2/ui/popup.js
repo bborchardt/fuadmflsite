@@ -6,7 +6,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {capPenalty} from "../lib/rules.js";
-import {NFL_TEAMS, holderOf, readArticle, readPlayerPage} from "./player-page.js";
+import {NFL_TEAMS, holderOf, openerName, readArticle, readPlayerPage} from "./player-page.js";
 import {openDialog} from "./dialog.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -24,12 +24,6 @@ const CLOSE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" 
 // Out, IR and suspended read as over a limit; doubtful and questionable as caution
 function injuryTone(status) {
     return /^(out|ir|suspended|pup|nfi)/i.test(status) ? "bad" : "caution";
-}
-
-// "Beck, Carson ARI QB" from MFL's link, until the page arrives
-function nameFromLink(label) {
-    const match = String(label || "").trim().match(/^([^,]+),\s*(.+?)\s+[A-Z]{2,3}\s+[A-Z]{1,3}\b/);
-    return match ? `${match[2]} ${match[1]}` : "";
 }
 
 async function page(url) {
@@ -229,13 +223,12 @@ export function installPopup({context, franchiseId, teamHref}) {
     document.body.append(layer);
 
     function open(playerId, opener, {actions = null} = {}) {
-        const label = opener && opener.textContent;
         layer.innerHTML = `
         <section class="fuad-popup" role="dialog" aria-modal="true" aria-labelledby="fuad-popup-name" tabindex="-1">
             <span class="fuad-grabber" aria-hidden="true"></span>
             <div class="fuad-popup-head">
                 <div class="fuad-popup-title">
-                    <h2 id="fuad-popup-name">${esc(nameFromLink(label) || "Player")}</h2>
+                    <h2 id="fuad-popup-name">${esc(openerName(opener) || "Player")}</h2>
                     <span class="fuad-meta fuad-popup-meta"></span>
                 </div>
                 ${member ? `<button type="button" class="fuad-watch" aria-pressed="false" aria-label="Watch" hidden>${STAR}</button>` : ""}

@@ -3,6 +3,7 @@
 // returns null and the popup leaves the player to MFL's own.
 
 import {displayName} from "../lib/mfl.js";
+import {clean} from "./html.js";
 
 export const NFL_TEAMS = {
     ARI: "Arizona Cardinals", ATL: "Atlanta Falcons", BAL: "Baltimore Ravens", BUF: "Buffalo Bills",
@@ -177,4 +178,26 @@ export function readArticle(html) {
     const update = text((split < 0 ? body : body.slice(0, split)).replace(/^\s*\(<a[^>]*>[^<]+<\/a>\)/, "").replace(/\(<a[^>]*>Article Link<\/a>\)[\s\S]*$/i, ""));
     const analysis = split < 0 ? "" : text(body.slice(split).replace(/<b>Analysis:<\/b>/i, "").replace(/\(<a[^>]*>Article Link<\/a>\)[\s\S]*$/i, ""));
     return {published: text(published[1]), source: text(source), update, analysis};
+}
+
+// "Beck, Carson ARI QB" from MFL's link, until the page arrives
+function nameFromLink(label) {
+    const match = String(label || "").trim().match(/^([^,]+),\s*(.+?)\s+[A-Z]{2,3}\s+[A-Z]{1,3}\b/);
+    return match ? `${match[2]} ${match[1]}` : "";
+}
+
+// the name shown until the page arrives: MFL's link, or v2's button naming the player (Scores' line:
+// its full name); anything else, the page itself included (Safari doesn't focus a tapped button), none
+export function openerName(opener) {
+    if (!opener || typeof opener.matches !== "function") {
+        return "";
+    }
+    if (opener.matches('a[href*="launch_player_modal"]')) {
+        return nameFromLink(opener.textContent);
+    }
+    if (!opener.matches("[data-player], [data-id]")) {
+        return "";
+    }
+    const full = opener.querySelector(".fuad-full");
+    return full ? clean(full.textContent) : opener.children.length ? "" : clean(opener.textContent).slice(0, 60);
 }
