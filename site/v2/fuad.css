@@ -1725,10 +1725,10 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-date > .fuad-meta { font-size: 14px; text-align: right; }
 
-/* chat: grows to about four messages, then scrolls inside itself, newest at the bottom */
+/* chat: grows to about ten messages, then scrolls inside itself, newest at the bottom */
 #fuad-home .fuad-home-chat.fuad-panel { padding-bottom: 16px; }
 
-#fuad-home .fuad-chat-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+#fuad-home .fuad-chat-list { display: flex; flex-direction: column; gap: 12px; max-height: 540px; overflow-y: auto; padding-right: 4px; }
 
 /* a heading action that acts on the card rather than leaving it: a button, looking like the
    headings' text links */
