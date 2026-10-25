@@ -14,6 +14,7 @@ import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
 import {money} from "./format.js";
 import {contractYears} from "./rosters-model.js";
+import {replaceEntry} from "./dialog.js";
 
 const FLASH_KEY = "fuad.dropFlash";
 
@@ -174,7 +175,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
     // Shows the result after MFL's page reloads
     function reloadWith(next) {
         leaveFlash(FLASH_KEY, next);
-        window.location.replace(window.location.pathname + window.location.search);
+        replaceEntry(window.location.pathname + window.location.search);
     }
 
     const mine = () => [...state.data.league.players.values()].filter((player) => player.franchise && player.franchise.franchiseId === franchiseId)

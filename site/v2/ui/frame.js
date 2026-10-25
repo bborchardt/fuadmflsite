@@ -206,7 +206,7 @@ export function drawFrame({context, storage}) {
     menuButton.addEventListener("click", () => {
         menuButton.setAttribute("aria-expanded", "true");
         filter.toggleAttribute("autofocus", window.matchMedia("(hover: hover) and (pointer: fine)").matches);
-        openDialog(menuLayer, {onClose: () => menuButton.setAttribute("aria-expanded", "false")});
+        openDialog(menuLayer, {history: true, onClose: () => menuButton.setAttribute("aria-expanded", "false")});
     });
     const teamButton = root.querySelector(".fuad-team");
     if (teamButton) {
@@ -215,7 +215,7 @@ export function drawFrame({context, storage}) {
             // the phone header's height varies with its context line
             sheetLayer.firstElementChild.style.top = `${Math.round(teamButton.getBoundingClientRect().bottom) + 8}px`;
             teamButton.setAttribute("aria-expanded", "true");
-            openDialog(sheetLayer, {onClose: () => teamButton.setAttribute("aria-expanded", "false")});
+            openDialog(sheetLayer, {history: true, onClose: () => teamButton.setAttribute("aria-expanded", "false")});
         });
     }
 
