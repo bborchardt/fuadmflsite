@@ -7,7 +7,7 @@
 //   MFL_HOST                    league host, default https://www44.myfantasyleague.com
 //   MFL_USER_AGENT              optional; set it if the client is registered with MFL
 //   SEASON                      default: the newest season the league has a site for
-//   RULES_VERSION               which site version's league logic to use, default v1
+//   RULES_VERSION               which site version's league logic to use, default v2
 //   PAGES_DATA_URL              published snapshots, default https://bborchardt.github.io/fuadmflsite/data/
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
 //   GITHUB_STEP_SUMMARY         set by GitHub Actions; receives this run's chore log entries, shown on
@@ -21,7 +21,7 @@ import {dirname, join, resolve} from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const version = process.env.RULES_VERSION || "v1";
+const version = process.env.RULES_VERSION || "v2";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 const {buildLeague, playersFromExport} = await lib("league.js");

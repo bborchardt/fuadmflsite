@@ -1,9 +1,9 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {capPenalty, netCapSpace, rookieSalary, franchiseTopSalaries, franchiseSalary, positionOrder} from "../site/v1/lib/rules.js";
-import {asArray, displayName, firstKickoff, weekKickoff} from "../site/v1/lib/mfl.js";
-import {franchisePhase, latestSeason, makeSnapshot, readSnapshot} from "../site/v1/lib/franchise.js";
-import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";
+import {capPenalty, netCapSpace, rookieSalary, franchiseTopSalaries, franchiseSalary, positionOrder} from "../site/v2/lib/rules.js";
+import {asArray, displayName, firstKickoff, weekKickoff} from "../site/v2/lib/mfl.js";
+import {franchisePhase, latestSeason, makeSnapshot, readSnapshot} from "../site/v2/lib/franchise.js";
+import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
 
 test("cap penalty is 40% of salary per year, at least $1 and at least $1 a year", () => {
     assert.equal(capPenalty(2, 10), 8);

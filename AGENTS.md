@@ -6,8 +6,9 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - `site/vN/` runs live in members' browsers as soon as master deploys. Visible or rule changes go in
   a new version; ask the maintainer before changing a live one in place. A version offered only as
   the beta (not loaded by the header) changes in place.
-- The daily job loads `lib/` from the version `RULES_VERSION` names: a new version must keep the
-  exports it reads, or its flags silently stop.
+- The daily job loads `lib/` from the version `RULES_VERSION` names (default v2, even while v2 is
+  the beta): a change there reaches the job's writes to MFL on its next run, and a new version must
+  keep the exports it reads, or its flags silently stop.
 - Members include older iPhones: a syntax error (e.g. regex lookbehind, Safari 16.4+) in a file
   breaks every tab. v1 loads such code with a dynamic `import()`; v2 is published as one file
   (`tools/build.mjs`), where `import()` doesn't keep it out, so the build fails on syntax past
