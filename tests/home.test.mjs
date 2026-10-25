@@ -198,6 +198,22 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-08-01T12:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Draft", "Final Cut Down/Contract Length Deadline", "Week 1 kickoff"]);
     // after the draft: the cut-down, the first blind bids, week 1
     assert.deepEqual(comingUp({dates, kickoffs, now: at("2026-09-07T15:00:00-05:00")}).slice(0, 3).map((d) => d.what), ["Final Cut Down/Contract Length Deadline", "First blind bids", "Week 1 kickoff"]);
+    // the week's waiver cycle: the next bid run, which opens the free agent window, and the lock
+    // that closes it, in order among the season's dates; none of them a My alerts to-do
+    const cycle = (when) => comingUp({dates, kickoffs, calendar, now: when}).filter((d) => !d.kind && /^(Blind|Free agent)/.test(d.what))
+        .map((d) => [d.what, d.when, d.detail || "", d.soon]);
+    assert.deepEqual(comingUp({dates, kickoffs, calendar, now}).slice(0, 3).map((d) => d.what), ["Free agent window closes", "Blind bids process", "Trade deadline"]);
+    assert.deepEqual(cycle(now), [
+        ["Free agent window closes", "Sun Oct 18, 12:00 p.m.", "then blind bids only", false],
+        ["Blind bids process", "Wed Oct 21, 11:00 p.m.", "then the free agent window opens", false]
+    ]);
+    // before the first run, "First blind bids" stands for it
+    assert.deepEqual(cycle(at("2026-09-08T12:00:00-05:00")), []);
+    // the last week: the last run reopens the window, whose close is free agency's
+    assert.deepEqual(cycle(at("2027-01-04T12:00:00-06:00")), [["Blind bids process", "Wed Jan 6, 11:00 p.m.", "then the free agent window opens", false]]);
+    // after the last run, only "Free agency closes" is left
+    assert.deepEqual(cycle(at("2027-01-07T12:00:00-06:00")), []);
+    assert.deepEqual(comingUp({dates, kickoffs, calendar, now: at("2027-01-07T12:00:00-06:00")}).map((d) => d.what), ["Free agency closes", "Contract Year Ends - Lengths Reduced by 1"]);
     // logged out there's no calendar, but the season's own dates show
     assert.deepEqual(comingUp({dates: [], kickoffs, now}).map((d) => d.what), ["Trade deadline", "Playoffs begin", "Championship week"]);
     // two days ahead, the cut-down, the deadline, free agency closing and the rollover are to-dos for
