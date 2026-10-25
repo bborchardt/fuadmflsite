@@ -43,11 +43,14 @@
                 });
             });
         };
-        // the beta didn't load or start: MAIN runs the page, with the bar that leads out of the beta
+        // the beta didn't load or start: MAIN runs the page, with the bar that leads out of the beta. As
+        // handed the page, but not in the beta ("fallback", not "beta"), so MAIN doesn't act as the beta
+        var fallen = false;
         var fallBack = function () {
             var sheet = document.getElementById("fuad-css");
             if (sheet) { sheet.remove(); }
-            window.fuadLoader = {mode: "beta", barShown: true};
+            fallen = true;
+            window.fuadLoader = {mode: "fallback", barShown: true};
             whenBody(function () {
                 var bar = document.createElement("div");
                 var out = new URL(location.href);
@@ -92,7 +95,11 @@
         var loaded = function () { if (!started()) { failed(); } };
         // Safari reports a syntax error in a module only to the page, with no load or error event
         window.addEventListener("error", function (event) {
-            if (event.filename === BASE + version + "/fuad.js" && !started()) { failed(); }
+            if (event.filename === BASE + version + "/fuad.js" && !started()) {
+                failed();
+            } else if (fallen && event.filename === BASE + MAIN + "/fuad.js" && !window.fuadLoader.started) {
+                unavailable();
+            }
         });
         // written into the page while it's being read, so the stylesheet holds the first paint as a link
         // in the page would; added by script if this runs later, where writing would replace the page
