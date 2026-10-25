@@ -4,7 +4,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingGroups} from "../lib/bids.js";
-import {SALARY_CAP} from "../lib/rules.js";
+import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {cached} from "./store.js";
 import {forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
@@ -44,7 +44,9 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const league = markContracts(buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents}), draftedIds(draftResults));
     const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
     const groups = pendingGroups(pendingWaivers);
-    return {league, mflNames, groups, pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
+    // MFL's limit on conditional bid groups
+    const maxGroups = Number(leagueInfo.maxWaiverRounds) || 1;
+    return {league, mflNames, groups, maxGroups, positions: lineupPositions(leagueInfo), pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
 }
 
 // what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again

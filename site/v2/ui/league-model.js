@@ -7,6 +7,7 @@ import {text} from "./player-page.js";
 import {scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {cents} from "./format.js";
 import settings from "../lib/settings.js";
+import {lineupPositions} from "../lib/rules.js";
 
 export const PLAYOFF_TEAMS = settings.playoffs.teams;
 export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
@@ -15,7 +16,6 @@ export const PRIZE_SHARES = settings.payouts.places;
 // a season's entry fees before the commissioner records them: $100 a team, 10 teams
 export const ENTRY_FEE = 100;
 export const TEAMS = 10;
-export const POSITION_ORDER = ["QB", "RB", "WR", "TE", "PK"];
 
 const record = (wlt) => {
     const [w, l, t] = String(wlt || "0-0-0").split("-").map(Number);
@@ -150,13 +150,14 @@ export const powerFacts = (team) => [
 const weeksOf = (weeklyResults) => asArray(weeklyResults && (weeklyResults.weeklyResults || weeklyResults));
 
 // Starter points by position, the season so far: each week's starters (`weeklyResults` for YTD)
-// summed by the player's position, in team order of the total
-export function positionPoints(weeklyResults, positions, names) {
+// summed by the player's position, in team order of the total; `order` the league's positions
+// (lib/rules.js lineupPositions)
+export function positionPoints(weeklyResults, positions, names, order) {
     const totals = new Map();
     for (const week of weeksOf(weeklyResults)) {
         for (const matchup of asArray(week.matchup)) {
             for (const team of asArray(matchup.franchise)) {
-                const sums = totals.get(team.id) || Object.fromEntries(POSITION_ORDER.map((position) => [position, 0]));
+                const sums = totals.get(team.id) || Object.fromEntries(order.map((position) => [position, 0]));
                 for (const player of asArray(team.player)) {
                     const position = positions.get(player.id);
                     if (player.status === "starter" && position in sums) {
@@ -170,8 +171,8 @@ export function positionPoints(weeklyResults, positions, names) {
     return [...totals].map(([id, sums]) => ({
         id,
         name: names.get(id) || id,
-        parts: POSITION_ORDER.map((position) => ({position, points: Math.round(sums[position])})),
-        total: Math.round(POSITION_ORDER.reduce((sum, position) => sum + sums[position], 0))
+        parts: order.map((position) => ({position, points: Math.round(sums[position])})),
+        total: Math.round(order.reduce((sum, position) => sum + sums[position], 0))
     })).sort((a, b) => b.total - a.total);
 }
 
@@ -283,7 +284,11 @@ export function teamSeason(schedule, teamId) {
 
 // ---- Scores ----
 
-const byPosition = (a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || a.sortName.localeCompare(b.sortName);
+// lines by the league's positions (lib/rules.js lineupPositions), any other last, then by name
+const byPosition = (order) => {
+    const rank = (position) => (order.includes(position) ? order.indexOf(position) : order.length);
+    return (a, b) => rank(a.position) - rank(b.position) || a.sortName.localeCompare(b.sortName);
+};
 
 const minutes = (seconds) => Math.round(seconds / 60);
 
@@ -326,7 +331,8 @@ export function gameText(game, kickoffText) {
 // the viewer's first. Scores come from the feed with the league's rules, the way MFL's live page
 // keeps them current; `projections` (the projected stats feed) adds each side's projection and win
 // chance while anything is left to play. `rosters` adds the viewer's week's IR players to benches.
-export function scoreCards({live, players, stats, games, rules, projections = null, week, viewer = null, irOf = () => []}) {
+export function scoreCards({live, players, stats, games, rules, projections = null, week, viewer = null, irOf = () => [], order = lineupPositions(null)}) {
+    const sorted = byPosition(order);
     const cards = asArray(live && live.matchup).map((matchup) => {
         const sides = asArray(matchup.franchise).slice().sort((a, b) => Number(a.isHome) - Number(b.isHome));
         const built = sides.map((side) => {
@@ -335,10 +341,10 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
                 ...playerLine(entry, {players, stats, games, rules, ir: entry.status !== "starter" && irOf(side.id).includes(entry.id)}),
                 starter: entry.status === "starter"
             }));
-            const starters = lineup.filter((line) => line.starter).sort(byPosition);
+            const starters = lineup.filter((line) => line.starter).sort(sorted);
             const bench = lineup.filter((line) => !line.starter)
                 .concat(irOf(side.id).filter((id) => !lineup.some((line) => line.id === id)).map((id) => ({...playerLine({id}, {players, stats, games, rules, ir: true}), starter: false})))
-                .sort((a, b) => Number(a.ir) - Number(b.ir) || (b.points || 0) - (a.points || 0) || byPosition(a, b));
+                .sort((a, b) => Number(a.ir) - Number(b.ir) || (b.points || 0) - (a.points || 0) || sorted(a, b));
             const secondsLeft = starters.reduce((sum, line) => sum + (["playing"].includes(line.game.state) ? line.game.secondsLeft
                 : line.game.state === "scheduled" ? 3600 : 0), 0);
             return {
@@ -435,7 +441,7 @@ export function bestCard(card, limits) {
     return {...card, teams: card.teams.map((team) => {
         const pool = team.starters.concat(team.bench.filter((line) => !line.ir));
         const ids = bestLineup(pool, limits);
-        const starters = pool.filter((line) => ids.has(line.id)).map((line) => ({...line, tag: line.starter ? "" : "in"})).sort(byPosition);
+        const starters = pool.filter((line) => ids.has(line.id)).map((line) => ({...line, tag: line.starter ? "" : "in"})).sort(byPosition(Object.keys(limits.limits)));
         const bench = team.starters.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: "started"}))
             .concat(team.bench.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: ""})));
         return {

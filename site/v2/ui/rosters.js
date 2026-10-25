@@ -6,6 +6,7 @@ import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached, storage} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
+import {lineupPositions} from "../lib/rules.js";
 import {beforeWeek1} from "./context.js";
 import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
@@ -239,14 +240,15 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             drawPanel(mount, {
                 what: "players", rows: 12,
                 load: async () => {
-                    const [{built, freeAgents, names}, {byes, points}, before, projected] = await Promise.all([
+                    const [{built, settings, freeAgents, names}, {byes, points}, before, projected] = await Promise.all([
                         league(), extras(), beforeSeason(),
                         exp("projectedScores", {W: Number(window.liveScoringWeek) || 1}, {optional: true})
                     ]);
                     const projections = new Map(asArray(projected && projected.playerScore).map((entry) => [entry.id, Number(entry.score) || 0]));
-                    return {pool: playerPool(built, {freeAgents, points, projections: before ? new Map() : projections, byes, names, offseason: before}), before};
+                    const positions = lineupPositions(settings);
+                    return {pool: playerPool(built, {freeAgents, points, projections: before ? new Map() : projections, byes, names, offseason: before, positions}), before, positions};
                 },
-                render: ({pool, before}, body) => {
+                render: ({pool, before, positions}, body) => {
                     mount.classList.remove("fuad-panel");
                     state.sort = state.sort || (before ? "points" : "projected");
                     state.direction = state.direction || FIRST_DIRECTION[state.sort];
@@ -256,7 +258,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     const chips = body.querySelector(".fuad-chips-block");
                     const none = body.querySelector(".fuad-none");
                     const redraw = () => {
-                        chips.innerHTML = playerChips(state, {yearChips: layout.yearChips, viewer, watched});
+                        chips.innerHTML = playerChips(state, {positions, yearChips: layout.yearChips, viewer, watched});
                         const shown = sortPlayers(filterPlayers(pool, {...state, viewer, watched: state.watching ? watched : null}), state.sort, state.direction);
                         tbody.innerHTML = playerRows(shown, layout, {before, viewer});
                         none.hidden = shown.length > 0;

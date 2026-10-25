@@ -8,9 +8,6 @@ import {cents, money, yearsText} from "./format.js";
 import {dayText} from "./home-model.js";
 
 export const SEASONS_SHOWN = 5;
-export const ROUNDS = 5;
-export const TEAM_COUNT = 10;
-export const SCALE_PICKS = 10;
 // cap used within this much of the cap reads as tight
 export const TIGHT = 10;
 
@@ -108,9 +105,11 @@ export function picksOf(teamId, futureDraftPicks, {names, numbers = new Map(), n
     const held = asArray(futureDraftPicks && futureDraftPicks.franchise).flatMap((team) =>
         asArray(team.futureDraftPick).map((pick) => ({holder: team.id, year: Number(pick.year), round: Number(pick.round), original: pick.originalPickFor})));
     const years = [...new Set(held.map((pick) => pick.year))].sort((a, b) => a - b);
+    // every team holds a pick in each round MFL has, so the draft's rounds are the picks' own
+    const rounds = Math.max(0, ...held.map((pick) => pick.round));
     return years.map((year) => {
         const rows = [];
-        for (let round = 1; round <= ROUNDS; round++) {
+        for (let round = 1; round <= rounds; round++) {
             const inRound = held.filter((pick) => pick.year === year && pick.round === round);
             const own = inRound.find((pick) => pick.original === teamId);
             const number = (original) => (year === nextYear && numbers.has(original) ? `${round}.${String(numbers.get(original)).padStart(2, "0")}` : "");
@@ -160,9 +159,10 @@ export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, p
 
 // ---- Players ----
 
-// Every rostered player and every free agent on an NFL team. `offseason`: before week 1, when the
-// expiring contracts are restricted free agents (0 years left, still on the roster).
-export function playerPool(league, {freeAgents, points, projections, byes, names, offseason}) {
+// Every rostered player and every free agent on an NFL team at one of the league's `positions`
+// (lib/rules.js lineupPositions). `offseason`: before week 1, when the expiring contracts are
+// restricted free agents (0 years left, still on the roster).
+export function playerPool(league, {freeAgents, points, projections, byes, names, offseason, positions}) {
     const rostered = league.rosteredPlayers.map((player) => {
         const rfa = offseason && Boolean(player.rfa);
         return {
@@ -176,7 +176,7 @@ export function playerPool(league, {freeAgents, points, projections, byes, names
     const onRoster = new Set(rostered.map((player) => player.id));
     const free = asArray(freeAgents && freeAgents.leagueUnit && freeAgents.leagueUnit.player)
         .map((entry) => league.players.get(entry.id))
-        .filter((player) => player && !onRoster.has(player.playerId) && player.team && !/^FA/.test(player.team) && positionOrder(player.nflPosition) < POSITIONS.length)
+        .filter((player) => player && !onRoster.has(player.playerId) && player.team && !/^FA/.test(player.team) && positions.includes(player.nflPosition))
         .map((player) => ({
             id: player.playerId, name: player.fullName, position: player.nflPosition, nfl: player.team,
             bye: byes.get(player.team) || "", points: points.get(player.playerId) || 0,
@@ -231,8 +231,17 @@ export function sortPlayers(list, key, direction = FIRST_DIRECTION[key]) {
 
 // ---- Draft ----
 
-// what the scale pays at an overall pick: [QB, RB, WR, TE, PK]
+// what the scale pays at an overall pick, by position (POSITIONS' order)
 export const scaleAt = (pick) => POSITIONS.map((position) => rookieSalary(position.rookieBaseline, pick));
+
+// the picks the scale table shows: through the first that pays $1 at every position
+export function scalePicks() {
+    let last = 1;
+    while (last < 100 && !scaleAt(last).every((value) => value === 1)) {
+        last += 1;
+    }
+    return Array.from({length: last}, (_, i) => i + 1);
+}
 
 export function scaleText(pick) {
     const values = scaleAt(pick);

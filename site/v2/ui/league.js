@@ -5,6 +5,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup} from "./panel.js";
 import {cached} from "./store.js";
+import {lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {beforeWeek1} from "./context.js";
 import {readProjections, readRules} from "./live-scoring.js";
@@ -190,7 +191,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 load: async () => {
                     const [ytd, settings, known] = await Promise.all([exp("weeklyResults", {W: "YTD"}, {year}), leagueOf(year), players()]);
                     const positions = new Map([...known].map(([id, player]) => [id, player.position]));
-                    return positionPoints(ytd, positions, namesOf(settings));
+                    return positionPoints(ytd, positions, namesOf(settings), lineupPositions(settings));
                 },
                 render: (rows, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");

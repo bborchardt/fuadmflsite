@@ -80,7 +80,7 @@ export function drawScores(mount, data) {
             week === currentWeek ? exp("rosters", {}, {optional: true}) : null
         ]);
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
-        const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || []});
+        const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || [], order: limits && Object.keys(limits.limits).length ? Object.keys(limits.limits) : undefined});
         return {cards, names, games, limits, state: weekState(cards, games, weekday)};
     };
 

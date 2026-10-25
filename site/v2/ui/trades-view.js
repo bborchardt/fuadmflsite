@@ -193,7 +193,7 @@ const theirAssets = (v) => v.proposal.theirs.map((item) => asset(v, item.id, v.p
 const chosen = (assets, set) => assets.filter((item) => set.has(item.id));
 
 function sideTable(v, assets, set, key) {
-    return pickGroups(assets).map((group) => `<div class="fuad-trades-group">${esc(group.label)} · ${group.items.length}</div>
+    return pickGroups(assets, v.positions).map((group) => `<div class="fuad-trades-group">${esc(group.label)} · ${group.items.length}</div>
     ${group.items.map((item) => {
         const box = `<input type="checkbox" data-act="tick" data-side="${key}" data-id="${esc(item.id)}"${set.has(item.id) ? " checked" : ""} aria-label="${esc(item.name)}">`;
         const tag = item.ir ? '<span class="fuad-tag">IR</span>' : "";

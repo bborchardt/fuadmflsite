@@ -72,7 +72,7 @@ test("draft picks: each round's own pick, picks from others, and own picks trade
 });
 
 test("the player pool: rostered players and free agents on an NFL team, filtered by the chips together", () => {
-    const pool = playerPool(league, {freeAgents: fixture("free-agents.json").freeAgents, points: context.points, projections: new Map(), byes: context.byes, names, offseason: false});
+    const pool = playerPool(league, {freeAgents: fixture("free-agents.json").freeAgents, points: context.points, projections: new Map(), byes: context.byes, names, offseason: false, positions: ["QB", "RB", "WR", "TE", "PK"]});
     const free = pool.filter((player) => player.fa);
     assert.ok(free.length > 100);
     assert.ok(free.every((player) => player.nfl && player.nfl !== "FA" && player.salary === null));
@@ -89,7 +89,7 @@ test("the player pool: rostered players and free agents on an NFL team, filtered
 });
 
 test("in the offseason a player without years left is a restricted free agent", () => {
-    const pool = playerPool(league, {freeAgents: null, points: new Map(), projections: new Map(), byes: new Map(), names, offseason: true});
+    const pool = playerPool(league, {freeAgents: null, points: new Map(), projections: new Map(), byes: new Map(), names, offseason: true, positions: ["QB", "RB", "WR", "TE", "PK"]});
     const rfas = pool.filter((player) => player.rfa);
     assert.ok(rfas.every((player) => player.salary === null && player.years === null));
     assert.deepEqual(filterPlayers(pool, {years: ["FA"]}).map((player) => player.id).sort(), rfas.map((player) => player.id).sort());

@@ -3,7 +3,7 @@
 
 import {esc} from "./html.js";
 import {clock, dayText} from "./home-model.js";
-import {POSITION_ORDER, gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
+import {gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
 
 // "R. Stevenson" on phones, the full name on desktop
 const shortName = (name) => {
@@ -204,7 +204,7 @@ export function powerMarkup(teams, {viewer, final, teamHref}) {
 
 export function positionsMarkup(rows, {viewer, teamHref}) {
     const top = Math.max(...rows.map((row) => row.total), 1);
-    const legend = `<span class="fuad-legend">${POSITION_ORDER.map((position) => `<span><span class="fuad-swatch fuad-pos-${position.toLowerCase()}" aria-hidden="true"></span>${position}</span>`).join("")}</span>`;
+    const legend = `<span class="fuad-legend">${(rows.length ? rows[0].parts.map((part) => part.position) : []).map((position) => `<span><span class="fuad-swatch fuad-pos-${position.toLowerCase()}" aria-hidden="true"></span>${position}</span>`).join("")}</span>`;
     return `<section class="fuad-panel fuad-positions">
         <div class="fuad-panel-head">
             <h2 class="fuad-panel-heading">Starter points by position</h2>

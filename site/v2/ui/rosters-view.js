@@ -5,7 +5,7 @@ import {POSITIONS, SALARY_CAP, franchiseSalary, rookieSalary} from "../lib/rules
 import {esc} from "./html.js";
 import {STAR} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
-import {SCALE_PICKS, contractYears, drafted, scaleRange, scaleText} from "./rosters-model.js";
+import {contractYears, drafted, scalePicks, scaleRange, scaleText} from "./rosters-model.js";
 import {money} from "./format.js";
 
 const pts = (value) => (Number(value) || 0).toFixed(1);
@@ -85,7 +85,6 @@ export function picksPanels(years, {nextYear, live}) {
 
 // ---- Players ----
 
-export const POSITION_CHIPS = ["All", ...POSITIONS.map((position) => position.code)];
 export const OWNER_CHIPS = ["All", "Mine", "Other teams", "Free agents"];
 
 // on phones, so the Owner row has room for the Watching star
@@ -156,7 +155,7 @@ export function myPicksPanel(board, {viewer, year}) {
 }
 
 export function scalePanel() {
-    const rows = Array.from({length: SCALE_PICKS}, (_, i) => i + 1);
+    const rows = scalePicks();
     return `<section class="fuad-panel fuad-scale" aria-labelledby="fuad-scale">
         <button type="button" class="fuad-scale-toggle fuad-phone-only" aria-expanded="false" aria-controls="fuad-scale-table">
             <span class="fuad-panel-heading" id="fuad-scale">Rookie scale</span><span class="fuad-meta fuad-scale-summary">Pick 1: ${esc(scaleText(1))}</span>
@@ -273,9 +272,9 @@ export function playerRows(shown, {columns, phoneKeys}, {before, viewer}) {
     return shown.map((player) => `<tr class="${player.owner && player.owner === viewer ? "fuad-row-mine" : ""}">${columns.map(([key]) => playerCell(player, key, {phoneKeys, before})).join("")}</tr>`).join("");
 }
 
-// the filter chips; the Owner row has Mine and the Watching star only for a member logged in
-export function playerChips(state, {yearChips, viewer, watched}) {
-    return chipRow("Position", POSITION_CHIPS, state.positions, "positions")
+// the filter chips, `positions` the league's (lib/rules.js lineupPositions); the Owner row has Mine and the Watching star only for a member logged in
+export function playerChips(state, {positions, yearChips, viewer, watched}) {
+    return chipRow("Position", ["All", ...positions], state.positions, "positions")
         + chipRow("Years left", yearChips, state.years, "years")
         + (viewer ? chipRow("Owner", OWNER_CHIPS, state.owners, "owners", watched ? `<button type="button" class="fuad-filter fuad-star-chip" aria-pressed="${state.watching}" data-chip="watching" data-value="Watching" aria-label="Watching" title="Watching">${STAR}</button>` : "")
             : chipRow("Owner", OWNER_CHIPS.filter((name) => name !== "Mine"), state.owners, "owners"));
