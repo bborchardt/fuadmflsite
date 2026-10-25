@@ -5,7 +5,6 @@ import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
-import settings from "../lib/settings.js";
 import {money, plural} from "./format.js";
 
 const DAY = 24 * 60 * 60;
@@ -234,7 +233,6 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     }
     const alerts = [];
     const push = (tone, mark, title, detail, href, where) => alerts.push({tone, mark, title, detail: [detail, href && where].filter(Boolean).join(" · "), href: href || null});
-    const week = Number(league.week);
     const byCut = cutDown ? `by ${dayText(cutDown)}` : "before the season";
 
     // the same violations League Alerts and the daily job flag, for the viewer's team
@@ -268,7 +266,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         const unsigned = draftDayUnsigned(franchise);
         if (unsigned.length) {
             push(tones.orange, "Y", unsigned.length === 1 ? `Post a contract length for ${lastName(unsigned[0])}` : `Post contract lengths for ${unsigned.length} players`,
-                `Draft-day players need them ${byCut}; $5 a day late`, links.contracts, "Message board");
+                `Draft-day players need them ${byCut}`, links.contracts, "Message board");
         }
         if (franchise.numPlayers > ROSTER_MAX) {
             push(tones.orange, String(ROSTER_MAX), `Get to ${ROSTER_MAX} active ${byCut}`, `You have ${franchise.numPlayers}`, links.drop, "Drop");
@@ -279,7 +277,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
 
     if (lineup && phase === "season") {
         for (const {player, why} of lineup.problems) {
-            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, settings.antiTanking && league.weeks && week < league.weeks.playoffsStart ? "A loss won’t count toward draft order" : "", links.lineup, "Lineup");
+            push(tones.red, "!", `${player.fullName} ${why} and in your lineup`, "", links.lineup, "Lineup");
         }
         const short = lineup.required - lineup.starters;
         if (short > 0) {

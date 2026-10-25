@@ -202,9 +202,21 @@ export function powerMarkup(teams, {viewer, final, teamHref}) {
     return `<section class="fuad-panel">${heading}${phone}${desktop}</section>`;
 }
 
+// A position's chart color: its own for this league's five, then two more in the league's order,
+// then grey (red is kept for limits)
+const NAMED = ["QB", "RB", "WR", "TE", "PK"];
+function positionClass(position, order) {
+    if (NAMED.includes(position)) {
+        return `fuad-pos-${position.toLowerCase()}`;
+    }
+    const extra = order.filter((other) => !NAMED.includes(other)).indexOf(position);
+    return extra >= 0 && extra < 2 ? `fuad-pos-extra-${extra + 1}` : "fuad-pos-other";
+}
+
 export function positionsMarkup(rows, {viewer, teamHref}) {
     const top = Math.max(...rows.map((row) => row.total), 1);
-    const legend = `<span class="fuad-legend">${(rows.length ? rows[0].parts.map((part) => part.position) : []).map((position) => `<span><span class="fuad-swatch fuad-pos-${position.toLowerCase()}" aria-hidden="true"></span>${position}</span>`).join("")}</span>`;
+    const order = rows.length ? rows[0].parts.map((part) => part.position) : [];
+    const legend = `<span class="fuad-legend">${order.map((position) => `<span><span class="fuad-swatch ${positionClass(position, order)}" aria-hidden="true"></span>${esc(position)}</span>`).join("")}</span>`;
     return `<section class="fuad-panel fuad-positions">
         <div class="fuad-panel-head">
             <h2 class="fuad-panel-heading">Starter points by position</h2>
@@ -215,7 +227,7 @@ export function positionsMarkup(rows, {viewer, teamHref}) {
             <ul class="fuad-position-rows">${rows.map((row) => `<li>
                 <span class="fuad-position-name${row.id === viewer ? " fuad-strong" : ""}"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></span>
                 <span class="fuad-position-total">${row.total}</span>
-                <span class="fuad-stack" style="width: ${Math.round(row.total / top * 100)}%" aria-hidden="true">${row.parts.map((part) => `<span class="fuad-pos-${part.position.toLowerCase()}" style="flex: ${part.points} 1 0">${part.points}</span>`).join("")}</span>
+                <span class="fuad-stack" style="width: ${Math.round(row.total / top * 100)}%" aria-hidden="true">${row.parts.map((part) => `<span class="${positionClass(part.position, order)}" style="flex: ${part.points} 1 0">${part.points}</span>`).join("")}</span>
                 <span class="fuad-position-values">${row.parts.map((part) => `${part.position} ${part.points}`).join(" · ")}</span>
             </li>`).join("")}</ul>
         </div>
@@ -238,22 +250,22 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
             <th scope="row" class="fuad-team"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></th>
             <td class="fuad-num">${esc(row.weeks.join(", ") || "—")}</td><td class="fuad-num">${row.weekly ? esc(ledger(row.weekly)) : "—"}</td>
             <td class="fuad-num">${esc(row.record)}</td><td class="fuad-num">${row.allPlay ? esc(ledger(row.allPlay)) : "—"}</td>
-            ${named ? `<td class="fuad-num">${row.prize ? esc(`${row.prize.place} ${ledger(row.prize.amount)}`) : "—"}</td>` : ""}
+            ${named ? `<td class="fuad-num">${row.prize ? esc(row.prize.amount === null ? row.prize.place : `${row.prize.place} ${ledger(row.prize.amount)}`) : "—"}</td>` : ""}
             <td class="fuad-num fuad-strong${row.total > 0 ? "" : " fuad-muted"}">${esc(ledger(row.total))}</td>
         </tr>`).join("")}</tbody>
     </table></div>`;
     const names = new Map(result.rows.map((row) => [row.id, row.name]));
     const prizes = `<div class="fuad-prizes">${result.prizes.map((prize) => `<div class="fuad-prize">
         <span class="fuad-prize-place${prize.team && prize.team === viewer ? " fuad-mine" : ""}">${esc(prize.place)} · ${Math.round(prize.share * 100)}%</span>
-        <span class="fuad-prize-amount">${esc(ledger(prize.amount))}</span>
+        ${prize.amount === null ? "" : `<span class="fuad-prize-amount">${esc(ledger(prize.amount))}</span>`}
         ${prize.team ? `<span class="fuad-prize-team"><a href="${esc(teamHref(prize.team))}">${esc(names.get(prize.team) || "")}</a></span>` : ""}
     </div>`).join("")}</div>`;
     const pot = `<dl class="fuad-pot">
-        <div class="fuad-pot-line"><dt>Pot</dt><dd>${esc(ledger(result.pot))}</dd></div>
+        <div class="fuad-pot-line"><dt>Pot</dt><dd${result.pot === null ? ' class="fuad-muted"' : ""}>${result.pot === null ? "Not in MFL’s accounting yet" : esc(ledger(result.pot))}</dd></div>
         ${result.potEntries.map((entry) => `<div class="fuad-pot-entry"><dt>${esc(entry.description)}</dt><dd>${esc(ledger(entry.amount))}</dd></div>`).join("")}
-        <div class="fuad-pot-line"><dt>Weekly points · ${result.weeklyTotal / 15} × $15</dt><dd>${esc(ledger(-result.weeklyTotal))}</dd></div>
+        <div class="fuad-pot-line"><dt>Weekly points · ${result.weeklyTotal / result.weeklyPrize} × ${esc(ledger(result.weeklyPrize).replace(/\.00$/, ""))}</dt><dd>${esc(ledger(-result.weeklyTotal))}</dd></div>
         <div class="fuad-pot-line"><dt>All-play${final ? "" : " so far"}</dt><dd>${esc(ledger(-result.allPlayPaid))}</dd></div>
-        <div class="fuad-pot-line fuad-pot-total"><dt>For the playoffs</dt><dd>${esc(ledger(result.forPlayoffs))}</dd></div>
+        <div class="fuad-pot-line fuad-pot-total"><dt>For the playoffs</dt><dd>${result.forPlayoffs === null ? "—" : esc(ledger(result.forPlayoffs))}</dd></div>
     </dl>`;
     return `<section class="fuad-panel" aria-labelledby="fuad-won">
             <h2 class="fuad-panel-heading" id="fuad-won">${final ? `${esc(final)} payouts` : "Won so far"}</h2>${today}

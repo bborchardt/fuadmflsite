@@ -13,9 +13,6 @@ export const PLAYOFF_TEAMS = settings.playoffs.teams;
 export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
 export const ALL_PLAY_RATE = settings.payouts.allPlayPerGameOver500;
 export const PRIZE_SHARES = settings.payouts.places;
-// a season's entry fees before the commissioner records them: $100 a team, 10 teams
-export const ENTRY_FEE = 100;
-export const TEAMS = 10;
 
 const record = (wlt) => {
     const [w, l, t] = String(wlt || "0-0-0").split("-").map(Number);
@@ -193,6 +190,9 @@ export function weeklyWinners(weeklyResults, lastRegularWeek) {
         .filter((week) => week.teams.length);
 }
 
+// "1st", "2nd", "3rd", "4th"…
+const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
+
 // Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00")
 export const ledger = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
@@ -228,15 +228,15 @@ export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thir
     return final && third ? [final[0], final[1], third[0]] : null;
 }
 
-// Bylaws 1.6–1.8. The pot is the league-wide (0000) entries in MFL's accounting, or the entry fees
-// before they're recorded; the weekly prizes (every regular season week, known up front) and the
-// all-play payouts so far come out of it, and what's left is split 55/30/15. `places` names the
-// prize winners once the playoffs are over.
+// The payouts (settings.payouts). The pot is the league-wide (0000) entries in MFL's accounting; the
+// weekly prizes (every regular season week, known up front) and the all-play payouts so far come out
+// of it, and what's left is split by the places' shares. Until the commissioner records the pot it's
+// null, and so are the playoffs' amounts. `places` names the prize winners once the playoffs are over.
 export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, names}) {
     const entries = asArray(accounting && accounting.entry).filter((entry) => entry.franchise_id === "0000")
         .map((entry) => ({description: entry.description, amount: Number(entry.amount) || 0}));
-    const potEntries = entries.length ? entries : [{description: "Entry fees", amount: ENTRY_FEE * TEAMS}];
-    const pot = potEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const potEntries = entries;
+    const pot = entries.length ? entries.reduce((sum, entry) => sum + entry.amount, 0) : null;
     const weekly = new Map();
     for (const {week, teams} of weeklyWinners(weeklyResults, lastRegularWeek)) {
         for (const id of teams) {
@@ -253,19 +253,19 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
     });
     const weeklyTotal = lastRegularWeek * WEEKLY_PRIZE;
     const allPlayPaid = teams.reduce((sum, team) => sum + team.allPlay, 0);
-    const forPlayoffs = cents(pot - weeklyTotal - allPlayPaid);
+    const forPlayoffs = pot === null ? null : cents(pot - weeklyTotal - allPlayPaid);
     const prizes = PRIZE_SHARES.map((share, i) => ({
-        place: ["1st", "2nd", "3rd"][i],
+        place: ordinal(i + 1),
         share,
-        amount: cents(forPlayoffs * share),
+        amount: forPlayoffs === null ? null : cents(forPlayoffs * share),
         team: places ? places[i] : null
     }));
     const prizeOf = (id) => prizes.find((prize) => prize.team === id) || null;
     const rows = teams.map((team) => {
         const prize = prizeOf(team.id);
-        return {...team, prize, total: team.weekly + team.allPlay + (prize ? prize.amount : 0)};
+        return {...team, prize, total: team.weekly + team.allPlay + (prize && prize.amount ? prize.amount : 0)};
     }).sort((a, b) => b.total - a.total || b.net - a.net);
-    return {potEntries, pot, weeklyTotal, allPlayPaid, forPlayoffs, prizes, rows};
+    return {potEntries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs, prizes, rows};
 }
 
 // "Week 3 $15.00 · 17-19 all-play · 2nd $139.51": a team's winnings in one grey line
@@ -276,7 +276,7 @@ export function winningsLine(row) {
     }
     parts.push(`${row.record} all-play${row.allPlay ? ` ${ledger(row.allPlay)}` : ""}`);
     if (row.prize) {
-        parts.push(`${row.prize.place} ${ledger(row.prize.amount)}`);
+        parts.push(row.prize.amount === null ? row.prize.place : `${row.prize.place} ${ledger(row.prize.amount)}`);
     }
     return parts.join(" · ");
 }

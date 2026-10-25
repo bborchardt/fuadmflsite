@@ -196,9 +196,13 @@ test("weekly winners and payouts as 2025's accounting recorded them", () => {
     assert.equal(byId.get("0001").allPlay, 30);
     assert.equal(byId.get("0005").allPlay, 44.25);
     assert.equal(result.weeklyTotal, 210);
-    assert.deepEqual(result.potEntries, [{description: "Entry fees", amount: 1000}]);
+    // 2025's accounting has no league-wide entries: no pot, so the places carry no amounts
+    assert.deepEqual(result.potEntries, []);
+    assert.equal(result.pot, null);
+    assert.equal(result.forPlayoffs, null);
+    assert.deepEqual(result.prizes.map((prize) => [prize.place, prize.share, prize.amount, prize.team]), [["1st", 0.55, null, "0004"], ["2nd", 0.3, null, "0001"], ["3rd", 0.15, null, "0005"]]);
     assert.equal(result.rows[0].id, "0004");
-    assert.match(winningsLine(byId.get("0004")), /^Weeks 1, 4, 5, 9, 13 \$75\.00 · .* all-play \$58\.50 · 1st \$/);
+    assert.match(winningsLine(byId.get("0004")), /^Weeks 1, 4, 5, 9, 13 \$75\.00 · .* all-play \$58\.50 · 1st$/);
 });
 
 test("this season's pot is the league-wide entries, prizes unnamed until the playoffs are played", () => {
