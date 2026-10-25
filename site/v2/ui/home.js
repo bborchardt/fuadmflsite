@@ -20,8 +20,8 @@ import {moveRows} from "./move-rows.js";
 const CHAT_POLL = 15 * 1000;
 // MFL's own chat stops polling after about two hours without posting
 const CHAT_IDLE = 2 * 60 * 60 * 1000;
-// phones show the newest messages in the page, with no box of their own to trap a swipe; the rest
-// are on MFL's chat page
+// phones show the newest messages in the page, with no box of their own to trap a swipe, and as many
+// more each tap of Older messages
 const PHONE_CHAT = 10;
 const CHEVRON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
@@ -99,7 +99,18 @@ function drawChat(mount, {context, franchiseId, teams}) {
     let timer = null;
     // null until the first draw, so an empty chat still draws its "No messages yet."
     let drawnIds = null;
-    let olderLink = null;
+    let olderButton = null;
+    // phones: the oldest message shown once Older messages is tapped, so new ones don't hide it
+    let shownFrom = null;
+    let shown = [];
+    let shownList = null;
+    const markOlder = () => {
+        const at = shown.findIndex((message) => message.id === shownFrom);
+        const start = at >= 0 ? at : Math.max(0, shown.length - PHONE_CHAT);
+        [...shownList.children].forEach((node, i) => node.classList.toggle("fuad-chat-older", i < start));
+        olderButton.hidden = start === 0;
+        return start;
+    };
     const load = async () => {
         const response = await mflFetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
@@ -109,33 +120,34 @@ function drawChat(mount, {context, franchiseId, teams}) {
     };
     const showMessages = (messages, list) => {
         const ids = messages.map((message) => message.id).join(",");
-        if (ids === drawnIds) {
+        // a refresh started before the card was drawn again answers for a list no longer on the page
+        if (!list.isConnected || ids === drawnIds) {
             return;
         }
         drawnIds = ids;
         const today = dayText(Date.now() / 1000);
-        const older = Math.max(0, messages.length - PHONE_CHAT);
         list.innerHTML = messages.length
-            ? messages.map((message, i) => {
+            ? messages.map((message) => {
                 const mine = message.from === franchiseId;
                 const to = !message.to ? "" : message.to === franchiseId ? "to you" : message.to === "0000" ? "to the commissioner" : `to ${teams.get(message.to) || "a team"}`;
                 const when = message.at ? (dayText(message.at) === today ? clock(message.at) : `${dayText(message.at)}, ${clock(message.at)}`) : "";
-                return `<div class="fuad-chat-message${i < older ? " fuad-chat-older" : ""}">
+                return `<div class="fuad-chat-message">
                     <div class="fuad-chat-head"><span class="fuad-chat-who"><span class="${mine ? "fuad-chat-mine" : ""}">${esc(teams.get(message.from) || "Commissioner")}</span>${to ? `<span class="fuad-tag">${LOCK}${esc(to)}</span>` : ""}</span><span class="fuad-meta">${esc(when)}</span></div>
                     <div>${esc(message.text)}</div>
                 </div>`;
             }).join("")
             : '<p class="fuad-muted fuad-empty">No messages yet.</p>';
+        shown = messages;
+        shownList = list;
         list.classList.toggle("fuad-chat-list", messages.length > 0);
         list.scrollTop = list.scrollHeight;
-        olderLink.hidden = older === 0;
+        markOlder();
     };
     const render = (messages, body) => {
         drawnIds = null;
         const typed = mount.querySelector("#fuad-chat-input");
         const draft = typed ? {text: typed.value, to: mount.querySelector("#fuad-chat-to").value} : null;
         body.innerHTML = `
-        <a class="fuad-chat-older-link" href="${esc(`${window.location.origin}/${context.season}/chat?L=${encodeURIComponent(context.leagueId)}&COUNT=40`)}" hidden>Older messages</a>
         <div class="fuad-chat-scroll"></div>
         <div class="fuad-chat-to"><label for="fuad-chat-to" class="fuad-meta">To</label>
             <select id="fuad-chat-to"><option value="">Everyone</option>${others.map(([id, name]) => `<option value="${esc(id)}">${esc(name)} (private)</option>`).join("")}</select></div>
@@ -146,7 +158,14 @@ function drawChat(mount, {context, franchiseId, teams}) {
         </form>
         <p class="fuad-result" role="status"></p>`;
         const list = body.querySelector(".fuad-chat-scroll");
-        olderLink = body.querySelector(".fuad-chat-older-link");
+        if (!olderButton) {
+            olderButton = mount.querySelector(".fuad-chat-older-button");
+            olderButton.addEventListener("click", () => {
+                const start = markOlder();
+                shownFrom = (shown[Math.max(0, start - PHONE_CHAT)] || {}).id || null;
+                markOlder();
+            });
+        }
         const input = body.querySelector("input");
         const to = body.querySelector("select");
         const result = body.querySelector(".fuad-result");
@@ -202,7 +221,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
         };
         schedule();
     };
-    drawPanel(mount, {heading: "Chat", what: "chat", key: `fuad.home.chat.${context.season}.${franchiseId}`, rows: 3, load, render});
+    drawPanel(mount, {heading: "Chat", actions: '<button type="button" class="fuad-text-button fuad-chat-older-button" hidden>Older messages</button>', what: "chat", key: `fuad.home.chat.${context.season}.${franchiseId}`, rows: 3, load, render});
 }
 
 function drawBoard(mount, {context, loggedIn, loginHref, exp, boardHref, threadHref}) {
