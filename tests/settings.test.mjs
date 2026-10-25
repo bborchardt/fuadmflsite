@@ -11,6 +11,7 @@ import settings from "../site/v2/lib/settings.js";
 import {CONTRACT_WINDOW_HOURS} from "../site/v2/lib/adds.js";
 import {MAX_YEARS, yearMentions} from "../site/v2/lib/contract-years.js";
 import {LENGTHS, isLengthLine, yearsIn} from "../site/v2/ui/add-model.js";
+import {lineupPositions, seasonWeeks, withOthers} from "../site/v2/lib/rules.js";
 
 const file = JSON.parse(readFileSync(new URL("../site/v2/settings.json", import.meta.url), "utf8"));
 
@@ -39,4 +40,16 @@ test("contract lengths run from 1 to maxYears, and a longer one is read so it ca
     assert.equal(yearsIn(`${MAX_YEARS} years`), MAX_YEARS);
     assert.equal(yearsIn(`${MAX_YEARS + 1} years`), null);
     assert.deepEqual(yearMentions("six years, or 10 yrs").map((mention) => mention.years), [6, 10]);
+});
+
+test("from MFL's league export: the season's weeks and the league's positions", () => {
+    assert.deepEqual(seasonWeeks({lastRegularSeasonWeek: "14", endWeek: "17"}), {playoffsStart: 15, championship: 17});
+    assert.deepEqual(seasonWeeks({lastRegularSeasonWeek: "13", endWeek: "16"}), {playoffsStart: 14, championship: 16});
+    assert.equal(seasonWeeks({}), null);
+    const league = JSON.parse(readFileSync(new URL("../tools/verify/screens/league.json", import.meta.url), "utf8")).league;
+    assert.deepEqual(lineupPositions(league), ["QB", "RB", "WR", "TE", "PK"]);
+    assert.deepEqual(lineupPositions({starters: {position: [{name: "QB"}, {name: "Def"}]}}), ["QB", "Def"]);
+    // without it, the rookie scale's
+    assert.deepEqual(lineupPositions(null), Object.keys(file.rookieScale.firstPick));
+    assert.deepEqual(withOthers(["QB", "RB"], ["RB", "Def", "QB", "Def"]), ["QB", "RB", "Def"]);
 });

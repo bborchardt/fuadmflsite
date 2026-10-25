@@ -5,6 +5,7 @@
 import {asArray} from "../lib/mfl.js";
 import {POSITIONS, SALARY_CAP, positionOrder, rookieSalary} from "../lib/rules.js";
 import {cents, money, yearsText} from "./format.js";
+import settings from "../lib/settings.js";
 import {dayText} from "./home-model.js";
 
 export const SEASONS_SHOWN = 5;
@@ -256,14 +257,15 @@ export function scaleRange(pick) {
     return low === high ? `$${low}` : `$${low}–${high}`;
 }
 
-// Next year's order (bylaws 8.1–8.2), worst to first: picks 1–4 the teams out of the playoffs,
-// worst first by the standings order; then the playoff teams, numbered once their finish is known.
-// `picture` is League's playoffPicture; `finish` the playoff teams' final order, worst first, when known
-// (first-round losers by seed, the lower first; the 3rd place game's loser and winner; the runner-up;
-// the champion).
-export function draftOrder(picture, {finish = null, futureDraftPicks = null, names, nextYear}) {
-    const out = picture.hunt.map((entry) => entry.team).sort((a, b) => b.order - a.order);
-    const inOrder = finish || picture.seeds.slice().reverse().map((seed) => seed.team.id);
+// Next year's order (settings.draftOrder), worst to first. "playoffFinish": the teams out of the
+// playoffs, worst first by the standings order; then the playoff teams, numbered once their finish
+// is known. "standings": every team, worst first by the standings order. `picture` is League's
+// playoffPicture; `finish` the playoff teams' final order, worst first, when known (playoffFinish).
+export function draftOrder(picture, {finish = null, futureDraftPicks = null, names, nextYear, by = settings.draftOrder}) {
+    const standingsOnly = by === "standings";
+    const out = (standingsOnly ? picture.seeds.map((seed) => seed.team) : []).concat(picture.hunt.map((entry) => entry.team))
+        .sort((a, b) => b.order - a.order);
+    const inOrder = standingsOnly ? [] : finish || picture.seeds.slice().reverse().map((seed) => seed.team.id);
     const traded = (teamId) => asArray(futureDraftPicks && futureDraftPicks.franchise).flatMap((team) =>
         asArray(team.futureDraftPick).filter((pick) => Number(pick.year) === nextYear && pick.originalPickFor === teamId && team.id !== teamId)
             .map((pick) => `Round ${pick.round} → ${names.get(team.id) || team.id}`));
@@ -280,25 +282,29 @@ export function draftOrder(picture, {finish = null, futureDraftPicks = null, nam
 // the original owner → pick number, for picks already decided
 export const pickNumbers = (order) => new Map(order.filter((row) => row.pick).map((row) => [row.id, row.pick]));
 
-// Playoff teams worst to best once every game is played: the first round's losers (lower seed
-// first), then the 3rd place game's loser and winner, the runner-up and the champion. Null until then.
-export function playoffFinish(brackets, {completedWeek = Infinity} = {}) {
+// Playoff teams worst to best once every game is played: each round's losers in turn (lower seed
+// first), those in the 3rd place game, if the league has one, by its result; then the runner-up and
+// the champion. `brackets`: the championship's, and the 3rd place game's. Null until then.
+export function playoffFinish(brackets, {completedWeek = Infinity, thirdPlaceGame = settings.playoffs.thirdPlaceGame} = {}) {
     const [championship, third] = brackets;
     const rounds = asArray(championship && championship.playoffRound);
     const games = (round) => asArray(round && round.playoffGame);
     const decided = (game) => game && game.home && game.away && game.home.points !== undefined && game.away.points !== undefined;
     const loser = (game) => (Number(game.home.points) >= Number(game.away.points) ? game.away : game.home);
     const winner = (game) => (loser(game) === game.home ? game.away : game.home);
-    const firstRound = games(rounds[0]);
     const final = games(rounds[rounds.length - 1])[0];
-    const thirdGame = games(asArray(third && third.playoffRound)[0])[0];
+    const thirdGame = thirdPlaceGame ? games(asArray(third && third.playoffRound)[0])[0] : null;
+    const earlier = rounds.slice(0, -1).map(games);
     // MFL may show points while a game is on: only a finished week counts
     const lastWeek = Number((rounds[rounds.length - 1] || {}).week) || 0;
-    if (completedWeek < lastWeek || !firstRound.every(decided) || !decided(final) || !decided(thirdGame)) {
+    if (completedWeek < lastWeek || !earlier.every((round) => round.every(decided)) || !decided(final) || (thirdPlaceGame && !decided(thirdGame))) {
         return null;
     }
-    const firstLosers = firstRound.map(loser).sort((a, b) => Number(b.seed || 0) - Number(a.seed || 0)).map((side) => side.franchise_id);
-    return [...firstLosers, loser(thirdGame).franchise_id, winner(thirdGame).franchise_id, loser(final).franchise_id, winner(final).franchise_id];
+    const inThird = new Set(thirdGame ? [thirdGame.home.franchise_id, thirdGame.away.franchise_id] : []);
+    const losers = earlier.flatMap((round) => round.map(loser).filter((side) => !inThird.has(side.franchise_id))
+        .sort((a, b) => Number(b.seed || 0) - Number(a.seed || 0)).map((side) => side.franchise_id));
+    const thirdPlaces = thirdGame ? [loser(thirdGame).franchise_id, winner(thirdGame).franchise_id] : [];
+    return [...losers, ...thirdPlaces, loser(final).franchise_id, winner(final).franchise_id];
 }
 
 // This site's draft from `draftResults`: rounds of picks, each with its team (and the original

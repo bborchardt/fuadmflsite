@@ -84,25 +84,28 @@ export function allPlayRecords(weeklyResults, lastRegularWeek) {
     return records;
 }
 
-// Bylaws 1.1–1.3: the division winners are the first seeds, the top ones with byes; the rest are
-// the best all-play records, ties broken by the standings order. "In the hunt" is the rest,
-// all-play games back of the last seed.
-export function playoffPicture(divisions) {
+// The playoff seeds (settings.playoffs): the division winners first, if the league seeds them so, in
+// standings order; then the best all-play records, or the next teams in the standings, ties going
+// by the standings order. The top seeds have byes. "In the hunt" is the rest, games back of the last
+// seed by the same record.
+export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divisionWinnersSeededFirst, wildcardsBy = settings.playoffs.wildcardsBy} = {}) {
     const all = divisions.flatMap((division) => division.rows.map((team) => ({...team, divisionName: division.name})));
     const byStandings = (a, b) => a.order - b.order;
-    const winners = divisions.map((division) => division.rows[0]).filter(Boolean)
+    const winners = !winnersFirst ? [] : divisions.map((division) => division.rows[0]).filter(Boolean)
         .map((team) => all.find((row) => row.id === team.id)).sort(byStandings);
+    const allPlay = wildcardsBy === "allPlay";
+    const recordOf = (team) => (allPlay ? team.allPlay : team.h2h);
     const rest = all.filter((team) => !winners.includes(team))
-        .sort((a, b) => pct(b.allPlay) - pct(a.allPlay) || byStandings(a, b));
+        .sort((a, b) => (allPlay ? pct(b.allPlay) - pct(a.allPlay) : 0) || byStandings(a, b));
     const wildcards = rest.slice(0, PLAYOFF_TEAMS - winners.length);
     const seeds = [
         ...winners.map((team) => ({team, why: `${team.divisionName} winner`})),
-        ...wildcards.map((team) => ({team, why: `${recordText(team.allPlay)} all-play`}))
+        ...wildcards.map((team) => ({team, why: `${recordText(recordOf(team))}${allPlay ? " all-play" : ""}`}))
     ].map((seed, i) => ({...seed, seed: i + 1, bye: i < settings.playoffs.byes}));
     const last = wildcards[wildcards.length - 1];
     const hunt = rest.slice(wildcards.length).map((team) => {
-        const back = last ? gamesBack(last.allPlay, team.allPlay) : 0;
-        return {team, record: recordText(team.allPlay), back: back > 0 ? `${back} back` : "tied · out on standings"};
+        const back = last ? gamesBack(recordOf(last), recordOf(team)) : 0;
+        return {team, record: recordText(recordOf(team)), back: back > 0 ? `${back} back` : "tied · out on standings"};
     });
     return {seeds, hunt};
 }
@@ -193,10 +196,19 @@ export function weeklyWinners(weeklyResults, lastRegularWeek) {
 // Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00")
 export const ledger = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
+// The brackets that decide the places, from MFL's `playoffBrackets` list: the championship's, and
+// the 3rd place game's if the league has one
+export const bracketCount = () => (settings.playoffs.thirdPlaceGame ? 2 : 1);
+export function placeBrackets(list) {
+    const champion = list.find((bracket) => /champion/i.test(bracket.bracketWinnerTitle || "")) || list[0];
+    const third = list.find((bracket) => /3rd/i.test(`${bracket.bracketWinnerTitle} ${bracket.name}`)) || list[1];
+    return settings.playoffs.thirdPlaceGame ? [champion, third] : [champion];
+}
+
 // The places once the playoffs are played: 1st and 2nd from the championship's last game, 3rd from
-// the 3rd place game. `brackets` are the `playoffBracket` exports; a tie goes to the higher seed
-// (bylaw 1.5), which MFL marks as the home side.
-export function playoffPlaces(brackets) {
+// the 3rd place game if the league has one. `brackets` are the `playoffBracket` exports; a tie goes
+// to the higher seed (bylaw 1.5), which MFL marks as the home side.
+export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thirdPlaceGame} = {}) {
     const lastGame = (bracket) => {
         const rounds = asArray(bracket && bracket.playoffRound);
         return rounds.length ? asArray(rounds[rounds.length - 1].playoffGame)[0] : null;
@@ -209,6 +221,9 @@ export function playoffPlaces(brackets) {
         return homeWins ? [game.home.franchise_id, game.away.franchise_id] : [game.away.franchise_id, game.home.franchise_id];
     };
     const final = decided(lastGame(brackets[0]));
+    if (!thirdPlaceGame) {
+        return final;
+    }
     const third = decided(lastGame(brackets[1]));
     return final && third ? [final[0], final[1], third[0]] : null;
 }

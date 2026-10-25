@@ -12,7 +12,7 @@ import {REBUILT, sections, storedTabs} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
 import {watchList, whenPopupClosed} from "./watch.js";
-import {allPlayRecords, playoffPicture, standings} from "./league-model.js";
+import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, standings} from "./league-model.js";
 import {
     FIRST_DIRECTION, boardPicksOf, byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf, playerPool, playoffFinish, pointsById,
     sortPlayers, teamSheets
@@ -101,10 +101,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const divisions = standings(standing, settings, names, ytd ? allPlayRecords(ytd, lastRegular) : null);
         let finish = null;
         const list = asArray(brackets && brackets.playoffBracket);
-        if (Number(window.liveScoringWeek) > lastRegular && list.length >= 2) {
-            const champion = list.find((bracket) => /champion/i.test(bracket.bracketWinnerTitle || "")) || list[0];
-            const third = list.find((bracket) => /3rd/i.test(`${bracket.bracketWinnerTitle} ${bracket.name}`)) || list[1];
-            const results = await Promise.all([champion, third].map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {optional: true})));
+        if (Number(window.liveScoringWeek) > lastRegular && list.length >= bracketCount()) {
+            const results = await Promise.all(placeBrackets(list).map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {optional: true})));
             finish = results.every(Boolean) ? playoffFinish(results, {completedWeek: Number(window.completedWeek) || 0}) : null;
         }
         const rows = draftOrder(playoffPicture(divisions), {finish, futureDraftPicks, names, nextYear: season + 1});
