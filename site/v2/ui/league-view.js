@@ -3,7 +3,7 @@
 
 import {esc} from "./html.js";
 import {clock, dayText} from "./home-model.js";
-import {gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
+import {WEEKLY_PRIZE, gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
 
 // "R. Stevenson" on phones, the full name on desktop
 const shortName = (name) => {
@@ -228,7 +228,7 @@ export function positionsMarkup(rows, {viewer, teamHref}) {
                 <span class="fuad-position-name${row.id === viewer ? " fuad-strong" : ""}"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></span>
                 <span class="fuad-position-total">${row.total}</span>
                 <span class="fuad-stack" style="width: ${Math.round(row.total / top * 100)}%" aria-hidden="true">${row.parts.map((part) => `<span class="${positionClass(part.position, order)}" style="flex: ${part.points} 1 0">${part.points}</span>`).join("")}</span>
-                <span class="fuad-position-values">${row.parts.map((part) => `${part.position} ${part.points}`).join(" · ")}</span>
+                <span class="fuad-position-values">${esc(row.parts.map((part) => `${part.position} ${part.points}`).join(" · "))}</span>
             </li>`).join("")}</ul>
         </div>
     </section>`;
@@ -260,10 +260,12 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
         ${prize.amount === null ? "" : `<span class="fuad-prize-amount">${esc(ledger(prize.amount))}</span>`}
         ${prize.team ? `<span class="fuad-prize-team"><a href="${esc(teamHref(prize.team))}">${esc(names.get(prize.team) || "")}</a></span>` : ""}
     </div>`).join("")}</div>`;
+    // a result saved before the weekly prize was in it
+    const weeklyPrize = result.weeklyPrize || WEEKLY_PRIZE;
     const pot = `<dl class="fuad-pot">
-        <div class="fuad-pot-line"><dt>Pot</dt><dd${result.pot === null ? ' class="fuad-muted"' : ""}>${result.pot === null ? "Not in MFL’s accounting yet" : esc(ledger(result.pot))}</dd></div>
+        <div class="fuad-pot-line"><dt>Pot</dt><dd${result.pot === null ? ' class="fuad-muted"' : ""}>${result.pot === null ? `Not in MFL’s accounting${final ? "" : " yet"}` : esc(ledger(result.pot))}</dd></div>
         ${result.potEntries.map((entry) => `<div class="fuad-pot-entry"><dt>${esc(entry.description)}</dt><dd>${esc(ledger(entry.amount))}</dd></div>`).join("")}
-        <div class="fuad-pot-line"><dt>Weekly points · ${result.weeklyTotal / result.weeklyPrize} × ${esc(ledger(result.weeklyPrize).replace(/\.00$/, ""))}</dt><dd>${esc(ledger(-result.weeklyTotal))}</dd></div>
+        <div class="fuad-pot-line"><dt>Weekly points · ${result.weeklyTotal / weeklyPrize} × ${esc(ledger(weeklyPrize).replace(/\.00$/, ""))}</dt><dd>${esc(ledger(-result.weeklyTotal))}</dd></div>
         <div class="fuad-pot-line"><dt>All-play${final ? "" : " so far"}</dt><dd>${esc(ledger(-result.allPlayPaid))}</dd></div>
         <div class="fuad-pot-line fuad-pot-total"><dt>For the playoffs</dt><dd>${result.forPlayoffs === null ? "—" : esc(ledger(result.forPlayoffs))}</dd></div>
     </dl>`;

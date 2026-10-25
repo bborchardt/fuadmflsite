@@ -235,7 +235,6 @@ export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thir
 export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, names}) {
     const entries = asArray(accounting && accounting.entry).filter((entry) => entry.franchise_id === "0000")
         .map((entry) => ({description: entry.description, amount: Number(entry.amount) || 0}));
-    const potEntries = entries;
     const pot = entries.length ? entries.reduce((sum, entry) => sum + entry.amount, 0) : null;
     const weekly = new Map();
     for (const {week, teams} of weeklyWinners(weeklyResults, lastRegularWeek)) {
@@ -265,7 +264,7 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
         const prize = prizeOf(team.id);
         return {...team, prize, total: team.weekly + team.allPlay + (prize && prize.amount ? prize.amount : 0)};
     }).sort((a, b) => b.total - a.total || b.net - a.net);
-    return {potEntries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs, prizes, rows};
+    return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs, prizes, rows};
 }
 
 // "Week 3 $15.00 · 17-19 all-play · 2nd $139.51": a team's winnings in one grey line
