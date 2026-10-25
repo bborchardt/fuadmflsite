@@ -233,13 +233,15 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     const views = () => groupViews(team(), state.data.pending, names);
     const rounds = () => state.data.groups.map((group) => group.round);
     const nextRound = () => Math.max(0, ...rounds()) + 1;
+    // a new bid's group: a new one, or the last once MFL allows no more
+    const newBidRound = () => (rounds().length < state.data.maxGroups ? nextRound() : Math.max(...rounds()));
     const theBanner = () => banner({phase: phase(), freeAgents: lists.add, calendar: state.data.calendar, now: now()});
     const freeAgent = (id) => lists.add.find((player) => player.id === id);
     const claimOf = (key) => findClaim(views(), key);
 
     function view() {
         return {
-            state, team: team(), phase: checks(), banner: theBanner(), groups: views(), rounds: rounds(), nextRound: nextRound(), lists, names,
+            state, team: team(), phase: checks(), banner: theBanner(), groups: views(), rounds: rounds(), nextRound: nextRound(), maxGroups: state.data.maxGroups, positions: state.data.positions, lists, names,
             wide: wide.matches, watched, runsLeft: runsLeft(), now: now(), franchiseId, canMove: (action, key) => Boolean(claimLink(action, key))
         };
     }
@@ -395,7 +397,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             return;
         }
         const kind = fa.mark || theBanner().kind === "bids" ? "bid" : "add";
-        state.compose = {add, drop: undefined, round: kind === "bid" ? round || nextRound() : null, bid: "1", years: 1, editing: null, kind};
+        state.compose = {add, drop: undefined, round: kind === "bid" ? round || newBidRound() : null, bid: "1", years: 1, editing: null, kind};
         state.error = "";
         state.done = null;
         go("drops", {replace});
@@ -610,7 +612,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
             if (c && c.changing === "add") {
                 const fa = freeAgent(id);
                 const kind = fa && (fa.mark || theBanner().kind === "bids") ? "bid" : "add";
-                state.compose = {...c, add: id, kind, changing: null, round: kind === "bid" ? c.round || state.pendingRound || nextRound() : null};
+                state.compose = {...c, add: id, kind, changing: null, round: kind === "bid" ? c.round || state.pendingRound || newBidRound() : null};
                 window.history.back();
                 return;
             }

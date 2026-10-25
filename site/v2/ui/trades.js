@@ -100,7 +100,7 @@ export async function drawTrades({context, franchiseId, loginHref, addHref, team
 
     function view() {
         return {
-            state, franchiseId, season: context.season, names: names(), proposal, partners: page.partners, now: now(), phase: phase(),
+            state, franchiseId, season: context.season, names: names(), positions: state.data.positions, proposal, partners: page.partners, now: now(), phase: phase(),
             limits: limitsApply(state.data.facts, state.data.calendar, now() * 1000), closed: closed(), wide: wide.matches, addHref, listUrl, proposeUrl, teamHref
         };
     }

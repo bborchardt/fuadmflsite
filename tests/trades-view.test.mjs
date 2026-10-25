@@ -36,7 +36,7 @@ function viewOf({state = {}, league = leagueOf(), proposal = null, closed = fals
             failed: false, busy: null, done: "", error: "", note: "", stillOpen: null, answer: {}, comment: {}, failure: {}, asking: null,
             give: new Set(), get: new Set(), step: "give", editing: false, expires: NOW + 7 * 86400, expKey: null, message: "", counter: null, ...state
         },
-        franchiseId: "0001", season: 2026, names: new Map([["0001", "Mine"], ["0002", "Pat's Team"]]), proposal, partners: [{id: "0001"}, {id: "0002"}],
+        franchiseId: "0001", season: 2026, names: new Map([["0001", "Mine"], ["0002", "Pat's Team"]]), positions: ["QB", "RB", "WR", "TE", "PK"], proposal, partners: [{id: "0001"}, {id: "0002"}],
         now: NOW, phase: "season", limits: true, closed, wide: true, addHref: "/add", listUrl: "/trades",
         proposeUrl: (partner) => `/trades&FRANCHISE=0001,${partner}`, teamHref: (id) => `/home#rosters-teams/${id}`, ...rest
     };

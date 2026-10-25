@@ -167,7 +167,7 @@ test("MFL's Power Rank page: every team, by id, with the figures the tap shows",
 });
 
 test("starter points by position add up to each team's points for", () => {
-    const sums = positionPoints(fixture("weekly-results-ytd.json").allWeeklyResults, positions, names);
+    const sums = positionPoints(fixture("weekly-results-ytd.json").allWeeklyResults, positions, names, ["QB", "RB", "WR", "TE", "PK"]);
     const standing = new Map(fixture("league-standings.json").leagueStandings.franchise.map((team) => [team.id, Number(team.pf)]));
     assert.equal(sums.length, 10);
     for (const team of sums) {

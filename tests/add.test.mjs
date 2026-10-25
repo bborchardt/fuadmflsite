@@ -138,7 +138,7 @@ test("copies go to another group or a new one, each checked first", () => {
         {round: 1, claims: [{add: "x", bid: 4, drop: null}]},
         {round: 2, claims: [{add: "z", bid: 1, drop: "olave"}]}
     ]});
-    const targets = copyTargets(team, {round: 1, claim: {add: "x", bid: 4, drop: null}, rounds: [1, 2], phase: "season"});
+    const targets = copyTargets(team, {round: 1, claim: {add: "x", bid: 4, drop: null}, rounds: [1, 2], maxGroups: 8, phase: "season"});
     // now $292 + $4 + $1 = $297; in group 2 its max grows by $3 to $300, and 30 active; a new group
     // 3 adds $4
     assert.deepEqual(targets, [{round: 2, isNew: false, off: false, why: null}, {round: 3, isNew: true, off: true, why: "over cap"}]);

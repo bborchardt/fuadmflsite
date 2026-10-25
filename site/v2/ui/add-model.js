@@ -4,7 +4,7 @@
 
 import {asArray} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
-import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
+import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib/rules.js";
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
 import {cents, money} from "./format.js";
 import settings from "../lib/settings.js";
@@ -14,11 +14,8 @@ import settings from "../lib/settings.js";
 export const LENGTHS = Array.from({length: settings.contracts.maxYears}, (_, i) => i + 1);
 // one of them in a regular expression, the longest first so "10" isn't read as "1"
 export const LENGTH_PATTERN = `(?:${LENGTHS.slice().reverse().join("|")})`;
-// MFL's conditional bidding (`maxWaiverRounds`)
-export const MAX_GROUPS = 8;
 // a player the team dropped can't be bid on by it for this long
 export const READD_HOURS = settings.adds.ownDropBidAfterHours;
-export const POSITIONS = ["QB", "RB", "WR", "TE", "PK"];
 
 const SUFFIXES = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
 
@@ -368,10 +365,11 @@ export function blockedText(why, bids) {
 
 // The team's roster for the drop step, by position: each player's cut penalty and the cap change a
 // drop makes (his salary off, his penalty on), and whether the move can take him. `check(drop)`
-// returns the move's checks with that drop; `marks` maps ids to MFL's drop list entries.
-export function dropGroups(team, {marks, check, immediate, usedIn = new Map()}) {
+// returns the move's checks with that drop; `marks` maps ids to MFL's drop list entries; `positions`
+// the league's (lib/rules.js lineupPositions).
+export function dropGroups(team, {marks, check, immediate, usedIn = new Map(), positions}) {
     const mine = [...team.players.values()].filter((player) => player.franchise === team.franchise);
-    return POSITIONS.concat([...new Set(mine.map((player) => player.nflPosition))].filter((pos) => !POSITIONS.includes(pos)))
+    return withOthers(positions, mine.map((player) => player.nflPosition))
         .map((pos) => {
             const players = mine.filter((player) => player.nflPosition === pos)
                 .sort((a, b) => b.salary - a.salary || b.years - a.years || a.fullName.localeCompare(b.fullName))
@@ -449,10 +447,11 @@ export function pendingWithComments(pendingWaivers, groups) {
     return groups.map((group) => ({...group, comment: comments.get(group.round) || ""}));
 }
 
-// The group a copy can go to: each other group and the next, whether the copy fits
-export function copyTargets(team, {round, claim, rounds, phase}) {
+// The group a copy can go to: each other group and the next, if MFL allows another (`maxGroups`),
+// whether the copy fits
+export function copyTargets(team, {round, claim, rounds, maxGroups, phase}) {
     const next = Math.max(0, ...rounds) + 1;
-    const targets = rounds.filter((other) => other !== round).concat(rounds.length < MAX_GROUPS ? [next] : []);
+    const targets = rounds.filter((other) => other !== round).concat(rounds.length < maxGroups ? [next] : []);
     return targets.map((target) => {
         const taken = (team.groups.find((group) => group.round === target) || {claims: []}).claims.some((other) => other.add === claim.add);
         const result = checkBid(team, {round: target, claim, phase});

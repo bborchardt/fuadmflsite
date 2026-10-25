@@ -2,6 +2,7 @@
 // numbers are the league's settings (settings.json).
 
 import settings from "./settings.js";
+import {asArray} from "./mfl.js";
 
 export const SALARY_CAP = settings.salaryCap;
 export const ROSTER_MIN = settings.roster.min;
@@ -28,6 +29,16 @@ export const PREVIOUS_FRANCHISE_UNTIL_WEEK = 1;
 export const ROOKIE_DECAY = 1 - settings.rookieScale.dropPerPick;
 
 export const POSITIONS = Object.entries(settings.rookieScale.firstPick).map(([code, rookieBaseline]) => ({code, rookieBaseline}));
+
+// The league's positions in MFL's order, from its `league` export's starting lineup; the rookie
+// scale's without it
+export function lineupPositions(league) {
+    const names = asArray(league && league.starters && league.starters.position).map((position) => position.name).filter(Boolean);
+    return names.length ? names : POSITIONS.map((position) => position.code);
+}
+
+// `positions` first, in their order, then any other a list has, as MFL lists them
+export const withOthers = (positions, found) => positions.concat([...new Set(found)].filter((pos) => pos && !positions.includes(pos)));
 
 const positionRank = new Map(POSITIONS.map((position, index) => [position.code, index]));
 
