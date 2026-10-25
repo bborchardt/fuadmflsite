@@ -5,7 +5,7 @@
 //   MFL_USERNAME, MFL_PASSWORD  commissioner login; without them the job reads public data only
 //   MFL_LEAGUE_ID               the league's id (required)
 //   MFL_HOST                    the league's host, as https://www44.myfantasyleague.com (required)
-//   MFL_USER_AGENT              optional; set it if the client is registered with MFL
+//   MFL_USER_AGENT              optional, the repository secret: the client name registered with MFL
 //   SEASON                      default: the newest season the league has a site for
 //   RULES_VERSION               which site version's league logic to use, default v2
 //   PAGES_DATA_URL              published snapshots, default the repository's GitHub Pages data/
