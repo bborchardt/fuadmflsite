@@ -244,7 +244,7 @@ export function installPopup({context, franchiseId, teamHref}) {
             <p class="fuad-meta fuad-watch-note" role="status"></p>
             <div class="fuad-popup-body"></div>
         </section>`;
-        const close = openDialog(layer, {opener});
+        const close = openDialog(layer, {opener, history: true});
         // the member's watch list: a star by the name, shown once the list is known
         const star = layer.querySelector(".fuad-watch");
         if (star) {
