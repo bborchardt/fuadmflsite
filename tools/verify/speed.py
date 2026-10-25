@@ -139,7 +139,8 @@ async def run(browser, site, name, net, path, cache, film):
     await context.route("**/*", handle)
     page = await context.new_page()
     errors = []
-    page.on("pageerror", lambda error: errors.append(str(error)))
+    # MFL's chart script isn't among the saved pages
+    page.on("pageerror", lambda error: "FusionCharts" not in str(error) and errors.append(str(error)))
     t0 = time.monotonic()
     nav = asyncio.create_task(page.goto(HOST + url, wait_until="commit", timeout=120_000))
     shots = 0
