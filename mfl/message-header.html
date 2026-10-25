@@ -56,7 +56,7 @@
                 var out = new URL(location.href);
                 out.searchParams.set("fuadBeta", "off");
                 bar.id = "fuad-preview";
-                bar.textContent = "The beta couldn’t load, so this is the current site. ";
+                bar.textContent = "The beta couldn\u2019t load, so this is the current site. ";
                 var link = document.createElement("a");
                 link.href = out.href;
                 link.textContent = "Leave the beta";
