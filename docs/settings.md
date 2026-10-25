@@ -3,6 +3,7 @@
 `site/v2/settings.json` holds the league's own numbers: the rules MFL doesn't know about, and the
 league's choices that MFL can't report. Everything else v2 reads from MFL. The site and the daily
 job both read this file, so its numbers apply as soon as master deploys and on the job's next run.
+Like any rule change, changing one in a version members already run means a new version.
 
 The values below are this league's.
 
@@ -17,7 +18,7 @@ The values below are this league's.
 
 | Setting | Value | Meaning |
 |---|---|---|
-| `weeks.tradeDeadline` | 12 | Trades close at this week's first kickoff, and franchise salaries are taken then. |
+| `weeks.tradeDeadline` | 12 | Franchise salaries are taken at this week's first kickoff. Trades close at MFL's own trade deadline (its calendar), or this week's first kickoff if MFL has none. |
 | `weeks.playoffsStart` | 15 | The first playoff week. The anti-tanking check covers the weeks before it. |
 | `weeks.championship` | 17 | The last week. The roster checks run until it's over. |
 
@@ -25,7 +26,7 @@ The values below are this league's.
 
 | Setting | Value | Meaning |
 |---|---|---|
-| `contracts.maxYears` | 5 | The longest contract. The shortest is always 1 year. Members can write a length in figures or as a word up to "ten". |
+| `contracts.maxYears` | 5 | The longest contract. The shortest is always 1 year. Members can write a length in figures, or as a word up to "ten"; a longer one is flagged. |
 | `contracts.defaultYears` | 1 | The length a player gets when nobody names one in time. |
 | `contracts.postWithinHours` | 1 | How long after a free agent or waiver add the length must be posted on the message board. A blind bid's length goes in its comment. |
 | `franchiseTag.averageOfTop` | 5 | A franchise salary is the average of this many top salaries at the position, at the trade deadline. |

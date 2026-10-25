@@ -156,7 +156,7 @@ export function banner({phase, freeAgents, calendar, now}) {
     return {kind: "bids", text: `Blind bids only${until}`};
 }
 
-// The team's own drops within the last 48 hours (9.4): free agent id → when he can be bid on again,
+// The team's own drops within the last READD_HOURS: free agent id → when he can be bid on again,
 // in seconds. `players` is the league model's, each with its transactions newest first.
 export function droppedByTeam(players, franchiseId, now) {
     const blocked = new Map();
