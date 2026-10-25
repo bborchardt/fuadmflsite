@@ -1,7 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {ruleViolations as items} from "../site/v1/lib/violations.js";
-import {ruleViolations as v2Items} from "../site/v2/lib/violations.js";
+import {ruleViolations as items} from "../site/v2/lib/violations.js";
 
 const ruleViolations = (league, options) => items(league, options).map((item) => item.text);
 
@@ -44,14 +43,14 @@ test("injured or suspended starters (anti-tanking): regular season lineups, unti
 });
 
 test("v2: no injured starters before week 1's kickoff, when MFL's results can list week 1's lineups", () => {
-    const texts = (built) => v2Items(built).map((item) => item.text);
+    const texts = (built) => items(built).map((item) => item.text);
     assert.deepEqual(texts({...league("1", franchise("Risky", 250, 25, [injured])), started: false}), []);
     assert.deepEqual(texts({...league("1", franchise("Risky", 250, 25, [injured])), started: true}),
         ["Risky started injured/suspended player Hurt Player in week 1!"]);
 });
 
 test("v2: the roster limits start at the final cut-down date (2.5), the IR check at week 1", () => {
-    const texts = (built, options) => v2Items(built, options).map((item) => item.text);
+    const texts = (built, options) => items(built, options).map((item) => item.text);
     const crowded = {...league("1", franchise("Crowded", 250, 34), franchise("Thin", 250, 22)), started: false};
     assert.deepEqual(texts(crowded, {now: 99, cutDown: 100}), []);
     assert.deepEqual(texts(crowded, {now: 100, cutDown: 100}),
@@ -119,7 +118,7 @@ test("warnings follow franchise order", () => {
 });
 
 test("injured reserve eligibility reads today's injury report, not the results week's", async () => {
-    const {buildLeague, playersFromExport} = await import("../site/v1/lib/league.js");
+    const {buildLeague, playersFromExport} = await import("../site/v2/lib/league.js");
     const model = buildLeague({
         players: playersFromExport({player: [{id: "1", name: "Back, Healthy", position: "RB"}]}),
         league: {franchises: {franchise: {id: "0001", name: "Alpha"}}},
@@ -135,7 +134,7 @@ test("injured reserve eligibility reads today's injury report, not the results w
 });
 
 test("without today's injury report, or with a thin one, the IR check is skipped rather than flagging everyone", async () => {
-    const {buildLeague, playersFromExport} = await import("../site/v1/lib/league.js");
+    const {buildLeague, playersFromExport} = await import("../site/v2/lib/league.js");
     const build = (currentInjuries) => buildLeague({
         players: playersFromExport({player: [{id: "1", name: "Hurt, Still", position: "RB"}]}),
         league: {franchises: {franchise: {id: "0001", name: "Alpha"}}},
@@ -149,7 +148,7 @@ test("without today's injury report, or with a thin one, the IR check is skipped
 });
 
 test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and the end of week 17", async () => {
-    const {seasonPhase} = await import("../site/v1/lib/violations.js");
+    const {seasonPhase} = await import("../site/v2/lib/violations.js");
     const at = (iso) => String(Date.parse(iso) / 1000);
     const schedule = {
         15: [at("2026-12-17T01:15:00Z"), at("2026-12-20T18:00:00Z")],

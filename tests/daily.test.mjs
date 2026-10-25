@@ -212,10 +212,10 @@ test("with nothing to do the chore log is left alone, but gets a heartbeat once 
     assert.equal(old.output.changed, "true");
 });
 
-test("v2's lib, should RULES_VERSION name it, runs the same day the same way", () => {
+test("v2's lib, the default, runs the same day as v1's", () => {
     const day = {scenario: {exports: league({alphaSalary: 290})}, env: {...LOGIN, DROP_PENALTIES: "apply"}};
-    const v1 = run(day);
-    const v2 = run({...day, env: {...day.env, RULES_VERSION: "v2"}});
+    const v1 = run({...day, env: {...day.env, RULES_VERSION: "v1"}});
+    const v2 = run(day);
     assert.equal(v2.status, v1.status, v2.stderr);
     assert.deepEqual(v2.entries, v1.entries);
     assert.deepEqual(imports(v2), imports(v1));
