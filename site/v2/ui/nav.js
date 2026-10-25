@@ -65,6 +65,13 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
     });
 }
 
+// where a section's link goes: the view last seen in it (`lastViews`, view names by section), so
+// leaving a page by another section returns there; the section you're in goes to its first view
+export function sectionHref(section, current, lastViews = {}) {
+    const view = section.views && section.name !== current && section.views.find((entry) => entry.name === lastViews[section.name]);
+    return view ? view.href : section.href;
+}
+
 // a team's page under Teams (`teams`, Rosters › Teams' href), rebuilt or MFL's: id → href
 export function teamLinks(teams) {
     return (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`);
