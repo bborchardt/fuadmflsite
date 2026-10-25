@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from screens import HOST, INIT, LEAGUE, NOW, REPO, Mfl, Site, build_working_copy  # noqa: E402
 
 HEADER = (REPO / "mfl" / "message-header.html").read_text()
-OFFER = '<script>window.fuadBeta = {version: "v2", feedback: "https://example.com/feedback", teams: ["0001"]};</script>\n'
+OFFER = '<script>window.fuadBeta = {version: "VERSION", feedback: "https://example.com/feedback", teams: ["0001"]};</script>\n'
 # the saved pages' header: from its comment to the script tag that loads a version
 SAVED = re.compile(r"<!-- FUAD league code.*?fuad\.js\"[^>]*></script>", re.S)
 
@@ -45,14 +45,22 @@ CASES = {
     "v2 main": (LINEUP, {"main": "v2", "offer": False}, {"ran": "v2", "requested": ["v2"], "beta": None, "cloaked": False}),
     "v2 main home": (HOME, {"main": "v2", "offer": False}, {"ran": "v2", "requested": ["v2"], "beta": None, "cloaked": False}),
     "v2 main 404": (HOME, {"main": "v2", "offer": False, "fail": ("v2", "404")}, {"ran": None, "requested": ["v2"], "cloaked": False, "note": True}),
+    # the beta and the version it falls back to both fail
+    "both broken": (HOME, {"beta": "v2", "fail": ("v2", "syntax"), "fail2": ("v1", "syntax")},
+                    {"ran": None, "requested": ["v2", "v1"], "cloaked": False, "note": True}),
+    # a later beta (v3, not published: 404) over v2 as MAIN: v2 runs as itself, not as the beta, with the bar out
+    "v3 beta 404": (LINEUP, {"main": "v2", "offer": "v3", "beta": "v3"},
+                    {"ran": "v2", "requested": ["v3", "v2"], "beta": "v3", "cloaked": False, "bar": "The beta couldn’t load", "inBeta": False}),
 }
 
 
 def header(main="v1", offer=True):
+    """the header with MAIN and the beta offer (True: v2; a version; False: none)"""
     text = HEADER.replace('var MAIN = "v1";', f'var MAIN = "{main}";')
     assert text != HEADER or main == "v1", "MAIN not found in the header"
     first = text.index("<script>")
-    return text[:first] + (OFFER if offer else "") + text[first:]
+    line = OFFER.replace("VERSION", "v2" if offer is True else str(offer)) if offer else ""
+    return text[:first] + line + text[first:]
 
 
 def run(browser, site, name):
@@ -86,8 +94,8 @@ def run(browser, site, name):
         match = re.search(r"/fuadmflsite/(v\d+)/fuad\.js$", request.url)
         if match:
             requested.append(match.group(1))
-            fail = given.get("fail")
-            if fail and fail[0] == match.group(1):
+            fail = next((f for f in (given.get("fail"), given.get("fail2")) if f and f[0] == match.group(1)), None)
+            if fail:
                 if fail[1] == "404":
                     return route.fulfill(status=404, body="")
                 return route.fulfill(body="export const x = ;", content_type="text/javascript")
@@ -120,6 +128,7 @@ def run(browser, site, name):
             note: Boolean(document.querySelector('.fuad-unavailable')),
             leave: bar && bar.querySelector('a') ? bar.querySelector('a').href : null,
             covered: Boolean(window.__covered),
+            inBeta: document.documentElement.classList.contains('fuad-beta'),
         };
     }""")
     got["requested"] = requested
@@ -139,7 +148,7 @@ def run(browser, site, name):
     if got["covered"] != should:
         problems.append(f"covered {got['covered']}, wanted {should}")
     # the deliberate syntax error
-    if given.get("fail", ("", ""))[1] == "syntax":
+    if "syntax" in (given.get("fail", ("", ""))[1], given.get("fail2", ("", ""))[1]):
         errors = [error for error in errors if "Unexpected" not in error]
     if errors:
         problems.append(f"page errors {errors}")
