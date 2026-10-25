@@ -2,7 +2,7 @@
 """How a v2 screen loads on a slow phone connection, from the saved pages, without asking MFL anything.
 
     uv run --no-project --with playwright python tools/verify/speed.py [--screens lineup,home] [--net slow]
-        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--film DIR]
+        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--header] [--film DIR]
 
 Each request is answered from tools/verify/screens/ (as screens.py does) after the delay a phone
 connection would add: a round trip per request, a connection setup per host, and the response's
@@ -11,6 +11,8 @@ modeled.
 
 --path   beta: the header loads v1, which hands the page to v2 (a beta member today); direct: the
          header loads v2 itself
+--header the saved pages' header replaced by mfl/message-header.html: beta is a beta member (MAIN
+         v1, the beta loaded directly), direct is MAIN v2
 --cache  cold: nothing cached; stale: cached more than GitHub Pages' 10 minutes, so every site file is
          asked again and answered unchanged (a round trip, no body)
 --film   saves a screenshot every second there
@@ -116,12 +118,18 @@ class Captured:
         self.answer = ("abort", {})
 
 
+def swap_header(html, path):
+    """mfl/message-header.html in place of the saved header"""
+    from header import SAVED, header
+    return SAVED.sub(lambda _: header("v1" if path == "beta" else "v2", path == "beta"), html, count=1)
+
+
 def header_v1(html):
     """the clone's header loads v2; a member's loads v1"""
     return html.replace("fuadmflsite/v2/fuad.", "fuadmflsite/v1/fuad.")
 
 
-async def run(browser, site, name, net, path, cache, film, no_lookbehind=False):
+async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, new_header=False):
     url, swaps = SCREENS[name]
     mfl = Mfl(site, swaps)
     link = Link(net)
@@ -144,8 +152,8 @@ async def run(browser, site, name, net, path, cache, film, no_lookbehind=False):
             return await route.abort()
         body = args.get("body", "")
         body = body.encode() if isinstance(body, str) else body
-        if path == "beta" and request.resource_type == "document":
-            body = header_v1(body.decode()).encode()
+        if request.resource_type == "document" and (new_header or path == "beta"):
+            body = (swap_header(body.decode(), path) if new_header else header_v1(body.decode())).encode()
             args = {**args, "body": body}
         site_file = host == "bborchardt.github.io"
         size = 0 if (cache == "stale" and site_file) else len(gzip.compress(body)) if body else 0
@@ -216,6 +224,7 @@ async def main():
     which.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
     parser.add_argument("--film", type=Path, default=None)
     parser.add_argument("--timeline", action="store_true")
+    parser.add_argument("--header", action="store_true", help="mfl/message-header.html in place of the saved header")
     parser.add_argument("--no-lookbehind", action="store_true", help="a regex with lookbehind throws, as before Safari 16.4")
     args = parser.parse_args()
     site = Site(build_working_copy() if args.built else args.ref)
@@ -226,7 +235,7 @@ async def main():
             for net in args.net.split(","):
                 for path in args.path.split(","):
                     for cache in args.cache.split(","):
-                        r = await run(browser, site, name, net, path, cache, args.film, args.no_lookbehind)
+                        r = await run(browser, site, name, net, path, cache, args.film, args.no_lookbehind, args.header)
                         print(f"{name:8} {path:6} {net:5} {cache:5}  {r['shows']}  {r['mfl flash']}    {r['drawn']}  {r['requests']:8} {r['kB']:4}")
                         if args.timeline:
                             print("   ", r["timeline"])
