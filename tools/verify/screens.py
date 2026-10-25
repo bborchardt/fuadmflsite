@@ -169,6 +169,12 @@ class Site:
 
     def read(self, path):
         if path not in self.cache:
+            if path.endswith("/lib/settings.js") and not (self.ref and self.ref.startswith(BUILT)):
+                # as tools/build.mjs publishes it: the JSON itself, which a browser can't read through Node
+                settings = self.read(path[: -len("lib/settings.js")] + "settings.json")
+                if settings is not None:
+                    self.cache[path] = f"export default {json.dumps(json.loads(settings))};\n".encode()
+                    return self.cache[path]
             if self.ref and self.ref.startswith(BUILT):
                 local = Path(self.ref[len(BUILT):]) / path
                 self.cache[path] = local.read_bytes() if local.exists() else None

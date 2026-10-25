@@ -88,7 +88,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 
 ## League rules the code relies on
 
-They're in `lib/rules.js` and `lib/violations.js`; a rule change means a new version.
+They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in `settings.json`
+(docs/settings.md); the numbers below are this league's. A rule change means a new version.
 
 - **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
 - **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
