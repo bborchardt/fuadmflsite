@@ -1,7 +1,8 @@
 // Builds what GitHub Pages publishes: site/ as it is, except each version in BUNDLED, whose code
 // becomes one minified fuad.js (the parts loaded on demand still run only when asked for), and whose
-// fuad.css is minified. A slow phone then waits for one request instead of one per module, level by
-// level, and a stale cache re-checks one file.
+// fuad.css is minified. Its modules stay published too, for a page still holding an unbundled
+// fuad.js from before (Pages caches for 10 minutes). A slow phone then waits for one request instead
+// of one per module, level by level, and a stale cache re-checks one file.
 //
 //   node tools/build.mjs [OUT]          OUT defaults to dist/
 import {cpSync, mkdirSync, rmSync} from "node:fs";
@@ -20,10 +21,10 @@ cpSync(join(REPO, "site"), out, {recursive: true, filter: (path) => !path.starts
 for (const version of BUNDLED) {
     const from = join(REPO, "site", version);
     const target = join(out, version);
-    rmSync(target, {recursive: true, force: true});
     await build({
         entryPoints: [join(from, "fuad.js")],
         outfile: join(target, "fuad.js"),
+        allowOverwrite: true,
         bundle: true,
         format: "esm",
         minify: true,
@@ -35,11 +36,14 @@ for (const version of BUNDLED) {
         legalComments: "none",
         logLevel: "warning"
     });
-    // only minified: newer CSS stays as written, failing quietly where unsupported
+    // minified for iOS 14, so it doesn't merge sides into `inset` (Safari 14.1+); newer CSS stays as
+    // written, failing quietly where unsupported
     await build({
         entryPoints: [join(from, "fuad.css")],
         outfile: join(target, "fuad.css"),
+        allowOverwrite: true,
         minify: true,
+        target: ["safari14"],
         sourcemap: true,
         logLevel: "warning"
     });
