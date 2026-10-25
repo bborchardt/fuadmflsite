@@ -108,7 +108,7 @@ function bioSection(player) {
     </section>` : "";
 }
 
-function newsSection(player, links) {
+function newsSection(player) {
     if (!player.news.length) {
         return "";
     }
@@ -123,7 +123,6 @@ function newsSection(player, links) {
             </button>
             <div class="fuad-news-body" id="fuad-news-${index}" hidden></div>
         </div>`).join("")}
-        <a class="fuad-more" href="${esc(links.moreNews)}">More news</a>
     </section>`;
 }
 
@@ -144,7 +143,6 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, teamHref, cu
     const ownerId = holderOf(player, player.holders, teamNames);
     const ownerName = ownerId ? teamNames.get(ownerId) || "" : "";
     const mine = Boolean(franchiseId && ownerId === franchiseId);
-    const links = {moreNews: `${window.location.origin}/${context.season}/news_articles?L=${context.leagueId}&PLAYERS=${player.id}&DAYS=7`};
     const injured = player.injury
         ? `<p class="fuad-popup-injury"><span class="fuad-tag fuad-tag-${injuryTone(player.injury.status)}">${esc(player.injury.status)}${player.injury.detail ? ` · ${esc(player.injury.detail)}` : ""}</span>${player.expectedReturn ? `<span class="fuad-meta">Expected back ${esc(player.expectedReturn.replace(/,\s*\d{4}$/, ""))}</span>` : ""}</p>`
         : "";
@@ -159,7 +157,7 @@ function drawPlayer(body, player, {context, franchiseId, teamNames, teamHref, cu
     ${mine && player.salary !== null && player.years ? `<p class="fuad-cut" aria-live="polite">Cut now: <strong>${money(capPenalty(player.years, player.salary))} penalty</strong><span class="fuad-cut-cap"></span></p>` : ""}
     ${actionButtons(player, {mine, ownerId, actions, franchiseId})}
     <div class="fuad-popup-cols">
-        <div class="fuad-popup-col">${newsSection(player, links)}${bioSection(player)}</div>
+        <div class="fuad-popup-col">${newsSection(player)}${bioSection(player)}</div>
         <div class="fuad-popup-col">${weeksSection(player, context.season, currentWeek)}</div>
     </div>`;
 
