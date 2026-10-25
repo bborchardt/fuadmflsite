@@ -358,6 +358,17 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     const show = () => {
         const on = document.documentElement.classList.contains("fuad-rosters-on");
         const route = on ? routeOf(window.location.hash) : null;
+        // redirected before anything shows, so the view left doesn't flash
+        // logged out or the commissioner: no team of your own, so Teams
+        if (route && route.view === "my-team" && !viewer) {
+            window.location.replace("#rosters-teams");
+            return;
+        }
+        // your own team, from any team link, is My team
+        if (route && route.view === "teams" && viewer && route.team === viewer) {
+            window.location.replace("#rosters-my-team");
+            return;
+        }
         const key = route ? `${route.view}/${route.team || ""}` : null;
         // the page's other classes change too (a dialog opening): only a change of view counts
         if (key === visible) {
@@ -368,11 +379,6 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             mount.hidden = !route || mount.dataset.view !== route.view;
         });
         if (!route) {
-            return;
-        }
-        // logged out or the commissioner: no team of your own, so Teams
-        if (route.view === "my-team" && !viewer) {
-            window.location.replace("#rosters-teams");
             return;
         }
         const mount = root.querySelector(`[data-view="${route.view}"]`);
