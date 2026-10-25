@@ -244,7 +244,7 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
     </table></div>`;
     const names = new Map(result.rows.map((row) => [row.id, row.name]));
     const prizes = `<div class="fuad-prizes">${result.prizes.map((prize) => `<div class="fuad-prize">
-        <span class="fuad-prize-place${prize.place === "1st" ? " fuad-mine" : ""}">${esc(prize.place)} · ${Math.round(prize.share * 100)}%</span>
+        <span class="fuad-prize-place${prize.team && prize.team === viewer ? " fuad-mine" : ""}">${esc(prize.place)} · ${Math.round(prize.share * 100)}%</span>
         <span class="fuad-prize-amount">${esc(ledger(prize.amount))}</span>
         ${prize.team ? `<span class="fuad-prize-team"><a href="${esc(teamHref(prize.team))}">${esc(names.get(prize.team) || "")}</a></span>` : ""}
     </div>`).join("")}</div>`;
