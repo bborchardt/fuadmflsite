@@ -61,7 +61,7 @@ jobs:
           MFL_USERNAME: ${{ secrets.MFL_USERNAME }}
           MFL_PASSWORD: ${{ secrets.MFL_PASSWORD }}
           MFL_USER_AGENT: ${{ vars.MFL_USER_AGENT }}
-          RULES_VERSION: ${{ vars.RULES_VERSION || 'v1' }}
+          RULES_VERSION: ${{ vars.RULES_VERSION || 'v2' }}
           DROP_PENALTIES: ${{ vars.DROP_PENALTIES }}
           CONTRACT_YEARS: ${{ vars.CONTRACT_YEARS }}
         run: node jobs/daily.mjs

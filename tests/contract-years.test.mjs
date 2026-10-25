@@ -3,8 +3,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {contractsXml} from "../jobs/contract-years.mjs";
-import {decideYears as decide_, postReadings, readProcessedWaivers, readYears, yearMentions} from "../site/v1/lib/contract-years.js";
-import {contractDeadline, pendingAdds, windowClosed} from "../site/v1/lib/adds.js";
+import {decideYears as decide_, postReadings, readProcessedWaivers, readYears, yearMentions} from "../site/v2/lib/contract-years.js";
+import {contractDeadline, pendingAdds, windowClosed} from "../site/v2/lib/adds.js";
 
 const decideYears = (options) => decide_({contractDeadline, ...options});
 

@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {buildLeague, playersFromExport} from "../site/v1/lib/league.js";
+import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
 import {dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
