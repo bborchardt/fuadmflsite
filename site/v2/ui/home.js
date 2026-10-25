@@ -422,6 +422,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     const allMoves = mflPage(/^transactions$/i);
     const allBids = mflPage(/^processed waivers$/i) || `${base}/processed_waivers?L=${context.leagueId}`;
     const rows = moveRows({context, players: () => league().then((built) => built.players), teams, teamHref: links.team, withBids: loggedIn});
+    rows.listen(panels.recent);
     drawPanel(panels.recent, {
         heading: "Recent moves",
         actions: [allMoves && `<a href="${esc(allMoves)}">All moves</a>`, loggedIn && `<a href="${esc(allBids)}">All bids</a>`].filter(Boolean).join(""),

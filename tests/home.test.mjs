@@ -264,6 +264,13 @@ test("recent moves: the latest 10 adds, bids, IR moves and trades, as saved 4 Oc
     assert.match(line("Trade").what, /^traded .+ to Team 07 for .+ and 2028 4th \(Team 07\)$/);
     assert.match(all.find((move) => move.kind === "Add" && /dropped/.test(move.what)).what, /^added .+, dropped .+/);
     assert.equal(all.find((move) => move.kind === "Drop").what.startsWith("dropped "), true);
+    // the line as parts: each player's name his own, the trade's other team its own, reading as `what`
+    const trade = line("Trade");
+    assert.equal(trade.parts.map((part) => part.text).join(""), trade.what);
+    assert.ok(trade.parts.some((part) => part.team === "0007" && part.text === "Team 07"));
+    const named = trade.parts.filter((part) => part.player);
+    assert.ok(named.length >= 2 && named.every((part) => players.get(part.player).fullName === part.text));
+    assert.ok(!trade.parts.some((part) => part.player && /2028/.test(part.text)));
 });
 
 test("board topics: the newest five, and the contracts topic for lengths", () => {
