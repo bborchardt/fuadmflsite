@@ -84,6 +84,7 @@ export function drawAllMoves({context, franchiseId, homeHref, teamHref}) {
         </div>
         <section class="fuad-panel fuad-moves-days" aria-label="Moves"></section>`;
     const list = mount.querySelector(".fuad-moves-days");
+    rows.listen(list);
     const meta = mount.querySelector("[data-meta]");
     let all = [];
 

@@ -1697,6 +1697,15 @@ body [tabindex]:focus-visible {
 #fuad-all-moves .fuad-move strong,
 #fuad-all-bids .fuad-move strong { font-weight: 600; }
 
+/* a move's players open the popup: names in the line, as its text */
+#fuad-home .fuad-move .fuad-name,
+#fuad-all-moves .fuad-move .fuad-name { min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+
+@media (hover: hover) {
+    #fuad-home .fuad-move .fuad-name:hover,
+    #fuad-all-moves .fuad-move .fuad-name:hover { color: var(--fuad-lime); }
+}
+
 /* a move's or a bid's team links to its page, in the row's own colour */
 #fuad-home .fuad-move a,
 #fuad-all-moves .fuad-move a,

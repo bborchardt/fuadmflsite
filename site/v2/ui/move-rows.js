@@ -48,12 +48,27 @@ export function moveRows({context, players, teams, teamHref, withBids}) {
         return bids.length ? `Also bid: ${bids.map((entry) => `${(teams.get(entry.team) || `Team ${entry.team}`).trim()} $${entry.amount}`).join(" · ")}` : "";
     };
 
+    // a player's name opens the popup, a team's links to its page; a move kept from before `parts`
+    // (Home's stored panel) shows its text
+    const line = (move) => (move.parts || [{text: move.what}]).map((part) => (part.player
+        ? `<button type="button" class="fuad-name" data-player="${esc(part.player)}">${esc(part.text)}</button>`
+        : part.team ? `<a href="${esc(teamHref(part.team))}">${esc(part.text)}</a>` : esc(part.text))).join("");
+
     return {
         // `when` adds each move's day under it (Home; All moves heads each day instead)
         markup(moves, {when = true} = {}) {
             return `<ul class="fuad-rows">${moves.map((move, i) => `<li class="fuad-move"><span class="fuad-label">${esc(move.kind)}</span>
-                <span class="fuad-row-text"><span><strong><a href="${esc(teamHref(move.teamIds[0]))}">${esc(move.team)}</a></strong> ${esc(move.what)}</span>${when ? `<span class="fuad-meta">${esc(move.when)}</span>` : ""}${
+                <span class="fuad-row-text"><span><strong><a href="${esc(teamHref(move.teamIds[0]))}">${esc(move.team)}</a></strong> ${line(move)}</span>${when ? `<span class="fuad-meta">${esc(move.when)}</span>` : ""}${
                 move.bid && withBids ? `<span class="fuad-also" data-move="${i}">${esc(lines.get(keyOf(move.bid)) || "")}</span>` : ""}</span></li>`).join("")}</ul>`;
+        },
+        // once, on what holds the rows however often they're drawn: a name opens the player popup
+        listen(container) {
+            container.addEventListener("click", (event) => {
+                const name = event.target.closest("[data-player]");
+                if (name && typeof window.fuadOpenPlayer === "function") {
+                    window.fuadOpenPlayer(name.dataset.player, {opener: name});
+                }
+            });
         },
         // after `markup(moves)` is in `container`: each won bid's line once its run arrives
         fill(container, moves) {
