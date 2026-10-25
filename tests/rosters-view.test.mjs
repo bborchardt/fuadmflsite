@@ -10,7 +10,7 @@ const sheet = {
 };
 const picks = [{year: 2027, rows: [{round: 1, number: "1.04", note: "", traded: false}, {round: 2, number: "—", note: "to Kings", traded: true}]}];
 
-test("a team's page: your own with the cut columns, another's with the way back and Propose a trade", () => {
+test("a team's page: your own with the cut columns, another's under its name with Propose a trade", () => {
     const own = teamMarkup({sheet, picks, live: true, own: true, fromTeams: false, tradeHref: null, season: 2026});
     assert.match(own, /Cut penalty<\/th><th scope="col" class="fuad-num fuad-wide">Cap used after cut/);
     assert.match(own, /<td class="fuad-num fuad-wide">\$28<\/td><td class="fuad-num fuad-wide">\$253<\/td>/);
@@ -22,8 +22,8 @@ test("a team's page: your own with the cut columns, another's with the way back 
     assert.match(own, /Darren Waller<span class="fuad-meta">Cut Sep 2 · \$8 · 3 yrs<\/span>/);
     assert.match(own, /If the season ended today/);
     const other = teamMarkup({sheet, picks, live: false, own: false, fromTeams: true, tradeHref: "/trade?x", season: 2026});
-    assert.match(other, /<a class="fuad-back" href="#rosters-teams">‹ Teams<\/a>/);
-    assert.match(teamMarkup({sheet, picks, live: false, own: false, fromTeams: true, backHistory: true, tradeHref: null, season: 2026}), /<a class="fuad-back" href="#rosters-teams" data-back>‹ Back<\/a>/);
+    assert.match(other, /<div class="fuad-team-head">\s*<h2 class="fuad-team-name">/);
+    assert.doesNotMatch(other, /fuad-back|‹/);
     assert.match(other, /<a class="fuad-cta" href="\/trade\?x">Propose a trade<\/a>/);
     assert.doesNotMatch(other, /Cut penalty/);
     // before week 1, last season's points
