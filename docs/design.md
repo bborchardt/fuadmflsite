@@ -83,7 +83,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   only its own tabs), for at most 30 seconds, so MFL's page doesn't show before the version draws;
   whichever version runs shows it again, v2 once its frame and any view it draws over MFL's page have
   first drawn.
-- A beta changes how things look, not the rules: the job follows `RULES_VERSION`.
+- A beta changes how things look, not the rules: the job follows `RULES_VERSION`, v2 by default
+  (v2's `lib/` holds v1's rules).
 
 ## League rules the code relies on
 
