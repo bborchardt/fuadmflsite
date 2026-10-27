@@ -159,7 +159,8 @@ function drawChat(mount, {context, franchiseId, teams}) {
         </form>
         <p class="fuad-result" role="status"></p>`;
         const list = body.querySelector(".fuad-chat-scroll");
-        if (!olderButton) {
+        // again if drawPanel rebuilt the heading after a saved copy it couldn't draw
+        if (!olderButton || !olderButton.isConnected) {
             olderButton = mount.querySelector(".fuad-chat-older-button");
             olderButton.addEventListener("click", () => {
                 const start = markOlder();
