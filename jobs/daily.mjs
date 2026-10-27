@@ -31,7 +31,8 @@ const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
 const {contractDeadline, pendingAdds, windowClosed} = await lib("adds.js");
-const {ruleViolations, seasonPhase} = await lib("violations.js");
+// v1's has no cutDownAt: its roster limits start with week 1
+const {cutDownAt = null, ruleViolations, seasonPhase} = await lib("violations.js");
 const {decideYears, readProcessedWaivers, teamPlayers} = await lib("contract-years.js");
 const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
@@ -304,7 +305,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
 }
 
 async function leagueState() {
-    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults] = await Promise.all([
+    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
         fetchFrom(host, "salaryAdjustments", {L: leagueId}),
@@ -315,7 +316,12 @@ async function leagueState() {
         fetchFrom(host, "weeklyResults", {L: leagueId}).catch((error) => {
             log(`Couldn't load the league's weekly results (${error.message}); the anti-tanking check is skipped.`);
             return {};
-        })
+        }),
+        // the final cut-down date, when the roster limits start before week 1; without it, from week 1
+        cutDownAt ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
+            log(`Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
+            return null;
+        }) : null
     ]);
     // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
     const currentInjuries = await fetchFrom(API_BASE, "injuries").catch((error) => {
@@ -343,6 +349,7 @@ async function leagueState() {
     return {
         players: playerMap,
         built,
+        cutDown: cutDownAt ? cutDownAt(calendar) : null,
         penalties: pendingPenalties(built),
         transactions: asArray(transactions.transaction),
         rosters,
@@ -355,13 +362,13 @@ const RULE_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster", "i
 
 // going over 30 voids the move like the cap, so the flag lists recent moves. Returns the teams over
 // 30, whose chores are held.
-function leagueRules({players, built, penalties, transactions}) {
+function leagueRules({players, built, cutDown, penalties, transactions}) {
     const overRoster = new Set();
     if (built.seasonOver === null) {
         return overRoster;
     }
     const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
-    const violations = ruleViolations(built).filter((item) => RULE_KINDS.has(item.kind));
+    const violations = ruleViolations(built, {now: now.getTime() / 1000, cutDown}).filter((item) => RULE_KINDS.has(item.kind));
     for (const violation of violations) {
         let text = violation.text;
         if (violation.kind === "roster-over") {

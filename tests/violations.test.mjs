@@ -195,3 +195,13 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
     // without the league's weeks the playoffs and the end can't be told: the in-season checks are off
     assert.deepEqual(await seasonPhase(2026, new Date("2026-10-01T00:00:00Z"), {fetchImpl}, null), {started: true, tankingOver: true, seasonOver: true});
 });
+
+test("the cut-down date is the commissioner's first one-off event named for a cut, at a set time", async () => {
+    const {cutDownAt} = await import("../site/v2/lib/violations.js");
+    const event = (title, extra = {}) => ({type: "CUSTOM", title, start_time: "1788843540", happens: "", ...extra});
+    assert.equal(cutDownAt({event: [event("Rookie draft"), event("Final cut down")]}), 1788843540);
+    assert.equal(cutDownAt({event: event("Cutdown day")}), 1788843540);
+    assert.equal(cutDownAt({event: [event("Cut by", {happens: "WEEKLY"}), event("Cut down", {start_time: "1"}), event("Last contract year ends: cut")]}), null);
+    assert.equal(cutDownAt({event: [{...event("Cut down"), type: "TRADE"}]}), null);
+    assert.equal(cutDownAt(null), null);
+});
