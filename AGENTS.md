@@ -17,7 +17,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   see, so keep those to touches that can fail quietly.
 - Members' browsers keep what v2 loaded across deploys (`site/v2/ui/store.js`). A panel's saved copy
   that its render throws on is loaded afresh, but a `cached()` value is used as found until it
-  expires (a year for a bid run): a change to the shape one holds changes its key too.
+  expires (a year for a bid run): a change to the shape one holds changes its key too, which
+  `tests/stored-shapes.test.mjs` checks for what v2 builds from MFL's pages.
 - MFL throttles by machine and doesn't say how much: test against saved exports, make one live run
   at the end, and never send the job's registered User-Agent from a dev machine.
 - Changes in MFL's header or tab messages are made by the commissioner by hand: give the exact lines
