@@ -2,6 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
 import {betaOffer, decide, offeredVersion, previewBase, withParam} from "../site/v1/loader.js";
+import {betaOffer as betaOfferV2} from "../site/v2/loader.js";
 
 const PAGES = "https://bborchardt.github.io/fuadmflsite/";
 const here = `${PAGES}v1/`;
@@ -22,6 +23,19 @@ test("the header's beta offer: a version other than the header's, for the teams 
     // a visitor who isn't logged in has no team
     assert.equal(betaOffer({version: "v2", teams: ["0001"]}, {versionHere: "v1", teamId: undefined}), null);
     assert.equal(offer("v2", {feedback: "javascript:alert(1)"}).feedback, null);
+});
+
+test("teams can name guests, who aren't logged in, and leave out the commissioner", () => {
+    for (const [offerFor, versionHere, version] of [[betaOffer, "v1", "v2"], [betaOfferV2, "v2", "v3"]]) {
+        const to = (teamId, teams = ["0001", "guest"]) => offerFor({version, teams}, {versionHere, teamId});
+        assert.equal(to(undefined).version, version);
+        assert.equal(to("").version, version);
+        assert.equal(to("0001").version, version);
+        assert.equal(to("0000"), null);
+        assert.equal(to(undefined, ["0001"]), null);
+        // without teams, everyone: the commissioner too
+        assert.equal(offerFor({version}, {versionHere, teamId: "0000"}).version, version);
+    }
 });
 
 test("members opt in and out of the beta, and stay in while it's offered", () => {
