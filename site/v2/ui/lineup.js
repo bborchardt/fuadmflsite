@@ -164,7 +164,7 @@ async function stillBeforeDraft(context) {
     return Boolean(results) && !draftPicked(results);
 }
 
-export async function drawLineup({context, franchiseId, loginHref, irHref}) {
+export async function drawLineup({context, franchiseId, irHref}) {
     const body = document.querySelector(".pagebody");
     if (!body) {
         return;
@@ -175,11 +175,10 @@ export async function drawLineup({context, franchiseId, loginHref, irHref}) {
         body.prepend(mount);
         document.documentElement.classList.add("fuad-lineup-on");
     };
+    // logged out MFL shows its login screen instead (and its page, should it ever be served); the
+    // commissioner's view stays MFL's
     if (!franchiseId || franchiseId === "0000") {
-        if (!franchiseId) {
-            mount.innerHTML = `<section class="fuad-panel fuad-lineup-note"><span>Log in to set your lineup.</span><a class="fuad-button" href="${esc(loginHref)}">Log in</a></section>`;
-            show();
-        }
+        document.documentElement.classList.remove("fuad-lineup-on");
         return;
     }
     // drawn at once, so MFL's form doesn't show while the season's phase is read

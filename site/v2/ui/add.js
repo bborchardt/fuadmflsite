@@ -6,7 +6,6 @@
 // made the add. MFL's form stays in the page underneath; anything v2 can't read leaves MFL's page.
 
 import {exportUrl, fetchExport} from "../lib/mfl.js";
-import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog, replaceEntry} from "./dialog.js";
@@ -152,7 +151,7 @@ async function saveGroup(context, franchiseId, round, change) {
     await send(new URL(form.getAttribute("action") || "options", url).href, {method: "POST", body: fields});
 }
 
-export async function drawAdd({context, franchiseId, loginHref}) {
+export async function drawAdd({context, franchiseId}) {
     const body = document.querySelector(".pagebody");
     if (!body) {
         return;
@@ -167,13 +166,10 @@ export async function drawAdd({context, franchiseId, loginHref}) {
         mount.remove();
         document.documentElement.classList.remove("fuad-add-on");
     };
-    if (!franchiseId) {
-        mount.innerHTML = `<section class="fuad-panel fuad-add-note"><span>Log in to make moves</span><a class="fuad-button" href="${esc(loginHref)}">Log in</a></section>`;
-        show();
-        return;
-    }
-    // the commissioner's view stays MFL's
-    if (franchiseId === "0000") {
+    // logged out MFL shows its login screen instead (and its page, should it ever be served); the
+    // commissioner's view stays MFL's
+    if (!franchiseId || franchiseId === "0000") {
+        standAside();
         return;
     }
     const form = addForm();
