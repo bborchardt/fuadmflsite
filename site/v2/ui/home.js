@@ -7,7 +7,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
-import {forget, mflFetch, pageFetch} from "./page-fetch.js";
+import {mflFetch, pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
 import {
@@ -227,24 +227,16 @@ function drawChat(mount, {context, franchiseId, teams}) {
 }
 
 function drawBoard(mount, {context, loggedIn, loginHref, exp, boardHref, threadHref}) {
+    // MFL's own page, for its formatting, email replies and Preview; its import drops line breaks
+    const addHref = `${window.location.origin}/${context.season}/mb/topic_add.pl?bid=${encodeURIComponent(`${context.season}${context.leagueId}`)}`;
     const actions = `${boardHref ? `<a href="${esc(boardHref)}">All topics</a>` : ""}${loggedIn
-        ? '<button type="button" class="fuad-chip" aria-expanded="false">New topic</button>'
+        ? `<a class="fuad-chip" href="${esc(addHref)}">New topic</a>`
         : `<a href="${esc(loginHref)}">Log in to post</a>`}`;
     const load = async () => boardTopics(await exp("messageBoard", {COUNT: 20}));
     const render = (topics, body) => {
-        body.innerHTML = `
-        <form class="fuad-topic-form" hidden>
-            <label for="fuad-topic-subject" class="fuad-meta">Subject</label>
-            <input id="fuad-topic-subject" maxlength="100" required>
-            <label for="fuad-topic-body" class="fuad-meta">Message</label>
-            <textarea id="fuad-topic-body" rows="4" required></textarea>
-            <p class="fuad-result" role="status"></p>
-            <div class="fuad-form-buttons"><button type="button" class="fuad-quiet" data-cancel>Cancel</button><button type="submit" class="fuad-cta">Post topic</button></div>
-        </form>
-        ${topics.length
+        body.innerHTML = topics.length
             ? `<ul class="fuad-rows">${topics.map((topic) => `<li><a class="fuad-topic" href="${esc(threadHref(topic.id))}"><span class="fuad-row-title">${esc(topic.title)}</span><span class="fuad-meta">${esc(topic.when)}</span></a></li>`).join("")}</ul>`
-            : '<p class="fuad-muted fuad-empty">No topics yet.</p>'}`;
-        wireNewTopic(mount, body, {context});
+            : '<p class="fuad-muted fuad-empty">No topics yet.</p>';
     };
     // logged out the board's export isn't readable, so the topics come from MFL's own module on the
     // page, when the home page has it
@@ -264,59 +256,6 @@ function drawBoard(mount, {context, loggedIn, loginHref, exp, boardHref, threadH
         return;
     }
     drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}`, load, render});
-}
-
-function wireNewTopic(mount, body, {context}) {
-    const toggle = mount.querySelector(".fuad-panel-actions button");
-    const form = body.querySelector("form");
-    if (!toggle || !form) {
-        return;
-    }
-    const show = (open) => {
-        form.hidden = !open;
-        toggle.setAttribute("aria-expanded", String(open));
-        toggle.textContent = open ? "Close" : "New topic";
-        if (open) {
-            form.querySelector("input").focus();
-        }
-    };
-    toggle.onclick = () => show(form.hidden);
-    form.querySelector("[data-cancel]").onclick = () => show(false);
-    form.onsubmit = async (event) => {
-        event.preventDefault();
-        const result = form.querySelector(".fuad-result");
-        const button = form.querySelector("button[type=submit]");
-        const subject = form.querySelector("input").value.trim();
-        const message = form.querySelector("textarea").value.trim();
-        if (!subject || !message) {
-            result.textContent = subject ? "Write a message." : "Write a subject.";
-            return;
-        }
-        button.disabled = true;
-        result.textContent = "";
-        try {
-            // MFL's messageBoard import, posted as the logged-in member
-            const response = await fetch(`${window.location.origin}/${context.season}/import`, {
-                method: "POST",
-                credentials: "same-origin",
-                body: new URLSearchParams({TYPE: "messageBoard", L: context.leagueId, SUBJECT: subject, BODY: message})
-            });
-            const text = await response.text();
-            // MFL answers <status>OK</status>; anything else, a login page included, didn't post
-            if (!response.ok || !/<status>\s*OK\s*<\/status>/i.test(text)) {
-                throw new Error((text.match(/<error[^>]*>([^<]*)/i) || [])[1] || (response.ok ? "MFL didn't confirm it" : `HTTP ${response.status}`));
-            }
-            forget();
-            form.reset();
-            show(false);
-            mount.dispatchEvent(new CustomEvent("fuad-refresh"));
-        } catch (error) {
-            console.warn("[fuad] couldn't post the topic:", error);
-            result.textContent = `Not posted: ${error.message}`;
-        } finally {
-            button.disabled = false;
-        }
-    };
 }
 
 // `league()` resolves to the league model (app.js), with `raw` holding the exports it was built from.
@@ -435,11 +374,6 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         drawChat(panels.chat, {context, franchiseId, teams});
     }
     drawBoard(panels.board, {context, loggedIn, loginHref, exp, boardHref, threadHref});
-    // after a new topic, the list again, with focus back on New topic
-    panels.board.addEventListener("fuad-refresh", () => {
-        drawBoard(panels.board, {context, loggedIn, loginHref, exp: fetcher(context, {fresh: true}), boardHref, threadHref});
-        panels.board.querySelector(".fuad-panel-actions button").focus();
-    });
 
     const allMoves = mflPage(/^transactions$/i);
     const allBids = mflPage(/^processed waivers$/i) || `${base}/processed_waivers?L=${context.leagueId}`;

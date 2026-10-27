@@ -1550,6 +1550,9 @@ body [tabindex]:focus-visible {
 #fuad-league .fuad-chip::after,
 #fuad-rosters .fuad-chip::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 
+/* a chip that's a link keeps the chip's size and colour, not a heading link's */
+#fuad-home .fuad-panel-actions a.fuad-chip { min-height: 0; margin: 0; color: var(--fuad-text); }
+
 #fuad-home .fuad-rows,
 #fuad-league .fuad-rows,
 #fuad-rosters .fuad-rows,
@@ -1839,12 +1842,6 @@ body #fuad-home select {
     #fuad-league .fuad-cta:not(:disabled):hover,
     #fuad-rosters .fuad-cta:not(:disabled):hover { background: var(--fuad-lime-hover); }
 }
-
-#fuad-home .fuad-topic-form { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--fuad-rule); }
-
-#fuad-home .fuad-topic-form[hidden] { display: none; }
-
-#fuad-home .fuad-form-buttons { display: flex; gap: 8px; justify-content: flex-end; }
 
 #fuad-home .fuad-result { margin: 6px 0 0; font-size: 13px; color: var(--fuad-bad); }
 
