@@ -359,7 +359,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const on = document.documentElement.classList.contains("fuad-rosters-on");
         const route = on ? routeOf(window.location.hash) : null;
         // redirected before anything shows, so the view left doesn't flash
-        // logged out or the commissioner: no team of your own, so Teams
+        // the commissioner has no team of their own, so Teams
         if (route && route.view === "my-team" && !viewer) {
             window.location.replace("#rosters-teams");
             return;

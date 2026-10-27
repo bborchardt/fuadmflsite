@@ -7,7 +7,6 @@
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {kickoffAt} from "./context.js";
-import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {
@@ -41,7 +40,7 @@ async function loadGames(context, calendar) {
     return {teams, all: [...teams.values(), ...teamKickoffs(nextWeek).values()], deadline};
 }
 
-export async function drawTrades({context, franchiseId, loginHref, addHref, teamHref}) {
+export async function drawTrades({context, franchiseId, addHref, teamHref}) {
     const body = document.querySelector(".pagebody");
     if (!body) {
         return;
@@ -59,13 +58,10 @@ export async function drawTrades({context, franchiseId, loginHref, addHref, team
             window.fuadDetour(null);
         }
     };
-    if (!franchiseId) {
-        mount.innerHTML = `<section class="fuad-panel fuad-trades-note"><span>Log in to make moves</span><a class="fuad-button" href="${esc(loginHref)}">Log in</a></section>`;
-        show();
-        return;
-    }
-    // the commissioner's view stays MFL's
-    if (franchiseId === "0000") {
+    // logged out MFL shows its login screen instead (and its page, should it ever be served); the
+    // commissioner's view stays MFL's
+    if (!franchiseId || franchiseId === "0000") {
+        standAside();
         return;
     }
     const proposal = readProposal(document, franchiseId);

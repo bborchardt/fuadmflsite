@@ -40,7 +40,7 @@ function formFields(form, playerId) {
     return fields;
 }
 
-export async function drawDrop({context, franchiseId, loginHref}) {
+export async function drawDrop({context, franchiseId}) {
     const body = document.querySelector(".pagebody");
     if (!body) {
         return;
@@ -55,13 +55,10 @@ export async function drawDrop({context, franchiseId, loginHref}) {
         mount.remove();
         document.documentElement.classList.remove("fuad-drop-on");
     };
-    if (!franchiseId) {
-        mount.innerHTML = `<section class="fuad-panel fuad-drop-note"><span>Log in to make moves</span><a class="fuad-button" href="${esc(loginHref)}">Log in</a></section>`;
-        show();
-        return;
-    }
-    // the commissioner's view stays MFL's
-    if (franchiseId === "0000") {
+    // logged out MFL shows its login screen instead (and its page, should it ever be served); the
+    // commissioner's view stays MFL's
+    if (!franchiseId || franchiseId === "0000") {
+        standAside();
         return;
     }
     const form = dropForm();
