@@ -50,6 +50,8 @@ test("logged out, a topic's posts are cards without Reply", () => {
     assert.equal(restyleTopic(doc, {guest: true}), true);
     const post = doc.querySelector(".fuad-post");
     assert.equal(post.querySelector(".fuad-post-team").textContent, "Commissioner");
+    // the commissioner has no team page to lead to
+    assert.equal(post.querySelectorAll(".fuad-post-team a").length, 0);
     assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m.");
     assert.equal(post.querySelector(".fuad-post-actions").children.length, 0);
     assert.equal(restyleTopic(page("topic-show-guest.html")), false);
