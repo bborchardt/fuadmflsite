@@ -63,7 +63,9 @@ function card(parts) {
             <span class="fuad-post-actions">${parts.reply ? `<a href="${esc(parts.reply)}">Reply</a>` : ""}${parts.quote ? `<a href="${esc(parts.quote)}">Quote</a>` : ""}${parts.edit ? `<a href="${esc(parts.edit)}">Edit</a>` : ""}</span>
         </div>
         <div class="fuad-post-text"></div>`;
-    article.querySelector(".fuad-post-team").append(parts.team);
+    // the commissioner has no roster, so no team page of v2's to lead to; MFL's is an empty one
+    const commish = /[?&]F=0000(&|$)/.test(parts.team.getAttribute("href") || "");
+    article.querySelector(".fuad-post-team").append(commish ? parts.team.textContent : parts.team);
     if (parts.avatar) {
         parts.avatar.alt = "";
         article.querySelector(".fuad-post-avatar").replaceChildren(parts.avatar);
