@@ -134,6 +134,20 @@ function wireMenu(layer) {
     });
 }
 
+// logged out, a view that needs a login (nav.js) is one line, whose link comes back to the view
+function loginPage(view, loginHref) {
+    let mount = document.getElementById("fuad-login-page");
+    if (view && !mount) {
+        mount = document.createElement("main");
+        mount.id = "fuad-login-page";
+        (document.querySelector(".pagebody") || document.body).prepend(mount);
+    }
+    if (view) {
+        mount.innerHTML = `<section class="fuad-panel"><p class="fuad-muted"><a href="${esc(`${loginHref}&URL=${encodeURIComponent(view.after)}`)}">Log in</a> to ${esc(view.login)}.</p></section>`;
+    }
+    document.documentElement.classList.toggle("fuad-login-page-on", Boolean(view));
+}
+
 export function drawFrame({context, storage}) {
     const {season, leagueId} = context;
     const base = `${window.location.origin}/${season}`;
@@ -173,10 +187,12 @@ export function drawFrame({context, storage}) {
         const page = pageOf(window.location, tabs);
         const here = locate(all, page, franchiseId);
         const current = here && here.section.name;
+        const gated = page.path === "home" && page.hash && here && (here.view || here.section).login ? here.view || here.section : null;
         // v2's Home replaces the home page's Main tab; its other tabs are still MFL's
         document.documentElement.classList.toggle("fuad-home-on", page.path === "home" && current === "Home");
         document.documentElement.classList.toggle("fuad-league-on", page.path === "home" && Boolean(page.hash) && current === "League");
-        document.documentElement.classList.toggle("fuad-rosters-on", page.path === "home" && Boolean(page.hash) && current === "Rosters");
+        document.documentElement.classList.toggle("fuad-rosters-on", page.path === "home" && Boolean(page.hash) && current === "Rosters" && !gated);
+        loginPage(gated, `${base}/login?L=${encodeURIComponent(leagueId)}`);
         if (here && here.view) {
             keepLastView(current, here.view.name);
         }

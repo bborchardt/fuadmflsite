@@ -121,11 +121,6 @@ function teamLink(view) {
     return teamLinks(view("Rosters", "Teams"));
 }
 
-function loginLink(context) {
-    const login = [...document.querySelectorAll(".myfantasyleague_menu a[href], .pageheader a[href]")].find((a) => /^log\s*in$/i.test(a.textContent.trim()));
-    return login ? login.href : `${window.location.origin}/${context.season}/login?L=${context.leagueId}`;
-}
-
 // v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
 // Home is the current view (`fuad-home-on`); MFL's tabs stay underneath for the other home page tabs.
 function startHome(context, league, {beta, inBeta, drawn}) {
@@ -144,7 +139,6 @@ function startHome(context, league, {beta, inBeta, drawn}) {
             trades: view("Moves", "Trades"),
             team: teamLink(view)
         },
-        loginHref: loginLink(context),
         inBeta,
         beta
     }).shown));
@@ -179,7 +173,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-lineup-on");
         await import("./lineup.js").then(({drawLineup}) => drawn(drawLineup({
-            context, franchiseId, loginHref: loginLink(context), irHref: viewLinks(context, franchiseId)("Moves", "IR")
+            context, franchiseId, irHref: viewLinks(context, franchiseId)("Moves", "IR")
         }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Lineup:", error);
             onTrouble();
@@ -188,7 +182,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     }
     if (context && here.path === "add_drop") {
         const shown = over("fuad-add-on");
-        await import("./add.js").then(({drawAdd}) => drawn(drawAdd({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)}))).catch(shown).catch((error) => {
+        await import("./add.js").then(({drawAdd}) => drawn(drawAdd({context, franchiseId: window.franchise_id || null}))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Add:", error);
             onTrouble();
         });
@@ -196,7 +190,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     }
     if (context && here.path === "options" && here.option === "257") {
         const shown = over("fuad-drop-on");
-        await import("./drop.js").then(({drawDrop}) => drawn(drawDrop({context, franchiseId: window.franchise_id || null, loginHref: loginLink(context)}))).catch(shown).catch((error) => {
+        await import("./drop.js").then(({drawDrop}) => drawn(drawDrop({context, franchiseId: window.franchise_id || null}))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Drop:", error);
             onTrouble();
         });
@@ -206,7 +200,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-ir-on");
         await import("./ir.js").then(({drawIR}) => drawn(drawIR({
-            context, franchiseId, loginHref: loginLink(context), dropHref: viewLinks(context, franchiseId)("Moves", "Drop")
+            context, franchiseId, dropHref: viewLinks(context, franchiseId)("Moves", "Drop")
         }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw IR:", error);
             onTrouble();
@@ -218,7 +212,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-trades-on");
         await import("./trades.js").then(({drawTrades}) => drawn(drawTrades({
-            context, franchiseId, loginHref: loginLink(context), addHref: viewLinks(context, franchiseId)("Moves", "Add"), teamHref: teamLink(viewLinks(context, franchiseId))
+            context, franchiseId, addHref: viewLinks(context, franchiseId)("Moves", "Add"), teamHref: teamLink(viewLinks(context, franchiseId))
         }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Trades:", error);
             onTrouble();
@@ -312,5 +306,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             onTrouble();
             onDrawn();
         });
+    // the frame draws a login page itself
+    whenShown("fuad-login-page-on").then(onDrawn);
     return homeShown;
 }

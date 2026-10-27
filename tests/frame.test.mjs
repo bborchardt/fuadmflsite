@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {locate, pageOf, sectionHref, sections, viewHash} from "../site/v2/ui/nav.js";
+import {REBUILT, locate, pageOf, sectionHref, sections, viewHash} from "../site/v2/ui/nav.js";
 import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
@@ -42,11 +42,26 @@ test("rosters: your own team is My team, any other is Teams", () => {
     assert.deepEqual(at(`${base}/options?L=48571&O=07`), ["Rosters", "Teams"]);
 });
 
-test("logged out, Rosters opens on Teams and has no My team", () => {
-    const guest = sections({base, leagueId: "48571", franchiseId: null});
-    const rosters = guest.find((s) => s.name === "Rosters");
-    assert.equal(rosters.href, `${base}/options?L=48571&O=07`);
-    assert.ok(!rosters.views.some((v) => v.name === "My team"));
+test("logged out, the views that need a login are v2's pages saying so, and Rosters opens on Teams", () => {
+    const guest = sections({base, leagueId: "48571", franchiseId: null, rebuilt: REBUILT});
+    const home = `${base}/home/48571`;
+    const view = (section, name) => guest.find((s) => s.name === section).views.find((v) => v.name === name);
+    const lineup = guest.find((s) => s.name === "Lineup");
+    assert.deepEqual([lineup.href, lineup.after, lineup.login], [`${home}#lineup`, `${base}/lineup?L=48571`, "set your lineup"]);
+    assert.deepEqual([view("Moves", "Add").href, view("Moves", "Add").after], [`${home}#moves-add`, `${base}/add_drop?L=48571`]);
+    assert.deepEqual([view("Rosters", "My team").href, view("Rosters", "My team").after], [`${home}#rosters-my-team`, `${home}#rosters-my-team`]);
+    assert.equal(guest.find((s) => s.name === "Rosters").href, `${home}#rosters-teams`);
+    assert.equal(view("Rosters", "Teams").login, undefined);
+    assert.equal(sectionHref(guest.find((s) => s.name === "Rosters"), "Home", {Rosters: "My team"}), `${home}#rosters-teams`);
+    const found = locate(guest, pageOf(new URL(`${home}#moves-trades`)), null);
+    assert.deepEqual([found.section.name, found.view.name], ["Moves", "Trades"]);
+});
+
+test("logged in, Lineup and Moves are MFL's pages", () => {
+    const member = sections({base, leagueId: "48571", franchiseId: "0001", rebuilt: REBUILT});
+    const lineup = member.find((s) => s.name === "Lineup");
+    assert.deepEqual([lineup.href, lineup.login], [`${base}/lineup?L=48571`, undefined]);
+    assert.equal(member.find((s) => s.name === "Moves").href, `${base}/add_drop?L=48571`);
 });
 
 test("Rules, over League Rules or League Settings, lives under Home", () => {

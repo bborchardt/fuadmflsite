@@ -58,7 +58,7 @@ function layout(root, {loggedIn}) {
     root.innerHTML = `
     <div class="fuad-home-columns">
         <div class="fuad-home-column">
-            <section class="fuad-home-alerts" aria-label="My alerts"></section>
+            ${loggedIn ? '<section class="fuad-home-alerts" aria-label="My alerts"></section>' : ""}
             <section class="fuad-home-league" aria-label="League alerts"></section>
             <section class="fuad-home-board" aria-label="Message board"></section>
             <section class="fuad-home-coming" aria-label="Coming up"></section>
@@ -226,12 +226,10 @@ function drawChat(mount, {context, franchiseId, teams}) {
     drawPanel(mount, {heading: "Chat", actions: '<button type="button" class="fuad-text-button fuad-chat-older-button" hidden>Older messages</button>', what: "chat", key: `fuad.home.chat.${context.season}.${franchiseId}`, rows: 3, load, render});
 }
 
-function drawBoard(mount, {context, loggedIn, loginHref, exp, boardHref, threadHref}) {
+function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
     // MFL's own page, for its formatting, email replies and Preview; its import drops line breaks
     const addHref = `${window.location.origin}/${context.season}/mb/topic_add.pl?bid=${encodeURIComponent(`${context.season}${context.leagueId}`)}`;
-    const actions = `${boardHref ? `<a href="${esc(boardHref)}">All topics</a>` : ""}${loggedIn
-        ? `<a class="fuad-chip" href="${esc(addHref)}">New topic</a>`
-        : `<a href="${esc(loginHref)}">Log in to post</a>`}`;
+    const actions = `${boardHref ? `<a href="${esc(boardHref)}">All topics</a>` : ""}${loggedIn ? `<a class="fuad-chip" href="${esc(addHref)}">New topic</a>` : ""}`;
     const load = async () => boardTopics(await exp("messageBoard", {COUNT: 20}));
     const render = (topics, body) => {
         body.innerHTML = topics.length
@@ -261,7 +259,7 @@ function drawBoard(mount, {context, loggedIn, loginHref, exp, boardHref, threadH
 // `league()` resolves to the league model (app.js), with `raw` holding the exports it was built from.
 // `readings(league)` resolves to the contract lengths read from the board, or null. Resolves to
 // whether League alerts, which hold the beta's way back, were drawn.
-export function drawHome({context, franchiseId, league, readings = () => Promise.resolve(null), links, loginHref, inBeta = null, beta = null}) {
+export function drawHome({context, franchiseId, league, readings = () => Promise.resolve(null), links, inBeta = null, beta = null}) {
     const member = Boolean(franchiseId && franchiseId !== "0000");
     const loggedIn = Boolean(franchiseId);
     const base = `${window.location.origin}/${context.season}`;
@@ -340,15 +338,13 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     : `<div class="fuad-all-clear"><span class="fuad-mark fuad-tone-lime" aria-hidden="true">${CHECK}</span><span class="fuad-muted">All clear.</span></div>`;
             }
         });
-    } else {
+    } else if (loggedIn) {
         drawPanel(panels.alerts, {
             heading: "My alerts",
             what: "my alerts",
             load: () => null,
             render: (value, body) => {
-                body.innerHTML = loggedIn
-                    ? '<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>'
-                    : `<div class="fuad-login-line"><span class="fuad-muted">Log in to see your alerts</span><a class="fuad-cta" href="${esc(loginHref)}">Log in</a></div>`;
+                body.innerHTML = '<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>';
             }
         });
     }
@@ -373,7 +369,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     if (panels.chat) {
         drawChat(panels.chat, {context, franchiseId, teams});
     }
-    drawBoard(panels.board, {context, loggedIn, loginHref, exp, boardHref, threadHref});
+    drawBoard(panels.board, {context, loggedIn, exp, boardHref, threadHref});
 
     const allMoves = mflPage(/^transactions$/i);
     const allBids = mflPage(/^processed waivers$/i) || `${base}/processed_waivers?L=${context.leagueId}`;

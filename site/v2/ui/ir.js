@@ -4,7 +4,6 @@
 // page underneath; anything v2 can't read leaves MFL's page.
 
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
-import {esc} from "./html.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
@@ -19,7 +18,7 @@ const FLASH_KEY = "fuad.irFlash";
 const READS = 3;
 const READ_GAP = 1500;
 
-export async function drawIR({context, franchiseId, loginHref, dropHref}) {
+export async function drawIR({context, franchiseId, dropHref}) {
     const body = document.querySelector(".pagebody");
     if (!body) {
         return;
@@ -34,13 +33,10 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
         mount.remove();
         document.documentElement.classList.remove("fuad-ir-on");
     };
-    if (!franchiseId) {
-        mount.innerHTML = `<section class="fuad-panel fuad-ir-note"><span>Log in to make moves</span><a class="fuad-button" href="${esc(loginHref)}">Log in</a></section>`;
-        show();
-        return;
-    }
-    // the commissioner's view stays MFL's
-    if (franchiseId === "0000") {
+    // logged out MFL shows its login screen instead (and its page, should it ever be served); the
+    // commissioner's view stays MFL's
+    if (!franchiseId || franchiseId === "0000") {
+        standAside();
         return;
     }
     const page = readIRPage(document, franchiseId);
