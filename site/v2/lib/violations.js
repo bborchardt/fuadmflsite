@@ -50,11 +50,13 @@ function contractNotice(teamName, add, reading) {
 const TITLE_KINDS = [[/^trade deadline$/i, "trades"], [/contract year ends?\b/i, "rollover"], [/\bcut/i, "cut"], [/\bdraft/i, "draft"]];
 export const titleKind = (title) => (TITLE_KINDS.find(([pattern]) => pattern.test(title)) || [])[1] || null;
 
-// The final cut-down date (2.5), in seconds: the commissioner's first one-off event on MFL's calendar
-// named for a cut, at a set time (not a week number). Null without one.
-export function cutDownAt(calendar) {
+// The season's final cut-down date (2.5), in seconds: the commissioner's first one-off event on MFL's
+// calendar named for a cut, at a set time (not a week number) in the season's year. A renewed
+// league's calendar can still hold last season's. Null without one.
+export function cutDownAt(calendar, season) {
     const event = asArray(calendar && calendar.event).find((item) => item.type === "CUSTOM" && !item.happens
-        && Number(item.start_time) >= 100 && titleKind(String(item.title || "").trim()) === "cut");
+        && Number(item.start_time) >= 100 && new Date(Number(item.start_time) * 1000).getUTCFullYear() === Number(season)
+        && titleKind(String(item.title || "").trim()) === "cut");
     return event ? Number(event.start_time) : null;
 }
 
