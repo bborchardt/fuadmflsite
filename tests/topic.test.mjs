@@ -1,6 +1,10 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {dayOnly, insertTags, shortDate, topicTitle} from "../site/v2/ui/topic.js";
+import {readFileSync} from "node:fs";
+import {parseHTML} from "linkedom";
+import {dayOnly, insertTags, restyleBoard, restyleTopic, shortDate, topicTitle} from "../site/v2/ui/topic.js";
+
+const page = (name) => parseHTML(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")).document;
 
 test("a post's date drops the seconds, the time zone and the year", () => {
     assert.equal(shortDate("\n Wed Sep 9 11:11:12 p.m. CT 2026\n"), "Wed Sep 9 · 11:11 p.m.");
@@ -28,4 +32,25 @@ test("a format chip wraps the selection, or puts the cursor between its tags", (
     assert.deepEqual(insertTags("see site", 4, 8, "url=", "url"), {text: "see [url=]site[/url]", caret: 9});
     assert.deepEqual(insertTags("[url=x.com][/url]", 10, 10, "url=", "url"), {text: "[url=x.com][/url]", caret: 11});
     assert.deepEqual(insertTags("a [b]bold[/b] c", 9, 9, "b", "b"), {text: "a [b]bold[/b] c", caret: 13});
+});
+
+test("logged out, the topic list is redrawn without New topic", () => {
+    const doc = page("board-show-guest.html");
+    assert.equal(restyleBoard(doc, {guest: true}), true);
+    const board = doc.getElementById("fuad-topics");
+    assert.equal(board.querySelector(".fuad-chip"), null);
+    assert.deepEqual([...board.querySelectorAll(".fuad-board-links a")].map((a) => a.textContent), ["Search"]);
+    assert.equal(board.querySelector(".fuad-board-topic .fuad-row-title").textContent, "New League Site");
+    // a member's list without New topic is one v2 doesn't know
+    assert.equal(restyleBoard(page("board-show-guest.html")), false);
+});
+
+test("logged out, a topic's posts are cards without Reply", () => {
+    const doc = page("topic-show-guest.html");
+    assert.equal(restyleTopic(doc, {guest: true}), true);
+    const post = doc.querySelector(".fuad-post");
+    assert.equal(post.querySelector(".fuad-post-team").textContent, "Commissioner");
+    assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m.");
+    assert.equal(post.querySelector(".fuad-post-actions").children.length, 0);
+    assert.equal(restyleTopic(page("topic-show-guest.html")), false);
 });

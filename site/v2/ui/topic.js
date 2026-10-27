@@ -25,14 +25,14 @@ const plural = (count, word) => `${count.toLocaleString("en-US")} ${word}${count
 // MFL indents a reply by 3% a level; capped, so a deep thread stays inside the column
 const depthOf = (post) => Math.min(6, Math.round((parseFloat(post.style.marginLeft) || 0) / 3));
 
-// a post's parts in MFL's markup, or null; nothing is moved yet
-function readPost(post) {
+// a post's parts in MFL's markup, or null; nothing is moved yet. A guest's posts have no Reply.
+function readPost(post, guest) {
     const rows = post.querySelectorAll("table tr");
     const team = rows[0] && rows[0].querySelector("td.poster a");
     const head = rows[0] && rows[0].querySelector("td.message");
     const body = rows[1] && rows[1].querySelector("td.message");
     const reply = head && head.querySelector("a[href*='post_add'][href]:not([href*='quote=1'])");
-    if (!team || !head || !body || !reply) {
+    if (!team || !head || !body || (!reply && !guest)) {
         return null;
     }
     const status = head.querySelector("img.ico[title]");
@@ -43,7 +43,7 @@ function readPost(post) {
         post,
         team,
         body,
-        reply: reply.getAttribute("href"),
+        reply: reply ? reply.getAttribute("href") : null,
         quote: quote ? quote.getAttribute("href") : null,
         edit: edit ? edit.getAttribute("href") : null,
         unread: Boolean(status && /unread/i.test(status.getAttribute("title"))),
@@ -60,7 +60,7 @@ function card(parts) {
         <div class="fuad-post-head">
             <span class="fuad-post-avatar" aria-hidden="true">${esc(initials(parts.team.textContent))}</span>
             <span class="fuad-post-who"><span class="fuad-post-team"></span><span class="fuad-post-when">${esc(parts.when)}</span>${parts.unread ? '<span class="fuad-post-new">New</span>' : ""}</span>
-            <span class="fuad-post-actions"><a href="${esc(parts.reply)}">Reply</a>${parts.quote ? `<a href="${esc(parts.quote)}">Quote</a>` : ""}${parts.edit ? `<a href="${esc(parts.edit)}">Edit</a>` : ""}</span>
+            <span class="fuad-post-actions">${parts.reply ? `<a href="${esc(parts.reply)}">Reply</a>` : ""}${parts.quote ? `<a href="${esc(parts.quote)}">Quote</a>` : ""}${parts.edit ? `<a href="${esc(parts.edit)}">Edit</a>` : ""}</span>
         </div>
         <div class="fuad-post-text"></div>`;
     article.querySelector(".fuad-post-team").append(parts.team);
@@ -73,9 +73,9 @@ function card(parts) {
 }
 
 // true when the page was restyled. Everything is read and checked before anything moves, so a page
-// v2 can't read is left exactly as MFL drew it.
-export function restyleTopic(doc = document) {
-    const posts = [...doc.querySelectorAll("div.frm.pst[id^='pid']")].map(readPost);
+// v2 can't read is left exactly as MFL drew it. `guest`: logged out, when MFL leaves out what needs a login.
+export function restyleTopic(doc = document, {guest = false} = {}) {
+    const posts = [...doc.querySelectorAll("div.frm.pst[id^='pid']")].map((post) => readPost(post, guest));
     const bars = [...doc.querySelectorAll("th.messageboardbar")].map((th) => th.closest("table"));
     const nav = doc.querySelector("span.nav");
     // a long topic's page numbers, in MFL's topic bar (which is hidden)
@@ -181,8 +181,8 @@ function pagerNav(pager) {
 }
 
 // true when the board's topic list (MFL's `mb/board_show.pl`) was redrawn. MFL's table and bar stay
-// on the page, hidden; a page with anything v2 doesn't know stays MFL's.
-export function restyleBoard(doc = document) {
+// on the page, hidden; a page with anything v2 doesn't know stays MFL's. A guest has no New topic.
+export function restyleBoard(doc = document, {guest = false} = {}) {
     const bar = doc.querySelector("th.messageboardbar");
     const options = bar && bar.closest("table");
     const cell = options && options.querySelector("td");
@@ -201,7 +201,7 @@ export function restyleBoard(doc = document) {
     const container = list && list.parentElement;
     const known = [nav, options, list];
     const blank = (node) => node.nodeType === 3 && !clean(node.textContent);
-    if (!options || !cell || !list || !add || !pager || !allRows.length || !allRows[0].querySelector("th")
+    if (!options || !cell || !list || (!add && !guest) || !pager || !allRows.length || !allRows[0].querySelector("th")
         || list.querySelector(":scope > caption, :scope > thead, :scope > tfoot") || topics.some((topic) => !topic) || (nav && nav.children.length)
         || [...cell.childNodes].some((node) => !blank(node) && node !== pln && !(node.tagName === "A" && BOARD_LINKS.some((name) => (node.getAttribute("href") || "").startsWith(name))))
         || [...container.childNodes].some((node) => !blank(node) && !known.includes(node) && node.tagName !== "BR")) {
@@ -222,7 +222,7 @@ export function restyleBoard(doc = document) {
                 <h2>Message board</h2>
                 <nav class="fuad-board-links" aria-label="Message board">${quiet.map((item) => `<a href="${esc(item.href)}">${esc(item.text)}</a>`).join("")}</nav>
             </div>
-            <a class="fuad-chip" href="${esc(add.href)}">New topic</a>
+            ${add ? `<a class="fuad-chip" href="${esc(add.href)}">New topic</a>` : ""}
         </div>
         <div class="fuad-panel">
             ${topics.length

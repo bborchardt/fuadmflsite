@@ -263,7 +263,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         const boardHref = `${window.location.origin}/${context.season}/options?L=${context.leagueId}&O=28`;
         await import("./topic.js").then((board) => {
             const restyle = {board_show: board.restyleBoard, topic_show: board.restyleTopic, post_add: board.restyleReply, topic_add: board.restyleReply, post_edit: board.restyleReply, message_show: board.restyleMessage}[boardPage];
-            return restyle ? restyle() : board.restyleSidePage(boardPage, boardHref);
+            return restyle ? restyle(document, {guest: !window.franchise_id}) : board.restyleSidePage(boardPage, boardHref);
         }).catch((error) => {
             console.error("[fuad] couldn't restyle the message board page:", error);
             onTrouble();
