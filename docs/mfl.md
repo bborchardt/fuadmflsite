@@ -86,7 +86,8 @@ MFL documents little of this.
 - **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
   comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`), posted to
   `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers
-  `<status>OK</status>` or `<error>`; `salaries` needs the commissioner's cookie.
+  `<status>OK</status>` or `<error>`, and a post's line breaks are lost, so v2 links to MFL's own
+  post pages instead; `salaries` needs the commissioner's cookie.
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
   Commissioner", `logout?L=<league>&BECOME=0000`; presumably `BECOME=<team>` goes the other way (not
   yet seen).
