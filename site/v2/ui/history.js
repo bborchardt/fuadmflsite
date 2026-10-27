@@ -9,6 +9,8 @@ import {readCareer, readChampions, readSeries} from "./history-model.js";
 const DAY = 24 * 60 * 60 * 1000;
 const WEEK = 7 * DAY;
 const done = () => Number(window.completedWeek) || 0;
+// tests/stored-shapes.test.mjs ties each to what its reader returns
+export const KEYS = {champions: "fuad.history.champions", career: "fuad.history.career", series: "fuad.history.series"};
 
 async function historyPage({season, leagueId}, query, read, what) {
     const response = await pageFetch(`${window.location.origin}/${season}/options?L=${leagueId}&${query}`, {credentials: "include"});
@@ -23,11 +25,11 @@ async function historyPage({season, leagueId}, query, read, what) {
 }
 
 // a new champion shows the day the title is won
-export const champions = (context) => cached(`fuad.history.champions.${context.season}.${done()}`, DAY,
+export const champions = (context) => cached(`${KEYS.champions}.${context.season}.${done()}`, DAY,
     () => historyPage(context, "O=194", readChampions, "League Champions"));
 
-export const careers = (context) => cached(`fuad.history.career.${context.season}.${done()}`, WEEK,
+export const careers = (context) => cached(`${KEYS.career}.${context.season}.${done()}`, WEEK,
     () => historyPage(context, "O=208", readCareer, "Career Records"));
 
-export const series = (context, teamId) => cached(`fuad.history.series.${context.season}.${done()}.${teamId}`, WEEK,
+export const series = (context, teamId) => cached(`${KEYS.series}.${context.season}.${done()}.${teamId}`, WEEK,
     () => historyPage(context, `O=171&FID=${encodeURIComponent(teamId)}`, readSeries, "All-Time Series Records"));
