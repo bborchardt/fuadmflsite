@@ -16,8 +16,10 @@
         var params = new URLSearchParams(location.search);
         var offer = window.fuadBeta;
         var team = function (id) { return String(id).padStart(4, "0"); };
+        // logged out, MFL sets no franchise_id: "guest" in teams
+        var viewer = window.franchise_id ? team(window.franchise_id) : "guest";
         var offered = offer && /^v\d+$/.test(String(offer.version)) && offer.version !== MAIN
-            && (!Array.isArray(offer.teams) || offer.teams.map(team).indexOf(team(window.franchise_id)) >= 0);
+            && (!Array.isArray(offer.teams) || offer.teams.map(team).indexOf(viewer) >= 0);
         var direct = offered && !params.has("fuadBeta") && !params.has("fuadPreview") && !stored("fuad.preview")
             && stored("fuad.beta") === offer.version;
         var version = direct ? offer.version : MAIN;
