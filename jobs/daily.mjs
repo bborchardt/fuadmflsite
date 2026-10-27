@@ -304,7 +304,7 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
     contracts.forEach((contract) => choreLog(`Set ${describe(contract)}.`));
 }
 
-async function leagueState() {
+async function leagueState({loggedIn}) {
     const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
@@ -318,7 +318,8 @@ async function leagueState() {
             return {};
         }),
         // the final cut-down date, when the roster limits start before week 1; without it, from week 1
-        cutDownAt ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
+        // (MFL shows the calendar only to a member)
+        cutDownAt && loggedIn ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
             log(`Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
             return null;
         }) : null
@@ -349,7 +350,7 @@ async function leagueState() {
     return {
         players: playerMap,
         built,
-        cutDown: cutDownAt ? cutDownAt(calendar) : null,
+        cutDown: cutDownAt ? cutDownAt(calendar, season) : null,
         penalties: pendingPenalties(built),
         transactions: asArray(transactions.transaction),
         rosters,
@@ -536,7 +537,7 @@ try {
     // each chore fails on its own; the snapshot doesn't depend on any of them
     let state = null;
     try {
-        state = await leagueState();
+        state = await leagueState({loggedIn});
     } catch (error) {
         needsAttention(`League chores: ${error.message}`);
     }

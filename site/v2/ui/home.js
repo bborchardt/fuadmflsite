@@ -375,7 +375,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     week1: timeline.kickoffs.get(1),
                     seasonOver: built.seasonOver,
                     drafted: draftPicked(draft),
-                    cutDown: cutDownAt(timeline.calendar)
+                    cutDown: cutDownAt(timeline.calendar, context.season)
                 });
                 const topic = contractTopic(board);
                 return myAlerts({
@@ -389,7 +389,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     trades: tradeOffers(trades, {franchiseId, players: built.players, teams}),
                     readings: lengths || new Map(),
                     coming: upcoming,
-                    cutDown: cutDownAt(timeline.calendar),
+                    cutDown: cutDownAt(timeline.calendar, context.season),
                     now
                 });
             },
@@ -419,7 +419,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         what: "league alerts",
         key: `fuad.home.league.${context.season}.${franchiseId || "guest"}`,
         rows: 2,
-        load: async () => leagueAlerts(await league(), member ? franchiseId : null, {now: nowSeconds(), cutDown: cutDownAt((await dates.catch(() => ({}))).calendar)})
+        load: async () => leagueAlerts(await league(), member ? franchiseId : null, {now: nowSeconds(), cutDown: cutDownAt((await dates.catch(() => ({}))).calendar, context.season)})
             .map((alert) => ({team: alert.franchise.teamName, franchiseId: alert.franchise.franchiseId, text: alert.text, figure: alert.figure, tone: alert.tone})),
         render: (alerts, body) => {
             body.innerHTML = `${alerts.length

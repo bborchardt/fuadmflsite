@@ -229,12 +229,16 @@ test("before week 1 the roster limits start at the cut-down date on MFL's calend
     const calendar = {event: [{type: "CUSTOM", title: "Final cut down", start_time: String(at("2026-09-08T04:59:00Z")), happens: ""}]};
     const preseason = "2026-09-09T12:00:00Z";
     const flagged = (result) => result.entries.filter((entry) => /over the roster limit with 31 players/.test(entry));
-    const after = run({scenario: {exports: {...crowded, calendar}}, now: preseason});
+    const after = run({scenario: {exports: {...crowded, calendar}}, env: LOGIN, now: preseason});
     assert.equal(flagged(after).length, 1, after.stdout);
     assert.equal(after.status, 1);
-    assert.deepEqual(flagged(run({scenario: {exports: {...crowded, calendar}}, now: "2026-09-07T12:00:00Z"})), []);
-    // without the calendar, from week 1
-    assert.deepEqual(flagged(run({scenario: {exports: crowded}, now: preseason})), []);
+    assert.deepEqual(flagged(run({scenario: {exports: {...crowded, calendar}}, env: LOGIN, now: "2026-09-07T12:00:00Z"})), []);
+    // without the calendar (MFL shows it only to a member), from week 1; a renewed league's calendar
+    // may still hold last season's date
+    assert.deepEqual(flagged(run({scenario: {exports: {...crowded, calendar}}, now: preseason})), []);
+    assert.deepEqual(flagged(run({scenario: {exports: crowded}, env: LOGIN, now: preseason})), []);
+    const stale = {event: [{...calendar.event[0], start_time: String(at("2025-09-08T04:59:00Z"))}]};
+    assert.deepEqual(flagged(run({scenario: {exports: {...crowded, calendar: stale}}, env: LOGIN, now: preseason})), []);
 });
 
 test("v2's lib, the default, runs the same day as v1's", () => {

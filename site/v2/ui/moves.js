@@ -46,7 +46,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const groups = pendingGroups(pendingWaivers);
     // MFL's limit on conditional bid groups
     const maxGroups = Number(leagueInfo.maxWaiverRounds) || 1;
-    return {league, mflNames, groups, maxGroups, positions: lineupPositions(leagueInfo), pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
+    return {season, league, mflNames, groups, maxGroups, positions: lineupPositions(leagueInfo), pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
 }
 
 // what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
@@ -110,9 +110,9 @@ export async function freshPending(context) {
 export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}});
 
 // The roster limits hold from the final cut-down date (2.5); without one on the calendar, from week 1
-export function limitsApply(facts, calendar, now = Date.now()) {
+export function limitsApply({facts, calendar, season}, now = Date.now()) {
     const phase = movesPhase(facts, now);
-    const cut = cutDownAt(calendar);
+    const cut = cutDownAt(calendar, season);
     return phase === "season" || (phase === "preseason" && Boolean(cut) && now / 1000 >= cut);
 }
 

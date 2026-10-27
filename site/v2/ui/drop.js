@@ -80,7 +80,7 @@ export async function drawDrop({context, franchiseId, loginHref}) {
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
     // in season once the roster limits hold, from the cut-down date (2.5)
-    const phase = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : movesPhase(state.data.facts));
+    const phase = () => (limitsApply(state.data) ? "season" : movesPhase(state.data.facts));
     const rows = () => dropRows(team(), {roster, phase: phase(), positions: state.data.positions});
 
     // ---- markup ----

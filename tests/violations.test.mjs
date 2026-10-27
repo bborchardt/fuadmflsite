@@ -199,9 +199,10 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
 test("the cut-down date is the commissioner's first one-off event named for a cut, at a set time", async () => {
     const {cutDownAt} = await import("../site/v2/lib/violations.js");
     const event = (title, extra = {}) => ({type: "CUSTOM", title, start_time: "1788843540", happens: "", ...extra});
-    assert.equal(cutDownAt({event: [event("Rookie draft"), event("Final cut down")]}), 1788843540);
-    assert.equal(cutDownAt({event: event("Cutdown day")}), 1788843540);
-    assert.equal(cutDownAt({event: [event("Cut by", {happens: "WEEKLY"}), event("Cut down", {start_time: "1"}), event("Last contract year ends: cut")]}), null);
-    assert.equal(cutDownAt({event: [{...event("Cut down"), type: "TRADE"}]}), null);
-    assert.equal(cutDownAt(null), null);
+    assert.equal(cutDownAt({event: [event("Rookie draft"), event("Final cut down")]}, 2026), 1788843540);
+    assert.equal(cutDownAt({event: event("Cutdown day")}, 2026), 1788843540);
+    assert.equal(cutDownAt({event: [event("Cut by", {happens: "WEEKLY"}), event("Cut down", {start_time: "1"}), event("Last contract year ends: cut")]}, 2026), null);
+    assert.equal(cutDownAt({event: [{...event("Cut down"), type: "TRADE"}]}, 2026), null);
+    assert.equal(cutDownAt(null, 2026), null);
+    assert.equal(cutDownAt({event: event("Final cut down")}, 2027), null);
 });

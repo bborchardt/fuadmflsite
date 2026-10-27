@@ -93,7 +93,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 
 - **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
 - **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
-  commissioner's first one-off calendar event, at a set time, with a word starting "cut" in its
+  commissioner's first one-off calendar event, at a set time in the season's year (a renewed
+  league's calendar can still hold last season's), with a word starting "cut" in its
   title, unless it says "contract year end(s)"; without one, from week 1's kickoff) until the
   championship week (MFL's last) is over, the same for the daily job. Going over 30
   voids the move, as going over the cap does; under 23 must be fixed but voids nothing.
