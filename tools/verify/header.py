@@ -41,9 +41,9 @@ CASES = {
     "beta ended": (LINEUP, {"beta": "v2", "offer": False}, {"ran": "v1", "requested": ["v1"], "beta": None, "cloaked": False}),
     "commissioner": (LINEUP, {"beta": "v2", "team": "0000"}, {"ran": "v1", "requested": ["v1"], "beta": "v2", "cloaked": False}),
     # an offer to guests: logged out, they're in it; the commissioner, left out, keeps the choice
-    "guest beta": (LINEUP, {"beta": "v2", "team": "guest", "teams": ["0001", "guest"]},
+    "guest beta": (LINEUP, {"beta": "v2", "team": "guest", "teams": ["guest"]},
                    {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "bar": "hidden"}),
-    "guest opt in": (LINEUP + "&fuadBeta=on", {"team": "guest", "teams": ["0001", "guest"]},
+    "guest opt in": (LINEUP + "&fuadBeta=on", {"team": "guest", "teams": ["guest"]},
                      {"ran": "v2", "requested": ["v1", "v2"], "beta": "v2", "cloaked": False}),
     "guest left out": (LINEUP, {"beta": "v2", "team": "guest"}, {"ran": "v1", "requested": ["v1"], "beta": "v2", "cloaked": False}),
     "commissioner, guests": (LINEUP, {"beta": "v2", "team": "0000", "teams": ["0001", "guest"]},
@@ -119,6 +119,7 @@ def run(browser, site, name):
             body = args["body"]
             body = SAVED.sub(lambda _: swapped, body, count=1)
             if team == "guest":
+                assert "var franchise_id = '0001';" in body, "the saved page no longer sets franchise_id as expected"
                 body = body.replace("var franchise_id = '0001';", "")
             elif team:
                 body = body.replace("franchise_id = '0001'", f"franchise_id = '{team}'")
