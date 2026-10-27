@@ -10,6 +10,17 @@ export const DEFAULT_TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 
 // the views v2 draws itself, on the home page
 export const REBUILT = ["Home", "League/Scores", "League/Standings", "League/Power", "League/Winners", "Rosters/My team", "Rosters/Teams", "Rosters/Players", "Rosters/Draft"];
 
+// MFL sends anyone logged out from these to its login screen; v2 draws its own page for each instead,
+// saying what logging in is for
+export const NEEDS_LOGIN = {
+    "Lineup": "set your lineup",
+    "Moves/Add": "make moves",
+    "Moves/Drop": "make moves",
+    "Moves/Trades": "make moves",
+    "Moves/IR": "make moves",
+    "Rosters/My team": "see your team"
+};
+
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 // Home isn't `#home`: that's the id of MFL's page body on the home page, and browsers scroll to it,
@@ -24,9 +35,12 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
     const option = (code, extra = "") => `${base}/options?L=${leagueId}&O=${code}${extra}`;
     const tab = (name) => `${base}/home/${leagueId}#${tabs[name] === undefined ? DEFAULT_TABS[name] : tabs[name]}`;
     const member = franchiseId && franchiseId !== "0000";
+    // `after` is where a view's login page leads once logged in
     const own = (href, sectionName, viewName) => {
-        const built = rebuilt.includes(viewName ? `${sectionName}/${viewName}` : sectionName);
-        return built ? `${base}/home/${leagueId}${viewHash(sectionName, viewName)}` : href;
+        const name = viewName ? `${sectionName}/${viewName}` : sectionName;
+        const home = `${base}/home/${leagueId}${viewHash(sectionName, viewName)}`;
+        const after = rebuilt.includes(name) ? home : href;
+        return !franchiseId && NEEDS_LOGIN[name] ? {href: home, after, login: NEEDS_LOGIN[name]} : {href: after};
     };
     const all = [
         // the message board's pages (`mb/…`), All moves (Transactions), All bids (Processed Waivers) and
@@ -47,8 +61,8 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
             {name: "IR", href: option("18"), match: {paths: ["ir"], options: ["18"]}}
         ]},
         {name: "Rosters", views: [
-            // logged out there's no team of your own, so Rosters opens on Teams
-            ...(member ? [{name: "My team", href: option("07", `&F=${franchiseId}`), match: {options: ["07"], mine: true}}] : []),
+            // the commissioner has no team of their own
+            ...(member || !franchiseId ? [{name: "My team", href: option("07", `&F=${franchiseId}`), match: {options: ["07"], mine: true}}] : []),
             {name: "Teams", href: option("07"), match: {options: ["07"]}},
             {name: "Players", href: tab("Contracts"), match: {tabs: ["Contracts"]}},
             {name: "Draft", href: option("17"), match: {options: ["17", "100"]}}
@@ -56,19 +70,21 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
     ];
     return all.map((section) => {
         if (!section.views) {
-            return {...section, href: own(section.href, section.name), hash: viewHash(section.name)};
+            return {...section, ...own(section.href, section.name), hash: viewHash(section.name)};
         }
         const views = section.views
-            .map((view) => ({...view, href: own(view.href, section.name, view.name), hash: viewHash(section.name, view.name)}))
+            .map((view) => ({...view, ...own(view.href, section.name, view.name), hash: viewHash(section.name, view.name)}))
             .filter((view) => view.href);
-        return {...section, views, href: views[0].href};
+        // logged out, Rosters opens on Teams rather than My team's login page
+        return {...section, views, href: (views.find((view) => !view.login) || views[0]).href};
     });
 }
 
 // where a section's link goes: the view last seen in it (`lastViews`, view names by section), so
 // leaving a page by another section returns there; the section you're in goes to its first view
 export function sectionHref(section, current, lastViews = {}) {
-    const view = section.views && section.name !== current && section.views.find((entry) => entry.name === lastViews[section.name]);
+    // a login page isn't kept to: logged out, Rosters still opens on Teams
+    const view = section.views && section.name !== current && section.views.find((entry) => entry.name === lastViews[section.name] && !entry.login);
     return view ? view.href : section.href;
 }
 
