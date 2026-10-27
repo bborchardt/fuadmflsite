@@ -42,12 +42,17 @@ export function placeholders(rows = 3) {
 // `maxAge` cache what `load` resolves to; `render(value, body)` draws it into the body. `actions`
 // is markup for the heading's row (a count, a link, a button).
 export function drawPanel(mount, {heading = "", actions = "", what, key = null, maxAge = 0, load, render, rows = 3}) {
-    mount.classList.add("fuad-panel");
     const title = heading ? `<h2 class="fuad-panel-heading">${esc(heading)}</h2>` : "";
-    mount.innerHTML = `${actions ? `<div class="fuad-panel-head">${title}<span class="fuad-panel-actions">${actions}</span></div>` : title}<p class="fuad-as-of" hidden></p><div class="fuad-panel-body"></div>`;
-    const body = mount.querySelector(".fuad-panel-body");
-    const asOf = mount.querySelector(".fuad-as-of");
-    const entry = key ? saved(key) : null;
+    let body;
+    let asOf;
+    const frame = () => {
+        mount.classList.add("fuad-panel");
+        mount.innerHTML = `${actions ? `<div class="fuad-panel-head">${title}<span class="fuad-panel-actions">${actions}</span></div>` : title}<p class="fuad-as-of" hidden></p><div class="fuad-panel-body"></div>`;
+        body = mount.querySelector(".fuad-panel-body");
+        asOf = mount.querySelector(".fuad-as-of");
+    };
+    frame();
+    let entry = key ? saved(key) : null;
 
     const show = (value) => {
         mount.removeAttribute("aria-busy");
@@ -81,8 +86,16 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
     };
 
     if (entry) {
-        show(entry.value);
-        if (Date.now() - entry.storedAt < maxAge) {
+        try {
+            show(entry.value);
+        } catch (error) {
+            // a copy saved by an older version, in a shape `render` no longer reads: loaded afresh,
+            // in a new frame, as what `render` changed before it threw (a count, a class) is wrong
+            console.warn(`[fuad] dropped the saved ${what}:`, error);
+            entry = null;
+            frame();
+        }
+        if (entry && Date.now() - entry.storedAt < maxAge) {
             return Promise.resolve(entry.value);
         }
     }

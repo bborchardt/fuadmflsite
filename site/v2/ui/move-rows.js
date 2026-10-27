@@ -8,10 +8,12 @@ import {pageFetch} from "./page-fetch.js";
 import {otherBids, readBidRun} from "./bids-model.js";
 
 const YEAR = 365 * 24 * 60 * 60 * 1000;
+// tests/stored-shapes.test.mjs ties it to what readBidRun returns
+export const BIDS_KEY = "fuad.bids";
 
 // a run's groups (bids-model.js), by its period
 export function bidRuns({season, leagueId}) {
-    return (period) => cached(`fuad.bids.${season}.${period}`, YEAR, async () => {
+    return (period) => cached(`${BIDS_KEY}.${season}.${period}`, YEAR, async () => {
         const response = await pageFetch(`${window.location.origin}/${season}/processed_waivers?LEAGUE_ID=${leagueId}&PERIOD=${encodeURIComponent(period)}`, {credentials: "include"});
         if (!response.ok) {
             throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
