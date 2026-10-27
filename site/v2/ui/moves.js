@@ -10,7 +10,7 @@ import {cached} from "./store.js";
 import {forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
-import {calendarDates, cutDownDate} from "./home-model.js";
+import {cutDownAt} from "../lib/violations.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -112,7 +112,7 @@ export const freshTrades = (context) => fetchExport(exportUrl(window.location.or
 // The roster limits hold from the final cut-down date (2.5); without one on the calendar, from week 1
 export function limitsApply(facts, calendar, now = Date.now()) {
     const phase = movesPhase(facts, now);
-    const cut = cutDownDate(calendarDates(calendar));
+    const cut = cutDownAt(calendar);
     return phase === "season" || (phase === "preseason" && Boolean(cut) && now / 1000 >= cut);
 }
 

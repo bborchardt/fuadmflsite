@@ -3,7 +3,7 @@
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "./rules.js";
 import settings from "./settings.js";
 import {contractDeadline, windowClosed} from "./adds.js";
-import {displayName, weekEnd, weekKickoff} from "./mfl.js";
+import {asArray, displayName, weekEnd, weekKickoff} from "./mfl.js";
 import {TIME_ZONE, ZONE} from "./zone.js";
 
 // MFL reports its last week all offseason, so the season's phase comes from its NFL schedule. A
@@ -44,6 +44,18 @@ function contractNotice(teamName, add, reading) {
         return `${added}: couldn't read his contract length from the message board. Edit your latest post or post again by ${by}, like ${example}.`;
     }
     return `${added}: post his contract length on the message board by ${by}, like ${example}, or it will be 1 year.`;
+}
+
+// a commissioner's calendar event's kind from its title, the first that matches
+const TITLE_KINDS = [[/^trade deadline$/i, "trades"], [/contract year ends?\b/i, "rollover"], [/\bcut/i, "cut"], [/\bdraft/i, "draft"]];
+export const titleKind = (title) => (TITLE_KINDS.find(([pattern]) => pattern.test(title)) || [])[1] || null;
+
+// The final cut-down date (2.5), in seconds: the commissioner's first one-off event on MFL's calendar
+// named for a cut, at a set time (not a week number). Null without one.
+export function cutDownAt(calendar) {
+    const event = asArray(calendar && calendar.event).find((item) => item.type === "CUSTOM" && !item.happens
+        && Number(item.start_time) >= 100 && titleKind(String(item.title || "").trim()) === "cut");
+    return event ? Number(event.start_time) : null;
 }
 
 // Returns [{kind, franchiseId, text, warning}]; `warning` items are rule violations, the others

@@ -220,6 +220,23 @@ test("with nothing to do the chore log is left alone, but gets a heartbeat once 
     assert.equal(old.output.changed, "true");
 });
 
+test("before week 1 the roster limits start at the cut-down date on MFL's calendar, as League Alerts' do", () => {
+    const crowded = league();
+    for (let i = 0; i < 8; i++) {
+        crowded.players.player.push({id: String(400 + i), name: `Player, Extra${i}`, position: "WR", team: "BUF"});
+        crowded.rosters.franchise[0].player.push({id: String(400 + i), salary: "1", contractYear: "1", status: "ROSTER"});
+    }
+    const calendar = {event: [{type: "CUSTOM", title: "Final cut down", start_time: String(at("2026-09-08T04:59:00Z")), happens: ""}]};
+    const preseason = "2026-09-09T12:00:00Z";
+    const flagged = (result) => result.entries.filter((entry) => /over the roster limit with 31 players/.test(entry));
+    const after = run({scenario: {exports: {...crowded, calendar}}, now: preseason});
+    assert.equal(flagged(after).length, 1, after.stdout);
+    assert.equal(after.status, 1);
+    assert.deepEqual(flagged(run({scenario: {exports: {...crowded, calendar}}, now: "2026-09-07T12:00:00Z"})), []);
+    // without the calendar, from week 1
+    assert.deepEqual(flagged(run({scenario: {exports: crowded}, now: preseason})), []);
+});
+
 test("v2's lib, the default, runs the same day as v1's", () => {
     const day = {scenario: {exports: league({alphaSalary: 290})}, env: {...LOGIN, DROP_PENALTIES: "apply"}};
     const v1 = run({...day, env: {...day.env, RULES_VERSION: "v1"}});

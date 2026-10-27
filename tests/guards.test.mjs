@@ -10,12 +10,14 @@ import {fileURLToPath, pathToFileURL} from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const versions = readdirSync(join(root, "site")).filter((name) => /^v\d+$/.test(name)).sort();
 
-// what jobs/daily.mjs takes from `lib(...)`: {file: [names]}
+// what jobs/daily.mjs takes from `lib(...)`: {file: [names]}; one with a default (`name = null`) is
+// optional
 function dailyNeeds() {
     const source = readFileSync(join(root, "jobs", "daily.mjs"), "utf8");
     const needs = {};
     for (const [, names, file] of source.matchAll(/const\s*\{([^}]+)\}\s*=\s*await\s+lib\(\s*["']([^"']+)["']\s*\)/g)) {
-        needs[file] = names.split(",").map((name) => name.trim().split(/\s*:\s*/)[0]).filter(Boolean);
+        needs[file] = names.split(",").map((name) => name.trim()).filter((name) => name && !name.includes("="))
+            .map((name) => name.split(/\s*:\s*/)[0]);
     }
     return {needs, calls: source.match(/\blib\(/g).length};
 }
