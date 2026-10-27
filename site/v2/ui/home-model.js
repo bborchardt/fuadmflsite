@@ -2,7 +2,7 @@
 
 import {asArray, nflCode} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
-import {onNflIR, ruleViolations} from "../lib/violations.js";
+import {onNflIR, ruleViolations, titleKind} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {money, plural} from "./format.js";
@@ -21,9 +21,6 @@ const TO_DO = new Map([
     ["adds", {page: "add", where: "Add"}],
     ["trades", {page: "trades", where: "Trades"}]
 ]);
-// a commissioner's event's kind from its title, the first that matches
-const TITLE_KINDS = [[/^trade deadline$/i, "trades"], [/contract year ends?\b/i, "rollover"], [/\bcut/i, "cut"], [/\bdraft/i, "draft"]];
-const titleKind = (title) => (TITLE_KINDS.find(([pattern]) => pattern.test(title)) || [])[1] || null;
 export const RECENT_MOVES = 10;
 export const TOPICS = 5;
 
@@ -87,9 +84,6 @@ export function calendarDates(calendar, kickoffs = new Map()) {
     }
     return dates;
 }
-
-// the event with a word starting "cut" in its name (the commissioner's to-do)
-export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
 
 // The season's dates, soonest first, each with its `when`. Without the calendar (logged out) the
 // season's own dates still show: week 1, the trade deadline, the playoffs and the championship

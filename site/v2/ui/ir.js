@@ -61,7 +61,7 @@ export async function drawIR({context, franchiseId, loginHref, dropHref}) {
     };
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
-    const limits = () => limitsApply(state.data.facts, state.data.calendar);
+    const limits = () => limitsApply(state.data);
     const groups = () => irGroups(state.data.league, page, state.report);
     // a player who must come off IR is in every save while his box is open (bylaw 11.1; MFL takes no
     // lineup until he is)

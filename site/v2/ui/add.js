@@ -224,7 +224,7 @@ export async function drawAdd({context, franchiseId, loginHref}) {
     // whether a bid placed now still has a run to process it
     const runsLeft = () => bidsLeft(movesPhase(state.data.facts), state.data.calendar, now());
     // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
-    const checks = () => (limitsApply(state.data.facts, state.data.calendar) ? "season" : phase());
+    const checks = () => (limitsApply(state.data) ? "season" : phase());
     const names = (id) => {
         const listed = lists.add.find((player) => player.id === id) || lists.drop.find((player) => player.id === id);
         const mflName = state.data.mflNames.get(id) || (listed && listed.mflName) || id;
