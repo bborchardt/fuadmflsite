@@ -85,9 +85,6 @@ export function calendarDates(calendar, kickoffs = new Map()) {
     return dates;
 }
 
-// the event with a word starting "cut" in its name (the commissioner's to-do)
-export const cutDownDate = (dates) => (dates.find((date) => date.kind === "cut") || {}).at || null;
-
 // The season's dates, soonest first, each with its `when`. Without the calendar (logged out) the
 // season's own dates still show: week 1, the trade deadline, the playoffs and the championship
 // (`weeks`, seasonWeeks' in lib/rules.js).

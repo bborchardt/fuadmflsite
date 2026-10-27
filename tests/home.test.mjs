@@ -4,10 +4,11 @@ import {readFileSync} from "node:fs";
 import {pendingGroups, projectBids} from "../site/v2/lib/bids.js";
 import {playersFromExport} from "../site/v2/lib/league.js";
 import {
-    boardTopics, calendarDates, comingUp, contractTopic, cutDownDate, freeAgencyEnd, homePhase, leagueAlerts, lineupProblems,
+    boardTopics, calendarDates, comingUp, contractTopic, freeAgencyEnd, homePhase, leagueAlerts, lineupProblems,
     myAlerts, nextBidRun, recentMoves
 } from "../site/v2/ui/home-model.js";
-import {moduleTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";
+import {moduleTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";import {cutDownAt} from "../site/v2/lib/violations.js";
+
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
 const at = (text) => new Date(text).getTime() / 1000;
@@ -166,7 +167,7 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
     const kickoffs = new Map([[1, at("2026-09-10T19:20:00-05:00")], [12, at("2026-11-25T19:00:00-06:00")], [15, at("2026-12-17T19:15:00-06:00")],
         [17, at("2026-12-31T19:15:00-06:00")]]);
     const dates = calendarDates(calendar, kickoffs);
-    assert.equal(cutDownDate(dates), 1788842700);
+    assert.equal(cutDownAt(calendar), 1788842700);
     // in season, every date left: the waiver lock repeats for 17 more weeks after Sun Sep 13, so
     // free agency closes Sun Jan 10, still at noon CT
     assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, now}).map((d) => [d.what, d.when, d.soon]), [

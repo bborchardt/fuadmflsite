@@ -9,8 +9,9 @@ import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {withParam} from "../loader.js";
+import {cutDownAt} from "../lib/violations.js";
 import {
-    boardTopics, calendarDates, clock, comingUp, contractTopic, cutDownDate, dayText, homePhase, leagueAlerts,
+    boardTopics, calendarDates, clock, comingUp, contractTopic, dayText, homePhase, leagueAlerts,
     lineupProblems, myAlerts, nextBidRun, recentMoves
 } from "./home-model.js";
 import {draftPicked, kickoffAt} from "./context.js";
@@ -374,7 +375,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     week1: timeline.kickoffs.get(1),
                     seasonOver: built.seasonOver,
                     drafted: draftPicked(draft),
-                    cutDown: cutDownDate(timeline.dates)
+                    cutDown: cutDownAt(timeline.calendar)
                 });
                 const topic = contractTopic(board);
                 return myAlerts({
@@ -388,7 +389,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     trades: tradeOffers(trades, {franchiseId, players: built.players, teams}),
                     readings: lengths || new Map(),
                     coming: upcoming,
-                    cutDown: cutDownDate(timeline.dates),
+                    cutDown: cutDownAt(timeline.calendar),
                     now
                 });
             },
@@ -418,7 +419,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         what: "league alerts",
         key: `fuad.home.league.${context.season}.${franchiseId || "guest"}`,
         rows: 2,
-        load: async () => leagueAlerts(await league(), member ? franchiseId : null, {now: nowSeconds(), cutDown: cutDownDate((await dates.catch(() => ({dates: []}))).dates)})
+        load: async () => leagueAlerts(await league(), member ? franchiseId : null, {now: nowSeconds(), cutDown: cutDownAt((await dates.catch(() => ({}))).calendar)})
             .map((alert) => ({team: alert.franchise.teamName, franchiseId: alert.franchise.franchiseId, text: alert.text, figure: alert.figure, tone: alert.tone})),
         render: (alerts, body) => {
             body.innerHTML = `${alerts.length
