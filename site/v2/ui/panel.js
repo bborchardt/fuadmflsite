@@ -47,7 +47,7 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
     mount.innerHTML = `${actions ? `<div class="fuad-panel-head">${title}<span class="fuad-panel-actions">${actions}</span></div>` : title}<p class="fuad-as-of" hidden></p><div class="fuad-panel-body"></div>`;
     const body = mount.querySelector(".fuad-panel-body");
     const asOf = mount.querySelector(".fuad-as-of");
-    const entry = key ? saved(key) : null;
+    let entry = key ? saved(key) : null;
 
     const show = (value) => {
         mount.removeAttribute("aria-busy");
@@ -81,8 +81,14 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
     };
 
     if (entry) {
-        show(entry.value);
-        if (Date.now() - entry.storedAt < maxAge) {
+        try {
+            show(entry.value);
+        } catch (error) {
+            // a copy saved by an older version, in a shape `render` no longer reads: loaded afresh
+            console.warn(`[fuad] dropped the saved ${what}:`, error);
+            entry = null;
+        }
+        if (entry && Date.now() - entry.storedAt < maxAge) {
             return Promise.resolve(entry.value);
         }
     }
