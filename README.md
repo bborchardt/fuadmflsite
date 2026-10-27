@@ -33,8 +33,9 @@ would do until they're switched on.
   ```html
   <script>window.fuadBeta = {version: "v2", feedback: "<link to a feedback thread>", teams: ["0001"]};</script>
   ```
-  `teams` limits it to those franchise ids; leave it out for everyone. Delete the line to end the
-  beta.
+  `teams` limits it to those franchise ids, and `"guest"` to visitors who aren't logged in; leave it
+  out for everyone, the commissioner (0000) included. Someone left out keeps their choice, so the
+  commissioner can be in the beta as their team and not as 0000. Delete the line to end the beta.
 - **Preview a version** in your browser only: add `?fuadPreview=v2` to any league page URL
   (`?fuadPreview=off` to stop).
 - **Turn chores on:** set the repository variables `DROP_PENALTIES` and `CONTRACT_YEARS` to

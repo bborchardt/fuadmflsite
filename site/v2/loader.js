@@ -48,9 +48,11 @@ export function betaOffer(config, {versionHere, teamId}) {
     if (!offeredVersion(config, versionHere)) {
         return null;
     }
-    // MFL's franchise ids are four digits ("0001"); a team written as 1 means the same
+    // MFL's franchise ids are four digits ("0001"); a team written as 1 means the same. A visitor
+    // who isn't logged in has no team: "guest" in `teams`.
     const id = (team) => String(team).padStart(4, "0");
-    if (Array.isArray(config.teams) && !config.teams.map(id).includes(id(teamId))) {
+    const viewer = teamId ? id(teamId) : "guest";
+    if (Array.isArray(config.teams) && !config.teams.map(id).includes(viewer)) {
         return null;
     }
     const feedback = /^https:\/\//.test(String(config.feedback || "")) ? String(config.feedback) : null;
