@@ -9,6 +9,7 @@ checks which version ran, the beta choice left stored, the cover, and the bars a
 A version's files can be made to fail (404) or not start (a syntax error).
 """
 import argparse
+import json
 import re
 import sys
 import time
@@ -27,7 +28,7 @@ SAVED = re.compile(r"<!-- FUAD league code.*?fuad\.js\"[^>]*></script>", re.S)
 LINEUP = f"/2026/lineup?L={LEAGUE}"
 HOME = f"/2026/home/{LEAGUE}"
 
-# name: url, {main, beta stored, offer shown, team, failing version, how}, expected
+# name: url, {main, beta stored, offer shown, its teams, team ("guest": logged out), failing version, how}, expected
 CASES = {
     "member": (LINEUP, {}, {"ran": "v1", "requested": ["v1"], "beta": None, "cloaked": False}),
     "beta direct": (LINEUP, {"beta": "v2"}, {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "bar": "hidden"}),
@@ -39,6 +40,14 @@ CASES = {
     "opt in": (LINEUP + "&fuadBeta=on", {}, {"ran": "v2", "requested": ["v1", "v2"], "beta": "v2", "cloaked": False}),
     "beta ended": (LINEUP, {"beta": "v2", "offer": False}, {"ran": "v1", "requested": ["v1"], "beta": None, "cloaked": False}),
     "commissioner": (LINEUP, {"beta": "v2", "team": "0000"}, {"ran": "v1", "requested": ["v1"], "beta": "v2", "cloaked": False}),
+    # an offer to guests: logged out, they're in it; the commissioner, left out, keeps the choice
+    "guest beta": (LINEUP, {"beta": "v2", "team": "guest", "teams": ["guest"]},
+                   {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "bar": "hidden"}),
+    "guest opt in": (LINEUP + "&fuadBeta=on", {"team": "guest", "teams": ["guest"]},
+                     {"ran": "v2", "requested": ["v1", "v2"], "beta": "v2", "cloaked": False}),
+    "guest left out": (LINEUP, {"beta": "v2", "team": "guest"}, {"ran": "v1", "requested": ["v1"], "beta": "v2", "cloaked": False}),
+    "commissioner, guests": (LINEUP, {"beta": "v2", "team": "0000", "teams": ["0001", "guest"]},
+                             {"ran": "v1", "requested": ["v1"], "beta": "v2", "cloaked": False}),
     "v1 404": (HOME, {"fail": ("v1", "404")}, {"ran": None, "requested": ["v1"], "cloaked": False, "note": True}),
     "v1 broken": (HOME, {"fail": ("v1", "syntax")}, {"ran": None, "requested": ["v1"], "cloaked": False, "note": True}),
     # after v2 is promoted: MAIN = "v2" and no beta line
@@ -54,12 +63,14 @@ CASES = {
 }
 
 
-def header(main="v1", offer=True):
-    """the header with MAIN and the beta offer (True: v2; a version; False: none)"""
+def header(main="v1", offer=True, teams=None):
+    """the header with MAIN and the beta offer (True: v2; a version; False: none), to `teams` if given"""
     text = HEADER.replace('var MAIN = "v1";', f'var MAIN = "{main}";')
     assert text != HEADER or main == "v1", "MAIN not found in the header"
     first = text.index("<script>")
     line = OFFER.replace("VERSION", "v2" if offer is True else str(offer)) if offer else ""
+    if teams is not None:
+        line = line.replace('teams: ["0001"]', f"teams: {json.dumps(teams)}")
     return text[:first] + line + text[first:]
 
 
@@ -75,7 +86,7 @@ def run(browser, site, name):
         DOMTokenList.prototype.add = function (...names) { if (names.includes('fuad-cloak')) window.__covered = true; return add.apply(this, names); }; })();""")
     if given.get("beta"):
         context.add_init_script(f"if (!sessionStorage.getItem('h.set')) {{ sessionStorage.setItem('h.set', '1'); localStorage.setItem('fuad.beta', '{given['beta']}'); }}")
-    swapped = header(given.get("main", "v1"), given.get("offer", True))
+    swapped = header(given.get("main", "v1"), given.get("offer", True), given.get("teams"))
     team = given.get("team")
 
     class Captured:
@@ -107,7 +118,10 @@ def run(browser, site, name):
         if request.resource_type == "document":
             body = args["body"]
             body = SAVED.sub(lambda _: swapped, body, count=1)
-            if team:
+            if team == "guest":
+                assert "var franchise_id = '0001';" in body, "the saved page no longer sets franchise_id as expected"
+                body = body.replace("var franchise_id = '0001';", "")
+            elif team:
                 body = body.replace("franchise_id = '0001'", f"franchise_id = '{team}'")
             args = {**args, "body": body}
         return route.fulfill(**args)
