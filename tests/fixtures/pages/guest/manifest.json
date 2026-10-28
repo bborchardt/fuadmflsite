@@ -1,0 +1,171 @@
+{
+  "league": "48571",
+  "season": "2026",
+  "viewer": "guest",
+  "franchise": null,
+  "at": "2026-10-28T20:57:05.586Z",
+  "pages": [
+    {
+      "name": "home",
+      "url": "https://www44.myfantasyleague.com/2026/home/48571",
+      "served": "https://www44.myfantasyleague.com/2026/home/48571",
+      "status": 200
+    },
+    {
+      "name": "lineup",
+      "url": "https://www44.myfantasyleague.com/2026/lineup?L=48571",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Foptions%3FL%3D48571%26O%3D47",
+      "status": 200
+    },
+    {
+      "name": "options-O02",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=02",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Foptions%3FL%3D48571%26O%3D02",
+      "status": 200
+    },
+    {
+      "name": "add_drop",
+      "url": "https://www44.myfantasyleague.com/2026/add_drop?L=48571",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Foptions%3FL%3D48571%26O%3D47",
+      "status": 200
+    },
+    {
+      "name": "options-O257",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=257",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Foptions%3FL%3D48571%26O%3D257",
+      "status": 200
+    },
+    {
+      "name": "options-O18",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=18",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Foptions%3FL%3D48571%26O%3D18",
+      "status": 200
+    },
+    {
+      "name": "options-O05",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=05",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Foptions%3FL%3D48571%26O%3D05",
+      "status": 200
+    },
+    {
+      "name": "options-O03",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=03",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=03",
+      "status": 200
+    },
+    {
+      "name": "options-O76",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=76",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Fprocessed_waivers%3FL%3D48571",
+      "status": 200
+    },
+    {
+      "name": "processed_waivers",
+      "url": "https://www44.myfantasyleague.com/2026/processed_waivers?LEAGUE_ID=48571",
+      "served": "https://www44.myfantasyleague.com/2026/login?L=48571&URL=https%3A%2F%2Fwww44.myfantasyleague.com%2F2026%2Fprocessed_waivers%3FL%3D48571",
+      "status": 200
+    },
+    {
+      "name": "options-O09",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=09",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=09",
+      "status": 200
+    },
+    {
+      "name": "options-O26",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=26",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=26",
+      "status": 200
+    },
+    {
+      "name": "options-O101",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=101",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=101",
+      "status": 200
+    },
+    {
+      "name": "options-O194",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=194",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=194",
+      "status": 200
+    },
+    {
+      "name": "options-O208",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=208",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=208",
+      "status": 200
+    },
+    {
+      "name": "options-O171",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=171&FID=0001",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=171&FID=0001",
+      "status": 200
+    },
+    {
+      "name": "options-O28",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=28",
+      "served": "https://www44.myfantasyleague.com/2026/mb/board_show.pl?bid=202648571",
+      "status": 200
+    },
+    {
+      "name": "csetup-SKIN",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=48571&C=SKIN",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=48571&C=SKIN",
+      "status": 200
+    },
+    {
+      "name": "mb-board_show",
+      "url": "https://www44.myfantasyleague.com/2026/mb/board_show.pl?bid=202648571",
+      "served": "https://www44.myfantasyleague.com/2026/mb/board_show.pl?bid=202648571",
+      "status": 200
+    },
+    {
+      "name": "mb-topic_add",
+      "url": "https://www44.myfantasyleague.com/2026/mb/topic_add.pl?bid=202648571",
+      "served": "https://www44.myfantasyleague.com/2026/mb/topic_add.pl?bid=202648571",
+      "status": 200
+    },
+    {
+      "name": "mb-message_list",
+      "url": "https://www44.myfantasyleague.com/2026/mb/message_list.pl",
+      "served": "https://www44.myfantasyleague.com/2026/mb/message_list.pl",
+      "status": 200
+    },
+    {
+      "name": "mb-message_add",
+      "url": "https://www44.myfantasyleague.com/2026/mb/message_add.pl",
+      "served": "https://www44.myfantasyleague.com/2026/mb/message_add.pl",
+      "status": 200
+    },
+    {
+      "name": "mb-user_options",
+      "url": "https://www44.myfantasyleague.com/2026/mb/user_options.pl",
+      "served": "https://www44.myfantasyleague.com/2026/mb/user_options.pl",
+      "status": 200
+    },
+    {
+      "name": "mb-forum_search",
+      "url": "https://www44.myfantasyleague.com/2026/mb/forum_search.pl",
+      "served": "https://www44.myfantasyleague.com/2026/mb/forum_search.pl",
+      "status": 200
+    },
+    {
+      "name": "player",
+      "url": "https://www44.myfantasyleague.com/2026/player?L=48571&P=13593",
+      "served": "https://www44.myfantasyleague.com/2026/player?L=48571&P=13593",
+      "status": 200
+    },
+    {
+      "name": "mb-topic_show",
+      "url": "https://www44.myfantasyleague.com/2026/mb/topic_show.pl?bid=202648571&tid=6758929",
+      "served": "https://www44.myfantasyleague.com/2026/mb/topic_show.pl?bid=202648571&tid=6758929",
+      "status": 200
+    },
+    {
+      "name": "mb-topic_show-long",
+      "url": "https://www44.myfantasyleague.com/2026/mb/topic_show.pl?bid=202648571&tid=6737097",
+      "served": "https://www44.myfantasyleague.com/2026/mb/topic_show.pl?bid=202648571&tid=6737097",
+      "status": 200
+    }
+  ]
+}

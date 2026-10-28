@@ -1,0 +1,626 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Fantasy Football: Copy of Fuad Reveiz Fan Club Dynasty League League Settings</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"  />
+<meta name="keywords" content="League Settings, fantasy football, keeper fantasy football league, dynasty fantasy football league, salary cap fantasy football league, IDP fantasy football league, MyFantasyLeague, MFL, ffl, league management"  />
+<meta name="description" content="The most customizable way to run your fantasy football league on the web today, MyFantasyLeague.com was voted 'Best Fantasy Commissioner Product' by the Fantasy Sports Trade Association, and has won several additional significant industry awards.  Our 32 years of experience means we do fantasy football right.  If you're ready to move beyond basic league settings, and onto fantasy football how the hard-core players play it, try MyFantasyLeague.com: Beyond League Management"  />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"  />
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WZDGQ9CBF2"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-WZDGQ9CBF2');
+</script>
+<meta name="viewport" content="initial-scale=1.0, width=device-width" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700|Roboto+Condensed:400,700|Roboto:400,400i,700" rel="stylesheet">
+<link rel="stylesheet" id="default" href="https://www44.myfantasyleague.com/skins17/MFLBaseCSS.css" type="text/css"  />
+<link rel="stylesheet" id="skin" href="https://www44.myfantasyleague.com/skins17/NeonBlue/NeonBlue.css" type="text/css"  />
+<link rel="stylesheet" id="responsive" href="https://www44.myfantasyleague.com/skins17/NeonBlue/responsive.css" type="text/css"  />
+<link rel="apple-touch-icon" href="https://www44.myfantasyleague.com/apple-touch-icon.png" />
+<link rel="shortcut icon" href="https://www44.myfantasyleague.com/favicon.ico" />
+<script type="text/javascript" src="https://www44.myfantasyleague.com/mfl_common.js"></script>
+<script type="text/javascript">
+<!--
+var franchise_id = '0001';
+var league_id = '50965';
+var year = 2026;
+var xmlBaseURL = 'https://www44.myfantasyleague.com/fflnetdynamic2026/';
+var baseURLStatic = 'https://www44.myfantasyleague.com';
+var baseURLDynamic = 'https://www44.myfantasyleague.com';
+var currentServerTime = 1793221209;
+var completedWeek = 7;
+var liveScoringWeek = 7;
+var startWeek = 1;
+var endWeek = 17;
+var standingsEndWeek = "14";
+var h2h_setting = "YES";  
+var precision = 2;
+var thisProgram = "options_26";
+var apiKey = "saved-sample";
+
+function Franchise (id, name, division, icon, logo, abbrev) {
+   this.id = id;
+   this.name = name;
+   this.division = division;
+   this.icon = icon;
+   this.logo = logo;
+   this.abbrev = abbrev;
+}
+var leagueAttributes = new Object();
+
+var franchiseDatabase = new Array();
+franchiseDatabase['fid_0000'] = new Franchise('0000', 'Commissioner', undefined, 'https://www44.myfantasyleague.com/fflnetdynamic2008/75574_avatar.jpg', '');
+franchiseDatabase['fid_0001'] = new Franchise('0001', 'All Hands on Beck', '00' ,'https://www44.myfantasyleague.com/fflnetdynamic2026/48571_franchise_icon0001.png' ,'https://www44.myfantasyleague.com/fflnetdynamic2026/48571_franchise_logo0001.png' ,'AHoB');
+franchiseDatabase['fid_0002'] = new Franchise('0002', 'So your saying there’s a chance?', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2019/48571_franchise_icon0002.jpg' ,'https://www43.myfantasyleague.com/fflnetdynamic2019/48571_franchise_logo0002.jpg' ,'Systac');
+franchiseDatabase['fid_0003'] = new Franchise('0003', 'The Obliterators ', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2015/15599_franchise_icon0010.gif' ,'https://www43.myfantasyleague.com/fflnetdynamic2015/15599_franchise_logo0010.gif' ,'TO');
+franchiseDatabase['fid_0004'] = new Franchise('0004', 'Smooth City Styles!', '00' ,'https://www49.myfantasyleague.com/fflnetdynamic2010/47266_franchise_icon0004.jpg' ,'https://www49.myfantasyleague.com/fflnetdynamic2010/47266_franchise_logo0004.jpg' ,'SCS');
+franchiseDatabase['fid_0005'] = new Franchise('0005', 'Golden Ratio', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2016/48571_franchise_icon0009.jpg' ,'https://www43.myfantasyleague.com/fflnetdynamic2016/48571_franchise_logo0009.jpg' ,'GR');
+franchiseDatabase['fid_0006'] = new Franchise('0006', 'We Made a Kicker', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2020/48571_franchise_icon0006.jpg' ,'https://www.moviedash.com/editorials/7376/michael-myers-vs-jason-voorhees/' ,'WMaK');
+franchiseDatabase['fid_0007'] = new Franchise('0007', 'The Fighting Injured Reserves!', '00' ,'https://i.imgur.com/iKyZOoL.jpeg' ,'https://media1.tenor.com/m/Jxm--iahFzEAAAAC/remember-the-titans-the-mighty-titans.gif' ,'KIT');
+franchiseDatabase['fid_0008'] = new Franchise('0008', 'Not 100% A Dick', '00' ,'https://media.tenor.com/images/77091c9904f632688a828ebbff0d8fe4/tenor.gif' ,'https://wtfbabe.files.wordpress.com/2015/01/guardians-of-the-galaxy-35-did-they-say-dick-wtf-watch-the-film-saint-pauly.jpg?w=648&h=270' ,'NOTADICK');
+franchiseDatabase['fid_0009'] = new Franchise('0009', 'Cool Runnings', '01' ,'' ,'' ,'cool runnings');
+franchiseDatabase['fid_0010'] = new Franchise('0010', 'The Wheelchair Massacre', '00' ,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOWCsw_w51d4rqJRG5hxfERP1i7B_oGCQ-6g4dljqgYZLzjlDxfi9pP_lu77AHMfuyyNA&usqp=CAU' ,'' ,'WHEEL');
+leagueAttributes['Draft'] = true;
+leagueAttributes['IR'] = true;
+leagueAttributes['Trade'] = true;
+leagueAttributes['MinStarters'] = 10;
+leagueAttributes['MaxStarters'] = 10;
+leagueAttributes['Franchises'] = 10;
+leagueAttributes['Divisions'] = new Array('West', 'East'); // This will be deprecated soon, use leagueDivisions instead
+leagueDivisions = new Object();
+leagueDivisions['00'] = { 'id' : '00', 'name' : 'West' };
+leagueDivisions['01'] = { 'id' : '01', 'name' : 'East' };
+
+function chat_window (url) {
+    var chatWindow = window.open(url,"chat_window","height=600,width=450,scrollbars=yes,toolbar=no,status=no,resizable=yes,menubar=no");
+    chatWindow.focus();
+}
+
+function live_draft_window (url) {
+    var liveDraftWindow = window.open(url,"live_draft_window","height=800,width=1060,scrollbars=yes,toolbar=no,status=no,resizable=yes,menubar=no");
+    liveDraftWindow.focus();
+}
+
+function live_auction_window (url) {
+    var liveAuctionWindow = window.open(url,"live_auction_window","height=700,width=1060,scrollbars=yes,toolbar=no,status=no,resizable=yes,menubar=no");
+    liveAuctionWindow.focus();
+}
+
+
+//-->
+</script>
+<link rev="MADE" href="mailto:support@myfantasyleague.com"  />
+</head>
+<body id="body_options_26"><noscript>
+  <img src="http://b.scorecardresearch.com/b?c1=2&amp;c2=6035210&amp;c3=&amp;c4=www.myfantasyleague.com&amp;c5=&amp;c6=&amp;c15=&amp;cv=1.3&amp;cj=1" style="display:none" width="0" height="0" alt="" />
+</noscript>
+<div class="myfantasyleague_menu" onclick=""><span>LEAGUE MENU</span><input id="sub0" type="checkbox"><label for="sub0"><span></span></label><ul>
+<li class="mfl-icon"><a class="no-sub" href="http://home.myfantasyleague.com"><img src="/images/mfl-logo-2017.png" alt="MyFantasyLeague.com"><span>MyFantasyLeague.com</span></a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/home/50965">Home</a></li>
+<li class="has-sub sub-default mm-myacct"><a>My Account</a><b aria-haspopup="true" aria-controls="p1"></b><input id="sub1" type="checkbox"><label for="sub1"><span></span></label>
+<ul id="p1">
+<li><a class="no-sub" href="https://www42.myfantasyleague.com/2026/dash" target="">MFL&nbsp;Dashboard</a></li>
+<li><a class="no-sub" href="https://subscribe.myfantasyleague.com" target="">Purchase&nbsp;Premium&nbsp;Projections</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/logout?L=50965" target="">Logout</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/logout?L=50965&BECOME=0000" target="">Become&nbsp;Commissioner</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/home/48571">Fuad&nbsp;Reveiz&nbsp;Fan&nbsp;Club&nbsp;Dynasty&nbsp;League</a></li>
+<li><a class="no-sub" href="https://www42.myfantasyleague.com/2026/myleagues" target="">All&nbsp;My&nbsp;Leagues</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/league_setup1" target="">Set&nbsp;up&nbsp;A&nbsp;New&nbsp;League</a></li>
+<li><a class="no-sub" href="https://www42.myfantasyleague.com/2026/index" target="">Find&nbsp;A&nbsp;League</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-scores"><a>Scores</a><b aria-haspopup="true" aria-controls="p2"></b><input id="sub2" type="checkbox"><label for="sub2"><span></span></label>
+<ul id="p2">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/ajax_ls?L=50965" target="">Live&nbsp;Scoring</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/standings?L=50965" target="">Standings</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=22" target="">Weekly&nbsp;Results</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=31" target="">Weekly&nbsp;Summary</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=101" target="">Power&nbsp;Rank</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=06" target="">Starting&nbsp;Lineups</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=15" target="">Fantasy&nbsp;Schedule</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=79" target="">Playoff&nbsp;Brackets</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/pro_schedule?L=50965" target="">NFL&nbsp;Schedule</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=207" target="">Fantasy&nbsp;Previews</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=177" target="">Fantasy&nbsp;Recaps</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-trans"><a>Transactions</a><b aria-haspopup="true" aria-controls="p3"></b><input id="sub3" type="checkbox"><label for="sub3"><span></span></label>
+<ul id="p3">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/add_drop?L=50965" target="">Add/Drops</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=02" target="">Submit&nbsp;Lineup</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=07" target="">Rosters</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=03" target="">Transactions</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=76" target="">Processed&nbsp;Waivers</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=05" target="">Trades</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=18" target="">Injured&nbsp;Reserve</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=257" target="">Drop&nbsp;Players</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/locked_players?L=50965" target="">Locked&nbsp;Players</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-player"><a>Player Research</a><b aria-haspopup="true" aria-controls="p4"></b><input id="sub4" type="checkbox"><label for="sub4"><span></span></label>
+<ul id="p4">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=08" target="">Top&nbsp;Performers/Player&nbsp;Stats</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=236" target="">Projected&nbsp;Stats</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/reports?L=50965&R=RANKS" target="">Player&nbsp;Ranks</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/depth_chart?L=50965" target="">Fantasy&nbsp;Depth&nbsp;Charts</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=117" target="">Top&nbsp;Adds/Drops/Starters</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=81" target="">Points&nbsp;Allowed&nbsp;-&nbsp;By&nbsp;Position</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=205" target="">Who&nbsp;Should&nbsp;I&nbsp;Start?</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/reports?L=50965&R=FULLFA" target="">Complete&nbsp;Free&nbsp;Agent&nbsp;Listing</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/injury?L=50965" target="">NFL&nbsp;Injury&nbsp;Report</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/news_articles?L=50965&P=*" target="">Player&nbsp;News</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/news_articles?L=50965&MYNEWS=1" target="">My&nbsp;Player&nbsp;News</a></li>
+<li><a class="no-sub" href="http://subscribe.myfantasyleague.com/" target="">Get&nbsp;Projection&nbsp;Sources</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/player_search?L=50965" target="">Player&nbsp;Search</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-draft"><a>Draft/Auction</a><b aria-haspopup="true" aria-controls="p5"></b><input id="sub5" type="checkbox"><label for="sub5"><span></span></label>
+<ul id="p5">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=17" target="">Draft&nbsp;Results</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/reports?L=50965&R=ADP" target="">ADP&nbsp;Report</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=100" target="">Future&nbsp;Draft&nbsp;Picks</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/reports?L=50965&R=AAV" target="">AAV&nbsp;Report</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-league"><a>League</a><b aria-haspopup="true" aria-controls="p6"></b><input id="sub6" type="checkbox"><label for="sub6"><span></span></label>
+<ul id="p6">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/all_reports?L=50965" target="">All&nbsp;Reports</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=123" target="">League&nbsp;Calendar</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=09" target="">League&nbsp;Rules</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/accounting_report?L=50965" target="">Accounting</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=01" target="">Franchise&nbsp;Information</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/reports?L=50965&R=FSUMMARY" target="">Franchise&nbsp;Summary</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=122" target="">NFL&nbsp;Pool&nbsp;Results</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=120" target="">Survivor&nbsp;Pool</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=194" target="">League&nbsp;Champions</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-franchise"><a>My Franchise</a><b aria-haspopup="true" aria-controls="p7"></b><input id="sub7" type="checkbox"><label for="sub7"><span></span></label>
+<ul id="p7">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FRANCHISE" target="">Franchise&nbsp;Setup</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=133" target="">Trade&nbsp;Bait</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=178" target="">My&nbsp;Watch&nbsp;List</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=234" target="">My&nbsp;Scratchpad</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/edit_my_links?L=50965" target="">My&nbsp;Links</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-social"><a>Social</a><b aria-haspopup="true" aria-controls="p8"></b><input id="sub8" type="checkbox"><label for="sub8"><span></span></label>
+<ul id="p8">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=28" target="">Message&nbsp;Board</a></li>
+<li><a class="no-sub" href="javascript:chat_window('https://www44.myfantasyleague.com/2026/chat?L=50965&COUNT=40');" target="">League&nbsp;Chat</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=73" target="">League&nbsp;Articles</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=69" target="">League&nbsp;Polls</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=244" target="">Trash-Talk&nbsp;Videos</a></li>
+<li><a class="no-sub" href="mailto:owner@example.com?Subject=Copy%20of%20Fuad%20Reveiz%20Fan%20Club%20Dynasty%20League%20%2850965%29" target="">Email&nbsp;to&nbsp;Commissioner</a></li>
+<li><a class="no-sub" href="mailto:owner@example.com?subject=Copy%20of%20Fuad%20Reveiz%20Fan%20Club%20Dynasty%20League%20%2850965%29" target="">Email&nbsp;to&nbsp;Entire&nbsp;League</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=218" target="">Send&nbsp;Text&nbsp;Message&nbsp;to&nbsp;League</a></li>
+<li><a class="no-sub" href="https://www.fantasysharks.com/forum/viewforum.php?f=501" target="">MFL&nbsp;Community&nbsp;Forums</a></li>
+<li><a class="no-sub" href="https://twitter.com/MyFantasyLeague" target="">Follow&nbsp;Us&nbsp;On&nbsp;Twitter</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=167" target="">Refer&nbsp;A&nbsp;Friend&nbsp;And&nbsp;Save!</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-help"><a>Help</a><b aria-haspopup="true" aria-controls="p9"></b><input id="sub9" type="checkbox"><label for="sub9"><span></span></label>
+<ul id="p9">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/support?L=50965" target="">Help&nbsp;Center</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/support?PROGRAM=options_26&L=50965" target="_blank">Help&nbsp;on&nbsp;this&nbsp;Page</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/my_tickets" target="">My&nbsp;Support&nbsp;Tickets</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/site_news?L=50965" target="">What's&nbsp;New?</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/options?L=50965&O=26&PRINTER=1" target="">Printer&nbsp;Friendly&nbsp;Page</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2026/api_info?L=50965" target="">Developer's&nbsp;API</a></li>
+</ul>
+</li>
+</ul></div>
+<table cellspacing="0" class="pageheader">
+<tr>
+<td rowspan="3" class="brandlogo">
+<a href="http://www.myfantasyleague.com/"><img src="https://www44.myfantasyleague.com/images/new_mfl_logo.png" alt="http://www.myfantasyleague.com/" width="80" height="80" border="0"  /></a></td><td align="center" class="bannerimage">
+</td>
+<td rowspan="3" class="welcome"><b>bborchardt: All Hands on Beck</b> (<a href="https://www44.myfantasyleague.com/2026/logout?L=50965">Logout</a> | <a href="https://www44.myfantasyleague.com/2026/logout?L=50965&amp;BECOME=0000">Become Commissioner</a>)</td>
+</tr>
+<tr>
+<td class="pagetitle">
+<h1>
+Copy of Fuad Reveiz Fan Club Dynasty League <span>League Settings</span></h1></td></tr></table><div class="pagebody" id="options_26">
+<!-- FUAD league code, served from GitHub Pages. Goes in a home page message set to appear on all league pages. -->
+<style>
+    html.fuad-cloak { background: #0D1117; }
+    html.fuad-cloak body { visibility: hidden; }
+    html.fuad-cloak::after { content: "Loading\2026"; position: fixed; top: 40%; left: 0; right: 0; text-align: center; font: 15px -apple-system, system-ui, sans-serif; color: #8B949E; }
+</style>
+<script>window.fuadBeta = {version: "v2", teams: ["0001"]};</script>
+<script>
+    // Loads MAIN, or the beta a member chose straight away (not through MAIN, a second download on a
+    // slow phone). A choice being made or changed (?fuadBeta=, ?fuadPreview=, a stored preview) goes
+    // through MAIN, which decides (site/vN/loader.js). docs/design.md: previews and the beta.
+    var fuadLoad = (function () {
+        var MAIN = "v1";
+        var BASE = "https://bborchardt.github.io/fuadmflsite/";
+        var root = document.documentElement;
+        var stored = function (key) { try { return localStorage.getItem(key); } catch (e) { return null; } };
+        var params = new URLSearchParams(location.search);
+        var offer = window.fuadBeta;
+        var team = function (id) { return String(id).padStart(4, "0"); };
+        var offered = offer && /^v\d+$/.test(String(offer.version)) && offer.version !== MAIN
+            && (!Array.isArray(offer.teams) || offer.teams.map(team).indexOf(team(window.franchise_id)) >= 0);
+        var direct = offered && !params.has("fuadBeta") && !params.has("fuadPreview") && !stored("fuad.preview")
+            && stored("fuad.beta") === offer.version;
+        var version = direct ? offer.version : MAIN;
+
+        // hidden until the version has drawn (it shows the page again), so MFL's page doesn't show first;
+        // after 20 seconds, whatever is there shows. v1 draws only its own tabs, so it's hidden only while
+        // a choice may hand the page on
+        if (version !== "v1" || stored("fuad.beta") || stored("fuad.preview") || params.has("fuadBeta") || params.has("fuadPreview")) {
+            root.classList.add("fuad-cloak");
+            setTimeout(function () { root.classList.remove("fuad-cloak"); }, 20000);
+        }
+
+        var whenBody = function (then) {
+            if (document.body && document.readyState !== "loading") { then(); } else { document.addEventListener("DOMContentLoaded", then); }
+        };
+        // MAIN didn't load or start: MFL's own pages, with a note where the custom tabs would be
+        var unavailable = function () {
+            root.classList.remove("fuad-cloak");
+            whenBody(function () {
+                ["fuad-contracts", "commishdiv", "fuadlinksdiv"].forEach(function (id) {
+                    var mount = document.getElementById(id);
+                    if (mount) { mount.innerHTML = '<div class="fuad-unavailable">League tools are temporarily unavailable. MFL’s own pages still work.</div>'; }
+                });
+            });
+        };
+        // the beta didn't load or start: MAIN runs the page, with the bar that leads out of the beta. As
+        // handed the page, but not in the beta ("fallback", not "beta"), so MAIN doesn't act as the beta
+        var fallen = false;
+        var fallBack = function () {
+            var sheet = document.getElementById("fuad-css");
+            if (sheet) { sheet.remove(); }
+            fallen = true;
+            window.fuadLoader = {mode: "fallback", barShown: true};
+            whenBody(function () {
+                var bar = document.createElement("div");
+                var out = new URL(location.href);
+                out.searchParams.set("fuadBeta", "off");
+                bar.id = "fuad-preview";
+                bar.textContent = "The beta couldn\u2019t load, so this is the current site. ";
+                var link = document.createElement("a");
+                link.href = out.href;
+                link.textContent = "Leave the beta";
+                bar.appendChild(link);
+                document.body.appendChild(bar);
+            });
+            add(MAIN, unavailable, function () { if (!window.fuadLoader.started) { unavailable(); } });
+        };
+        var add = function (which, onerror, onload) {
+            var css = document.createElement("link");
+            css.id = "fuad-css";
+            css.rel = "stylesheet";
+            css.href = BASE + which + "/fuad.css";
+            document.head.appendChild(css);
+            var js = document.createElement("script");
+            js.type = "module";
+            js.src = BASE + which + "/fuad.js";
+            js.onerror = onerror;
+            js.onload = onload;
+            document.head.appendChild(js);
+        };
+        if (direct) {
+            // as if MAIN had handed the page over; the version draws its own bar
+            window.fuadLoader = {mode: "beta", feedback: /^https:\/\//.test(String(offer.feedback || "")) ? String(offer.feedback) : null, barShown: false};
+        }
+        var done = false;
+        var failed = function () {
+            if (!done) {
+                done = true;
+                (direct ? fallBack : unavailable)();
+            }
+        };
+        // fetched but not started (a syntax error, a failing import): MAIN sets window.fuadLoader as it
+        // starts, a version handed the page sets .started
+        var started = function () { return Boolean(window.fuadLoader && (!direct || window.fuadLoader.started)); };
+        var loaded = function () { if (!started()) { failed(); } };
+        // Safari reports a syntax error in a module only to the page, with no load or error event
+        window.addEventListener("error", function (event) {
+            if (event.filename === BASE + version + "/fuad.js" && !started()) {
+                failed();
+            } else if (fallen && event.filename === BASE + MAIN + "/fuad.js" && !window.fuadLoader.started) {
+                unavailable();
+            }
+        });
+        // written into the page while it's being read, so the stylesheet holds the first paint as a link
+        // in the page would; added by script if this runs later, where writing would replace the page
+        if (document.readyState === "loading") {
+            document.write('<link id="fuad-css" rel="stylesheet" href="' + BASE + version + '/fuad.css">'
+                + '<script type="module" src="' + BASE + version + '/fuad.js" onerror="fuadLoad.failed()" onload="fuadLoad.loaded()"><\/script>');
+        } else {
+            add(version, failed, loaded);
+        }
+        return {failed: failed, loaded: loaded};
+    })();
+</script><div id="contentframe">
+<div id="hsubmenu"><ul id="hsubmenuitems"><li><a href="/2026/home/50965">Home</a></li><li><a href="/2026/options?L=50965&O=07">Rosters</a></li><li><a href="/2026/options?L=50965&O=17">Draft</a></li><li><a href="/2026/lineup?L=50965">Submit Lineup</a></li><li><a href="/2026/add_drop?L=50965">Add/Drops</a></li><li><a href="/2026/options?L=50965&O=05">Trades</a></li><li><a href="/2026/options?L=50965&O=08">Player Stats</a></li><li><a href="/2026/standings?L=50965">Standings</a></li><li><a href="/2026/options?L=50965&O=03">Transactions</a></li><li><a href="https://www44.myfantasyleague.com/2026/ajax_ls?L=50965">Live Scoring</a></li><li><a href="/2026/options?L=50965&O=15">Schedule</a></li></ul></div>
+<div id="withmenus"><h3>Display: <a href="https://www44.myfantasyleague.com/2026/options?L=50965&O=09">Scoring Rules</a> | League Settings</h4>
+<table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">General League Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Commissioner Email Address:</td><td><a href="mailto:owner@example.com?Subject=Copy%20of%20Fuad%20Reveiz%20Fan%20Club%20Dynasty%20League%20%2850965%29">Send Email To Commish</a></td></tr>
+<td class="inputlabel">Commissioner Username(s):</td><td></td></tr>
+<tr class="eventablerow"><td class="inputlabel">Total Number of Divisions:</td><td>2</td></tr><tr class="oddtablerow"><td class="inputlabel">Number of Franchises:</td><td>10</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Number of Roster Spots:</td><td>80</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Number of Injured Reserve Spots:</td><td>25</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Head-To-Head Matchups:</td><td>Yes</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Each Player can be on:</td><td>1 rosters per League</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Track Player Salaries and/or Contracts:</td><td>Yes</td></tr></tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Abilities Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Franchise Abilities:</td><td>Submit lineups</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Perform Add/Drops</td></tr><tr class="oddtablerow"><td>&nbsp;</td><td>Drop players without Adding</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Propose / accept trades</td></tr><tr class="oddtablerow"><td>&nbsp;</td><td>Trade Future Draft Picks</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Make IR moves</td></tr><tr class="oddtablerow"><td>&nbsp;</td><td>Write league articles</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Post to message board</td></tr><tr class="oddtablerow"><td>&nbsp;</td><td>Post to league chat and trash-talk videos</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Create league polls</td></tr><tr class="oddtablerow"><td>&nbsp;</td><td>Customize franchise</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Customize home page</td></tr><tr class="oddtablerow"><td>&nbsp;</td><td>Participate in survivor pool</td></tr><tr class="eventablerow"><td>&nbsp;</td><td>Participate in NFL pool</td></tr><tr class="oddtablerow"><td class="inputlabel">Commissioner Lockout:</td><td>No, the commissioner has the ability to view pending owner-initiated transactions.</td></tr></tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Standings Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Standings Sort Criteria #1:</td>
+<td>Overall Winning Percentage</td></tr><tr class="eventablerow"><td class="inputlabel">Standings Sort Criteria #2:</td>
+<td>Total Points Scored</td></tr><tr class="oddtablerow"><td class="inputlabel">Standings Sort Criteria #3:</td>
+<td>Head-To-Head Record</td></tr><tr class="eventablerow"><td class="inputlabel">Standings Sort Criteria #4:</td>
+<td>Divisional Winning Percentage</td></tr><tr class="oddtablerow"><td class="inputlabel">Standings Sort Criteria #5:</td>
+<td>Reverse Order Of Opponent Total Points Scored</td></tr><tr class="eventablerow"><td class="inputlabel">Standings Sort Criteria #6:</td>
+<td>Power Rank</td></tr><tr class="oddtablerow"><td class="inputlabel">Standings Sort Criteria #7:</td>
+<td>Victory Points</td></tr><tr class="eventablerow"><td class="inputlabel">Standings Sort Criteria #8:</td>
+<td>Last Week's Point Total</td></tr></tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Division/Conference Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Divisions:</td><td>
+West, East</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Accounting Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">League Entry Fee:</td><td>$100.00</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">General Scoring Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Calculate Fantasy Results From:</td><td>Week 1 through Week 17</td></tr><tr class="eventablerow"><td class="inputlabel">Number of Decimal Places For League Scoring:</td><td>2</td></tr><tr class="oddtablerow"><td class="inputlabel">Ties Are:</td><td>Counted as ties</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Starting Lineup Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Total Starters:</td><td>10</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Number of Starting QBs:</td><td>1-2</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Number of Starting RBs:</td><td>1-3</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Number of Starting WRs:</td><td>2-5</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Number of Starting TEs:</td><td>1-3</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Number of Starting PKs:</td><td>1</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Lineup Submission Deadline:</td><td>Players Are Locked At Kickoff Of Their Game</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Are Partial Lineups Allowed?</td><td>NO</td></tr><tr class="oddtablerow"><td class="inputlabel">Hide starting lineups from all owners until:</td><td>Never hide starters.</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Should owners be allowed to submit players on bye as starters?</td><td>No</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Roster Position Limits Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Number Of QB on Roster:</td><td>0-No Limit</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Number Of RB on Roster:</td><td>0-No Limit</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Number Of WR on Roster:</td><td>0-No Limit</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Number Of TE on Roster:</td><td>0-No Limit</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Number Of PK on Roster:</td><td>0-No Limit</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Salary Cap Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Track Salaries:</td><td>Yes<tr class="eventablerow"><td class="inputlabel">Per-Franchise Roster Salary Cap:</td><td>$300</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Salary Cap Type:</td><td>soft</td></tr>
+<tr class="eventablerow"><td class="inputlabel">When a player is acquired that does not have a salary/contract, assign the default salary/contract to him?</td><td>No</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Reset Player Salary/Contract To League Default:</td><td>never</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Percent Of IR Player Salary That Counts Towards The Salary Cap:</td><td>100%</td></tr>
+<td class="inputlabel">Track Contract Year</td><td>Yes</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Other League Settings</th></tr><tr class="oddtablerow"><td class="inputlabel">Display Rosters Report?</td><td>Yes</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Display NFL News Articles?</td><td></td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Display NFL Free Agents on Fantasy Free Agent Lists?</td><td>Yes</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Display NFL Rookies With (R) Next To Name?</td><td>Yes</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Time Zone:</td><td>CT</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Display "Acquired" Column on Rosters Report?</td><td>No</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Are league reports private?</td><td>No</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Is league home page private?</td><td>No</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Draft Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Draft Pick Time Limit Turned:</td><td>
+Off</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Add/Drop and Waivers Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Add/Drop System:</td><td>Blind Bid Requests For Locked Players, First Come/First Serve For Rest</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Waivers Processed Automatically:</td><td>Yes</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Waiver Calendar:</td><td><table align="center" cellspacing="1" class="report nocaption"><tbody><tr><th>Event Title</th><th>Initial Date/Time</th><th width="40">Repeat</th></tr>
+<tr class="oddtablerow"><td>Process Blind Bid Waivers</td>
+<td>Wed Sep 9 2026 11:00 p.m. CT</td>
+<td align="center" width="40">17</td>
+</tr>
+<tr class="eventablerow"><td>Put All Free Agents On Waivers</td>
+<td>Sun Sep 13 2026 12:00 p.m. CT</td>
+<td align="center" width="40">17</td>
+</tr>
+</tbody></table></td></tr>
+<tr class="eventablerow"><td class="inputlabel">Maximum Number of Conditional Blind Bid Groups:</td><td>8</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Dropped Players are Locked Until:</td><td>The first waivers run after 2 days</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Prevent Owners From Making <b>ANY</b> Add/Drops Between Kickoff of <b>that player's game</b> and the end of the last game of the week?</td><td>Yes</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Blind Bidding Waivers Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Are Salary Cap Dollars And Blind Bidding Dollars Treated As One And The Same?</td><td>No</td></tr>
+<td class="inputlabel">Do Winning Blind Bid Waiver Amounts Get Assigned As Player Salaries?</td><td>Yes</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Maximum Amount Each Owner Can Spend During The Season On Blind Bid Waivers (not including balances carried from previous season or individual adjustments):</td><td>$999999.00</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">All Blind Bids Must Be In Increments Of:</td><td>$1.00</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Minimum Blind Bid Amount:</td><td>$1.00</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Amount charged to blind bidding balance for each player acquired via FCFS waivers:</td><td>$0.00</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Are Conditional Blind Bids Allowed?</td><td>Yes</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Do Winning Blind Bid Waiver Amounts Get Charged To An Owner's Accounting Report As "Real" Dollars?</td><td>No</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Blind Bidding Ties Are Broken By:</td><td>Sort Criteria Listed Below (from worst to best):</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #1:</td>
+<td>Overall Winning Percentage</td></tr><tr class="eventablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #2:</td>
+<td>Total Points Scored</td></tr><tr class="oddtablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #3:</td>
+<td>Head-To-Head Record</td></tr><tr class="eventablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #4:</td>
+<td>Divisional Winning Percentage</td></tr><tr class="oddtablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #5:</td>
+<td>Reverse Order Of Opponent Total Points Scored</td></tr><tr class="eventablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #6:</td>
+<td>Power Rank</td></tr><tr class="oddtablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #7:</td>
+<td>Victory Points</td></tr><tr class="eventablerow"><td class="inputlabel">Blind Bidding Ties Sort Criteria #8:</td>
+<td>Last Week's Point Total</td></tr></tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Trades Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">When An Owner Accepts A Trade:</td><td>
+The trade is immediately processed.</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Display Trade Comments To All Owners?</td><td>No</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Allow Trades That Would Create Invalid Rosters To Go Through?</td><td>Yes</td></tr>
+<tr class="eventablerow"><td class="inputlabel">When A Trade Causes An Invalid Roster, Allow Owner To Submit Lineup?</td><td>No</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Default Number Of Days For A Trade Proposal To Be Valid For:</td><td>7</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Prevent Owners From Accepting Trades Between Kickoff of <b>that player's game</b> and the end of the last game of the week?</td><td>Yes</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th colspan="2">Injured Reserve Setup</th></tr><tr class="oddtablerow"><td class="inputlabel">Player Must Be Classified As Before Being Deactivated:</td><td>IR</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Can a player be deactivated when he is listed as "Suspended"?</td><td>No</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">Can a player be deactivated when he is away from the team due to a contract dispute (or opted out of playing due to COVID-19 concerns)??</td><td>No</td></tr>
+<tr class="eventablerow"><td class="inputlabel">Can a player be deactivated when he is on the NFL Reserve/COVID-19 list?</td><td>Yes</td></tr>
+<tr class="oddtablerow"><td class="inputlabel">In case of an IR violation, prevent owner from submitting lineup?</td><td>Yes</td></tr>
+</tbody></table><table align="center" cellspacing="1" class=" rulestable report nocaption"><tbody><tr><th>Additional League Rules Setup</th></tr><tr class="oddtablerow"><td>
+<p><b>1. Playoffs</b></p>
+<ul>
+	<li><b>1.1.</b> 2 division winners + 4 wildcards make playoffs</li>
+	<li><b>1.2.</b> 2 division winners get the top 2 seeds</li>
+	<li><b>1.3.</b> Wildcards are determined by all-play record (with standings setup used as a tiebreaker).  Any ties that cannot be resolved by standings setup will go to a coin flip.</li>
+	<li><b>1.4.</b> Playoff weeks 15-17</li>
+	<li><b>1.5.</b> If there is a tie in the playoffs, the higher seed wins</li>
+	<li><b>1.6.</b> Weekly points winner: $15</li>
+	<li><b>1.7.</b> End of year payout: $0.75 * (all-play wins - losses)</li>	
+	<li><b>1.8.</b> 1<suli>st</suli> – 55%, 2<suli>nd</suli> – 30%, 3<suli>rd</suli> – 15% of remaining pot</li>
+</ul>
+<p/>
+<p><b>2. Contracts</b></p>
+<ul>
+	<li><b>2.1.</b> Each player on team will be signed to a contract</li>
+	<li><b>2.2.</b> Contracts are 1-5 years in length, with constant salary per year</li>
+	<li><b>2.3.</b> Salary cap = 300</li>
+	<li><b>2.4.</b> Roster need not be full but from final cut down date to end of the season minimum roster size is 23 and max is 30</li>
+	<li><b>2.5.</b> No roster min or max in the off season, but salary cap still applies</li>
+	<li><b>2.6.</b> Any transaction that violates the salary cap or roster limits will be voided by the commish, with the following exceptions:
+		<ul>
+			<li><b>2.6.1.</b> If the violation occurs during the season but is noticed after the week in which it occurred, the offending team must immediately drop any players obtained illegally in free agency. If still in violation after this, the team must make other moves to get legal by either dropping more players to get under the salary cap or roster max, or picking players up in the next FA period to get over the roster min.</li>
+			<li><b>2.6.2.</b> If the violation is noticed after the contract year rolls over, the team is only responsible for making moves to get under the salary cap in the new year if necessary.</li>
+		</ul>
+	</li>
+</ul>
+<p/>
+<p><b>3. The first year</b></p>
+<ul>
+	<li><b>3.1.</b> An auction of all players is held. Each team is given a maximum of 250 dollars to spend, and the amount spent on each player represents their salary.</li>
+	<li><b>3.2.</b> Each player drafted must be assigned a contract length of at least 1 by the final cut down date.</li>
+	<li><b>3.3.</b> A team need not spend all 250 dollars at the auction nor fill their entire roster. Teams are allowed to pass on nominating after they have enough rookie picks to bring their roster to 18 players.</li>
+	<li><b>3.4.</b> A team may draft more than 25 players but players can not be waived until contract length is assigned and waiver penalties will apply.</li>
+	<li><b>3.5.</b> Roster size limits must be met by final cut down date.</li>
+	<li><b>3.6.</b> When nominating a player a team must put in an opening bid with a minimum of $1.</li>
+</ul>
+<p/>
+<p><b>4. After the first year</b></p>
+<ul>
+	<li><b>4.1.</b> Teams are filled using a combination of free agency and a rookie draft</li>
+	<li><b>4.2.</b> Each year before the season starts the league will gather to sign free agents, followed by a rookie draft.</li>
+	<li><b>4.3.</b> Contract lengths are reduced by 1 on the first day of the NFL league year (in early March). On this date all waiver penalties applied during the previous year are removed, and players with no years remaining on the contract become restricted free agents. Restricted free agents will not count against a team’s salary cap until signed or tagged as a franchise player.</li>
+	<li><b>4.4.</b> Players obtained in the off season do not need a contract length specified until the final cut down date.</li>
+	<li><b>4.5.</b> Free agents obtained count immediately against the cap, and must be extended a minimum contract length of 1 by the final cut down date.</li>
+	<li><b>4.6.</b> Rookies obtained in the rookie draft do not count against the cap until contract length is assigned.  They may be waived before the final cut down date without penalty.</li>
+</ul>
+<p/>
+<p><b>5. Unrestricted Free Agency</b></p>
+<ul>
+	<li><b>5.1.</b> Any player not on a roster (except rookies before the rookie draft) is an unrestricted free agent.</li>
+	<li><b>5.2.</b> UFAs are bid on via normal auction before the rookie draft along with restricted free agents. After that UFAs can be bid on via silent auction, through the web site.  See league calendar for dates.</li>
+	<li><b>5.3.</b> If there is a tie in the blind bidding, see tiebreaker rules.  In the offseason, we use the worst team from the prior year (based on rookie draft order).  In the inaugural offseason, ties will be settled with a coin flip.</li>
+	<li><b>5.4.</b> See the help pages to understand how the blind bidding works. You are allowed bid what you want as long as you don't exceed the salary cap.  If you include a player to drop as part of your bid, that should be included in the salary cap calculation for the transaction.</li>
+	<li><b>5.5.</b> Any bid or combination of bids that could potentially lead to exceeding the salary cap will cause all bids for that owner to be voided (even if the actual winning bids don't exceed the salary cap) and blind bids will be recalculated for the week.</li>
+	<li><b>5.6.</b> Contract length need not be assigned immediately before the final cut down date, otherwise length must be submitted along with the bid.</li>
+	<li><b>5.7.</b> Free for all pickups are allowed after each silent auction has been processed until the games start for that week. Salary will be one in this case, and contract length must be declared upon pickup.</li>
+	<li><b>5.8.</b> If a pickup must be voided due to a salary cap violation and the player being put back into the pool is in the team's starting lineup come gametime, commish will replace player with the player on the team's bench that has the highest projected points as given by the guru link (fantasysharks).</li>
+</ul>
+<p/>
+<p><b>6. Restricted Free Agency</b></p>
+<ul>
+	<li><b>6.1.</b> Restricted free agents are bid on via normal auction along with UFAs before the rookie draft.  However, when the bidding concludes on an RFA the winning bidder will have one final chance to raise their bid before the original team decides whether or not to match.</li>
+	<li><b>6.2.</b> Players are nominated one at a time for bidding, with the worst team nominating the first player.  You must bid at least $1 on all nominations, unless nominating one of your own RFAs.</li>
+	<li><b>6.3.</b> Teams may exceed the salary cap in obtaining a player, but one or more players must be released to get under the cap immediately after winning the bid if this is done.</li>
+	<li><b>6.4.</b> A team may pass on nominating a player, but this forfeits the right to nominate any more players for the duration of the auction.</li>
+	<li><b>6.5.</b> The team holding the RFA has the option to match the final offer submitted by another team. If no bids are made on a player, the original team may either keep the player for $1 or release the player into the unrestricted free agent pool.  This only applies when the player is nominated.  If an RFA is not nominated during the auction they are released into the UFA pool.</li>
+	<li><b>6.6.</b> RFAs may be traded until we begin the auction for that year, which transfers right to match and franchise to the new owner.</li>
+</ul>
+<p/>
+<p><b>7. Franchise tag</b></p>
+<ul>
+	<li><b>7.1.</b> Each year a team is allowed to franchise one restricted free agent. By franchising a player, the player is automatically assigned a contract in the amount of the average of the top 5 salaries at their position in the previous year (salaries taken at prior year trading deadline, rounded to the nearest dollar), for the duration of one year. The player may be bid on by other teams starting at one more than this number, and again the original team retains the right to match the highest bid.</li>
+	<li><b>7.2.</b> If other teams bid on the franchise player and he is not retained by the original team, the team with the winning bid must compensate the original team their top 1<suli>st</suli> round pick. </li>
+	<li><b>7.3.</b> If the compensating team doesn’t have a 1<suli>st</suli> round pick, they must compensate their 1<suli>st</suli> round pick from the following year (if the team has multiple first rounders the team being compensated must immediately choose one) and their top pick from the current year. If they don’t have a first round pick the following year they cannot bid on a franchise tagged player unless they get the original owner to accept some other package before the bidding starts as compensation should they win the bid.</li>
+	<li><b>7.4.</b> The team winning the bid has the option to increase the compensation awarded to the team losing a franchise player if the team being compensated agrees to it in exchange for not retaining the franchise player</li>
+	<li><b>7.5.</b> In the unlikely event that the same team signs 2 franchise players, compensation is awarded in the order the signings are made (so the top 1st round pick goes to the first team, and another 1st or other compensation would go to the 2nd team, etc)</li>
+	<li><b>7.6.</b> If the franchise player is bid on the duration of the contract is reset and must be assigned by the final cut date.</li>
+</ul>
+<p/>
+<p><b>8. Rookie draft</b></p>
+<ul>
+	<li><b>8.1.</b> The rookie draft will be 5 rounds, with teams picking worst to first each round based on finish from prior year.</li>
+	<li><b>8.2.</b> Order for non-playoff teams is based on order of finish in the standings (see standings tiebreakers - if there is a tie after all that we will flip a coin). Order for playoff teams is reverse order of finish in the playoffs.</li>
+	<li><b>8.3.</b> Rookie salaries follow a formula based on previous year salaries at that position, adjusted for the round and pick. Formula is determined as follows:
+		<ul>
+			<li><b>8.3.1.</b> Each position has a baseline value. This is the salary a player would command if they were the #1 pick in the draft. The baselines are QB: $6, RB: $10, WR: $10, TE: $4, and K: $1.</li>
+			<li><b>8.3.2.</b> The actual salary is determined by reducing the baseline value for that position by 20% for each pick that has already been taken in the draft, rounded to the nearest dollar. </li>
+			<li><b>8.3.3.</b> Salary = Max(1, Baseline * Power(.8, # players picked))</li>
+			<li><b>8.3.4.</b> Example: say a RB is the #4 overall pick in the draft. Then the salary would be 10 * Power(.8, 3) = 5.</li>
+		</ul>
+	</li>
+	<li><b>8.4.</b> Commish will publish salary info each year before the draft for easy reference</li>
+	<li><b>8.5.</b> Rookies are defined as any player that has never had a contract with an NFL team</li>
+</ul>
+<p/>
+<p><b>9. Waiving players</b></p>
+<ul>
+	<li><b>9.1.</b> Waived players result in an immediate cap hit of 40% of the total remaining contract, rounded up to the nearest dollar.  However, the original salary of the player is deducted from the cap.  For example, a contract of $14 for 3 years results in a $17 cap penalty for this year, but since the original $14 salary is cleared the net effect is $3 added to the cap space used.  The minimum cap hit is $1/contract year remaining (so if a player is signed for $1/5 years and then released, the penalty would be $5).  The exception to this is players with a contract status of 'g', which indicates their contract was signed under the old rule where this rule didn't apply (for these players the $1/5 year contract results in a $2 penalty).  This salary comes off the cap at contract year reduction date (see 4.3).</li>
+	<li><b>9.2.</b> Players may be waived at any time as long as it doesn’t result in a salary cap violation or go below the minimum roster size (during the season).</li>
+	<li><b>9.3.</b> Waived players become unrestricted free agents.</li>
+	<li><b>9.4.</b> The team that waives a player cannot bid on said player until 48 hours have passed.</li>
+	<li><b>9.5.</b> Waived players are not eligible for first come first serve pickup up until they have been available for at least one silent bidding round.</li>
+</ul>
+<p/>
+<p><b>10. Trading players</b></p>
+<ul>
+	<li><b>10.1.</b> Players may be traded at any time in the off season. The trading deadline during the season is the kickoff of the first game of week 12.</li>
+	<li><b>10.2.</b> Draft picks for the next two drafts may be traded, and draft picks three drafts into the future can be traded after the web site has been created for the next year.</li>
+	<li><b>10.3.</b> Any trade that results in a cap violation will be voided unless the team under violation clears space as part of the trade.</li>
+	<li><b>10.4.</b> All trades stand once agreed to and executed by all involved parties. If one party made a mistake (such as accidentally clicking accept), this must be immediately posted on the league message board.  If you  accept a trade and wait to complain about it it will be assumed that you agreed to the trade at the time it was made and it will remain in effect.  Trades will never be vetoed unless collusion is suspected.</li>
+	<li><b>10.5.</b> Teams may go over/under the roster minimums for a trade, but if roster limits are in force then the team must get back in compliance by waiving players, picking up players, or executing a subsequent trade. Waiving players or executing a subsequent trade to get in compliance must be executed either within 12 hours of the original trade, by the start of the next NFL game, or by the next blind bidding waiver deadline, whichever comes first. Adding players to get in compliance must be executed within 12 hours of the original trade or by the start of the next NFL game, whichever comes first (unless adds are not allowed in this period, in which case the add must be performed at the first available opportunity). No adds or drops may be made while in violation of the roster limit unless it brings the team closer to being in compliance.</li>
+</ul>
+<p/>
+<p><b>11. IR/Retired</b></p>
+<ul>
+	<li><b>11.1.</b> Players that go on IR in the NFL may also be placed on IR in our league, with no limit on the number of players on IR</li>
+	<li><b>11.2.</b> Players on IR do not count against the player roster limit</li>
+	<li><b>11.3.</b> Players that retire count fully against the salary cap until their contract expires or they are waived.</li>
+</ul>
+<p/>
+<p><b>12. Final Cut Down Date</b></p>
+<ul>
+	<li><b>12.1.</b> The final cut down date will be prior to the start of the regular season.  See the league calendar.</li>
+	<li><b>12.2.</b> Rookies selected during the draft may be waived without any cap ramifications</li>
+	<li><b>12.3.</b> Free agents must be assigned a contract of at least one year.</li>
+	<li><b>12.4.</b> Rosters must be conform to the min/max limits (23/30) by the final cut down date deadline, and all new players being kept must be assigned a contract length.</li>
+	<li><b>12.5.</b> Post contract lengths to the league message board.</li>
+	<li><b>12.6.</b> If length is not submitted in time a cap penalty of $5/day will be assessed.  If not submitted by the start of the season all contracts will default to one year.</li>
+</ul>
+<p/>
+<p><b>13. Tanking</b></p>
+<ul>
+	<li><b>13.1.</b> Tanking is defined as intentionally not starting your best players in order to try to lose a game. This can ruin the fun of a league like this and is not allowed. If you do this you may be penalized at the discretion of the commissioner, including draft picks or possibly even finding a replacement owner. Just don’t do it and we won’t have any problems.</li>
+	<li><b>13.2.</b> Starting players on bye or listed as out in the NFL injury report or any other type of invalid lineup will cause any loss incurred to not count when determining draft order in the following year, unless the violation is not noticed in the same contract year in which it occurred. This does not apply if you have at least one backup at a position, at least one of them is not on bye and is listed as out, and you have no cap space available to pick up a free agent. It also does not apply if a player is not declared out until the day of their game and was not previously listed on the injury report. If starting players on bye becomes a pattern it will be considered tanking.</li>
+</ul>
+<p/>
+<p><b>14. Payment</b></p>
+<ul>
+	<li><b>14.1.</b> Payment is due at the draft each year. For remote people it must be postmarked by the Tuesday following the draft.</li>
+	<li><b>14.2.</b> If you forget to pay at the draft and payment is not received by the time the season starts, you cannot accumulate any wins until you pay (but if you win it still counts as a win for purposes of draft seeding and the other team still takes a loss). </li>
+	<li><b>14.3.</b> If it looks like a team has no intention of paying and has given up, control of team will be assumed by commissioner using rankings from a web site, and we will seek a replacement owner for the next year.</li>
+	<li><b>14.4.</b> Since the commish will be renewing the web site early in order to keep things running all year and get a discount, all teams will put in a $25 deposit to cover the web site fee ($70).  This will protect the commish from fronting the $70 and not getting it back if the league were to ever be shut down.  It will be refunded to any team leaving the league (or all teams if the league shuts down).  The only exception to this rule is if it is determined a team was left in bad shape for the next year (traded away draft picks, etc) and the owner then left the league.  In this situation some or all of the deposit money may be used to entice a new replacement owner if necessary.</li>
+</ul>
+<p/>
+<p><b>15. Expansion Teams</b></p>
+<ul>
+	<li><b>15.1.</b> In the 2nd year of the league, we will attempt to recruit two expansion teams to bring the league size to 12.  During this year an expansion draft will occur before the free agent signing/rookie draft.</li>
+	<li><b>15.2.</b> During the expansion each team may declare 8 players that are protected from being taken.  A maximum of 4 players can be taken from each team.  The expansion team will inherit the existing contract status of any player taken (so if they are a RFA, they would then become an RFA for the expansion team, along with the right to match the final offer and/or franchise them).</li>
+	<li><b>15.3.</b> Any player that is cut by a team after the last blind bidding period is eligible to be taken during the expansion draft using the same contract the player had when cut.  This would not count as part of the 4 player limit for the team that had cut them.</li>
+	<li><b>15.4.</b> Each expansion team will also be given draft picks to help populate their teams.  The two expansion draft slots will be randomly assigned, and must be between the #3-#6 slot.  In addition, each expansion team will be given a supplemental pick at the end of each round.</li>
+	<li><b>15.5.</b> One expansion team will get first pick in the expansion draft and  the earlier rookie draft supplemental picks, the other will get the earlier rookie draft slot.  If the teams cannot agree on who gets what, we'll flip a coin.</li>
+	<li><b>15.6.</b> Expansion teams may participate fully in the free agent signing period.  Supplemental picks at the end of the first round may not be used as compensation for signing a franchise player (unless the team losing the franchise player agrees to it before bidding, as mentioned above under "other compensation").</li>
+	<li><b>15.7.</b> There is a $50 bounty for recruiting two new teams until the league is expanded to 12.</li>
+</ul>
+<p/>
+<p><b>16. Miscellaneous</b></p>
+<ul>
+	<li><b>16.1.</b> As we may periodically need to tweak rules to improve the league, rule changes may be proposed and voted during the off season. Rule changes require a 75% vote to pass. All new rule & proposal voting is done via the message board & polls prior to the draft. Deadlines for all final proposals will be 2 weeks prior to the draft.  Polls go up 2 weeks from the draft.  They are due the day before the draft.  If any owner does not vote, that owner is not counted in the denominator when calculating the percent approval. Mutually exclusive proposals will use multi-select polls to allow owners to vote on multiple options, with the highest voted option winning if it receives the required 75%.</li>
+	<li><b>16.2.</b> Rules changes will be classified into two separate categories: League Operations and Team Strategy.
+	<ul>
+	    <li><b>16.2.1</b> League Ops rules will be classified as those rules whose only impact will be on the format of the league, and will have no impact on the individual owners strategy and tactics for the upcoming/current season (e.g. Playoff format change, end of the year payouts, additional monetary rewards, etc.) As such, those rules, having no impact on how an owner manages their team, will be implemented immediately upon league approval of the change.</li>
+	    <li><b>16.2.2</b> Team Strategy rules will be classified as any rule change the will have an impact on how an owner manages their team for the current/upcoming season, (e.g. change in scoring, roster submission, trades, salary, etc) .  Recognizing that changes to these rules have the potential to impact how an owner prepares for the season and how a team is managed, any approved change to Team Strategy rules will be implemented the following season so as not to impact how an owner would manage their team without appropriate time to prepare.</li>
+	    </ul>
+<li><b>16.3.</b> Any loopholes or ambiguities in the rules will be ruled on by the commissioner if noticed during the season. These may be addressed permanently in the off season by a league vote. If the league cannot agree on a solution, the commissioner’s ruling will remain permanent.</li>
+<li><b>16.4.</b> Late stat changes will not be allowed.  All stats are final as set by the site on Tuesday.</li>
+<li><b>16.5.</b> You may submit backup starters with your weekly lineup to substitute for players in the starting lineup that may be a late scratch:
+	<ul>
+		<li><b>16.5.1.</b> Only one backup is allowed per starter.</li>
+		<li><b>16.5.2.</b> The same backup cannot be used for multiple starters.</li>
+		<li><b>16.5.3.</b> Backups can only be submitted for starters (no backups for backups).</li>
+		<li><b>16.5.4.</b> Backups may have a different game start time that the starter they are backing up, but the backup must be submitted 5 minutes before their own game time as well as the game time of the original starter, whichever comes first.</li>
+		<li><b>16.5.5.</b> Backup submissions lock both the original starter and the backup into the lineup after the deadline specified 16.5.4 has passed (5 minutes before the earlier game's start). Since the web site cannot enforce this lock for us, any subsequent changes made to the lineup involving the players in question will be ignored.</li>    
+		<li><b>16.5.6.</b> Backup starters must be submitted via a designated thread on the league message board.</li>
+		<li><b>16.5.7.</b> A backup will be inserted into the lineup if the original starter is officially declared out and not activated on the roster for that day.</li>
+		<li><b>16.5.8.</b> If the conditions are met such that a backup player needs to be inserted in a team's lineup, a followup post to remind the commissioner to make the change must be made in the backup submissions message board thread before the beginning of the following week's game or the backup submission will be voided.</li>
+	</ul>
+</li>
+</ul>
+</td></tr></tbody></table></div></div></div><div class="pagefooter"><table border="0" cellpadding="1" cellspacing="1" align="center">
+<tr><td colspan="2" align="center"><a href="#body_options_26">Back To Top Of Page</a></td></tr>
+<tr><td colspan="2" align="center">Page Generated Wed Oct 28 4:00:09 p.m. CT 2026</td></tr>
+<tr><td colspan="2" align="center">Copyright &copy; 1995-2026 <a href="http://home.myfantasyleague.com/">First Pick Labs, Inc.</a> All Rights Reserved. <a href="http://home.myfantasyleague.com/privacy.html">Privacy Policy</a> - <a href="http://home.myfantasyleague.com/terms.html">Terms Of Service</a> 
+ - <a href="http://home.myfantasyleague.com/use.html">Acceptable Use Policy</a> - Powered by: <a href="https://www.geniussports.com/">Genius Sports</a>.
+- <button id="pmLink">Privacy Manager</button>
+</td></tr>
+<tr><td colspan="2" align="center"><b>Disclaimer:</b>  This site is not
+in any way affiliated with, endorsed or licensed by the
+National Football League, any NFL team or NFLPA member.
+</td></tr></table></div>
+</body></html>
