@@ -3114,7 +3114,7 @@ body #fuad-home select {
     #fuad-rosters .fuad-round-toggle [aria-hidden="true"] { display: none; }
     #fuad-rosters .fuad-board-picks[hidden] { display: block !important; }
     #fuad-rosters .fuad-board-picks > li { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 6px; font-size: 14px; }
-    #fuad-rosters .fuad-order { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 16px; }
+    #fuad-rosters .fuad-order { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0 16px; }
 }
 
 /* each pick shares its row's height across the rounds, so a name that wraps doesn't push the rest of its round out of line */
