@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {contextOf, crc32, fixedPages, safeLink, scrub, topicLinks, topicsOn, viewerOf, zip} from "../site/capture/capture-model.js";
+import {contextOf, crc32, fixedPages, ownersOf, safeLink, scrub, topicLinks, topicsOn, viewerOf, zip} from "../site/capture/capture-model.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
@@ -87,4 +87,22 @@ test("the zip holds each page as written", () => {
     assert.deepEqual(read, files);
     // the directory's end says how many
     assert.equal(view.getUint16(bytes.length - 22 + 10, true), 2);
+});
+
+test("owners' names become their team's placeholder; a one-word name only as an owner", () => {
+    const owners = ownersOf({league: {franchises: {franchise: [
+        {id: "0001", owner_name: "Sam Rivera"}, {id: "0004", owner_name: "Dana O'Toole"}, {id: "0002", owner_name: "Pat"}, {id: "0003", owner_name: ""}
+    ]}}});
+    assert.deepEqual(owners.map((owner) => owner.id), ["0001", "0004", "0002"]);
+    const html = `<a title="Owner: Sam Rivera, Record: 6-1-0">A</a> <a title='Owner: Dana O'Toole, Record'>B</a>
+        <a title="Owner: Pat, Record: 0-0-0">C</a> Dana O&#39;Toole posted; Sam&nbsp;Rivera too. Pat Freiermuth scored. {"owner_name":"Pat"}`;
+    const out = scrub(html, owners);
+    assert.doesNotMatch(out, /Rivera|Toole|Owner: Pat|"owner_name":"Pat"/);
+    assert.match(out, /Owner: Owner 0001, Record/);
+    assert.match(out, /Owner: Owner 0004, Record/);
+    assert.match(out, /Owner 0004 posted; Owner 0001 too/);
+    assert.match(out, /Owner: Owner 0002, Record/);
+    assert.match(out, /Pat Freiermuth scored/);
+    assert.match(out, /"owner_name":"Owner 0002"/);
+    assert.equal(ownersOf(null).length, 0);
 });
