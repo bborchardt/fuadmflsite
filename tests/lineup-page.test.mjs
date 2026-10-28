@@ -5,7 +5,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {parseHTML} from "linkedom";
-import {applyInjuries, lineupForm, readLineupPage} from "../site/v2/ui/lineup-model.js";
+import {applyInjuries, lineupForm, lineupStatus, readLineupPage} from "../site/v2/ui/lineup-model.js";
 
 const saved = readFileSync(new URL("../tools/verify/screens/lineup.html", import.meta.url), "utf8");
 const pageOf = (html = saved) => parseHTML(html).document;
@@ -63,4 +63,15 @@ test("without MFL's total, the most each position may start add up; without the 
     const players = [{id: "1", code: "Q", injury: "Questionable"}];
     applyInjuries(players, null);
     assert.equal(players[0].injury, "Questionable");
+});
+
+test("week 8 with the only kicker on a bye: no lineup MFL takes, so the bar says why (the capture's page)", () => {
+    const page = readLineupPage(pageOf(readFileSync(new URL("./fixtures/pages/member/lineup.html", import.meta.url), "utf8")));
+    assert.equal(page.week, 8);
+    const kicker = page.players.find((player) => player.pos === "PK");
+    // MFL greys out a player on a bye and leaves him unticked, with no hidden input keeping him
+    assert.deepEqual([kicker.onBye, kicker.locked, kicker.starter], [true, true, false]);
+    const status = lineupStatus(page, new Set(page.players.filter((player) => !player.locked).map((player) => player.id)));
+    assert.equal(status.ok, false);
+    assert.deepEqual(status.stuck, [{pos: "PK", why: `${kicker.name} is on a bye`}]);
 });

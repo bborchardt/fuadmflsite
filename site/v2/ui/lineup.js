@@ -8,7 +8,7 @@ import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
-    applyInjuries, lineupForm, lineupStatus, lineupWarnings, rangeText, readLineupPage, sameLineup, tagOf
+    applyInjuries, lineupForm, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf
 } from "./lineup-model.js";
 
 const CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
@@ -68,7 +68,7 @@ function groups(page, on, status) {
 }
 
 function draw(mount, state) {
-    const {page, on, base, irHref} = state;
+    const {page, on, base, irHref, addHref} = state;
     const status = lineupStatus(page, on);
     const warnings = lineupWarnings(page.players, on);
     const changed = !sameLineup(on, base);
@@ -94,7 +94,7 @@ function draw(mount, state) {
     ${page.ir.length ? `<p class="fuad-lineup-ir fuad-meta">On IR: ${esc(page.ir.join(", "))} · <a href="${esc(irHref)}">Manage IR</a></p>` : ""}
     <section class="fuad-save-bar" aria-label="Save">
         <span class="fuad-save-count${status.starting === page.total ? "" : " fuad-bad"}">${status.starting} of ${page.total} starting</span>
-        <span class="fuad-save-line${status.ok ? " fuad-muted" : " fuad-bad"}">${esc(status.line)}</span>
+        <span class="fuad-save-line${status.ok ? " fuad-muted" : " fuad-bad"}">${esc(status.line)}${status.stuck.length && addHref ? ` · <a href="${esc(addHref)}">Add a ${esc(positionName(status.stuck[0].pos))}</a>` : ""}</span>
         <button type="button" class="fuad-save"${canSave ? "" : " disabled"}>${state.saving ? "Saving…" : changed ? "Save lineup" : "Saved"}</button>
     </section>`;
 }
@@ -164,7 +164,7 @@ async function stillBeforeDraft(context) {
     return Boolean(results) && !draftPicked(results);
 }
 
-export async function drawLineup({context, franchiseId, irHref}) {
+export async function drawLineup({context, franchiseId, irHref, addHref}) {
     const body = document.querySelector(".pagebody");
     if (!body) {
         return;
@@ -197,7 +197,7 @@ export async function drawLineup({context, franchiseId, irHref}) {
         return;
     }
     // `stale`: a save went but couldn't be checked, so the form underneath may be out of date
-    const state = {page, on: startersOf(page), base: startersOf(page), irHref, report: null, saved: false, saving: false, stale: false, error: ""};
+    const state = {page, on: startersOf(page), base: startersOf(page), irHref, addHref, report: null, saved: false, saving: false, stale: false, error: ""};
     const render = () => {
         const focused = document.activeElement && mount.contains(document.activeElement) ? document.activeElement : null;
         const key = focused && ["toggle", "player"].find((name) => focused.dataset[name]);

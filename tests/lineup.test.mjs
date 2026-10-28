@@ -25,6 +25,25 @@ test("Save takes only a full lineup within each position's limits", () => {
     assert.equal(status(["QB0", "QB1", "RB0", "RB1", "RB2", "WR0", "WR1", "WR2", "TE0", "PK0", "PK1"]).line, "Over 10 starters");
 });
 
+test("a position no one can fill says why, as MFL refuses a lineup short there", () => {
+    const team = [
+        ...players.filter((player) => player.pos !== "PK"),
+        {id: "PK9", pos: "PK", name: "Ka'imi Fairbairn", onBye: true, locked: true}
+    ];
+    const shortKicker = lineupStatus({players: team, limits, total: 10}, new Set(["QB0", "RB0", "RB1", "RB2", "WR0", "WR1", "WR2", "WR3", "TE0"]));
+    assert.equal(shortKicker.ok, false);
+    assert.equal(shortKicker.line, "PK: Ka'imi Fairbairn is on a bye");
+    assert.deepEqual(shortKicker.stuck, [{pos: "PK", why: "Ka'imi Fairbairn is on a bye"}]);
+
+    // a benched kicker whose game has started can't come in either; with none at all, there's no one
+    const started = team.map((player) => (player.pos === "PK" ? {...player, onBye: false} : player));
+    assert.equal(lineupStatus({players: started, limits, total: 10}, new Set()).stuck[0].why, "Ka'imi Fairbairn can't start this week");
+    assert.equal(lineupStatus({players: team.filter((player) => player.pos !== "PK"), limits, total: 10}, new Set()).line, "PK: no kicker on your roster");
+
+    // a kicker who can still be picked is just "Pick 1 more"
+    assert.deepEqual(status(["QB0", "RB0", "RB1", "RB2", "WR0", "WR1", "WR2", "WR3", "TE0"]).stuck, []);
+});
+
 test("starters who can't play are warned about, except once their game has started", () => {
     const team = [
         {id: "1", name: "Lamar Jackson", nfl: "BAL", injury: "Out"},

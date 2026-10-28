@@ -149,6 +149,29 @@ export function tagOf(player) {
 
 export const rangeText = ([least, most]) => (least === most ? String(least) : `${least}–${most}`);
 
+const POSITION_NAMES = {QB: "quarterback", RB: "running back", WR: "receiver", TE: "tight end", PK: "kicker", DEF: "defense"};
+export const positionName = (pos) => POSITION_NAMES[pos] || pos;
+
+// Positions whose minimum no lineup can reach: MFL locks a player on a bye, and a benched one whose
+// game has started, and refuses a lineup short at any position ("You must select 1 PK (0 selected)"),
+// so only adding a player fills it
+function unfillable(players, limits, on) {
+    return Object.keys(limits).map((pos) => {
+        const here = players.filter((player) => player.pos === pos);
+        const open = here.filter((player) => on.has(player.id) || !player.locked);
+        if (open.length >= limits[pos][0]) {
+            return null;
+        }
+        const out = here.filter((player) => !on.has(player.id) && player.locked);
+        const bye = out.filter((player) => player.onBye);
+        const names = (list) => list.map((player) => player.name).join(" and ");
+        const why = !out.length ? `no ${positionName(pos)} on your roster`
+            : bye.length === out.length ? `${names(bye)} ${bye.length > 1 ? "are" : "is"} on a bye`
+                : `${names(out)} can't start this week`;
+        return {pos, why};
+    }).filter(Boolean);
+}
+
 // what the save bar says about `on` (a Set of player ids), and whether Save may send it: MFL takes no
 // partial lineup, so it must be full and within each position's limits
 export function lineupStatus({players, limits, total}, on) {
@@ -163,8 +186,11 @@ export function lineupStatus({players, limits, total}, on) {
     const over = Object.keys(counts).filter((pos) => counts[pos] > limits[pos][1]);
     const broken = Object.keys(counts).filter((pos) => counts[pos] < limits[pos][0] || counts[pos] > limits[pos][1]);
     const limitText = (pos) => `${pos} ${counts[pos]}, start ${rangeText(limits[pos])}`;
+    const stuck = unfillable(players, limits, on);
     let line;
-    if (starting < total) {
+    if (stuck.length) {
+        line = stuck.map((slot) => `${slot.pos}: ${slot.why}`).join(" · ");
+    } else if (starting < total) {
         line = [`Pick ${total - starting} more`, ...over.map(limitText)].join(" · ");
     } else if (starting > total) {
         line = `Over ${total} starters`;
@@ -173,7 +199,7 @@ export function lineupStatus({players, limits, total}, on) {
     } else {
         line = Object.keys(counts).map((pos) => `${pos} ${counts[pos]}`).join(" · ");
     }
-    return {counts, starting, broken: starting === total ? broken : over, ok: starting === total && !broken.length, line};
+    return {counts, starting, broken: starting === total ? broken : over, ok: starting === total && !broken.length, line, stuck};
 }
 
 // starters who can't play, one line each; a game that has started can't be changed, so it's left out.
