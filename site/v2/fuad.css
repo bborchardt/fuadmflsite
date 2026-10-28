@@ -3114,6 +3114,17 @@ body #fuad-home select {
     #fuad-rosters .fuad-round-toggle [aria-hidden="true"] { display: none; }
     #fuad-rosters .fuad-board-picks[hidden] { display: block !important; }
     #fuad-rosters .fuad-board-picks > li { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 6px; font-size: 14px; }
+    #fuad-rosters .fuad-order { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 16px; }
+}
+
+/* each pick shares its row's height across the rounds, so a name that wraps doesn't push the rest of its round out of line */
+@media (min-width: 48.01em) {
+    @supports (grid-template-rows: subgrid) {
+        #fuad-rosters .fuad-rounds { grid-template-rows: auto repeat(var(--fuad-picks), auto); }
+        #fuad-rosters .fuad-round { display: grid; grid-row: 1 / -1; grid-template-rows: subgrid; }
+        #fuad-rosters .fuad-board-picks,
+        #fuad-rosters .fuad-board-picks[hidden] { display: grid !important; grid-row: 2 / -1; grid-template-rows: subgrid; }
+    }
 }
 
 /* Players: fixed column widths, so filtering doesn't make the columns jump */
