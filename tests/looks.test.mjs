@@ -189,3 +189,18 @@ test("every look has its colors, and they stand out from its backgrounds", () =>
         }
     }
 });
+
+// The header's cover (mfl/message-header.html, pasted by the commissioner) is drawn before v2 loads,
+// in the look's colours from the skin's folder: it must match every look, or a member sees a flash
+test("the header's cover is each look's page and muted colours", () => {
+    const header = readFileSync(new URL("../mfl/message-header.html", import.meta.url), "utf8");
+    const covers = Object.fromEntries([...header.match(/var COVERS = \{([\s\S]*?)\};/)[1]
+        .matchAll(/(\w+): \["(#[0-9A-F]{6})", "(#[0-9A-F]{6})"\]/g)].map((match) => [match[1], [match[2], match[3]]]));
+    const night = colors(LOOKS[0].id);
+    assert.match(header, new RegExp(`background: var\\(--fuad-cover, ${night.page}\\)`));
+    for (const look of LOOKS.slice(1)) {
+        const set = colors(look.id);
+        assert.deepEqual(covers[look.folder.toLowerCase()], [set.page, set.muted], `${look.id}: the header's cover`);
+    }
+    assert.equal(Object.keys(covers).length, LOOKS.length - 1);
+});

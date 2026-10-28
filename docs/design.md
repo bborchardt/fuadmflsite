@@ -44,6 +44,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   and are saved by the form that also holds the team's logo.
 - **Three looks are team colours** (Vikings, Packers, Cowboys), for the league's fans of those teams,
   each saved as MFL's skin for that team, so MFL's own pages match.
+- **The header's loading cover is in the member's look**, read from the skin as v2 reads it, so a
+  light look doesn't flash dark on a slow connection; the header keeps each look's two colours,
+  which a test holds to the looks'.
 
 ## The daily job
 
