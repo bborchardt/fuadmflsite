@@ -59,9 +59,10 @@ test("emails, phone numbers and the apiKey come out; MFL's support address stays
 test("the board's per-member token and private message subjects come out", () => {
     const html = `<a href="post_add.pl?tid=1;auth=f00d1e">Reply</a><input type="hidden" name="auth" value="f00d1e">
         <input type='hidden' value='5ec' name='sid'><input name="subject" value="Hi">
-        <a href="message_show.pl?mid=9">Trade talk, keep quiet</a>`;
+        <a href="message_show.pl?mid=9">Trade talk, keep quiet</a>
+        <a href='message_show.pl?mid=10' title='Don&#39;t tell the league'>Re: trade</a>`;
     const out = scrub(html);
-    assert.doesNotMatch(out, /f00d1e|5ec|keep quiet/);
+    assert.doesNotMatch(out, /f00d1e|5ec|keep quiet|tell the league|Re: trade/);
     assert.match(out, /tid=1;auth=saved-sample/);
     assert.match(out, /name="subject" value="Hi"/);
     assert.match(out, /mid=9">A message</);

@@ -118,7 +118,8 @@ export function scrub(html) {
         .replace(/<input\b[^>]*>/gi, (input) => (new RegExp(`\\bname\\s*=\\s*["']?(?:${SECRET})\\b`, "i").test(input)
             ? input.replace(/(\bvalue\s*=\s*)(["'])[^"']*\2/i, "$1$2saved-sample$2")
             : input))
-        .replace(/(<a\b[^>]*message_show\.pl[^>]*>)[\s\S]*?(<\/a>)/gi, "$1A message$2")
+        // MFL's list gives each message's opening as the link's title, as well as its subject
+        .replace(/(<a\b[^>]*message_show\.pl[^>]*>)[\s\S]*?(<\/a>)/gi, (link, open, close) => `${open.replace(/\btitle\s*=\s*(["'])[\s\S]*?\1/i, "title='A message'")}A message${close}`)
         .replace(/tel:[^"'\s>]+/gi, "tel:5550100")
         .replace(/\(?\b\d{3}\)?[-. ]\d{3}[-. ]\d{4}\b/g, "555-555-0100");
 }
