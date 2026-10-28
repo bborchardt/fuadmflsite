@@ -83,3 +83,33 @@ It records what it did in the chore log (`chore-log.md`, on the `league-data` br
   file. Commit it to the `league-data` branch's `data/` folder, and the next run publishes it.
 - **The schedule keeps itself on.** GitHub turns off a scheduled workflow after 60 days without
   activity in the repo, so each run switches it back on.
+
+## Each season
+
+The league renews in mid-March or later, never on a fixed date. MFL keeps past seasons' sites and
+copies the home page messages forward, so the site keeps running without a paste.
+
+**At renewal:**
+- **The daily job** moves to the new season by itself: it uses the newest season the league has a
+  site for. If MFL moves the league to another server, update the `MFL_HOST` variable. Then run the
+  job by hand once (Actions › Daily chores › Run workflow) and check its summary.
+- **The contract-year rollover:** in MFL, lower every player's contract years by 1. Players going
+  from 1 year to 0 (the new RFAs) get a salary of $0.01, since MFL won't take $0; the roster report
+  shows it as $0. The Commish tab's contract form fills in $0.01 for 0-year players from renewal
+  until week 1's kickoff.
+- **League Alerts:** look once for anything flagged wrongly before the season.
+
+**On MFL's calendar:** Home's Coming up, and the alerts that date members' deadlines, read these
+events from the calendar. Add each season's as soon as its date is set; the title words are what the
+site looks for:
+
+| Event | Title must contain | Notes |
+|---|---|---|
+| The rookie draft | "draft" | |
+| The final cut-down | a word starting "cut", e.g. "Final cut-down" | A one-time event at a set time, not a week. The roster limits (23–30) start then; without it, from week 1's kickoff. |
+| The rollover | "contract year ends" | Members' last chance to cut players so the penalties clear before next season. |
+
+The trade deadline comes from MFL's own trade deadline setting, and the blind-bid and waiver times
+from MFL's waiver settings, so neither needs an event.
+
+**At the trade deadline:** nothing to do. The daily job snapshots each franchise's salaries.
