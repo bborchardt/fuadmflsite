@@ -113,3 +113,22 @@ The trade deadline comes from MFL's own trade deadline setting, and the blind-bi
 from MFL's waiver settings, so neither needs an event.
 
 **At the trade deadline:** nothing to do. The daily job snapshots each franchise's salaries.
+
+## When something breaks
+
+- **The site doesn't load** (GitHub Pages down, or a bad deploy): MFL's own pages keep working. Where
+  v1's custom tabs would be, members see "League tools are temporarily unavailable. MFL's own pages
+  still work." A page still hidden behind "Loading…" shows MFL's page after 30 seconds. Nothing needs
+  doing on MFL. Check the "Publish site" workflow under Actions: a failed run can be re-run from its
+  page, and a GitHub outage clears on its own.
+- **The beta fails to load or start:** that member gets `MAIN` instead, with a bar that leads out of
+  the beta. To take the beta down for everyone, delete its offer line from MFL's header (Betas and
+  versions).
+- **A change was published:** GitHub Pages publishes `master` within a few minutes of a merge that
+  touches the site, and after a daily run that adds a franchise snapshot. Browsers can keep the old
+  copy for up to 10 minutes, so reload after that to see it.
+- **MFL's app:** it doesn't run home page messages, so members using it see none of the site. That
+  isn't a fault.
+- **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
+  (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
+  again, or you can run it by hand.
