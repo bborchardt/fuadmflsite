@@ -28,8 +28,8 @@ would do until they're switched on.
 - **Switch versions:** the home page message on all pages ([`mfl/message-header.html`](mfl/message-header.html))
   loads one version (`site/v<N>/`), its `MAIN`. Edit `MAIN` to switch, or back to revert. Past seasons
   keep the version they ended on.
-- **Offer a beta:** add a line before that message's script, and League Alerts invites members to
-  try it:
+- **Offer a beta:** add a line where that message's comment marks, and League Alerts invites
+  members to try it:
   ```html
   <script>window.fuadBeta = {version: "v2", feedback: "<link to a feedback thread>", teams: ["0001"]};</script>
   ```
