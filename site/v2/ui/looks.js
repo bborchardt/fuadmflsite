@@ -11,11 +11,11 @@ import {mflFetch, mflSend} from "./page-fetch.js";
 
 export const LOOKS = [
     {id: "night", name: "Night Game", skin: "-1", folder: null},
-    {id: "day", name: "Day Game", skin: "1043", folder: "Winter"},
+    {id: "day", name: "Day Game", skin: "1032", folder: "OceanBlue"},
     {id: "purple", name: "Purple Reign", skin: "1029", folder: "Norseman"},
     {id: "tundra", name: "Frozen Tundra", skin: "1011", folder: "Cheeseheads"},
     {id: "cowboys", name: "Cowboys", skin: "1022", folder: "LoneStar"},
-    {id: "paper", name: "Sunday Paper", skin: "1038", folder: "Summer"}
+    {id: "paper", name: "Sunday Paper", skin: "1021", folder: "LeatherHelmet"}
 ];
 
 // "BlueMesh" from `…/skins17/BlueMesh/BlueMesh.css`

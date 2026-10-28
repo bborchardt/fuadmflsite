@@ -34,6 +34,8 @@ test("the default is saved as the commissioner's choice of skin", () => {
     // the league's own skin (its pages logged out, 27 Oct 2026): a look on it would show for every
     // member on Commish Choice
     assert.ok(LOOKS.every((look) => look.folder !== "BlueMesh"));
+    // MFL's Seasons skin draws from these in turn: a member on it would be shown a look for a season
+    assert.ok(LOOKS.every((look) => !["Spring", "Summer", "Autumn", "Winter"].includes(look.folder)));
 });
 
 test("every look's skin is one MFL offers, and its folder is MFL's", () => {

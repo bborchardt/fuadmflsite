@@ -472,6 +472,7 @@ body .homepagecolumn .homepagemodule caption {
     margin-bottom: 0;
     box-shadow: none;
     text-align: left;
+    text-indent: 0;
     text-transform: uppercase;
     font-style: normal;
 }
@@ -629,6 +630,7 @@ body .pagebody button {
     border-radius: 10px;
     min-height: 40px;
     padding: 0 18px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     /* MFL's skin paints a red glow inside its buttons */
