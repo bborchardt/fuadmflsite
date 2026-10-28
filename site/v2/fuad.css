@@ -59,6 +59,8 @@
     --fuad-pos-extra-1: #008300;
     --fuad-pos-extra-2: #9085E9;
     --fuad-pos-other: #6E7681;
+    /* points on those colours, dark in every look */
+    --fuad-on-pos: #0D1117;
     --fuad-scrim: rgba(0, 0, 0, 0.6);
     --fuad-shadow: rgba(0, 0, 0, 0.5);
     --fuad-body: Barlow, system-ui, sans-serif;
@@ -1304,7 +1306,11 @@ body [tabindex]:focus-visible {
     border: 1px solid var(--fuad-hairline);
     border-radius: 18px;
     box-shadow: 0 16px 40px var(--fuad-shadow);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
+
+.fuad-sheet > * { flex-shrink: 0; }
 
 .fuad-sheet h2 { font-size: 24px; }
 
@@ -2729,7 +2735,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-stack { display: flex; gap: 2px; height: 20px; }
 
 #fuad-league .fuad-stack span,
-#fuad-rosters .fuad-stack span { display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--fuad-page); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#fuad-rosters .fuad-stack span { display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--fuad-on-pos); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 #fuad-league .fuad-stack span:last-child,
 #fuad-rosters .fuad-stack span:last-child { border-radius: 0 4px 4px 0; }
