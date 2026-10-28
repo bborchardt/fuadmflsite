@@ -1,6 +1,6 @@
 // Looks read the member's MFL skin from the page and save one through MFL's Franchise setup › Skin
-// form (the league's, saved 27 Oct 2026, cut to its stylesheets and the form): if MFL changes it,
-// these say where.
+// form (the league's, saved 27 Oct 2026, cut to its stylesheets and the form, and the clone's answer
+// to a save): if MFL changes them, these say where.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
@@ -58,16 +58,25 @@ test("MFL's skin form: its hidden fields, the skins it offers and the one chosen
     assert.equal(readSkinForm(doc(fixture.replace("</form>", '<input type="checkbox" name="ALL_LEAGUES" value="1"></form>'))), null);
 });
 
-test("saving reads the form for its token, sends it with the look's skin, and checks MFL chose it", async (t) => {
+test("saving reads the form for its token, sends it with the look's skin, and takes MFL's word or its form", async (t) => {
     const chosen = (skin) => fixture.replace(' checked="checked"', "").replace(`value="${skin}"`, `value="${skin}" checked="checked"`);
+    // MFL's answer to a save (the clone, 27 Oct 2026), drawn in the skin before it
+    const saved = readFileSync(new URL("./fixtures/skin-saved.html", import.meta.url), "utf8");
+    const other = "<html><body>Something else</body></html>";
     let sent = [];
     let answers = [];
+    const answering = (post) => {
+        globalThis.fetch = async (url, init = {}) => {
+            sent.push({url: String(url), init});
+            if (post && init.method === "POST") {
+                return post();
+            }
+            return answers.length ? new Response(answers.shift(), {status: 200}) : new Response("", {status: 500});
+        };
+    };
     globalThis.window = {location: new URL("https://www44.myfantasyleague.com/2026/home/48571"), localStorage: {getItem: () => null, setItem: () => {}}};
     globalThis.DOMParser = DOMParser;
-    globalThis.fetch = async (url, init = {}) => {
-        sent.push({url: String(url), init});
-        return new Response(answers.shift(), {status: 200});
-    };
+    answering();
     t.after(() => {
         delete globalThis.window;
         delete globalThis.fetch;
@@ -76,9 +85,9 @@ test("saving reads the form for its token, sends it with the look's skin, and ch
     const save = (look, ...pages) => {
         sent = [];
         answers = pages;
-        return saveLook({season: 2026, leagueId: "48571"}, look);
+        return saveLook({season: 2026, leagueId: "48571"}, look, looks);
     };
-    await save(red, fixture, chosen("1031"));
+    await save(red, fixture, saved);
     assert.equal(sent[0].url, "https://www44.myfantasyleague.com/2026/csetup?L=48571&C=SKIN");
     assert.equal(sent[1].url, "https://www44.myfantasyleague.com/2026/csetup");
     assert.equal(sent[1].init.method, "POST");
@@ -86,35 +95,28 @@ test("saving reads the form for its token, sends it with the look's skin, and ch
     assert.equal(readSkinForm(doc(fixture)).submit, "Save Skin");
     assert.equal(sent.length, 2);
 
-    // an answer that isn't the form: the form is read again, and decides
-    await save(night, fixture, "<html><body>Saved</body></html>", chosen("-1"));
+    // MFL's words elsewhere on a page aren't its answer
+    await assert.rejects(save(red, fixture, "<html><body><p>Skin Selection Saved</p></body></html>", fixture), /didn't save the new skin/);
+    // without MFL's word, the form is read again and decides
+    await save(red, fixture, other, chosen("1031"));
     assert.equal(sent.length, 3);
-    await assert.rejects(save(night, fixture, page("MFL").documentElement.outerHTML, fixture), /didn't save the new skin/);
-    await assert.rejects(save(red, fixture, fixture), /didn't save the new skin/);
+    await assert.rejects(save(red, fixture, other, fixture), /didn't save the new skin/);
+    // Commish Choice shows on the form as the league's own skin (Neon Blue in the clone)
+    await save(night, fixture, other, chosen("1007"));
+    await assert.rejects(save(night, fixture, other, chosen("1031")), /didn't save the new skin/);
+    // the member's own skin (MFL, in the fixture) still chosen: nothing was saved
+    await assert.rejects(save(night, fixture, other, fixture), /didn't save the new skin/);
+    await assert.rejects(save(night, fixture, other, fixture.replace(' checked="checked"', "")), /didn't save the new skin/);
     await assert.rejects(save({...red, skin: "9999"}, fixture), /doesn't offer skin 9999/);
+    await assert.rejects(save(red, other), (error) => error.noForm === true);
     // sent, but the check can't be read: MFL may have saved it
-    globalThis.fetch = async (url, init = {}) => {
-        sent.push({url: String(url), init});
-        return answers.length ? new Response(answers.shift(), {status: 200}) : new Response("", {status: 500});
-    };
-    await assert.rejects(save(red, fixture, "<html><body>Saved</body></html>"), (error) => error.unconfirmed === true);
+    await assert.rejects(save(red, fixture, other), (error) => error.unconfirmed === true);
     // the save's own request failing on the way back
-    globalThis.fetch = async (url, init = {}) => {
-        sent.push({url: String(url), init});
-        if (init.method === "POST") {
-            throw new TypeError("Load failed");
-        }
-        return new Response(answers.shift(), {status: 200});
-    };
+    answering(() => {
+        throw new TypeError("Load failed");
+    });
     await assert.rejects(save(red, fixture), (error) => error.unconfirmed === true);
-    globalThis.fetch = async (url, init = {}) => {
-        sent.push({url: String(url), init});
-        return new Response(answers.shift(), {status: 200});
-    };
-    await assert.rejects(save(red, doc("<html><body>Log in</body></html>").documentElement.outerHTML), (error) => error.noForm === true);
-    // the form in the answer without the new skin chosen: read again
-    await save(red, fixture, fixture, chosen("1031"));
-    assert.equal(sent.length, 3);
+    answering();
     // before anything is sent, MFL's wait holds the first read
     globalThis.window.localStorage = {getItem: () => String(Date.now() + 60000), setItem: () => {}};
     await assert.rejects(save(red, fixture), (error) => error.status === 429);
