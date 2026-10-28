@@ -109,7 +109,7 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
     assert.doesNotMatch(final, /If the season ended today/);
     assert.match(final, />Playoffs<\/th>/);
     assert.match(final, /<span class="fuad-prize-team"><a href="#rosters-teams\/0001">Mine<\/a><\/span>/);
-    // lime on the viewer's own place only, whichever it is
+    // the accent on the viewer's own place only, whichever it is
     assert.doesNotMatch(html, /fuad-prize-place fuad-mine/);
     assert.match(final, /<span class="fuad-prize-place fuad-mine">1st/);
     const second = winnersMarkup({...result, prizes: [{place: "1st", share: 0.6, amount: 300, team: "0002"}, {place: "2nd", share: 0.4, amount: 200, team: "0001"}]}, {viewer: "0001", final: "2025", teamHref: (id) => `#rosters-teams/${id}`});

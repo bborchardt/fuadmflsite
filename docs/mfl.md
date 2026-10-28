@@ -178,6 +178,12 @@ Each is an ordinary page form, posted from the logged-in browser.
   players). Each player is a `launch_player_modal` link with MFL's injury mark after it ("(IR)",
   "(Out)"). MFL refuses ineligible players itself ("Can not be deactivated" in place of a
   checkbox) and puts "Locked" in place of a player's boxes once his game has started.
+- **Skin** (Franchise setup › Skin, `csetup?L=<league>&C=SKIN`), a member's own, one form `skin`
+  posted to `csetup`: `form_name=skin`, `LEAGUE_ID`, `C=SKIN`, `input_expires` (a token, a Unix time
+  about a day ahead), `USE_SKIN` (radios: `0` None, `-1` Commish Choice, the league's skin; `1099` Holiday and
+  `1098` Seasons, which change on their own; then about 60 skins, `1024` MFL, `1016` Blue Mesh, `1031`
+  Red Steel, …, each with a thumbnail in its folder, `skins17/<folder>/thumbnail.gif`), `SUBMIT`
+  ("Save Skin"). The form names no team: MFL saves the skin for whoever is logged in.
 - **Trades** (`options?L=<league>&O=05`): "Trades Offered By You", "Trades Offered To You", and a
   "Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
   proposal page.
@@ -243,6 +249,8 @@ Each is an ordinary page form, posted from the logged-in browser.
 - **Tabs:** up to 10 custom tabs ("Main" is fixed). MFL's nav bar and dropdown menu can't be changed.
 - **Phones:** the BlueMesh skin hides the nav bar below 54.25em; `fuad.css` brings it back. Wide
   modules already scroll sideways.
+- **The skin** a page is drawn in is its `link#skin`, `skins17/<folder>/<folder>.css` (with
+  `link#responsive` from the same folder): the member's own, or the league's.
 - **MFL's app** doesn't run home page messages, so none of this code.
 
 ## GitHub

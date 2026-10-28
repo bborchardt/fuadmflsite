@@ -3,6 +3,7 @@
 
 import {pageContext, start} from "./ui/app.js";
 import {PAGES_BASE, betaOffer, decide, offeredVersion, withParam} from "./loader.js";
+import {applyLook} from "./ui/looks.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
@@ -85,6 +86,12 @@ function reveal() {
 
 function boot(beta) {
     window.fuadVersion = versionHere;
+    // before the page shows: the member's look is in MFL's page already
+    try {
+        applyLook(document);
+    } catch (error) {
+        console.warn("[fuad] couldn't apply the look:", error);
+    }
     const context = pageContext();
     const loader = window.fuadLoader;
     // `started` only when the header's version handed this page over: after a beta fails to load,
