@@ -116,6 +116,7 @@ test("Winners: so far in season, payouts once final; the viewer's row and titles
     assert.match(second, /<span class="fuad-prize-place">1st/);
     assert.match(second, /<span class="fuad-prize-place fuad-mine">2nd/);
     assert.match(championsMarkup([{year: 2024, name: "Mine"}, {year: 2023, name: "Kings"}], [2024]), /<li class="fuad-row-mine">\s*<span class="fuad-meta">2024<\/span>/);
+    assert.match(championsMarkup([], []), /No champions yet\./);
 });
 
 test("starter points by position: this league's colors, two more for other positions, then grey", () => {
