@@ -1,8 +1,8 @@
 <!-- FUAD league code, served from GitHub Pages. Goes in a home page message set to appear on all league pages. -->
 <style>
-    html.fuad-cloak { background: #0D1117; }
+    html.fuad-cloak { background: var(--fuad-cover, #0D1117); }
     html.fuad-cloak body { visibility: hidden; }
-    html.fuad-cloak::after { content: "Loading\2026"; position: fixed; top: 40%; left: 0; right: 0; text-align: center; font: 15px -apple-system, system-ui, sans-serif; color: #8B949E; }
+    html.fuad-cloak::after { content: "Loading\2026"; position: fixed; top: 40%; left: 0; right: 0; text-align: center; font: 15px -apple-system, system-ui, sans-serif; color: var(--fuad-cover-text, #8B949E); }
 </style>
 <script>
     // Loads MAIN, or the beta a member chose straight away (not through MAIN, a second download on a
@@ -23,6 +23,22 @@
         var direct = offered && !params.has("fuadBeta") && !params.has("fuadPreview") && !stored("fuad.preview")
             && stored("fuad.beta") === offer.version;
         var version = direct ? offer.version : MAIN;
+
+        // the cover in the member's look (site/v2/ui/looks.js: its page and muted colours), from the skin
+        // MFL draws the page in; any other skin, Night Game's
+        var COVERS = {
+            oceanblue: ["#F5F6F8", "#545A66"],
+            norseman: ["#160A24", "#B8A6CF"],
+            cheeseheads: ["#0B1A15", "#A0B7AB"],
+            lonestar: ["#CDD3D9", "#34465F"],
+            leatherhelmet: ["#F2EDE3", "#5C5447"]
+        };
+        var skin = document.getElementById("skin");
+        var folder = skin && /\/skins\d*\/([^\/]+)\//.exec(skin.getAttribute("href") || "");
+        if (folder && Object.prototype.hasOwnProperty.call(COVERS, folder[1].toLowerCase())) {
+            root.style.setProperty("--fuad-cover", COVERS[folder[1].toLowerCase()][0]);
+            root.style.setProperty("--fuad-cover-text", COVERS[folder[1].toLowerCase()][1]);
+        }
 
         // hidden until the version has drawn (it shows the page again), so MFL's page doesn't show first;
         // after 30 seconds, whatever is there shows. v1 draws only its own tabs, so it's hidden only while

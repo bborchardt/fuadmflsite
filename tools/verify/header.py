@@ -32,6 +32,10 @@ HOME = f"/2026/home/{LEAGUE}"
 CASES = {
     "member": (LINEUP, {}, {"ran": "v1", "requested": ["v1"], "beta": None, "cloaked": False}),
     "beta direct": (LINEUP, {"beta": "v2"}, {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "bar": "hidden"}),
+    # the cover in the member's look, from the page's skin; any other skin (MFL's, here) Night Game's
+    "beta look": (LINEUP, {"beta": "v2", "skin": "OceanBlue"},
+                  {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "cover": ["rgb(245, 246, 248)", "rgb(84, 90, 102)"]}),
+    "beta no look": (LINEUP, {"beta": "v2"}, {"ran": "v2", "requested": ["v2"], "cover": ["rgb(13, 17, 23)", "rgb(139, 148, 158)"]}),
     "beta 404": (LINEUP, {"beta": "v2", "fail": ("v2", "404")},
                  {"ran": "v1", "requested": ["v2", "v1"], "beta": "v2", "cloaked": False, "bar": "The beta couldn’t load"}),
     "beta broken": (LINEUP, {"beta": "v2", "fail": ("v2", "syntax")},
@@ -83,7 +87,15 @@ def run(browser, site, name):
     context.add_init_script(INIT)
     # whether the cover ever went up, however briefly
     context.add_init_script("""(() => { const add = DOMTokenList.prototype.add;
-        DOMTokenList.prototype.add = function (...names) { if (names.includes('fuad-cloak')) window.__covered = true; return add.apply(this, names); }; })();""")
+        DOMTokenList.prototype.add = function (...names) {
+            const result = add.apply(this, names);
+            if (names.includes('fuad-cloak')) {
+                window.__covered = true;
+                const root = document.documentElement;
+                window.__cover = [getComputedStyle(root).backgroundColor, getComputedStyle(root, '::after').color];
+            }
+            return result;
+        }; })();""")
     if given.get("beta"):
         context.add_init_script(f"if (!sessionStorage.getItem('h.set')) {{ sessionStorage.setItem('h.set', '1'); localStorage.setItem('fuad.beta', '{given['beta']}'); }}")
     swapped = header(given.get("main", "v1"), given.get("offer", True), given.get("teams"))
@@ -118,6 +130,8 @@ def run(browser, site, name):
         if request.resource_type == "document":
             body = args["body"]
             body = SAVED.sub(lambda _: swapped, body, count=1)
+            if given.get("skin"):
+                body = re.sub(r"skins17/(?!MFLBaseCSS)[^/\"]+/", f"skins17/{given['skin']}/", body)
             if team == "guest":
                 assert "var franchise_id = '0001';" in body, "the saved page no longer sets franchise_id as expected"
                 body = body.replace("var franchise_id = '0001';", "")
@@ -142,6 +156,7 @@ def run(browser, site, name):
             note: Boolean(document.querySelector('.fuad-unavailable')),
             leave: bar && bar.querySelector('a') ? bar.querySelector('a').href : null,
             covered: Boolean(window.__covered),
+            cover: window.__cover || null,
             inBeta: document.documentElement.classList.contains('fuad-beta'),
         };
     }""")
