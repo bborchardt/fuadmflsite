@@ -290,8 +290,10 @@ export function drawFrame({context, storage}) {
             wireLooks(sheetLayer, context, look);
         }
         teamButton.addEventListener("click", () => {
-            // the phone header's height varies with its context line
-            sheetLayer.firstElementChild.style.top = `${Math.round(teamButton.getBoundingClientRect().bottom) + 8}px`;
+            // the phone header's height varies with its context line; a short screen (landscape) scrolls the sheet
+            const top = Math.round(teamButton.getBoundingClientRect().bottom) + 8;
+            sheetLayer.firstElementChild.style.top = `${top}px`;
+            sheetLayer.firstElementChild.style.maxHeight = `calc(100% - ${top + 16}px)`;
             teamButton.setAttribute("aria-expanded", "true");
             openDialog(sheetLayer, {history: true, onClose: () => teamButton.setAttribute("aria-expanded", "false")});
         });

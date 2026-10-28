@@ -31,6 +31,11 @@ test("the default is saved as the commissioner's choice of skin", () => {
     assert.equal(night.skin, "-1");
     assert.equal(night.folder, null);
     assert.equal(new Set(LOOKS.map((look) => look.id)).size, LOOKS.length);
+    // the league's own skin (its pages logged out, 27 Oct 2026): a look on it would show for every
+    // member on Commish Choice
+    assert.ok(LOOKS.every((look) => look.folder !== "BlueMesh"));
+    // MFL's Seasons skin draws from these in turn: a member on it would be shown a look for a season
+    assert.ok(LOOKS.every((look) => !["Spring", "Summer", "Autumn", "Winter"].includes(look.folder)));
 });
 
 test("every look's skin is one MFL offers, and its folder is MFL's", () => {
@@ -183,4 +188,19 @@ test("every look has its colors, and they stand out from its backgrounds", () =>
             assert.ok(ratio >= least, `${look.id}: --fuad-${fg} on --fuad-${bg} is ${ratio.toFixed(2)}, under ${least}`);
         }
     }
+});
+
+// The header's cover (mfl/message-header.html, pasted by the commissioner) is drawn before v2 loads,
+// in the look's colours from the skin's folder: it must match every look, or a member sees a flash
+test("the header's cover is each look's page and muted colours", () => {
+    const header = readFileSync(new URL("../mfl/message-header.html", import.meta.url), "utf8");
+    const covers = Object.fromEntries([...header.match(/var COVERS = \{([\s\S]*?)\};/)[1]
+        .matchAll(/(\w+): \["(#[0-9A-F]{6})", "(#[0-9A-F]{6})"\]/g)].map((match) => [match[1], [match[2], match[3]]]));
+    const night = colors(LOOKS[0].id);
+    assert.match(header, new RegExp(`background: var\\(--fuad-cover, ${night.page}\\)`));
+    for (const look of LOOKS.slice(1)) {
+        const set = colors(look.id);
+        assert.deepEqual(covers[look.folder.toLowerCase()], [set.page, set.muted], `${look.id}: the header's cover`);
+    }
+    assert.equal(Object.keys(covers).length, LOOKS.length - 1);
 });
