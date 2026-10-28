@@ -66,12 +66,17 @@ export function readSkinForm(doc) {
 
 const failure = (message, status) => Object.assign(new Error(message), {status});
 
+// the look a skin on MFL's form is: Commish Choice shows there as the league's own skin, which no
+// look names, so the default
+const lookOfSkin = (skin, looks) => looks.find((look) => look !== looks[0] && look.skin === skin) || looks[0];
+
 // Saves `look` as the member's skin: MFL's form is read first for its token (`input_expires`, good
-// for about a day), then sent as MFL's own page sends it. Throws unless MFL's form then has the new
-// skin chosen: in its answer, or else read again. Only the first read waits out MFL's refusal
-// (page-fetch.js); a check that can't be read after the save is sent throws `unconfirmed`, since MFL
-// may have made it.
-export async function saveLook({season, leagueId}, look) {
+// for about a day), then sent as MFL's own page sends it. MFL answers "Skin Selection Saved" (on a
+// page still in the old skin); without that, the form is read again and must show the look, and for
+// the default a change, since a skin no look names shows as the default before the save too. Only
+// the first read waits out MFL's refusal (page-fetch.js); a check that can't be read after the save
+// is sent throws `unconfirmed`, since MFL may have made it.
+export async function saveLook({season, leagueId}, look, looks = LOOKS) {
     const page = `${window.location.origin}/${season}/csetup?L=${encodeURIComponent(leagueId)}&C=SKIN`;
     const readForm = async (get = mflSend) => {
         const read = await get(page, {credentials: "include", cache: "no-store"});
@@ -102,13 +107,17 @@ export async function saveLook({season, leagueId}, look) {
     if (!sent.ok) {
         throw failure(`HTTP ${sent.status}`, sent.status);
     }
-    let answer = readSkinForm(new DOMParser().parseFromString(await sent.text(), "text/html"));
-    if (!answer || answer.chosen !== look.skin) {
-        answer = await readForm().catch((error) => {
-            throw unconfirmed(error);
-        });
+    const text = await sent.text().catch((error) => {
+        throw unconfirmed(error);
+    });
+    const said = new DOMParser().parseFromString(text, "text/html").querySelectorAll("h3");
+    if ([...said].some((heading) => /^\s*Skin Selection Saved\s*$/i.test(heading.textContent))) {
+        return;
     }
-    if (!answer || answer.chosen !== look.skin) {
+    const answer = await readForm().catch((error) => {
+        throw unconfirmed(error);
+    });
+    if (!answer || !answer.chosen || lookOfSkin(answer.chosen, looks) !== look || (look === looks[0] && answer.chosen === form.chosen)) {
         throw failure("MFL didn't save the new skin");
     }
 }

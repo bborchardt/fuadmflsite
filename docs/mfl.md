@@ -183,7 +183,10 @@ Each is an ordinary page form, posted from the logged-in browser.
   about a day ahead), `USE_SKIN` (radios: `0` None, `-1` Commish Choice, the league's skin; `1099` Holiday and
   `1098` Seasons, which change on their own; then about 60 skins, `1024` MFL, `1016` Blue Mesh, `1031`
   Red Steel, …, each with a thumbnail in its folder, `skins17/<folder>/thumbnail.gif`), `SUBMIT`
-  ("Save Skin"). The form names no team: MFL saves the skin for whoever is logged in.
+  ("Save Skin"). The form names no team: MFL saves the skin for whoever is logged in, and answers
+  with a page still drawn in the skin before, headed "Skin Selection Saved" (an `h3`); from the
+  next page on, on any device the member uses, it's the new one. Saved as Commish Choice, the form
+  shows the league's own skin chosen (Neon Blue in the clone), not Commish Choice.
 - **Trades** (`options?L=<league>&O=05`): "Trades Offered By You", "Trades Offered To You", and a
   "Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
   proposal page.
