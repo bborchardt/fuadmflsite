@@ -172,8 +172,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     if (context && (here.path === "lineup" || (here.path === "options" && here.option === "02"))) {
         const franchiseId = window.franchise_id || null;
         const shown = over("fuad-lineup-on");
+        const view = viewLinks(context, franchiseId);
         await import("./lineup.js").then(({drawLineup}) => drawn(drawLineup({
-            context, franchiseId, irHref: viewLinks(context, franchiseId)("Moves", "IR")
+            context, franchiseId, irHref: view("Moves", "IR"), addHref: view("Moves", "Add")
         }))).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Lineup:", error);
             onTrouble();

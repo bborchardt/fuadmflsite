@@ -215,6 +215,11 @@ Each is an ordinary page form, posted from the logged-in browser.
   - The checkbox is **disabled** (no name) for a player on a bye or whose game has started, so
     neither can be changed. A starter whose game has started stays checked, and a hidden input of
     the same name and value keeps him in the posted lineup. An Out player can stay checked.
+  - A player on a bye shows unchecked, even when the lineup carried over from last week starts him,
+    and gets no hidden input. MFL refuses a lineup short at any position ("Error(s) submitting
+    lineup: You must select 1 PK (0 selected) / You must select 10 starters (9 selected)"), so a team
+    whose only kicker is on a bye can't submit until it adds one. Without a new lineup, last week's
+    carries over, the bye player in it.
   - Then `MESSAGE<team>` ("Optional Message"), and `SUBMIT` ("Submit Lineup"; with nothing checked
     it asks to confirm "un-submitting" the lineup). IR players are listed below the table ("you must
     first activate them on the Injured Reserve page").
