@@ -106,3 +106,12 @@ test("owners' names become their team's placeholder; a one-word name only as an 
     assert.match(out, /"owner_name":"Owner 0002"/);
     assert.equal(ownersOf(null).length, 0);
 });
+
+test("a longer name goes first, and a name ending in a stop, an accent or an ampersand is still found", () => {
+    const owners = ownersOf({league: {franchises: {franchise: [
+        {id: "0001", owner_name: "Jeff"}, {id: "0002", owner_name: "Jeff O'Brien"}, {id: "0003", owner_name: "Bob Smith Jr."},
+        {id: "0004", owner_name: "Zoë Adams-Zoë"}, {id: "0005", owner_name: "Bob & Sue"}
+    ]}}});
+    const out = scrub(`Owner: Jeff O'Brien, Owner: Jeff, Bob Smith Jr. said; Zoë Adams-Zoë too; Owner: Bob &amp; Sue, Bob Smith Jr.x`, owners);
+    assert.equal(out, "Owner: Owner 0002, Owner: Owner 0001, Owner 0003 said; Owner 0004 too; Owner: Owner 0005, Bob Smith Jr.x");
+});

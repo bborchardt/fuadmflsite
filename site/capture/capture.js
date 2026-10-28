@@ -75,6 +75,11 @@ async function capture() {
         view.line(`Couldn't read the league's owners (${error}), so nothing was saved. Try again in a minute.`);
         return;
     }
+    // a guest isn't shown the owners, nor their names on the pages; anyone logged in is
+    if (!owners.length && context.viewer !== "guest") {
+        view.line("MFL didn't give the league's owners, so nothing was saved. Try again in a minute.");
+        return;
+    }
     await wait(PAUSE);
     const files = {};
     const manifest = [];
