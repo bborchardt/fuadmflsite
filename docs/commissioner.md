@@ -31,3 +31,24 @@ To paste one:
 4. When more than one file changed, paste the tab messages first and the header last. The header
    loads code that looks for the tabs' messages, so the tabs need to be in place before it.
 5. Reload the league's home page and check that the site loads and the changed tab looks right.
+
+## Betas and versions
+
+The header's `MAIN` (in `mfl/message-header.html`) names the version everyone gets. A beta offers
+another version to some or all members; they switch to it themselves from League Alerts, and can
+switch back.
+
+- **Offer a beta:** in MFL's header, on the line the beta-offer comment marks, add:
+  ```html
+  <script>window.fuadBeta = {version: "v2", feedback: "<link to a feedback thread>", teams: ["0001"]};</script>
+  ```
+  - `feedback` links members to the board thread for comments.
+  - `teams` limits the offer to those franchise ids; `"guest"` includes visitors who aren't logged
+    in. Leave `teams` out to offer it to everyone, the commissioner (0000) included.
+  - A member left out keeps the choice they made, so you can be in the beta as your team without
+    being in it as the commissioner.
+- **End a beta:** delete the line. Members in it go back to `MAIN`, with nothing for them to do.
+- **Try a version yourself, without offering it:** add `?fuadPreview=v2` to any league page's
+  address. It lasts in your browser only, until `?fuadPreview=off`.
+- **Make a version the default:** change `MAIN` in `mfl/message-header.html` through a pull request,
+  then paste the header. Past seasons keep the version they ended on.
