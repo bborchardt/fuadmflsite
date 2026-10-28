@@ -118,7 +118,7 @@ const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // An owner's name becomes "Owner 0004": a full name wherever it is, as MFL writes it (an
 // apostrophe or ampersand raw or as an entity), and a one-word name only as an owner, as elsewhere it may be part
-// of a player's name. Longest first, so "Jeff" can't take the start of "Owner 0004".
+// of a player's name. Longest first, so "Dana" can't take the start of "Dana O'Toole".
 export function withoutOwners(text, owners) {
     let out = text;
     for (const {id, name} of [...owners].sort((a, b) => b.name.length - a.name.length)) {
