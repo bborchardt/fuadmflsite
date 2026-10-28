@@ -50,6 +50,8 @@
     --fuad-band: #252D38;
     /* a choice that's made and can't be changed (a starter whose game has started) */
     --fuad-locked: #4A5566;
+    /* the half of the team sheet's swatch that isn't the accent: the team colour in a team look */
+    --fuad-swatch: var(--fuad-page);
     /* positions in charts: categorical, validated on the panel color */
     --fuad-pos-qb: #3987E5;
     --fuad-pos-rb: #D95926;
@@ -130,6 +132,7 @@
     --fuad-raised-edge: #44296A;
     --fuad-band: #4F2683;
     --fuad-locked: #5C4480;
+    --fuad-swatch: #4F2683;
 }
 
 [data-fuad-look="tundra"] {
@@ -154,6 +157,7 @@
     --fuad-raised-edge: #2A4A3D;
     --fuad-band: #203731;
     --fuad-locked: #3E5E51;
+    --fuad-swatch: #203731;
 }
 
 [data-fuad-look="cowboys"] {
@@ -1370,7 +1374,7 @@ body [tabindex]:focus-visible {
 
 .fuad-switch-options [aria-current] { background: var(--fuad-quiet); color: var(--fuad-text) !important; }
 
-/* the team sheet's looks: each with a swatch of its page and accent colors */
+/* the team sheet's looks: each with a swatch of its page (or team) and accent colors */
 .fuad-looks { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 
 .fuad-looks-options { display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 12px; background: var(--fuad-page); }
@@ -1400,7 +1404,7 @@ body [tabindex]:focus-visible {
     height: 22px;
     border-radius: 50%;
     border: 1px solid var(--fuad-raised-edge);
-    background: linear-gradient(135deg, var(--fuad-page) 50%, var(--fuad-accent) 50%);
+    background: linear-gradient(135deg, var(--fuad-swatch) 50%, var(--fuad-accent) 50%);
 }
 
 .fuad-looks-status { margin: 0; font-size: 13px; }
