@@ -117,16 +117,18 @@ export function ownersOf(leagueExport) {
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // An owner's name becomes "Owner 0004": a full name wherever it is, as MFL writes it (an
-// apostrophe raw or as an entity), and a one-word name only as an owner, as elsewhere it may be part
-// of a player's name
+// apostrophe or ampersand raw or as an entity), and a one-word name only as an owner, as elsewhere it may be part
+// of a player's name. Longest first, so "Jeff" can't take the start of "Owner 0004".
 export function withoutOwners(text, owners) {
     let out = text;
-    for (const {id, name} of owners) {
-        const pattern = escapeRegExp(name).replace(/['\u2019]/g, "(?:'|\u2019|&#0?39;|&apos;)").replace(/ +/g, "(?:\\s|&nbsp;)+");
+    for (const {id, name} of [...owners].sort((a, b) => b.name.length - a.name.length)) {
+        const pattern = escapeRegExp(name).replace(/&/g, "(?:&|&amp;)").replace(/['\u2019]/g, "(?:'|\u2019|&#0?39;|&apos;)").replace(/ +/g, "(?:\\s|&nbsp;)+");
+        // the name's end isn't followed by more of a word; \b fails after "Jr." or "Zoë"
+        const end = "(?![A-Za-z0-9_\u00C0-\u024F])";
         const placeholder = `Owner ${id}`;
         out = /\s/.test(name)
-            ? out.replace(new RegExp(`\\b${pattern}\\b`, "g"), placeholder)
-            : out.replace(new RegExp(`(Owner:\\s*|"owner_name"\\s*:\\s*"|owner_name=["'])${pattern}\\b`, "g"), `$1${placeholder}`);
+            ? out.replace(new RegExp(`(^|[^A-Za-z0-9_\u00C0-\u024F])${pattern}${end}`, "g"), `$1${placeholder}`)
+            : out.replace(new RegExp(`(Owner:\\s*|"owner_name"\\s*:\\s*"|owner_name=["'])${pattern}${end}`, "g"), `$1${placeholder}`);
     }
     return out;
 }
