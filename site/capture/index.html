@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Save MFL pages</title>
+<style>
+    body { font: 16px/1.5 -apple-system, system-ui, sans-serif; max-width: 640px; margin: 0 auto; padding: 16px; color: #111; background: #fff; }
+    textarea { width: 100%; box-sizing: border-box; font: 13px ui-monospace, monospace; }
+    a.bookmark { display: inline-block; padding: 8px 14px; border: 1px solid #888; border-radius: 8px; text-decoration: none; }
+</style>
+</head>
+<body>
+<h1>Save MFL pages</h1>
+<p>On any page of the league on MFL, the bookmark reads every page v2 reads, draws or restyles, as MFL
+serves it to whoever is logged in, and saves them as one zip. It takes about a minute and only reads
+pages. Emails, phone numbers and MFL's apiKey are taken out.</p>
+<p>On a computer, drag this to the bookmarks bar: <a class="bookmark" id="bookmark" href="#">Save MFL pages</a></p>
+<p>On an iPhone, bookmark this page, then edit the bookmark and replace its address with this:</p>
+<textarea id="code" rows="4" readonly></textarea>
+<script>
+    var code = "javascript:(function(){var s=document.createElement('script');s.type='module';s.src='"
+        + new URL("capture.js", location.href).href + "?'+Date.now();document.body.appendChild(s)})()";
+    document.getElementById("bookmark").href = code;
+    document.getElementById("code").value = code;
+</script>
+</body>
+</html>
