@@ -3,15 +3,21 @@
  * Selectors start with "body" where they need to outrank the skin's own rules,
  * whichever order MFL loads the stylesheets in.
  *
- * Night Game: v2's look laid over MFL's own pages. It restyles the markup of MFL's skin
- * (BlueMesh: MFLBaseCSS.css, BlueMesh.css, responsive.css); if MFL changes that markup, the
- * look degrades but MFL's controls keep working.
+ * v2's look laid over MFL's own pages. It restyles the markup of MFL's skin (BlueMesh:
+ * MFLBaseCSS.css, BlueMesh.css, responsive.css); if MFL changes that markup, the look degrades but
+ * MFL's controls keep working.
+ *
+ * Looks (ui/looks.js): every color is a variable below. The first block is Night Game, the
+ * default, under every look; another look is one `[data-fuad-look="<id>"]` block after it, setting
+ * the variables it changes. It matches the page (data-fuad-look on <html>) and the look's swatch in
+ * the team sheet.
  */
 
 @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap");
 
-:root {
-    /* one meaning per color: lime is yours, interactive, selected or live; green a good change;
+:root,
+[data-fuad-look] {
+    /* one meaning per color: the accent (lime in Night Game) is yours, interactive, selected or live; green a good change;
        red over a limit, blocked or a bad change; orange caution; white and grey plain facts */
     --fuad-page: #0D1117;
     --fuad-panel: #161B22;
@@ -25,15 +31,19 @@
     --fuad-text: #E9EDF2;
     --fuad-soft: #C9D1DB;
     --fuad-muted: #9AA4B2;
-    --fuad-lime: #C8F43C;
-    --fuad-lime-hover: #E2FF8A;
-    --fuad-on-lime: #0D1117;
+    --fuad-accent: #C8F43C;
+    --fuad-accent-hover: #E2FF8A;
+    --fuad-on-accent: #0D1117;
     --fuad-good: #4ADE80;
+    --fuad-good-tint: rgba(74, 222, 128, 0.14);
+    --fuad-good-wash: rgba(74, 222, 128, 0.1);
     --fuad-bad: #FF6B6B;
     --fuad-bad-tint: rgba(255, 107, 107, 0.14);
+    /* text on the red tint */
+    --fuad-on-bad-tint: #FFB3B3;
     --fuad-caution: #FF9F43;
     --fuad-caution-tint: rgba(255, 159, 67, 0.14);
-    --fuad-lime-tint: rgba(200, 244, 60, 0.14);
+    --fuad-accent-tint: rgba(200, 244, 60, 0.14);
     /* a bar or win chance that isn't yours or ahead */
     --fuad-bar-off: #4A5566;
     --fuad-raised-edge: #2F3743;
@@ -57,6 +67,8 @@
     /* text read as prose (news articles): larger and looser than the 15 px body, in full white */
     --fuad-read-size: 16px;
     --fuad-read-leading: 1.55;
+    /* how the browser draws its own controls (a date picker's calendar) */
+    --fuad-scheme: dark;
 }
 
 /* ---- Page ---- */
@@ -120,7 +132,7 @@ body .pagebody {
 
 .fuad-slot { box-sizing: border-box; width: 12px; height: 12px; border: 2px solid var(--fuad-faint); border-radius: 6px; }
 
-.fuad-slot-on { border-color: var(--fuad-lime); background: var(--fuad-lime); }
+.fuad-slot-on { border-color: var(--fuad-accent); background: var(--fuad-accent); }
 
 .fuad-slots-bad .fuad-slot-on { border-color: var(--fuad-bad); background: var(--fuad-bad); }
 
@@ -167,12 +179,12 @@ body .pagetitle h1 { letter-spacing: 0.02em; }
 
 body a:link,
 body a:visited,
-body a:active { color: var(--fuad-lime); }
+body a:active { color: var(--fuad-accent); }
 
 @media (hover: hover) {
     body a:hover,
     body a:link:hover,
-    body a:visited:hover { color: var(--fuad-lime-hover); }
+    body a:visited:hover { color: var(--fuad-accent-hover); }
 }
 
 body .warning,
@@ -243,7 +255,7 @@ body .myfantasyleague_menu > label span:after,
 body .myfantasyleague_menu ul li label span:before,
 body .myfantasyleague_menu ul li label span:after,
 body .myfantasyleague_tabmenu > label span:before,
-body .myfantasyleague_tabmenu > label span:after { background: var(--fuad-lime); }
+body .myfantasyleague_tabmenu > label span:after { background: var(--fuad-accent); }
 
 @media (hover: hover) {
     body #hsubmenu ul li:hover,
@@ -263,7 +275,7 @@ body .myfantasyleague_tabmenu > label span:after { background: var(--fuad-lime);
     }
 }
 
-body .myfantasyleague_tabmenu #homepagetabs li.currenttab a { color: var(--fuad-lime); }
+body .myfantasyleague_tabmenu #homepagetabs li.currenttab a { color: var(--fuad-accent); }
 
 body .pagefooter {
     background: var(--fuad-page);
@@ -376,7 +388,7 @@ body .eventablerow a {
 
 @media (hover: hover) {
     body .oddtablerow a:hover,
-    body .eventablerow a:hover { color: var(--fuad-lime); text-decoration-color: currentColor; }
+    body .eventablerow a:hover { color: var(--fuad-accent); text-decoration-color: currentColor; }
 }
 
 body .newposition td,
@@ -390,7 +402,7 @@ body #owner_activity td.franchisename { color: var(--fuad-text); }
 
 body a.myfranchise,
 body a.myfranchise:link,
-body a.myfranchise:visited { color: var(--fuad-lime); }
+body a.myfranchise:visited { color: var(--fuad-accent); }
 
 body td.salary,
 body td.points,
@@ -405,13 +417,13 @@ body .reportfooter {
 }
 
 body .reportfooter a:link,
-body .reportfooter a:visited { color: var(--fuad-lime); }
+body .reportfooter a:visited { color: var(--fuad-accent); }
 
 body span.reportnavigation,
 body span.reportnavigation a { color: var(--fuad-muted); }
 
 body .reportnavigation .currentweek,
-body .reportnavigationheader { color: var(--fuad-lime); }
+body .reportnavigationheader { color: var(--fuad-accent); }
 
 body .homepagemessage {
     background: var(--fuad-panel);
@@ -451,15 +463,15 @@ body .pagebody :where(td:has(> input[type="text"] ~ input[type="text"])) > input
 body .pagebody input:focus,
 body .pagebody select:focus,
 body .pagebody textarea:focus {
-    outline: 2px solid var(--fuad-lime);
+    outline: 2px solid var(--fuad-accent);
     outline-offset: 1px;
 }
 
 body input[type="button"],
 body input[type="submit"],
 body .pagebody button {
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     border: 0;
     border-radius: 10px;
     min-height: 40px;
@@ -477,22 +489,22 @@ body .pagebody input:where([type="button"], [type="submit"]) { padding: 0 18px !
     body input[type="button"]:hover,
     body input[type="submit"]:hover,
     body .pagebody button:hover {
-        background: var(--fuad-lime-hover);
-        color: var(--fuad-on-lime);
+        background: var(--fuad-accent-hover);
+        color: var(--fuad-on-accent);
         box-shadow: none;
     }
 }
 
 body input[type="checkbox"],
-body input[type="radio"] { accent-color: var(--fuad-lime); }
+body input[type="radio"] { accent-color: var(--fuad-accent); }
 
 /* ---- Chat, live scoring, calendar, brackets ---- */
 
 body #league_chat b { color: var(--fuad-text); }
 
-body #league_chat td:first-child b { color: var(--fuad-lime); }
+body #league_chat td:first-child b { color: var(--fuad-accent); }
 
-body tr.total td { color: var(--fuad-lime); }
+body tr.total td { color: var(--fuad-accent); }
 
 body tr.players_yet_to_play td { color: var(--fuad-caution); }
 
@@ -512,8 +524,8 @@ body tr.player_minutes_remaining th {
 
 body #body_live_scoring .grand_total td {
     background: transparent;
-    color: var(--fuad-lime);
-    border-top: 2px solid var(--fuad-lime);
+    color: var(--fuad-accent);
+    border-top: 2px solid var(--fuad-accent);
 }
 
 body #monthly_calendar td { border: 1px solid var(--fuad-rule); }
@@ -524,7 +536,7 @@ body #monthly_calendar td .calendarday {
     color: var(--fuad-text);
 }
 
-body #monthly_calendar td.today { border: 2px solid var(--fuad-lime); }
+body #monthly_calendar td.today { border: 2px solid var(--fuad-accent); }
 
 body .playoffbracket td { background: transparent; }
 
@@ -534,7 +546,7 @@ body .playoffbracket td.bottomteam { border-bottom: 2px solid var(--fuad-hairlin
 body .playoffbracket td.bracket,
 body .playoffbracket td.bottomteam { border-right: 2px solid var(--fuad-hairline); }
 
-body .playoffbracket td b { color: var(--fuad-lime); }
+body .playoffbracket td b { color: var(--fuad-accent); }
 
 /* ---- MFL's player popup ---- */
 
@@ -585,7 +597,7 @@ body ul.MFLPlayerPopupTab li a { color: var(--fuad-muted); }
     body ul.MFLPlayerPopupTab li a:hover,
     body ul.MFLPlayerPopupTab li a.active {
         background: var(--fuad-raised);
-        color: var(--fuad-lime);
+        color: var(--fuad-accent);
     }
 }
 
@@ -631,20 +643,20 @@ body .fuad-layer h2, body .fuad-layer h3 { text-align: left; }
     z-index: 10000;
     padding: 8px 12px;
     border-radius: 10px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font: 600 13px/1.3 var(--fuad-body);
     box-shadow: 0 2px 12px var(--fuad-shadow);
 }
 
-#fuad-preview a { color: var(--fuad-on-lime); text-decoration: underline; }
+#fuad-preview a { color: var(--fuad-on-accent); text-decoration: underline; }
 
 /* In the beta, League Alerts is the way back; the bar shows only once something has failed. */
 .fuad-beta:not(.fuad-trouble) #fuad-preview { display: none; }
 
 /* ---- Focus and tap areas, on every page ---- */
 
-/* a lime ring on every control reached by keyboard */
+/* an accent ring on every control reached by keyboard */
 body a:focus-visible,
 body button:focus-visible,
 body input:focus-visible,
@@ -652,7 +664,7 @@ body select:focus-visible,
 body textarea:focus-visible,
 body summary:focus-visible,
 body [tabindex]:focus-visible {
-    outline: 2px solid var(--fuad-lime);
+    outline: 2px solid var(--fuad-accent);
     outline-offset: 2px;
 }
 
@@ -772,7 +784,7 @@ body [tabindex]:focus-visible {
 
 .fuad-sections-top a[aria-current="page"] {
     background: var(--fuad-raised);
-    color: var(--fuad-lime) !important;
+    color: var(--fuad-accent) !important;
 }
 
 #fuad-frame .fuad-team {
@@ -783,8 +795,8 @@ body [tabindex]:focus-visible {
     padding: 0;
     border: 0;
     border-radius: 22px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font: 700 18px/1 var(--fuad-display);
     display: flex;
     align-items: center;
@@ -799,17 +811,17 @@ body [tabindex]:focus-visible {
     padding: 0 16px;
     box-sizing: border-box;
     border-radius: 22px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
     font-size: 15px;
 }
 
 @media (hover: hover) {
-    .fuad-login:hover { background: var(--fuad-lime-hover); }
+    .fuad-login:hover { background: var(--fuad-accent-hover); }
 }
 
-/* view segments: the selected one lime with a bar under it, the fill subtle */
+/* view segments: the selected one in the accent with a bar under it, the fill subtle */
 .fuad-views {
     display: flex;
     gap: 4px;
@@ -846,8 +858,8 @@ body [tabindex]:focus-visible {
 
 .fuad-views a[aria-current="page"] {
     background: var(--fuad-raised);
-    color: var(--fuad-lime) !important;
-    box-shadow: inset 0 -2px 0 var(--fuad-lime);
+    color: var(--fuad-accent) !important;
+    box-shadow: inset 0 -2px 0 var(--fuad-accent);
 }
 
 /* more than four views would scroll sideways as chips; none has more yet */
@@ -892,7 +904,7 @@ body [tabindex]:focus-visible {
         font-weight: 600;
     }
 
-    .fuad-sections-bottom a[aria-current="page"] { color: var(--fuad-lime) !important; }
+    .fuad-sections-bottom a[aria-current="page"] { color: var(--fuad-accent) !important; }
 
     .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
@@ -928,7 +940,7 @@ body [tabindex]:focus-visible {
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--fuad-lime);
+    color: var(--fuad-accent);
     font-size: 13px;
     font-weight: 600;
     text-align: left;
@@ -1066,7 +1078,7 @@ body [tabindex]:focus-visible {
     color: var(--fuad-muted);
 }
 
-.fuad-search:focus-within { border-color: var(--fuad-lime); }
+.fuad-search:focus-within { border-color: var(--fuad-accent); }
 
 .fuad-layer .fuad-search input {
     flex: 1;
@@ -1156,19 +1168,19 @@ body [tabindex]:focus-visible {
     align-items: center;
     justify-content: center;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
 }
 
 .fuad-layer .fuad-button-quiet { background: var(--fuad-quiet); color: var(--fuad-text) !important; font-weight: 600; }
 
-/* an action that isn't the screen's point (the popup's Rosters actions): lime, but outlined */
-.fuad-layer .fuad-button-outline { background: transparent; border: 1px solid var(--fuad-lime); color: var(--fuad-lime) !important; font-weight: 600; }
+/* an action that isn't the screen's point (the popup's Rosters actions): the accent, but outlined */
+.fuad-layer .fuad-button-outline { background: transparent; border: 1px solid var(--fuad-accent); color: var(--fuad-accent) !important; font-weight: 600; }
 
 @media (hover: hover) {
-    .fuad-layer .fuad-button-outline:hover { background: var(--fuad-lime-tint); }
-    .fuad-layer .fuad-button:not(.fuad-button-quiet):not(.fuad-button-outline):hover { background: var(--fuad-lime-hover); }
+    .fuad-layer .fuad-button-outline:hover { background: var(--fuad-accent-tint); }
+    .fuad-layer .fuad-button:not(.fuad-button-quiet):not(.fuad-button-outline):hover { background: var(--fuad-accent-hover); }
 }
 
 .fuad-switch { display: flex; align-items: center; gap: 10px; font-size: 14px; }
@@ -1198,6 +1210,45 @@ body [tabindex]:focus-visible {
 .fuad-switch-options a::after { content: ""; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
 
 .fuad-switch-options [aria-current] { background: var(--fuad-quiet); color: var(--fuad-text) !important; }
+
+/* the team sheet's looks: each with a swatch of its page and accent colors */
+.fuad-looks { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+
+.fuad-looks-options { display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 12px; background: var(--fuad-page); }
+
+.fuad-looks-options button {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--fuad-muted);
+    font: 600 15px var(--fuad-body);
+    text-align: left;
+    cursor: pointer;
+}
+
+.fuad-looks-options button[aria-pressed="true"] { background: var(--fuad-quiet); color: var(--fuad-text); }
+
+.fuad-looks-options button:disabled { cursor: default; }
+
+.fuad-look-swatch {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--fuad-raised-edge);
+    background: linear-gradient(135deg, var(--fuad-page) 50%, var(--fuad-accent) 50%);
+}
+
+.fuad-looks-status { margin: 0; font-size: 13px; }
+
+.fuad-looks-status:empty { display: none; }
+
+.fuad-looks-status.fuad-looks-failed { color: var(--fuad-bad); }
 
 @media (max-width: 48em) {
     .fuad-grabber { display: block; }
@@ -1267,7 +1318,7 @@ body [tabindex]:focus-visible {
 /* the member's watch list: a star by the close button, filled when watched */
 .fuad-layer .fuad-watch { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: none; color: var(--fuad-soft); cursor: pointer; }
 
-.fuad-layer .fuad-watch[aria-pressed="true"] { color: var(--fuad-lime); }
+.fuad-layer .fuad-watch[aria-pressed="true"] { color: var(--fuad-accent); }
 
 .fuad-layer .fuad-watch[aria-pressed="true"] svg { fill: currentColor; }
 
@@ -1322,7 +1373,7 @@ body [tabindex]:focus-visible {
 .fuad-popup .fuad-tile-value a { color: var(--fuad-text) !important; text-decoration: none; }
 
 @media (hover: hover) {
-    .fuad-popup .fuad-tile-value a:hover { color: var(--fuad-lime) !important; }
+    .fuad-popup .fuad-tile-value a:hover { color: var(--fuad-accent) !important; }
 }
 
 .fuad-cut { margin-top: -8px !important; font-size: 14px; color: var(--fuad-muted); font-variant-numeric: tabular-nums; }
@@ -1451,13 +1502,13 @@ body [tabindex]:focus-visible {
 #fuad-home a,
 #fuad-league a,
 #fuad-rosters a,
-#fuad-login-page a { color: var(--fuad-lime); text-decoration: none; }
+#fuad-login-page a { color: var(--fuad-accent); text-decoration: none; }
 
 @media (hover: hover) {
     #fuad-home a:hover,
     #fuad-league a:hover,
     #fuad-rosters a:hover,
-    #fuad-login-page a:hover { color: var(--fuad-lime-hover); }
+    #fuad-login-page a:hover { color: var(--fuad-accent-hover); }
 }
 
 /* two columns of variable panels on desktop, the same gap in both, bottoms left to fall where they
@@ -1621,7 +1672,7 @@ body [tabindex]:focus-visible {
 
 .fuad-tone-orange { background: var(--fuad-caution-tint); color: var(--fuad-caution); }
 
-.fuad-tone-lime { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+.fuad-tone-accent { background: var(--fuad-accent-tint); color: var(--fuad-accent); }
 
 .fuad-text-red { color: var(--fuad-bad); }
 
@@ -1684,7 +1735,7 @@ body [tabindex]:focus-visible {
 
 @media (hover: hover) {
     #fuad-home .fuad-move .fuad-name:hover,
-    #fuad-all-moves .fuad-move .fuad-name:hover { color: var(--fuad-lime); }
+    #fuad-all-moves .fuad-move .fuad-name:hover { color: var(--fuad-accent); }
 }
 
 /* a move's or a bid's team links to its page, in the row's own colour */
@@ -1695,7 +1746,7 @@ body [tabindex]:focus-visible {
 @media (hover: hover) {
     #fuad-home .fuad-move a:hover,
     #fuad-all-moves .fuad-move a:hover,
-    #fuad-all-bids .fuad-run-team a:hover { color: var(--fuad-lime); }
+    #fuad-all-bids .fuad-run-team a:hover { color: var(--fuad-accent); }
 }
 
 /* a won bid's line of the run's other bids */
@@ -1725,13 +1776,13 @@ body [tabindex]:focus-visible {
     border: 0;
     border-radius: 0;
     background: none;
-    color: var(--fuad-lime);
+    color: var(--fuad-accent);
     font: inherit;
     cursor: pointer;
 }
 
 @media (hover: hover) {
-    #fuad-home .fuad-panel-actions .fuad-text-button:hover { background: none; color: var(--fuad-lime-hover); }
+    #fuad-home .fuad-panel-actions .fuad-text-button:hover { background: none; color: var(--fuad-accent-hover); }
 }
 
 #fuad-home .fuad-panel-actions .fuad-text-button[hidden] { display: none; }
@@ -1749,7 +1800,7 @@ body [tabindex]:focus-visible {
 
 #fuad-home .fuad-chat-who { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; font-weight: 700; }
 
-#fuad-home .fuad-chat-mine { color: var(--fuad-lime); }
+#fuad-home .fuad-chat-mine { color: var(--fuad-accent); }
 
 #fuad-home .fuad-chat-head .fuad-meta { white-space: nowrap; }
 
@@ -1812,7 +1863,7 @@ body #fuad-home select {
 
 #fuad-home input:focus,
 #fuad-home select:focus,
-#fuad-home textarea:focus { border-color: var(--fuad-lime); }
+#fuad-home textarea:focus { border-color: var(--fuad-accent); }
 
 #fuad-home input::placeholder,
 #fuad-home textarea::placeholder { color: var(--fuad-muted); }
@@ -1827,8 +1878,8 @@ body #fuad-home select {
     padding: 0 16px;
     border: 0;
     border-radius: 10px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font: 600 15px var(--fuad-body);
     cursor: pointer;
 }
@@ -1840,7 +1891,7 @@ body #fuad-home select {
 @media (hover: hover) {
     #fuad-home .fuad-cta:not(:disabled):hover,
     #fuad-league .fuad-cta:not(:disabled):hover,
-    #fuad-rosters .fuad-cta:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    #fuad-rosters .fuad-cta:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
 #fuad-home .fuad-result { margin: 6px 0 0; font-size: 13px; color: var(--fuad-bad); }
@@ -1910,10 +1961,10 @@ body #fuad-home select {
 #fuad-rosters .fuad-bad-text { color: var(--fuad-bad); }
 
 #fuad-league .fuad-live,
-#fuad-rosters .fuad-live { color: var(--fuad-lime); }
+#fuad-rosters .fuad-live { color: var(--fuad-accent); }
 
 #fuad-league .fuad-mine,
-#fuad-rosters .fuad-mine { color: var(--fuad-lime); }
+#fuad-rosters .fuad-mine { color: var(--fuad-accent); }
 
 #fuad-league .fuad-strong,
 #fuad-rosters .fuad-strong { font-weight: 700; }
@@ -1932,10 +1983,10 @@ body #fuad-home select {
 #fuad-rosters .fuad-row-mine .fuad-team,
 #fuad-rosters .fuad-row-mine .fuad-row-title { font-weight: 700; }
 
-#fuad-league .fuad-tag-lime,
-#fuad-rosters .fuad-tag-lime,
-#fuad-all-moves .fuad-tag-lime,
-#fuad-all-bids .fuad-tag-lime { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+#fuad-league .fuad-tag-accent,
+#fuad-rosters .fuad-tag-accent,
+#fuad-all-moves .fuad-tag-accent,
+#fuad-all-bids .fuad-tag-accent { background: var(--fuad-accent-tint); color: var(--fuad-accent); }
 
 #fuad-league button,
 #fuad-rosters button { font-family: var(--fuad-body); }
@@ -1968,7 +2019,7 @@ body #fuad-home select {
 /* Best's marks on a player's grey line: off the bench, or a starter left out */
 #fuad-league .fuad-ln-tag { display: inline-block; margin: 0 2px; padding: 0 5px; border-radius: 5px; font-size: 12px; font-weight: 700; line-height: 16px; }
 
-#fuad-league .fuad-ln-tag-in { background: rgba(74, 222, 128, 0.14); color: var(--fuad-good); }
+#fuad-league .fuad-ln-tag-in { background: var(--fuad-good-tint); color: var(--fuad-good); }
 
 #fuad-league .fuad-ln-tag-started { background: var(--fuad-quiet); color: var(--fuad-soft); }
 
@@ -2096,7 +2147,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-winbar-labels { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; color: var(--fuad-muted); }
 
 #fuad-league .fuad-winbar-labels .fuad-ahead,
-#fuad-rosters .fuad-winbar-labels .fuad-ahead { color: var(--fuad-lime); }
+#fuad-rosters .fuad-winbar-labels .fuad-ahead { color: var(--fuad-accent); }
 
 #fuad-league .fuad-winbar-track,
 #fuad-rosters .fuad-winbar-track { display: flex; gap: 2px; height: 10px; }
@@ -2111,7 +2162,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-winbar-track span:last-child { border-radius: 0 5px 5px 0; }
 
 #fuad-league .fuad-winbar-track .fuad-ahead,
-#fuad-rosters .fuad-winbar-track .fuad-ahead { background: var(--fuad-lime); }
+#fuad-rosters .fuad-winbar-track .fuad-ahead { background: var(--fuad-accent); }
 
 #fuad-league .fuad-chip-row,
 #fuad-rosters .fuad-chip-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; width: 100%; }
@@ -2173,11 +2224,11 @@ body #fuad-home select {
 #fuad-rosters .fuad-ln-meta { font-size: 13px; color: var(--fuad-muted); line-height: 1.3; overflow-wrap: anywhere; }
 
 #fuad-league .fuad-ln-meta.fuad-live,
-#fuad-rosters .fuad-ln-meta.fuad-live { color: var(--fuad-lime); }
+#fuad-rosters .fuad-ln-meta.fuad-live { color: var(--fuad-accent); }
 
 @media (hover: hover) {
     #fuad-league .fuad-ln:hover .fuad-ln-name,
-    #fuad-rosters .fuad-ln:hover .fuad-ln-name { color: var(--fuad-lime); }
+    #fuad-rosters .fuad-ln:hover .fuad-ln-name { color: var(--fuad-accent); }
 }
 
 #fuad-league .fuad-ln-b .fuad-ln-pos,
@@ -2222,7 +2273,7 @@ body #fuad-home select {
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--fuad-lime);
+    color: var(--fuad-accent);
     font: 600 14px var(--fuad-body);
     text-align: left;
     cursor: pointer;
@@ -2287,7 +2338,7 @@ body #fuad-home select {
     #fuad-league .fuad-chip-stat b,
     #fuad-rosters .fuad-chip-stat b { color: var(--fuad-text); }
     #fuad-league .fuad-chip-stat b.fuad-live,
-    #fuad-rosters .fuad-chip-stat b.fuad-live { color: var(--fuad-lime); }
+    #fuad-rosters .fuad-chip-stat b.fuad-live { color: var(--fuad-accent); }
     #fuad-league .fuad-chip-stat + .fuad-chip-stat::before,
     #fuad-rosters .fuad-chip-stat + .fuad-chip-stat::before { content: "· "; }
     #fuad-league .fuad-chips,
@@ -2387,7 +2438,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-seeds > li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 44px; padding: 6px 0; }
 
 #fuad-league .fuad-seed,
-#fuad-rosters .fuad-seed { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; color: var(--fuad-lime); }
+#fuad-rosters .fuad-seed { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; color: var(--fuad-accent); }
 
 #fuad-league .fuad-seed-name,
 #fuad-rosters .fuad-seed-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
@@ -2423,7 +2474,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-power-bar span { display: block; height: 6px; border-radius: 3px; background: var(--fuad-bar-off); }
 
 #fuad-league .fuad-power-bar .fuad-bar-mine,
-#fuad-rosters .fuad-power-bar .fuad-bar-mine { background: var(--fuad-lime); }
+#fuad-rosters .fuad-power-bar .fuad-bar-mine { background: var(--fuad-accent); }
 
 #fuad-league .fuad-power-cell,
 #fuad-rosters .fuad-power-cell { display: flex; align-items: center; gap: 10px; min-width: 160px; }
@@ -2481,7 +2532,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
 
 #fuad-league .fuad-collapse,
-#fuad-rosters .fuad-collapse { min-height: 44px; margin: -12px 0; padding: 0; border: 0; background: none; color: var(--fuad-lime); font: 600 14px var(--fuad-body); cursor: pointer; }
+#fuad-rosters .fuad-collapse { min-height: 44px; margin: -12px 0; padding: 0; border: 0; background: none; color: var(--fuad-accent); font: 600 14px var(--fuad-body); cursor: pointer; }
 
 #fuad-league .fuad-legend,
 #fuad-rosters .fuad-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 10px; font-size: 13px; color: var(--fuad-muted); }
@@ -2638,7 +2689,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
 @media (hover: hover) {
-    #fuad-rosters .fuad-name:hover { color: var(--fuad-lime); }
+    #fuad-rosters .fuad-name:hover { color: var(--fuad-accent); }
 }
 
 #fuad-rosters .fuad-team .fuad-meta { display: block; font-weight: 400; }
@@ -2712,7 +2763,7 @@ body #fuad-home select {
     #fuad-league .fuad-row-title a:hover,
     #fuad-league .fuad-position-name a:hover,
     #fuad-league .fuad-prize-team a:hover,
-    #fuad-league .fuad-season-row a:hover { color: var(--fuad-lime); }
+    #fuad-league .fuad-season-row a:hover { color: var(--fuad-accent); }
 }
 
 /* Players: the find box and chips, then the table; on desktop it scrolls inside itself */
@@ -2731,7 +2782,7 @@ body #fuad-home select {
     font: 16px var(--fuad-body);
 }
 
-#fuad-rosters .fuad-find input:focus { border-color: var(--fuad-lime); }
+#fuad-rosters .fuad-find input:focus { border-color: var(--fuad-accent); }
 
 #fuad-rosters .fuad-chips-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
@@ -2778,7 +2829,7 @@ body #fuad-home select {
     #fuad-rosters .fuad-sort:hover { color: var(--fuad-text); }
 }
 
-#fuad-rosters .fuad-quiet-link { padding: 0; border: 0; background: none; color: var(--fuad-lime); font: inherit; font-weight: 600; cursor: pointer; }
+#fuad-rosters .fuad-quiet-link { padding: 0; border: 0; background: none; color: var(--fuad-accent); font: inherit; font-weight: 600; cursor: pointer; }
 
 /* desktop: the chips wrap and the list uses the page's scroll, nothing scrolls inside */
 @media (min-width: 48.01em) {
@@ -2803,7 +2854,7 @@ body #fuad-home select {
     cursor: pointer;
 }
 
-#fuad-rosters .fuad-tag-tile[aria-expanded="true"] { border-color: var(--fuad-lime); }
+#fuad-rosters .fuad-tag-tile[aria-expanded="true"] { border-color: var(--fuad-accent); }
 
 @media (hover: hover) {
     #fuad-rosters .fuad-tag-tile:hover { background: var(--fuad-quiet); }
@@ -2817,7 +2868,7 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-order > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; }
 
-#fuad-rosters .fuad-seed { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; color: var(--fuad-lime); }
+#fuad-rosters .fuad-seed { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; color: var(--fuad-accent); }
 
 #fuad-rosters .fuad-traded { font-size: 13px; }
 
@@ -2849,7 +2900,7 @@ body #fuad-home select {
 
 @media (hover: hover) {
     #fuad-rosters .fuad-order a:hover,
-    #fuad-rosters .fuad-board-picks a:hover { color: var(--fuad-lime); }
+    #fuad-rosters .fuad-board-picks a:hover { color: var(--fuad-accent); }
 }
 
 #fuad-rosters .fuad-my-picks > li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; }
@@ -2881,12 +2932,12 @@ body #fuad-home select {
     #fuad-rosters .fuad-table tbody td { vertical-align: middle; }
 }
 
-/* Teams on desktop: a row opens its team (the name white like every name, lime on hover), a chevron at the end */
+/* Teams on desktop: a row opens its team (the name white like every name, the accent on hover), a chevron at the end */
 #fuad-rosters .fuad-row-link { cursor: pointer; }
 
 @media (hover: hover) {
     #fuad-rosters .fuad-row-link:hover > * { background: var(--fuad-raised); }
-    #fuad-rosters .fuad-teams .fuad-row-link:hover .fuad-team a { color: var(--fuad-lime); }
+    #fuad-rosters .fuad-teams .fuad-row-link:hover .fuad-team a { color: var(--fuad-accent); }
 }
 
 
@@ -2969,10 +3020,10 @@ body #fuad-home select {
     text-align: left;
 }
 
-#fuad-lineup a { color: var(--fuad-lime); text-decoration: none; }
+#fuad-lineup a { color: var(--fuad-accent); text-decoration: none; }
 
 @media (hover: hover) {
-    #fuad-lineup a:hover { color: var(--fuad-lime-hover); }
+    #fuad-lineup a:hover { color: var(--fuad-accent-hover); }
 }
 
 #fuad-lineup button { font-family: var(--fuad-body); }
@@ -2993,8 +3044,8 @@ body #fuad-home select {
     min-height: 44px;
     padding: 0 18px;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
 }
 
@@ -3026,7 +3077,7 @@ body #fuad-home select {
     font-size: 15px;
 }
 
-#fuad-lineup .fuad-lineup-saved { align-items: center; gap: 8px; background: rgba(74, 222, 128, 0.1); font-weight: 600; }
+#fuad-lineup .fuad-lineup-saved { align-items: center; gap: 8px; background: var(--fuad-good-wash); font-weight: 600; }
 
 #fuad-lineup .fuad-lineup-saved svg { color: var(--fuad-good); flex: none; }
 
@@ -3049,7 +3100,7 @@ body #fuad-home select {
 
 #fuad-lineup .fuad-tag-caution { background: var(--fuad-caution-tint); color: var(--fuad-caution); }
 
-/* the round check: lime when starting */
+/* the round check: the accent when starting */
 #fuad-lineup .fuad-check {
     flex: none;
     box-sizing: border-box;
@@ -3067,9 +3118,9 @@ body #fuad-home select {
 }
 
 #fuad-lineup [aria-pressed="true"] .fuad-check,
-#fuad-lineup .fuad-check[aria-pressed="true"] { border-color: var(--fuad-lime); background: var(--fuad-lime); color: var(--fuad-on-lime); }
+#fuad-lineup .fuad-check[aria-pressed="true"] { border-color: var(--fuad-accent); background: var(--fuad-accent); color: var(--fuad-on-accent); }
 
-/* locked (a bye, or a game that has started): grey, not lime, since it can't be tapped; a starter
+/* locked (a bye, or a game that has started): grey, not the accent, since it can't be tapped; a starter
    keeps his check, a bench player shows a dash */
 #fuad-lineup .fuad-lineup-toggle:disabled[aria-pressed="true"] .fuad-check,
 #fuad-lineup .fuad-check:disabled[aria-pressed="true"] { border-color: var(--fuad-locked); background: var(--fuad-locked); color: var(--fuad-text); }
@@ -3164,8 +3215,8 @@ body #fuad-home select {
     padding: 0 18px;
     border: 0;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
@@ -3175,7 +3226,7 @@ body #fuad-home select {
 
 @media (hover: hover) {
     #fuad-lineup .fuad-button:hover,
-    #fuad-lineup .fuad-save:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    #fuad-lineup .fuad-save:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
 .fuad-lineup-on.fuad-framed body { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
@@ -3200,7 +3251,7 @@ body #fuad-home select {
 #fuad-lineup .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
 @media (hover: hover) {
-    #fuad-lineup .fuad-name:hover { color: var(--fuad-lime); }
+    #fuad-lineup .fuad-name:hover { color: var(--fuad-accent); }
 }
 
 /* desktop: full-width bands, the save bar sticky, then one table by position */
@@ -3365,7 +3416,7 @@ body .fuad-post-team a { color: var(--fuad-text); font-weight: 700; font-size: 1
 
 .fuad-post-when { font-size: 13px; color: var(--fuad-muted); }
 
-.fuad-post-new { padding: 0 6px; border-radius: 5px; background: var(--fuad-lime-tint); color: var(--fuad-lime); font-size: 12px; font-weight: 700; }
+.fuad-post-new { padding: 0 6px; border-radius: 5px; background: var(--fuad-accent-tint); color: var(--fuad-accent); font-size: 12px; font-weight: 700; }
 
 .fuad-post-actions { grid-area: actions; display: flex; justify-content: flex-end; }
 
@@ -3432,14 +3483,14 @@ body a.fuad-board-topic {
     text-decoration: none;
 }
 
-.fuad-board-topic.fuad-unread::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--fuad-lime); }
+.fuad-board-topic.fuad-unread::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--fuad-accent); }
 
 .fuad-board-topic .fuad-row-text { grid-column: 2; }
 
 .fuad-board-topic > .fuad-meta { white-space: nowrap; }
 
 @media (hover: hover) {
-    body a.fuad-board-topic:hover { color: var(--fuad-lime); }
+    body a.fuad-board-topic:hover { color: var(--fuad-accent); }
 }
 
 .fuad-board-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 15px; font-weight: 600; }
@@ -3528,7 +3579,7 @@ body .fuad-reply-text textarea {
     resize: vertical;
 }
 
-body .fuad-reply-text textarea:focus { border-color: var(--fuad-lime); }
+body .fuad-reply-text textarea:focus { border-color: var(--fuad-accent); }
 
 body .fuad-reply-subject input {
     box-sizing: border-box;
@@ -3542,13 +3593,13 @@ body .fuad-reply-subject input {
     font: 400 var(--fuad-read-size) var(--fuad-body);
 }
 
-body .fuad-reply-subject input:focus { border-color: var(--fuad-lime); }
+body .fuad-reply-subject input:focus { border-color: var(--fuad-accent); }
 
 .fuad-reply-buttons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 16px; }
 
 .fuad-reply-notify { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; color: var(--fuad-soft); }
 
-.fuad-reply-notify input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-lime); }
+.fuad-reply-notify input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); }
 
 body .fuad-reply-buttons input[type="submit"] {
     min-height: 44px;
@@ -3562,10 +3613,10 @@ body .fuad-reply-buttons input[type="submit"] {
 
 body .fuad-reply-buttons input.fuad-reply-preview { order: 1; background: var(--fuad-quiet); color: var(--fuad-text); font-weight: 600; }
 
-body .fuad-reply-buttons input.fuad-reply-post { order: 2; background: var(--fuad-lime); color: var(--fuad-on-lime); font-weight: 700; }
+body .fuad-reply-buttons input.fuad-reply-post { order: 2; background: var(--fuad-accent); color: var(--fuad-on-accent); font-weight: 700; }
 
 @media (hover: hover) {
-    body .fuad-reply-buttons input.fuad-reply-post:hover { background: var(--fuad-lime-hover); }
+    body .fuad-reply-buttons input.fuad-reply-post:hover { background: var(--fuad-accent-hover); }
 }
 
 @media (max-width: 48em) {
@@ -3702,7 +3753,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-add { display: flex; flex-direction: column; gap: 14px; padding: 4px 0 24px; }
 
 #fuad-add a,
-.fuad-add-layer a { color: var(--fuad-lime); text-decoration: none; }
+.fuad-add-layer a { color: var(--fuad-accent); text-decoration: none; }
 
 /* the buttons set every property MFL's button styles touch */
 #fuad-add button,
@@ -3781,12 +3832,12 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     min-height: 44px;
     padding: 0 18px;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
 }
 
-/* the period: lime while free agents can be added outright, blue-grey for blind bids only */
+/* the period: the accent while free agents can be added outright, blue-grey for blind bids only */
 #fuad-add .fuad-add-banner {
     display: flex;
     align-items: center;
@@ -3799,7 +3850,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     font-weight: 600;
 }
 
-#fuad-add .fuad-add-banner-window { background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+#fuad-add .fuad-add-banner-window { background: var(--fuad-accent-tint); color: var(--fuad-accent); }
 
 #fuad-add .fuad-dot { flex: none; width: 8px; height: 8px; border-radius: 4px; background: currentColor; }
 
@@ -3809,7 +3860,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     gap: 10px;
     padding: 12px 14px;
     border-radius: 12px;
-    background: rgba(74, 222, 128, 0.1);
+    background: var(--fuad-good-wash);
     font-size: 15px;
     font-weight: 600;
 }
@@ -3832,7 +3883,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     margin: 0;
     padding: 12px 14px;
     border-radius: 12px;
-    background: rgba(74, 222, 128, 0.1);
+    background: var(--fuad-good-wash);
     font-size: 15px;
     font-weight: 600;
 }
@@ -3850,7 +3901,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     padding: 12px 14px;
     border-radius: 12px;
     background: var(--fuad-bad-tint);
-    color: #FFB3B3;
+    color: var(--fuad-on-bad-tint);
     font-size: 14px;
     font-weight: 600;
     line-height: 1.4;
@@ -3892,8 +3943,8 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     gap: 8px;
     min-height: 44px;
     padding: 0 16px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font-weight: 700;
 }
 
@@ -3910,7 +3961,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-add .fuad-cta:not(:disabled):hover,
     #fuad-add .fuad-add-start:not(:disabled):hover,
     #fuad-add .fuad-add-submit:not(:disabled):hover,
-    .fuad-add-layer .fuad-add-submit:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    .fuad-add-layer .fuad-add-submit:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
 /* cap used, now → after */
@@ -3959,7 +4010,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     border-radius: 8px;
 }
 
-#fuad-add .fuad-add-flash { background: var(--fuad-lime-tint); }
+#fuad-add .fuad-add-flash { background: var(--fuad-accent-tint); }
 
 #fuad-add .fuad-add-rank { font: 700 18px var(--fuad-display); color: var(--fuad-muted); }
 
@@ -4031,7 +4082,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     padding: 0;
     border-top: 1px solid var(--fuad-rule);
     border-radius: 0;
-    color: var(--fuad-lime);
+    color: var(--fuad-accent);
     text-align: left;
 }
 
@@ -4053,7 +4104,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     color: var(--fuad-muted);
 }
 
-#fuad-add .fuad-add-search:focus-within { border-color: var(--fuad-lime); }
+#fuad-add .fuad-add-search:focus-within { border-color: var(--fuad-accent); }
 
 #fuad-add .fuad-add-search input {
     flex: 1;
@@ -4161,7 +4212,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-add .fuad-add-drop[aria-pressed="true"],
 .fuad-add-layer .fuad-add-drop[aria-pressed="true"],
-.fuad-add-layer .fuad-add-nodrop[aria-pressed="true"] { background: var(--fuad-raised); box-shadow: inset 3px 0 0 var(--fuad-lime); }
+.fuad-add-layer .fuad-add-nodrop[aria-pressed="true"] { background: var(--fuad-raised); box-shadow: inset 3px 0 0 var(--fuad-accent); }
 
 #fuad-add .fuad-add-drop-cost,
 .fuad-add-layer .fuad-add-drop-cost { grid-row: span 2; text-align: right; white-space: nowrap; font-size: 14px; }
@@ -4181,7 +4232,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-add .fuad-add-summary-row > span:last-child { flex: none; }
 
-#fuad-add .fuad-add-this { color: var(--fuad-lime); font-weight: 700; }
+#fuad-add .fuad-add-this { color: var(--fuad-accent); font-weight: 700; }
 
 #fuad-add .fuad-add-group-summary .fuad-add-field { padding: 6px 0 8px; }
 
@@ -4245,7 +4296,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 }
 
 #fuad-add .fuad-add-amount:focus-within,
-.fuad-add-layer .fuad-add-amount:focus-within { border-color: var(--fuad-lime); }
+.fuad-add-layer .fuad-add-amount:focus-within { border-color: var(--fuad-accent); }
 
 #fuad-add .fuad-add-amount-bad,
 .fuad-add-layer .fuad-add-amount-bad { border-color: var(--fuad-bad); }
@@ -4294,10 +4345,10 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 .fuad-add-layer .fuad-add-year-cut { color: var(--fuad-muted); }
 
 #fuad-add .fuad-add-year[aria-pressed="true"],
-.fuad-add-layer .fuad-add-year[aria-pressed="true"] { background: var(--fuad-lime); border-color: var(--fuad-lime); color: var(--fuad-on-lime); }
+.fuad-add-layer .fuad-add-year[aria-pressed="true"] { background: var(--fuad-accent); border-color: var(--fuad-accent); color: var(--fuad-on-accent); }
 
 #fuad-add .fuad-add-year[aria-pressed="true"] .fuad-add-year-cut,
-.fuad-add-layer .fuad-add-year[aria-pressed="true"] .fuad-add-year-cut { color: var(--fuad-on-lime); }
+.fuad-add-layer .fuad-add-year[aria-pressed="true"] .fuad-add-year-cut { color: var(--fuad-on-accent); }
 
 /* ---- Add on desktop: pending bids and free agents as tables, a move in a dialog ---- */
 
@@ -4316,7 +4367,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-add .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
 @media (hover: hover) {
-    #fuad-add .fuad-name:hover { color: var(--fuad-lime); }
+    #fuad-add .fuad-name:hover { color: var(--fuad-accent); }
 }
 
 @media (min-width: 48.01em) {
@@ -4404,15 +4455,15 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
         margin-left: auto;
         padding: 0 12px;
         border-radius: 9px;
-        background: var(--fuad-lime);
-        color: var(--fuad-on-lime);
+        background: var(--fuad-accent);
+        color: var(--fuad-on-accent);
         font-size: 14px;
         font-weight: 700;
     }
     #fuad-add .fuad-add-row-action::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
     #fuad-add .fuad-add-row-action:disabled { background: var(--fuad-quiet); color: var(--fuad-muted); }
     @media (hover: hover) {
-        #fuad-add .fuad-add-row-action:not(:disabled):hover { background: var(--fuad-lime-hover); }
+        #fuad-add .fuad-add-row-action:not(:disabled):hover { background: var(--fuad-accent-hover); }
     }
 }
 
@@ -4478,7 +4529,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     text-align: left;
 }
 
-#fuad-drop a { color: var(--fuad-lime); text-decoration: none; }
+#fuad-drop a { color: var(--fuad-accent); text-decoration: none; }
 
 /* the buttons set every property MFL's button styles touch */
 #fuad-drop button {
@@ -4523,8 +4574,8 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     min-height: 44px;
     padding: 0 18px;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
 }
 
@@ -4602,12 +4653,12 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-drop .fuad-drop-review .fuad-move-alert { flex-basis: 100%; }
 
-/* the screen's own action: filled lime (red is kept for limits) */
+/* the screen's own action: filled in the accent (red is kept for limits) */
 #fuad-drop .fuad-drop-go {
     min-height: 44px;
     padding: 0 18px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font-weight: 700;
 }
 
@@ -4615,7 +4666,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 @media (hover: hover) {
     #fuad-drop .fuad-button:hover,
-    #fuad-drop .fuad-drop-go:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    #fuad-drop .fuad-drop-go:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
 #fuad-drop .fuad-tag {
@@ -4676,7 +4727,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     text-align: left;
 }
 
-#fuad-ir a { color: var(--fuad-lime); text-decoration: none; font-weight: 600; }
+#fuad-ir a { color: var(--fuad-accent); text-decoration: none; font-weight: 600; }
 
 /* the buttons set every property MFL's button styles touch */
 #fuad-ir button {
@@ -4732,8 +4783,8 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     min-height: 44px;
     padding: 0 18px;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
 }
 
@@ -4788,10 +4839,10 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     white-space: nowrap;
 }
 
-#fuad-ir .fuad-ir-on-row .fuad-ir-act { color: var(--fuad-lime); }
+#fuad-ir .fuad-ir-on-row .fuad-ir-act { color: var(--fuad-accent); }
 
 #fuad-ir input[type=checkbox],
-#fuad-ir input[type=radio] { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-lime); cursor: pointer; }
+#fuad-ir input[type=radio] { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); cursor: pointer; }
 
 #fuad-ir input:disabled { cursor: default; }
 
@@ -4839,13 +4890,13 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-ir .fuad-ir-why strong { color: var(--fuad-bad); }
 
-/* the screen's own action: filled lime (red is kept for limits) */
+/* the screen's own action: filled in the accent (red is kept for limits) */
 #fuad-ir .fuad-ir-save {
     flex: 1 1 100%;
     min-height: 48px;
     padding: 0 22px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font-size: 16px;
     font-weight: 700;
 }
@@ -4854,7 +4905,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 @media (hover: hover) {
     #fuad-ir .fuad-button:hover,
-    #fuad-ir .fuad-ir-save:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    #fuad-ir .fuad-ir-save:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
 #fuad-ir .fuad-ir-columns {
@@ -4907,7 +4958,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-ir .fuad-ir-link::after { content: ""; position: absolute; left: -4px; right: -4px; top: -12px; bottom: -12px; }
 
     @media (hover: hover) {
-        #fuad-ir .fuad-ir-link:hover { color: var(--fuad-lime); }
+        #fuad-ir .fuad-ir-link:hover { color: var(--fuad-accent); }
     }
 
     #fuad-ir .fuad-ir-act { cursor: pointer; }
@@ -4944,7 +4995,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     text-align: left;
 }
 
-#fuad-trades a { color: var(--fuad-lime); text-decoration: none; }
+#fuad-trades a { color: var(--fuad-accent); text-decoration: none; }
 
 /* the buttons set every property MFL's button styles touch */
 #fuad-trades button {
@@ -5003,8 +5054,8 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     min-height: 44px;
     padding: 0 18px;
     border-radius: 12px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime) !important;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
     font-weight: 700;
 }
 
@@ -5058,7 +5109,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-trades .fuad-trades-from a { color: inherit; }
 
 @media (hover: hover) {
-    #fuad-trades .fuad-trades-from a:hover { color: var(--fuad-lime); }
+    #fuad-trades .fuad-trades-from a:hover { color: var(--fuad-accent); }
 }
 
 #fuad-trades .fuad-trades-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
@@ -5080,7 +5131,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-trades .fuad-trades-link { position: relative; padding: 0; font-size: inherit; text-align: left; }
 @media (hover: hover) {
-    #fuad-trades .fuad-trades-link:hover { color: var(--fuad-lime); }
+    #fuad-trades .fuad-trades-link:hover { color: var(--fuad-accent); }
 }
 #fuad-trades .fuad-trades-link::after { content: ""; position: absolute; left: -4px; right: -4px; top: -10px; bottom: -10px; }
 
@@ -5102,7 +5153,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-trades .fuad-trades-choice { min-height: 44px; border: 1px solid var(--fuad-raised-edge); background: var(--fuad-page); }
 #fuad-trades .fuad-trades-choice[aria-pressed="true"] { border-color: var(--fuad-text); background: var(--fuad-text); color: var(--fuad-page); }
-#fuad-trades .fuad-trades-choice[data-answer="accept"][aria-pressed="true"] { border-color: var(--fuad-lime); background: var(--fuad-lime); color: var(--fuad-on-lime); }
+#fuad-trades .fuad-trades-choice[data-answer="accept"][aria-pressed="true"] { border-color: var(--fuad-accent); background: var(--fuad-accent); color: var(--fuad-on-accent); }
 #fuad-trades .fuad-trades-choice:disabled { color: var(--fuad-muted); }
 
 #fuad-trades .fuad-trades-reply,
@@ -5121,7 +5172,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     border-radius: 10px;
     background: var(--fuad-page);
     color: var(--fuad-text);
-    color-scheme: dark;
+    color-scheme: var(--fuad-scheme);
     /* 16 px, so iPhones don't zoom in on focus */
     font: 16px var(--fuad-body);
 }
@@ -5132,14 +5183,14 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-trades textarea:focus,
 #fuad-trades input:focus,
-#fuad-trades select:focus { border-color: var(--fuad-lime); }
+#fuad-trades select:focus { border-color: var(--fuad-accent); }
 
-/* the screen's own action: filled lime (red is kept for limits) */
+/* the screen's own action: filled in the accent (red is kept for limits) */
 #fuad-trades .fuad-trades-go {
     min-height: 44px;
     padding: 0 18px;
-    background: var(--fuad-lime);
-    color: var(--fuad-on-lime);
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
     font-weight: 700;
 }
 
@@ -5147,7 +5198,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 @media (hover: hover) {
     #fuad-trades .fuad-button:hover,
-    #fuad-trades .fuad-trades-go:not(:disabled):hover { background: var(--fuad-lime-hover); }
+    #fuad-trades .fuad-trades-go:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
 #fuad-trades .fuad-trades-quiet { min-height: 44px; padding: 0 14px; border: 1px solid var(--fuad-raised-edge); background: var(--fuad-quiet); }
@@ -5177,7 +5228,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 }
 
 @media (hover: hover) {
-    #fuad-trades .fuad-trades-partner:hover { color: var(--fuad-lime); }
+    #fuad-trades .fuad-trades-partner:hover { color: var(--fuad-accent); }
 }
 
 #fuad-trades .fuad-trades-used { flex: none; font-size: 13px; font-weight: 500; }
@@ -5214,7 +5265,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     cursor: pointer;
 }
 
-#fuad-trades .fuad-trades-pick-row input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-lime); }
+#fuad-trades .fuad-trades-pick-row input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); }
 
 #fuad-trades .fuad-trades-who { display: flex; flex-direction: column; min-width: 0; }
 
@@ -5362,7 +5413,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     #fuad-trades .fuad-trades-side { min-width: 0; padding: 14px 16px 10px; }
     #fuad-trades .fuad-trades-side .fuad-trades-pick-row { grid-template-columns: 28px minmax(0, 1fr) 52px 64px 56px; gap: 0 8px; min-height: 40px; border-radius: 6px; font-size: 14px; cursor: default; }
     #fuad-trades .fuad-trades-side .fuad-trades-pick-row input { width: 18px; height: 18px; margin-left: 4px; cursor: pointer; }
-    #fuad-trades .fuad-trades-on-row { background: var(--fuad-lime-tint); }
+    #fuad-trades .fuad-trades-on-row { background: var(--fuad-accent-tint); }
     #fuad-trades .fuad-trades-who { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
     #fuad-trades .fuad-trades-who .fuad-tag { margin-left: 0; }
     #fuad-trades .fuad-trades-columns { min-height: 0; padding: 10px 0 4px; border-top: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-muted); }
@@ -5451,7 +5502,7 @@ body #fuad-all-moves .fuad-select select { width: 100%; height: 44px; padding: 0
 #fuad-all-bids .fuad-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
 
 @media (hover: hover) {
-    #fuad-all-bids .fuad-name:hover { color: var(--fuad-lime); }
+    #fuad-all-bids .fuad-name:hover { color: var(--fuad-accent); }
 }
 
 body #fuad-all-bids .fuad-run-who h3 { margin: 0; padding: 0; border: 0; background: none; color: var(--fuad-text); font-family: var(--fuad-body); font-size: 17px; font-weight: 700; text-transform: none; text-align: left; }
@@ -5532,7 +5583,7 @@ body #fuad-all-bids .fuad-run-who h3 { margin: 0; padding: 0; border: 0; backgro
     color: var(--fuad-muted);
 }
 
-#fuad-rules .fuad-rules-filter:focus-within { border-color: var(--fuad-lime); }
+#fuad-rules .fuad-rules-filter:focus-within { border-color: var(--fuad-accent); }
 
 #fuad-rules .fuad-rules-filter input {
     flex: 1;
@@ -5580,7 +5631,7 @@ body #fuad-all-bids .fuad-run-who h3 { margin: 0; padding: 0; border: 0; backgro
 #fuad-rules .fuad-rules-section[open] .fuad-chev { transform: rotate(180deg); }
 
 @media (hover: hover) {
-    #fuad-rules .fuad-rules-section summary:hover { color: var(--fuad-lime); }
+    #fuad-rules .fuad-rules-section summary:hover { color: var(--fuad-accent); }
 }
 
 #fuad-rules .fuad-rules-body { display: flex; flex-direction: column; gap: 10px; padding: 0 0 16px; }
@@ -5612,7 +5663,7 @@ body #fuad-all-bids .fuad-run-who h3 { margin: 0; padding: 0; border: 0; backgro
 
 #fuad-rules .fuad-rules-modified { margin: 4px 0 0; }
 
-#fuad-rules mark { padding: 0 1px; border-radius: 3px; background: var(--fuad-lime-tint); color: var(--fuad-lime); }
+#fuad-rules mark { padding: 0 1px; border-radius: 3px; background: var(--fuad-accent-tint); color: var(--fuad-accent); }
 
 @media (min-width: 48.01em) {
     #fuad-rules .fuad-setting { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }

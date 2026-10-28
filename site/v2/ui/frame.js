@@ -1,6 +1,7 @@
 // v2's frame on every league page: the header (site menu, wordmark and context line, team button),
-// the five sections, the current section's views, the team sheet and the player popup. MFL's own
-// menus are hidden only once the frame is drawn, so if this fails the page keeps MFL's navigation.
+// the five sections, the current section's views, the team sheet (with the looks) and the player
+// popup. MFL's own menus are hidden only once the frame is drawn, so if this fails the page keeps
+// MFL's navigation.
 
 import settings from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
@@ -8,6 +9,7 @@ import {REBUILT, locate, pageOf, sectionHref, sections, storedTabs, teamLinks} f
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
+import {LOOKS, applyLook, looksMarkup, saveLook} from "./looks.js";
 
 export {locate, pageOf, sections};
 
@@ -79,7 +81,7 @@ function siteMenu(groups) {
     </section>`;
 }
 
-function teamSheet({team, member, setup, logout, become, franchiseId}) {
+function teamSheet({team, member, setup, logout, become, franchiseId, look}) {
     const switchTo = become && become.getAttribute("href");
     return `
     <section class="fuad-sheet" role="dialog" aria-modal="true" aria-labelledby="fuad-sheet-title">
@@ -91,6 +93,7 @@ function teamSheet({team, member, setup, logout, become, franchiseId}) {
             ${member && setup ? `<a class="fuad-button fuad-button-quiet" href="${esc(setup.getAttribute("href"))}">Franchise setup</a>` : ""}
             ${logout ? `<a class="fuad-button fuad-button-quiet" href="${esc(logout.getAttribute("href"))}">Log out</a>` : ""}
         </div>
+        ${member ? looksMarkup(LOOKS, look) : ""}
         ${switchTo ? `
         <div class="fuad-switch" role="group" aria-label="Viewing as">
             <span class="fuad-muted">Viewing as</span>
@@ -101,6 +104,59 @@ function teamSheet({team, member, setup, logout, become, franchiseId}) {
             </div>
         </div>` : ""}
     </section>`;
+}
+
+// A look shows as soon as it's picked and stays if MFL saves it; if MFL doesn't, the one before comes
+// back and the sheet says so. Picks are taken one at a time. The default is shown for skins no look
+// names too, so picking it saves it even when it's the one shown.
+function wireLooks(layer, context, current) {
+    const group = layer.querySelector(".fuad-looks");
+    if (!group) {
+        return;
+    }
+    const buttons = [...group.querySelectorAll("button[data-look]")];
+    const status = group.querySelector(".fuad-looks-status");
+    let shown = current;
+    let saved = current === LOOKS[0] ? null : current;
+    const show = (look) => {
+        applyLook(document, look);
+        buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.look === look.id)));
+    };
+    buttons.forEach((button) => button.addEventListener("click", async () => {
+        const look = LOOKS.find((entry) => entry.id === button.dataset.look);
+        if (!look || look === saved) {
+            return;
+        }
+        const before = shown;
+        shown = look;
+        show(look);
+        buttons.forEach((each) => {
+            each.disabled = true;
+        });
+        status.classList.remove("fuad-looks-failed");
+        status.textContent = "Saving…";
+        try {
+            await saveLook(context, look);
+            saved = look;
+            status.textContent = "";
+        } catch (error) {
+            if (error.unconfirmed) {
+                saved = look;
+                status.textContent = "Sent, but MFL didn’t confirm it. Reload the page to check.";
+                return;
+            }
+            console.warn("[fuad] couldn't save the look:", error);
+            shown = before;
+            show(before);
+            status.classList.add("fuad-looks-failed");
+            status.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a few seconds."
+                : error.noForm ? "Couldn’t open MFL’s skin page. Reload and try again." : "Couldn’t save your look. Try again.";
+        } finally {
+            buttons.forEach((each) => {
+                each.disabled = false;
+            });
+        }
+    }));
 }
 
 function wireMenu(layer) {
@@ -163,6 +219,8 @@ export function drawFrame({context, storage}) {
     const setup = mflLink((a) => /\/csetup\?.*\bC=FRANCHISE\b/.test(a.getAttribute("href")));
     const loggedIn = Boolean(franchiseId);
     const mflTitle = clean((document.querySelector(".pagetitle h1") || {}).textContent);
+    // as boot applied it
+    const look = LOOKS.find((entry) => entry.id === document.documentElement.getAttribute("data-fuad-look")) || LOOKS[0];
 
     const root = document.createElement("div");
     root.id = "fuad-frame";
@@ -181,7 +239,7 @@ export function drawFrame({context, storage}) {
     <nav class="fuad-views" hidden></nav>
     <nav class="fuad-sections fuad-sections-bottom" aria-label="Sections"></nav>
     <div class="fuad-layer fuad-menu-layer" hidden>${siteMenu(mflMenu())}</div>
-    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, setup, logout, become, franchiseId})}</div>` : ""}`;
+    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, setup, logout, become, franchiseId, look})}</div>` : ""}`;
 
     const render = () => {
         const page = pageOf(window.location, tabs);
@@ -228,6 +286,9 @@ export function drawFrame({context, storage}) {
     const teamButton = root.querySelector(".fuad-team");
     if (teamButton) {
         const sheetLayer = root.querySelector(".fuad-sheet-layer");
+        if (member) {
+            wireLooks(sheetLayer, context, look);
+        }
         teamButton.addEventListener("click", () => {
             // the phone header's height varies with its context line
             sheetLayer.firstElementChild.style.top = `${Math.round(teamButton.getBoundingClientRect().bottom) + 8}px`;
