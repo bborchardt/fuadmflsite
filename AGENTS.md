@@ -21,6 +21,10 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   `tests/stored-shapes.test.mjs` checks for what v2 builds from MFL's pages.
 - MFL throttles by machine and doesn't say how much: test against saved exports, make one live run
   at the end, and never send the job's registered User-Agent from a dev machine.
+- The repo is public: a page saved from MFL goes in only through the capture bookmark (`site/capture/`),
+  which takes out emails, phone numbers, owners' names, private messages, the apiKey and the board's
+  `auth` token. Clean a page saved any other way the same way. `tests/saved-pages.test.mjs` fails on
+  what it can recognize, but only that.
 - Changes in MFL's header or tab messages are made by the commissioner by hand: give the exact lines
   to paste, tab messages first and the header last.
 - `verify.py` can report "no differences" for an area it doesn't see: prove it notices a change first.
