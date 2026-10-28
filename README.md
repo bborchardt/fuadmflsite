@@ -14,7 +14,7 @@ runs inside MFL's own pages, loaded by a home page message.
   to post a free agent's contract length, with the length it read from the message board.
 - **Commish tab:** forms for the commissioner's manual work. **Links tab:** league links.
 
-**For the commissioner**, a job every morning (08:00 UTC):
+**For the commissioner**, a job every morning (about 07:40 UTC):
 - snapshots franchise salaries at the trade deadline
 - charges cap penalties for dropped players
 - sets contract years for added players, from the bid comment or a message board post
@@ -75,9 +75,10 @@ would do until they're switched on.
 | `site/v<N>/lib/` | League rules and logic, shared with the daily job |
 | `site/v<N>/ui/` | The Main, Contracts, Commish and Links features; in v2 also the frame (sections, site menu, team sheet) and the player popup |
 | `mfl/` | What goes in MFL's home page messages |
+| `site/capture/` | A bookmark that saves MFL's pages as the viewer gets them, private details taken out, for tests |
 | `jobs/` | The daily job (`.github/workflows/daily.yml` runs `jobs/daily.mjs`) |
 | `tests/` | Unit tests |
 | `tools/` | The build for Pages, local preview server, the live-page comparison, and the offline comparison and timing of v2's screens with its saved pages |
-| `docs/` | [Design decisions](docs/design.md) and [MFL facts](docs/mfl.md) |
+| `docs/` | [Design decisions](docs/design.md), [MFL facts](docs/mfl.md), [league settings](docs/settings.md) and the [commissioner's guide](docs/commissioner.md) |
 
 The `league-data` branch holds what the job writes: franchise salary snapshots and its chore log.
