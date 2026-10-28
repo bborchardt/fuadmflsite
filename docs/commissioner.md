@@ -3,6 +3,9 @@
 What the commissioner does, on MFL and GitHub, to run the league site from this repo. How the code
 works is in `README.md` and `docs/`.
 
+The Commish tab is v1's: it's there while v1 is the main version, and for the commissioner (0000),
+whose view stays v1 unless the commissioner is in a beta as 0000.
+
 ## Pasting into MFL
 
 The site reaches members through MFL home page messages. Their text lives in `mfl/`:
@@ -27,7 +30,8 @@ To paste one:
    and save.
 3. For the header: the beta offer line (see Betas and versions) is only in MFL's copy, not the repo's.
    Copy it from the live header before replacing, and put it back on the line the comment
-   `<!-- a beta offer, if any, goes here -->` marks; leaving it out ends the beta.
+   `<!-- a beta offer, if any, goes here (README: Offer a beta) -->` marks; leaving it out ends the
+   beta.
 4. When more than one file changed, paste the tab messages first and the header last. The header
    loads code that looks for the tabs' messages, so the tabs need to be in place before it.
 5. Reload the league's home page and check that the site loads and the changed tab looks right.
@@ -35,8 +39,8 @@ To paste one:
 ## Betas and versions
 
 The header's `MAIN` (in `mfl/message-header.html`) names the version everyone gets. A beta offers
-another version to some or all members; they switch to it themselves from League Alerts, and can
-switch back.
+another version to some or all members; they switch to it themselves from the invitation on the
+home page (League Alerts in v1, Home in v2), and can switch back.
 
 - **Offer a beta:** in MFL's header, on the line the beta-offer comment marks, add:
   ```html
@@ -79,8 +83,9 @@ It records what it did in the chore log (`chore-log.md`, on the `league-data` br
   you. Open the run from the email: its summary lists what it did and what needs you. Then fix it in
   MFL by hand.
 - **Run it now:** Actions › Daily chores › Run workflow.
-- **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button makes the
-  file. Commit it to the `league-data` branch's `data/` folder, and the next run publishes it.
+- **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button shows the
+  snapshot as text. Save that text as `franchise-<season>.json` (e.g. `franchise-2026.json`), commit
+  it to the `league-data` branch's `data/` folder, and the next run publishes it.
 - **The schedule keeps itself on.** GitHub turns off a scheduled workflow after 60 days without
   activity in the repo, so each run switches it back on.
 
@@ -109,8 +114,9 @@ site looks for:
 | The final cut-down | a word starting "cut", e.g. "Final cut-down" | A one-time event at a set time, not a week. The roster limits (23–30) start then; without it, from week 1's kickoff. |
 | The rollover | "contract year ends" | Members' last chance to cut players so the penalties clear before next season. |
 
-The trade deadline comes from MFL's own trade deadline setting, and the blind-bid and waiver times
-from MFL's waiver settings, so neither needs an event.
+No event is needed for the trade deadline or the blind-bid and waiver times: MFL puts its own on
+the calendar from its trade and waiver settings. Without MFL's trade deadline event, the site uses
+week 12's kickoff.
 
 **At the trade deadline:** nothing to do. The daily job snapshots each franchise's salaries.
 
