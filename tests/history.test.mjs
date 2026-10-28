@@ -30,6 +30,13 @@ test("a series page: one team's record against each of today's teams, not the de
     assert.equal(Object.keys(series).length, 9);
 });
 
+test("champions: a league with no title won yet has none, not a changed page", () => {
+    // the clone league's page (28 Oct 2026): MFL's table with its caption and nothing in it
+    const empty = '<table align="center" cellspacing="1" class="report"><caption><span>League Champions</span></caption><tbody></tbody></table>';
+    assert.deepEqual(readChampions(`<html><body>${empty}</body></html>`), []);
+    assert.equal(readChampions('<html><a href="#">League Champions</a></html>'), null);
+});
+
 test("pages MFL no longer draws as expected read as nothing", () => {
     assert.equal(readChampions("<html></html>"), null);
     assert.equal(readCareer("<html>Career Records</html>"), null);

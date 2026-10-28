@@ -29,9 +29,10 @@ function rows(html, caption) {
 }
 
 // [{year, name, team}], newest first: each year's champion with that year's name and franchise
-// number; null if the page isn't drawn as expected
+// number, none before a league's first title; null if the page isn't drawn as expected
 export function readChampions(html) {
-    const champions = String(html || "").split(/<th colspan="2">/).slice(1).flatMap((part) => {
+    const page = String(html || "");
+    const champions = page.split(/<th colspan="2">/).slice(1).flatMap((part) => {
         const year = (part.match(/^(\d{4})<\/th>/) || [])[1];
         const first = part.match(/<td class="rank">1\.<\/td>\s*<td class="franchisename">([\s\S]*?)<\/td>/);
         if (!year || !first) {
@@ -39,7 +40,11 @@ export function readChampions(html) {
         }
         return [{year: Number(year), name: text(first[1]), team: (first[1].match(/[?&;]F=(\d{4})/) || [])[1] || null}];
     });
-    return champions.length ? champions : null;
+    if (champions.length) {
+        return champions;
+    }
+    // no title won yet: MFL draws the table with its caption and no rows
+    return page.includes("<caption><span>League Champions</span></caption>") && rows(page, "League Champions").length === 0 ? [] : null;
 }
 
 // {team: {w, l, t, seasons}} for today's teams, `seasons` the years MFL links to each; null if the

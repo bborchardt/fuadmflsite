@@ -285,8 +285,8 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
 export function championsMarkup(list, mine) {
     return `<section class="fuad-panel" aria-labelledby="fuad-champions">
         <h2 class="fuad-panel-heading" id="fuad-champions">Champions</h2>
-        <ol class="fuad-rows fuad-champions">${list.map((champion) => `<li${mine.includes(champion.year) ? ' class="fuad-row-mine"' : ""}>
+        ${list.length ? `<ol class="fuad-rows fuad-champions">${list.map((champion) => `<li${mine.includes(champion.year) ? ' class="fuad-row-mine"' : ""}>
             <span class="fuad-meta">${champion.year}</span><span class="fuad-row-title">${esc(champion.name)}</span>
-        </li>`).join("")}</ol>
+        </li>`).join("")}</ol>` : '<p class="fuad-muted fuad-empty">No champions yet.</p>'}
     </section>`;
 }
