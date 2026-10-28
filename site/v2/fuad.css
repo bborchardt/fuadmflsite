@@ -71,6 +71,157 @@
     --fuad-scheme: dark;
 }
 
+[data-fuad-look="day"] {
+    --fuad-page: #F5F6F8;
+    --fuad-panel: #FFFFFF;
+    --fuad-raised: #FAFBFC;
+    --fuad-quiet: #EBEDF1;
+    --fuad-hairline: #E1E4E9;
+    --fuad-rule: #ECEEF2;
+    --fuad-field: #8C96A4;
+    --fuad-faint: #6F7581;
+    --fuad-grabber: #C2C9D3;
+    --fuad-text: #111318;
+    --fuad-soft: #2D3139;
+    --fuad-muted: #545A66;
+    --fuad-accent: #6D28D9;
+    --fuad-accent-hover: #5B21B6;
+    --fuad-on-accent: #FFFFFF;
+    --fuad-good: #12733A;
+    --fuad-good-tint: rgba(18, 115, 58, 0.12);
+    --fuad-good-wash: rgba(18, 115, 58, 0.08);
+    --fuad-bad: #C0262D;
+    --fuad-bad-tint: rgba(192, 38, 45, 0.12);
+    --fuad-on-bad-tint: #8F1A20;
+    --fuad-caution: #A84E00;
+    --fuad-caution-tint: rgba(168, 78, 0, 0.12);
+    --fuad-accent-tint: rgba(109, 40, 217, 0.1);
+    --fuad-bar-off: #C2C9D3;
+    --fuad-raised-edge: #DDE1E7;
+    --fuad-band: #EBEDF1;
+    --fuad-locked: #A3ACB8;
+    --fuad-scrim: rgba(15, 23, 34, 0.45);
+    --fuad-shadow: rgba(15, 23, 34, 0.18);
+    --fuad-scheme: light;
+}
+
+/* the league's Vikings, Packers and Cowboys fans: each team's colours, on its MFL skin */
+[data-fuad-look="purple"] {
+    --fuad-page: #160A24;
+    --fuad-panel: #201033;
+    --fuad-raised: #29163F;
+    --fuad-quiet: #3A2159;
+    --fuad-hairline: #3A2159;
+    --fuad-rule: #2F1A4A;
+    --fuad-field: #8C78A8;
+    --fuad-faint: #8C78A8;
+    --fuad-grabber: #4D3270;
+    --fuad-text: #F5F0FA;
+    --fuad-soft: #DDD0EC;
+    --fuad-muted: #B8A6CF;
+    --fuad-accent: #FFC62F;
+    --fuad-accent-hover: #FFDA75;
+    --fuad-on-accent: #160A24;
+    --fuad-bad: #FF8585;
+    --fuad-accent-tint: rgba(255, 198, 47, 0.14);
+    --fuad-bar-off: #5C4480;
+    --fuad-raised-edge: #44296A;
+    --fuad-band: #4F2683;
+    --fuad-locked: #5C4480;
+}
+
+[data-fuad-look="tundra"] {
+    --fuad-page: #0B1A15;
+    --fuad-panel: #12251E;
+    --fuad-raised: #172E26;
+    --fuad-quiet: #203D32;
+    --fuad-hairline: #203D32;
+    --fuad-rule: #1B342A;
+    --fuad-field: #6F8C7F;
+    --fuad-faint: #6F8C7F;
+    --fuad-grabber: #2E5244;
+    --fuad-text: #F3F7F4;
+    --fuad-soft: #D0DED6;
+    --fuad-muted: #A0B7AB;
+    --fuad-accent: #FFB612;
+    --fuad-accent-hover: #FFCB5C;
+    --fuad-on-accent: #0B1A15;
+    --fuad-bad: #FF8585;
+    --fuad-accent-tint: rgba(255, 182, 18, 0.14);
+    --fuad-bar-off: #3E5E51;
+    --fuad-raised-edge: #2A4A3D;
+    --fuad-band: #203731;
+    --fuad-locked: #3E5E51;
+}
+
+[data-fuad-look="cowboys"] {
+    --fuad-page: #CDD3D9;
+    --fuad-panel: #E4E8EC;
+    --fuad-raised: #EDF0F3;
+    --fuad-quiet: #C5CCD4;
+    --fuad-hairline: #B3BCC6;
+    --fuad-rule: #BEC6CF;
+    --fuad-field: #6A778A;
+    --fuad-faint: #56657A;
+    --fuad-grabber: #9BA6B3;
+    --fuad-text: #041E42;
+    --fuad-soft: #142E52;
+    --fuad-muted: #34465F;
+    --fuad-accent: #003594;
+    --fuad-accent-hover: #00276F;
+    --fuad-on-accent: #FFFFFF;
+    --fuad-good: #0B5A2B;
+    --fuad-good-tint: rgba(11, 90, 43, 0.12);
+    --fuad-good-wash: rgba(11, 90, 43, 0.08);
+    --fuad-bad: #981E24;
+    --fuad-bad-tint: rgba(152, 30, 36, 0.12);
+    --fuad-on-bad-tint: #7A171C;
+    --fuad-caution: #7A3900;
+    --fuad-caution-tint: rgba(122, 57, 0, 0.12);
+    --fuad-accent-tint: rgba(0, 53, 148, 0.1);
+    --fuad-bar-off: #A9B3BE;
+    --fuad-raised-edge: #B3BCC6;
+    --fuad-band: #C5CCD4;
+    --fuad-locked: #8E99A7;
+    --fuad-scrim: rgba(4, 30, 66, 0.45);
+    --fuad-shadow: rgba(4, 30, 66, 0.2);
+    --fuad-scheme: light;
+}
+
+[data-fuad-look="paper"] {
+    --fuad-page: #F2EDE3;
+    --fuad-panel: #FFFCF6;
+    --fuad-raised: #FAF6EE;
+    --fuad-quiet: #E8E1D3;
+    --fuad-hairline: #DDD5C5;
+    --fuad-rule: #E6DFD1;
+    --fuad-field: #968C7C;
+    --fuad-faint: #776E60;
+    --fuad-grabber: #CBC2B1;
+    --fuad-text: #1C1813;
+    --fuad-soft: #3A332A;
+    --fuad-muted: #5C5447;
+    --fuad-accent: #155E75;
+    --fuad-accent-hover: #0E4A5E;
+    --fuad-on-accent: #FFFFFF;
+    --fuad-good: #1F6B33;
+    --fuad-good-tint: rgba(31, 107, 51, 0.12);
+    --fuad-good-wash: rgba(31, 107, 51, 0.08);
+    --fuad-bad: #B3262B;
+    --fuad-bad-tint: rgba(179, 38, 43, 0.12);
+    --fuad-on-bad-tint: #85191D;
+    --fuad-caution: #9A4A00;
+    --fuad-caution-tint: rgba(154, 74, 0, 0.12);
+    --fuad-accent-tint: rgba(21, 94, 117, 0.1);
+    --fuad-bar-off: #CBC2B1;
+    --fuad-raised-edge: #D8CFBE;
+    --fuad-band: #E8E1D3;
+    --fuad-locked: #ABA292;
+    --fuad-scrim: rgba(28, 24, 19, 0.45);
+    --fuad-shadow: rgba(28, 24, 19, 0.18);
+    --fuad-scheme: light;
+}
+
 /* ---- Page ---- */
 
 /* Each member can pick their own MFL skin (the league's is only the default), so these set every
@@ -2204,6 +2355,7 @@ body #fuad-home select {
     border-left: 0;
     border-right: 0;
     border-bottom: 0;
+    border-radius: 0;
     background: transparent;
     color: var(--fuad-text);
     font-size: 15px;

@@ -31,6 +31,9 @@ test("the default is saved as the commissioner's choice of skin", () => {
     assert.equal(night.skin, "-1");
     assert.equal(night.folder, null);
     assert.equal(new Set(LOOKS.map((look) => look.id)).size, LOOKS.length);
+    // the league's own skin (its pages logged out, 27 Oct 2026): a look on it would show for every
+    // member on Commish Choice
+    assert.ok(LOOKS.every((look) => look.folder !== "BlueMesh"));
 });
 
 test("every look's skin is one MFL offers, and its folder is MFL's", () => {
