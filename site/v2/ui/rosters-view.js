@@ -118,14 +118,21 @@ export function tagsPanel(view, year) {
 const teamLink = (id, name) => `<a href="#rosters-teams/${esc(id)}">${esc(name)}</a>`;
 
 export function orderPanel(order, year, {final}) {
-    return `<section class="fuad-panel" aria-labelledby="fuad-order">
-        <h2 class="fuad-panel-heading" id="fuad-order">${year} draft order</h2>
-        ${final ? "" : '<p class="fuad-meta fuad-if">If the season ended today</p>'}
-        <ol class="fuad-rows fuad-order">${order.map((row) => `<li>
+    const list = (rows) => `<ol class="fuad-rows fuad-order">${rows.map((row) => `<li>
             <span class="fuad-seed">${row.pick || ""}</span>
             <span class="fuad-row-text"><span class="fuad-row-title">${teamLink(row.id, row.name)}</span><span class="fuad-meta">${esc(row.why)}</span>
                 ${row.traded.map((line) => `<span class="fuad-caution fuad-traded">${esc(line)}</span>`).join("")}</span>
-        </li>`).join("")}</ol>
+        </li>`).join("")}</ol>`;
+    // the playoff teams' picks aren't numbered until the playoffs are played: they get a group of their own
+    const open = order.findIndex((row) => !row.pick);
+    const picks = (first, last) => first === last ? `Pick ${first}` : `Picks ${first}–${last}`;
+    const groups = open < 0 ? list(order)
+        : `${open ? `<h3 class="fuad-label fuad-subhead">${picks(1, open)} · out of the playoffs</h3>${list(order.slice(0, open))}` : ""}
+        <h3 class="fuad-label fuad-subhead">${picks(open + 1, order.length)} · by playoff finish</h3>${list(order.slice(open))}`;
+    return `<section class="fuad-panel" aria-labelledby="fuad-order">
+        <h2 class="fuad-panel-heading" id="fuad-order">${year} draft order</h2>
+        ${final ? "" : '<p class="fuad-meta fuad-if">If the season ended today</p>'}
+        ${groups}
     </section>`;
 }
 
