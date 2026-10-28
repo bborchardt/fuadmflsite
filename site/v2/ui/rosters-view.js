@@ -132,7 +132,7 @@ export function orderPanel(order, year, {final}) {
 export function boardPanel(board, {year, viewer, before, open}) {
     return `<section class="fuad-panel" aria-labelledby="fuad-board">
         <h2 class="fuad-panel-heading" id="fuad-board">${year} rookie draft</h2>
-        <div class="fuad-rounds">${board.map((round) => `<div class="fuad-round">
+        <div class="fuad-rounds" style="--fuad-picks: ${Math.max(0, ...board.map((round) => round.picks.length))}">${board.map((round) => `<div class="fuad-round">
             <button type="button" class="fuad-round-toggle" aria-expanded="${open(round.round)}" aria-controls="fuad-round-${round.round}"><span>Round ${round.round}</span><span class="fuad-meta" aria-hidden="true">${open(round.round) ? "Hide" : "Show"}</span></button>
             <ul class="fuad-rows fuad-board-picks" id="fuad-round-${round.round}"${open(round.round) ? "" : " hidden"}>${round.picks.map((pick) => `<li class="${pick.team === viewer ? "fuad-row-mine" : ""}">
                 <span class="fuad-meta">${esc(pick.number)}</span>
