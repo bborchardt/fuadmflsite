@@ -106,12 +106,39 @@ export function playerPage(htmls, leagueId) {
     return `player?L=${encodeURIComponent(leagueId)}&P=13593`;
 }
 
-// The repo is public: members' email addresses, phone numbers, private message subjects, MFL's
-// apiKey and the board's per-member token (`auth`, which signs its actions) come out. MFL's own
-// support address stays, as it's on every page; `logo@2x.png` isn't an address.
-export function scrub(html) {
+// each team's owner, from MFL's league export (JSON), for scrub
+export function ownersOf(leagueExport) {
+    const teams = ((((leagueExport || {}).league || {}).franchises || {}).franchise) || [];
+    return (Array.isArray(teams) ? teams : [teams])
+        .filter((team) => team && team.id && team.owner_name && String(team.owner_name).trim())
+        .map((team) => ({id: team.id, name: String(team.owner_name).trim()}));
+}
+
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// An owner's name becomes "Owner 0004": a full name wherever it is, as MFL writes it (an
+// apostrophe or ampersand raw or as an entity), and a one-word name only as an owner, as elsewhere it may be part
+// of a player's name. Longest first, so "Jeff" can't take the start of "Owner 0004".
+export function withoutOwners(text, owners) {
+    let out = text;
+    for (const {id, name} of [...owners].sort((a, b) => b.name.length - a.name.length)) {
+        const pattern = escapeRegExp(name).replace(/&/g, "(?:&|&amp;)").replace(/['\u2019]/g, "(?:'|\u2019|&#0?39;|&apos;)").replace(/ +/g, "(?:\\s|&nbsp;)+");
+        // the name's end isn't followed by more of a word; \b fails after "Jr." or "Zoë"
+        const end = "(?![A-Za-z0-9_\u00C0-\u024F])";
+        const placeholder = `Owner ${id}`;
+        out = /\s/.test(name)
+            ? out.replace(new RegExp(`(^|[^A-Za-z0-9_\u00C0-\u024F])${pattern}${end}`, "g"), `$1${placeholder}`)
+            : out.replace(new RegExp(`(Owner:\\s*|"owner_name"\\s*:\\s*"|owner_name=["'])${pattern}${end}`, "g"), `$1${placeholder}`);
+    }
+    return out;
+}
+
+// The repo is public: members' email addresses, phone numbers, owners' names, private message
+// subjects, MFL's apiKey and the board's per-member token (`auth`, which signs its actions) come out.
+// MFL's own support address stays, as it's on every page; `logo@2x.png` isn't an address.
+export function scrub(html, owners = []) {
     const SECRET = "auth|sid|session|token|apikey";
-    return html
+    return withoutOwners(html, owners)
         .replace(/[A-Za-z0-9._%+-]+(@|%40|&#64;|&#x40;)[A-Za-z0-9.-]+\.[A-Za-z]{2,}/gi, (address, at) => (/(myfantasyleague\.com|\.(png|jpe?g|gif|svg|webp))$/i.test(address) ? address : `owner${at}example.com`))
         .replace(/(apiKey\s*[=:]\s*)(["'])[^"']*\2/gi, "$1$2saved-sample$2")
         .replace(new RegExp(`([?&;](?:${SECRET})=)[^&;#"'\\s]+`, "gi"), "$1saved-sample")

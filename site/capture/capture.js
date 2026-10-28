@@ -55,7 +55,7 @@ function panel() {
 async function capture() {
     // the bookmark asks for this file afresh; the model comes with the same query, so a deploy can't
     // pair this file with an older one from the cache
-    const {contextOf, fixedPages, playerPage, scrub, topicLinks, topicsOn, zip} = await import(`./capture-model.js${new URL(import.meta.url).search}`);
+    const {contextOf, fixedPages, ownersOf, playerPage, scrub, topicLinks, topicsOn, zip} = await import(`./capture-model.js${new URL(import.meta.url).search}`);
     const context = contextOf(window.location, window.franchise_id, window.league_id);
     const view = panel();
     if (!context) {
@@ -65,6 +65,22 @@ async function capture() {
     }
     const base = `${context.origin}/${context.season}/`;
     view.title(`Saving MFL's pages as the ${context.viewer} sees them`);
+    // the owners' names, to take out of every page; a capture that can't read them stops, as its
+    // pages would keep them
+    let owners;
+    try {
+        const response = await fetch(`${base}export?TYPE=league&L=${encodeURIComponent(context.leagueId)}&JSON=1`, {credentials: "include", cache: "no-store"});
+        owners = ownersOf(await response.json());
+    } catch (error) {
+        view.line(`Couldn't read the league's owners (${error}), so nothing was saved. Try again in a minute.`);
+        return;
+    }
+    // a guest isn't shown the owners, nor their names on the pages; anyone logged in is
+    if (!owners.length && context.viewer !== "guest") {
+        view.line("MFL didn't give the league's owners, so nothing was saved. Try again in a minute.");
+        return;
+    }
+    await wait(PAUSE);
     const files = {};
     const manifest = [];
     const htmls = {};
@@ -82,7 +98,7 @@ async function capture() {
             const response = await fetch(url, {credentials: "include", cache: "no-store"});
             const html = await response.text();
             htmls[name] = html;
-            files[`${prefix}${name}.html`] = scrub(html);
+            files[`${prefix}${name}.html`] = scrub(html, owners);
             manifest.push({name, url, served: response.url, status: response.status});
             view.item(`${name} (${response.status}${response.url !== url ? `, from ${response.url.replace(context.origin, "")}` : ""})`, !response.ok);
         } catch (error) {
@@ -110,7 +126,7 @@ async function capture() {
     const filename = `mfl-pages-${context.viewer}-${context.leagueId}.zip`;
     const blob = new Blob([zip(files)], {type: "application/zip"});
     view.title(`Saved ${manifest.length} pages as the ${context.viewer} sees them`);
-    view.line(`${filename}, ${Math.round(blob.size / 1024)} KB. Emails, phone numbers and the apiKey are taken out.`);
+    view.line(`${filename}, ${Math.round(blob.size / 1024)} KB. Emails, phone numbers, owners' names and the apiKey are taken out.`);
     view.button("Save", () => {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
