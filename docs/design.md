@@ -35,6 +35,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   the job's flags can't disagree. The job loads them from the version `RULES_VERSION` names, so a
   new version's `lib/` must keep the exports the job reads.
 - **The job writes only to the `league-data` branch,** because master is protected.
+- **A member's look is their MFL skin** (v2's team sheet, `ui/looks.js`): each look is saved as one of
+  MFL's skins, which MFL keeps with the franchise, so it follows the member to any device, and v2
+  reads it from the page's own stylesheet link, asking MFL nothing and drawing the look before the
+  page shows. The default look is saved as Commish Choice (the league's skin) and shown for any skin
+  no look names. MFL's own pages, v1's included, take the skin too, so each look saves a skin in its
+  colors. Browser storage would keep a look per device; a franchise's notes aren't in any export,
+  and are saved by the form that also holds the team's logo.
 
 ## The daily job
 
@@ -204,5 +211,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   shown since the page loaded.
 - Moves › Trades' "Locked" note shows for the rest of the NFL week once a traded player's game has
   kicked off, after MFL's own lock has lifted: Accept stays on, so MFL takes or refuses it.
+- The commissioner viewing as another team (MFL's Become) is that team to MFL, so a look picked then
+  is saved as that team's skin.
 - A preview or beta whose features fail after starting shows their errors, with its bar there to
   leave. The beta is per browser, isn't in MFL's app, and nothing reports who's using it.

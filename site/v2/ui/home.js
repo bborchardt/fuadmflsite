@@ -290,7 +290,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             heading: "My alerts",
             actions: '<span class="fuad-meta fuad-alert-count"></span>',
             what: "my alerts",
-            key: `fuad.home.alerts.${context.season}.${franchiseId}`,
+            key: `fuad.home.myAlerts.${context.season}.${franchiseId}`,
             rows: 3,
             load: async () => {
                 const built = await league();
@@ -335,7 +335,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 panels.alerts.querySelector(".fuad-alert-count").textContent = alerts.length ? `${alerts.length} to do` : "";
                 body.innerHTML = alerts.length
                     ? alertRows(alerts)
-                    : `<div class="fuad-all-clear"><span class="fuad-mark fuad-tone-lime" aria-hidden="true">${CHECK}</span><span class="fuad-muted">All clear.</span></div>`;
+                    : `<div class="fuad-all-clear"><span class="fuad-mark fuad-tone-accent" aria-hidden="true">${CHECK}</span><span class="fuad-muted">All clear.</span></div>`;
             }
         });
     } else if (loggedIn) {

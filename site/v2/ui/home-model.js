@@ -33,7 +33,7 @@ export const clock = (seconds) => new Date(seconds * 1000).toLocaleTimeString("e
 export const whenText = (seconds) => `${dayText(seconds)}, ${clock(seconds)}`;
 const lastName = (player) => String(player.fullName).split(" ").slice(1).join(" ") || player.fullName;
 
-const tones = {red: "red", orange: "orange", lime: "lime"};
+const tones = {red: "red", orange: "orange", accent: "accent"};
 
 // The season's phase for Home: "before-draft", "before-cut" (draft picks in, before the cut-down
 // date), "preseason" (after it, before week 1's kickoff), "season", or "over".
@@ -291,7 +291,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         const reading = readings.get(add.playerId);
         const due = `${clock(contractDeadline(add))} ${ZONE}`;
         if (reading && reading.state === "read") {
-            push(tones.lime, "Y", `${lastName(player)}: ${plural(reading.years, "year")}`, `Read from the message board; to change it, post again by ${due}`, links.contracts, "Message board");
+            push(tones.accent, "Y", `${lastName(player)}: ${plural(reading.years, "year")}`, `Read from the message board; to change it, post again by ${due}`, links.contracts, "Message board");
         } else if (reading && reading.state === "problem") {
             push(tones.red, "Y", `Couldn’t read ${lastName(player)}’s contract length`, `Post it again by ${due}, like “${lastName(player)}: 2 years”`, links.contracts, "Message board");
         } else {
@@ -300,7 +300,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     }
 
     for (const trade of trades) {
-        push(tones.lime, "⇄", `Trade offer from ${trade.from}`, [trade.summary, trade.expires && `expires ${dayText(trade.expires)}`].filter(Boolean).join(" · "), links.trades, "Trades");
+        push(tones.accent, "⇄", `Trade offer from ${trade.from}`, [trade.summary, trade.expires && `expires ${dayText(trade.expires)}`].filter(Boolean).join(" · "), links.trades, "Trades");
     }
 
     // pending bids that say when they process stand in for the first run

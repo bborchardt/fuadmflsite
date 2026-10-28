@@ -156,7 +156,7 @@ function bidItem(bid, teams, teamHref, {won = false, tag = ""} = {}) {
 function playerBlock(player, teams, teamHref, {isVoided, id}) {
     const count = (player.won ? 1 : 0) + player.bids.length;
     const top = player.won
-        ? bidItem(player.won, teams, teamHref, {won: true, tag: isVoided ? '<span class="fuad-tag fuad-tag-muted">Voided</span>' : '<span class="fuad-tag fuad-tag-lime">Won</span>'})
+        ? bidItem(player.won, teams, teamHref, {won: true, tag: isVoided ? '<span class="fuad-tag fuad-tag-muted">Voided</span>' : '<span class="fuad-tag fuad-tag-accent">Won</span>'})
         : '<li class="fuad-run-none"><span class="fuad-muted">Not awarded</span></li>';
     return `<section class="fuad-panel fuad-run-player">
         <div class="fuad-run-who"><h3>${id ? `<button type="button" class="fuad-name" data-player="${esc(id)}">${esc(displayName(player.name))}</button>` : esc(displayName(player.name))}</h3><span class="fuad-meta">${esc([player.position, player.nfl, plural(count, "bid")].join(" · "))}</span></div>

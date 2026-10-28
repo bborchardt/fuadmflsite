@@ -162,7 +162,7 @@ export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt, teamHref}
                 <h3 class="fuad-label fuad-subhead">Seeds</h3>
                 <ol class="fuad-rows fuad-seeds">${seeds.map((seed) => `<li${seed.team.id === viewer ? ' class="fuad-row-mine"' : ""}>
                     <span class="fuad-seed">${seed.seed}</span>
-                    <span class="fuad-row-text"><span class="fuad-seed-name"><span class="fuad-row-title"><a href="${esc(teamHref(seed.team.id))}">${esc(seed.team.name)}</a></span>${seed.bye ? '<span class="fuad-tag fuad-tag-lime">Bye</span>' : ""}</span></span>
+                    <span class="fuad-row-text"><span class="fuad-seed-name"><span class="fuad-row-title"><a href="${esc(teamHref(seed.team.id))}">${esc(seed.team.name)}</a></span>${seed.bye ? '<span class="fuad-tag fuad-tag-accent">Bye</span>' : ""}</span></span>
                     <span class="fuad-meta fuad-seed-why">${esc(seed.why)}</span>
                 </li>`).join("")}</ol>
             </div>
