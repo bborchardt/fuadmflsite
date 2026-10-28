@@ -149,6 +149,15 @@ export async function mflFetch(url, init) {
     return response;
 }
 
+// A move: sent even while reads are held, and a 429 holds them as one to a read does
+export async function mflSend(url, init) {
+    const response = await fetch(url, init);
+    if (response.status === 429) {
+        storage.set(WAIT_KEY, String(Date.now() + WAIT));
+    }
+    return response;
+}
+
 // how long until MFL may be asked again, in ms
 export function waitLeft() {
     return Math.max(0, (Number(storage.get(WAIT_KEY)) || 0) - Date.now());
