@@ -1,5 +1,5 @@
 // The contract years chore replayed on the league's real 2019–2026 seasons (tests/fixtures/seasons:
-// each season's posts, blind bid comments, adds and end-of-season rosters, owners' names replaced),
+// each season's posts, blind bid comments by period, adds and end-of-season rosters, owners' names replaced),
 // one run each morning after adds, and checked against the years each player ended the season on.
 // The adds it gets wrong or flags are listed: mostly rule defaults the commissioner overrode, posts
 // after the hour, and one-offs. A change that fixes or breaks one fails here, naming the player.
@@ -8,7 +8,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {decideYears, teamPlayers} from "../site/v2/lib/contract-years.js";
-import {contractDeadline, pendingAdds} from "../site/v2/lib/adds.js";
+import {CONTRACT_WINDOW_HOURS, contractDeadline, pendingAdds} from "../site/v2/lib/adds.js";
 
 const SEASONS = {
     2019: {match: 45, differ: ["Edwards, Gus", "Ginn Jr., Ted", "Dissly, Will"], flagged: ["Phillip Dorsett", "Rex Burkhead"]},
@@ -21,11 +21,11 @@ const SEASONS = {
     2026: {match: 20, differ: ["Keenum, Case"], flagged: []}
 };
 
-// the job's morning run, taken as 08:00 UTC; an add in the hour before is still in its window, so waits a day
+// the job's morning run (daily.yml's cron); an add whose window is still open then waits a day
 function runAfter(time) {
     const run = new Date(time * 1000);
-    run.setUTCHours(8, 0, 0, 0);
-    if (run.getTime() / 1000 - time < 3600) {
+    run.setUTCHours(7, 37, 0, 0);
+    if (run.getTime() / 1000 - time < CONTRACT_WINDOW_HOURS * 3600) {
         run.setUTCDate(run.getUTCDate() + 1);
     }
     return run.getTime() / 1000;

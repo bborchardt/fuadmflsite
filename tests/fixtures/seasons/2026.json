@@ -4110,7 +4110,8 @@
    "adds": [
     "Tagovailoa, Tua"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1789012800
   },
   {
    "franchiseId": "0003",
@@ -4120,7 +4121,8 @@
     "Wentz, Carson",
     "Raymond, Kalif"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1789617600
   },
   {
    "franchiseId": "0004",
@@ -4128,7 +4130,8 @@
    "adds": [
     "Freiermuth, Pat"
    ],
-   "comment": "3 years"
+   "comment": "3 years",
+   "period": 1789617600
   },
   {
    "franchiseId": "0007",
@@ -4136,7 +4139,8 @@
    "adds": [
     "Mariota, Marcus"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790222400
   },
   {
    "franchiseId": "0008",
@@ -4144,7 +4148,8 @@
    "adds": [
     "Winston, Jameis"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1790222400
   },
   {
    "franchiseId": "0006",
@@ -4153,7 +4158,8 @@
     "Wilson, Emanuel",
     "Palmer, Joshua"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790222400
   },
   {
    "franchiseId": "0002",
@@ -4161,7 +4167,8 @@
    "adds": [
     "Bateman, Rashod"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790222400
   },
   {
    "franchiseId": "0004",
@@ -4169,7 +4176,8 @@
    "adds": [
     "Bateman, Rashod"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1790222400
   },
   {
    "franchiseId": "0003",
@@ -4178,7 +4186,8 @@
     "Gordon II, Ollie",
     "Keenum, Case"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790827200
   },
   {
    "franchiseId": "0008",
@@ -4186,7 +4195,8 @@
    "adds": [
     "Wright, Jaylen"
    ],
-   "comment": "2yrs"
+   "comment": "2yrs",
+   "period": 1790827200
   },
   {
    "franchiseId": "0001",
@@ -4194,7 +4204,8 @@
    "adds": [
     "Raymond, Kalif"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790827200
   },
   {
    "franchiseId": "0001",
@@ -4202,7 +4213,8 @@
    "adds": [
     "Waller, Darren"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790827200
   },
   {
    "franchiseId": "0007",
@@ -4210,7 +4222,8 @@
    "adds": [
     "Daniels, Jalon"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1790827200
   }
  ]
 }

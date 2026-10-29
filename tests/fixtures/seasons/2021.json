@@ -4694,7 +4694,8 @@
    "adds": [
     "Ahmed, Salvon"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1631160000
   },
   {
    "franchiseId": "0004",
@@ -4703,7 +4704,8 @@
     "Watkins, Sammy",
     "Jones, Daniel"
    ],
-   "comment": "3 years\n1 year"
+   "comment": "3 years\n1 year",
+   "period": 1631764800
   },
   {
    "franchiseId": "0007",
@@ -4711,7 +4713,8 @@
    "adds": [
     "Mills, Davis"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1632974400
   },
   {
    "franchiseId": "0004",
@@ -4719,7 +4722,8 @@
    "adds": [
     "Patterson, Cordarrelle"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1633579200
   },
   {
    "franchiseId": "0003",
@@ -4727,7 +4731,8 @@
    "adds": [
     "Williams, Damien"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1633579200
   },
   {
    "franchiseId": "0008",
@@ -4736,7 +4741,8 @@
     "Williams, Damien",
     "Schultz, Dalton"
    ],
-   "comment": "Williams - 1yr\nSchultz - 2yrs"
+   "comment": "Williams - 1yr\nSchultz - 2yrs",
+   "period": 1633579200
   },
   {
    "franchiseId": "0008",
@@ -4745,7 +4751,8 @@
     "Williams, Damien",
     "Schultz, Dalton"
    ],
-   "comment": "Williams - 1yr\nSchultz - 2yrs"
+   "comment": "Williams - 1yr\nSchultz - 2yrs",
+   "period": 1633579200
   },
   {
    "franchiseId": "0001",
@@ -4754,7 +4761,8 @@
     "Prater, Matt",
     "Gay, Matt"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1633579200
   },
   {
    "franchiseId": "0008",
@@ -4763,7 +4771,8 @@
     "Williams, Darrel",
     "Booker, Devontae"
    ],
-   "comment": "1yr\n1yr"
+   "comment": "1yr\n1yr",
+   "period": 1634184000
   },
   {
    "franchiseId": "0003",
@@ -4771,7 +4780,8 @@
    "adds": [
     "Smith, Geno"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1634184000
   },
   {
    "franchiseId": "0004",
@@ -4779,7 +4789,8 @@
    "adds": [
     "Peoples-Jones, Donovan"
    ],
-   "comment": "5 years"
+   "comment": "5 years",
+   "period": 1634788800
   },
   {
    "franchiseId": "0008",
@@ -4787,7 +4798,8 @@
    "adds": [
     "Collins, Alex"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1634788800
   },
   {
    "franchiseId": "0004",
@@ -4795,7 +4807,8 @@
    "adds": [
     "Folk, Nick"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1635393600
   },
   {
    "franchiseId": "0008",
@@ -4804,7 +4817,8 @@
     "McNichols, Jeremy",
     "Engram, Evan"
    ],
-   "comment": "McNichols - 1yr\nEngram - 2yrs"
+   "comment": "McNichols - 1yr\nEngram - 2yrs",
+   "period": 1635998400
   },
   {
    "franchiseId": "0007",
@@ -4812,7 +4826,8 @@
    "adds": [
     "Ammendola, Matt"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1638421200
   },
   {
    "franchiseId": "0003",
@@ -4820,7 +4835,8 @@
    "adds": [
     "Bryant, Harrison"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1639630800
   },
   {
    "franchiseId": "0008",
@@ -4828,7 +4844,8 @@
    "adds": [
     "Penny, Rashaad"
    ],
-   "comment": "2yrs"
+   "comment": "2yrs",
+   "period": 1639630800
   },
   {
    "franchiseId": "0008",
@@ -4837,7 +4854,8 @@
     "Jackson, Justin",
     "Foreman, D'Onta"
    ],
-   "comment": "1yr\n1yr"
+   "comment": "1yr\n1yr",
+   "period": 1640235600
   }
  ]
 }

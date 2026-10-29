@@ -4728,7 +4728,8 @@
    "adds": [
     "Ebron, Eric"
    ],
-   "comment": "3 years"
+   "comment": "3 years",
+   "period": 1599710400
   },
   {
    "franchiseId": "0002",
@@ -4736,7 +4737,8 @@
    "adds": [
     "Brown, Antonio"
    ],
-   "comment": "5 year contract"
+   "comment": "5 year contract",
+   "period": 1599710400
   },
   {
    "franchiseId": "0004",
@@ -4745,7 +4747,8 @@
     "Valdes-Scantling, Marquez",
     "Gage, Russell"
    ],
-   "comment": "3 years\n5 years"
+   "comment": "3 years\n5 years",
+   "period": 1600315200
   },
   {
    "franchiseId": "0008",
@@ -4753,7 +4756,8 @@
    "adds": [
     "Snell, Benny"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1600315200
   },
   {
    "franchiseId": "0008",
@@ -4761,7 +4765,8 @@
    "adds": [
     "Hines, Nyheim"
    ],
-   "comment": "1 yr"
+   "comment": "1 yr",
+   "period": 1600315200
   },
   {
    "franchiseId": "0010",
@@ -4769,7 +4774,8 @@
    "adds": [
     "Goff, Jared"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1600315200
   },
   {
    "franchiseId": "0007",
@@ -4777,7 +4783,8 @@
    "adds": [
     "Gallman, Wayne"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1600920000
   },
   {
    "franchiseId": "0005",
@@ -4785,7 +4792,8 @@
    "adds": [
     "Schultz, Dalton"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1600920000
   },
   {
    "franchiseId": "0004",
@@ -4793,7 +4801,8 @@
    "adds": [
     "Schultz, Dalton"
    ],
-   "comment": "5 years"
+   "comment": "5 years",
+   "period": 1600920000
   },
   {
    "franchiseId": "0008",
@@ -4801,7 +4810,8 @@
    "adds": [
     "Davis, Mike"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1600920000
   },
   {
    "franchiseId": "0008",
@@ -4809,7 +4819,8 @@
    "adds": [
     "McKinnon, Jerick"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1600920000
   },
   {
    "franchiseId": "0008",
@@ -4817,7 +4828,8 @@
    "adds": [
     "Freeman, Devonta"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1600920000
   },
   {
    "franchiseId": "0009",
@@ -4825,7 +4837,8 @@
    "adds": [
     "Sample, Drew"
    ],
-   "comment": "5 years"
+   "comment": "5 years",
+   "period": 1600920000
   },
   {
    "franchiseId": "0009",
@@ -4833,7 +4846,8 @@
    "adds": [
     "Cole, Keelan"
    ],
-   "comment": "2 years"
+   "comment": "2 years",
+   "period": 1600920000
   },
   {
    "franchiseId": "0008",
@@ -4841,7 +4855,8 @@
    "adds": [
     "Lindsay, Phillip"
    ],
-   "comment": "3yrs"
+   "comment": "3yrs",
+   "period": 1601524800
   },
   {
    "franchiseId": "0008",
@@ -4849,7 +4864,8 @@
    "adds": [
     "Tonyan, Robert"
    ],
-   "comment": "3yr"
+   "comment": "3yr",
+   "period": 1602129600
   },
   {
    "franchiseId": "0004",
@@ -4858,7 +4874,8 @@
     "Tonyan, Robert",
     "Patrick, Tim"
    ],
-   "comment": "5 years\n5 years"
+   "comment": "5 years\n5 years",
+   "period": 1602129600
   },
   {
    "franchiseId": "0008",
@@ -4866,7 +4883,8 @@
    "adds": [
     "Carlson, Daniel"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1602129600
   },
   {
    "franchiseId": "0004",
@@ -4875,7 +4893,8 @@
     "Tonyan, Robert",
     "Patrick, Tim"
    ],
-   "comment": "5 years\n5 years"
+   "comment": "5 years\n5 years",
+   "period": 1602129600
   },
   {
    "franchiseId": "0007",
@@ -4885,7 +4904,8 @@
     "Patterson, Cordarrelle",
     "Renfrow, Hunter"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1602734400
   },
   {
    "franchiseId": "0004",
@@ -4893,7 +4913,8 @@
    "adds": [
     "Fulgham, Travis"
    ],
-   "comment": "5 years"
+   "comment": "5 years",
+   "period": 1602734400
   },
   {
    "franchiseId": "0003",
@@ -4901,7 +4922,8 @@
    "adds": [
     "Fells, Darren"
    ],
-   "comment": "2 years"
+   "comment": "2 years",
+   "period": 1603339200
   },
   {
    "franchiseId": "0004",
@@ -4909,7 +4931,8 @@
    "adds": [
     "Koo, Younghoe"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1603339200
   },
   {
    "franchiseId": "0008",
@@ -4917,7 +4940,8 @@
    "adds": [
     "Edmonds, Chase"
    ],
-   "comment": "2yr"
+   "comment": "2yr",
+   "period": 1603944000
   },
   {
    "franchiseId": "0010",
@@ -4925,7 +4949,8 @@
    "adds": [
     "Succop, Ryan"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1604552400
   },
   {
    "franchiseId": "0005",
@@ -4933,7 +4958,8 @@
    "adds": [
     "Thomas, Logan"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1605157200
   },
   {
    "franchiseId": "0004",
@@ -4941,7 +4967,8 @@
    "adds": [
     "Agholor, Nelson"
    ],
-   "comment": "3 years"
+   "comment": "3 years",
+   "period": 1606366800
   }
  ]
 }

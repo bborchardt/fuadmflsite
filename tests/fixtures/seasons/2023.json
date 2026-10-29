@@ -4610,7 +4610,8 @@
     "Jones, Marvin",
     "Gaskin, Myles"
    ],
-   "comment": "1 year for each"
+   "comment": "1 year for each",
+   "period": 1694059200
   },
   {
    "franchiseId": "0003",
@@ -4625,7 +4626,8 @@
     "Valdes-Scantling, Marquez",
     "Tonyan, Robert"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1694059200
   },
   {
    "franchiseId": "0003",
@@ -4636,7 +4638,8 @@
     "Shaheed, Rashid",
     "Hill, Justice"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1694664000
   },
   {
    "franchiseId": "0004",
@@ -4645,7 +4648,8 @@
     "Ford, Jerome",
     "Dobbs, Joshua"
    ],
-   "comment": "2 years\n1 year"
+   "comment": "2 years\n1 year",
+   "period": 1695268800
   },
   {
    "franchiseId": "0006",
@@ -4653,7 +4657,8 @@
    "adds": [
     "Atwell, Tutu"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1695268800
   },
   {
    "franchiseId": "0008",
@@ -4663,7 +4668,8 @@
     "Ford, Jerome",
     "Breida, Matt"
    ],
-   "comment": "1yr\n1yr\n1yr"
+   "comment": "1yr\n1yr\n1yr",
+   "period": 1695268800
   },
   {
    "franchiseId": "0003",
@@ -4671,7 +4677,8 @@
    "adds": [
     "Dotson, Elijah"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1695268800
   },
   {
    "franchiseId": "0002",
@@ -4679,7 +4686,8 @@
    "adds": [
     "Shaheed, Rashid"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1695873600
   },
   {
    "franchiseId": "0008",
@@ -4687,7 +4695,8 @@
    "adds": [
     "Shaheed, Rashid"
    ],
-   "comment": "2yr"
+   "comment": "2yr",
+   "period": 1695873600
   },
   {
    "franchiseId": "0004",
@@ -4695,7 +4704,8 @@
    "adds": [
     "Dobbs, Joshua"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1695873600
   },
   {
    "franchiseId": "0004",
@@ -4704,7 +4714,8 @@
     "Ferguson, Jake",
     "McLaughlin, Jaleel"
    ],
-   "comment": "5 years\n5 years"
+   "comment": "5 years\n5 years",
+   "period": 1696478400
   },
   {
    "franchiseId": "0008",
@@ -4712,7 +4723,8 @@
    "adds": [
     "Mason, Jordan"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1697688000
   },
   {
    "franchiseId": "0006",
@@ -4720,7 +4732,8 @@
    "adds": [
     "Hopkins, Dustin"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1698292800
   },
   {
    "franchiseId": "0004",
@@ -4728,7 +4741,8 @@
    "adds": [
     "Wilson, Zach"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1698897600
   },
   {
    "franchiseId": "0007",
@@ -4736,7 +4750,8 @@
    "adds": [
     "Heinicke, Taylor"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1699506000
   },
   {
    "franchiseId": "0008",
@@ -4745,7 +4760,8 @@
     "Mitchell, Keaton",
     "Guyton, Jalen"
    ],
-   "comment": "5yrs\n1yr"
+   "comment": "5yrs\n1yr",
+   "period": 1700110800
   },
   {
    "franchiseId": "0008",
@@ -4753,7 +4769,8 @@
    "adds": [
     "Flacco, Joe"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1703134800
   }
  ]
 }

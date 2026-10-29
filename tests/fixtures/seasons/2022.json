@@ -4541,7 +4541,8 @@
    "adds": [
     "Wilson, Jeffery"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1663214400
   },
   {
    "franchiseId": "0008",
@@ -4551,7 +4552,8 @@
     "Hill, Taysom",
     "Everett, Gerald"
    ],
-   "comment": "1yr\n1yr\n1yr"
+   "comment": "1yr\n1yr\n1yr",
+   "period": 1663214400
   },
   {
    "franchiseId": "0002",
@@ -4559,7 +4561,8 @@
    "adds": [
     "Samuel, Curtis"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1663214400
   },
   {
    "franchiseId": "0002",
@@ -4567,7 +4570,8 @@
    "adds": [
     "Wentz, Carson"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1663214400
   },
   {
    "franchiseId": "0008",
@@ -4577,7 +4581,8 @@
     "Hill, Taysom",
     "Everett, Gerald"
    ],
-   "comment": "1yr\n1yr\n1yr"
+   "comment": "1yr\n1yr\n1yr",
+   "period": 1663214400
   },
   {
    "franchiseId": "0006",
@@ -4585,7 +4590,8 @@
    "adds": [
     "Duvernay, Devin"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1663819200
   },
   {
    "franchiseId": "0004",
@@ -4593,7 +4599,8 @@
    "adds": [
     "Jones, Zay"
    ],
-   "comment": "2 years"
+   "comment": "2 years",
+   "period": 1664424000
   },
   {
    "franchiseId": "0008",
@@ -4601,7 +4608,8 @@
    "adds": [
     "Williams, Jamaal"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1664424000
   },
   {
    "franchiseId": "0002",
@@ -4609,7 +4617,8 @@
    "adds": [
     "Davis, Corey"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1665028800
   },
   {
    "franchiseId": "0002",
@@ -4617,7 +4626,8 @@
    "adds": [
     "Davis, Corey"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1665633600
   },
   {
    "franchiseId": "0008",
@@ -4625,7 +4635,8 @@
    "adds": [
     "Beckham, Odell"
    ],
-   "comment": "3yrs"
+   "comment": "3yrs",
+   "period": 1665633600
   },
   {
    "franchiseId": "0007",
@@ -4633,7 +4644,8 @@
    "adds": [
     "Thompson, Skylar"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1666238400
   },
   {
    "franchiseId": "0004",
@@ -4641,7 +4653,8 @@
    "adds": [
     "Reynolds, Josh"
    ],
-   "comment": "3 years"
+   "comment": "3 years",
+   "period": 1666238400
   },
   {
    "franchiseId": "0003",
@@ -4649,7 +4662,8 @@
    "adds": [
     "Maher, Brett"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1666238400
   },
   {
    "franchiseId": "0003",
@@ -4657,7 +4671,8 @@
    "adds": [
     "Myers, Jason"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1666238400
   },
   {
    "franchiseId": "0008",
@@ -4666,7 +4681,8 @@
     "Patterson, Cordarrelle",
     "Foreman, D'Onta"
    ],
-   "comment": "1 yr\n1yr"
+   "comment": "1 yr\n1yr",
+   "period": 1667448000
   },
   {
    "franchiseId": "0004",
@@ -4674,7 +4690,8 @@
    "adds": [
     "Patterson, Cordarrelle"
    ],
-   "comment": "2 years"
+   "comment": "2 years",
+   "period": 1667448000
   },
   {
    "franchiseId": "0003",
@@ -4682,7 +4699,8 @@
    "adds": [
     "Koo, Younghoe"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1667448000
   },
   {
    "franchiseId": "0004",
@@ -4690,7 +4708,8 @@
    "adds": [
     "Gano, Graham"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1668056400
   },
   {
    "franchiseId": "0008",
@@ -4698,7 +4717,8 @@
    "adds": [
     "Waller, Darren"
    ],
-   "comment": "3 yrs"
+   "comment": "3 yrs",
+   "period": 1668661200
   },
   {
    "franchiseId": "0008",
@@ -4706,7 +4726,8 @@
    "adds": [
     "Bass, Tyler"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1669266000
   }
  ]
 }

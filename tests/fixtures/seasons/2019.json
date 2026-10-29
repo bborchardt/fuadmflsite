@@ -4854,7 +4854,8 @@
     "Sternberger, Jace",
     "Williams, Jamaal"
    ],
-   "comment": "5 years\n1 year"
+   "comment": "5 years\n1 year",
+   "period": 1567656000
   },
   {
    "franchiseId": "0009",
@@ -4863,7 +4864,8 @@
     "Sternberger, Jace",
     "Williams, Jamaal"
    ],
-   "comment": "5 years\n1 year"
+   "comment": "5 years\n1 year",
+   "period": 1567656000
   },
   {
    "franchiseId": "0008",
@@ -4871,7 +4873,8 @@
    "adds": [
     "Warring, Kahale"
    ],
-   "comment": "5yr"
+   "comment": "5yr",
+   "period": 1567656000
   },
   {
    "franchiseId": "0005",
@@ -4879,7 +4882,8 @@
    "adds": [
     "Hauschka, Steven"
    ],
-   "comment": "1 year\n1 year"
+   "comment": "1 year\n1 year",
+   "period": 1567656000
   },
   {
    "franchiseId": "0005",
@@ -4887,7 +4891,8 @@
    "adds": [
     "Dalton, Andy"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1567656000
   },
   {
    "franchiseId": "0004",
@@ -4895,7 +4900,8 @@
    "adds": [
     "Bernard, Giovani"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1567656000
   },
   {
    "franchiseId": "0001",
@@ -4903,7 +4909,8 @@
    "adds": [
     "Brown, Malcolm"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1568260800
   },
   {
    "franchiseId": "0009",
@@ -4913,7 +4920,8 @@
     "Crowder, Jamison",
     "Sternberger, Jace"
    ],
-   "comment": "1 year\n1 year\n5 years"
+   "comment": "1 year\n1 year\n5 years",
+   "period": 1568260800
   },
   {
    "franchiseId": "0007",
@@ -4922,7 +4930,8 @@
     "Brown, Malcolm",
     "Crowder, Jamison"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1568260800
   },
   {
    "franchiseId": "0001",
@@ -4930,7 +4939,8 @@
    "adds": [
     "Crowder, Jamison"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1568260800
   },
   {
    "franchiseId": "0009",
@@ -4940,7 +4950,8 @@
     "Crowder, Jamison",
     "Sternberger, Jace"
    ],
-   "comment": "1 year\n1 year\n5 years"
+   "comment": "1 year\n1 year\n5 years",
+   "period": 1568260800
   },
   {
    "franchiseId": "0007",
@@ -4949,7 +4960,8 @@
     "Brown, Malcolm",
     "Crowder, Jamison"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1568260800
   },
   {
    "franchiseId": "0009",
@@ -4959,7 +4971,8 @@
     "Crowder, Jamison",
     "Sternberger, Jace"
    ],
-   "comment": "1 year\n1 year\n5 years"
+   "comment": "1 year\n1 year\n5 years",
+   "period": 1568260800
   },
   {
    "franchiseId": "0001",
@@ -4968,7 +4981,8 @@
     "Robinson, Demarcus",
     "Mostert, Raheem"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1568865600
   },
   {
    "franchiseId": "0007",
@@ -4976,7 +4990,8 @@
    "adds": [
     "Robinson, Demarcus"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1568865600
   },
   {
    "franchiseId": "0006",
@@ -4984,7 +4999,8 @@
    "adds": [
     "Flacco, Joe"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1568865600
   },
   {
    "franchiseId": "0008",
@@ -4992,7 +5008,8 @@
    "adds": [
     "Rudolph, Mason"
    ],
-   "comment": "5"
+   "comment": "5",
+   "period": 1568865600
   },
   {
    "franchiseId": "0008",
@@ -5000,7 +5017,8 @@
    "adds": [
     "Gallman, Wayne"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1569470400
   },
   {
    "franchiseId": "0006",
@@ -5008,7 +5026,8 @@
    "adds": [
     "Gore, Frank"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1569470400
   },
   {
    "franchiseId": "0004",
@@ -5017,7 +5036,8 @@
     "Akins, Jordan",
     "Richardson, Paul"
    ],
-   "comment": "3 years\n2 years"
+   "comment": "3 years\n2 years",
+   "period": 1569470400
   },
   {
    "franchiseId": "0010",
@@ -5025,7 +5045,8 @@
    "adds": [
     "Slye, Joey"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1570075200
   },
   {
    "franchiseId": "0006",
@@ -5033,7 +5054,8 @@
    "adds": [
     "Witten, Jason"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1570680000
   },
   {
    "franchiseId": "0007",
@@ -5041,7 +5063,8 @@
    "adds": [
     "Minshew, Gardner"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1570680000
   },
   {
    "franchiseId": "0007",
@@ -5049,7 +5072,8 @@
    "adds": [
     "Williams, Duke"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1570680000
   },
   {
    "franchiseId": "0006",
@@ -5057,7 +5081,8 @@
    "adds": [
     "Pascal, Zach"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1571284800
   },
   {
    "franchiseId": "0008",
@@ -5065,7 +5090,8 @@
    "adds": [
     "Johnson, Ty"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1571889600
   },
   {
    "franchiseId": "0001",
@@ -5073,7 +5099,8 @@
    "adds": [
     "Johnson, Ty"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1571889600
   },
   {
    "franchiseId": "0001",
@@ -5082,7 +5109,8 @@
     "Tannehill, Ryan",
     "Bridgewater, Teddy"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1571889600
   },
   {
    "franchiseId": "0004",
@@ -5090,7 +5118,8 @@
    "adds": [
     "Lambo, Josh"
    ],
-   "comment": "1 year"
+   "comment": "1 year",
+   "period": 1571889600
   },
   {
    "franchiseId": "0006",
@@ -5098,7 +5127,8 @@
    "adds": [
     "Fells, Darren"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1572494400
   },
   {
    "franchiseId": "0004",
@@ -5106,7 +5136,8 @@
    "adds": [
     "Fells, Darren"
    ],
-   "comment": "2 Years"
+   "comment": "2 Years",
+   "period": 1572494400
   },
   {
    "franchiseId": "0007",
@@ -5115,7 +5146,8 @@
     "Smith, Jonnu",
     "Mostert, Raheem"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1572494400
   },
   {
    "franchiseId": "0007",
@@ -5123,7 +5155,8 @@
    "adds": [
     "Lazard, Allen"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1572494400
   },
   {
    "franchiseId": "0008",
@@ -5131,7 +5164,8 @@
    "adds": [
     "Prater, Matt"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1572494400
   },
   {
    "franchiseId": "0008",
@@ -5139,7 +5173,8 @@
    "adds": [
     "Boswell, Chris"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1572494400
   },
   {
    "franchiseId": "0002",
@@ -5147,7 +5182,8 @@
    "adds": [
     "Gonzalez, Zane"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1572494400
   },
   {
    "franchiseId": "0009",
@@ -5156,7 +5192,8 @@
     "Hill, Brian",
     "Washington, James"
    ],
-   "comment": "1 year\n2 years"
+   "comment": "1 year\n2 years",
+   "period": 1573707600
   },
   {
    "franchiseId": "0006",
@@ -5164,7 +5201,8 @@
    "adds": [
     "Boswell, Chris"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1573707600
   },
   {
    "franchiseId": "0008",
@@ -5172,7 +5210,8 @@
    "adds": [
     "Gostkowski, Stephen"
    ],
-   "comment": "1yr\n1yr"
+   "comment": "1yr\n1yr",
+   "period": 1574917200
   },
   {
    "franchiseId": "0001",
@@ -5180,7 +5219,8 @@
    "adds": [
     "Badgley, Mike"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1574917200
   },
   {
    "franchiseId": "0008",
@@ -5188,7 +5228,8 @@
    "adds": [
     "Gronkowski, Rob"
    ],
-   "comment": "2yrs"
+   "comment": "2yrs",
+   "period": 1575522000
   },
   {
    "franchiseId": "0001",
@@ -5196,7 +5237,8 @@
    "adds": [
     "Mostert, Raheem"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1576126800
   },
   {
    "franchiseId": "0008",
@@ -5205,7 +5247,8 @@
     "Mostert, Raheem",
     "Higbee, Tyler"
    ],
-   "comment": "1yr\n1yr"
+   "comment": "1yr\n1yr",
+   "period": 1576126800
   },
   {
    "franchiseId": "0008",
@@ -5214,7 +5257,8 @@
     "Mostert, Raheem",
     "Higbee, Tyler"
    ],
-   "comment": "1yr\n1yr"
+   "comment": "1yr\n1yr",
+   "period": 1576126800
   },
   {
    "franchiseId": "0001",
@@ -5222,7 +5266,8 @@
    "adds": [
     "Washington, DeAndre"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1576126800
   },
   {
    "franchiseId": "0010",
@@ -5230,7 +5275,8 @@
    "adds": [
     "Ford, Isaiah"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1576126800
   },
   {
    "franchiseId": "0001",
@@ -5239,7 +5285,8 @@
     "Perriman, Breshad",
     "Boone, Mike"
    ],
-   "comment": ""
+   "comment": "",
+   "period": 1576731600
   },
   {
    "franchiseId": "0008",
@@ -5247,7 +5294,8 @@
    "adds": [
     "Perriman, Breshad"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1576731600
   },
   {
    "franchiseId": "0008",
@@ -5255,7 +5303,8 @@
    "adds": [
     "Prater, Matt"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1576731600
   },
   {
    "franchiseId": "0008",
@@ -5263,7 +5312,8 @@
    "adds": [
     "Love, Bryce"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1576731600
   },
   {
    "franchiseId": "0008",
@@ -5271,7 +5321,8 @@
    "adds": [
     "Williams, Damien"
    ],
-   "comment": "1yr"
+   "comment": "1yr",
+   "period": 1576731600
   }
  ]
 }
