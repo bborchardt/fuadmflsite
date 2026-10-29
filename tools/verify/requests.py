@@ -6,9 +6,11 @@
 MFL throttles by machine and doesn't say how much, so each request v2 adds costs every member. In one
 browser, as a member moves through the site, each of v2's views is opened in turn, first with nothing
 stored and then again (what v2 keeps in the browser answering instead), on --base (a git ref) and on
-the working copy. What each step asks MFL for (exports, feeds and pages, not MFL's own scripts,
-styles or images, nor the page the member opened) is counted, and a step that asks for more, or for
-something it didn't, fails the run. MFL's answers are screens.py's saved clone samples.
+the working copy. What each step asks MFL for (exports, feeds and pages; not MFL's own scripts,
+styles or images, the page the member opened, nor MFL's page polling its chat and visitors) is
+counted, and a step that asks for more, or for something it didn't, fails the run. The clock is
+fixed, so the returning visit is one moments later: what v2 keeps answers it, however long it keeps
+it. MFL's answers are screens.py's saved clone samples.
 """
 import argparse
 import importlib.util
@@ -45,16 +47,20 @@ STEPS = [
     ("Moves › Trades", f"/2026/options?L={L}&O=05"),
 ]
 VISITS = ["first visit", "returning visit"]
+# what MFL's own page polls, with XMLHttpRequest, every few seconds; v2 reads these with fetch
+MFL_POLLS = ("_chat.xml", "_visitors.xml")
 
 
 def label(url):
     query = parse_qs(url.query)
+    # another host or season than the usual, named
+    where = ("api " if url.netloc.startswith("api.") else "") + next((f"{year} " for year in [url.path[1:5]] if year.isdigit() and year != "2026"), "")
     if url.path.endswith("/export"):
         extra = ",".join(f"{key}={value[0]}" for key, value in sorted(query.items()) if key not in ("TYPE", "L", "JSON"))
-        return f"export {query.get('TYPE', ['?'])[0]}{f' ({extra})' if extra else ''}"
+        return f"{where}export {query.get('TYPE', ['?'])[0]}{f' ({extra})' if extra else ''}"
     if "/fflnetdynamic" in url.path:
-        return "feed " + url.path.rsplit("/", 1)[1]
-    return "page " + url.path.rsplit("/", 1)[1] + (f" O={query['O'][0]}" if "O" in query else "")
+        return f"{where}feed " + url.path.rsplit("/", 1)[1]
+    return f"{where}page " + url.path.rsplit("/", 1)[1] + (f" O={query['O'][0]}" if "O" in query else "")
 
 
 class Counted(harness.Mfl):
@@ -68,7 +74,8 @@ class Counted(harness.Mfl):
         request = route.request
         url = urlparse(request.url)
         if (url.netloc.endswith("myfantasyleague.com") and request.resource_type != "document"
-                and not url.path.endswith((".js", ".css", ".gif", ".png", ".jpg", ".svg", ".ico", ".woff", ".woff2"))):
+                and not url.path.endswith((".js", ".css", ".gif", ".png", ".jpg", ".svg", ".ico", ".woff", ".woff2"))
+                and not (request.resource_type == "xhr" and url.path.endswith(MFL_POLLS))):
             self.asked.append(label(url))
         return super().handle(route)
 
@@ -96,7 +103,7 @@ def walk(ref):
         context.route("**/*", mfl.handle)
         page = context.new_page()
         for visit in VISITS:
-            for name, target in STEPS:
+            for step, (name, target) in enumerate(STEPS):
                 start = len(mfl.asked)
                 if target.startswith("#"):
                     page.evaluate(f"window.location.hash = {target!r}")
@@ -105,7 +112,9 @@ def walk(ref):
                 harness.settle(page)
                 # and what it asks for after drawing (a saved copy shown, then refreshed) counts here
                 # too, not against the next step
-                quiet(page, mfl)
+                # longer before a page is left (or the walk ends), when a late request would be lost
+                leaving = not STEPS[(step + 1) % len(STEPS)][1].startswith("#")
+                quiet(page, mfl, still=2.5 if leaving else 1.0)
                 found[f"{visit}: {name}"] = Counter(mfl.asked[start:])
         browser.close()
     return ref, found
