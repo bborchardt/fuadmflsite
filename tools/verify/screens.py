@@ -20,9 +20,12 @@ record   writes one version's record, from the working copy or --ref.
 It sees HTML and moves, not CSS: a style change needs its own check. The site menu, team sheet and
 header (#fuad-frame) are in the HTML but their controls aren't used. MFL's answer to a move is the
 saved page unchanged, so moves end on their unconfirmed path; the *-done screens plant the line a
-successful move leaves instead.
+successful move leaves instead. On the drop-* and ir-* screens MFL keeps the roster their posts
+change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or not, MFL refuses it
+(or, on IR, makes the moves but refuses the drop), or (IR) the rosters export lags it.
 """
 import argparse
+import copy
 import difflib
 import json
 import os
@@ -69,6 +72,10 @@ SCREENS = {
     "drop-done": (f"/2026/options?L={LEAGUE}&O=257", {"flash": ("fuad.dropFlash", {"done": "Tyler Higbee dropped.", "error": "Couldn’t drop: a test error."})}),
     "ir-done": (f"/2026/options?L={LEAGUE}&O=18", {"flash": ("fuad.irFlash", {"done": "Jalen Hurts moved to IR.", "error": "Couldn’t save: a test error."})}),
     "trades-done": (f"/2026/options?L={LEAGUE}&O=05", {"now": BEFORE_DEADLINE, "flash": ("fuad.tradesFlash", {"done": "Offer sent.", "error": "Couldn’t send: a test error.", "note": "A test note."})}),
+    # MFL keeping the roster a move changes (Mfl's "moves")
+    **{f"{move}-{how}": (f"/2026/options?L={LEAGUE}&O={option}", {"moves": how})
+       for move, option in [("drop", "257"), ("ir", "18")] for how in ["lands", "fails", "fails-made", "refuses"]},
+    **{f"ir-{how}": (f"/2026/options?L={LEAGUE}&O=18", {"moves": how}) for how in ["lags", "refuses-drop"]},
     "lineup": (f"/2026/lineup?L={LEAGUE}", {}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
@@ -92,8 +99,11 @@ SEEDS = {
     "trades": [["ask", "withdraw"]],
     "trades-offer": [["answer"], ["answer", "comment", "send-answer"], [("answer", "reject", 0), "send-answer"],
                      [("answer", "counter", 0), "comment", "send-answer"]],
+    **{f"drop-{how}": [["toggle", "drop"]] for how in ["lands", "fails", "fails-made", "refuses"]},
+    # a drop is offered only once a player is activated
+    **{f"ir-{how}": [["toIR", "save"], ["activate", "drop", "save"]] for how in ["lands", "fails", "fails-made", "lags", "refuses", "refuses-drop"]},
     # a box ticked and unticked again, which no first-of-each-kind chain does
-    "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["toIR", "drop", "save"],
+    "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["activate", "drop", "save"],
            [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
 }
 
@@ -191,13 +201,86 @@ def sample(name):
     return (SAMPLES / name).read_text()
 
 
+TEAM = "0001"
+REFUSED = '<html><body><div class="pagebody"><span class="warning">Roster moves are locked for this team.</span></div></body></html>'
+ROW = re.compile(r'<tr class="(?:odd|even)tablerow">.*?</tr>', re.S)
+
+
 class Mfl:
-    """Answers the page's requests from the saved samples, and keeps what it posts"""
+    """Answers the page's requests from the saved samples, and keeps what it posts. With swaps["moves"],
+    Drop's and IR's posts change the roster that the rosters export and their pages then show, as MFL
+    does: "lands"; "fails" (MFL's answer an error, nothing changed); "fails-made" (an error, the move
+    made); "refuses" (a page with MFL's reason, nothing changed); "refuses-drop" (that page, the moves
+    made but not the drop); "lags" (made, MFL's answer not the IR page, and the first rosters read after
+    it still shows the roster from before)"""
 
     def __init__(self, site, swaps):
         self.site = site
         self.swaps = swaps
         self.posts = []
+        self.moves = swaps.get("moves")
+        self.rosters = json.loads(sample("rosters.json")) if self.moves else None
+        self.stale = None
+
+    def team(self, rosters=None):
+        return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
+
+    def make(self, route, path, fields):
+        """MFL's answer to Drop's or IR's post, the roster changed as the move says"""
+        before = copy.deepcopy(self.rosters)
+        if self.moves not in ("fails", "refuses"):
+            team = self.team()
+            for player in team["player"]:
+                if player["id"] in fields.get(f"deactivate{TEAM}", []):
+                    player["status"] = "INJURED_RESERVE"
+                if player["id"] in fields.get(f"activate{TEAM}", []):
+                    player["status"] = "ROSTER"
+            if self.moves != "refuses-drop":
+                gone = set(fields.get("drop_pid", []) + fields.get(f"drop{TEAM}", []))
+                team["player"] = [player for player in team["player"] if player["id"] not in gone]
+        if self.moves in ("fails", "fails-made"):
+            return route.fulfill(status=500, body="")
+        if self.moves in ("refuses", "refuses-drop"):
+            return route.fulfill(content_type="text/html", body=REFUSED)
+        if self.moves == "lags":
+            # an answer that isn't the IR page, so v2 reads the rosters export, which still has it as it was
+            self.stale = before
+            return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
+        return route.fulfill(content_type="text/html", body=self.ir_page() if path.endswith("/ir") else self.drop_page())
+
+    def drop_page(self):
+        """MFL's Drop Players page as the roster now stands: a dropped player's entry gone"""
+        html = sample("drop-O257.html")
+        kept = {player["id"] for player in self.team()["player"]}
+        html = re.sub(r'\s*pdb_picker\[\d+\] = new Player2 \("(\d+)",[^\n]*', lambda m: m.group(0) if m.group(1) in kept else "", html)
+        counter = iter(range(1000))
+        return re.sub(r"pdb_picker\[\d+\]( = new Player2)", lambda m: f"pdb_picker[{next(counter)}]{m.group(1)}", html)
+
+    def ir_page(self):
+        """MFL's Injured Reserve page as the roster now stands: a player moved to IR under Activate, one
+        activated under Deactivate, a dropped one gone"""
+        html = sample("ir-O18.html")
+        statuses = {player["id"]: player["status"] for player in self.team()["player"]}
+        head, rest = html.split("Select Players To Activate", 1)
+        form_at = head.index('name="FRANCHISE_ID"')
+        pre, head = head[:form_at], head[form_at:]
+        player = lambda row: re.search(r"launch_player_modal\('\d+','(\d+)'\)", row)
+        active_rows = {player(row).group(1): row for row in ROW.findall(head) if player(row)}
+        form_end = rest.index("</form>")
+        rest, post = rest[:form_end], rest[form_end:]
+        ir_rows = {player(row).group(1): row for row in ROW.findall(rest) if player(row)}
+        link = lambda row: re.search(r"<td><a .*?</a>[^<]*(?:<span[^>]*>[^<]*</span>\)?)?", row).group(0)
+        as_ir = lambda row, id_: (f'<tr class="oddtablerow"><td class="inputfield"><input type="checkbox" name="activate{TEAM}" value="{id_}"/></td>'
+                                  f'<td class="inputfield dropplayer"><input type="checkbox" name="drop{TEAM}" value="{id_}"/></td>{link(row)}</tr>')
+        as_active = lambda row, id_: (f'<tr class="oddtablerow"><td class="inputfield"><span class="warning">Can not be deactivated</span></td>'
+                                      f'<td class="inputfield dropplayer"><input type="checkbox" name="drop{TEAM}" value="{id_}"/></td>{link(row)}<td align="center">No</td></tr>')
+        new_active = [row for id_, row in active_rows.items() if statuses.get(id_) == "ROSTER"] + [as_active(row, id_) for id_, row in ir_rows.items() if statuses.get(id_) == "ROSTER"]
+        new_ir = [row for id_, row in ir_rows.items() if statuses.get(id_) == "INJURED_RESERVE"] + [as_ir(row, id_) for id_, row in active_rows.items() if statuses.get(id_) == "INJURED_RESERVE"]
+
+        def swap(part, rows):
+            found = ROW.findall(part)
+            return part[:part.index(found[0])] + "\n".join(rows) + part[part.rindex(found[-1]) + len(found[-1]):]
+        return pre + swap(head, new_active) + "Select Players To Activate" + swap(rest, new_ir) + post
 
     def page_for(self, path, query):
         option = query.get("O", [""])[0]
@@ -233,6 +316,9 @@ class Mfl:
         week = query.get("W", [""])[0]
         if kind in self.swaps:
             return sample(self.swaps[kind])
+        if kind == "rosters" and self.moves:
+            stale, self.stale = self.stale, None
+            return json.dumps(stale or self.rosters)
         if kind == "weeklyResults":
             name = "weeklyResults-YTD.json" if week == "YTD" else "weeklyResults-W5.json"
         elif kind == "playerScores":
@@ -264,6 +350,8 @@ class Mfl:
             body = request.post_data or url.query
             fields = sorted(parse_qs(body, keep_blank_values=True).items()) if "=" in body else body
             self.posts.append({"method": request.method, "url": f"{url.path}?{url.query}" if url.query else url.path, "body": fields})
+            if self.moves and request.method == "POST" and url.path.endswith(("/add_drop", "/ir")):
+                return self.make(route, url.path, parse_qs(body, keep_blank_values=True))
             if url.path.endswith("/import"):
                 return route.fulfill(content_type="text/xml", body="<status>OK</status>")
             name = self.page_for(url.path, query)
@@ -277,6 +365,8 @@ class Mfl:
             if name.endswith(".xml"):
                 return route.fulfill(content_type="text/xml", body="<messages></messages>")
             return route.fulfill(status=404, body="")
+        if self.moves and url.path.endswith("/options") and query.get("O") in (["257"], ["18"]):
+            return route.fulfill(content_type="text/html", body=self.drop_page() if query["O"] == ["257"] else self.ir_page())
         name = self.page_for(url.path, query)
         if name and (SAMPLES / name).exists():
             return route.fulfill(content_type="text/html", body=sample(name))
