@@ -112,7 +112,8 @@ SEEDS = {
            [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
 }
 # MFL keeping the pending trades and rosters that Trades' moves change: each move on the plain
-# screens, landing, failing (made or not) or refused; an accepted offer already gone; a counter sent
+# screens, landing, failing (made or not) or refused; an accepted offer already gone; a withdrawn one
+# accepted first; a counter sent
 TRADE_SCREENS = ["trades", "trades-offer", "propose"]
 for _name in TRADE_SCREENS:
     for _how in ["lands", "fails", "fails-made", "refuses", "lands-unread"]:
@@ -120,6 +121,8 @@ for _name in TRADE_SCREENS:
         SEEDS[f"{_name}-{_how}"] = SEEDS[_name]
 SCREENS["trades-offer-gone"] = (SCREENS["trades-offer"][0], {**SCREENS["trades-offer"][1], "moves": "gone"})
 SEEDS["trades-offer-gone"] = [["answer", "send-answer"]]
+SCREENS["trades-taken"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves": "taken"})
+SEEDS["trades-taken"] = SEEDS["trades"]
 for _how in ["lands", "fails", "fails-made", "refuses", "then-fails"]:
     SCREENS[f"counter-{_how}"] = (SCREENS["propose"][0] + "#counter-1003", {**SCREENS["trades-offer"][1], "moves": _how})
     SEEDS[f"counter-{_how}"] = [["send"], ["next", "next", "send"]]
@@ -235,7 +238,8 @@ class Mfl:
     "-noteam" (each rosters read v2 makes to confirm it leaves the team out); "offline" (the post and
     rosters reads don't reach MFL). Trades' moves too: "lands", "fails", "fails-made", "refuses";
     "gone" (an accepted offer removed with no players moved); "then-fails" (the first move lands, those
-    after it fail); "lands-unread" (made, MFL's answer its Trades page, the pending trades unread after)"""
+    after it fail); "lands-unread" (made, MFL's answer its Trades page, the pending trades unread after);
+    "taken" (an offer withdrawn, but the other team accepted it first)"""
 
     def __init__(self, site, swaps):
         self.site = site
@@ -313,7 +317,7 @@ class Mfl:
                 trade = next((trade for trade in self.trades if trade["trade_id"] == field("TRADE_ID")), None)
                 if trade:
                     self.trades.remove(trade)
-                if trade and field("ACTION") == "accept" and how != "gone":
+                if trade and (field("ACTION") == "accept" and how != "gone" or how == "taken"):
                     teams = {team["id"]: team for team in self.rosters["rosters"]["franchise"]}
                     for giver, taker, listed in [(trade["offeringteam"], trade["offeredto"], trade["will_give_up"]),
                                                  (trade["offeredto"], trade["offeringteam"], trade["will_receive"])]:
