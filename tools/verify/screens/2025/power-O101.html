@@ -1,0 +1,443 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Fantasy Football: Fuad Reveiz Fan Club Dynasty League Power Rank</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"  />
+<meta name="keywords" content="Power Rank, fantasy football, keeper fantasy football league, dynasty fantasy football league, salary cap fantasy football league, IDP fantasy football league, MyFantasyLeague, MFL, ffl, league management"  />
+<meta name="description" content="The most customizable way to run your fantasy football league on the web today, MyFantasyLeague.com was voted 'Best Fantasy Commissioner Product' by the Fantasy Sports Trade Association, and has won several additional significant industry awards.  Our 32 years of experience means we do fantasy football right.  If you're ready to move beyond basic league settings, and onto fantasy football how the hard-core players play it, try MyFantasyLeague.com: Beyond League Management"  />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"  />
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WZDGQ9CBF2"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-WZDGQ9CBF2');
+</script>
+<meta name="viewport" content="initial-scale=1.0, width=device-width" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700|Roboto+Condensed:400,700|Roboto:400,400i,700" rel="stylesheet">
+<link rel="stylesheet" id="default" href="https://www44.myfantasyleague.com/skins17/MFLBaseCSS.css" type="text/css"  />
+<link rel="stylesheet" id="skin" href="https://www44.myfantasyleague.com/skins17/BlueMesh/BlueMesh.css" type="text/css"  />
+<link rel="stylesheet" id="responsive" href="https://www44.myfantasyleague.com/skins17/BlueMesh/responsive.css" type="text/css"  />
+<link rel="apple-touch-icon" href="https://www44.myfantasyleague.com/apple-touch-icon.png" />
+<link rel="shortcut icon" href="https://www44.myfantasyleague.com/favicon.ico" />
+<script type="text/javascript" src="https://www44.myfantasyleague.com/mfl_common.js"></script>
+<script type="text/javascript">
+<!--
+var league_id = '48571';
+var year = 2025;
+var xmlBaseURL = 'https://www44.myfantasyleague.com/fflnetdynamic2025/';
+var baseURLStatic = 'https://www44.myfantasyleague.com';
+var baseURLDynamic = 'https://www44.myfantasyleague.com';
+var currentServerTime = 1792333006;
+var completedWeek = 22;
+var liveScoringWeek = 22;
+var startWeek = 1;
+var endWeek = 17;
+var standingsEndWeek = "14";
+var h2h_setting = "YES";  
+var precision = 2;
+var thisProgram = "options_101";
+
+function Franchise (id, name, division, icon, logo, abbrev) {
+   this.id = id;
+   this.name = name;
+   this.division = division;
+   this.icon = icon;
+   this.logo = logo;
+   this.abbrev = abbrev;
+}
+var leagueAttributes = new Object();
+
+var franchiseDatabase = new Array();
+franchiseDatabase['fid_0000'] = new Franchise('0000', 'Commissioner', undefined, 'https://www44.myfantasyleague.com/fflnetdynamic2008/75574_avatar.jpg', '');
+franchiseDatabase['fid_0001'] = new Franchise('0001', 'Zeke Squad', '00' ,'https://www43.myfantasyleague.com/fflnetdynamic2021/48571_franchise_icon0001.png' ,'https://www43.myfantasyleague.com/fflnetdynamic2021/48571_franchise_logo0001.png' ,'ZS');
+franchiseDatabase['fid_0002'] = new Franchise('0002', 'So your saying there’s a chance?', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2019/48571_franchise_icon0002.jpg' ,'https://www43.myfantasyleague.com/fflnetdynamic2019/48571_franchise_logo0002.jpg' ,'Systac');
+franchiseDatabase['fid_0003'] = new Franchise('0003', 'Fitz & the Tantrums', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2015/15599_franchise_icon0010.gif' ,'https://www43.myfantasyleague.com/fflnetdynamic2015/15599_franchise_logo0010.gif' ,'FtT');
+franchiseDatabase['fid_0004'] = new Franchise('0004', 'Smooth City Styles!', '00' ,'https://www49.myfantasyleague.com/fflnetdynamic2010/47266_franchise_icon0004.jpg' ,'https://www49.myfantasyleague.com/fflnetdynamic2010/47266_franchise_logo0004.jpg' ,'SCS');
+franchiseDatabase['fid_0005'] = new Franchise('0005', 'Golden Ratio', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2016/48571_franchise_icon0009.jpg' ,'https://www43.myfantasyleague.com/fflnetdynamic2016/48571_franchise_logo0009.jpg' ,'GR');
+franchiseDatabase['fid_0006'] = new Franchise('0006', 'We Made a Kicker', '01' ,'https://www43.myfantasyleague.com/fflnetdynamic2020/48571_franchise_icon0006.jpg' ,'https://www.moviedash.com/editorials/7376/michael-myers-vs-jason-voorhees/' ,'WMaK');
+franchiseDatabase['fid_0007'] = new Franchise('0007', 'The Kittle Engine That Could', '00' ,'https://www43.myfantasyleague.com/fflnetdynamic2020/48571_franchise_icon0007.jpg' ,'https://www43.myfantasyleague.com/fflnetdynamic2020/48571_franchise_logo0007.jpg' ,'TKETC');
+franchiseDatabase['fid_0008'] = new Franchise('0008', 'Not 100% A Dick', '00' ,'https://media.tenor.com/images/77091c9904f632688a828ebbff0d8fe4/tenor.gif' ,'https://wtfbabe.files.wordpress.com/2015/01/guardians-of-the-galaxy-35-did-they-say-dick-wtf-watch-the-film-saint-pauly.jpg?w=648&h=270' ,'NOTADICK');
+franchiseDatabase['fid_0009'] = new Franchise('0009', 'Cool Runnings', '01' ,'' ,'' ,'cool runnings');
+franchiseDatabase['fid_0010'] = new Franchise('0010', 'The Wheelchair Massacre', '00' ,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOWCsw_w51d4rqJRG5hxfERP1i7B_oGCQ-6g4dljqgYZLzjlDxfi9pP_lu77AHMfuyyNA&usqp=CAU' ,'' ,'WHEEL');
+leagueAttributes['Draft'] = true;
+leagueAttributes['MinStarters'] = 10;
+leagueAttributes['MaxStarters'] = 10;
+leagueAttributes['Franchises'] = 10;
+leagueAttributes['Divisions'] = new Array('West', 'East'); // This will be deprecated soon, use leagueDivisions instead
+leagueDivisions = new Object();
+leagueDivisions['00'] = { 'id' : '00', 'name' : 'West' };
+leagueDivisions['01'] = { 'id' : '01', 'name' : 'East' };
+
+function chat_window (url) {
+    var chatWindow = window.open(url,"chat_window","height=600,width=450,scrollbars=yes,toolbar=no,status=no,resizable=yes,menubar=no");
+    chatWindow.focus();
+}
+
+function live_draft_window (url) {
+    var liveDraftWindow = window.open(url,"live_draft_window","height=800,width=1060,scrollbars=yes,toolbar=no,status=no,resizable=yes,menubar=no");
+    liveDraftWindow.focus();
+}
+
+function live_auction_window (url) {
+    var liveAuctionWindow = window.open(url,"live_auction_window","height=700,width=1060,scrollbars=yes,toolbar=no,status=no,resizable=yes,menubar=no");
+    liveAuctionWindow.focus();
+}
+
+
+//-->
+</script>
+<link rev="MADE" href="mailto:support@myfantasyleague.com"  />
+</head>
+<body id="body_options_101"><noscript>
+  <img src="http://b.scorecardresearch.com/b?c1=2&amp;c2=6035210&amp;c3=&amp;c4=www.myfantasyleague.com&amp;c5=&amp;c6=&amp;c15=&amp;cv=1.3&amp;cj=1" style="display:none" width="0" height="0" alt="" />
+</noscript>
+<div class="myfantasyleague_menu" onclick=""><span>LEAGUE MENU</span><input id="sub0" type="checkbox"><label for="sub0"><span></span></label><ul>
+<li class="mfl-icon"><a class="no-sub" href="http://home.myfantasyleague.com"><img src="/images/mfl-logo-2017.png" alt="MyFantasyLeague.com"><span>MyFantasyLeague.com</span></a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/home/48571">Home</a></li>
+<li class="has-sub sub-default mm-myacct"><a>My Account</a><b aria-haspopup="true" aria-controls="p1"></b><input id="sub1" type="checkbox"><label for="sub1"><span></span></label>
+<ul id="p1">
+<li><a class="no-sub" href="https://www42.myfantasyleague.com/2026/dash" target="">MFL&nbsp;Dashboard</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/login?L=48571" target="">Login</a></li>
+<li><a class="no-sub" href="https://www42.myfantasyleague.com/2026/index" target="">Find&nbsp;A&nbsp;League</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-scores"><a>Scores</a><b aria-haspopup="true" aria-controls="p2"></b><input id="sub2" type="checkbox"><label for="sub2"><span></span></label>
+<ul id="p2">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/ajax_ls?L=48571" target="">Live&nbsp;Scoring</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/standings?L=48571" target="">Standings</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=22" target="">Weekly&nbsp;Results</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=31" target="">Weekly&nbsp;Summary</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101" target="">Power&nbsp;Rank</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=06" target="">Starting&nbsp;Lineups</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=15" target="">Fantasy&nbsp;Schedule</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=79" target="">Playoff&nbsp;Brackets</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/pro_schedule?L=48571" target="">NFL&nbsp;Schedule</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=207" target="">Fantasy&nbsp;Previews</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=177" target="">Fantasy&nbsp;Recaps</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-trans"><a>Transactions</a><b aria-haspopup="true" aria-controls="p3"></b><input id="sub3" type="checkbox"><label for="sub3"><span></span></label>
+<ul id="p3">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=07" target="">Rosters</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=03" target="">Transactions</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=76" target="">Processed&nbsp;Waivers</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/locked_players?L=48571" target="">Locked&nbsp;Players</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-player"><a>Player Research</a><b aria-haspopup="true" aria-controls="p4"></b><input id="sub4" type="checkbox"><label for="sub4"><span></span></label>
+<ul id="p4">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=08" target="">Top&nbsp;Performers/Player&nbsp;Stats</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=236" target="">Projected&nbsp;Stats</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/depth_chart?L=48571" target="">Fantasy&nbsp;Depth&nbsp;Charts</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=117" target="">Top&nbsp;Adds/Drops/Starters</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=81" target="">Points&nbsp;Allowed&nbsp;-&nbsp;By&nbsp;Position</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/reports?L=48571&R=FULLFA" target="">Complete&nbsp;Free&nbsp;Agent&nbsp;Listing</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/injury?L=48571" target="">NFL&nbsp;Injury&nbsp;Report</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/news_articles?L=48571&P=*" target="">Player&nbsp;News</a></li>
+<li><a class="no-sub" href="http://subscribe.myfantasyleague.com/" target="">Get&nbsp;Projection&nbsp;Sources</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/player_search?L=48571" target="">Player&nbsp;Search</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-draft"><a>Draft/Auction</a><b aria-haspopup="true" aria-controls="p5"></b><input id="sub5" type="checkbox"><label for="sub5"><span></span></label>
+<ul id="p5">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=17" target="">Draft&nbsp;Results</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/reports?L=48571&R=ADP" target="">ADP&nbsp;Report</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=100" target="">Future&nbsp;Draft&nbsp;Picks</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/reports?L=48571&R=AAV" target="">AAV&nbsp;Report</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-league"><a>League</a><b aria-haspopup="true" aria-controls="p6"></b><input id="sub6" type="checkbox"><label for="sub6"><span></span></label>
+<ul id="p6">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/all_reports?L=48571" target="">All&nbsp;Reports</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=123" target="">League&nbsp;Calendar</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=09" target="">League&nbsp;Rules</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/accounting_report?L=48571" target="">Accounting</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=01" target="">Franchise&nbsp;Information</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/reports?L=48571&R=FSUMMARY" target="">Franchise&nbsp;Summary</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=122" target="">NFL&nbsp;Pool&nbsp;Results</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=120" target="">Survivor&nbsp;Pool</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=194" target="">League&nbsp;Champions</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-social"><a>Social</a><b aria-haspopup="true" aria-controls="p7"></b><input id="sub7" type="checkbox"><label for="sub7"><span></span></label>
+<ul id="p7">
+<li><a class="no-sub" href="https://www.fantasysharks.com/forum/viewforum.php?f=501" target="">MFL&nbsp;Community&nbsp;Forums</a></li>
+<li><a class="no-sub" href="https://twitter.com/MyFantasyLeague" target="">Follow&nbsp;Us&nbsp;On&nbsp;Twitter</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=167" target="">Refer&nbsp;A&nbsp;Friend&nbsp;And&nbsp;Save!</a></li>
+</ul>
+</li>
+<li class="has-sub sub-default mm-help"><a>Help</a><b aria-haspopup="true" aria-controls="p8"></b><input id="sub8" type="checkbox"><label for="sub8"><span></span></label>
+<ul id="p8">
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/support?L=48571" target="">Help&nbsp;Center</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/support?PROGRAM=options_101&L=48571" target="_blank">Help&nbsp;on&nbsp;this&nbsp;Page</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/site_news?L=48571" target="">What's&nbsp;New?</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&PRINTER=1" target="">Printer&nbsp;Friendly&nbsp;Page</a></li>
+<li><a class="no-sub" href="https://www44.myfantasyleague.com/2025/api_info?L=48571" target="">Developer's&nbsp;API</a></li>
+</ul>
+</li>
+</ul></div>
+<table cellspacing="0" class="pageheader">
+<tr>
+<td rowspan="3" class="brandlogo">
+<a href="http://www.myfantasyleague.com/"><img src="https://www44.myfantasyleague.com/images/new_mfl_logo.png" alt="http://www.myfantasyleague.com/" width="80" height="80" border="0"  /></a></td><td align="center" class="bannerimage">
+</td>
+<td rowspan="3" class="welcome"><b>Guest</b> (<a href="https://www44.myfantasyleague.com/2025/login?L=48571">Login</a>)</td>
+</tr>
+<tr>
+<td class="pagetitle">
+<h1>
+Fuad Reveiz Fan Club Dynasty League <span>Power Rank</span></h1></td></tr></table><div class="pagebody" id="options_101">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.0/jquery-1.8.0.min.js"></script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.rc.1/handlebars.min.js"></script>
+<span id="ajaxLoadEventSpan"></span>
+<script type="text/javascript">
+    window.console = window.console || {log: function() {}};
+    jQuery.noConflict();
+    var fuad = {};
+    fuad.util = (function (global, document, $) {
+        // update these after upgrading site
+        var year = "2025";
+        var leagueId = "48571";
+        var beforeDraft = false;
+
+        // contains all positional settings needed for rookie draft and franchise player calculations
+        var settings = {
+            QB: {
+                sortOrder: 1,
+                rookieBaselineRank: 15
+            },
+            RB: {
+                sortOrder: 2,
+                rookieBaselineRank: 20
+            },
+            WR: {
+                sortOrder: 3,
+                rookieBaselineRank: 35
+            },
+            TE: {
+                sortOrder: 4,
+                rookieBaselineRank: 15
+            },
+            PK: {
+                sortOrder: 5,
+                rookieBaselineRank: 15
+            }
+        };
+
+        // UPDATE THIS SECTION AFTER TRADE DEADLINE
+        var beforeTradeDeadline = false;
+    if (!beforeTradeDeadline) {
+        settings.QB.rookieBaselineSalary = 20;
+        settings.QB.franchisePlayers = [
+            {fullName:"Lamar Jackson", salary:100},
+            {fullName:"Baker Mayfield", salary:70},
+            {fullName:"Josh Allen", salary:55},
+            {fullName:"Justin Herbert", salary:55},
+            {fullName:"Jordan Love", salary:52}
+        ];
+        settings.RB.rookieBaselineSalary = 9;
+        settings.RB.franchisePlayers = [
+            {fullName:"Jahmyr Gibbs", salary:64},
+            {fullName:"Saquon Barkley", salary:64},
+            {fullName:"Derrick Henry", salary:60},
+            {fullName:"Christian McCaffrey", salary:57},
+            {fullName:"Kyren Williams", salary:56}
+        ];
+        settings.WR.rookieBaselineSalary = 1;
+        settings.WR.franchisePlayers = [
+            {fullName:"Justin Jefferson", salary:80},
+            {fullName:"Nico Collins", salary:65},
+            {fullName:"CeeDee Lamb", salary:61},
+            {fullName:"Tee Higgins", salary:51},
+            {fullName:"DK Metcalf", salary:50}
+        ];
+        settings.TE.rookieBaselineSalary = 1;
+        settings.TE.franchisePlayers = [
+            {fullName:"George Kittle", salary:42},
+            {fullName:"T.J. Hockenson", salary:36},
+            {fullName:"Travis Kelce", salary:29},
+            {fullName:"Jonnu Smith", salary:20},
+            {fullName:"Mark Andrews", salary:15}
+        ];
+        settings.PK.rookieBaselineSalary = 1;
+        settings.PK.franchisePlayers = [
+            {fullName:"Daniel Carlson", salary:5},
+            {fullName:"Brandon Aubrey", salary:3},
+            {fullName:"Evan McPherson", salary:2},
+            {fullName:"Chris Boswell", salary:2},
+            {fullName:"Jason Sanders", salary:1}
+        ];
+    }
+        // END SECTION TO UPDATE AFTER TRADE DEADLINE
+
+        var currentUrl = document.location.href;
+        var baseUrl = currentUrl.substring(0, currentUrl.indexOf(year) + 5);
+        var baseUrlSuffix = currentUrl.substring(currentUrl.indexOf('://') + 3, currentUrl.indexOf('.')).replace('www', '').replace('football', '');
+        // set if we want to test a specific week (leave blank for "current" week)
+        var week = "";
+
+        /**
+         * Compare two objects across several properties, in order. Useful for sorting.
+         *
+         * @param o1 The first object to compare.
+         * @param o2 The second object to compare.
+         * @param sortByProps Array of properties to sort by, in order.
+         * @param compareFunctions Optional map of {propertyName:compareFunction} where propertyName matches a property name in
+         * sortByProps and compareFunction is a function that compares the values (o1.propertyName, o2.propertyName) and returns
+         * -1, 0, or 1 as the first value is less than, equal to, or greater than the second value.
+         * @return {Number} -1, 0, or 1 as the first value is less than, equal to, or greater than the second value
+         */
+        var compareObjects = function (o1, o2, sortByProps, compareFunctions) {
+            var i;
+            for (i = 0; i < sortByProps.length; i++) {
+                var prop = sortByProps[i];
+                var val1 = o1[prop];
+                var val2 = o2[prop];
+                if (compareFunctions && compareFunctions[prop]) {
+                    var result = compareFunctions[prop](val1, val2);
+                    if (result !== 0) {
+                        return result;
+                    }
+                } else if (val1 > val2) {
+                    return 1;
+                } else if (val1 < val2) {
+                    return -1;
+                }
+            }
+            return 0;
+        };
+
+        /**
+         * Compare two objects assuming we want to sort in descending order.
+         *
+         * @param val1 the first value to compare
+         * @param val2 the second value to compare
+         * @return {Number} -1, 0, or 1 as the second value is less than, equal to, or greater than the first value
+         */
+        var compareDesc = function (val1, val2) {
+            if (val1 === val2) {
+                return 0;
+            }
+            return val2 > val1 ? 1 : -1;
+        };
+
+        var comparePositions = function (position1, position2) {
+            if (position1 === position2) {
+                return 0;
+            }
+            return settings[position1].sortOrder > settings[position2].sortOrder ? 1 : -1;
+        };
+
+        return {
+            // data
+            cacheData: true,
+            year: year,
+            leagueId: leagueId,
+            beforeDraft: beforeDraft,
+            salaryCap: 300,
+            rosterMax: 30,
+            rosterMin: 23,
+            franchisePlayerCount: 5,
+            numRookiesToDisplay: 15,
+            beforeTradeDeadline: beforeTradeDeadline,
+            baseUrl: baseUrl,
+            playersDataUrl: "https://api.myfantasyleague.com/" + year + "/export?TYPE=players&L=&W=" + week,
+            franchiseDataUrl: baseUrl + "export?TYPE=league&L=" + leagueId + "&W=" + week,
+            salaryAdjustmentsDataUrl: baseUrl + "export?TYPE=salaryAdjustments&L=" + leagueId + "&W=",
+            rostersDataUrl: baseUrl + "export?TYPE=rosters&L=" + leagueId + "&W=" + week,
+            // no week for injuries since we get dynamically off weekly results
+            injuriesDataUrl: baseUrl + "export?TYPE=injuries&L=" + leagueId + "&W=",
+            weeklyResultsDataUrl: baseUrl + "export?TYPE=weeklyResults&L=" + leagueId + "&W=" + week,
+            transactionsDataUrl: baseUrl + "export?TYPE=transactions&L=" + leagueId + "&W=" + week,
+            freeAgentDataUrl: baseUrl + "export?TYPE=freeAgents&L=" + leagueId + "&W=" + week,
+            homeUrl:"https://www" + baseUrlSuffix + ".myfantasyleague.com/" + year,
+            reportUrl:"https://football" + baseUrlSuffix + ".myfantasyleague.com/" + year,
+            settings: settings,
+            // functions
+            isLoggedInAsCommish: function () {
+                return typeof global.franchise_id !== "undefined" && global.franchise_id === '0000';
+            },
+            getCapPenalty: function (years, salary) {
+                var capPenalty = 0;
+                if (years > 0) {
+                    capPenalty = Math.ceil(Math.max(1, 0.4 * salary * years));
+                    if (years > capPenalty) {
+                        capPenalty = years;
+                    }
+                }
+                return capPenalty;
+            },
+            getRowStripingFunction: function () {
+                var oddRow = false;
+                return function () {
+                    oddRow = !oddRow;
+                    return oddRow ? "oddtablerow" : "eventablerow";
+                };
+            },
+            compareObjects: compareObjects,
+            compareDesc: compareDesc,
+            comparePositions: comparePositions,
+            subscribeToDataLoadedEvent: function (callback) {
+                $("#ajaxLoadEventSpan").on("ajaxDataLoaded", callback);
+            }
+        };
+    }(window, document, jQuery));
+
+</script><div id="contentframe">
+<div id="hsubmenu"><ul id="hsubmenuitems"><li><a href="/2025/home/48571">Home</a></li><li><a href="/2025/options?L=48571&O=07">Rosters</a></li><li><a href="/2025/options?L=48571&O=17">Draft</a></li><li><a href="/2025/lineup?L=48571">Submit Lineup</a></li><li><a href="/2025/add_drop?L=48571">Add/Drops</a></li><li><a href="/2025/options?L=48571&O=08">Player Stats</a></li><li><a href="/2025/standings?L=48571">Standings</a></li><li><a href="/2025/options?L=48571&O=03">Transactions</a></li><li><a href="https://www44.myfantasyleague.com/2025/ajax_ls?L=48571">Live Scoring</a></li><li><a href="/2025/options?L=48571&O=15">Schedule</a></li></ul></div>
+<div id="withmenus"><span class="reportnavigation"><span class="reportnavigationheader">Power Rank As Of Week:</span>
+<a href="options?L=48571&O=101&W=1">1</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=2">2</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=3">3</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=4">4</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=5">5</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=6">6</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=7">7</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=8">8</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=9">9</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=10">10</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=11">11</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=12">12</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=13">13</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=14">14</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=15">15</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=16">16</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=17">17</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=18">18</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=19">19</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=20">20</a>&nbsp;|&nbsp;<a href="options?L=48571&O=101&W=21">21</a>&nbsp;|&nbsp;<span class="currentweek">22</span>
+</span>
+<form action="options" method="get" class="reportform">
+<input type="hidden" name="L" value="48571"  />
+<input type="hidden" name="O" value="101"  />
+<input type="hidden" name="W" value="22"  />
+Sort By:
+<select size="1" name="SORT" onchange="this.form.submit();">
+<option value="PWR"selected="selected">Power Rank</option>
+<option value="ALTPWR">Alternate Power Rank</option>
+<option value="ALLPLAY">All-Play Record</option>
+<option value="COULDAWON">Coulda Won</option>
+<option value="WOULDALOST">Woulda Lost</option>
+</select><input type="submit" value="Now!"  /> </form>
+<div class="mobile-wrap" style="max-width:100%;overflow:auto;"><table align="center" cellspacing="1" class="report"><caption><span>Power Rankings</span></caption><tbody><tr>
+<th colspan="12">&nbsp;</th>
+<th colspan="4">All-Play Record</th>
+</tr>
+<tr>
+<th class="franchisename">Franchise</th>
+<th class="h2hwlt">W-L-T</th>
+<th class="total_points"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=PTS">PF</a></th>
+<th class="total_potential_points"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=PP">PP</a></th>
+<th class="efficiency"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=EFF">Eff</a></th>
+<th class="bench_points"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=BENCH">Bench Points</a></th>
+<th class="maxpf"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=MAXPF">Max PF</a></th>
+<th class="minpf"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=MINPF">Min PF</a></th>
+<th class="coulda_won"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=COULDAWON">Coulda Won</a></th>
+<th class="woulda_lost"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=WOULDALOST">Woulda Lost</a></th>
+<th class="power_rank"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=PWR">Power Rank</a></th>
+<th class="alt_power_rank"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=ALTPWR">Alternate Power Rank</a></th>
+<th class="all_play_w">W</th>
+<th class="all_play_l">L</th>
+<th class="all_play_t">T</th>
+<th class="all_play_pct"><a title="Click to sort" href="https://www44.myfantasyleague.com/2025/options?L=48571&O=101&SORT=ALLPLAY">Pct</a></th>
+</tr>
+<tr class="oddtablerow"><td class="franchisename"><a title="Franchise home page, Record: 12-2-0, PF: 2477.90"  class="franchise_0004 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0004&amp;O=07">Smooth City Styles!</a></td><td class="h2hwlt">12-2-0</td><td class="total_points points">2477.90</td><td class="total_potential_points points">2926.10</td><td class="efficiency" align="right">84.7%</td><td class="bench_points points">1530.50</td><td class="maxpf points">193.9</td><td class="minpf points">108.6</td><td class="coulda_won" align="right">2</td><td class="woulda_lost" align="right">7</td><td class="power_rank" align="right">37.08</td><td class="alt_power_rank" align="right">30.0</td><td class="all_play_w" align="right">128</td><td class="all_play_l" align="right">25</td><td class="all_play_t" align="right">0</td><td class="all_play_pct" align="right">.837</td></tr><tr class="eventablerow"><td class="franchisename"><a title="Franchise home page, Record: 10-3-1, PF: 2306.10"  class="franchise_0005 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0005&amp;O=07">Golden Ratio</a></td><td class="h2hwlt">10-3-1</td><td class="total_points points">2306.10</td><td class="total_potential_points points">2879.40</td><td class="efficiency" align="right">80.1%</td><td class="bench_points points">1956.60</td><td class="maxpf points">159.6</td><td class="minpf points">112</td><td class="coulda_won" align="right">3</td><td class="woulda_lost" align="right">7</td><td class="power_rank" align="right">32.62</td><td class="alt_power_rank" align="right">26.0</td><td class="all_play_w" align="right">107</td><td class="all_play_l" align="right">45</td><td class="all_play_t" align="right">1</td><td class="all_play_pct" align="right">.703</td></tr><tr class="oddtablerow"><td class="franchisename"><a title="Franchise home page, Record: 10-4-0, PF: 2316.90"  class="franchise_0001 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0001&amp;O=07">Zeke Squad</a></td><td class="h2hwlt">10-4-0</td><td class="total_points points">2316.90</td><td class="total_potential_points points">2715.40</td><td class="efficiency" align="right">85.3%</td><td class="bench_points points">1414.80</td><td class="maxpf points">184.8</td><td class="minpf points">97</td><td class="coulda_won" align="right">3</td><td class="woulda_lost" align="right">5</td><td class="power_rank" align="right">32.31</td><td class="alt_power_rank" align="right">25.0</td><td class="all_play_w" align="right">107</td><td class="all_play_l" align="right">46</td><td class="all_play_t" align="right">0</td><td class="all_play_pct" align="right">.699</td></tr><tr class="eventablerow"><td class="franchisename"><a title="Franchise home page, Record: 8-6-0, PF: 2237.20"  class="franchise_0009 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0009&amp;O=07">Cool Runnings</a></td><td class="h2hwlt">8-6-0</td><td class="total_points points">2237.20</td><td class="total_potential_points points">2666.20</td><td class="efficiency" align="right">83.9%</td><td class="bench_points points">1357.00</td><td class="maxpf points">166.1</td><td class="minpf points">71</td><td class="coulda_won" align="right">4</td><td class="woulda_lost" align="right">2</td><td class="power_rank" align="right">27.32</td><td class="alt_power_rank" align="right">20.5</td><td class="all_play_w" align="right">94</td><td class="all_play_l" align="right">59</td><td class="all_play_t" align="right">0</td><td class="all_play_pct" align="right">.614</td></tr><tr class="oddtablerow"><td class="franchisename"><a title="Franchise home page, Record: 8-6-0, PF: 1935.00"  class="franchise_0002 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0002&amp;O=07">So your saying there’s a chance?</a></td><td class="h2hwlt">8-6-0</td><td class="total_points points">1935.00</td><td class="total_potential_points points">2376.10</td><td class="efficiency" align="right">81.4%</td><td class="bench_points points">1117.70</td><td class="maxpf points">151</td><td class="minpf points">76.8</td><td class="coulda_won" align="right">3</td><td class="woulda_lost" align="right">5</td><td class="power_rank" align="right">26.52</td><td class="alt_power_rank" align="right">18.5</td><td class="all_play_w" align="right">66</td><td class="all_play_l" align="right">87</td><td class="all_play_t" align="right">0</td><td class="all_play_pct" align="right">.431</td></tr><tr class="eventablerow"><td class="franchisename"><a title="Franchise home page, Record: 6-8-0, PF: 1930.20"  class="franchise_0007 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0007&amp;O=07">The Kittle Engine That Could</a></td><td class="h2hwlt">6-8-0</td><td class="total_points points">1930.20</td><td class="total_potential_points points">2467.40</td><td class="efficiency" align="right">78.2%</td><td class="bench_points points">1288.70</td><td class="maxpf points">144.7</td><td class="minpf points">69.1</td><td class="coulda_won" align="right">4</td><td class="woulda_lost" align="right">2</td><td class="power_rank" align="right">22.43</td><td class="alt_power_rank" align="right">15.0</td><td class="all_play_w" align="right">62</td><td class="all_play_l" align="right">90</td><td class="all_play_t" align="right">1</td><td class="all_play_pct" align="right">.408</td></tr><tr class="oddtablerow"><td class="franchisename"><a title="Franchise home page, Record: 5-9-0, PF: 1790.00"  class="franchise_0008 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0008&amp;O=07">Not 100% A Dick</a></td><td class="h2hwlt">5-9-0</td><td class="total_points points">1790.00</td><td class="total_potential_points points">2219.30</td><td class="efficiency" align="right">80.7%</td><td class="bench_points points">1129.10</td><td class="maxpf points">148.4</td><td class="minpf points">67.4</td><td class="coulda_won" align="right">4</td><td class="woulda_lost" align="right">5</td><td class="power_rank" align="right">19.19</td><td class="alt_power_rank" align="right">9.0</td><td class="all_play_w" align="right">51</td><td class="all_play_l" align="right">102</td><td class="all_play_t" align="right">0</td><td class="all_play_pct" align="right">.333</td></tr><tr class="eventablerow"><td class="franchisename"><a title="Franchise home page, Record: 4-10-0, PF: 1884.50"  class="franchise_0006 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0006&amp;O=07">We Made a Kicker</a></td><td class="h2hwlt">4-10-0</td><td class="total_points points">1884.50</td><td class="total_potential_points points">2589.90</td><td class="efficiency" align="right">72.8%</td><td class="bench_points points">1670.10</td><td class="maxpf points">148.9</td><td class="minpf points">64</td><td class="coulda_won" align="right">6</td><td class="woulda_lost" align="right">1</td><td class="power_rank" align="right">17.47</td><td class="alt_power_rank" align="right">10.5</td><td class="all_play_w" align="right">62</td><td class="all_play_l" align="right">91</td><td class="all_play_t" align="right">0</td><td class="all_play_pct" align="right">.405</td></tr><tr class="oddtablerow"><td class="franchisename"><a title="Franchise home page, Record: 4-10-0, PF: 1809.40"  class="franchise_0010 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0010&amp;O=07">The Wheelchair Massacre</a></td><td class="h2hwlt">4-10-0</td><td class="total_points points">1809.40</td><td class="total_potential_points points">2104.00</td><td class="efficiency" align="right">86.0%</td><td class="bench_points points">789.50</td><td class="maxpf points">154</td><td class="minpf points">70</td><td class="coulda_won" align="right">4</td><td class="woulda_lost" align="right">2</td><td class="power_rank" align="right">14.78</td><td class="alt_power_rank" align="right">7.5</td><td class="all_play_w" align="right">45</td><td class="all_play_l" align="right">107</td><td class="all_play_t" align="right">1</td><td class="all_play_pct" align="right">.297</td></tr><tr class="eventablerow"><td class="franchisename"><a title="Franchise home page, Record: 2-11-1, PF: 1761.60"  class="franchise_0003 " href="https://www44.myfantasyleague.com/2025/options?L=48571&amp;F=0003&amp;O=07">Fitz & the Tantrums</a></td><td class="h2hwlt">2-11-1</td><td class="total_points points">1761.60</td><td class="total_potential_points points">2328.40</td><td class="efficiency" align="right">75.7%</td><td class="bench_points points">1288.40</td><td class="maxpf points">125.4</td><td class="minpf points">63.6</td><td class="coulda_won" align="right">6</td><td class="woulda_lost" align="right">3</td><td class="power_rank" align="right">14.71</td><td class="alt_power_rank" align="right">3.0</td><td class="all_play_w" align="right">41</td><td class="all_play_l" align="right">111</td><td class="all_play_t" align="right">1</td><td class="all_play_pct" align="right">.271</td></tr></tbody></table></div>
+</div></div></div><div class="pagefooter"><table border="0" cellpadding="1" cellspacing="1" align="center">
+<tr><td colspan="2" align="center"><a href="#body_options_101">Back To Top Of Page</a></td></tr>
+<tr><td colspan="2" align="center">Page Generated Sun Oct 18 9:16:46 a.m. CT 2026</td></tr>
+<tr><td colspan="2" align="center">Copyright &copy; 1995-2026 <a href="http://home.myfantasyleague.com/">First Pick Labs, Inc.</a> All Rights Reserved. <a href="http://home.myfantasyleague.com/privacy.html">Privacy Policy</a> - <a href="http://home.myfantasyleague.com/terms.html">Terms Of Service</a> 
+ - <a href="http://home.myfantasyleague.com/use.html">Acceptable Use Policy</a> - Powered by: <a href="https://www.geniussports.com/">Genius Sports</a>.
+- <button id="pmLink">Privacy Manager</button>
+</td></tr>
+<tr><td colspan="2" align="center"><b>Disclaimer:</b>  This site is not
+in any way affiliated with, endorsed or licensed by the
+National Football League, any NFL team or NFLPA member.
+</td></tr></table></div>
+</body></html>
