@@ -21,8 +21,8 @@ It sees HTML and moves, not CSS: a style change needs its own check. The site me
 header (#fuad-frame) are in the HTML but their controls aren't used. MFL's answer to a move is the
 saved page unchanged, so moves end on their unconfirmed path; the *-done screens plant the line a
 successful move leaves instead. On the drop-* and ir-* screens MFL keeps the roster their posts
-change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or not, or (IR) the
-rosters export lags it.
+change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or not, MFL refuses it
+(or, on IR, makes the moves but refuses the drop), or (IR) the rosters export lags it.
 """
 import argparse
 import copy
@@ -72,11 +72,10 @@ SCREENS = {
     "drop-done": (f"/2026/options?L={LEAGUE}&O=257", {"flash": ("fuad.dropFlash", {"done": "Tyler Higbee dropped.", "error": "Couldn’t drop: a test error."})}),
     "ir-done": (f"/2026/options?L={LEAGUE}&O=18", {"flash": ("fuad.irFlash", {"done": "Jalen Hurts moved to IR.", "error": "Couldn’t save: a test error."})}),
     "trades-done": (f"/2026/options?L={LEAGUE}&O=05", {"now": BEFORE_DEADLINE, "flash": ("fuad.tradesFlash", {"done": "Offer sent.", "error": "Couldn’t send: a test error.", "note": "A test note."})}),
-    # MFL keeping the roster a move changes: the move lands, MFL's answer fails (with or without making
-    # it), or the rosters export still shows the roster from before it
+    # MFL keeping the roster a move changes (Mfl's "moves")
     **{f"{move}-{how}": (f"/2026/options?L={LEAGUE}&O={option}", {"moves": how})
-       for move, option in [("drop", "257"), ("ir", "18")] for how in ["lands", "fails", "fails-made"]},
-    "ir-lags": (f"/2026/options?L={LEAGUE}&O=18", {"moves": "lags"}),
+       for move, option in [("drop", "257"), ("ir", "18")] for how in ["lands", "fails", "fails-made", "refuses"]},
+    **{f"ir-{how}": (f"/2026/options?L={LEAGUE}&O=18", {"moves": how}) for how in ["lags", "refuses-drop"]},
     "lineup": (f"/2026/lineup?L={LEAGUE}", {}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
@@ -100,10 +99,11 @@ SEEDS = {
     "trades": [["ask", "withdraw"]],
     "trades-offer": [["answer"], ["answer", "comment", "send-answer"], [("answer", "reject", 0), "send-answer"],
                      [("answer", "counter", 0), "comment", "send-answer"]],
-    **{f"drop-{how}": [["toggle", "drop"]] for how in ["lands", "fails", "fails-made"]},
-    **{f"ir-{how}": [["toIR", "save"], ["activate", "save"], ["toIR", "drop", "save"]] for how in ["lands", "fails", "fails-made", "lags"]},
+    **{f"drop-{how}": [["toggle", "drop"]] for how in ["lands", "fails", "fails-made", "refuses"]},
+    # a drop is offered only once a player is activated
+    **{f"ir-{how}": [["toIR", "save"], ["activate", "drop", "save"]] for how in ["lands", "fails", "fails-made", "lags", "refuses", "refuses-drop"]},
     # a box ticked and unticked again, which no first-of-each-kind chain does
-    "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["toIR", "drop", "save"],
+    "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["activate", "drop", "save"],
            [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
 }
 
@@ -202,6 +202,7 @@ def sample(name):
 
 
 TEAM = "0001"
+REFUSED = '<html><body><div class="pagebody"><span class="warning">Roster moves are locked for this team.</span></div></body></html>'
 ROW = re.compile(r'<tr class="(?:odd|even)tablerow">.*?</tr>', re.S)
 
 
@@ -209,7 +210,9 @@ class Mfl:
     """Answers the page's requests from the saved samples, and keeps what it posts. With swaps["moves"],
     Drop's and IR's posts change the roster that the rosters export and their pages then show, as MFL
     does: "lands"; "fails" (MFL's answer an error, nothing changed); "fails-made" (an error, the move
-    made); "lags" (made, but the first rosters read after it still shows the roster from before)"""
+    made); "refuses" (a page with MFL's reason, nothing changed); "refuses-drop" (that page, the moves
+    made but not the drop); "lags" (made, MFL's answer not the IR page, and the first rosters read after
+    it still shows the roster from before)"""
 
     def __init__(self, site, swaps):
         self.site = site
@@ -225,19 +228,24 @@ class Mfl:
     def make(self, route, path, fields):
         """MFL's answer to Drop's or IR's post, the roster changed as the move says"""
         before = copy.deepcopy(self.rosters)
-        if self.moves != "fails":
+        if self.moves not in ("fails", "refuses"):
             team = self.team()
             for player in team["player"]:
                 if player["id"] in fields.get(f"deactivate{TEAM}", []):
                     player["status"] = "INJURED_RESERVE"
                 if player["id"] in fields.get(f"activate{TEAM}", []):
                     player["status"] = "ROSTER"
-            gone = set(fields.get("drop_pid", []) + fields.get(f"drop{TEAM}", []))
-            team["player"] = [player for player in team["player"] if player["id"] not in gone]
-        if self.moves == "lags":
-            self.stale = before
+            if self.moves != "refuses-drop":
+                gone = set(fields.get("drop_pid", []) + fields.get(f"drop{TEAM}", []))
+                team["player"] = [player for player in team["player"] if player["id"] not in gone]
         if self.moves in ("fails", "fails-made"):
             return route.fulfill(status=500, body="")
+        if self.moves in ("refuses", "refuses-drop"):
+            return route.fulfill(content_type="text/html", body=REFUSED)
+        if self.moves == "lags":
+            # an answer that isn't the IR page, so v2 reads the rosters export, which still has it as it was
+            self.stale = before
+            return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
         return route.fulfill(content_type="text/html", body=self.ir_page() if path.endswith("/ir") else self.drop_page())
 
     def drop_page(self):
