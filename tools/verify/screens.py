@@ -115,7 +115,7 @@ SEEDS = {
 # screens, landing, failing (made or not) or refused; an accepted offer already gone; a counter sent
 TRADE_SCREENS = ["trades", "trades-offer", "propose"]
 for _name in TRADE_SCREENS:
-    for _how in ["lands", "fails", "fails-made", "refuses"]:
+    for _how in ["lands", "fails", "fails-made", "refuses", "lands-unread"]:
         SCREENS[f"{_name}-{_how}"] = (SCREENS[_name][0], {**SCREENS[_name][1], "moves": _how})
         SEEDS[f"{_name}-{_how}"] = SEEDS[_name]
 SCREENS["trades-offer-gone"] = (SCREENS["trades-offer"][0], {**SCREENS["trades-offer"][1], "moves": "gone"})
@@ -235,7 +235,7 @@ class Mfl:
     "-noteam" (each rosters read v2 makes to confirm it leaves the team out); "offline" (the post and
     rosters reads don't reach MFL). Trades' moves too: "lands", "fails", "fails-made", "refuses";
     "gone" (an accepted offer removed with no players moved); "then-fails" (the first move lands, those
-    after it fail)"""
+    after it fail); "lands-unread" (made, MFL's answer its Trades page, the pending trades unread after)"""
 
     def __init__(self, site, swaps):
         self.site = site
@@ -254,6 +254,8 @@ class Mfl:
         # rosters reads still to answer without the team, and whether MFL can't be reached
         self.noteam = 0
         self.offline = False
+        # whether the pending trades can no longer be read
+        self.trades_unread = False
 
     def team(self, rosters=None):
         return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
@@ -296,6 +298,10 @@ class Mfl:
             # the first move lands, any after it fails unmade
             how = "lands" if sum(post["url"].split("?")[0].endswith(("/trade_response", "/trade_offer")) for post in self.posts) == 1 else "fails"
         field = lambda name: fields.get(name, [""])[0]
+        unread = how == "lands-unread"
+        if unread:
+            how = "lands"
+            self.trades_unread = True
         if how not in ("fails", "refuses"):
             if path.endswith("/trade_offer"):
                 partner = next(team for team in field("FRANCHISE_ID").split(",") if team != TEAM)
@@ -319,6 +325,9 @@ class Mfl:
             return route.fulfill(status=500, body="")
         if how == "refuses":
             return route.fulfill(content_type="text/html", body=REFUSED)
+        if unread:
+            # MFL's Trades page, whose header warning ("No outstanding trade proposals received") isn't a refusal
+            return route.fulfill(content_type="text/html", body=sample("trades-O05.html"))
         return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
 
     def drop_page(self):
@@ -442,7 +451,7 @@ class Mfl:
             name = self.page_for(url.path, query)
             return route.fulfill(content_type="text/html", body=sample(name) if name else "<html><body></body></html>")
         if url.path.endswith("/export"):
-            if self.offline and query.get("TYPE") == ["rosters"]:
+            if self.offline and query.get("TYPE") == ["rosters"] or self.trades_unread and query.get("TYPE") == ["pendingTrades"]:
                 return route.abort()
             return route.fulfill(content_type="application/json", body=self.export(query))
         if "/fflnetdynamic" in url.path:

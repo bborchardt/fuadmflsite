@@ -227,8 +227,9 @@ export async function drawDrop({context, franchiseId}) {
         if (ids && JSON.stringify(ids) !== JSON.stringify(mine())) {
             reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
         } else {
-            // with the roster unread, MFL's reason if it refused, else no telling whether it made it
-            state.error = ids || error.reason ? failedLine(`drop ${name}`, error) : "Couldn’t check whether MFL made it. Reload the page to see your roster.";
+            // with the roster unread there's no telling whether MFL made it: what it answers a drop with
+            // isn't known, and a page's header warnings aren't a refusal
+            state.error = ids ? failedLine(`drop ${name}`, error) : "Couldn’t check whether MFL made it. Reload the page to see your roster.";
             state.busy = false;
             render();
             // the button was off while sending, so focus fell away from it
