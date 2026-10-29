@@ -178,6 +178,13 @@ export async function drawDrop({context, franchiseId}) {
     const mine = () => [...state.data.league.players.values()].filter((player) => player.franchise && player.franchise.franchiseId === franchiseId)
         .map((player) => player.playerId).sort();
 
+    // the team's player ids, fresh; null when the answer leaves the team out, which isn't a roster
+    // with no one on it
+    const teamIds = async () => {
+        const ids = await rosterIds(context, franchiseId);
+        return ids.length ? ids : null;
+    };
+
     async function drop(playerId) {
         const row = rows().flatMap((group) => group.players).find((entry) => entry.player.playerId === playerId);
         if (!row || row.off || state.busy) {
@@ -187,24 +194,21 @@ export async function drawDrop({context, franchiseId}) {
         state.busy = true;
         state.error = "";
         render();
-        let sent = false;
         let read = false;
         try {
             const answer = await send(form.action, {method: "POST", body: formFields(form, playerId)});
-            sent = true;
-            const after = await rosterIds(context, franchiseId);
-            read = true;
-            if (after.includes(playerId)) {
+            const after = await teamIds();
+            read = Boolean(after);
+            if (!after || after.includes(playerId)) {
                 throw new Refused(refusal(answer));
             }
             reloadWith({done: `${name} dropped.`});
         } catch (error) {
             console.warn("[fuad] couldn't drop:", error);
             let message = failedLine(`drop ${name}`, error);
-            // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it.
-            // No players at all is an answer without the team, not a drop
-            const ids = await rosterIds(context, franchiseId).catch(() => null);
-            if (ids && ids.length && !ids.includes(playerId)) {
+            // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it
+            const ids = await teamIds().catch(() => null);
+            if (ids && !ids.includes(playerId)) {
                 reloadWith({done: `${name} dropped.`});
                 return;
             }
@@ -212,8 +216,8 @@ export async function drawDrop({context, franchiseId}) {
                 reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
                 return;
             }
-            // sent, but the roster couldn't be read to tell whether MFL made it
-            if (!ids && sent && !read) {
+            // the roster couldn't be read to tell whether MFL made it (an answer that failed may have)
+            if (!ids && !read) {
                 message = "Couldn't check whether MFL made it. Reload the page to see your roster.";
             }
             state.error = message;
