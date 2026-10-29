@@ -6,12 +6,11 @@
 MFL throttles by machine and doesn't say how much, so each request v2 adds costs every member. In one
 browser, as a member moves through the site, each of v2's views is opened in turn, first with nothing
 stored and then again (what v2 keeps in the browser answering instead), on --base (a git ref) and on
-the working copy. What each step has v2 ask MFL for (exports, feeds and pages; not what MFL's own
-page asks for, such as its chat polling, nor the page the member opened) is counted, and a step that
-asks for more, or for something it didn't, fails the run. A feed asked for again 10 s or more after
-the same page last asked is a poll, not counted. The clock is fixed, so the returning visit is one
-moments later: what v2 keeps answers it, however long it keeps it. MFL's answers are screens.py's
-saved clone samples.
+the working copy. What each step asks MFL for (exports, feeds and pages; not MFL's own scripts,
+styles or images, the page the member opened, nor MFL's page polling its chat and visitors) is
+counted, and a step that asks for more, or for something it didn't, fails the run. The clock is
+fixed, so the returning visit is one moments later: what v2 keeps answers it, however long it keeps
+it. MFL's answers are screens.py's saved clone samples.
 """
 import argparse
 import importlib.util
@@ -48,8 +47,8 @@ STEPS = [
     ("Moves › Trades", f"/2026/options?L={L}&O=05"),
 ]
 VISITS = ["first visit", "returning visit"]
-# v2's polls are 15 s apart or more; a feed asked for again within this is asked for twice
-POLL = 10
+# what MFL's own page polls, with XMLHttpRequest, every few seconds; v2 reads these with fetch
+MFL_POLLS = ("_chat.xml", "_visitors.xml")
 
 
 def label(url):
@@ -70,22 +69,14 @@ class Counted(harness.Mfl):
     def __init__(self, site):
         super().__init__(site, {})
         self.asked = []
-        # when each feed was last asked for, since the page loaded
-        self.feeds = {}
 
     def handle(self, route):
         request = route.request
         url = urlparse(request.url)
-        if request.resource_type == "document":
-            self.feeds = {}
-        # v2 asks with fetch; MFL's own page polls its chat with XMLHttpRequest
-        elif url.netloc.endswith("myfantasyleague.com") and request.resource_type == "fetch":
-            name = label(url)
-            last = self.feeds.get(name)
-            if "feed" in name.split():
-                self.feeds[name] = time.time()
-            if last is None or time.time() - last < POLL:
-                self.asked.append(name)
+        if (url.netloc.endswith("myfantasyleague.com") and request.resource_type != "document"
+                and not url.path.endswith((".js", ".css", ".gif", ".png", ".jpg", ".svg", ".ico", ".woff", ".woff2"))
+                and not (request.resource_type == "xhr" and url.path.endswith(MFL_POLLS))):
+            self.asked.append(label(url))
         return super().handle(route)
 
 
