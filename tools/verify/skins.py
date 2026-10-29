@@ -99,10 +99,12 @@ class Skinned(harness.Mfl):
     def __init__(self, site, swaps, folder, styled):
         super().__init__(site, swaps)
         self.folder, self.styled = folder, styled
+        self.loaded = set()
 
     def handle(self, route):
         path = route.request.url.split("?")[0]
         if "/skins17/" in path and path.endswith(".css"):
+            self.loaded.add(path.split("/skins17/", 1)[1])
             cached = CACHE / path.split("/skins17/", 1)[1]
             body = cached.read_text() if self.styled and cached.exists() else ""
             # the page box as MFL's base stylesheet leaves it, so sizes differ only by what reaches v2's parts
@@ -134,6 +136,10 @@ def draw(browser, site, screen, look, width, styled):
     context = browser.new_context(viewport={"width": harness.WIDTHS[width], "height": 1000}, timezone_id="America/Los_Angeles")
     context.clock.set_fixed_time(swaps.get("now", harness.NOW))
     context.add_init_script(harness.INIT)
+    if "flash" in swaps:
+        # the line a move leaves for after the reload, as screens.py plants it
+        key, value = swaps["flash"]
+        context.add_init_script(f"sessionStorage.setItem({json.dumps(key)}, {json.dumps(json.dumps(value))});")
     context.route("**/*", mfl.handle)
     page = context.new_page()
     page.goto(harness.HOST + url)
@@ -141,7 +147,9 @@ def draw(browser, site, screen, look, width, styled):
     shown = page.evaluate("() => document.documentElement.getAttribute('data-fuad-look')")
     styles = page.evaluate(STYLES, PROPS)
     context.close()
-    return shown, styles
+    folder = LOOKS[look]
+    missing = sorted({"MFLBaseCSS.css", f"{folder}/{folder}.css", f"{folder}/responsive.css"} - mfl.loaded)
+    return shown, styles, missing
 
 
 def check(job):
@@ -149,8 +157,8 @@ def check(job):
     site = harness.Site(built)
     with sync_playwright() as playwright:
         browser = playwright.webkit.launch()
-        shown, skinned = draw(browser, site, screen, look, width, True)
-        _, plain = draw(browser, site, screen, look, width, False)
+        shown, skinned, missing = draw(browser, site, screen, look, width, True)
+        _, plain, _ = draw(browser, site, screen, look, width, False)
         browser.close()
     differ = []
     for path, element in skinned.items():
@@ -162,7 +170,7 @@ def check(job):
             if other["styles"][prop] != value:
                 differ.append((element["name"], element["text"], prop, value, other["styles"][prop]))
     differ += [(plain[path]["name"], plain[path]["text"], "drawn", "no", "yes") for path in plain if path not in skinned]
-    return screen, look, width, shown, len(skinned), differ
+    return screen, look, width, shown, missing, len(skinned), differ
 
 
 def main():
@@ -172,7 +180,8 @@ def main():
     args = parser.parse_args()
     changed = fetch(args.refresh)
     for name in changed:
-        print(f"MFL changed {name} (skins.json updated)")
+        print(f"MFL changed {name} (skins.json updated)" if args.refresh
+              else f"mfl-skins/{name} isn't the copy skins.json has: --refresh fetches MFL's")
     screens = args.only.split(",") if args.only else list(harness.SCREENS)
     built = harness.build_working_copy()
     jobs = [(built, screen, look, width) for look in LOOKS for screen in screens for width in harness.WIDTHS]
@@ -182,9 +191,11 @@ def main():
     # shares is MFL's base stylesheet's, or the same rule in every skin
     found = {}
     problems = []
-    for screen, look, width, shown, count, differ in results:
+    for screen, look, width, shown, missing, count, differ in results:
         if shown != look:
             problems.append(f"{look}/{screen}/{width}: drawn in look {shown}")
+        if missing:
+            problems.append(f"{look}/{screen}/{width}: the page didn't load {', '.join(missing)}")
         if not count:
             problems.append(f"{look}/{screen}/{width}: nothing of v2's drawn")
         for name, text, prop, value, plain in differ:
