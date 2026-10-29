@@ -23,7 +23,9 @@ saved page unchanged, so moves end on their unconfirmed path; the *-done screens
 successful move leaves instead. On the drop-* and ir-* screens MFL keeps the roster their posts
 change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or not, MFL refuses it
 (or, on IR, makes the moves but refuses the drop), the rosters export lags it or leaves the team out,
-or (Drop) MFL can't be reached.
+or (Drop) MFL can't be reached. On the trades-*, trades-offer-*, propose-* and counter-* screens MFL
+keeps the pending trades and rosters that Trades' moves change in the same ways, and an offer can be
+gone by the time it's accepted, or a counter's offer sent but the original left open.
 """
 import argparse
 import copy
@@ -109,6 +111,18 @@ SEEDS = {
     "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["activate", "drop", "save"],
            [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
 }
+# MFL keeping the pending trades and rosters that Trades' moves change: each move on the plain
+# screens, landing, failing (made or not) or refused; an accepted offer already gone; a counter sent
+TRADE_SCREENS = ["trades", "trades-offer", "propose"]
+for _name in TRADE_SCREENS:
+    for _how in ["lands", "fails", "fails-made", "refuses", "lands-unread"]:
+        SCREENS[f"{_name}-{_how}"] = (SCREENS[_name][0], {**SCREENS[_name][1], "moves": _how})
+        SEEDS[f"{_name}-{_how}"] = SEEDS[_name]
+SCREENS["trades-offer-gone"] = (SCREENS["trades-offer"][0], {**SCREENS["trades-offer"][1], "moves": "gone"})
+SEEDS["trades-offer-gone"] = [["answer", "send-answer"]]
+for _how in ["lands", "fails", "fails-made", "refuses", "then-fails"]:
+    SCREENS[f"counter-{_how}"] = (SCREENS["propose"][0] + "#counter-1003", {**SCREENS["trades-offer"][1], "moves": _how})
+    SEEDS[f"counter-{_how}"] = [["send"], ["next", "next", "send"]]
 
 EXPORTS = {
     "nflSchedule": "nflSchedule-W6.json", "liveScoring": "liveScoring-W6.json", "projectedScores": "projectedScores-W6.json",
@@ -219,7 +233,9 @@ class Mfl:
     made but not the drop); "lags" (made, MFL's answer not the IR page, and the first rosters read after
     it still shows the roster from before); "lags-twice" (the first two reads do); any of these with
     "-noteam" (each rosters read v2 makes to confirm it leaves the team out); "offline" (the post and
-    rosters reads don't reach MFL)"""
+    rosters reads don't reach MFL). Trades' moves too: "lands", "fails", "fails-made", "refuses";
+    "gone" (an accepted offer removed with no players moved); "then-fails" (the first move lands, those
+    after it fail); "lands-unread" (made, MFL's answer its Trades page, the pending trades unread after)"""
 
     def __init__(self, site, swaps):
         self.site = site
@@ -227,12 +243,19 @@ class Mfl:
         self.posts = []
         self.moves = swaps.get("moves")
         self.rosters = json.loads(sample("rosters.json")) if self.moves else None
+        # the pending trades, as moves change them
+        self.trades = None
+        if self.moves:
+            pending = json.loads(sample(swaps.get("pendingTrades", "pendingTrades.json")))["pendingTrades"].get("pendingTrade", [])
+            self.trades = pending if isinstance(pending, list) else [pending]
         self.stale = None
         # how many rosters reads still get the stale copy
         self.stale_reads = 0
         # rosters reads still to answer without the team, and whether MFL can't be reached
         self.noteam = 0
         self.offline = False
+        # whether the pending trades can no longer be read
+        self.trades_unread = False
 
     def team(self, rosters=None):
         return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
@@ -267,6 +290,45 @@ class Mfl:
             self.stale_reads = 2 if how == "lags-twice" else 1
             return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
         return route.fulfill(content_type="text/html", body=self.ir_page() if path.endswith("/ir") else self.drop_page())
+
+    def trade(self, route, path, fields):
+        """MFL's answer to a trade move: an offer sent, answered (accept swaps the players) or withdrawn"""
+        how = self.moves
+        if how == "then-fails":
+            # the first move lands, any after it fails unmade
+            how = "lands" if sum(post["url"].split("?")[0].endswith(("/trade_response", "/trade_offer")) for post in self.posts) == 1 else "fails"
+        field = lambda name: fields.get(name, [""])[0]
+        unread = how == "lands-unread"
+        if unread:
+            how = "lands"
+            self.trades_unread = True
+        if how not in ("fails", "refuses"):
+            if path.endswith("/trade_offer"):
+                partner = next(team for team in field("FRANCHISE_ID").split(",") if team != TEAM)
+                listed = lambda team: "".join(f"{id_}," for id_ in fields.get(f"drop{team}", []))
+                self.trades.append({"trade_id": str(2001 + len(self.posts)), "offeringteam": TEAM, "offeredto": partner,
+                                    "will_give_up": listed(TEAM), "will_receive": listed(partner), "comments": field("msg"),
+                                    "timestamp": "1792300000", "expires": "1792900000", "description": ""})
+            else:
+                trade = next((trade for trade in self.trades if trade["trade_id"] == field("TRADE_ID")), None)
+                if trade:
+                    self.trades.remove(trade)
+                if trade and field("ACTION") == "accept" and how != "gone":
+                    teams = {team["id"]: team for team in self.rosters["rosters"]["franchise"]}
+                    for giver, taker, listed in [(trade["offeringteam"], trade["offeredto"], trade["will_give_up"]),
+                                                 (trade["offeredto"], trade["offeringteam"], trade["will_receive"])]:
+                        ids = [id_ for id_ in listed.split(",") if id_]
+                        moved = [player for player in teams[giver]["player"] if player["id"] in ids]
+                        teams[giver]["player"] = [player for player in teams[giver]["player"] if player["id"] not in ids]
+                        teams[taker]["player"] += moved
+        if how in ("fails", "fails-made"):
+            return route.fulfill(status=500, body="")
+        if how == "refuses":
+            return route.fulfill(content_type="text/html", body=REFUSED)
+        if unread:
+            # MFL's Trades page, whose header warning ("No outstanding trade proposals received") isn't a refusal
+            return route.fulfill(content_type="text/html", body=sample("trades-O05.html"))
+        return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
 
     def drop_page(self):
         """MFL's Drop Players page as the roster now stands: a dropped player's entry gone"""
@@ -334,6 +396,9 @@ class Mfl:
     def export(self, query):
         kind = query.get("TYPE", [""])[0]
         week = query.get("W", [""])[0]
+        if kind == "pendingTrades" and self.moves:
+            # MFL's shape with none left
+            return json.dumps({"pendingTrades": {"pendingTrade": self.trades} if self.trades else {}})
         if kind in self.swaps:
             return sample(self.swaps[kind])
         if kind == "rosters" and self.noteam:
@@ -379,12 +444,14 @@ class Mfl:
             self.posts.append({"method": request.method, "url": f"{url.path}?{url.query}" if url.query else url.path, "body": fields})
             if self.moves and request.method == "POST" and url.path.endswith(("/add_drop", "/ir")):
                 return self.make(route, url.path, parse_qs(body, keep_blank_values=True))
+            if self.moves and url.path.endswith(("/trade_response", "/trade_offer")):
+                return self.trade(route, url.path, parse_qs(body, keep_blank_values=True))
             if url.path.endswith("/import"):
                 return route.fulfill(content_type="text/xml", body="<status>OK</status>")
             name = self.page_for(url.path, query)
             return route.fulfill(content_type="text/html", body=sample(name) if name else "<html><body></body></html>")
         if url.path.endswith("/export"):
-            if self.offline and query.get("TYPE") == ["rosters"]:
+            if self.offline and query.get("TYPE") == ["rosters"] or self.trades_unread and query.get("TYPE") == ["pendingTrades"]:
                 return route.abort()
             return route.fulfill(content_type="application/json", body=self.export(query))
         if "/fflnetdynamic" in url.path:

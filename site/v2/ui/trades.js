@@ -10,7 +10,7 @@ import {kickoffAt} from "./context.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {
-    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterIds, send, takeFlash
+    READ_GAP, READS, Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterIds, send, takeFlash
 } from "./moves.js";
 import {
     answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
@@ -146,21 +146,21 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         replaceEntry(listUrl, proposal ? state.depth : 0);
     };
 
-    // after a failure: if MFL's trades changed anyway, the page reloads to show them
+    // the member's pending trades, fresh, to confirm a move; null when they can't be read
+    const readOffers = () => freshTrades(context).then((found) => offersOf(found, franchiseId)).catch(() => null);
+
+    // after a move MFL's trades don't show: if they changed anyway, the page reloads to show them
     // `what` names the move for its failure line: "accept the offer from Kings"
-    async function failed(error, {sent, read, offerId = null, what}) {
+    function failed(error, {after, offerId = null, what}) {
         console.warn("[fuad] trade move failed:", error);
-        let message = failedLine(what, error);
-        const after = await freshTrades(context).then((found) => offersOf(found, franchiseId)).catch(() => null);
         const ids = (list) => list.map((offer) => offer.id).sort().join();
         if (after && ids(after) !== ids(offers())) {
-            // sent but not confirmed: the change may be this move's own
-            reloadList(sent && !read ? {note: "Couldn't confirm the move: this is how MFL has your trades now."} : {error: failedLine(what, error, {changed: true})});
+            reloadList({error: failedLine(what, error, {changed: true})});
             return;
         }
-        if (!after && sent && !read) {
-            message = "Couldn’t check whether MFL made it. Reload the page to see your trades.";
-        }
+        // with the trades unread there's no telling whether MFL made it: its answer to a move it made
+        // can be its Trades page, whose header warnings aren't a refusal
+        const message = after ? failedLine(what, error) : "Couldn’t check whether MFL made it. Reload the page to see your trades.";
         state.busy = null;
         if (offerId) {
             state.failure[offerId] = message;
@@ -168,6 +168,16 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
             state.error = message;
         }
         render();
+    }
+
+    // Sends a move (`init` builds the request); MFL's answer, or the error it failed with. A move
+    // whose answer failed may still have been made, so what MFL's trades show decides
+    async function sendMove(url, init) {
+        try {
+            return {reply: await send(url, init()), error: null};
+        } catch (error) {
+            return {reply: "", error};
+        }
     }
 
     const answerUrl = (offerId) => {
@@ -183,32 +193,36 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         state.failure[offer.id] = "";
         state.done = "";
         render();
-        let sent = false;
-        let read = false;
-        try {
-            const reply = await send(answerUrl(offer.id), {method: "POST", body: answerFields(page.answers.get(offer.id), {tradeId: offer.id, leagueId: context.leagueId, action, comment: state.comment[offer.id] || ""})});
-            sent = true;
-            const after = offersOf(await freshTrades(context), franchiseId);
-            read = true;
-            if (after.some((other) => other.id === offer.id)) {
-                throw new Refused(refusal(reply));
+        const partnerName = nameOf(offer.partner);
+        const {reply, error} = await sendMove(answerUrl(offer.id), () => ({method: "POST", body: answerFields(page.answers.get(offer.id), {tradeId: offer.id, leagueId: context.leagueId, action, comment: state.comment[offer.id] || ""})}));
+        const after = await readOffers();
+        if (!after || after.some((other) => other.id === offer.id)) {
+            failed(error || new Refused(refusal(reply)), {after, offerId: offer.id, what: `${action === "accept" ? "accept" : "reject"} the offer from ${partnerName}`});
+            return;
+        }
+        if (action !== "accept") {
+            reloadList({done: stop(`Offer from ${partnerName} rejected`)});
+            return;
+        }
+        // gone from the pending trades but not on the roster: it expired or was withdrawn. The roster
+        // is read again a few times while it lacks them, as it can lag a move
+        const players = offer.get.filter((id) => state.data.league.players.has(id));
+        let roster = null;
+        for (let tries = 0; tries < READS; tries += 1) {
+            if (tries) {
+                await new Promise((resolve) => setTimeout(resolve, READ_GAP));
             }
-            const partnerName = nameOf(offer.partner);
-            if (action === "accept") {
-                // gone from the pending trades but not on the roster: it expired or was withdrawn
-                const players = offer.get.filter((id) => state.data.league.players.has(id));
-                read = false;
-                const roster = await rosterIds(context, franchiseId);
-                if (!players.every((id) => roster.includes(id))) {
-                    reloadList({error: failedLine(`accept the offer from ${partnerName}`, new Refused("it’s no longer open"))});
-                    return;
-                }
-                reloadList({done: stop(`Trade with ${partnerName} accepted`)});
-            } else {
-                reloadList({done: stop(`Offer from ${partnerName} rejected`)});
+            roster = (await rosterIds(context, franchiseId).catch(() => null)) || roster;
+            if (roster && players.every((id) => roster.includes(id))) {
+                break;
             }
-        } catch (error) {
-            await failed(error, {sent, read, offerId: offer.id, what: `${action === "accept" ? "accept" : "reject"} the offer from ${nameOf(offer.partner)}`});
+        }
+        if (!roster) {
+            reloadList({note: "Couldn't confirm the move: this is how MFL has your trades now."});
+        } else if (!players.every((id) => roster.includes(id))) {
+            reloadList({error: failedLine(`accept the offer from ${partnerName}`, new Refused("it’s no longer open"))});
+        } else {
+            reloadList({done: stop(`Trade with ${partnerName} accepted`)});
         }
     }
 
@@ -220,21 +234,14 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         state.failure[offer.id] = "";
         state.done = "";
         render();
-        let sent = false;
-        let read = false;
-        try {
-            const href = page.revokes.get(offer.id) || `${window.location.origin}/${context.season}/trade_response?L=${encodeURIComponent(context.leagueId)}&TRADE_ID=${encodeURIComponent(offer.id)}&ACTION=revoke`;
-            const reply = await send(href, {method: "GET"});
-            sent = true;
-            const after = offersOf(await freshTrades(context), franchiseId);
-            read = true;
-            if (after.some((other) => other.id === offer.id)) {
-                throw new Refused(refusal(reply));
-            }
-            reloadList({done: stop(`Offer to ${nameOf(offer.partner)} withdrawn`)});
-        } catch (error) {
-            await failed(error, {sent, read, offerId: offer.id, what: `withdraw your offer to ${nameOf(offer.partner)}`});
+        const href = page.revokes.get(offer.id) || `${window.location.origin}/${context.season}/trade_response?L=${encodeURIComponent(context.leagueId)}&TRADE_ID=${encodeURIComponent(offer.id)}&ACTION=revoke`;
+        const {reply, error} = await sendMove(href, () => ({method: "GET"}));
+        const after = await readOffers();
+        if (!after || after.some((other) => other.id === offer.id)) {
+            failed(error || new Refused(refusal(reply)), {after, offerId: offer.id, what: `withdraw your offer to ${nameOf(offer.partner)}`});
+            return;
         }
+        reloadList({done: stop(`Offer to ${nameOf(offer.partner)} withdrawn`)});
     }
 
     // A counter sends the new offer first, then answers the original with MFL's counter (which
@@ -247,39 +254,29 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         state.busy = "send";
         state.error = "";
         render();
-        let sent = false;
-        let read = false;
         const known = new Set(offers().map((offer) => offer.id));
-        try {
-            const reply = await send(proposal.form.action, {method: "POST", body: proposalFields(proposal.form, {
-                mine: franchiseId, partner: proposal.partner, give: check.give, get: check.get, expires: state.expires, message: state.message
-            })});
-            sent = true;
-            const after = offersOf(await freshTrades(context), franchiseId);
-            read = true;
-            const made = findOffer(after.filter((offer) => !known.has(offer.id)), {partner: proposal.partner, give: check.give, get: check.get});
-            if (!made) {
-                throw new Refused(refusal(reply));
-            }
-            if (!state.counter) {
-                reloadList({done: stop(`Offer sent to ${check.partnerName}`)});
-                return;
-            }
-            const counter = state.counter;
-            try {
-                await send(answerUrl(counter), {method: "POST", body: answerFields(page.answers.get(counter), {tradeId: counter, leagueId: context.leagueId, action: "counter_proposal"})});
-                const left = offersOf(await freshTrades(context), franchiseId);
-                if (left.some((offer) => offer.id === counter)) {
-                    throw new Error("still open");
-                }
-                reloadList({done: stop(`Counter sent to ${check.partnerName}`)});
-            } catch (error) {
-                console.warn("[fuad] the countered offer is still open:", error);
-                reloadList({done: stop(`Counter sent to ${check.partnerName}`), stillOpen: counter});
-            }
-        } catch (error) {
-            await failed(error, {sent, read, what: `send your ${state.counter ? "counter" : "offer"} to ${check.partnerName}`});
+        const {reply, error} = await sendMove(proposal.form.action, () => ({method: "POST", body: proposalFields(proposal.form, {
+            mine: franchiseId, partner: proposal.partner, give: check.give, get: check.get, expires: state.expires, message: state.message
+        })}));
+        const after = await readOffers();
+        const made = after && findOffer(after.filter((offer) => !known.has(offer.id)), {partner: proposal.partner, give: check.give, get: check.get});
+        if (!made) {
+            failed(error || new Refused(refusal(reply)), {after, what: `send your ${state.counter ? "counter" : "offer"} to ${check.partnerName}`});
+            return;
         }
+        if (!state.counter) {
+            reloadList({done: stop(`Offer sent to ${check.partnerName}`)});
+            return;
+        }
+        const counter = state.counter;
+        await sendMove(answerUrl(counter), () => ({method: "POST", body: answerFields(page.answers.get(counter), {tradeId: counter, leagueId: context.leagueId, action: "counter_proposal"})}));
+        const left = await readOffers();
+        if (!left || left.some((offer) => offer.id === counter)) {
+            console.warn("[fuad] the countered offer may still be open");
+            reloadList({done: stop(`Counter sent to ${check.partnerName}`), stillOpen: counter});
+            return;
+        }
+        reloadList({done: stop(`Counter sent to ${check.partnerName}`)});
     }
 
     // ---- phone steps: each a history entry, so Back returns to the one before ----
