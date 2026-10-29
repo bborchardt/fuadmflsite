@@ -49,3 +49,8 @@ What the daily job did, newest last.
 - 2026-10-25 12:43 UTC: Charged $1 to The Fighting Injured Reserves! for Matt Gay (1yrs@1, 10/24), and reset the player to $1 / 0 years.
 - 2026-10-26 14:30 UTC: League rules: So your saying there’s a chance? started injured/suspended player Tyler Warren in week 6!
 - 2026-10-26 14:30 UTC: League rules: We Made a Kicker started injured/suspended player Rashee Rice in week 6!
+- 2026-10-29 14:36 UTC: Charged $1 to Smooth City Styles! for Cade Otton (1yrs@1, 10/29), and reset the player to $1 / 0 years.
+- 2026-10-29 14:36 UTC: Set Tyler Bass to 1 year (blind bid comment "Bass: 1 year
+Santos: 1 year").
+- 2026-10-29 14:36 UTC: Set Darnell Washington to 5 years (blind bid comment "5 years").
+- 2026-10-29 14:36 UTC: Set Cooper Kupp to 1 year (no length stated: the default).
