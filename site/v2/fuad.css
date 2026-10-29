@@ -2022,6 +2022,10 @@ body #fuad-home select {
 
 #fuad-home .fuad-chat-form input { flex: 1; min-width: 0; }
 
+/* the 2 px MFL's skins give every field, kept here so a skin can't move it */
+#fuad-home .fuad-chat-form input,
+#fuad-home #fuad-chat-to { margin: 2px; }
+
 #fuad-home textarea { line-height: 1.4; resize: vertical; }
 
 #fuad-home input:focus,
@@ -2133,7 +2137,7 @@ body #fuad-home select {
 #fuad-rosters .fuad-strong { font-weight: 700; }
 
 #fuad-league .fuad-subhead,
-#fuad-rosters .fuad-subhead { margin: 8px 0 2px; }
+#fuad-rosters .fuad-subhead { margin: 8px 0 2px; padding: 4px; }
 
 #fuad-league .fuad-if,
 #fuad-rosters .fuad-if { margin: -4px 0 8px; }
@@ -2937,7 +2941,8 @@ body #fuad-home select {
     box-sizing: border-box;
     width: 100%;
     min-height: 44px;
-    margin-bottom: 14px;
+    /* the 2 px MFL's skins give every field, kept here so a skin can't move it */
+    margin: 2px 2px 14px;
     padding: 0 12px !important;
     border: 1px solid var(--fuad-field);
     border-radius: 10px;
@@ -4288,6 +4293,7 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
     margin: 0;
     padding: 0 !important;
     border: 0;
+    border-radius: 3px;
     outline: 0;
     background: transparent;
     box-shadow: none;
@@ -5018,6 +5024,17 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 
 #fuad-ir input[type=checkbox],
 #fuad-ir input[type=radio] { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); cursor: pointer; }
+
+/* what MFL's skins set on every field (16 px type on a phone), kept here so a skin can't change it */
+#fuad-ir input[type=checkbox],
+#fuad-ir input[type=radio],
+#fuad-trades .fuad-trades-pick-row input { color: #000; font-size: 13px; }
+
+@media (max-width: 41.688em) {
+    #fuad-ir input[type=checkbox],
+    #fuad-ir input[type=radio],
+    #fuad-trades .fuad-trades-pick-row input { font-size: 16px; }
+}
 
 #fuad-ir input:disabled { cursor: default; }
 

@@ -9,8 +9,8 @@ skin and with its stylesheets empty, and every style of v2's parts that differs 
 listed: what the skin changes there, which fuad.css should set itself. Both keep MFL's page margin. The default look is drawn
 with the league's own skin, Neon Blue.
 
-MFL's stylesheets aren't the repo's to publish, so they're fetched from MFL once (13 files) into
-~/.cache/fuadmflsite, and their fingerprints kept in skins.json. --refresh fetches them again and
+MFL's stylesheets aren't the repo's to publish, so they're fetched from MFL on the first run (13
+files) into mfl-skins/ here, which git ignores, and their fingerprints kept in skins.json. --refresh fetches them again and
 rewrites skins.json, so a skin MFL has changed shows in git diff.
 """
 import argparse
@@ -27,7 +27,7 @@ from playwright.sync_api import sync_playwright
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-CACHE = Path.home() / ".cache" / "fuadmflsite" / "skins17"
+CACHE = HERE / "mfl-skins"
 FINGERPRINTS = HERE / "skins.json"
 
 _spec = importlib.util.spec_from_file_location("screens_harness", HERE / "screens.py")
@@ -197,7 +197,7 @@ def main():
         looks = "every look" if seen["looks"] == set(LOOKS) else ", ".join(sorted(seen["looks"]))
         where = sorted(seen["where"])
         text = f' "{seen["text"]}"' if seen["text"] else ""
-        lines.append(f"{looks}: {name}{text} {prop}: {value} (without the skin {plain}) on {', '.join(where[:4])}{'…' if len(where) > 4 else ''}")
+        lines.append(f"{looks}: {name}{text} {prop}: {value} (without the skin {plain}) on {', '.join(where)}")
     print("\n".join(sorted(lines)))
     print(f"\n{len(results)} screens drawn, {len(found)} styles the skins change, {len(problems)} problems")
     return 1 if found or problems or changed else 0

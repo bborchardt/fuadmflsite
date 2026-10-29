@@ -72,7 +72,7 @@ would do until they're switched on.
   or that MFL's page stays.
 - `uv run --no-project --with playwright python tools/verify/skins.py` draws v2's screens in each look,
   with the look's MFL skin and without it, and lists every style the skin changes on v2's parts. MFL's
-  stylesheets are fetched once into `~/.cache/fuadmflsite`, not the repo; `--refresh` fetches them again
+  stylesheets are fetched on the first run into `tools/verify/mfl-skins/`, which git ignores; `--refresh` fetches them again
   and updates their fingerprints in `tools/verify/skins.json`, so a skin MFL changed shows in git diff.
 
 ## What's where
