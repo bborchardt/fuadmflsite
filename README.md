@@ -66,6 +66,10 @@ would do until they're switched on.
 - `uv run --no-project --with playwright python tools/verify/header.py --built` loads saved pages with
   `mfl/message-header.html` as their header, in Chromium and WebKit, through each beta, fallback and
   failure case, before the commissioner pastes it; `speed.py --header` times it.
+- `uv run --no-project --with playwright python tools/verify/pages.py` loads every page the capture
+  bookmark saved (`tests/fixtures/pages/`), as the guest, a member or the commissioner got it, with
+  the working copy built and v2 as the main version, and checks which of v2's screens takes each one,
+  or that MFL's page stays.
 
 ## What's where
 
