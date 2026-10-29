@@ -20,19 +20,18 @@ compare does for one date. MFL's answers are screens.py's saved clone samples, r
 
 Before week 1 the rosters are as after the commissioner's rollover (a year off every contract, the
 expiring players RFAs at $0.01), the standings and results a new season's, and last season's come
-from screens/2025/. From before-cut, team 0001 has four draft-day players at 0 years and a pending
+from screens/2025/. Live scoring's feeds for any week are week 6's. From before-cut, team 0001 has four draft-day players at 0 years and a pending
 bid. A request no sample answers, or an error on the page, also fails the run: a new date may ask
 for something the samples don't have.
 """
 import argparse
-import copy
+import importlib.util
 import json
 import re
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
-import importlib.util
 
 from playwright.sync_api import sync_playwright
 
@@ -167,6 +166,8 @@ class Phase:
         """the export's answer, or None if no sample has it"""
         kind = query.get("TYPE", [""])[0]
         week = query.get("W", [""])[0]
+        if year not in ("2025", "2026"):
+            return None
         if year == "2025":
             if kind == "playoffBracket":
                 return load(PAST / f"playoffBracket-{query.get('BRACKET_ID', ['1'])[0]}.json")
@@ -206,8 +207,8 @@ class Phased(harness.Mfl):
             body = self.phase.export(year, query)
             if body is None and year == "2026" and query.get("TYPE") != ["nflSchedule"]:
                 body = json.loads(super().export(query))
-            if body is None and query.get("TYPE") == ["nflSchedule"]:
-                # what MFL answers for a week it hasn't published
+            if body is None and query.get("TYPE") == ["nflSchedule"] and year == "2026" and not self.phase.published:
+                # what MFL answers before it publishes the season's schedule
                 return route.fulfill(status=404, content_type="application/json", body=json.dumps({"error": {"$t": "no schedule"}}))
             if body is None or "error" in body:
                 self.missed.append(f"export {year} {query.get('TYPE', [''])[0]}{' W=' + query['W'][0] if 'W' in query else ''}")
@@ -219,6 +220,10 @@ class Phased(harness.Mfl):
             return route.fulfill(content_type="text/plain", body=(SAMPLES / f"{feed[1]}_06.txt").read_text())
         if year == "2025" and url.path.endswith("/options") and query.get("O") == ["101"]:
             return route.fulfill(content_type="text/html", body=(PAST / "power-O101.html").read_text())
+        # the samples are 2026's: another season's page would be answered with this one's
+        if year != "2026" and url.netloc.endswith("myfantasyleague.com") and re.match(r"^/\d{4}/", url.path):
+            self.missed.append(f"{route.request.method} {url.path}?{url.query}")
+            return route.fulfill(status=404, body="")
         return super().handle(Weeked(route, self))
 
 
@@ -254,7 +259,10 @@ def draw(job):
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
-        page.on("console", lambda message: message.type == "error" and message.text.startswith("[fuad]") and errors.append(message.text))
+        # v2's own reports of what it couldn't load or draw; a schedule MFL hasn't published is expected
+        expected = "couldn't load nflSchedule" if not mfl.phase.published else None
+        page.on("console", lambda message: message.type in ("error", "warning") and message.text.startswith("[fuad]")
+                and not (expected and expected in message.text) and errors.append(message.text))
         page.goto(harness.HOST + VIEWS[view])
         html = harness.settle(page)
         browser.close()
