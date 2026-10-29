@@ -228,7 +228,7 @@ export async function drawDrop({context, franchiseId}) {
             reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
         } else {
             // with the roster unread, MFL's reason if it refused, else no telling whether it made it
-            state.error = ids || error.reason ? failedLine(`drop ${name}`, error) : "Couldn't check whether MFL made it. Reload the page to see your roster.";
+            state.error = ids || error.reason ? failedLine(`drop ${name}`, error) : "Couldn’t check whether MFL made it. Reload the page to see your roster.";
             state.busy = false;
             render();
             // the button was off while sending, so focus fell away from it

@@ -205,8 +205,8 @@ def sample(name):
 
 
 TEAM = "0001"
-# how many times v2 reads the roster to confirm a move (moves.js)
-READS = 3
+# how many times v2 reads the roster to confirm a move
+READS = int(re.search(r"export const READS = (\d+);", (SAMPLES.parent.parent.parent / "site/v2/ui/moves.js").read_text()).group(1))
 REFUSED = '<html><body><div class="pagebody"><span class="warning">Roster moves are locked for this team.</span></div></body></html>'
 ROW = re.compile(r'<tr class="(?:odd|even)tablerow">.*?</tr>', re.S)
 
@@ -217,8 +217,9 @@ class Mfl:
     does: "lands"; "fails" (MFL's answer an error, nothing changed); "fails-made" (an error, the move
     made); "refuses" (a page with MFL's reason, nothing changed); "refuses-drop" (that page, the moves
     made but not the drop); "lags" (made, MFL's answer not the IR page, and the first rosters read after
-    it still shows the roster from before; "lags-twice", the first two); any of these with "-noteam" (each rosters read v2 makes to
-    confirm it leaves the team out); "offline" (the post and rosters reads don't reach MFL)"""
+    it still shows the roster from before); "lags-twice" (the first two reads do); any of these with
+    "-noteam" (each rosters read v2 makes to confirm it leaves the team out); "offline" (the post and
+    rosters reads don't reach MFL)"""
 
     def __init__(self, site, swaps):
         self.site = site
