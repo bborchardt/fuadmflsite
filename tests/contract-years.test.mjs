@@ -2,6 +2,7 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {contractsXml} from "../jobs/contract-years.mjs";
 import {decideYears as decide_, postReadings, readProcessedWaivers, readYears, yearMentions} from "../site/v2/lib/contract-years.js";
 import {contractDeadline, pendingAdds, windowClosed} from "../site/v2/lib/adds.js";
@@ -79,6 +80,16 @@ test("blind bids are read from the processed waivers page, with their comments",
         {franchiseId: "0002", granted: "St. Brown, Amon-Ra", adds: ["St. Brown, Amon-Ra"], comment: "it's 4 years"}
     ]);
     assert.throws(() => readProcessedWaivers("<html>Please log in</html>"), /no waiver table/);
+});
+
+test("blind bids are read from MFL's page as the job gets it, logged in as the commissioner", () => {
+    const saved = (viewer) => readFileSync(new URL(`./fixtures/pages/${viewer}/processed_waivers.html`, import.meta.url), "utf8");
+    assert.deepEqual(readProcessedWaivers(saved("commish")), [
+        {franchiseId: "0001", granted: null, adds: ["Fehoko, Simi"], comment: "Fehoko: 1 year"},
+        {franchiseId: "0001", granted: "Patrick, Tim", adds: ["Patrick, Tim"], comment: "Patrick: 2 years"}
+    ]);
+    // logged out, MFL answers with its login page
+    assert.throws(() => readProcessedWaivers(saved("guest")), /no waiver table/);
 });
 
 test("pending adds: 0 years and last moved by the team's own add", () => {

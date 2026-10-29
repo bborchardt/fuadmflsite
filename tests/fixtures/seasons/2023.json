@@ -1,0 +1,4759 @@
+{
+ "season": 2023,
+ "players": [
+  {
+   "id": "5848",
+   "name": "Brady, Tom",
+   "position": "QB"
+  },
+  {
+   "id": "7836",
+   "name": "Rodgers, Aaron",
+   "position": "QB"
+  },
+  {
+   "id": "8742",
+   "name": "Crosby, Mason",
+   "position": "PK"
+  },
+  {
+   "id": "8851",
+   "name": "Folk, Nick",
+   "position": "PK"
+  },
+  {
+   "id": "8930",
+   "name": "Prater, Matt",
+   "position": "PK"
+  },
+  {
+   "id": "9064",
+   "name": "Flacco, Joe",
+   "position": "QB"
+  },
+  {
+   "id": "9099",
+   "name": "Ryan, Matt",
+   "position": "QB"
+  },
+  {
+   "id": "9431",
+   "name": "Stafford, Matthew",
+   "position": "QB"
+  },
+  {
+   "id": "9686",
+   "name": "Succop, Ryan",
+   "position": "PK"
+  },
+  {
+   "id": "9694",
+   "name": "Gano, Graham",
+   "position": "PK"
+  },
+  {
+   "id": "10312",
+   "name": "Rudolph, Kyle",
+   "position": "TE"
+  },
+  {
+   "id": "10697",
+   "name": "Tannehill, Ryan",
+   "position": "QB"
+  },
+  {
+   "id": "10700",
+   "name": "Cousins, Kirk",
+   "position": "QB"
+  },
+  {
+   "id": "10703",
+   "name": "Wilson, Russell",
+   "position": "QB"
+  },
+  {
+   "id": "10738",
+   "name": "Jones, Marvin",
+   "position": "WR"
+  },
+  {
+   "id": "10976",
+   "name": "Tucker, Justin",
+   "position": "PK"
+  },
+  {
+   "id": "11150",
+   "name": "Smith, Geno",
+   "position": "QB"
+  },
+  {
+   "id": "11222",
+   "name": "Allen, Keenan",
+   "position": "WR"
+  },
+  {
+   "id": "11225",
+   "name": "Patterson, Cordarrelle",
+   "position": "RB"
+  },
+  {
+   "id": "11228",
+   "name": "Woods, Robert",
+   "position": "WR"
+  },
+  {
+   "id": "11232",
+   "name": "Hopkins, DeAndre",
+   "position": "WR"
+  },
+  {
+   "id": "11244",
+   "name": "Kelce, Travis",
+   "position": "TE"
+  },
+  {
+   "id": "11247",
+   "name": "Ertz, Zach",
+   "position": "TE"
+  },
+  {
+   "id": "11387",
+   "name": "Hopkins, Dustin",
+   "position": "PK"
+  },
+  {
+   "id": "11644",
+   "name": "Carr, Derek",
+   "position": "QB"
+  },
+  {
+   "id": "11647",
+   "name": "Thomas, Logan",
+   "position": "TE"
+  },
+  {
+   "id": "11671",
+   "name": "Evans, Mike",
+   "position": "WR"
+  },
+  {
+   "id": "11674",
+   "name": "Cooks, Brandin",
+   "position": "WR"
+  },
+  {
+   "id": "11675",
+   "name": "Adams, Davante",
+   "position": "WR"
+  },
+  {
+   "id": "11678",
+   "name": "Robinson, Allen",
+   "position": "WR"
+  },
+  {
+   "id": "11679",
+   "name": "Beckham, Odell",
+   "position": "WR"
+  },
+  {
+   "id": "11760",
+   "name": "Garoppolo, Jimmy",
+   "position": "QB"
+  },
+  {
+   "id": "11761",
+   "name": "McKinnon, Jerick",
+   "position": "RB"
+  },
+  {
+   "id": "11938",
+   "name": "Thielen, Adam",
+   "position": "WR"
+  },
+  {
+   "id": "11947",
+   "name": "McManus, Brandon",
+   "position": "PK"
+  },
+  {
+   "id": "12140",
+   "name": "Winston, Jameis",
+   "position": "QB"
+  },
+  {
+   "id": "12141",
+   "name": "Mariota, Marcus",
+   "position": "QB"
+  },
+  {
+   "id": "12151",
+   "name": "Gordon, Melvin",
+   "position": "RB"
+  },
+  {
+   "id": "12175",
+   "name": "Cooper, Amari",
+   "position": "WR"
+  },
+  {
+   "id": "12176",
+   "name": "Parker, DeVante",
+   "position": "WR"
+  },
+  {
+   "id": "12186",
+   "name": "Diggs, Stefon",
+   "position": "WR"
+  },
+  {
+   "id": "12187",
+   "name": "Lockett, Tyler",
+   "position": "WR"
+  },
+  {
+   "id": "12263",
+   "name": "Waller, Darren",
+   "position": "TE"
+  },
+  {
+   "id": "12288",
+   "name": "Anderson, Henry",
+   "position": "DT"
+  },
+  {
+   "id": "12437",
+   "name": "Myers, Jason",
+   "position": "PK"
+  },
+  {
+   "id": "12447",
+   "name": "Mostert, Raheem",
+   "position": "RB"
+  },
+  {
+   "id": "12476",
+   "name": "Heinicke, Taylor",
+   "position": "QB"
+  },
+  {
+   "id": "12610",
+   "name": "Wentz, Carson",
+   "position": "QB"
+  },
+  {
+   "id": "12611",
+   "name": "Goff, Jared",
+   "position": "QB"
+  },
+  {
+   "id": "12620",
+   "name": "Prescott, Dak",
+   "position": "QB"
+  },
+  {
+   "id": "12625",
+   "name": "Elliott, Ezekiel",
+   "position": "RB"
+  },
+  {
+   "id": "12626",
+   "name": "Henry, Derrick",
+   "position": "RB"
+  },
+  {
+   "id": "12630",
+   "name": "Drake, Kenyan",
+   "position": "RB"
+  },
+  {
+   "id": "12650",
+   "name": "Boyd, Tyler",
+   "position": "WR"
+  },
+  {
+   "id": "12652",
+   "name": "Thomas, Michael",
+   "position": "WR"
+  },
+  {
+   "id": "12676",
+   "name": "Henry, Hunter",
+   "position": "TE"
+  },
+  {
+   "id": "12677",
+   "name": "Hooper, Austin",
+   "position": "TE"
+  },
+  {
+   "id": "12678",
+   "name": "Higbee, Tyler",
+   "position": "TE"
+  },
+  {
+   "id": "12801",
+   "name": "Hill, Tyreek",
+   "position": "WR"
+  },
+  {
+   "id": "12835",
+   "name": "Parks, Will",
+   "position": "S"
+  },
+  {
+   "id": "12930",
+   "name": "Chosen, Robbie",
+   "position": "WR"
+  },
+  {
+   "id": "12956",
+   "name": "Lutz, Wil",
+   "position": "PK"
+  },
+  {
+   "id": "13113",
+   "name": "Watson, Deshaun",
+   "position": "QB"
+  },
+  {
+   "id": "13116",
+   "name": "Mahomes, Patrick",
+   "position": "QB"
+  },
+  {
+   "id": "13119",
+   "name": "Dobbs, Joshua",
+   "position": "QB"
+  },
+  {
+   "id": "13121",
+   "name": "Kelly, Chad",
+   "position": "QB"
+  },
+  {
+   "id": "13128",
+   "name": "Cook, Dalvin",
+   "position": "RB"
+  },
+  {
+   "id": "13129",
+   "name": "Fournette, Leonard",
+   "position": "RB"
+  },
+  {
+   "id": "13130",
+   "name": "McCaffrey, Christian",
+   "position": "RB"
+  },
+  {
+   "id": "13131",
+   "name": "Mixon, Joe",
+   "position": "RB"
+  },
+  {
+   "id": "13132",
+   "name": "Kamara, Alvin",
+   "position": "RB"
+  },
+  {
+   "id": "13133",
+   "name": "Perine, Samaje",
+   "position": "RB"
+  },
+  {
+   "id": "13134",
+   "name": "Foreman, D'Onta",
+   "position": "RB"
+  },
+  {
+   "id": "13138",
+   "name": "Hunt, Kareem",
+   "position": "RB"
+  },
+  {
+   "id": "13139",
+   "name": "Williams, Jamaal",
+   "position": "RB"
+  },
+  {
+   "id": "13146",
+   "name": "Conner, James",
+   "position": "RB"
+  },
+  {
+   "id": "13154",
+   "name": "Williams, Mike",
+   "position": "WR"
+  },
+  {
+   "id": "13156",
+   "name": "Smith-Schuster, JuJu",
+   "position": "WR"
+  },
+  {
+   "id": "13157",
+   "name": "Samuel, Curtis",
+   "position": "WR"
+  },
+  {
+   "id": "13163",
+   "name": "Godwin, Chris",
+   "position": "WR"
+  },
+  {
+   "id": "13164",
+   "name": "Kupp, Cooper",
+   "position": "WR"
+  },
+  {
+   "id": "13168",
+   "name": "Reynolds, Josh",
+   "position": "WR"
+  },
+  {
+   "id": "13172",
+   "name": "Brown, Noah",
+   "position": "WR"
+  },
+  {
+   "id": "13176",
+   "name": "Jones, Zay",
+   "position": "WR"
+  },
+  {
+   "id": "13189",
+   "name": "Engram, Evan",
+   "position": "TE"
+  },
+  {
+   "id": "13192",
+   "name": "Njoku, David",
+   "position": "TE"
+  },
+  {
+   "id": "13193",
+   "name": "Smith, Jonnu",
+   "position": "TE"
+  },
+  {
+   "id": "13236",
+   "name": "Everett, Gerald",
+   "position": "TE"
+  },
+  {
+   "id": "13289",
+   "name": "Hollins, Mack",
+   "position": "WR"
+  },
+  {
+   "id": "13299",
+   "name": "Kittle, George",
+   "position": "TE"
+  },
+  {
+   "id": "13303",
+   "name": "Elliott, Jake",
+   "position": "PK"
+  },
+  {
+   "id": "13319",
+   "name": "Jones, Aaron",
+   "position": "RB"
+  },
+  {
+   "id": "13354",
+   "name": "Butker, Harrison",
+   "position": "PK"
+  },
+  {
+   "id": "13403",
+   "name": "Koo, Younghoe",
+   "position": "PK"
+  },
+  {
+   "id": "13404",
+   "name": "Ekeler, Austin",
+   "position": "RB"
+  },
+  {
+   "id": "13418",
+   "name": "Bourne, Kendrick",
+   "position": "WR"
+  },
+  {
+   "id": "13424",
+   "name": "Hill, Taysom",
+   "position": "TE"
+  },
+  {
+   "id": "13427",
+   "name": "Tonyan, Robert",
+   "position": "TE"
+  },
+  {
+   "id": "13589",
+   "name": "Allen, Josh",
+   "position": "QB"
+  },
+  {
+   "id": "13590",
+   "name": "Mayfield, Baker",
+   "position": "QB"
+  },
+  {
+   "id": "13593",
+   "name": "Jackson, Lamar",
+   "position": "QB"
+  },
+  {
+   "id": "13604",
+   "name": "Barkley, Saquon",
+   "position": "RB"
+  },
+  {
+   "id": "13606",
+   "name": "Jones, Ronald",
+   "position": "RB"
+  },
+  {
+   "id": "13608",
+   "name": "Penny, Rashaad",
+   "position": "RB"
+  },
+  {
+   "id": "13610",
+   "name": "Chubb, Nick",
+   "position": "RB"
+  },
+  {
+   "id": "13629",
+   "name": "Ridley, Calvin",
+   "position": "WR"
+  },
+  {
+   "id": "13630",
+   "name": "Sutton, Courtland",
+   "position": "WR"
+  },
+  {
+   "id": "13632",
+   "name": "Lazard, Allen",
+   "position": "WR"
+  },
+  {
+   "id": "13633",
+   "name": "Kirk, Christian",
+   "position": "WR"
+  },
+  {
+   "id": "13635",
+   "name": "Moore, D.J.",
+   "position": "WR"
+  },
+  {
+   "id": "13639",
+   "name": "Miller, Anthony",
+   "position": "WR"
+  },
+  {
+   "id": "13646",
+   "name": "Gallup, Michael",
+   "position": "WR"
+  },
+  {
+   "id": "13668",
+   "name": "Chark, D.J.",
+   "position": "WR"
+  },
+  {
+   "id": "13671",
+   "name": "Andrews, Mark",
+   "position": "TE"
+  },
+  {
+   "id": "13672",
+   "name": "Gesicki, Mike",
+   "position": "TE"
+  },
+  {
+   "id": "13674",
+   "name": "Goedert, Dallas",
+   "position": "TE"
+  },
+  {
+   "id": "13675",
+   "name": "Conklin, Tyler",
+   "position": "TE"
+  },
+  {
+   "id": "13680",
+   "name": "Hurst, Hayden",
+   "position": "TE"
+  },
+  {
+   "id": "13718",
+   "name": "Carlson, Daniel",
+   "position": "PK"
+  },
+  {
+   "id": "13726",
+   "name": "Edmonds, Chase",
+   "position": "RB"
+  },
+  {
+   "id": "13746",
+   "name": "Green, Rasheem",
+   "position": "DE"
+  },
+  {
+   "id": "13753",
+   "name": "Akins, Jordan",
+   "position": "TE"
+  },
+  {
+   "id": "13772",
+   "name": "Schultz, Dalton",
+   "position": "TE"
+  },
+  {
+   "id": "13793",
+   "name": "Valdes-Scantling, Marquez",
+   "position": "WR"
+  },
+  {
+   "id": "13832",
+   "name": "Sanders, Jason",
+   "position": "PK"
+  },
+  {
+   "id": "13850",
+   "name": "Edwards, Gus",
+   "position": "RB"
+  },
+  {
+   "id": "13898",
+   "name": "Joseph, Greg",
+   "position": "PK"
+  },
+  {
+   "id": "13909",
+   "name": "Maher, Brett",
+   "position": "PK"
+  },
+  {
+   "id": "13910",
+   "name": "Powell, Brandon",
+   "position": "WR"
+  },
+  {
+   "id": "13920",
+   "name": "Ward, Charvarius",
+   "position": "CB"
+  },
+  {
+   "id": "14017",
+   "name": "Wilson, Jeffery",
+   "position": "RB"
+  },
+  {
+   "id": "14056",
+   "name": "Murray, Kyler",
+   "position": "QB"
+  },
+  {
+   "id": "14059",
+   "name": "Jones, Daniel",
+   "position": "QB"
+  },
+  {
+   "id": "14067",
+   "name": "Minshew, Gardner",
+   "position": "QB"
+  },
+  {
+   "id": "14071",
+   "name": "Montgomery, David",
+   "position": "RB"
+  },
+  {
+   "id": "14073",
+   "name": "Jacobs, Josh",
+   "position": "RB"
+  },
+  {
+   "id": "14075",
+   "name": "Harris, Damien",
+   "position": "RB"
+  },
+  {
+   "id": "14079",
+   "name": "Sanders, Miles",
+   "position": "RB"
+  },
+  {
+   "id": "14080",
+   "name": "Singletary, Devin",
+   "position": "RB"
+  },
+  {
+   "id": "14081",
+   "name": "Gaskin, Myles",
+   "position": "RB"
+  },
+  {
+   "id": "14085",
+   "name": "Pollard, Tony",
+   "position": "RB"
+  },
+  {
+   "id": "14087",
+   "name": "Henderson, Darrell",
+   "position": "RB"
+  },
+  {
+   "id": "14102",
+   "name": "Metcalf, DK",
+   "position": "WR"
+  },
+  {
+   "id": "14104",
+   "name": "Brown, A.J.",
+   "position": "WR"
+  },
+  {
+   "id": "14105",
+   "name": "Brown, Marquise",
+   "position": "WR"
+  },
+  {
+   "id": "14109",
+   "name": "McLaurin, Terry",
+   "position": "WR"
+  },
+  {
+   "id": "14112",
+   "name": "Campbell, Parris",
+   "position": "WR"
+  },
+  {
+   "id": "14122",
+   "name": "Slayton, Darius",
+   "position": "WR"
+  },
+  {
+   "id": "14123",
+   "name": "Renfrow, Hunter",
+   "position": "WR"
+  },
+  {
+   "id": "14127",
+   "name": "Meyers, Jakobi",
+   "position": "WR"
+  },
+  {
+   "id": "14136",
+   "name": "Samuel, Deebo",
+   "position": "WR"
+  },
+  {
+   "id": "14137",
+   "name": "Fant, Noah",
+   "position": "TE"
+  },
+  {
+   "id": "14138",
+   "name": "Hockenson, T.J.",
+   "position": "TE"
+  },
+  {
+   "id": "14141",
+   "name": "Smith Jr., Irv",
+   "position": "TE"
+  },
+  {
+   "id": "14143",
+   "name": "Knox, Dawson",
+   "position": "TE"
+  },
+  {
+   "id": "14208",
+   "name": "Johnson, Diontae",
+   "position": "WR"
+  },
+  {
+   "id": "14223",
+   "name": "Mattison, Alexander",
+   "position": "RB"
+  },
+  {
+   "id": "14244",
+   "name": "Gay, Matt",
+   "position": "PK"
+  },
+  {
+   "id": "14358",
+   "name": "Browning, Jake",
+   "position": "QB"
+  },
+  {
+   "id": "14777",
+   "name": "Burrow, Joe",
+   "position": "QB"
+  },
+  {
+   "id": "14778",
+   "name": "Tagovailoa, Tua",
+   "position": "QB"
+  },
+  {
+   "id": "14779",
+   "name": "Herbert, Justin",
+   "position": "QB"
+  },
+  {
+   "id": "14782",
+   "name": "Love, Jordan",
+   "position": "QB"
+  },
+  {
+   "id": "14783",
+   "name": "Hurts, Jalen",
+   "position": "QB"
+  },
+  {
+   "id": "14789",
+   "name": "Huntley, Tyler",
+   "position": "QB"
+  },
+  {
+   "id": "14797",
+   "name": "Swift, D'Andre",
+   "position": "RB"
+  },
+  {
+   "id": "14798",
+   "name": "Moss, Zack",
+   "position": "RB"
+  },
+  {
+   "id": "14799",
+   "name": "Akers, Cam",
+   "position": "RB"
+  },
+  {
+   "id": "14800",
+   "name": "Dobbins, J.K.",
+   "position": "RB"
+  },
+  {
+   "id": "14802",
+   "name": "Taylor, Jonathan",
+   "position": "RB"
+  },
+  {
+   "id": "14803",
+   "name": "Edwards-Helaire, Clyde",
+   "position": "RB"
+  },
+  {
+   "id": "14805",
+   "name": "Dillon, AJ",
+   "position": "RB"
+  },
+  {
+   "id": "14807",
+   "name": "Kelley, Joshua",
+   "position": "RB"
+  },
+  {
+   "id": "14813",
+   "name": "Robinson, James",
+   "position": "RB"
+  },
+  {
+   "id": "14832",
+   "name": "Lamb, CeeDee",
+   "position": "WR"
+  },
+  {
+   "id": "14833",
+   "name": "Jeudy, Jerry",
+   "position": "WR"
+  },
+  {
+   "id": "14835",
+   "name": "Higgins, Tee",
+   "position": "WR"
+  },
+  {
+   "id": "14836",
+   "name": "Jefferson, Justin",
+   "position": "WR"
+  },
+  {
+   "id": "14837",
+   "name": "Hamler, KJ",
+   "position": "WR"
+  },
+  {
+   "id": "14838",
+   "name": "Shenault, Laviska",
+   "position": "WR"
+  },
+  {
+   "id": "14839",
+   "name": "Reagor, Jalen",
+   "position": "WR"
+  },
+  {
+   "id": "14840",
+   "name": "Aiyuk, Brandon",
+   "position": "WR"
+  },
+  {
+   "id": "14841",
+   "name": "Claypool, Chase",
+   "position": "WR"
+  },
+  {
+   "id": "14842",
+   "name": "Pittman, Michael",
+   "position": "WR"
+  },
+  {
+   "id": "14845",
+   "name": "Davis, Gabriel",
+   "position": "WR"
+  },
+  {
+   "id": "14847",
+   "name": "Duvernay, Devin",
+   "position": "WR"
+  },
+  {
+   "id": "14852",
+   "name": "Gibson, Antonio",
+   "position": "RB"
+  },
+  {
+   "id": "14857",
+   "name": "Peoples-Jones, Donovan",
+   "position": "WR"
+  },
+  {
+   "id": "14861",
+   "name": "Johnson, Juwan",
+   "position": "TE"
+  },
+  {
+   "id": "14867",
+   "name": "Kmet, Cole",
+   "position": "TE"
+  },
+  {
+   "id": "14873",
+   "name": "Okwuegbunam, Albert",
+   "position": "TE"
+  },
+  {
+   "id": "14974",
+   "name": "Mooney, Darnell",
+   "position": "WR"
+  },
+  {
+   "id": "14977",
+   "name": "Osborn, K.J.",
+   "position": "WR"
+  },
+  {
+   "id": "14983",
+   "name": "Bass, Tyler",
+   "position": "PK"
+  },
+  {
+   "id": "15034",
+   "name": "Callaway, Marquez",
+   "position": "WR"
+  },
+  {
+   "id": "15237",
+   "name": "Lawrence, Trevor",
+   "position": "QB"
+  },
+  {
+   "id": "15238",
+   "name": "Fields, Justin",
+   "position": "QB"
+  },
+  {
+   "id": "15239",
+   "name": "Wilson, Zach",
+   "position": "QB"
+  },
+  {
+   "id": "15240",
+   "name": "Lance, Trey",
+   "position": "QB"
+  },
+  {
+   "id": "15241",
+   "name": "Jones, Mac",
+   "position": "QB"
+  },
+  {
+   "id": "15243",
+   "name": "Mond, Kellen",
+   "position": "QB"
+  },
+  {
+   "id": "15253",
+   "name": "Etienne, Travis",
+   "position": "RB"
+  },
+  {
+   "id": "15254",
+   "name": "Harris, Najee",
+   "position": "RB"
+  },
+  {
+   "id": "15255",
+   "name": "Gainwell, Kenneth",
+   "position": "RB"
+  },
+  {
+   "id": "15256",
+   "name": "Williams, Javonte",
+   "position": "RB"
+  },
+  {
+   "id": "15258",
+   "name": "Carter, Michael",
+   "position": "RB"
+  },
+  {
+   "id": "15259",
+   "name": "Stevenson, Rhamondre",
+   "position": "RB"
+  },
+  {
+   "id": "15261",
+   "name": "Hubbard, Chuba",
+   "position": "RB"
+  },
+  {
+   "id": "15263",
+   "name": "Mitchell, Elijah",
+   "position": "RB"
+  },
+  {
+   "id": "15271",
+   "name": "Herbert, Khalil",
+   "position": "RB"
+  },
+  {
+   "id": "15281",
+   "name": "Chase, Ja'Marr",
+   "position": "WR"
+  },
+  {
+   "id": "15282",
+   "name": "Smith, DeVonta",
+   "position": "WR"
+  },
+  {
+   "id": "15283",
+   "name": "Moore, Rondale",
+   "position": "WR"
+  },
+  {
+   "id": "15284",
+   "name": "Waddle, Jaylen",
+   "position": "WR"
+  },
+  {
+   "id": "15287",
+   "name": "St. Brown, Amon-Ra",
+   "position": "WR"
+  },
+  {
+   "id": "15288",
+   "name": "Moore, Elijah",
+   "position": "WR"
+  },
+  {
+   "id": "15289",
+   "name": "Toney, Kadarius",
+   "position": "WR"
+  },
+  {
+   "id": "15290",
+   "name": "Collins, Nico",
+   "position": "WR"
+  },
+  {
+   "id": "15292",
+   "name": "Brown, Dyami",
+   "position": "WR"
+  },
+  {
+   "id": "15293",
+   "name": "Bateman, Rashod",
+   "position": "WR"
+  },
+  {
+   "id": "15296",
+   "name": "Schwartz, Anthony",
+   "position": "WR"
+  },
+  {
+   "id": "15301",
+   "name": "Atwell, Tutu",
+   "position": "WR"
+  },
+  {
+   "id": "15302",
+   "name": "Eskridge, D'Wayne",
+   "position": "WR"
+  },
+  {
+   "id": "15319",
+   "name": "Palmer, Josh",
+   "position": "WR"
+  },
+  {
+   "id": "15329",
+   "name": "Pitts, Kyle",
+   "position": "TE"
+  },
+  {
+   "id": "15330",
+   "name": "Jordan, Brevin",
+   "position": "TE"
+  },
+  {
+   "id": "15331",
+   "name": "Freiermuth, Pat",
+   "position": "TE"
+  },
+  {
+   "id": "15368",
+   "name": "McPherson, Evan",
+   "position": "PK"
+  },
+  {
+   "id": "15369",
+   "name": "Patterson, Riley",
+   "position": "PK"
+  },
+  {
+   "id": "15692",
+   "name": "Pickett, Kenny",
+   "position": "QB"
+  },
+  {
+   "id": "15693",
+   "name": "Howell, Sam",
+   "position": "QB"
+  },
+  {
+   "id": "15694",
+   "name": "Willis, Malik",
+   "position": "QB"
+  },
+  {
+   "id": "15697",
+   "name": "Ridder, Desmond",
+   "position": "QB"
+  },
+  {
+   "id": "15698",
+   "name": "Purdy, Brock",
+   "position": "QB"
+  },
+  {
+   "id": "15699",
+   "name": "Thompson, Skylar",
+   "position": "QB"
+  },
+  {
+   "id": "15708",
+   "name": "Hall, Breece",
+   "position": "RB"
+  },
+  {
+   "id": "15709",
+   "name": "Spiller, Isaiah",
+   "position": "RB"
+  },
+  {
+   "id": "15710",
+   "name": "Williams, Kyren",
+   "position": "RB"
+  },
+  {
+   "id": "15711",
+   "name": "Walker III, Kenneth",
+   "position": "RB"
+  },
+  {
+   "id": "15712",
+   "name": "Allgeier, Tyler",
+   "position": "RB"
+  },
+  {
+   "id": "15713",
+   "name": "Ford, Jerome",
+   "position": "RB"
+  },
+  {
+   "id": "15714",
+   "name": "White, Zamir",
+   "position": "RB"
+  },
+  {
+   "id": "15715",
+   "name": "Cook, James",
+   "position": "RB"
+  },
+  {
+   "id": "15716",
+   "name": "Robinson, Brian",
+   "position": "RB"
+  },
+  {
+   "id": "15717",
+   "name": "Pierce, Dameon",
+   "position": "RB"
+  },
+  {
+   "id": "15720",
+   "name": "Haskins, Hassan",
+   "position": "RB"
+  },
+  {
+   "id": "15721",
+   "name": "White, Rachaad",
+   "position": "RB"
+  },
+  {
+   "id": "15723",
+   "name": "Chandler, Ty",
+   "position": "RB"
+  },
+  {
+   "id": "15734",
+   "name": "Ingram, Keaontay",
+   "position": "RB"
+  },
+  {
+   "id": "15742",
+   "name": "Warren, Jaylen",
+   "position": "RB"
+  },
+  {
+   "id": "15746",
+   "name": "Davis-Price, Tyrion",
+   "position": "RB"
+  },
+  {
+   "id": "15749",
+   "name": "Pacheco, Isiah",
+   "position": "RB"
+  },
+  {
+   "id": "15751",
+   "name": "London, Drake",
+   "position": "WR"
+  },
+  {
+   "id": "15752",
+   "name": "Burks, Treylon",
+   "position": "WR"
+  },
+  {
+   "id": "15753",
+   "name": "Wilson, Garrett",
+   "position": "WR"
+  },
+  {
+   "id": "15754",
+   "name": "Olave, Chris",
+   "position": "WR"
+  },
+  {
+   "id": "15755",
+   "name": "Dotson, Jahan",
+   "position": "WR"
+  },
+  {
+   "id": "15756",
+   "name": "Williams, Jameson",
+   "position": "WR"
+  },
+  {
+   "id": "15757",
+   "name": "Robinson, Wan'Dale",
+   "position": "WR"
+  },
+  {
+   "id": "15758",
+   "name": "Bell, David",
+   "position": "WR"
+  },
+  {
+   "id": "15759",
+   "name": "Metchie, John",
+   "position": "WR"
+  },
+  {
+   "id": "15761",
+   "name": "Shakir, Khalil",
+   "position": "WR"
+  },
+  {
+   "id": "15762",
+   "name": "Pickens, George",
+   "position": "WR"
+  },
+  {
+   "id": "15766",
+   "name": "Moore, Skyy",
+   "position": "WR"
+  },
+  {
+   "id": "15768",
+   "name": "Pierce, Alec",
+   "position": "WR"
+  },
+  {
+   "id": "15779",
+   "name": "Doubs, Romeo",
+   "position": "WR"
+  },
+  {
+   "id": "15787",
+   "name": "Thornton, Tyquan",
+   "position": "WR"
+  },
+  {
+   "id": "15788",
+   "name": "Tolbert, Jalen",
+   "position": "WR"
+  },
+  {
+   "id": "15789",
+   "name": "Watson, Christian",
+   "position": "WR"
+  },
+  {
+   "id": "15794",
+   "name": "McBride, Trey",
+   "position": "TE"
+  },
+  {
+   "id": "15797",
+   "name": "Dulcich, Greg",
+   "position": "TE"
+  },
+  {
+   "id": "15798",
+   "name": "Likely, Isaiah",
+   "position": "TE"
+  },
+  {
+   "id": "15799",
+   "name": "Ferguson, Jake",
+   "position": "TE"
+  },
+  {
+   "id": "15802",
+   "name": "Otton, Cade",
+   "position": "TE"
+  },
+  {
+   "id": "15840",
+   "name": "Woods, Jelani",
+   "position": "TE"
+  },
+  {
+   "id": "15873",
+   "name": "Bellinger, Daniel",
+   "position": "TE"
+  },
+  {
+   "id": "15889",
+   "name": "Okonkwo, Chigoziem",
+   "position": "TE"
+  },
+  {
+   "id": "15900",
+   "name": "Washington, Montrell",
+   "position": "WR"
+  },
+  {
+   "id": "15972",
+   "name": "Mason, Jordan",
+   "position": "RB"
+  },
+  {
+   "id": "15979",
+   "name": "Dicker, Cameron",
+   "position": "PK"
+  },
+  {
+   "id": "15987",
+   "name": "Johnson, Brandon",
+   "position": "WR"
+  },
+  {
+   "id": "16080",
+   "name": "Shaheed, Rashid",
+   "position": "WR"
+  },
+  {
+   "id": "16148",
+   "name": "Young, Bryce",
+   "position": "QB"
+  },
+  {
+   "id": "16149",
+   "name": "Levis, Will",
+   "position": "QB"
+  },
+  {
+   "id": "16150",
+   "name": "Stroud, C.J.",
+   "position": "QB"
+  },
+  {
+   "id": "16151",
+   "name": "Hooker, Hendon",
+   "position": "QB"
+  },
+  {
+   "id": "16152",
+   "name": "Richardson, Anthony",
+   "position": "QB"
+  },
+  {
+   "id": "16154",
+   "name": "Hall, Jaren",
+   "position": "QB"
+  },
+  {
+   "id": "16158",
+   "name": "Thompson-Robinson, Dorian",
+   "position": "QB"
+  },
+  {
+   "id": "16159",
+   "name": "O'Connell, Aidan",
+   "position": "QB"
+  },
+  {
+   "id": "16161",
+   "name": "Robinson, Bijan",
+   "position": "RB"
+  },
+  {
+   "id": "16162",
+   "name": "Gibbs, Jahmyr",
+   "position": "RB"
+  },
+  {
+   "id": "16163",
+   "name": "Evans, Zach",
+   "position": "RB"
+  },
+  {
+   "id": "16164",
+   "name": "Bigsby, Tank",
+   "position": "RB"
+  },
+  {
+   "id": "16165",
+   "name": "Spears, Tyjae",
+   "position": "RB"
+  },
+  {
+   "id": "16166",
+   "name": "Tucker, Sean",
+   "position": "RB"
+  },
+  {
+   "id": "16167",
+   "name": "Achane, De'Von",
+   "position": "RB"
+  },
+  {
+   "id": "16168",
+   "name": "Abanikanda, Israel",
+   "position": "RB"
+  },
+  {
+   "id": "16169",
+   "name": "Charbonnet, Zach",
+   "position": "RB"
+  },
+  {
+   "id": "16171",
+   "name": "Miller, Kendre",
+   "position": "RB"
+  },
+  {
+   "id": "16175",
+   "name": "Johnson, Roschon",
+   "position": "RB"
+  },
+  {
+   "id": "16176",
+   "name": "Vaughn, Deuce",
+   "position": "RB"
+  },
+  {
+   "id": "16178",
+   "name": "Mitchell, Keaton",
+   "position": "RB"
+  },
+  {
+   "id": "16180",
+   "name": "Hull, Evan",
+   "position": "RB"
+  },
+  {
+   "id": "16181",
+   "name": "Brown, Chase",
+   "position": "RB"
+  },
+  {
+   "id": "16183",
+   "name": "Hyatt, Jalin",
+   "position": "WR"
+  },
+  {
+   "id": "16184",
+   "name": "Reed, Jayden",
+   "position": "WR"
+  },
+  {
+   "id": "16185",
+   "name": "Smith-Njigba, Jaxon",
+   "position": "WR"
+  },
+  {
+   "id": "16186",
+   "name": "Addison, Jordan",
+   "position": "WR"
+  },
+  {
+   "id": "16187",
+   "name": "Downs, Josh",
+   "position": "WR"
+  },
+  {
+   "id": "16188",
+   "name": "Johnston, Quentin",
+   "position": "WR"
+  },
+  {
+   "id": "16189",
+   "name": "Mims, Marvin",
+   "position": "WR"
+  },
+  {
+   "id": "16190",
+   "name": "Flowers, Zay",
+   "position": "WR"
+  },
+  {
+   "id": "16191",
+   "name": "Tillman, Cedric",
+   "position": "WR"
+  },
+  {
+   "id": "16193",
+   "name": "Boutte, Kayshon",
+   "position": "WR"
+  },
+  {
+   "id": "16194",
+   "name": "Rice, Rashee",
+   "position": "WR"
+  },
+  {
+   "id": "16195",
+   "name": "Wicks, Dontayvion",
+   "position": "WR"
+  },
+  {
+   "id": "16196",
+   "name": "Perry, A.T.",
+   "position": "WR"
+  },
+  {
+   "id": "16197",
+   "name": "Mingo, Jonathan",
+   "position": "WR"
+  },
+  {
+   "id": "16199",
+   "name": "Palmer, Trey",
+   "position": "WR"
+  },
+  {
+   "id": "16201",
+   "name": "Hutchinson, Xavier",
+   "position": "WR"
+  },
+  {
+   "id": "16203",
+   "name": "Jones, Charlie",
+   "position": "WR"
+  },
+  {
+   "id": "16204",
+   "name": "Dell, Tank",
+   "position": "WR"
+  },
+  {
+   "id": "16206",
+   "name": "Wilson, Michael",
+   "position": "WR"
+  },
+  {
+   "id": "16211",
+   "name": "Nacua, Puka",
+   "position": "WR"
+  },
+  {
+   "id": "16212",
+   "name": "Mayer, Michael",
+   "position": "TE"
+  },
+  {
+   "id": "16213",
+   "name": "Kincaid, Dalton",
+   "position": "TE"
+  },
+  {
+   "id": "16214",
+   "name": "LaPorta, Sam",
+   "position": "TE"
+  },
+  {
+   "id": "16215",
+   "name": "Musgrave, Luke",
+   "position": "TE"
+  },
+  {
+   "id": "16216",
+   "name": "Washington, Darnell",
+   "position": "TE"
+  },
+  {
+   "id": "16220",
+   "name": "Mallory, Will",
+   "position": "TE"
+  },
+  {
+   "id": "16221",
+   "name": "Schoonmaker, Luke",
+   "position": "TE"
+  },
+  {
+   "id": "16222",
+   "name": "Kraft, Tucker",
+   "position": "TE"
+  },
+  {
+   "id": "16286",
+   "name": "Moody, Jake",
+   "position": "PK"
+  },
+  {
+   "id": "16287",
+   "name": "Tucker, Tre",
+   "position": "WR"
+  },
+  {
+   "id": "16333",
+   "name": "Higgins, Elijah",
+   "position": "TE"
+  },
+  {
+   "id": "16342",
+   "name": "Douglas, Demario",
+   "position": "WR"
+  },
+  {
+   "id": "16390",
+   "name": "McLaughlin, Jaleel",
+   "position": "RB"
+  },
+  {
+   "id": "16409",
+   "name": "Dotson, Elijah",
+   "position": "RB"
+  },
+  {
+   "id": "16414",
+   "name": "Aubrey, Brandon",
+   "position": "PK"
+  },
+  {
+   "id": "16441",
+   "name": "DeVito, Tommy",
+   "position": "QB"
+  }
+ ],
+ "rosters": [
+  {
+   "id": "0001",
+   "player": [
+    {
+     "id": "13128",
+     "contractYear": "1",
+     "salary": "22"
+    },
+    {
+     "id": "14087",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "10697",
+     "contractYear": "1",
+     "salary": "5"
+    },
+    {
+     "id": "14838",
+     "contractYear": "0",
+     "salary": "1"
+    },
+    {
+     "id": "14127",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14104",
+     "contractYear": "4",
+     "salary": "35"
+    },
+    {
+     "id": "14783",
+     "contractYear": "2",
+     "salary": "35"
+    },
+    {
+     "id": "15287",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15754",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15694",
+     "contractYear": "0",
+     "salary": "1"
+    },
+    {
+     "id": "15746",
+     "contractYear": "0",
+     "salary": "1"
+    },
+    {
+     "id": "12447",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15263",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "14105",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13674",
+     "contractYear": "1",
+     "salary": "18"
+    },
+    {
+     "id": "15256",
+     "contractYear": "3",
+     "salary": "2"
+    },
+    {
+     "id": "13164",
+     "contractYear": "1",
+     "salary": "82"
+    },
+    {
+     "id": "13832",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13133",
+     "contractYear": "2",
+     "salary": "8"
+    },
+    {
+     "id": "13680",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "9431",
+     "contractYear": "1",
+     "salary": "18"
+    },
+    {
+     "id": "13850",
+     "contractYear": "1",
+     "salary": "2"
+    },
+    {
+     "id": "16167",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16171",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16181",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "11947",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14861",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "16441",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "12625",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14059",
+     "contractYear": "1",
+     "salary": "42"
+    },
+    {
+     "id": "16152",
+     "contractYear": "5",
+     "salary": "1"
+    }
+   ]
+  },
+  {
+   "id": "0002",
+   "player": [
+    {
+     "id": "13163",
+     "contractYear": "2",
+     "salary": "17"
+    },
+    {
+     "id": "12956",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14112",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14109",
+     "contractYear": "2",
+     "salary": "25"
+    },
+    {
+     "id": "14777",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "14802",
+     "contractYear": "2",
+     "salary": "50"
+    },
+    {
+     "id": "13146",
+     "contractYear": "1",
+     "salary": "25"
+    },
+    {
+     "id": "13718",
+     "contractYear": "3",
+     "salary": "5"
+    },
+    {
+     "id": "13668",
+     "contractYear": "1",
+     "salary": "3"
+    },
+    {
+     "id": "15259",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15789",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13157",
+     "contractYear": "1",
+     "salary": "10"
+    },
+    {
+     "id": "13193",
+     "contractYear": "2",
+     "salary": "11"
+    },
+    {
+     "id": "13590",
+     "contractYear": "1",
+     "salary": "22"
+    },
+    {
+     "id": "15698",
+     "contractYear": "2",
+     "salary": "14"
+    },
+    {
+     "id": "15290",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "11674",
+     "contractYear": "1",
+     "salary": "12"
+    },
+    {
+     "id": "14798",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14842",
+     "contractYear": "2",
+     "salary": "20"
+    },
+    {
+     "id": "14805",
+     "contractYear": "2",
+     "salary": "22"
+    },
+    {
+     "id": "13192",
+     "contractYear": "1",
+     "salary": "10"
+    },
+    {
+     "id": "13139",
+     "contractYear": "1",
+     "salary": "11"
+    },
+    {
+     "id": "16186",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16184",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "16183",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "16166",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "16080",
+     "contractYear": "1",
+     "salary": "2"
+    }
+   ]
+  },
+  {
+   "id": "0003",
+   "player": [
+    {
+     "id": "12677",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "10703",
+     "contractYear": "1",
+     "salary": "20"
+    },
+    {
+     "id": "13404",
+     "contractYear": "1",
+     "salary": "52"
+    },
+    {
+     "id": "14782",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "14136",
+     "contractYear": "2",
+     "salary": "55"
+    },
+    {
+     "id": "15284",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15241",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15798",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15761",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15302",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "12626",
+     "contractYear": "1",
+     "salary": "52"
+    },
+    {
+     "id": "13909",
+     "contractYear": "1",
+     "salary": "3"
+    },
+    {
+     "id": "16213",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "16206",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16196",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16168",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "13675",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13793",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13289",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13753",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "8851",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14122",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14847",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14807",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "16409",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13910",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "11228",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14836",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15710",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "11247",
+     "contractYear": "1",
+     "salary": "4"
+    },
+    {
+     "id": "7836",
+     "contractYear": "1",
+     "salary": "28"
+    },
+    {
+     "id": "13418",
+     "contractYear": "1",
+     "salary": "4"
+    }
+   ]
+  },
+  {
+   "id": "0004",
+   "player": [
+    {
+     "id": "10976",
+     "contractYear": "1",
+     "salary": "4"
+    },
+    {
+     "id": "14840",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "14797",
+     "contractYear": "1",
+     "salary": "19"
+    },
+    {
+     "id": "14102",
+     "contractYear": "1",
+     "salary": "40"
+    },
+    {
+     "id": "12611",
+     "contractYear": "2",
+     "salary": "15"
+    },
+    {
+     "id": "13130",
+     "contractYear": "1",
+     "salary": "52"
+    },
+    {
+     "id": "15753",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15794",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "13176",
+     "contractYear": "1",
+     "salary": "2"
+    },
+    {
+     "id": "15802",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15889",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15708",
+     "contractYear": "4",
+     "salary": "3"
+    },
+    {
+     "id": "15756",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "11938",
+     "contractYear": "1",
+     "salary": "18"
+    },
+    {
+     "id": "16190",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16175",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16211",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "15713",
+     "contractYear": "2",
+     "salary": "8"
+    },
+    {
+     "id": "13119",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15799",
+     "contractYear": "5",
+     "salary": "2"
+    },
+    {
+     "id": "16390",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "16414",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "14056",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "16203",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "15331",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15319",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "13610",
+     "contractYear": "1",
+     "salary": "65"
+    },
+    {
+     "id": "16215",
+     "contractYear": "5",
+     "salary": "1"
+    }
+   ]
+  },
+  {
+   "id": "0005",
+   "player": [
+    {
+     "id": "13132",
+     "contractYear": "1",
+     "salary": "30"
+    },
+    {
+     "id": "13589",
+     "contractYear": "1",
+     "salary": "65"
+    },
+    {
+     "id": "14073",
+     "contractYear": "1",
+     "salary": "5"
+    },
+    {
+     "id": "14845",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "11222",
+     "contractYear": "1",
+     "salary": "20"
+    },
+    {
+     "id": "15237",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "14778",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "14833",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15368",
+     "contractYear": "1",
+     "salary": "5"
+    },
+    {
+     "id": "11244",
+     "contractYear": "1",
+     "salary": "50"
+    },
+    {
+     "id": "15762",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15712",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "13236",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15716",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "13629",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15723",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "14974",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15717",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15255",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "11671",
+     "contractYear": "1",
+     "salary": "45"
+    },
+    {
+     "id": "16185",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16188",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16164",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "16149",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16286",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16342",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "11647",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "16154",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "16195",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16222",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "12652",
+     "contractYear": "1",
+     "salary": "16"
+    },
+    {
+     "id": "16204",
+     "contractYear": "5",
+     "salary": "1"
+    }
+   ]
+  },
+  {
+   "id": "0006",
+   "player": [
+    {
+     "id": "14080",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "12187",
+     "contractYear": "1",
+     "salary": "25"
+    },
+    {
+     "id": "13593",
+     "contractYear": "1",
+     "salary": "36"
+    },
+    {
+     "id": "13319",
+     "contractYear": "1",
+     "salary": "43"
+    },
+    {
+     "id": "15254",
+     "contractYear": "3",
+     "salary": "3"
+    },
+    {
+     "id": "15238",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15292",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15330",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "13646",
+     "contractYear": "1",
+     "salary": "15"
+    },
+    {
+     "id": "15253",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "13354",
+     "contractYear": "1",
+     "salary": "3"
+    },
+    {
+     "id": "15751",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15697",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15873",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15787",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15752",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "14141",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13772",
+     "contractYear": "1",
+     "salary": "25"
+    },
+    {
+     "id": "11150",
+     "contractYear": "2",
+     "salary": "40"
+    },
+    {
+     "id": "16194",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16197",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16161",
+     "contractYear": "5",
+     "salary": "5"
+    },
+    {
+     "id": "16287",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "15301",
+     "contractYear": "2",
+     "salary": "2"
+    },
+    {
+     "id": "13168",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "11387",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "13172",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15987",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14143",
+     "contractYear": "1",
+     "salary": "8"
+    },
+    {
+     "id": "16151",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "15797",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "14799",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "13671",
+     "contractYear": "1",
+     "salary": "70"
+    }
+   ]
+  },
+  {
+   "id": "0007",
+   "player": [
+    {
+     "id": "13116",
+     "contractYear": "1",
+     "salary": "36"
+    },
+    {
+     "id": "11644",
+     "contractYear": "1",
+     "salary": "22"
+    },
+    {
+     "id": "14137",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14803",
+     "contractYear": "2",
+     "salary": "4"
+    },
+    {
+     "id": "14123",
+     "contractYear": "1",
+     "salary": "3"
+    },
+    {
+     "id": "15282",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15261",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "14841",
+     "contractYear": "2",
+     "salary": "17"
+    },
+    {
+     "id": "13299",
+     "contractYear": "2",
+     "salary": "25"
+    },
+    {
+     "id": "15711",
+     "contractYear": "4",
+     "salary": "3"
+    },
+    {
+     "id": "15755",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15721",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15757",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15900",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "14977",
+     "contractYear": "1",
+     "salary": "25"
+    },
+    {
+     "id": "13630",
+     "contractYear": "2",
+     "salary": "13"
+    },
+    {
+     "id": "12676",
+     "contractYear": "1",
+     "salary": "5"
+    },
+    {
+     "id": "13633",
+     "contractYear": "2",
+     "salary": "32"
+    },
+    {
+     "id": "11761",
+     "contractYear": "2",
+     "salary": "10"
+    },
+    {
+     "id": "13632",
+     "contractYear": "2",
+     "salary": "5"
+    },
+    {
+     "id": "13303",
+     "contractYear": "1",
+     "salary": "3"
+    },
+    {
+     "id": "16212",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16201",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16159",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16220",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "10738",
+     "contractYear": "1",
+     "salary": "2"
+    },
+    {
+     "id": "12476",
+     "contractYear": "1",
+     "salary": "5"
+    },
+    {
+     "id": "15840",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "10700",
+     "contractYear": "1",
+     "salary": "40"
+    },
+    {
+     "id": "14075",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "9694",
+     "contractYear": "2",
+     "salary": "2"
+    }
+   ]
+  },
+  {
+   "id": "0008",
+   "player": [
+    {
+     "id": "12801",
+     "contractYear": "1",
+     "salary": "56"
+    },
+    {
+     "id": "14832",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "14835",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15281",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "11675",
+     "contractYear": "1",
+     "salary": "82"
+    },
+    {
+     "id": "13189",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15289",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "13131",
+     "contractYear": "1",
+     "salary": "40"
+    },
+    {
+     "id": "14085",
+     "contractYear": "1",
+     "salary": "6"
+    },
+    {
+     "id": "11679",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "14983",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15240",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "15283",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "15693",
+     "contractYear": "1",
+     "salary": "21"
+    },
+    {
+     "id": "15979",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15742",
+     "contractYear": "1",
+     "salary": "4"
+    },
+    {
+     "id": "16165",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16150",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16169",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16191",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16221",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "13138",
+     "contractYear": "1",
+     "salary": "2"
+    },
+    {
+     "id": "12175",
+     "contractYear": "1",
+     "salary": "11"
+    },
+    {
+     "id": "13424",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15271",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "13121",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "14358",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "12263",
+     "contractYear": "2",
+     "salary": "3"
+    },
+    {
+     "id": "9064",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "13403",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14800",
+     "contractYear": "0",
+     "salary": "1.00"
+    },
+    {
+     "id": "13154",
+     "contractYear": "3",
+     "salary": "9"
+    },
+    {
+     "id": "13113",
+     "contractYear": "4",
+     "salary": "10"
+    },
+    {
+     "id": "14779",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "16178",
+     "contractYear": "5",
+     "salary": "1"
+    }
+   ]
+  },
+  {
+   "id": "0009",
+   "player": [
+    {
+     "id": "14071",
+     "contractYear": "1",
+     "salary": "4"
+    },
+    {
+     "id": "14208",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14852",
+     "contractYear": "2",
+     "salary": "1"
+    },
+    {
+     "id": "15759",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "12620",
+     "contractYear": "3",
+     "salary": "38"
+    },
+    {
+     "id": "15779",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "14223",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14138",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15715",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15766",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "13635",
+     "contractYear": "2",
+     "salary": "30"
+    },
+    {
+     "id": "12186",
+     "contractYear": "1",
+     "salary": "82"
+    },
+    {
+     "id": "15692",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "15329",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "15288",
+     "contractYear": "3",
+     "salary": "1"
+    },
+    {
+     "id": "12678",
+     "contractYear": "2",
+     "salary": "2"
+    },
+    {
+     "id": "15768",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "14079",
+     "contractYear": "1",
+     "salary": "2"
+    },
+    {
+     "id": "15749",
+     "contractYear": "4",
+     "salary": "1"
+    },
+    {
+     "id": "14867",
+     "contractYear": "2",
+     "salary": "4"
+    },
+    {
+     "id": "13604",
+     "contractYear": "2",
+     "salary": "85"
+    },
+    {
+     "id": "16162",
+     "contractYear": "1",
+     "salary": "3"
+    },
+    {
+     "id": "16148",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16214",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16187",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16189",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "16176",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "16199",
+     "contractYear": "5",
+     "salary": "1"
+    },
+    {
+     "id": "14067",
+     "contractYear": "1",
+     "salary": "1"
+    },
+    {
+     "id": "15369",
+     "contractYear": "1",
+     "salary": "1"
+    }
+   ]
+  }
+ ],
+ "transactions": [
+  {
+   "timestamp": "1708839410",
+   "activated": "16204,12652,",
+   "deactivated": "",
+   "franchise": "0005",
+   "type": "IR"
+  },
+  {
+   "franchise": "0008",
+   "type": "IR",
+   "deactivated": "",
+   "activated": "14779,13113,16178,13154,",
+   "timestamp": "1708802061"
+  },
+  {
+   "timestamp": "1708799930",
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "transaction": "|14800,"
+  },
+  {
+   "timestamp": "1708799862",
+   "transaction": "|11679,",
+   "type": "FREE_AGENT",
+   "franchise": "0008"
+  },
+  {
+   "franchise": "0005",
+   "type": "FREE_AGENT",
+   "transaction": "|15255,",
+   "timestamp": "1708787782"
+  },
+  {
+   "timestamp": "1708787254",
+   "type": "FREE_AGENT",
+   "franchise": "0005",
+   "transaction": "|16164,"
+  },
+  {
+   "transaction": "|16154,",
+   "type": "FREE_AGENT",
+   "franchise": "0005",
+   "timestamp": "1708786778"
+  },
+  {
+   "timestamp": "1708716736",
+   "transaction": "|15289,",
+   "type": "FREE_AGENT",
+   "franchise": "0008"
+  },
+  {
+   "timestamp": "1708716726",
+   "transaction": "|15283,",
+   "type": "FREE_AGENT",
+   "franchise": "0008"
+  },
+  {
+   "transaction": "|15240,",
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "timestamp": "1708716715"
+  },
+  {
+   "transaction": "|15694,",
+   "type": "FREE_AGENT",
+   "franchise": "0001",
+   "timestamp": "1708489862"
+  },
+  {
+   "timestamp": "1708489854",
+   "transaction": "|14838,",
+   "franchise": "0001",
+   "type": "FREE_AGENT"
+  },
+  {
+   "timestamp": "1708489807",
+   "type": "FREE_AGENT",
+   "franchise": "0001",
+   "transaction": "|15746,"
+  },
+  {
+   "transaction": "|16180,",
+   "type": "FREE_AGENT",
+   "franchise": "0002",
+   "timestamp": "1703619695"
+  },
+  {
+   "transaction": "|14017,",
+   "franchise": "0002",
+   "type": "FREE_AGENT",
+   "timestamp": "1703619659"
+  },
+  {
+   "timestamp": "1703612288",
+   "transaction": "|12650,",
+   "franchise": "0004",
+   "type": "FREE_AGENT"
+  },
+  {
+   "timestamp": "1703612271",
+   "transaction": "|15293,",
+   "type": "FREE_AGENT",
+   "franchise": "0004"
+  },
+  {
+   "timestamp": "1703611907",
+   "transaction": "|13156,",
+   "franchise": "0004",
+   "type": "FREE_AGENT"
+  },
+  {
+   "timestamp": "1703611891",
+   "transaction": "|11232,",
+   "type": "FREE_AGENT",
+   "franchise": "0004"
+  },
+  {
+   "timestamp": "1703440800",
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1703136068",
+   "transaction": "13403,|13134,",
+   "type": "FREE_AGENT",
+   "franchise": "0008"
+  },
+  {
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1703134800"
+  },
+  {
+   "timestamp": "1703134800",
+   "transaction": "9064,|1|",
+   "type": "BBID_WAIVER",
+   "franchise": "0008"
+  },
+  {
+   "franchise": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "transaction": "",
+   "timestamp": "1703134800"
+  },
+  {
+   "type": "IR",
+   "franchise": "0008",
+   "activated": "",
+   "deactivated": "16178,",
+   "timestamp": "1703080597"
+  },
+  {
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1702836000"
+  },
+  {
+   "deactivated": "",
+   "activated": "12263,",
+   "timestamp": "1702771054",
+   "franchise": "0008",
+   "type": "IR"
+  },
+  {
+   "transaction": "|16163,",
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "timestamp": "1702771054"
+  },
+  {
+   "timestamp": "1702667899",
+   "transaction": "14358,|",
+   "type": "FREE_AGENT",
+   "franchise": "0008"
+  },
+  {
+   "transaction": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "timestamp": "1702530000"
+  },
+  {
+   "timestamp": "1702506574",
+   "activated": "15319,",
+   "deactivated": "",
+   "franchise": "0004",
+   "type": "IR"
+  },
+  {
+   "activated": "",
+   "deactivated": "14779,",
+   "timestamp": "1702413538",
+   "franchise": "0008",
+   "type": "IR"
+  },
+  {
+   "timestamp": "1702231200",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1702230986",
+   "transaction": "16222,|",
+   "type": "FREE_AGENT",
+   "franchise": "0005"
+  },
+  {
+   "timestamp": "1702230671",
+   "activated": "14143,",
+   "deactivated": "",
+   "type": "IR",
+   "franchise": "0006"
+  },
+  {
+   "transaction": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "timestamp": "1701925200"
+  },
+  {
+   "timestamp": "1701833274",
+   "activated": "",
+   "deactivated": "16204,",
+   "type": "IR",
+   "franchise": "0005"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "timestamp": "1701626400"
+  },
+  {
+   "deactivated": "",
+   "activated": "15987,",
+   "timestamp": "1701625872",
+   "franchise": "0006",
+   "type": "IR"
+  },
+  {
+   "type": "IR",
+   "franchise": "0003",
+   "activated": "11247,",
+   "deactivated": "",
+   "timestamp": "1701438142"
+  },
+  {
+   "timestamp": "1701320400",
+   "franchise": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "transaction": ""
+  },
+  {
+   "franchise": "0004",
+   "type": "IR",
+   "timestamp": "1701185738",
+   "activated": "",
+   "deactivated": "16215,"
+  },
+  {
+   "timestamp": "1701021600",
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1701020533",
+   "deactivated": "",
+   "activated": "15710,",
+   "franchise": "0003",
+   "type": "IR"
+  },
+  {
+   "deactivated": "13671,",
+   "activated": "",
+   "timestamp": "1701013920",
+   "type": "IR",
+   "franchise": "0006"
+  },
+  {
+   "timestamp": "1700753794",
+   "franchise": "0005",
+   "type": "FREE_AGENT",
+   "transaction": "16195,|"
+  },
+  {
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "transaction": "13121,|15734,",
+   "timestamp": "1700721865"
+  },
+  {
+   "timestamp": "1700715600",
+   "transaction": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": ""
+  },
+  {
+   "timestamp": "1700690237",
+   "deactivated": "12652,",
+   "activated": "",
+   "type": "IR",
+   "franchise": "0005"
+  },
+  {
+   "activated": "",
+   "deactivated": "10700,14075,9694,",
+   "timestamp": "1700616883",
+   "type": "IR",
+   "franchise": "0007"
+  },
+  {
+   "franchise": "0004",
+   "type": "IR",
+   "timestamp": "1700418793",
+   "deactivated": "",
+   "activated": "15331,"
+  },
+  {
+   "timestamp": "1700418793",
+   "transaction": "|15239,",
+   "type": "FREE_AGENT",
+   "franchise": "0004"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "timestamp": "1700416800"
+  },
+  {
+   "timestamp": "1700363647",
+   "type": "FREE_AGENT",
+   "franchise": "0009",
+   "transaction": "15369,|13403,"
+  },
+  {
+   "timestamp": "1700347838",
+   "activated": "15271,",
+   "deactivated": "",
+   "type": "IR",
+   "franchise": "0008"
+  },
+  {
+   "franchise": "0004",
+   "type": "IR",
+   "activated": "16203,",
+   "deactivated": "",
+   "timestamp": "1700228558"
+  },
+  {
+   "timestamp": "1700182722",
+   "deactivated": "",
+   "activated": "14836,",
+   "type": "IR",
+   "franchise": "0003"
+  },
+  {
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1700110800"
+  },
+  {
+   "type": "BBID_WAIVER",
+   "franchise": "0008",
+   "transaction": "16178,|1|",
+   "timestamp": "1700110800"
+  },
+  {
+   "timestamp": "1700110800",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": "",
+   "transaction": ""
+  },
+  {
+   "franchise": "0008",
+   "type": "IR",
+   "timestamp": "1700106712",
+   "deactivated": "13113,",
+   "activated": ""
+  },
+  {
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1699812000"
+  },
+  {
+   "timestamp": "1699580476",
+   "franchise": "0001",
+   "type": "FREE_AGENT",
+   "transaction": "12625,|"
+  },
+  {
+   "timestamp": "1699580268",
+   "type": "FREE_AGENT",
+   "franchise": "0001",
+   "transaction": "16441,|"
+  },
+  {
+   "type": "FREE_AGENT",
+   "franchise": "0001",
+   "transaction": "14861,|",
+   "timestamp": "1699580185"
+  },
+  {
+   "type": "FREE_AGENT",
+   "franchise": "0001",
+   "transaction": "11947,|",
+   "timestamp": "1699580085"
+  },
+  {
+   "activated": "",
+   "deactivated": "14059,16152,",
+   "timestamp": "1699579816",
+   "franchise": "0001",
+   "type": "IR"
+  },
+  {
+   "franchise": "0006",
+   "type": "FREE_AGENT",
+   "transaction": "13172,|",
+   "timestamp": "1699573912"
+  },
+  {
+   "timestamp": "1699573480",
+   "deactivated": "14799,",
+   "activated": "",
+   "type": "IR",
+   "franchise": "0006"
+  },
+  {
+   "timestamp": "1699506000",
+   "transaction": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": ""
+  },
+  {
+   "timestamp": "1699506000",
+   "type": "BBID_WAIVER",
+   "franchise": "0007",
+   "transaction": "12476,|5|"
+  },
+  {
+   "franchise": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "transaction": "",
+   "timestamp": "1699506000"
+  },
+  {
+   "type": "IR",
+   "franchise": "0004",
+   "activated": "14056,",
+   "deactivated": "15319,",
+   "timestamp": "1699456931"
+  },
+  {
+   "franchise": "0009",
+   "type": "FREE_AGENT",
+   "transaction": "|16158,",
+   "timestamp": "1699362550"
+  },
+  {
+   "timestamp": "1699207200",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1699207149",
+   "transaction": "16154,|14861,",
+   "type": "FREE_AGENT",
+   "franchise": "0005"
+  },
+  {
+   "timestamp": "1699140903",
+   "activated": "",
+   "deactivated": "12263,",
+   "type": "IR",
+   "franchise": "0008"
+  },
+  {
+   "transaction": "13424,|15972,",
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "timestamp": "1698963412"
+  },
+  {
+   "activated": "",
+   "deactivated": "13418,",
+   "timestamp": "1698932295",
+   "franchise": "0003",
+   "type": "IR"
+  },
+  {
+   "transaction": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "timestamp": "1698897600"
+  },
+  {
+   "timestamp": "1698897600",
+   "transaction": "15239,|1|11760,",
+   "type": "BBID_WAIVER",
+   "franchise": "0004"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "timestamp": "1698897600"
+  },
+  {
+   "timestamp": "1698865979",
+   "activated": "",
+   "deactivated": "15987,14143,",
+   "franchise": "0006",
+   "type": "IR"
+  },
+  {
+   "transaction": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "timestamp": "1698598800"
+  },
+  {
+   "deactivated": "15710,11247,",
+   "activated": "",
+   "timestamp": "1698430138",
+   "franchise": "0003",
+   "type": "IR"
+  },
+  {
+   "timestamp": "1698292800",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1698292800",
+   "franchise": "0006",
+   "type": "BBID_WAIVER",
+   "transaction": "11387,|1|"
+  },
+  {
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1698292800"
+  },
+  {
+   "type": "IR",
+   "franchise": "0006",
+   "timestamp": "1698252622",
+   "deactivated": "15797,",
+   "activated": ""
+  },
+  {
+   "timestamp": "1697994000",
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1697909204",
+   "activated": "",
+   "deactivated": "15331,",
+   "franchise": "0004",
+   "type": "IR"
+  },
+  {
+   "timestamp": "1697834868",
+   "type": "FREE_AGENT",
+   "franchise": "0008",
+   "transaction": "|13608,"
+  },
+  {
+   "type": "TRADE",
+   "franchise2": "0002",
+   "franchise1_gave_up": "FP_0008_2024_4,FP_0006_2024_4,",
+   "franchise2_gave_up": "12175,",
+   "franchise": "0008",
+   "expires": "1697918400",
+   "timestamp": "1697833766"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "timestamp": "1697688000"
+  },
+  {
+   "franchise": "0008",
+   "type": "BBID_WAIVER",
+   "transaction": "15972,|1|",
+   "timestamp": "1697688000"
+  },
+  {
+   "timestamp": "1697688000",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": "",
+   "transaction": ""
+  },
+  {
+   "transaction": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "timestamp": "1697389200"
+  },
+  {
+   "timestamp": "1697326056",
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "transaction": "15734,|"
+  },
+  {
+   "timestamp": "1697252343",
+   "transaction": "14067,|",
+   "franchise": "0009",
+   "type": "FREE_AGENT"
+  },
+  {
+   "type": "IR",
+   "franchise": "0008",
+   "deactivated": "15271,",
+   "activated": "",
+   "timestamp": "1697250177"
+  },
+  {
+   "franchise": "0005",
+   "type": "FREE_AGENT",
+   "transaction": "11647,|16193,",
+   "timestamp": "1697149986"
+  },
+  {
+   "type": "FREE_AGENT",
+   "franchise": "0003",
+   "transaction": "|11225,",
+   "timestamp": "1697147574"
+  },
+  {
+   "timestamp": "1697147412",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "transaction": "11228,|"
+  },
+  {
+   "timestamp": "1697147050",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "transaction": "13910,|"
+  },
+  {
+   "franchise": "0003",
+   "type": "IR",
+   "timestamp": "1697125946",
+   "activated": "",
+   "deactivated": "14836,"
+  },
+  {
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1697083200"
+  },
+  {
+   "transaction": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "timestamp": "1696784400"
+  },
+  {
+   "franchise": "0006",
+   "type": "FREE_AGENT",
+   "transaction": "15987,|",
+   "timestamp": "1696536646"
+  },
+  {
+   "timestamp": "1696515293",
+   "type": "FREE_AGENT",
+   "franchise": "0004",
+   "transaction": "16414,|"
+  },
+  {
+   "type": "FREE_AGENT",
+   "franchise": "0004",
+   "transaction": "16390,|14857,",
+   "timestamp": "1696515243"
+  },
+  {
+   "timestamp": "1696478400",
+   "franchise": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "transaction": ""
+  },
+  {
+   "transaction": "15799,|2|",
+   "type": "BBID_WAIVER",
+   "franchise": "0004",
+   "timestamp": "1696478400"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "timestamp": "1696478400"
+  },
+  {
+   "activated": "",
+   "deactivated": "16151,",
+   "timestamp": "1696420555",
+   "franchise": "0006",
+   "type": "IR"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "timestamp": "1696179600"
+  },
+  {
+   "franchise": "0004",
+   "type": "IR",
+   "timestamp": "1696178405",
+   "activated": "",
+   "deactivated": "16203,"
+  },
+  {
+   "timestamp": "1695873600",
+   "franchise": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "transaction": ""
+  },
+  {
+   "timestamp": "1695873600",
+   "transaction": "13119,|1|15239,",
+   "type": "BBID_WAIVER",
+   "franchise": "0004"
+  },
+  {
+   "franchise": "0002",
+   "type": "BBID_WAIVER",
+   "transaction": "16080,|2|15714,",
+   "timestamp": "1695873600"
+  },
+  {
+   "transaction": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": "",
+   "timestamp": "1695873600"
+  },
+  {
+   "type": "IR",
+   "franchise": "0008",
+   "timestamp": "1695770324",
+   "activated": "",
+   "deactivated": "13154,"
+  },
+  {
+   "type": "LOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1695574800"
+  },
+  {
+   "transaction": "13168,|",
+   "franchise": "0006",
+   "type": "FREE_AGENT",
+   "timestamp": "1695328140"
+  },
+  {
+   "transaction": "16163,|",
+   "franchise": "0008",
+   "type": "FREE_AGENT",
+   "timestamp": "1695322454"
+  },
+  {
+   "type": "UNLOCK_ALL_PLAYERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1695268800"
+  },
+  {
+   "franchise": "0003",
+   "type": "BBID_WAIVER",
+   "transaction": "16409,|1|",
+   "timestamp": "1695268800"
+  },
+  {
+   "timestamp": "1695268800",
+   "transaction": "13138,|2|",
+   "type": "BBID_WAIVER",
+   "franchise": "0008"
+  },
+  {
+   "timestamp": "1695268800",
+   "type": "BBID_WAIVER",
+   "franchise": "0006",
+   "transaction": "15301,|2|"
+  },
+  {
+   "timestamp": "1695268800",
+   "franchise": "0004",
+   "type": "BBID_WAIVER",
+   "transaction": "15713,|8|12625,"
+  },
+  {
+   "transaction": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": "",
+   "timestamp": "1695268800"
+  },
+  {
+   "deactivated": "13610,",
+   "activated": "",
+   "timestamp": "1695244702",
+   "type": "IR",
+   "franchise": "0004"
+  },
+  {
+   "timestamp": "1694970000",
+   "transaction": "",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS"
+  },
+  {
+   "timestamp": "1694968009",
+   "franchise": "0005",
+   "type": "FREE_AGENT",
+   "transaction": "16342,|13672,"
+  },
+  {
+   "timestamp": "1694964206",
+   "transaction": "16286,|15369,",
+   "type": "FREE_AGENT",
+   "franchise": "0005"
+  },
+  {
+   "franchise": "0003",
+   "type": "IR",
+   "timestamp": "1694733795",
+   "deactivated": "7836,",
+   "activated": ""
+  },
+  {
+   "timestamp": "1694733752",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "transaction": "14807,|"
+  },
+  {
+   "transaction": "15710,|",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "timestamp": "1694733734"
+  },
+  {
+   "franchise": "0004",
+   "type": "FREE_AGENT",
+   "transaction": "15239,|15758,",
+   "timestamp": "1694666059"
+  },
+  {
+   "timestamp": "1694664000",
+   "transaction": "",
+   "franchise": "",
+   "type": "UNLOCK_ALL_PLAYERS"
+  },
+  {
+   "timestamp": "1694664000",
+   "transaction": "13418,|4|",
+   "franchise": "0003",
+   "type": "BBID_WAIVER"
+  },
+  {
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": "",
+   "transaction": "",
+   "timestamp": "1694664000"
+  },
+  {
+   "timestamp": "1694635676",
+   "deactivated": "14800,",
+   "activated": "",
+   "type": "IR",
+   "franchise": "0008"
+  },
+  {
+   "timestamp": "1694365200",
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "transaction": ""
+  },
+  {
+   "franchise": "0002",
+   "type": "FREE_AGENT",
+   "transaction": "|12176,",
+   "timestamp": "1694128911"
+  },
+  {
+   "transaction": "|15258,",
+   "type": "FREE_AGENT",
+   "franchise": "0002",
+   "timestamp": "1694128694"
+  },
+  {
+   "franchise": "0002",
+   "type": "FREE_AGENT",
+   "transaction": "|15709,",
+   "timestamp": "1694128642"
+  },
+  {
+   "transaction": "|14873,",
+   "type": "FREE_AGENT",
+   "franchise": "0002",
+   "timestamp": "1694128595"
+  },
+  {
+   "timestamp": "1694113966",
+   "transaction": "14847,|",
+   "franchise": "0003",
+   "type": "FREE_AGENT"
+  },
+  {
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "transaction": "14122,|",
+   "timestamp": "1694113772"
+  },
+  {
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "transaction": "8851,|",
+   "timestamp": "1694113746"
+  },
+  {
+   "timestamp": "1694113584",
+   "type": "FREE_AGENT",
+   "franchise": "0003",
+   "transaction": "13753,|"
+  },
+  {
+   "timestamp": "1694113527",
+   "type": "FREE_AGENT",
+   "franchise": "0003",
+   "transaction": "11225,|"
+  },
+  {
+   "timestamp": "1694113454",
+   "transaction": "13289,|",
+   "franchise": "0003",
+   "type": "FREE_AGENT"
+  },
+  {
+   "transaction": "13793,|",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "timestamp": "1694113424"
+  },
+  {
+   "transaction": "",
+   "franchise": "",
+   "type": "UNLOCK_ALL_PLAYERS",
+   "timestamp": "1694059200"
+  },
+  {
+   "timestamp": "1694059200",
+   "franchise": "0003",
+   "type": "BBID_WAIVER",
+   "transaction": "13675,|1|"
+  },
+  {
+   "timestamp": "1694059200",
+   "franchise": "0007",
+   "type": "BBID_WAIVER",
+   "transaction": "10738,|2|14839,"
+  },
+  {
+   "timestamp": "1694059200",
+   "transaction": "",
+   "type": "BBID_AUTO_PROCESS_WAIVERS",
+   "franchise": ""
+  },
+  {
+   "timestamp": "1694004306",
+   "type": "FREE_AGENT",
+   "franchise": "0009",
+   "transaction": "|15788,"
+  },
+  {
+   "timestamp": "1693924999",
+   "franchise": "0009",
+   "type": "FREE_AGENT",
+   "transaction": "|16178,11947,16163,13424,"
+  },
+  {
+   "franchise2": "0006",
+   "franchise1_gave_up": "",
+   "franchise2_gave_up": "FP_0006_2024_4,",
+   "type": "TRADE",
+   "expires": "1694494800",
+   "franchise": "0008",
+   "timestamp": "1693923323"
+  },
+  {
+   "timestamp": "1693792942",
+   "type": "FREE_AGENT",
+   "franchise": "0008",
+   "transaction": "|16333,"
+  },
+  {
+   "timestamp": "1693779342",
+   "transaction": "|12630,",
+   "type": "FREE_AGENT",
+   "franchise": "0007"
+  },
+  {
+   "timestamp": "1693696069",
+   "franchise": "0005",
+   "type": "FREE_AGENT",
+   "transaction": "|14081,"
+  },
+  {
+   "timestamp": "1693681292",
+   "transaction": "|16216,",
+   "franchise": "0001",
+   "type": "FREE_AGENT"
+  },
+  {
+   "deactivated": "14056,",
+   "activated": "",
+   "timestamp": "1693512835",
+   "franchise": "0004",
+   "type": "IR"
+  },
+  {
+   "franchise": "",
+   "type": "LOCK_ALL_PLAYERS",
+   "transaction": "",
+   "timestamp": "1693504466",
+   "by_commish": "1"
+  },
+  {
+   "franchise2_gave_up": "DP_3_2,",
+   "franchise1_gave_up": "DP_3_5,",
+   "franchise2": "0002",
+   "type": "TRADE",
+   "expires": "1694106000",
+   "franchise": "0001",
+   "by_commish": "1",
+   "timestamp": "1693503767"
+  },
+  {
+   "timestamp": "1693497120",
+   "activated": "",
+   "deactivated": "15840,",
+   "franchise": "0007",
+   "type": "IR"
+  },
+  {
+   "by_commish": "1",
+   "timestamp": "1693496927",
+   "transaction": "14867,13604,13403,|",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0009"
+  },
+  {
+   "timestamp": "1693496865",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0008",
+   "transaction": "15742,|"
+  },
+  {
+   "transaction": "|",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0007",
+   "by_commish": "1",
+   "timestamp": "1693496783"
+  },
+  {
+   "timestamp": "1693496674",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0006",
+   "transaction": "13772,11150,13671,|"
+  },
+  {
+   "timestamp": "1693496575",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0005",
+   "transaction": "15369,12652,11671,14081,|"
+  },
+  {
+   "by_commish": "1",
+   "timestamp": "1693496407",
+   "transaction": "11938,|",
+   "franchise": "0004",
+   "type": "LOAD_ROSTERS"
+  },
+  {
+   "timestamp": "1693496290",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0003",
+   "transaction": "11247,7836,|13403,"
+  },
+  {
+   "franchise": "0002",
+   "type": "LOAD_ROSTERS",
+   "transaction": "15290,11674,14798,14842,14805,13192,13139,|13604,",
+   "timestamp": "1693496220",
+   "by_commish": "1"
+  },
+  {
+   "timestamp": "1693494075",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0001",
+   "transaction": "9431,14059,13850,|14867,"
+  },
+  {
+   "timestamp": "1693493944",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0009",
+   "transaction": "14071,14208,14852,15759,12620,15779,14223,14138,15715,15766,13635,12186,15692,15329,15788,15288,12678,15768,13424,14079,11947,15749,|"
+  },
+  {
+   "timestamp": "1693493750",
+   "by_commish": "1",
+   "franchise": "0008",
+   "type": "LOAD_ROSTERS",
+   "transaction": "15693,15979,|13772,14244,14223,14138,11947,13424,11150,13850,"
+  },
+  {
+   "type": "LOAD_ROSTERS",
+   "franchise": "0007",
+   "transaction": "14977,10700,13630,12676,13633,9694,11761,13632,13303,|5848,8742,10738,14842,14805,10312,11938,12186,15369,15699,13639,",
+   "timestamp": "1693493605",
+   "by_commish": "1"
+  },
+  {
+   "timestamp": "1693493364",
+   "by_commish": "1",
+   "franchise": "0006",
+   "type": "LOAD_ROSTERS",
+   "transaction": "|12930,12151,12140,13427,13635,14813,15766,15692,14847,12437,"
+  },
+  {
+   "transaction": "14861,15255,|13633,14208,14977,9686,10700,13138,15779,15749,",
+   "franchise": "0005",
+   "type": "LOAD_ROSTERS",
+   "by_commish": "1",
+   "timestamp": "1693493221"
+  },
+  {
+   "transaction": "12625,11760,|11674,14079,15759,15329,11247,",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0004",
+   "by_commish": "1",
+   "timestamp": "1693493038"
+  },
+  {
+   "type": "LOAD_ROSTERS",
+   "franchise": "0003",
+   "transaction": "13909,|11671,13192,14852,14071,13671,15715,14059,14861,9431,",
+   "timestamp": "1693492854",
+   "by_commish": "1"
+  },
+  {
+   "type": "LOAD_ROSTERS",
+   "franchise": "0002",
+   "transaction": "13590,15698,|11678,13606,12678,12620,13793,15768,15720,12610,",
+   "timestamp": "1693492723",
+   "by_commish": "1"
+  },
+  {
+   "timestamp": "1693492489",
+   "by_commish": "1",
+   "type": "LOAD_ROSTERS",
+   "franchise": "0001",
+   "transaction": "13832,13133,13680,|9099,13630,13590,12676,12625,13726,15288,8930,15788,12141,13303,13898,8851,"
+  },
+  {
+   "franchise2": "0002",
+   "franchise1_gave_up": "DP_3_4,",
+   "franchise2_gave_up": "DP_3_2,",
+   "type": "TRADE",
+   "timestamp": "1693448288",
+   "expires": "1694048400",
+   "franchise": "0001"
+  },
+  {
+   "expires": "1694044800",
+   "franchise": "0004",
+   "timestamp": "1693440981",
+   "franchise2_gave_up": "15756,",
+   "franchise1_gave_up": "12626,",
+   "franchise2": "0003",
+   "type": "TRADE"
+  },
+  {
+   "timestamp": "1693434886",
+   "type": "FREE_AGENT",
+   "franchise": "0003",
+   "transaction": "|15296,"
+  },
+  {
+   "type": "FREE_AGENT",
+   "franchise": "0003",
+   "transaction": "|13909,",
+   "timestamp": "1693434875"
+  },
+  {
+   "timestamp": "1693434863",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "transaction": "|14837,"
+  },
+  {
+   "timestamp": "1693434854",
+   "transaction": "|13129,",
+   "franchise": "0003",
+   "type": "FREE_AGENT"
+  },
+  {
+   "transaction": "|15034,",
+   "franchise": "0003",
+   "type": "FREE_AGENT",
+   "timestamp": "1693434847"
+  },
+  {
+   "franchise": "0006",
+   "type": "FREE_AGENT",
+   "transaction": "|14789,",
+   "timestamp": "1692568850"
+  }
+ ],
+ "posts": [
+  {
+   "franchise": "0004",
+   "postTime": "1693513315",
+   "body": "Hey Owner 0001, here are the contract lengths for Smooth City:<br/><br/>J. Goff - 2 years<br/>N. Chubb - 1 year<br/>A. Thielen - 1 year<br/>DK Metcalf - 1 year<br/>J. Tucker - 1 year<br/>C. McCaffrey - 1 year<br/>D. Hopkins - 1 year<br/>E. Elliott - 2 years<br/>Jimmy G - 2 years<br/>T. Boyd - 2 years<br/>Z. Flowers - 5 years<br/>L. Musgrave - 5 years<br/>R. Johnson - 5 years<br/>P. Nacua - 5 years<br/>C. Jones - 5 years"
+  },
+  {
+   "franchise": "0001",
+   "postTime": "1693681334",
+   "body": "Richardson 5<br/>Jones 1<br/>Stafford 1<br/>Tannehill 1<br/>Achane 5<br/>Brown 5<br/>Cook 1<br/>Edwards 1<br/>Miller 5<br/>Perine 2<br/>Goedert 1<br/>Hurst 1<br/>Sanders 1"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1693696255",
+   "body": "Commish,<br/><br/>All rookies 5<br/>Kenneth Gainwell 2<br/>Juwan Johnson 2<br/>All others 1"
+  },
+  {
+   "franchise": "0007",
+   "postTime": "1693779262",
+   "body": "Carr&#160; - 1<br/>Cousins – 1<br/>McKinnon – 2<br/>Kirk – 2<br/>Lazard – 2<br/>Osborn – 1<br/>Sutton – 2<br/>Henry – 1<br/>Kittle – 2<br/>Elliott – 1<br/>Gano – 2<br/>O’Connell – 5<br/>Hutchinson – 5<br/>Mayer – 5<br/>Mallory - 5"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1693792860",
+   "body": "QB<br/>Howell - 1yr<br/>Stroud - 5yr<br/>RB<br/>Charbonnet - 5yr&#160;&#160; <br/>Foreman - 1yr <br/>Mixon - 1yr <br/>Penny - 1yr<br/>Spears - 5yr<br/>Warren - 1yr<br/>WR<br/>Adams - 1yr<br/>Tillman - 5yr<br/>Williams - 3yr&#160; &#160; &#160;&#160; <br/>TE<br/>Higgins - 0yr<br/>Schoonmaker - 5yr<br/>K <br/>Bass - 1yr<br/>Dicker - 1yr"
+  },
+  {
+   "franchise": "0006",
+   "postTime": "1693886147",
+   "body": "Hooker, Hendon - 5&#160;&#160; <br/>Smith, Geno - 2 <br/>Robinson, Bijan - 5 <br/>Lockett, Tyler - 1&#160;&#160; <br/>Mingo, Jonathan - 5&#160;&#160; <br/>Rice, Rashee - 5<br/>Tucker, Tre - 5<br/>Andrews, Mark - 1<br/>Knox, Dawson - 1<br/>Schultz, Dalton - 1&#160;&#160; <br/>Butker, Harrison - 1&#160;&#160; "
+  },
+  {
+   "franchise": "0003",
+   "postTime": "1693944010",
+   "body": "Sorry for the delay Commish:<br/>Perry, A.T. (WR) - 5 years<br/>Samuel, Deebo (WR) - 2 years<br/>Wilson, Michael (WR) - 5 years<br/>Kincaid, Dalton (TE) - 3 years<br/>Abanikanda, Israel (RB) - 5 years"
+  },
+  {
+   "franchise": "0009",
+   "postTime": "1693965405",
+   "body": "Saquan Barkley 2 yes \nBryce young -5 yrs \nDj moore - 2 yrs\nDuce vaughn -5 yrs\nYounghae loo -2 yrs\nStefan diggs - 2 yrs\n\nSo sorry for the delay"
+  },
+  {
+   "franchise": "0009",
+   "postTime": "1693965607",
+   "body": "Josh downs 5 yrs\nTrey Palmer 5 yrs \nSam laporta 5 yrs "
+  },
+  {
+   "franchise": "0002",
+   "postTime": "1694007255",
+   "body": "Moss, Zack IND RB�(Q) - 1 Years<br/>Wilson, Jeffery MIA RB�(I) - 1 Years<br/>Chark, D.J. CAR WR�(Q) - 1 Years<br/>Samuel, Curtis WAS WR - 1 Years<br/>Njoku, David CLE TE - 1 Years<br/>Williams, Jamaal NOS RB - 1 Years<br/>Cooks, Brandin DAL WR - 1 Years<br/>Mayfield, Baker TBB QB - 1 Years<br/>Conner, James ARI RB - 1 Years<br/>Tucker, Sean TBB RB�(R) - 2 Years<br/>Collins, Nico HOU WR - 2 Years<br/>Purdy, Brock SFO QB - 2 Years<br/>Godwin, Chris TBB WR - 2 Years<br/>Pittman, Michael IND WR - 2 Years<br/>Dillon, AJ GBP RB - 2 Years<br/>Hull, Evan IND RB�(R) - 3 Years<br/>Carlson, Daniel LVR PK - 3 Years<br/>Hyatt, Jalin NYG WR�(R) - 4 Years<br/>Reed, Jayden GBP WR�(R) - 4 Years<br/>Addison, Jordan MIN WR�(R) - 5 Years"
+  },
+  {
+   "franchise": "0000",
+   "postTime": "1694021715",
+   "body": "Owner 0009&#39;s Team:<br/><br/>&gt; Saquan Barkley 2 yes<br/>&gt; Bryce young -5 yrs<br/>&gt; Dj moore - 2 yrs<br/>&gt; Duce vaughn -5 yrs<br/>&gt; Younghae loo -2 yrs<br/>&gt; Stefan diggs - 2 yrs<br/>&gt;<br/>&gt; So sorry for the delay<br/><br/>Diggs was a franchise player so he has to be 1 year.<br/><br/>Just missing these 3 now:<br/><br/>Jahmyr Gibbs<br/>Marvin Mims<br/>Thompson-Robinson"
+  },
+  {
+   "franchise": "0000",
+   "postTime": "1694021761",
+   "body": "There’s Always Next Year:<br/><br/>&gt; Moss, Zack IND RB (Q) - 1 Years<br/>&gt; Wilson, Jeffery MIA RB (I) - 1 Years<br/>&gt; Chark, D.J. CAR WR (Q) - 1 Years<br/>&gt; Samuel, Curtis WAS WR - 1 Years<br/>&gt; Njoku, David CLE TE - 1 Years<br/>&gt; Williams, Jamaal NOS RB - 1 Years<br/>&gt; Cooks, Brandin DAL WR - 1 Years<br/>&gt; Mayfield, Baker TBB QB - 1 Years<br/>&gt; Conner, James ARI RB - 1 Years<br/>&gt; Tucker, Sean TBB RB (R) - 2 Years<br/>&gt; Collins, Nico HOU WR - 2 Years<br/>&gt; Purdy, Brock SFO QB - 2 Years<br/>&gt; Godwin, Chris TBB WR - 2 Years<br/>&gt; Pittman, Michael IND WR - 2 Years<br/>&gt; Dillon, AJ GBP RB - 2 Years<br/>&gt; Hull, Evan IND RB (R) - 3 Years<br/>&gt; Carlson, Daniel LVR PK - 3 Years<br/>&gt; Hyatt, Jalin NYG WR (R) - 4 Years<br/>&gt; Reed, Jayden GBP WR (R) - 4 Years<br/>&gt; Addison, Jordan MIN WR (R) - 5 Years<br/><br/>Thanks. Just a heads up that you currently have 34 players and the limit is 30, so need to cut 4 still."
+  },
+  {
+   "franchise": "0000",
+   "postTime": "1693850973",
+   "body": "Ok, the schedule has been updated. There was no off the shelf generator I could find for 9 teams 14 weeks, so I made a custom one. I was able to get it so everyone played their division rivals twice, and all other teams at least once. Everyone plays the league average either once or twice (which thankfully, the site does support). All slots were randomized. The only thing that looks off is the home/away ratio for some teams, but since that doesn&#39;t make any difference I&#39;m just going to call it good."
+  },
+  {
+   "franchise": "0000",
+   "postTime": "1694021973",
+   "body": "Just a reminder, we have a blind bidding system that processes every Wednesday night, starting tonight. So if you want to bid on anyone, get those into the site by 11pm. Remember to put the number of years you want to sign them for in the comments.<br/><br/>After blind bidding processes then it&#39;s free for all pickups for $1 until game time Sunday."
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1694199562",
+   "body": "If Darren Waller isn’t active, start Evan Engram"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1694962428",
+   "body": "if Travis Kelce doesn&#39;t play, play Juwan Johnson instead."
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1696548339",
+   "body": "If Davante Adams doesn’t play, start Khalil Herbert"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1697387962",
+   "body": "If mike evans is out, play Brian Robinson"
+  },
+  {
+   "franchise": "0004",
+   "postTime": "1697724660",
+   "body": "If McCaffrey is out, play McLaughlin."
+  },
+  {
+   "franchise": "0004",
+   "postTime": "1697740516",
+   "body": "If Jimmy G is out, start Dobbs."
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1699768676",
+   "body": "If Ja’Marr Chase doesn’t play, start Kareem Hunt"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1694964407",
+   "body": "Moody 5 years"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1694968052",
+   "body": "Douglas 5 years"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1695322511",
+   "body": "Evans 5 yrs"
+  },
+  {
+   "franchise": "0006",
+   "postTime": "1695327956",
+   "body": "Atwell - 2 years"
+  },
+  {
+   "franchise": "0004",
+   "postTime": "1696515427",
+   "body": "McLaughlin - 3 years<br/>Aubrey - 2 years"
+  },
+  {
+   "franchise": "0004",
+   "postTime": "1696519626",
+   "body": "Also thought I had it in notes for waiver, but I had Ferguson for 5 years"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1697150249",
+   "body": "Thomas 2 years"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1697326082",
+   "body": "Ingram 1yr"
+  },
+  {
+   "franchise": "0006",
+   "postTime": "1698504127",
+   "body": "Hopkins - 2 years"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1698963450",
+   "body": "Taysom Hill 1yr"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1699207174",
+   "body": "Hall 5 years"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1700721896",
+   "body": "Chad Kelly 5 yrs"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1700753866",
+   "body": "Wicks 5 years"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1700753908",
+   "body": "Moving this to the bottom of the list:<br/><br/>Wicks 5 years"
+  },
+  {
+   "franchise": "0005",
+   "postTime": "1702231044",
+   "body": "kraft 5 years"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1702667944",
+   "body": "Browning 1 yr"
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1703136216",
+   "body": "Koo 1yr"
+  },
+  {
+   "franchise": "0000",
+   "postTime": "1702502631",
+   "body": "Here are the playoff seeds with the matchups beginning this week:<br/><br/>1. Golden Ratio (Central division champ, 11-2-1 record)<br/>2. Smooth City Styles (West division champ, 9-5 record)<br/>3. Fitz &amp; the Tantrums (East division champ, 6-7-1 record)<br/>4. Not 100% a Dick (Wild card, 82-29-1 all play)<br/><br/><b>Draft order in 2024:</b><br/>1. There&#39;s Always Next Year (3-11 record)<br/>2. Cool Runnings (4-10 record)<br/>3. We Made a Kicker (5-9 record)<br/>4. Mahomes Alone (7-7 record, 1578.7 points)<br/>5. Zeke Squad (7-7 record, 1769.8 points)<br/>6. Not 100% a Dick (4th place)<br/>7. Smooth City Styles! (3rd place)<br/>8. Golden Ratio (2nd place)<br/>9. Fitz &amp; the Tantrums (1st place)<br/><br/><b>Most Points:</b><br/>Not 100% a Dick: $75 (week 1, 3, 8, 9, 13)<br/>Golden Ratio: $52.50 (week 2 split, 5, 10, 12)<br/>We Made a Kicker: $30 (week 4, 14)<br/>Mahomes Alone: $22.50 (week 2 split, 7)<br/>Zeke Squad: $15 (week 6)<br/>Smooth City Styles: $15 (week 11)<br/><br/><b>All-Play</b>&#160; ($0.75 * (wins - losses)):<br/>Not 100% a Dick: $39.75 (90-37-1)<br/>Golden Ratio: $34.50 (86-40-2)<br/>Smooth City Styles: $3 (66-62)<br/>Zeke Squad: $3 (66-62)<br/>Everyone else: below .500<br/><br/><b>Pot:</b><br/>&#160;&#160; 900.00&#160; Initial Pot<br/>-&#160; &#160; 50.00&#160; Bounty<br/>-&#160; 100.00&#160; Web Site<br/>-&#160; 210.00&#160; Most Points<br/>-&#160; &#160; 80.25&#160; All-Play<br/>-------------------------------<br/>&#160;&#160; 459.75&#160; Final Pot<br/><br/>1st Place 55% = $252.86: Fitz &amp; the Tantrums<br/>2nd Place 30% = $137.93: Golden Ratio<br/>3rd Place 15% = $68.96: Smooth City Styles"
+  },
+  {
+   "franchise": "0003",
+   "postTime": "1703565392",
+   "body": "Well that was unexpected! So many injuries across the league this season definitely made things interesting. Not sure my team deserves a championship but I guess &#39;any given sunday&#39;? It was a wild ride... Looking forward to next year everyone. "
+  },
+  {
+   "franchise": "0008",
+   "postTime": "1703567987",
+   "body": "Congrats on the win!<br/>I don’t think anyone “deserves” a championship more than anyone else. It just came down to whoever had the best team at the right time. You had that, so you’re the champ. Enjoy it. "
+  }
+ ],
+ "bids": [
+  {
+   "franchiseId": "0007",
+   "granted": "Jones, Marvin",
+   "adds": [
+    "Jones, Marvin",
+    "Gaskin, Myles"
+   ],
+   "comment": "1 year for each"
+  },
+  {
+   "franchiseId": "0003",
+   "granted": "Conklin, Tyler",
+   "adds": [
+    "Conklin, Tyler",
+    "Fournette, Leonard",
+    "Hunt, Kareem",
+    "Patterson, Cordarrelle",
+    "Murray, Latavius",
+    "Slayton, Darius",
+    "Valdes-Scantling, Marquez",
+    "Tonyan, Robert"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0003",
+   "granted": "Bourne, Kendrick",
+   "adds": [
+    "Bourne, Kendrick",
+    "Williams, Kyren",
+    "Shaheed, Rashid",
+    "Hill, Justice"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0004",
+   "granted": "Ford, Jerome",
+   "adds": [
+    "Ford, Jerome",
+    "Dobbs, Joshua"
+   ],
+   "comment": "2 years\n1 year"
+  },
+  {
+   "franchiseId": "0006",
+   "granted": "Atwell, Tutu",
+   "adds": [
+    "Atwell, Tutu"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0008",
+   "granted": "Hunt, Kareem",
+   "adds": [
+    "Hunt, Kareem",
+    "Ford, Jerome",
+    "Breida, Matt"
+   ],
+   "comment": "1yr\n1yr\n1yr"
+  },
+  {
+   "franchiseId": "0003",
+   "granted": "Dotson, Elijah",
+   "adds": [
+    "Dotson, Elijah"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0002",
+   "granted": "Shaheed, Rashid",
+   "adds": [
+    "Shaheed, Rashid"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0008",
+   "granted": null,
+   "adds": [
+    "Shaheed, Rashid"
+   ],
+   "comment": "2yr"
+  },
+  {
+   "franchiseId": "0004",
+   "granted": "Dobbs, Joshua",
+   "adds": [
+    "Dobbs, Joshua"
+   ],
+   "comment": "1 year"
+  },
+  {
+   "franchiseId": "0004",
+   "granted": "Ferguson, Jake",
+   "adds": [
+    "Ferguson, Jake",
+    "McLaughlin, Jaleel"
+   ],
+   "comment": "5 years\n5 years"
+  },
+  {
+   "franchiseId": "0008",
+   "granted": "Mason, Jordan",
+   "adds": [
+    "Mason, Jordan"
+   ],
+   "comment": "1yr"
+  },
+  {
+   "franchiseId": "0006",
+   "granted": "Hopkins, Dustin",
+   "adds": [
+    "Hopkins, Dustin"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0004",
+   "granted": "Wilson, Zach",
+   "adds": [
+    "Wilson, Zach"
+   ],
+   "comment": "1 year"
+  },
+  {
+   "franchiseId": "0007",
+   "granted": "Heinicke, Taylor",
+   "adds": [
+    "Heinicke, Taylor"
+   ],
+   "comment": ""
+  },
+  {
+   "franchiseId": "0008",
+   "granted": "Mitchell, Keaton",
+   "adds": [
+    "Mitchell, Keaton",
+    "Guyton, Jalen"
+   ],
+   "comment": "5yrs\n1yr"
+  },
+  {
+   "franchiseId": "0008",
+   "granted": "Flacco, Joe",
+   "adds": [
+    "Flacco, Joe"
+   ],
+   "comment": "1yr"
+  }
+ ]
+}
