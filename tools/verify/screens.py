@@ -25,7 +25,9 @@ change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or
 (or, on IR, makes the moves but refuses the drop), the rosters export lags it or leaves the team out,
 or (Drop) MFL can't be reached. On the trades-*, trades-offer-*, propose-* and counter-* screens MFL
 keeps the pending trades and rosters that Trades' moves change in the same ways, and an offer can be
-gone by the time it's accepted, or a counter's offer sent but the original left open.
+gone by the time it's accepted, or a counter's offer sent but the original left open. On the add-*
+screens MFL keeps the pending claims and roster that Add's moves change, a bid or a removed claim,
+and on add-window-* an add made at once in the free agent window, and its length's board post.
 """
 import argparse
 import copy
@@ -123,6 +125,21 @@ SCREENS["trades-offer-gone"] = (SCREENS["trades-offer"][0], {**SCREENS["trades-o
 SEEDS["trades-offer-gone"] = [["answer", "send-answer"]]
 SCREENS["trades-taken"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves": "taken"})
 SEEDS["trades-taken"] = SEEDS["trades"]
+# MFL keeping the pending claims and roster that Add's moves change, in the same ways (or the claims
+# and rosters unread after it): a bid, a claim removed, an add made at once in the free agent window
+# (the rosters export lagging it or leaving the team out) and its length's board post. The samples'
+# copies are all over a limit, their groups have one claim each to reorder, and MFL's edit page isn't
+# saved.
+SCREENS["add-window"] = (SCREENS["add"][0], {"window": True})
+SEEDS["add-window"] = [["pick-fa"], ["pick-fa", "pick-drop", "submit"], ["start", "pick-fa", "pick-drop", "submit"]]
+for _how in ["lands", "fails", "fails-made", "refuses", "unread", "offline"]:
+    SCREENS[f"add-{_how}"] = (SCREENS["add"][0], {"moves": _how})
+    SEEDS[f"add-{_how}"] = [["start", "pick-fa", "pick-drop", "submit"]]
+    SCREENS[f"add-claims-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-claims"][1], "moves": _how})
+    SEEDS[f"add-claims-{_how}"] = [["toggle", "copy"], ["remove"]]
+for _how in ["lands", "fails", "fails-made", "refuses", "unread", "lands-noteam", "offline", "lags", "board-fails"]:
+    SCREENS[f"add-window-{_how}"] = (SCREENS["add"][0], {"window": True, "moves": _how})
+    SEEDS[f"add-window-{_how}"] = [["pick-fa", "pick-drop", "submit"], ["start", "pick-fa", "pick-drop", "submit"]]
 for _how in ["lands", "fails", "fails-made", "refuses", "then-fails"]:
     SCREENS[f"counter-{_how}"] = (SCREENS["propose"][0] + "#counter-1003", {**SCREENS["trades-offer"][1], "moves": _how})
     SEEDS[f"counter-{_how}"] = [["send"], ["next", "next", "send"]]
@@ -225,6 +242,8 @@ TEAM = "0001"
 # how many times v2 reads the roster to confirm a move
 READS = int(re.search(r"export const READS = (\d+);", (SAMPLES.parent.parent.parent / "site/v2/ui/moves.js").read_text()).group(1))
 REFUSED = '<html><body><div class="pagebody"><span class="warning">Roster moves are locked for this team.</span></div></body></html>'
+# what Add's claim links name, the claim as ROUND_ADD_BID_DROP
+CLAIM_LINKS = ("DELETE", "MOVE_UP", "MOVE_DOWN")
 ROW = re.compile(r'<tr class="(?:odd|even)tablerow">.*?</tr>', re.S)
 
 
@@ -239,7 +258,10 @@ class Mfl:
     rosters reads don't reach MFL). Trades' moves too: "lands", "fails", "fails-made", "refuses";
     "gone" (an accepted offer removed with no players moved); "then-fails" (the first move lands, those
     after it fail); "lands-unread" (made, MFL's answer its Trades page, the pending trades unread after);
-    "taken" (an offer withdrawn, but the other team accepted it first)"""
+    "taken" (an offer withdrawn, but the other team accepted it first). Add's moves too: "lands", "fails",
+    "fails-made", "refuses", "lags", "offline", "-noteam"; "unread" (made, the pending claims and
+    rosters unread after); "board-fails" (the add made, the
+    board post of its length refused). With swaps["window"], no free agent is locked."""
 
     def __init__(self, site, swaps):
         self.site = site
@@ -258,8 +280,13 @@ class Mfl:
         # rosters reads still to answer without the team, and whether MFL can't be reached
         self.noteam = 0
         self.offline = False
-        # whether the pending trades can no longer be read
-        self.trades_unread = False
+        # the pending claims, as Add's moves change them
+        self.claims = None
+        if self.moves:
+            pending = json.loads(sample(swaps.get("pendingWaivers", "pendingWaivers.json")))["pendingWaivers"].get("blindBidWaiverRequest", [])
+            self.claims = pending if isinstance(pending, list) else [pending]
+        # the exports that can no longer be read
+        self.unread = set()
 
     def team(self, rosters=None):
         return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
@@ -305,7 +332,7 @@ class Mfl:
         unread = how == "lands-unread"
         if unread:
             how = "lands"
-            self.trades_unread = True
+            self.unread.add("pendingTrades")
         if how not in ("fails", "refuses"):
             if path.endswith("/trade_offer"):
                 partner = next(team for team in field("FRANCHISE_ID").split(",") if team != TEAM)
@@ -333,6 +360,70 @@ class Mfl:
             # MFL's Trades page, whose header warning ("No outstanding trade proposals received") isn't a refusal
             return route.fulfill(content_type="text/html", body=sample("trades-O05.html"))
         return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
+
+    def add(self, route, fields):
+        """MFL's answer to Add's move: a blind bid joins its group's claims (its comment a line of the
+        group's), an add made at once joins the roster, a claim link removes or reorders a claim"""
+        before = copy.deepcopy(self.rosters)
+        how = self.moves
+        field = lambda name: fields.get(name, [""])[0]
+        if how == "offline":
+            self.offline = True
+            return route.abort()
+        if how.endswith("-noteam"):
+            how = how[:-len("-noteam")]
+            self.noteam = READS
+        if how == "unread":
+            how = "lands"
+            self.unread |= {"pendingWaivers", "rosters"}
+        if how not in ("fails", "refuses"):
+            link = next((key for key in CLAIM_LINKS if key in fields), None)
+            if link:
+                round_, claim = field(link).split("_", 1)
+                group = next(group for group in self.claims if group["round"] == round_)
+                claims = group["addsDrops"].split(",")
+                at = claims.index(claim)
+                if link == "DELETE":
+                    claims.pop(at)
+                else:
+                    to = max(0, min(len(claims) - 1, at + (-1 if link == "MOVE_UP" else 1)))
+                    claims.insert(to, claims.pop(at))
+                group["addsDrops"] = ",".join(claims)
+                self.claims = [group for group in self.claims if group["addsDrops"]]
+            elif re.search("request", field("SUBMIT"), re.I):
+                claim = f"{field('add_pid')}_{field('BBID_AMT')}_{field('drop_pid') or '0000'}"
+                group = next((group for group in self.claims if group["round"] == field("ROUND")), None)
+                if group:
+                    group["addsDrops"] += f",{claim}"
+                    group["comments"] = "br/".join(line for line in [group.get("comments", ""), field("COMMENTS")] if line)
+                else:
+                    self.claims.append({"round": field("ROUND"), "addsDrops": claim, "comments": field("COMMENTS"), "timestamp": "1792340000"})
+            else:
+                team = self.team()
+                team["player"] = [player for player in team["player"] if player["id"] != field("drop_pid")]
+                team["player"].append({"id": field("add_pid"), "status": "ROSTER", "salary": "1", "contractYear": "0"})
+        if how in ("fails", "fails-made"):
+            return route.fulfill(status=500, body="")
+        if how == "refuses":
+            return route.fulfill(content_type="text/html", body=REFUSED)
+        if how == "lags":
+            self.stale = before
+            self.stale_reads = 1
+        return route.fulfill(content_type="text/html", body=self.add_page())
+
+    def add_page(self):
+        """MFL's Add/Drop page; in the free agent window ("window"), no free agent marked locked, so
+        MFL's page makes an add at once"""
+        html = sample(self.swaps.get("page:add_drop", "add_drop.html"))
+        if self.swaps.get("window"):
+            html = re.sub(r'(pdb_add\[\d+\] = new Player2 \("\d+","[^"]*?)[#!*]+"', r'\1"', html)
+        if self.rosters:
+            # a player added is no longer a free agent
+            mine = {player["id"] for player in self.team()["player"]}
+            html = re.sub(r'\s*pdb_add\[\d+\] = new Player2 \("(\d+)",[^\n]*', lambda m: "" if m.group(1) in mine else m.group(0), html)
+            counter = iter(range(10000))
+            html = re.sub(r"pdb_add\[\d+\]( = new Player2)", lambda m: f"pdb_add[{next(counter)}]{m.group(1)}", html)
+        return html
 
     def drop_page(self):
         """MFL's Drop Players page as the roster now stands: a dropped player's entry gone"""
@@ -400,6 +491,8 @@ class Mfl:
     def export(self, query):
         kind = query.get("TYPE", [""])[0]
         week = query.get("W", [""])[0]
+        if kind == "pendingWaivers" and self.moves:
+            return json.dumps({"pendingWaivers": {"blindBidWaiverRequest": self.claims} if self.claims else {}})
         if kind == "pendingTrades" and self.moves:
             # MFL's shape with none left
             return json.dumps({"pendingTrades": {"pendingTrade": self.trades} if self.trades else {}})
@@ -440,22 +533,27 @@ class Mfl:
             return route.fulfill(body=body, content_type="text/css" if path.endswith(".css") else "text/javascript")
         if not url.netloc.endswith("myfantasyleague.com"):
             return route.abort()
-        # a move: a POST, or a GET naming an ACTION (withdrawing an offer by its revoke link)
-        move = request.method == "POST" or "ACTION" in query
+        # a move: a POST, or a GET naming an ACTION (withdrawing an offer by its revoke link) or a claim
+        # to remove or reorder (Add's claim links)
+        move = request.method == "POST" or any(key in query for key in ("ACTION", *CLAIM_LINKS))
         if move:
             body = request.post_data or url.query
             fields = sorted(parse_qs(body, keep_blank_values=True).items()) if "=" in body else body
             self.posts.append({"method": request.method, "url": f"{url.path}?{url.query}" if url.query else url.path, "body": fields})
+            if self.moves and url.path.endswith("/add_drop") and (query.keys() & set(CLAIM_LINKS) or "add_pid=" in body and parse_qs(body).get("add_pid")):
+                return self.add(route, query if request.method == "GET" else parse_qs(body, keep_blank_values=True))
             if self.moves and request.method == "POST" and url.path.endswith(("/add_drop", "/ir")):
                 return self.make(route, url.path, parse_qs(body, keep_blank_values=True))
             if self.moves and url.path.endswith(("/trade_response", "/trade_offer")):
                 return self.trade(route, url.path, parse_qs(body, keep_blank_values=True))
             if url.path.endswith("/import"):
+                if self.moves == "board-fails" and query.get("TYPE") == ["messageBoard"]:
+                    return route.fulfill(content_type="text/xml", body="<error>Posting is closed.</error>")
                 return route.fulfill(content_type="text/xml", body="<status>OK</status>")
             name = self.page_for(url.path, query)
             return route.fulfill(content_type="text/html", body=sample(name) if name else "<html><body></body></html>")
         if url.path.endswith("/export"):
-            if self.offline and query.get("TYPE") == ["rosters"] or self.trades_unread and query.get("TYPE") == ["pendingTrades"]:
+            if self.offline and query.get("TYPE") == ["rosters"] or query.get("TYPE", [""])[0] in self.unread:
                 return route.abort()
             return route.fulfill(content_type="application/json", body=self.export(query))
         if "/fflnetdynamic" in url.path:
@@ -469,7 +567,7 @@ class Mfl:
             return route.fulfill(content_type="text/html", body=self.drop_page() if query["O"] == ["257"] else self.ir_page())
         name = self.page_for(url.path, query)
         if name and (SAMPLES / name).exists():
-            return route.fulfill(content_type="text/html", body=sample(name))
+            return route.fulfill(content_type="text/html", body=self.add_page() if url.path.endswith("/add_drop") else sample(name))
         # MFL's own scripts the pages need (picker.js, mfl_common.js)
         if url.path.endswith(".js") and (SAMPLES / url.path.rsplit("/", 1)[1]).exists():
             return route.fulfill(body=sample(url.path.rsplit("/", 1)[1]), content_type="text/javascript")
