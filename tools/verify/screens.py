@@ -388,7 +388,8 @@ class Mfl:
         kind = query.get("TYPE", [""])[0]
         week = query.get("W", [""])[0]
         if kind == "pendingTrades" and self.moves:
-            return json.dumps({"pendingTrades": {"pendingTrade": self.trades}})
+            # MFL's shape with none left
+            return json.dumps({"pendingTrades": {"pendingTrade": self.trades} if self.trades else {}})
         if kind in self.swaps:
             return sample(self.swaps[kind])
         if kind == "rosters" and self.noteam:
