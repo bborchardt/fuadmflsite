@@ -70,6 +70,10 @@ would do until they're switched on.
   bookmark saved (`tests/fixtures/pages/`), as the guest, a member or the commissioner got it, with
   the working copy built and v2 as the main version, and checks which of v2's screens takes each one,
   or that MFL's page stays.
+- `uv run --no-project --with playwright python tools/verify/skins.py` draws v2's screens in each look,
+  with the look's MFL skin and without it, and lists every style the skin changes on v2's parts. MFL's
+  stylesheets are fetched once into `~/.cache/fuadmflsite`, not the repo; `--refresh` fetches them again
+  and updates their fingerprints in `tools/verify/skins.json`, so a skin MFL changed shows in git diff.
 
 ## What's where
 
