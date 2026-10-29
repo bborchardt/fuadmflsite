@@ -6,17 +6,13 @@
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
+import {READS, READ_GAP, Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 import {controlSelector, irMarkup, loadingMarkup, moveCount} from "./ir-view.js";
 import {replaceEntry} from "./dialog.js";
 
 const FLASH_KEY = "fuad.irFlash";
-// reading the roster back after a save: how many times, and how far apart (MFL asks for about a
-// second between requests)
-const READS = 3;
-const READ_GAP = 1500;
 
 export async function drawIR({context, franchiseId, dropHref}) {
     const body = document.querySelector(".pagebody");
@@ -109,8 +105,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
     }
 
     // What MFL made of a save: the IR page it answered with, as the roster now stands, else the
-    // rosters export, read again a few times while it shows nothing done, since it can lag a move
-    // (seen live: a move to IR made, the export read just after still had him active)
+    // rosters export, read again a few times while it shows nothing done
     async function readBack(asked, answered) {
         if (answered) {
             const roster = rosterFromPage(answered);

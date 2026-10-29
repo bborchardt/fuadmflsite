@@ -60,6 +60,12 @@ export async function send(url, init) {
 }
 
 // A move MFL didn't make; `reason` is MFL's, when it gave one (refusal)
+// reads of the roster to confirm a move, while it doesn't show it yet, since the rosters export can
+// lag a move (seen live: a move to IR made, the export read just after still had him active); how
+// many, and how far apart (MFL asks for about a second between requests)
+export const READS = 3;
+export const READ_GAP = 1500;
+
 export class Refused extends Error {
     constructor(reason) {
         super(reason || "MFL gave no reason");

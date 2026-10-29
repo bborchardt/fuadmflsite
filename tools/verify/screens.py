@@ -22,7 +22,8 @@ header (#fuad-frame) are in the HTML but their controls aren't used. MFL's answe
 saved page unchanged, so moves end on their unconfirmed path; the *-done screens plant the line a
 successful move leaves instead. On the drop-* and ir-* screens MFL keeps the roster their posts
 change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or not, MFL refuses it
-(or, on IR, makes the moves but refuses the drop), or (IR) the rosters export lags it.
+(or, on IR, makes the moves but refuses the drop), the rosters export lags it or leaves the team out,
+or (Drop) MFL can't be reached.
 """
 import argparse
 import copy
@@ -74,8 +75,10 @@ SCREENS = {
     "trades-done": (f"/2026/options?L={LEAGUE}&O=05", {"now": BEFORE_DEADLINE, "flash": ("fuad.tradesFlash", {"done": "Offer sent.", "error": "Couldn’t send: a test error.", "note": "A test note."})}),
     # MFL keeping the roster a move changes (Mfl's "moves")
     **{f"{move}-{how}": (f"/2026/options?L={LEAGUE}&O={option}", {"moves": how})
-       for move, option in [("drop", "257"), ("ir", "18")] for how in ["lands", "fails", "fails-made", "refuses"]},
-    **{f"ir-{how}": (f"/2026/options?L={LEAGUE}&O=18", {"moves": how}) for how in ["lags", "refuses-drop"]},
+       for move, option in [("drop", "257"), ("ir", "18")] for how in ["lands", "fails", "fails-made", "refuses", "lags"]},
+    **{f"ir-{how}": (f"/2026/options?L={LEAGUE}&O=18", {"moves": how}) for how in ["refuses-drop"]},
+    **{f"drop-{how}": (f"/2026/options?L={LEAGUE}&O=257", {"moves": how})
+       for how in ["lags-twice", "fails-noteam", "fails-made-noteam", "refuses-noteam", "offline"]},
     "lineup": (f"/2026/lineup?L={LEAGUE}", {}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
@@ -99,7 +102,7 @@ SEEDS = {
     "trades": [["ask", "withdraw"]],
     "trades-offer": [["answer"], ["answer", "comment", "send-answer"], [("answer", "reject", 0), "send-answer"],
                      [("answer", "counter", 0), "comment", "send-answer"]],
-    **{f"drop-{how}": [["toggle", "drop"]] for how in ["lands", "fails", "fails-made", "refuses"]},
+    **{f"drop-{how}": [["toggle", "drop"]] for how in ["lands", "fails", "fails-made", "refuses", "lags", "lags-twice", "fails-noteam", "fails-made-noteam", "refuses-noteam", "offline"]},
     # a drop is offered only once a player is activated
     **{f"ir-{how}": [["toIR", "save"], ["activate", "drop", "save"]] for how in ["lands", "fails", "fails-made", "lags", "refuses", "refuses-drop"]},
     # a box ticked and unticked again, which no first-of-each-kind chain does
@@ -202,6 +205,8 @@ def sample(name):
 
 
 TEAM = "0001"
+# how many times v2 reads the roster to confirm a move (moves.js)
+READS = 3
 REFUSED = '<html><body><div class="pagebody"><span class="warning">Roster moves are locked for this team.</span></div></body></html>'
 ROW = re.compile(r'<tr class="(?:odd|even)tablerow">.*?</tr>', re.S)
 
@@ -212,7 +217,8 @@ class Mfl:
     does: "lands"; "fails" (MFL's answer an error, nothing changed); "fails-made" (an error, the move
     made); "refuses" (a page with MFL's reason, nothing changed); "refuses-drop" (that page, the moves
     made but not the drop); "lags" (made, MFL's answer not the IR page, and the first rosters read after
-    it still shows the roster from before)"""
+    it still shows the roster from before; "lags-twice", the first two); any of these with "-noteam" (each rosters read v2 makes to
+    confirm it leaves the team out); "offline" (the post and rosters reads don't reach MFL)"""
 
     def __init__(self, site, swaps):
         self.site = site
@@ -221,6 +227,11 @@ class Mfl:
         self.moves = swaps.get("moves")
         self.rosters = json.loads(sample("rosters.json")) if self.moves else None
         self.stale = None
+        # how many rosters reads still get the stale copy
+        self.stale_reads = 0
+        # rosters reads still to answer without the team, and whether MFL can't be reached
+        self.noteam = 0
+        self.offline = False
 
     def team(self, rosters=None):
         return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
@@ -228,23 +239,31 @@ class Mfl:
     def make(self, route, path, fields):
         """MFL's answer to Drop's or IR's post, the roster changed as the move says"""
         before = copy.deepcopy(self.rosters)
-        if self.moves not in ("fails", "refuses"):
+        how = self.moves
+        if how == "offline":
+            self.offline = True
+            return route.abort()
+        if how.endswith("-noteam"):
+            how = how[:-len("-noteam")]
+            self.noteam = READS
+        if how not in ("fails", "refuses"):
             team = self.team()
             for player in team["player"]:
                 if player["id"] in fields.get(f"deactivate{TEAM}", []):
                     player["status"] = "INJURED_RESERVE"
                 if player["id"] in fields.get(f"activate{TEAM}", []):
                     player["status"] = "ROSTER"
-            if self.moves != "refuses-drop":
+            if how != "refuses-drop":
                 gone = set(fields.get("drop_pid", []) + fields.get(f"drop{TEAM}", []))
                 team["player"] = [player for player in team["player"] if player["id"] not in gone]
-        if self.moves in ("fails", "fails-made"):
+        if how in ("fails", "fails-made"):
             return route.fulfill(status=500, body="")
-        if self.moves in ("refuses", "refuses-drop"):
+        if how in ("refuses", "refuses-drop"):
             return route.fulfill(content_type="text/html", body=REFUSED)
-        if self.moves == "lags":
+        if how in ("lags", "lags-twice"):
             # an answer that isn't the IR page, so v2 reads the rosters export, which still has it as it was
             self.stale = before
+            self.stale_reads = 2 if how == "lags-twice" else 1
             return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
         return route.fulfill(content_type="text/html", body=self.ir_page() if path.endswith("/ir") else self.drop_page())
 
@@ -316,9 +335,16 @@ class Mfl:
         week = query.get("W", [""])[0]
         if kind in self.swaps:
             return sample(self.swaps[kind])
+        if kind == "rosters" and self.noteam:
+            self.noteam -= 1
+            rosters = copy.deepcopy(self.rosters)
+            rosters["rosters"]["franchise"] = [team for team in rosters["rosters"]["franchise"] if team["id"] != TEAM]
+            return json.dumps(rosters)
         if kind == "rosters" and self.moves:
-            stale, self.stale = self.stale, None
-            return json.dumps(stale or self.rosters)
+            if self.stale_reads:
+                self.stale_reads -= 1
+                return json.dumps(self.stale)
+            return json.dumps(self.rosters)
         if kind == "weeklyResults":
             name = "weeklyResults-YTD.json" if week == "YTD" else "weeklyResults-W5.json"
         elif kind == "playerScores":
@@ -357,6 +383,8 @@ class Mfl:
             name = self.page_for(url.path, query)
             return route.fulfill(content_type="text/html", body=sample(name) if name else "<html><body></body></html>")
         if url.path.endswith("/export"):
+            if self.offline and query.get("TYPE") == ["rosters"]:
+                return route.abort()
             return route.fulfill(content_type="application/json", body=self.export(query))
         if "/fflnetdynamic" in url.path:
             name = url.path.rsplit("/", 1)[1]

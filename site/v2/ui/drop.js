@@ -7,7 +7,7 @@ import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {
-    Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, movesPhase, refusal,
+    READS, READ_GAP, Refused, WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, movesPhase, refusal,
     rosterIds, send, takeFlash
 } from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
@@ -185,6 +185,21 @@ export async function drawDrop({context, franchiseId}) {
         return ids.length ? ids : null;
     };
 
+    // the roster after a drop, read again a few times while it still has him; null if never read
+    async function readBack(playerId) {
+        let ids = null;
+        for (let tries = 0; tries < READS; tries += 1) {
+            if (tries) {
+                await new Promise((resolve) => setTimeout(resolve, READ_GAP));
+            }
+            ids = (await teamIds().catch(() => null)) || ids;
+            if (ids && !ids.includes(playerId)) {
+                break;
+            }
+        }
+        return ids;
+    }
+
     async function drop(playerId) {
         const row = rows().flatMap((group) => group.players).find((entry) => entry.player.playerId === playerId);
         if (!row || row.off || state.busy) {
@@ -194,33 +209,26 @@ export async function drawDrop({context, franchiseId}) {
         state.busy = true;
         state.error = "";
         render();
-        let read = false;
+        let answer = "";
+        let failed = null;
         try {
-            const answer = await send(form.action, {method: "POST", body: formFields(form, playerId)});
-            const after = await teamIds();
-            read = Boolean(after);
-            if (!after || after.includes(playerId)) {
-                throw new Refused(refusal(answer));
-            }
-            reloadWith({done: `${name} dropped.`});
+            answer = await send(form.action, {method: "POST", body: formFields(form, playerId)});
         } catch (error) {
             console.warn("[fuad] couldn't drop:", error);
-            let message = failedLine(`drop ${name}`, error);
-            // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it
-            const ids = await teamIds().catch(() => null);
-            if (ids && !ids.includes(playerId)) {
-                reloadWith({done: `${name} dropped.`});
-                return;
-            }
-            if (ids && JSON.stringify(ids) !== JSON.stringify(mine())) {
-                reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
-                return;
-            }
-            // the roster couldn't be read to tell whether MFL made it (an answer that failed may have)
-            if (!ids && !read) {
-                message = "Couldn't check whether MFL made it. Reload the page to see your roster.";
-            }
-            state.error = message;
+            failed = error;
+        }
+        // MFL may have made it even when its answer failed: the page reloads to show what it has
+        const ids = await readBack(playerId);
+        if (ids && !ids.includes(playerId)) {
+            reloadWith({done: `${name} dropped.`});
+            return;
+        }
+        const error = failed || new Refused(refusal(answer));
+        if (ids && JSON.stringify(ids) !== JSON.stringify(mine())) {
+            reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
+        } else {
+            // with the roster unread, MFL's reason if it refused, else no telling whether it made it
+            state.error = ids || error.reason ? failedLine(`drop ${name}`, error) : "Couldn't check whether MFL made it. Reload the page to see your roster.";
             state.busy = false;
             render();
             // the button was off while sending, so focus fell away from it
