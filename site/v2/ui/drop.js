@@ -201,9 +201,10 @@ export async function drawDrop({context, franchiseId}) {
         } catch (error) {
             console.warn("[fuad] couldn't drop:", error);
             let message = failedLine(`drop ${name}`, error);
-            // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it
+            // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it.
+            // No players at all is an answer without the team, not a drop
             const ids = await rosterIds(context, franchiseId).catch(() => null);
-            if (ids && !ids.includes(playerId)) {
+            if (ids && ids.length && !ids.includes(playerId)) {
                 reloadWith({done: `${name} dropped.`});
                 return;
             }
