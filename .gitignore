@@ -7,3 +7,5 @@ __pycache__/
 node_modules/
 # what tools/build.mjs makes for Pages
 dist/
+# MFL's skin stylesheets, fetched by tools/verify/skins.py: MFL's, not the repo's to publish
+tools/verify/mfl-skins/
