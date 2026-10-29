@@ -241,7 +241,19 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
             failed(error || new Refused(refusal(reply)), {after, offerId: offer.id, what: `withdraw your offer to ${nameOf(offer.partner)}`});
             return;
         }
-        reloadList({done: stop(`Offer to ${nameOf(offer.partner)} withdrawn`)});
+        // gone from the pending trades, but the other team may have accepted it just before: then the
+        // roster has the players it got and not those it gave
+        const players = state.data.league.players;
+        const give = offer.give.filter((id) => players.has(id));
+        const get = offer.get.filter((id) => players.has(id));
+        const roster = give.length || get.length ? await rosterIds(context, franchiseId).catch(() => null) : [];
+        if (!roster) {
+            reloadList({note: "Couldn't confirm the move: this is how MFL has your trades now."});
+        } else if ((give.length || get.length) && give.every((id) => !roster.includes(id)) && get.every((id) => roster.includes(id))) {
+            reloadList({error: failedLine(`withdraw your offer to ${nameOf(offer.partner)}`, new Refused("they accepted it first"))});
+        } else {
+            reloadList({done: stop(`Offer to ${nameOf(offer.partner)} withdrawn`)});
+        }
     }
 
     // A counter sends the new offer first, then answers the original with MFL's counter (which
