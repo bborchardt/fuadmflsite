@@ -159,7 +159,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
             return;
         }
         if (!after && sent && !read) {
-            message = "Couldn't check whether MFL made it. Reload the page to see your trades.";
+            message = "Couldn’t check whether MFL made it. Reload the page to see your trades.";
         }
         state.busy = null;
         if (offerId) {
