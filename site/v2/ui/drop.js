@@ -203,6 +203,10 @@ export async function drawDrop({context, franchiseId}) {
             let message = failedLine(`drop ${name}`, error);
             // MFL may have changed the roster anyway (an answer that failed): the page reloads to show it
             const ids = await rosterIds(context, franchiseId).catch(() => null);
+            if (ids && !ids.includes(playerId)) {
+                reloadWith({done: `${name} dropped.`});
+                return;
+            }
             if (ids && JSON.stringify(ids) !== JSON.stringify(mine())) {
                 reloadWith({error: failedLine(`drop ${name}`, error, {changed: true})});
                 return;
