@@ -32,14 +32,16 @@ test("links that change something are never followed", () => {
 });
 
 test("the board gives its first topic and its longest", () => {
-    const topics = topicsOn(fixture("board-show-guest.html"));
-    assert.equal(topics["mb-topic_show"], "topic_show.pl?bid=202648571&tid=6758929");
-    assert.match(topics["mb-topic_show-long"] || topics["mb-topic_show"], /^topic_show\.pl\?bid=202648571&tid=\d+$/);
+    assert.deepEqual(topicsOn(fixture("pages/guest/mb-board_show.html")),
+        {"mb-topic_show": "topic_show.pl?bid=202648571&tid=6758929", "mb-topic_show-long": "topic_show.pl?bid=202648571&tid=6737097"});
     assert.deepEqual(topicsOn("<p>No topics</p>"), {});
 });
 
 test("a guest's topic has no reply or edit form to follow", () => {
-    assert.deepEqual(topicLinks(fixture("topic-show-guest.html")), {});
+    assert.deepEqual(topicLinks(fixture("pages/guest/mb-topic_show.html")), {});
+    // a member's, with a post of their own
+    assert.deepEqual(topicLinks(fixture("pages/member/mb-topic_show.html")),
+        {"mb-post_add": "post_add.pl?bid=202650965&pid=23216675", "mb-post_edit": "post_edit.pl?bid=202650965&pid=23216675"});
     assert.deepEqual(topicLinks("<a href='post_add.pl?tid=1&amp;pid=2'>Reply</a><a href=\"post_edit.pl?pid=2\">Edit</a>", "-long"),
         {"mb-post_add-long": "post_add.pl?tid=1&pid=2", "mb-post_edit-long": "post_edit.pl?pid=2"});
 });

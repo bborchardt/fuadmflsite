@@ -35,18 +35,18 @@ test("a format chip wraps the selection, or puts the cursor between its tags", (
 });
 
 test("logged out, the topic list is redrawn without New topic", () => {
-    const doc = page("board-show-guest.html");
+    const doc = page("pages/guest/mb-board_show.html");
     assert.equal(restyleBoard(doc, {guest: true}), true);
     const board = doc.getElementById("fuad-topics");
     assert.equal(board.querySelector(".fuad-chip"), null);
     assert.deepEqual([...board.querySelectorAll(".fuad-board-links a")].map((a) => a.textContent), ["Search"]);
     assert.equal(board.querySelector(".fuad-board-topic .fuad-row-title").textContent, "New League Site");
     // a member's list without New topic is one v2 doesn't know
-    assert.equal(restyleBoard(page("board-show-guest.html")), false);
+    assert.equal(restyleBoard(page("pages/guest/mb-board_show.html")), false);
 });
 
 test("logged out, a topic's posts are cards without Reply", () => {
-    const doc = page("topic-show-guest.html");
+    const doc = page("pages/guest/mb-topic_show.html");
     assert.equal(restyleTopic(doc, {guest: true}), true);
     const post = doc.querySelector(".fuad-post");
     assert.equal(post.querySelector(".fuad-post-team").textContent, "Commissioner");
@@ -54,5 +54,5 @@ test("logged out, a topic's posts are cards without Reply", () => {
     assert.equal(post.querySelectorAll(".fuad-post-team a").length, 0);
     assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m.");
     assert.equal(post.querySelector(".fuad-post-actions").children.length, 0);
-    assert.equal(restyleTopic(page("topic-show-guest.html")), false);
+    assert.equal(restyleTopic(page("pages/guest/mb-topic_show.html")), false);
 });
