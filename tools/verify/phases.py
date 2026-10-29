@@ -20,9 +20,11 @@ compare does for one date. MFL's answers are screens.py's saved clone samples, r
 
 Before week 1 the rosters are as after the commissioner's rollover (a year off every contract, the
 expiring players RFAs at $0.01), the standings and results a new season's, and last season's come
-from screens/2025/. Live scoring's feeds for any week are week 6's. From before-cut, team 0001 has four draft-day players at 0 years and a pending
-bid. A request no sample answers, or an error on the page, also fails the run: a new date may ask
-for something the samples don't have.
+from screens/2025/. Live scoring's feeds for any week are week 6's. From before-cut, team 0001 has
+four draft-day players at 0 years and a pending bid. The franchise salaries published at the trade
+deadline are served (screens/franchise-2025.json, for 2026 too), and Rosters › Draft is drawn once
+more without them. A request no sample answers, or an error on the page, also fails the run: a new
+date may ask for something the samples don't have.
 """
 import argparse
 import importlib.util
@@ -68,6 +70,8 @@ VIEWS = {
     **{v: f"/2026/home/{L}#league-{v}" for v in ["scores", "standings", "power", "winners"]},
     **{f"rosters-{v}": f"/2026/home/{L}#rosters-{v}" for v in ["my-team", "teams", "players", "draft"]},
     "rosters-team": f"/2026/home/{L}#rosters-teams/0002",
+    # as when the daily job hasn't saved the trade deadline's franchise salaries
+    "rosters-draft-no-snapshot": f"/2026/home/{L}#rosters-draft",
 }
 # MFL's own scripts that aren't saved, and the images no sample has
 NOISE = ("FusionCharts", "show_tab is not defined")
@@ -194,15 +198,24 @@ class Phased(harness.Mfl):
     """screens.py's answers, with the exports reshaped for the phase, MFL's week on its pages set to
     the phase's, and every request no sample answers noted"""
 
-    def __init__(self, site, phase):
+    def __init__(self, site, phase, snapshot=True):
         super().__init__(site, {})
         self.phase = Phase(phase)
+        self.snapshot = snapshot
         self.missed = []
 
     def handle(self, route):
         url = urlparse(route.request.url)
         query = parse_qs(url.query)
         year = (re.match(r"^/(\d{4})/", url.path) or [None, "2026"])[1]
+        # the franchise salaries the daily job publishes at each trade deadline: 2025's, which also
+        # stands in for 2026's
+        if url.netloc == "bborchardt.github.io" and re.search(r"/data/franchise-\d{4}\.json$", url.path):
+            if not self.snapshot:
+                return route.fulfill(status=404, body="")
+            snapshot = load(SAMPLES / "franchise-2025.json")
+            snapshot["season"] = int(re.search(r"(\d{4})\.json$", url.path)[1])
+            return route.fulfill(content_type="application/json", body=json.dumps(snapshot))
         if url.netloc.endswith("myfantasyleague.com") and url.path.endswith("/export"):
             body = self.phase.export(year, query)
             if body is None and year == "2026" and query.get("TYPE") != ["nflSchedule"]:
@@ -249,7 +262,7 @@ class Weeked:
 def draw(job):
     ref, phase, view, width = job
     site = harness.Site(ref)
-    mfl = Phased(site, phase)
+    mfl = Phased(site, phase, snapshot=view != "rosters-draft-no-snapshot")
     with sync_playwright() as playwright:
         browser = playwright.webkit.launch()
         context = browser.new_context(viewport={"width": harness.WIDTHS[width], "height": 1000}, timezone_id="America/Chicago")

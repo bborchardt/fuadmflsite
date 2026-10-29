@@ -61,8 +61,9 @@ would do until they're switched on.
   Pages publishes it.
 - `uv run --no-project --with playwright python tools/verify/phases.py` draws every view on nine dates
   through the league's year (offseason, draft, cut-down, preseason, season, trade deadline, playoffs,
-  season over), from the same saved pages reshaped for each date, on master and on your working copy,
-  and lists every view that differs; a request no saved page answers fails it.
+  season over), from the same saved pages reshaped for each date, with and without the trade
+  deadline's franchise snapshot, on master and on your working copy, and lists every view that
+  differs; a request no saved page answers fails it.
 - `uv run --no-project --with playwright python tools/verify/speed.py` times Lineup and Home from the
   same saved pages over a simulated slow phone connection: when the page shows, how long MFL's own
   page shows first, and when v2's screen is drawn; `--built` times the bundle, `--no-lookbehind`
