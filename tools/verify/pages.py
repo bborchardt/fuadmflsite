@@ -104,13 +104,17 @@ def check(job):
         page = context.new_page()
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
+        # app.js catches a screen's failed draw and logs it, leaving MFL's page as if v2 had passed it by
+        failed = []
+        page.on("console", lambda message: message.type == "error" and message.text.startswith("[fuad]")
+                and failed.append(message.text))
         page.goto(url)
         harness.settle(page)
         page.wait_for_timeout(500)
         classes = page.evaluate("() => [...document.documentElement.classList]")
         browser.close()
     taken = [name for name in SCREEN_CLASSES if name in classes]
-    return viewer, name, taken[0] if taken else None, sorted(set(errors)), urlparse(url).path
+    return viewer, name, taken[0] if taken else None, sorted(set(errors)), sorted(set(failed))
 
 
 def main():
@@ -123,12 +127,15 @@ def main():
         results = list(pool.map(check, jobs))
     found = {}
     differ_errors = []
-    for viewer, name, taken, errors, path in results:
+    for viewer, name, taken, errors, failed in results:
         found.setdefault(name, {})[viewer] = taken
         # the home page's chart script is MFL's, not saved with it
         errors = [error for error in errors if "FusionCharts" not in error]
         if errors:
             differ_errors.append(f"{viewer}/{name}: page errors {errors}")
+        # a guest's login page fails to draw as the screen v2 tries first; only a page v2 should take matters
+        if failed and EXPECTED.get(name, {}).get(viewer):
+            differ_errors.append(f"{viewer}/{name}: {failed}")
     if args.record:
         for name in sorted(found):
             print(f"    {json.dumps(name)}: {json.dumps(found[name])},")

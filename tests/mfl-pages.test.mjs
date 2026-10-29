@@ -33,7 +33,7 @@ test("a guest asking for what needs a login gets MFL's login page, which v2 does
         assert.equal(served("guest", name), "/2026/login", name);
     }
     assert.equal(readLineupPage(doc("guest", "lineup")), null);
-    assert.deepEqual(readPlayerLists(html("guest", "add_drop")).add || [], []);
+    assert.deepEqual(readPlayerLists(html("guest", "add_drop")).add, []);
     assert.deepEqual(readRoster(html("guest", "options-O257")), []);
     assert.equal(readBidRun(html("guest", "processed_waivers")), null);
     assert.equal(readSkinForm(doc("guest", "csetup-SKIN")), null);
