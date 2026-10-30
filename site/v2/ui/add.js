@@ -10,8 +10,8 @@ import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog, replaceEntry} from "./dialog.js";
 import {
-    READ_GAP, READS, Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterStatuses, send,
-    takeFlash
+    Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
+    sendMove, takeFlash
 } from "./moves.js";
 import {contractTopic} from "./home-model.js";
 import {watchList, whenPopupClosed} from "./watch.js";
@@ -110,37 +110,21 @@ function fillForm(form, lists, {add, drop, bid = null, round = null, comment = "
 const hasClaim = (groups, round, claim) => groups.some((group) => group.round === round
     && group.claims.some((other) => other.add === claim.add && other.bid === claim.bid && (other.drop || null) === (claim.drop || null)));
 
-// A move whose answer failed may still have been made, so what MFL holds after it decides: MFL's
-// answer, or the error it failed with
-async function sendMove(url, init) {
-    try {
-        return {answer: await send(url, init()), error: null};
-    } catch (error) {
-        return {answer: "", error};
-    }
-}
-
-// What MFL holds after a move (`read`), read again a few times while it doesn't show the move
-// (`shows`), as an export can lag one; null when it can't be read
-async function readBack(read, shows) {
-    let found = null;
-    for (let tries = 0; tries < READS; tries += 1) {
-        if (tries) {
-            await new Promise((resolve) => setTimeout(resolve, READ_GAP));
-        }
-        found = (await read().catch(() => null)) || found;
-        if (found && shows(found)) {
-            break;
-        }
-    }
-    return found;
-}
-
-// A move whose result couldn't be read back: there's no telling whether MFL made it, and its answer
-// to a move it made can be its own page, whose header warnings aren't a refusal
+// A move whose result couldn't be read back (moveOutcome's "unread")
 class Unchecked extends Error {
     constructor(what) {
         super(`Couldn’t check whether MFL made it. Reload the page to see your ${what}.`);
+    }
+}
+
+// Throws unless a move was made: `what` MFL holds that couldn't be read ("bids"), or why it wasn't
+async function confirm(sent, read, shows, what) {
+    const outcome = moveOutcome(sent, await readBack(read, shows), shows);
+    if (outcome === "unread") {
+        throw new Unchecked(what);
+    }
+    if (outcome !== "made") {
+        throw outcome;
     }
 }
 
@@ -461,15 +445,8 @@ export async function drawAdd({context, franchiseId}) {
 
     // Whether MFL holds a claim after the move (`sent`, sendMove's) that makes it, or with `gone`
     // removes it: throws when it doesn't, or when that can't be read
-    async function claimMade({answer, error}, round, claim, {gone = false} = {}) {
-        const holds = (fresh) => hasClaim(fresh.groups, round, claim) !== gone;
-        const fresh = await readBack(() => freshPending(context), holds);
-        if (!fresh) {
-            throw new Unchecked("bids");
-        }
-        if (!holds(fresh)) {
-            throw error || new Refused(refusal(answer));
-        }
+    async function claimMade(sent, round, claim, {gone = false} = {}) {
+        await confirm(sent, () => freshPending(context), (fresh) => hasClaim(fresh.groups, round, claim) !== gone, "bids");
     }
 
     async function mflChanged() {
@@ -549,14 +526,7 @@ export async function drawAdd({context, franchiseId}) {
                 return;
             }
             const body = fillForm(form, lists, {add: c.add, drop: c.drop || null});
-            const {answer, error} = await sendMove(form.action, () => ({method: "POST", body}));
-            const statuses = await readBack(() => rosterStatuses(context, franchiseId), (found) => found.has(c.add));
-            if (!statuses) {
-                throw new Unchecked("roster");
-            }
-            if (!statuses.has(c.add)) {
-                throw error || new Refused(refusal(answer));
-            }
+            await confirm(await sendMove(form.action, () => ({method: "POST", body})), () => rosterStatuses(context, franchiseId), (found) => found.has(c.add), "roster");
             const line = lengthLine(fa.mflName, c.years);
             const dropped = c.drop ? surname(names(c.drop).mflName) : null;
             const made = `${surname(fa.mflName)} added${dropped ? `, ${dropped} dropped.` : "."}`;
@@ -591,19 +561,12 @@ export async function drawAdd({context, franchiseId}) {
                 if (!link) {
                     throw new Error("MFL's page has no link for that");
                 }
-                const {answer, error} = await sendMove(link.href, () => ({cache: "no-store"}));
+                const sent = await sendMove(link.href, () => ({cache: "no-store"}));
                 // the claim's place in its group, as MFL has it
                 const at = (groups) => ((groups.find((other) => other.round === group.round) || {claims: []}).claims
                     .findIndex((other) => other.add === claim.add && other.bid === claim.bid && (other.drop || null) === (claim.drop || null)));
                 const before = at(state.data.groups);
-                const moved = (fresh) => at(fresh.groups) >= 0 && at(fresh.groups) !== before;
-                const fresh = await readBack(() => freshPending(context), moved);
-                if (!fresh) {
-                    throw new Unchecked("bids");
-                }
-                if (!moved(fresh)) {
-                    throw error || new Refused(refusal(answer));
-                }
+                await confirm(sent, () => freshPending(context), (fresh) => at(fresh.groups) >= 0 && at(fresh.groups) !== before, "bids");
                 reloadWith({highlight: key});
             } else if (act === "remove") {
                 const link = claimLink("DELETE", key);

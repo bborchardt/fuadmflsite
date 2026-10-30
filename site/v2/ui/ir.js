@@ -6,7 +6,7 @@
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
-import {READS, READ_GAP, Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
+import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 import {controlSelector, irMarkup, loadingMarkup, moveCount} from "./ir-view.js";
@@ -106,24 +106,14 @@ export async function drawIR({context, franchiseId, dropHref}) {
 
     // What MFL made of a save: the IR page it answered with, as the roster now stands, else the
     // rosters export, read again a few times while it shows nothing done
-    async function readBack(asked, answered) {
+    async function readSaved(asked, answered) {
         if (answered) {
             const roster = rosterFromPage(answered);
             if (savedMoves(roster, asked).done.length) {
                 return roster;
             }
         }
-        let roster = null;
-        for (let tries = 0; tries < READS; tries += 1) {
-            if (tries) {
-                await new Promise((resolve) => setTimeout(resolve, READ_GAP));
-            }
-            roster = (await rosterStatuses(context, franchiseId).catch(() => null)) || roster;
-            if (roster && !savedMoves(roster, asked).missed.length) {
-                break;
-            }
-        }
-        return roster;
+        return readBack(() => rosterStatuses(context, franchiseId), (roster) => !savedMoves(roster, asked).missed.length);
     }
 
     async function save() {
@@ -147,7 +137,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
         const answered = sent ? readIRPage(new DOMParser().parseFromString(answer, "text/html"), franchiseId) : null;
         // MFL's reason, unless it answered with the IR page itself, whose marks aren't one
         const refused = new Refused(sent && !answered ? refusal(answer) : null);
-        const roster = await readBack(asked, answered);
+        const roster = await readSaved(asked, answered);
         if (roster) {
             const {done, missed} = savedMoves(roster, asked);
             if (done.length) {

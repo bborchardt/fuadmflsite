@@ -10,7 +10,7 @@ import {kickoffAt} from "./context.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {
-    READ_GAP, READS, Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterIds, send, takeFlash
+    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
 } from "./moves.js";
 import {
     answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
@@ -170,16 +170,6 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         render();
     }
 
-    // Sends a move (`init` builds the request); MFL's answer, or the error it failed with. A move
-    // whose answer failed may still have been made, so what MFL's trades show decides
-    async function sendMove(url, init) {
-        try {
-            return {reply: await send(url, init()), error: null};
-        } catch (error) {
-            return {reply: "", error};
-        }
-    }
-
     const answerUrl = (offerId) => {
         const form = page.answers.get(offerId);
         return form ? form.action : `${window.location.origin}/${context.season}/trade_response`;
@@ -194,7 +184,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         state.done = "";
         render();
         const partnerName = nameOf(offer.partner);
-        const {reply, error} = await sendMove(answerUrl(offer.id), () => ({method: "POST", body: answerFields(page.answers.get(offer.id), {tradeId: offer.id, leagueId: context.leagueId, action, comment: state.comment[offer.id] || ""})}));
+        const {answer: reply, error} = await sendMove(answerUrl(offer.id), () => ({method: "POST", body: answerFields(page.answers.get(offer.id), {tradeId: offer.id, leagueId: context.leagueId, action, comment: state.comment[offer.id] || ""})}));
         const after = await readOffers();
         if (!after || after.some((other) => other.id === offer.id)) {
             failed(error || new Refused(refusal(reply)), {after, offerId: offer.id, what: `${action === "accept" ? "accept" : "reject"} the offer from ${partnerName}`});
@@ -207,16 +197,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         // gone from the pending trades but not on the roster: it expired or was withdrawn. The roster
         // is read again a few times while it lacks them, as it can lag a move
         const players = offer.get.filter((id) => state.data.league.players.has(id));
-        let roster = null;
-        for (let tries = 0; tries < READS; tries += 1) {
-            if (tries) {
-                await new Promise((resolve) => setTimeout(resolve, READ_GAP));
-            }
-            roster = (await rosterIds(context, franchiseId).catch(() => null)) || roster;
-            if (roster && players.every((id) => roster.includes(id))) {
-                break;
-            }
-        }
+        const roster = await readBack(() => rosterIds(context, franchiseId), (found) => players.every((id) => found.includes(id)));
         if (!roster) {
             reloadList({note: "Couldn't confirm the move: this is how MFL has your trades now."});
         } else if (!players.every((id) => roster.includes(id))) {
@@ -235,7 +216,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         state.done = "";
         render();
         const href = page.revokes.get(offer.id) || `${window.location.origin}/${context.season}/trade_response?L=${encodeURIComponent(context.leagueId)}&TRADE_ID=${encodeURIComponent(offer.id)}&ACTION=revoke`;
-        const {reply, error} = await sendMove(href, () => ({method: "GET"}));
+        const {answer: reply, error} = await sendMove(href, () => ({method: "GET"}));
         const after = await readOffers();
         if (!after || after.some((other) => other.id === offer.id)) {
             failed(error || new Refused(refusal(reply)), {after, offerId: offer.id, what: `withdraw your offer to ${nameOf(offer.partner)}`});
@@ -267,7 +248,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         state.error = "";
         render();
         const known = new Set(offers().map((offer) => offer.id));
-        const {reply, error} = await sendMove(proposal.form.action, () => ({method: "POST", body: proposalFields(proposal.form, {
+        const {answer: reply, error} = await sendMove(proposal.form.action, () => ({method: "POST", body: proposalFields(proposal.form, {
             mine: franchiseId, partner: proposal.partner, give: check.give, get: check.get, expires: state.expires, message: state.message
         })}));
         const after = await readOffers();
