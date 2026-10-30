@@ -5,7 +5,7 @@
 
 import settings from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
-import {REBUILT, locate, pageOf, sectionHref, sections, storedTabs, teamLinks} from "./nav.js";
+import {REBUILT, leavesPage, locate, pageOf, sectionHref, sections, storedTabs, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
@@ -271,6 +271,42 @@ export function drawFrame({context, storage}) {
     render();
     document.body.prepend(root);
     document.documentElement.classList.add("fuad-framed");
+
+    // A section or view on another page is lit at once, with a bar along the top, so a tap shows
+    // while MFL sends the page; one on this page (a home page view) is drawn by the hashchange
+    root.addEventListener("click", (event) => {
+        const link = event.target.closest(".fuad-sections a, .fuad-views a");
+        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !leavesPage(link.href)) {
+            return;
+        }
+        const nav = link.parentElement;
+        const at = [...nav.children].indexOf(link);
+        const lit = nav.classList.contains("fuad-sections") ? root.querySelectorAll(".fuad-sections") : [nav];
+        root.querySelectorAll(".fuad-views a").forEach((a) => a.removeAttribute("aria-current"));
+        lit.forEach((each) => [...each.children].forEach((a, index) => {
+            if (index === at) {
+                a.setAttribute("aria-current", "page");
+            } else {
+                a.removeAttribute("aria-current");
+            }
+        }));
+        document.documentElement.classList.add("fuad-leaving");
+        // a load stopped or swiped back from leaves this page up: as it was, before the header's cover would give up
+        clearTimeout(leftAt);
+        leftAt = setTimeout(stay, 30000);
+    });
+    let leftAt;
+    const stay = () => {
+        clearTimeout(leftAt);
+        document.documentElement.classList.remove("fuad-leaving");
+        render();
+    };
+    // Back to this page from the browser's cache: as it was
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            stay();
+        }
+    });
 
     const menuButton = root.querySelector(".fuad-menu-button");
     const menuLayer = root.querySelector(".fuad-menu-layer");

@@ -1081,6 +1081,32 @@ body [tabindex]:focus-visible {
 
 .fuad-commish #fuad-frame { border-top: 4px solid var(--fuad-accent); }
 
+/* a tap on a section or view on another page (ui/frame.js), until the page arrives */
+.fuad-leaving #fuad-frame::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    width: 100%;
+    height: 3px;
+    background: var(--fuad-accent);
+    transform-origin: left;
+    animation: fuad-leaving 8s cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+
+/* over the commissioner's border, which is the accent */
+.fuad-commish.fuad-leaving #fuad-frame::before { height: 4px; background: var(--fuad-text); }
+
+@keyframes fuad-leaving {
+    from { transform: scaleX(0.05); }
+    to { transform: scaleX(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fuad-leaving #fuad-frame::before { animation: none; }
+}
+
 .fuad-commish-tag {
     display: inline-block;
     margin-left: 10px;
