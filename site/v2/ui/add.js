@@ -529,8 +529,10 @@ export async function drawAdd({context, franchiseId}) {
                     throw new Unchecked("bids");
                 }
                 if (!holds(fresh)) {
-                    // the bid saved but not its line: MFL's answer is no refusal
-                    throw error || new Refused(hasClaim(fresh.groups, c.round, claim) ? "MFL kept only part of it" : refusal(answer));
+                    // part of what changed was saved (the bid or drop, or the line): MFL's answer is no refusal
+                    const keptClaim = hasClaim(fresh.groups, c.round, claim) && (claim.bid !== found.claim.bid || claim.drop !== (found.claim.drop || null));
+                    const keptLine = Boolean(line) && line !== found.claim.line && lineFor(commentLines(fresh.comments.get(c.round)), fa.mflName, others) === line;
+                    throw error || new Refused(keptClaim || keptLine ? "MFL kept only part of it" : refusal(answer));
                 }
                 reloadWith({highlight: claimKey(c.round, claim)});
                 return;
