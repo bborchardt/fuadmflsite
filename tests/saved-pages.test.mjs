@@ -31,6 +31,17 @@ const CHECKS = {
         .filter((found) => !/(Owner:\s*|"owner_name"\s*:\s*")(Owner \d{4}|Someone|Commissioner)\b/.test(found))
 };
 
+test("the contact screens' saved pages hold no typed value", () => {
+    const found = pages.filter(({path}) => /\/csetup-(FCONTACT|FMOBILE)\.html$/.test(path))
+        .map(({path, text}) => ({path, found: [
+            ...(text.match(/<input\b[^>]*>/gi) || []).filter((input) => !/\btype\s*=\s*["']?(?:hidden|radio|checkbox|submit|button|image|reset)\b/i.test(input)
+                && /\bvalue\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>"']+)/i.test(input)),
+            ...(text.match(/<textarea\b[^>]*>[^<]+</gi) || [])
+        ]}))
+        .filter((page) => page.found.length);
+    assert.deepEqual(found, []);
+});
+
 for (const [what, find] of Object.entries(CHECKS)) {
     test(`no saved page holds ${what}`, () => {
         const found = pages.map(({path, text}) => ({path, found: find(text)})).filter((page) => page.found.length);

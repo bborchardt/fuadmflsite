@@ -55,7 +55,7 @@ function panel() {
 async function capture() {
     // the bookmark asks for this file afresh; the model comes with the same query, so a deploy can't
     // pair this file with an older one from the cache
-    const {contextOf, fixedPages, ownersOf, playerPage, scrub, topicLinks, topicsOn, zip} = await import(`./capture-model.js${new URL(import.meta.url).search}`);
+    const {PRIVATE_FIELDS, contextOf, fixedPages, ownersOf, playerPage, scrub, topicLinks, topicsOn, zip} = await import(`./capture-model.js${new URL(import.meta.url).search}`);
     const context = contextOf(window.location, window.franchise_id, window.league_id);
     const view = panel();
     if (!context) {
@@ -98,7 +98,7 @@ async function capture() {
             const response = await fetch(url, {credentials: "include", cache: "no-store"});
             const html = await response.text();
             htmls[name] = html;
-            files[`${prefix}${name}.html`] = scrub(html, owners);
+            files[`${prefix}${name}.html`] = scrub(html, owners, {fields: PRIVATE_FIELDS.has(name)});
             manifest.push({name, url, served: response.url, status: response.status});
             view.item(`${name} (${response.status}${response.url !== url ? `, from ${response.url.replace(context.origin, "")}` : ""})`, !response.ok);
         } catch (error) {

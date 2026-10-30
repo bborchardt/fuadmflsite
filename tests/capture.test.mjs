@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {contextOf, crc32, fixedPages, ownersOf, safeLink, scrub, topicLinks, topicsOn, viewerOf, zip} from "../site/capture/capture-model.js";
+import {PRIVATE_FIELDS, contextOf, crc32, fixedPages, ownersOf, safeLink, scrub, topicLinks, topicsOn, viewerOf, zip} from "../site/capture/capture-model.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
@@ -23,6 +23,11 @@ test("only a member gets a trade proposal page, with another team", () => {
     assert.equal(fixedPages({season: "2026", leagueId: "50965", franchiseId: "0001"})["options-O05-propose"], "options?L=50965&O=05&FRANCHISE=0001,0002");
     assert.equal(fixedPages({season: "2026", leagueId: "50965", franchiseId: "0000"})["options-O05-propose"], undefined);
     assert.equal(fixedPages({season: "2026", leagueId: "50965", franchiseId: null})["mb-board_show"], "mb/board_show.pl?bid=202650965");
+    const pages = fixedPages({season: "2026", leagueId: "50965", franchiseId: "0001"});
+    for (const name of PRIVATE_FIELDS) {
+        assert.ok(pages[name], name);
+    }
+    assert.ok(!Object.values(pages).some((path) => /FUNLINK/.test(path)));
 });
 
 test("links that change something are never followed", () => {
@@ -56,6 +61,19 @@ test("emails, phone numbers and the apiKey come out; MFL's support address stays
     assert.match(out, /score 123\.45/);
     assert.doesNotMatch(scrub("612 555 0199 jo%40gmail.com jo&#64;gmail.com apiKey: 'k1'"), /612|jo|k1/);
     assert.match(scrub('<img src="logo@2x.png">'), /logo@2x\.png/);
+});
+
+test("with fields, what a member typed in a field comes out, and the form's own values stay", () => {
+    const html = `<input type="text" name="PHONE" value="6125550199"><input name=CELL value=6125550199>
+        <input type="tel" value='612-555-0199' name="X"><textarea name="ADDR">1 Main St</textarea>
+        <input type="hidden" name="C" value="FCONTACT"><input type="radio" name="CARRIER" value="att" checked>
+        <input type="submit" name="SUBMIT" value="Save">`;
+    const out = scrub(html, [], {fields: true});
+    assert.doesNotMatch(out, /612|Main St/);
+    assert.match(out, /name="C" value="FCONTACT"/);
+    assert.match(out, /name="CARRIER" value="att"/);
+    assert.match(out, /value="Save"/);
+    assert.match(scrub('<input name="PHONE" value="6125550199">'), /6125550199/);
 });
 
 test("the board's per-member token and private message subjects come out", () => {
