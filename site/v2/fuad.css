@@ -228,6 +228,15 @@
     --fuad-scheme: light;
 }
 
+/* the commissioner's view (looks.js): blue where a look has its accent, a bar along the top and a tag
+   by the wordmark, so it can't be taken for a member's */
+html.fuad-commish {
+    --fuad-accent: #38BDF8;
+    --fuad-accent-hover: #7DD3FC;
+    --fuad-on-accent: #0D1117;
+    --fuad-accent-tint: rgba(56, 189, 248, 0.14);
+}
+
 /* ---- Page ---- */
 
 /* Each member can pick their own MFL skin (the league's is only the default), so these set every
@@ -1068,6 +1077,29 @@ body [tabindex]:focus-visible {
     .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
     .fuad-framed #fuad-preview { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+
+.fuad-commish #fuad-frame { border-top: 4px solid var(--fuad-accent); }
+
+.fuad-commish-tag {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent);
+    font: 700 13px/1.2 var(--fuad-display);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: 4px;
+}
+
+.fuad-commish-short { display: none; }
+
+@media (max-width: 48em) {
+    .fuad-commish-tag { margin-left: 8px; padding: 2px 6px; font-size: 12px; }
+    .fuad-commish-long { display: none; }
+    .fuad-commish-short { display: inline; }
 }
 
 /* a detour's screen (window.fuadDetour): Back and the screen's name, phones only */

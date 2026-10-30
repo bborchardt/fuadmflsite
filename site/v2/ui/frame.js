@@ -228,7 +228,7 @@ export function drawFrame({context, storage}) {
     <header class="fuad-top">
         <button type="button" class="fuad-back" aria-label="Back" hidden>${BACK_ICON}</button>
         <button type="button" class="fuad-menu-button" aria-label="Menu" aria-expanded="false" aria-haspopup="dialog">${MENU_ICON}<span class="fuad-menu-word" aria-hidden="true">Menu</span></button>
-        <a class="fuad-brand" href="${esc(all[0].href)}"><span class="fuad-wordmark">${esc(settings.wordmark)}</span><span class="fuad-context"></span></a>
+        <a class="fuad-brand" href="${esc(all[0].href)}"><span class="fuad-wordmark">${esc(settings.wordmark)}${franchiseId === "0000" ? '<span class="fuad-commish-tag"><span class="fuad-commish-long">Commissioner</span><span class="fuad-commish-short">Commish</span></span>' : ""}</span><span class="fuad-context"></span></a>
         <span class="fuad-detour" hidden><span class="fuad-wordmark">${esc(settings.wordmark)}</span><span class="fuad-detour-title"></span></span>
         <nav class="fuad-sections fuad-sections-top" aria-label="Sections"></nav>
         ${loggedIn
