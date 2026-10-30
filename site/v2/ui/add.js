@@ -10,7 +10,8 @@ import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog, replaceEntry} from "./dialog.js";
 import {
-    Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterIds, send, takeFlash
+    READ_GAP, READS, Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, movesPhase, refusal, rosterStatuses, send,
+    takeFlash
 } from "./moves.js";
 import {contractTopic} from "./home-model.js";
 import {watchList, whenPopupClosed} from "./watch.js";
@@ -109,7 +110,39 @@ function fillForm(form, lists, {add, drop, bid = null, round = null, comment = "
 const hasClaim = (groups, round, claim) => groups.some((group) => group.round === round
     && group.claims.some((other) => other.add === claim.add && other.bid === claim.bid && (other.drop || null) === (claim.drop || null)));
 
-const onRoster = async (context, franchiseId, playerId) => (await rosterIds(context, franchiseId)).includes(playerId);
+// A move whose answer failed may still have been made, so what MFL holds after it decides: MFL's
+// answer, or the error it failed with
+async function sendMove(url, init) {
+    try {
+        return {answer: await send(url, init()), error: null};
+    } catch (error) {
+        return {answer: "", error};
+    }
+}
+
+// What MFL holds after a move (`read`), read again a few times while it doesn't show the move
+// (`shows`), as an export can lag one; null when it can't be read
+async function readBack(read, shows) {
+    let found = null;
+    for (let tries = 0; tries < READS; tries += 1) {
+        if (tries) {
+            await new Promise((resolve) => setTimeout(resolve, READ_GAP));
+        }
+        found = (await read().catch(() => null)) || found;
+        if (found && shows(found)) {
+            break;
+        }
+    }
+    return found;
+}
+
+// A move whose result couldn't be read back: there's no telling whether MFL made it, and its answer
+// to a move it made can be its own page, whose header warnings aren't a refusal
+class Unchecked extends Error {
+    constructor(what) {
+        super(`Couldn’t check whether MFL made it. Reload the page to see your ${what}.`);
+    }
+}
 
 // Posts the length to the board (messageBoard import): a reply in the contract topic, or a new one
 async function postLength(context, line) {
@@ -400,7 +433,9 @@ export async function drawAdd({context, franchiseId}) {
     }
 
     // `what` names the move for its failure line: "place your bid on Higbee"
-    async function run(what, task) {
+    async function run(what, task, acting = null) {
+        // the claim whose move this is (claimAction's), for its button to say so
+        state.acting = acting;
         state.busy = true;
         state.error = "";
         render();
@@ -408,13 +443,13 @@ export async function drawAdd({context, franchiseId}) {
             await task();
         } catch (error) {
             console.warn("[fuad] couldn't make the move:", error);
-            // MFL may have made something anyway (a bid where an add was asked, a move whose answer
-            // failed): then the page reloads to show what it holds
-            if (await mflChanged().catch(() => false)) {
+            // MFL may have made something else (a bid where an add was asked): then the page reloads
+            // to show what it holds
+            if (!(error instanceof Unchecked) && await mflChanged().catch(() => false)) {
                 reloadWith({error: failedLine(what, error, {changed: true})});
                 return;
             }
-            state.error = failedLine(what, error);
+            state.error = error instanceof Unchecked ? error.message : failedLine(what, error);
             state.busy = false;
             if (state.screen === "home" && !wide.matches) {
                 state.compose = null;
@@ -423,8 +458,25 @@ export async function drawAdd({context, franchiseId}) {
         }
     }
 
+    // Whether MFL holds a claim after the move (`sent`, sendMove's) that makes it, or with `gone`
+    // removes it: throws when it doesn't, or when that can't be read
+    async function claimMade({answer, error}, round, claim, {gone = false} = {}) {
+        const holds = (fresh) => hasClaim(fresh.groups, round, claim) !== gone;
+        const fresh = await readBack(() => freshPending(context), holds);
+        if (!fresh) {
+            throw new Unchecked("bids");
+        }
+        if (!holds(fresh)) {
+            throw error || new Refused(refusal(answer));
+        }
+    }
+
     async function mflChanged() {
-        const [fresh, ids] = await Promise.all([freshPending(context), rosterIds(context, franchiseId)]);
+        const [fresh, statuses] = await Promise.all([freshPending(context), rosterStatuses(context, franchiseId)]);
+        if (!statuses) {
+            throw new Error("MFL's rosters left the team out");
+        }
+        const ids = [...statuses.keys()].sort();
         const mine = [...state.data.league.players.values()].filter((player) => player.franchise && player.franchise.franchiseId === franchiseId)
             .map((player) => player.playerId).sort();
         return JSON.stringify(fresh.groups) !== JSON.stringify(state.data.groups) || JSON.stringify(ids) !== JSON.stringify(mine);
@@ -465,14 +517,18 @@ export async function drawAdd({context, franchiseId}) {
                 const found = claimOf(c.editing);
                 const others = found.group.claims.filter((claim) => claim.key !== c.editing).map((claim) => claim.addMfl);
                 const line = c.years ? lengthLine(fa.mflName, c.years, others) : null;
-                await saveGroup(context, franchiseId, c.round, {
+                const failed = await saveGroup(context, franchiseId, c.round, {
                     claim: {mflName: fa.mflName, bid: found.claim.bid}, bid: checks.bid, drop: c.drop || null,
                     comment: (comment) => (line ? rewriteComment(comment, fa.mflName, line, others) : comment)
-                });
+                }).then(() => null, (error) => error);
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
-                const fresh = await freshPending(context);
-                if (!hasClaim(fresh.groups, c.round, claim) || (line && lineFor(commentLines(fresh.comments.get(c.round)), fa.mflName, others) !== line)) {
-                    throw new Refused("MFL kept only part of it");
+                const holds = (fresh) => hasClaim(fresh.groups, c.round, claim) && (!line || lineFor(commentLines(fresh.comments.get(c.round)), fa.mflName, others) === line);
+                const fresh = await readBack(() => freshPending(context), holds);
+                if (!fresh) {
+                    throw new Unchecked("bids");
+                }
+                if (!holds(fresh)) {
+                    throw failed || new Refused("MFL kept only part of it");
                 }
                 reloadWith({highlight: claimKey(c.round, claim)});
                 return;
@@ -482,17 +538,20 @@ export async function drawAdd({context, franchiseId}) {
                 const others = view ? view.claims.map((claim) => claim.addMfl) : [];
                 const line = lengthLine(fa.mflName, c.years, others);
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
-                const answer = await send(form.action, {method: "POST", body: fillForm(form, lists, {...claim, round: c.round, comment: line})});
-                if (!hasClaim((await freshPending(context)).groups, c.round, claim)) {
-                    throw new Refused(refusal(answer));
-                }
+                const body = fillForm(form, lists, {...claim, round: c.round, comment: line});
+                await claimMade(await sendMove(form.action, () => ({method: "POST", body})), c.round, claim);
                 const kept = await ensureLine(c.round, fa.mflName, line, others).catch(() => false);
                 reloadWith({highlight: claimKey(c.round, claim), done: kept ? null : {text: `Bid made, but MFL didn’t keep group ${c.round}’s comment as it was: check its lengths with Edit.`, failed: true}});
                 return;
             }
-            const answer = await send(form.action, {method: "POST", body: fillForm(form, lists, {add: c.add, drop: c.drop || null})});
-            if (!(await onRoster(context, franchiseId, c.add))) {
-                throw new Refused(refusal(answer));
+            const body = fillForm(form, lists, {add: c.add, drop: c.drop || null});
+            const {answer, error} = await sendMove(form.action, () => ({method: "POST", body}));
+            const statuses = await readBack(() => rosterStatuses(context, franchiseId), (found) => found.has(c.add));
+            if (!statuses) {
+                throw new Unchecked("roster");
+            }
+            if (!statuses.has(c.add)) {
+                throw error || new Refused(refusal(answer));
             }
             const line = lengthLine(fa.mflName, c.years);
             const dropped = c.drop ? surname(names(c.drop).mflName) : null;
@@ -528,14 +587,26 @@ export async function drawAdd({context, franchiseId}) {
                 if (!link) {
                     throw new Error("MFL's page has no link for that");
                 }
-                await send(link.href, {cache: "no-store"});
+                const {answer, error} = await sendMove(link.href, () => ({cache: "no-store"}));
+                // the claim's place in its group, as MFL has it
+                const at = (groups) => ((groups.find((other) => other.round === group.round) || {claims: []}).claims
+                    .findIndex((other) => other.add === claim.add && other.bid === claim.bid && (other.drop || null) === (claim.drop || null)));
+                const before = at(state.data.groups);
+                const moved = (fresh) => at(fresh.groups) >= 0 && at(fresh.groups) !== before;
+                const fresh = await readBack(() => freshPending(context), moved);
+                if (!fresh) {
+                    throw new Unchecked("bids");
+                }
+                if (!moved(fresh)) {
+                    throw error || new Refused(refusal(answer));
+                }
                 reloadWith({highlight: key});
             } else if (act === "remove") {
                 const link = claimLink("DELETE", key);
                 if (!link) {
                     throw new Error("MFL's page has no link for that");
                 }
-                await send(link.href, {cache: "no-store"});
+                await claimMade(await sendMove(link.href, () => ({cache: "no-store"})), group.round, claim, {gone: true});
                 const rest = group.claims.filter((other) => other.key !== key);
                 // the group's one comment keeps a line per claim: the removed one's goes, unless another
                 // claim in the group goes by the same name
@@ -550,14 +621,12 @@ export async function drawAdd({context, franchiseId}) {
                 const years = yearsIn(claim.line);
                 const line = years ? lengthLine(claim.addMfl, years, others) : claim.line || "";
                 const copy = {add: claim.add, bid: claim.bid, drop: claim.drop || null};
-                const answer = await send(form.action, {method: "POST", body: fillForm(form, lists, {...copy, round, comment: line})});
-                if (!hasClaim((await freshPending(context)).groups, round, copy)) {
-                    throw new Refused(refusal(answer));
-                }
+                const body = fillForm(form, lists, {...copy, round, comment: line});
+                await claimMade(await sendMove(form.action, () => ({method: "POST", body})), round, copy);
                 const kept = await ensureLine(round, claim.addMfl, line, others).catch(() => false);
                 reloadWith({highlight: claimKey(round, copy), done: kept ? null : {text: `Copied, but MFL didn’t keep group ${round}’s comment as it was: check its lengths with Edit.`, failed: true}});
             }
-        });
+        }, {act, key, round: round === undefined ? null : round});
     }
 
     // ---- events ----
@@ -567,6 +636,7 @@ export async function drawAdd({context, franchiseId}) {
         if (!line || state.busy) {
             return;
         }
+        state.acting = null;
         state.busy = true;
         render();
         try {
