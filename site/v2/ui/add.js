@@ -156,7 +156,8 @@ async function postLength(context, line) {
     }
 }
 
-// MFL's edit page for a group, read and posted with one claim's bid and drop and the group's comment
+// MFL's edit page for a group, read and posted with one claim's bid and drop and the group's comment;
+// MFL's answer
 async function saveGroup(context, franchiseId, round, change) {
     const {season, leagueId} = context;
     const url = `${window.location.origin}/${season}/options?L=${encodeURIComponent(leagueId)}&O=255&F=${encodeURIComponent(franchiseId)}&ROUND=${round}`;
@@ -181,7 +182,7 @@ async function saveGroup(context, franchiseId, round, change) {
     }
     fields.set("comment", change.comment(comment.value));
     fields.set("SAVE", (form.querySelector("input[name=SAVE]") || {value: "Save Waiver Request"}).value);
-    await send(new URL(form.getAttribute("action") || "options", url).href, {method: "POST", body: fields});
+    return send(new URL(form.getAttribute("action") || "options", url).href, {method: "POST", body: fields});
 }
 
 export async function drawAdd({context, franchiseId}) {
@@ -517,10 +518,10 @@ export async function drawAdd({context, franchiseId}) {
                 const found = claimOf(c.editing);
                 const others = found.group.claims.filter((claim) => claim.key !== c.editing).map((claim) => claim.addMfl);
                 const line = c.years ? lengthLine(fa.mflName, c.years, others) : null;
-                const failed = await saveGroup(context, franchiseId, c.round, {
+                const {answer, error} = await saveGroup(context, franchiseId, c.round, {
                     claim: {mflName: fa.mflName, bid: found.claim.bid}, bid: checks.bid, drop: c.drop || null,
                     comment: (comment) => (line ? rewriteComment(comment, fa.mflName, line, others) : comment)
-                }).then(() => null, (error) => error);
+                }).then((reply) => ({answer: reply, error: null}), (failed) => ({answer: "", error: failed}));
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
                 const holds = (fresh) => hasClaim(fresh.groups, c.round, claim) && (!line || lineFor(commentLines(fresh.comments.get(c.round)), fa.mflName, others) === line);
                 const fresh = await readBack(() => freshPending(context), holds);
@@ -528,7 +529,8 @@ export async function drawAdd({context, franchiseId}) {
                     throw new Unchecked("bids");
                 }
                 if (!holds(fresh)) {
-                    throw failed || new Refused("MFL kept only part of it");
+                    // the bid saved but not its line: MFL's answer is no refusal
+                    throw error || new Refused(hasClaim(fresh.groups, c.round, claim) ? "MFL kept only part of it" : refusal(answer));
                 }
                 reloadWith({highlight: claimKey(c.round, claim)});
                 return;

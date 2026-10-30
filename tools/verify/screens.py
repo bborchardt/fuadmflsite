@@ -26,8 +26,9 @@ change (Mfl's "moves"): the move lands, MFL's answer fails with the move made or
 or (Drop) MFL can't be reached. On the trades-*, trades-offer-*, propose-* and counter-* screens MFL
 keeps the pending trades and rosters that Trades' moves change in the same ways, and an offer can be
 gone by the time it's accepted, or a counter's offer sent but the original left open. On the add-*
-screens MFL keeps the pending claims and roster that Add's moves change, a bid or a removed claim,
-and on add-window-* an add made at once in the free agent window, and its length's board post.
+screens MFL keeps the pending claims and roster that Add's moves change: a bid, a claim removed,
+reordered, copied or edited through MFL's edit page (built from the claims kept), and on add-window-*
+an add made at once in the free agent window, and its length's board post.
 """
 import argparse
 import copy
@@ -127,16 +128,19 @@ SCREENS["trades-taken"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves
 SEEDS["trades-taken"] = SEEDS["trades"]
 # MFL keeping the pending claims and roster that Add's moves change, in the same ways (or the claims
 # and rosters unread after it): a bid, a claim removed, an add made at once in the free agent window
-# (the rosters export lagging it or leaving the team out) and its length's board post. The samples'
-# copies are all over a limit, their groups have one claim each to reorder, and MFL's edit page isn't
-# saved.
+# (the rosters export lagging it or leaving the team out) and its length's board post; on add-group-*,
+# a group of two claims whose drop frees cap, so they can be reordered and copied, and edits.
+SCREENS["add-group"] = (SCREENS["add-claims"][0], {**SCREENS["add-claims"][1], "pendingWaivers": "pendingWaivers-group.json"})
+SEEDS["add-group"] = [["toggle", "copy"], ["edit", "bid-plus", "submit"]]
 SCREENS["add-window"] = (SCREENS["add"][0], {"window": True})
 SEEDS["add-window"] = [["pick-fa"], ["pick-fa", "pick-drop", "submit"], ["start", "pick-fa", "pick-drop", "submit"]]
 for _how in ["lands", "fails", "fails-made", "refuses", "unread", "offline"]:
     SCREENS[f"add-{_how}"] = (SCREENS["add"][0], {"moves": _how})
     SEEDS[f"add-{_how}"] = [["start", "pick-fa", "pick-drop", "submit"]]
     SCREENS[f"add-claims-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-claims"][1], "moves": _how})
-    SEEDS[f"add-claims-{_how}"] = [["toggle", "copy"], ["remove"]]
+    SEEDS[f"add-claims-{_how}"] = [["toggle", "copy"], ["remove"], ["edit", "bid-plus", "submit"]]
+    SCREENS[f"add-group-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-group"][1], "moves": _how})
+    SEEDS[f"add-group-{_how}"] = [["up"], ["down"], ["toggle", "copy"], ["edit", "bid-plus", "submit"]]
 for _how in ["lands", "fails", "fails-made", "refuses", "unread", "lands-noteam", "offline", "lags", "board-fails"]:
     SCREENS[f"add-window-{_how}"] = (SCREENS["add"][0], {"window": True, "moves": _how})
     SEEDS[f"add-window-{_how}"] = [["pick-fa", "pick-drop", "submit"], ["start", "pick-fa", "pick-drop", "submit"]]
@@ -281,10 +285,8 @@ class Mfl:
         self.noteam = 0
         self.offline = False
         # the pending claims, as Add's moves change them
-        self.claims = None
-        if self.moves:
-            pending = json.loads(sample(swaps.get("pendingWaivers", "pendingWaivers.json")))["pendingWaivers"].get("blindBidWaiverRequest", [])
-            self.claims = pending if isinstance(pending, list) else [pending]
+        pending = json.loads(sample(swaps.get("pendingWaivers", "pendingWaivers.json")))["pendingWaivers"].get("blindBidWaiverRequest", [])
+        self.claims = pending if isinstance(pending, list) else [pending]
         # the exports that can no longer be read
         self.unread = set()
 
@@ -380,16 +382,23 @@ class Mfl:
             link = next((key for key in CLAIM_LINKS if key in fields), None)
             if link:
                 round_, claim = field(link).split("_", 1)
-                group = next(group for group in self.claims if group["round"] == round_)
+                group = next((group for group in self.claims if group["round"] == round_), {"addsDrops": ""})
                 claims = group["addsDrops"].split(",")
-                at = claims.index(claim)
-                if link == "DELETE":
-                    claims.pop(at)
-                else:
-                    to = max(0, min(len(claims) - 1, at + (-1 if link == "MOVE_UP" else 1)))
-                    claims.insert(to, claims.pop(at))
-                group["addsDrops"] = ",".join(claims)
-                self.claims = [group for group in self.claims if group["addsDrops"]]
+                # a link to a claim no longer there (its bid since changed) changes nothing
+                if claim in claims:
+                    at = claims.index(claim)
+                    if link == "DELETE":
+                        claims.pop(at)
+                    else:
+                        to = max(0, min(len(claims) - 1, at + (-1 if link == "MOVE_UP" else 1)))
+                        claims.insert(to, claims.pop(at))
+                    group["addsDrops"] = ",".join(claims)
+                    self.claims = [group for group in self.claims if group["addsDrops"]]
+            elif field("form_name") == "editwr":
+                group = next((group for group in self.claims if group["round"] == field("ROUND")), {"addsDrops": ""})
+                claims = [claim.split("_") for claim in group["addsDrops"].split(",") if claim]
+                group["addsDrops"] = ",".join(f"{add}_{field(f'amount_{at}') or bid}_{field(f'drop_{at}') or drop}" for at, (add, bid, drop) in enumerate(claims))
+                group["comments"] = field("comment").replace("\r\n", "\n").replace("\n", "br/")
             elif re.search("request", field("SUBMIT"), re.I):
                 claim = f"{field('add_pid')}_{field('BBID_AMT')}_{field('drop_pid') or '0000'}"
                 group = next((group for group in self.claims if group["round"] == field("ROUND")), None)
@@ -417,6 +426,8 @@ class Mfl:
         html = sample(self.swaps.get("page:add_drop", "add_drop.html"))
         if self.swaps.get("window"):
             html = re.sub(r'(pdb_add\[\d+\] = new Player2 \("\d+","[^"]*?)[#!*]+"', r'\1"', html)
+        if self.moves:
+            html = re.sub(r'<table id="waiver_request_list".*?</table>', lambda m: self.claims_table(), html, count=1, flags=re.S)
         if self.rosters:
             # a player added is no longer a free agent
             mine = {player["id"] for player in self.team()["player"]}
@@ -424,6 +435,46 @@ class Mfl:
             counter = iter(range(10000))
             html = re.sub(r"pdb_add\[\d+\]( = new Player2)", lambda m: f"pdb_add[{next(counter)}]{m.group(1)}", html)
         return html
+
+    def mfl_name(self, player_id):
+        """a player as MFL's pages name him ("Fitzgerald, Ryan CAR PK")"""
+        if not hasattr(self, "players"):
+            self.players = {player["id"]: player for player in json.loads(sample("players.json"))["players"]["player"]}
+        player = self.players.get(player_id, {"name": player_id, "team": "", "position": ""})
+        return f"{player['name']} {player['team']} {player['position']}"
+
+    def claims_table(self):
+        """MFL's table of the team's claims as they stand, with its links: the first claim of a group to
+        edit it, each to delete it and to move it within its group"""
+        rows = []
+        for group in self.claims:
+            claims = group["addsDrops"].split(",")
+            for at, claim in enumerate(claims):
+                add, bid, drop = claim.split("_")
+                key = f"{group['round']}_{claim}"
+                links = ([f'<a href="options?L={LEAGUE}&O=255&F={TEAM}&ROUND={group["round"]}">Edit</a>'] if at == 0 else [])
+                links += [f'<a href="add_drop?L={LEAGUE}&F={TEAM}&MOVE_UP={key}">Move Up</a>'] if at > 0 else []
+                links += [f'<a href="add_drop?L={LEAGUE}&F={TEAM}&MOVE_DOWN={key}">Move Down</a>'] if at < len(claims) - 1 else []
+                links += [f'<a href="add_drop?L={LEAGUE}&F={TEAM}&DELETE={key}">Delete</a>']
+                rows.append(f'<tr class="eventablerow"><td>{group["round"]}</td><td>{self.mfl_name(add)}</td><td>{self.mfl_name(drop) if drop != "0000" else "None"}</td>'
+                            f'<td class="points">{bid}</td><td>{" | ".join(links)}</td><td>{group.get("comments", "")}</td></tr>')
+        return f'<table id="waiver_request_list" class="report"><tr><th>Group</th><th>Add</th><th>Drop</th><th>Bid Amount</th><th>Action</th><th>Comments</th></tr>{"".join(rows)}</table>'
+
+    def edit_page(self, round_):
+        """MFL's page to edit a group (a reduced copy of the clone's, O=255): a row per claim, with its
+        bid and a choice of drop from the roster, and the group's one comment"""
+        group = next((group for group in self.claims if group["round"] == round_), None)
+        if not group:
+            return "<html><body><div class=\"pagebody\"></div></body></html>"
+        roster = [player["id"] for player in self.team(self.rosters or json.loads(sample("rosters.json")))["player"]]
+        rows = []
+        for at, claim in enumerate(group["addsDrops"].split(",")):
+            add, bid, drop = claim.split("_")
+            options = "".join(f'<option value="{id_}"{" selected" if id_ == drop else ""}>{"None" if id_ == "0000" else self.mfl_name(id_)}</option>' for id_ in ["0000", *roster])
+            rows.append(f'<tr class="eventablerow" id="row_amount_{at}"><td>{self.mfl_name(add)}</td><td></td><td><input type="text" name="amount_{at}" id="amount_{at}" value="{bid}" />'
+                        f'<select size="1" name="drop_{at}" id="drop_{at}">{options}</select></td><td></td></tr>\n')
+        comment = re.sub(r"\s*(?:<br\s*/?>|br/)\s*", "\n", group.get("comments", ""))
+        return sample("edit-O255.html").replace("{round}", round_).replace("{rows}", "".join(rows)).replace("{comment}", comment)
 
     def drop_page(self):
         """MFL's Drop Players page as the roster now stands: a dropped player's entry gone"""
@@ -542,6 +593,8 @@ class Mfl:
             self.posts.append({"method": request.method, "url": f"{url.path}?{url.query}" if url.query else url.path, "body": fields})
             if self.moves and url.path.endswith("/add_drop") and (query.keys() & set(CLAIM_LINKS) or "add_pid=" in body and parse_qs(body).get("add_pid")):
                 return self.add(route, query if request.method == "GET" else parse_qs(body, keep_blank_values=True))
+            if self.moves and url.path.endswith("/options") and "form_name=editwr" in body:
+                return self.add(route, parse_qs(body, keep_blank_values=True))
             if self.moves and request.method == "POST" and url.path.endswith(("/add_drop", "/ir")):
                 return self.make(route, url.path, parse_qs(body, keep_blank_values=True))
             if self.moves and url.path.endswith(("/trade_response", "/trade_offer")):
@@ -563,6 +616,8 @@ class Mfl:
             if name.endswith(".xml"):
                 return route.fulfill(content_type="text/xml", body="<messages></messages>")
             return route.fulfill(status=404, body="")
+        if url.path.endswith("/options") and query.get("O") == ["255"]:
+            return route.fulfill(content_type="text/html", body=self.edit_page(query.get("ROUND", [""])[0]))
         if self.moves and url.path.endswith("/options") and query.get("O") in (["257"], ["18"]):
             return route.fulfill(content_type="text/html", body=self.drop_page() if query["O"] == ["257"] else self.ir_page())
         name = self.page_for(url.path, query)
