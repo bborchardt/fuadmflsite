@@ -32,7 +32,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3
       - name: Install ${{ matrix.browsers }}
         run: uv run --no-project --with playwright==1.64.1 playwright install --with-deps ${{ matrix.browsers }}
       - run: uv run --no-project --with playwright==1.64.1 python ${{ matrix.run }}
