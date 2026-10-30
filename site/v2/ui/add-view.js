@@ -117,6 +117,9 @@ function copyChips(v, group, claim) {
 const removeButton = (state, claim) => `<button type="button" class="fuad-add-remove" data-act="remove" data-key="${esc(claim.key)}"${state.busy ? " disabled" : ""}>${acting(state, "remove", claim.key) ? "Removing…" : "Remove"}</button>`;
 
 function arrows(v, claim, i, count) {
+    if (acting(v.state, "up", claim.key) || acting(v.state, "down", claim.key)) {
+        return `<span class="fuad-add-order fuad-meta">Moving…</span>`;
+    }
     const up = i > 0 && v.canMove("MOVE_UP", claim.key) && !v.state.busy;
     const down = i < count - 1 && v.canMove("MOVE_DOWN", claim.key) && !v.state.busy;
     return `<span class="fuad-add-order">

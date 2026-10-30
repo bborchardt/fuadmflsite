@@ -116,8 +116,8 @@ MFL documents little of this.
 - **Pending claims** (`export?TYPE=pendingWaivers`) are the logged-in owner's own:
   `{"pendingWaivers":{"blindBidWaiverRequest":{"round":"1","addsDrops":"13753_1_16619,13308_1_16152",
   "comments":"1 yearbr/2 years","timestamp":"…"}}}`, one entry per group (a list when there are
-  several), claims in priority order as `ADD_BID_DROP` (a claim with no drop ends `_0000`), and the
-  comment's line breaks mangled to `br/`. Until the run, each group also shows in `transactions` as
+  several), claims in priority order (a `MOVE_UP`/`MOVE_DOWN` shows in the next read) as
+  `ADD_BID_DROP` (a claim with no drop ends `_0000`), and the comment's line breaks mangled to `br/`. Until the run, each group also shows in `transactions` as
   a `BBID_WAIVER_REQUEST` (`"transaction":"<round>|<claims>"`).
 - **The board's pages:** a topic is `options?L=<league>&O=28&TOPIC_ID=<thread id>`, a new one
   `options?L=<league>&O=28&ACTION=add`. The home page's "10 Newest Message Board Topics" module
@@ -155,12 +155,16 @@ Each is an ordinary page form, posted from the logged-in browser.
     `#round_field_id`, `#comments_field_id`) and the `FORCE_WAIVER` row. A pick with any flag,
     `!` included, becomes a blind bid ("Submit Request"), not a refusal; a row already picked is
     unpicked by `picker_select` on it again. The drop list's `!` isn't checked by the page.
-  - After a submit MFL shows Add/Drop again with no message; the claim appears in
+  - An add made at once is answered with a page headed "Transaction Completed" ("Acquired <player>")
+    and the team's roster.
+  - After a blind bid MFL shows Add/Drop again with no message; the claim appears in
     `#waiver_request_list`: Group, Add, Drop, Bid Amount, Action, Time Entered, Comments (one cell
     per group). Its action links write a claim as `ROUND_ADDID_BID_DROPID`:
     `add_drop?L=<league>&F=<team>&MOVE_UP=1_13308_1_16152`, `MOVE_DOWN=…`, `DELETE=…`,
     `COPY_ROUND=1_13753_1_16619_2` (the last part is the target group), and Edit,
-    `options?L=<league>&O=255&F=<team>&ROUND=1`.
+    `options?L=<league>&O=255&F=<team>&ROUND=1`. `MOVE_UP`, `MOVE_DOWN` and `DELETE` are plain GETs
+    with no confirmation, answered with Add/Drop again. Add/Drop's only `.reportnavigationheader` is
+    "Use projections from …", not a refusal.
 - **Drop Players** (`options?L=<league>&O=257`), one form posted to `add_drop`: `LEAGUE_ID`,
   `FRANCHISE`, `OPTION=257`, `drop_pid` (a multiple select, filled by "Add To List"), `SUBMIT`
   ("Drop Players"). The roster is JavaScript data, `playerDatabaseObj["picker"]`: `Player2` (`id,
@@ -168,8 +172,8 @@ Each is an ordinary page form, posted from the logged-in browser.
   `IR`, and `!` on the name once his game has started.
 - **Edit a claim group** (`options?O=255&ROUND=<n>`), one form posted to `options`:
   `form_name=editwr`, `LEAGUE_ID`, `O=255`, `ROUND`; per claim `amount_<i>` and `drop_<i>` (a select
-  of the roster plus "None"); `applyall` (checkbox); `comment` (the group's one comment); `SAVE` /
-  `CANCEL`.
+  of the roster plus "None"); `applyall` (checkbox); `comment` (the group's one comment, its lines
+  separated by line breaks); `SAVE` / `CANCEL`. A save is answered with a redirect (HTTP 302).
 - **Injured reserve** (`options?L=<league>&O=18`), one form posted to `ir`: `LEAGUE_ID`,
   `FRANCHISE_ID`; per player checkboxes `deactivate<team>` (to IR), `activate<team>` (from IR) and
   `drop<team>`, each valued with the player id, all in one submit ("Perform Injured Reserve", no
