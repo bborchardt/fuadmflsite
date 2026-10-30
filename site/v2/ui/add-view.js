@@ -105,14 +105,20 @@ function claimDetail(claim) {
     return `${claim.dropName ? `drop ${esc(claim.dropName)}` : "no drop"}${claim.line ? ` · “${esc(claim.line)}”` : ""}`;
 }
 
+// whether a claim's move (`act`, and for a copy its group) is the one under way
+const acting = (state, act, key, round = null) => Boolean(state.busy && state.acting && state.acting.act === act && state.acting.key === key
+    && (round === null || state.acting.round === round));
+
 function copyChips(v, group, claim) {
     const targets = copyTargets(v.team, {round: group.round, claim, rounds: v.rounds, maxGroups: v.maxGroups, phase: v.phase});
-    return `<span class="fuad-meta">Copy to</span>${targets.map((target) => `<button type="button" class="fuad-add-chip" data-act="copy" data-key="${esc(claim.key)}" data-round="${target.round}"${target.off ? " disabled" : ""}>${target.isNew ? "new group" : "group"} ${target.round}${target.why ? ` · ${esc(target.why)}` : ""}</button>`).join("")}`;
+    return `<span class="fuad-meta">Copy to</span>${targets.map((target) => `<button type="button" class="fuad-add-chip" data-act="copy" data-key="${esc(claim.key)}" data-round="${target.round}"${target.off || v.state.busy ? " disabled" : ""}>${acting(v.state, "copy", claim.key, target.round) ? "Copying…" : `${target.isNew ? "new group" : "group"} ${target.round}${target.why ? ` · ${esc(target.why)}` : ""}`}</button>`).join("")}`;
 }
 
+const removeButton = (state, claim) => `<button type="button" class="fuad-add-remove" data-act="remove" data-key="${esc(claim.key)}"${state.busy ? " disabled" : ""}>${acting(state, "remove", claim.key) ? "Removing…" : "Remove"}</button>`;
+
 function arrows(v, claim, i, count) {
-    const up = i > 0 && v.canMove("MOVE_UP", claim.key);
-    const down = i < count - 1 && v.canMove("MOVE_DOWN", claim.key);
+    const up = i > 0 && v.canMove("MOVE_UP", claim.key) && !v.state.busy;
+    const down = i < count - 1 && v.canMove("MOVE_DOWN", claim.key) && !v.state.busy;
     return `<span class="fuad-add-order">
         <button type="button" class="fuad-add-arrow" data-act="up" data-key="${esc(claim.key)}" aria-label="Move ${esc(claim.addName)} up"${up ? "" : " disabled"}>${UP}</button>
         <button type="button" class="fuad-add-arrow" data-act="down" data-key="${esc(claim.key)}" aria-label="Move ${esc(claim.addName)} down"${down ? "" : " disabled"}>${DOWN}</button>
@@ -137,7 +143,7 @@ export function phoneHome(v) {
             ${arrows(v, claim, i, group.claims.length)}
         </div>
         ${state.open === claim.key ? `<div class="fuad-add-claim-tools">
-            <div class="fuad-add-claim-buttons"><button type="button" class="fuad-add-quiet" data-act="edit" data-key="${esc(claim.key)}">Edit bid</button><button type="button" class="fuad-add-remove" data-act="remove" data-key="${esc(claim.key)}">Remove</button></div>
+            <div class="fuad-add-claim-buttons"><button type="button" class="fuad-add-quiet" data-act="edit" data-key="${esc(claim.key)}">Edit bid</button>${removeButton(state, claim)}</div>
             <div class="fuad-add-copies">${copyChips(v, group, claim)}</div>
         </div>` : ""}`).join("")}
         ${bidsPeriod && !block ? `<button type="button" class="fuad-add-more" data-act="start" data-round="${group.round}">+ Add a claim to group ${group.round}</button>` : ""}
@@ -290,7 +296,7 @@ function bidsTable(v) {
                     <span role="cell" class="fuad-add-claim-actions">
                         <button type="button" class="fuad-add-quiet" data-act="edit" data-key="${esc(claim.key)}">Edit</button>
                         <button type="button" class="fuad-add-quiet" data-act="toggle" data-key="${esc(claim.key)}" aria-expanded="${state.open === claim.key}">Copy</button>
-                        <button type="button" class="fuad-add-remove" data-act="remove" data-key="${esc(claim.key)}">Remove</button>
+                        ${removeButton(state, claim)}
                     </span>
                 </div>
                 ${state.open === claim.key ? `<div class="fuad-add-copies fuad-add-copies-wide" role="row"><span role="cell">${copyChips(v, group, claim)}</span></div>` : ""}`).join("")}`).join("")}
