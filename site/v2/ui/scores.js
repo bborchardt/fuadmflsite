@@ -214,6 +214,8 @@ export function drawScores(mount, data) {
 
     const showSeason = async () => {
         clearTimeout(timer);
+        // a week still loading is dropped, and its placeholders with it; the season's panel says its own
+        body.removeAttribute("aria-busy");
         const panelMount = document.createElement("div");
         body.replaceChildren(panelMount);
         drawPanel(panelMount, {
