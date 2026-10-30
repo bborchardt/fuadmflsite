@@ -64,6 +64,10 @@ Actions tab (GitHub can run it late on busy days). It:
 - snapshots each franchise's salaries at the trade deadline;
 - charges cap penalties for dropped players;
 - sets contract years for added players, from the bid comment or a message board post;
+- records the payouts in MFL's accounting, as League › Winners works them out: "Most Points Week N"
+  once the next week has kicked off, "All-play (W-L)" once week 14's scores are, and "1st Place",
+  "2nd Place", "3rd Place" once the championship's are. A payout already there under any team, as
+  you'd enter it by hand, isn't added again; the places need the pot's league-wide entries first;
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
@@ -76,7 +80,7 @@ It records what it did in the chore log (`chore-log.md`, on the `league-data` br
   | `MFL_USER_AGENT` | secret | the client name registered with MFL; only for the job, never from your own computer |
   | `MFL_LEAGUE_ID` | variable | the league's id |
   | `MFL_HOST` | variable | the league's host, as `https://www44.myfantasyleague.com` |
-  | `DROP_PENALTIES`, `CONTRACT_YEARS` | variable | `apply` to write that chore to MFL; anything else only logs what it would do |
+  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS` | variable | `apply` to write that chore to MFL; anything else only logs what it would do |
   | `RULES_VERSION` | variable | which version's league rules it uses; `v2` when unset |
 
 - **A flag:** anything it can't decide, or a rule problem, fails the run on purpose, so GitHub emails

@@ -15,6 +15,8 @@
 //                               the run's page (GitHub's failure email links to it)
 //   DROP_PENALTIES              "apply" to charge drop penalties; anything else only logs them
 //   CONTRACT_YEARS              "apply" to set contract years for adds; anything else only logs them
+//   PAYOUTS                     "apply" to record the league's payouts in MFL's accounting; anything
+//                               else only logs them
 //   NOW                         optional ISO time, for testing
 
 import {existsSync, readFileSync, readdirSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
@@ -25,6 +27,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = process.env.RULES_VERSION || "v2";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
+// v1's lib has no payouts: the chore is skipped
+const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces} = version === "v1" ? {} : await lib("payouts.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
@@ -63,6 +67,9 @@ if (!pagesData) {
 const LATE_AFTER_DAYS = 7;
 const applyDropPenalties = process.env.DROP_PENALTIES === "apply";
 const applyContractYears = process.env.CONTRACT_YEARS === "apply";
+const applyPayouts = process.env.PAYOUTS === "apply";
+// a season's weekly prizes and all-play payouts, with room for a backfill: more means something's wrong
+const MAX_PAYOUTS_PER_RUN = 30;
 const entries = [];
 
 function log(message) {
@@ -206,14 +213,15 @@ function writeSummary() {
     }
 }
 
-// MFL reports errors with HTTP 200, so anything but <status>OK</status> throws
+// MFL reports errors with HTTP 200, so anything but <status>OK</status> throws. `data` null: an
+// import that takes its fields as parameters
 async function mflImport(type, data, params = {}) {
     let response, body;
     try {
         response = await mflFetch(`${host}/${season}/import`, {
             method: "POST",
             headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
-            body: new URLSearchParams({TYPE: type, L: leagueId, DATA: data, ...params})
+            body: new URLSearchParams({TYPE: type, L: leagueId, ...(data === null ? {} : {DATA: data}), ...params})
         });
         body = await response.text();
     } catch (error) {
@@ -302,6 +310,69 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
     }
     await mflImport("salaries", contractsXml(contracts), {APPEND: "1"});
     contracts.forEach((contract) => choreLog(`Set ${describe(contract)}.`));
+}
+
+// A week's scores are final once the next week has kicked off, when the NFL's stat corrections are
+// usually out. Payouts already in the accounting, by hand or by an earlier run, aren't added again.
+async function payouts(loggedIn, {built}) {
+    if (!missingPayouts) {
+        log(`The ${version} lib has no payouts; none recorded.`);
+        return;
+    }
+    if (!built.weeks) {
+        throw new Error("the league export gives no last regular season week or end week, so no payouts were recorded");
+    }
+    const lastRegular = built.weeks.playoffsStart - 1;
+    const endWeek = built.weeks.championship;
+    // the year to date comes back as `allWeeklyResults`
+    const weeklyResults = await fetchFrom(host, "weeklyResults", {L: leagueId, W: "YTD"}, "allWeeklyResults");
+    const latest = latestScoredWeek(weeklyResults);
+    if (!latest) {
+        log("No week has scores yet; no payouts to record.");
+        return;
+    }
+    const next = await weekKickoff(season, latest + 1, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
+    const finalWeek = next && now >= next ? latest : latest - 1;
+    if (!finalWeek) {
+        log("No week's scores are final yet; no payouts to record.");
+        return;
+    }
+    if (!loggedIn) {
+        log("Reading MFL's accounting needs the commissioner login; no payouts recorded.");
+        return;
+    }
+    const accounting = await fetchFrom(host, "accounting", {L: leagueId});
+    let places = null;
+    if (finalWeek >= endWeek) {
+        const list = asArray((await fetchFrom(host, "playoffBrackets", {L: leagueId})).playoffBracket);
+        const brackets = [];
+        for (const bracket of placeBrackets(list)) {
+            brackets.push(bracket ? await fetchFrom(host, "playoffBracket", {L: leagueId, BRACKET_ID: bracket.id}) : null);
+        }
+        places = playoffPlaces(brackets);
+    }
+    const {records, problem} = missingPayouts({accounting, weeklyResults, lastRegularWeek: lastRegular, endWeek, finalWeek, places});
+    if (problem) {
+        needsAttention(`Payouts: the places can't be recorded: ${problem}. Left for the commissioner.`);
+    }
+    if (!records.length) {
+        log("No payouts to record.");
+        return;
+    }
+    const teamName = (id) => (built.franchises.get(id) || {}).teamName || id;
+    const describe = (record) => `"${record.description}" $${record.amount.toFixed(2)} to ${teamName(record.franchise)}`;
+    if (!applyPayouts) {
+        records.forEach((record) => choreLog(`Dry run: would record ${describe(record)}.`));
+        return;
+    }
+    if (records.length > MAX_PAYOUTS_PER_RUN) {
+        throw new Error(`${records.length} payouts are waiting to be recorded, more than the ${MAX_PAYOUTS_PER_RUN} expected, so none were. `
+            + "Check MFL's accounting and enter them by hand.");
+    }
+    for (const record of records) {
+        await mflImport("accounting", null, {FRANCHISE: record.franchise, AMOUNT: String(record.amount), DESCRIPTION: record.description});
+        choreLog(`Recorded ${describe(record)}.`);
+    }
 }
 
 async function leagueState({loggedIn}) {
@@ -567,6 +638,11 @@ try {
             await contractYears(loggedIn, state, over);
         } catch (error) {
             needsAttention(`Contract years: ${error.message}`);
+        }
+        try {
+            await payouts(loggedIn, state);
+        } catch (error) {
+            needsAttention(`Payouts: ${error.message}`);
         }
     }
     for (const year of [season - 1, season]) {
