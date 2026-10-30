@@ -60,3 +60,9 @@ Santos: 1 year").
 - 2026-10-30 03:24 UTC: Dry run: would record "Most Points Week 5" $15.00 to Smooth City Styles!.
 - 2026-10-30 03:24 UTC: Dry run: would record "Most Points Week 6" $15.00 to The Fighting Injured Reserves!.
 - 2026-10-30 03:24 UTC: Dry run: would record "Most Points Week 7" $15.00 to Smooth City Styles!.
+- 2026-10-30 03:27 UTC: Recorded "Most Points Week 2" $15.00 to So your saying there’s a chance?.
+- 2026-10-30 03:27 UTC: Recorded "Most Points Week 3" $15.00 to Not 100% A Dick.
+- 2026-10-30 03:27 UTC: Recorded "Most Points Week 4" $15.00 to Smooth City Styles!.
+- 2026-10-30 03:27 UTC: Recorded "Most Points Week 5" $15.00 to Smooth City Styles!.
+- 2026-10-30 03:27 UTC: Recorded "Most Points Week 6" $15.00 to The Fighting Injured Reserves!.
+- 2026-10-30 03:27 UTC: Recorded "Most Points Week 7" $15.00 to Smooth City Styles!.
