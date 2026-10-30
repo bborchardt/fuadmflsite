@@ -93,6 +93,12 @@ export function teamLinks(teams) {
     return (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`);
 }
 
+// whether following `href` loads another page, rather than changing this one's #
+export function leavesPage(href, here = window.location) {
+    const to = new URL(href, here.href);
+    return `${to.origin}${to.pathname}${to.search}` !== `${here.origin}${here.pathname}${here.search}`;
+}
+
 // {path, option, team, tab, hash} for a page: the MFL page name, its O= report, its F= team, and on
 // the home page the name of the tab a numeric # picks, or v2's own view #
 export function pageOf(location, tabs = DEFAULT_TABS) {

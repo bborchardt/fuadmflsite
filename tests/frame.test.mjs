@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {REBUILT, locate, pageOf, sectionHref, sections, viewHash} from "../site/v2/ui/nav.js";
+import {REBUILT, leavesPage, locate, pageOf, sectionHref, sections, viewHash} from "../site/v2/ui/nav.js";
 import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
@@ -138,4 +138,12 @@ test("a section's link returns to the view last seen in it; the section you're i
     assert.equal(sectionHref(league, "Rosters", {League: "Gone"}), view("Scores"));
     const home = all.find((s) => s.name === "Home");
     assert.equal(sectionHref(home, "League", {Home: "Anything"}), home.href);
+});
+
+test("a link loads another page unless only its # differs", () => {
+    const here = new URL(`${base}/home/48571#home-page`);
+    assert.equal(leavesPage(`${base}/home/48571#league-standings`, here), false);
+    assert.equal(leavesPage("#rosters-teams", here), false);
+    assert.equal(leavesPage(`${base}/lineup?L=48571`, here), true);
+    assert.equal(leavesPage(`${base}/options?L=48571&O=257`, new URL(`${base}/options?L=48571&O=255`)), true);
 });
