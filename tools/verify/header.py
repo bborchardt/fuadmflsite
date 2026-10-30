@@ -207,7 +207,8 @@ def main():
     failed = 0
     with sync_playwright() as p:
         for engine in (p.chromium, p.webkit):
-            browser = engine.launch(headless=True)
+            # as screens.py: the connections Chromium opens itself (preconnect links) reach nothing
+            browser = engine.launch(headless=True, args=["--host-resolver-rules=MAP * ~NOTFOUND"] if engine.name == "chromium" else [])
             failed += not loading_shown(browser, engine.name)
             for name in names:
                 problems, got = run(browser, site, name)

@@ -11,6 +11,11 @@ on:
 permissions:
   contents: read
 
+# a new push to the pull request replaces a run still going
+concurrency:
+  group: browser-checks-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -20,7 +25,7 @@ jobs:
         include:
           - {name: pages, run: "tools/verify/pages.py", browsers: webkit}
           - {name: header, run: "tools/verify/header.py --built", browsers: "chromium webkit"}
-          - {name: requests, run: "tools/verify/requests.py --built --base origin/${{ github.base_ref }}", browsers: webkit}
+          - {name: requests, run: "tools/verify/requests.py --built --base \"origin/$BASE_REF\"", browsers: webkit}
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v7
@@ -36,3 +41,5 @@ jobs:
       - name: Install ${{ matrix.browsers }}
         run: uv run --no-project --with playwright==1.64.1 playwright install --with-deps ${{ matrix.browsers }}
       - run: uv run --no-project --with playwright==1.64.1 python ${{ matrix.run }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
