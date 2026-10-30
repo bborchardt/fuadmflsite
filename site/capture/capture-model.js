@@ -40,6 +40,13 @@ export function fixedPages({season, leagueId, franchiseId}) {
         "options-O171": `options?L=${L}&O=171&FID=${franchiseId && franchiseId !== "0000" ? franchiseId : "0001"}`,
         "options-O28": `options?L=${L}&O=28`,
         "csetup-SKIN": `csetup?L=${L}&C=SKIN`,
+        // Franchise setup's other screens; Unlink Franchise is left out, as a page that unlinks a team
+        "csetup-FRANCHISE": `csetup?L=${L}&C=FRANCHISE`,
+        "csetup-FACCESS": `csetup?L=${L}&C=FACCESS`,
+        "csetup-FCUSTOM": `csetup?L=${L}&C=FCUSTOM`,
+        "csetup-FCONTACT": `csetup?L=${L}&C=FCONTACT`,
+        "csetup-FMOBILE": `csetup?L=${L}&C=FMOBILE`,
+        "csetup-HMPGMOD": `csetup?L=${L}&C=HMPGMOD`,
         "mb-board_show": `mb/board_show.pl?bid=${season}${L}`,
         "mb-topic_add": `mb/topic_add.pl?bid=${season}${L}`,
         // its subjects come out (scrub); no message itself is opened, as they're private
@@ -133,12 +140,22 @@ export function withoutOwners(text, owners) {
     return out;
 }
 
+// pages whose fields hold a member's own contact details, in forms scrub can't recognize
+export const PRIVATE_FIELDS = new Set(["csetup-FCONTACT", "csetup-FMOBILE"]);
+
 // The repo is public: members' email addresses, phone numbers, owners' names, private message
 // subjects, MFL's apiKey and the board's per-member token (`auth`, which signs its actions) come out.
-// MFL's own support address stays, as it's on every page; `logo@2x.png` isn't an address.
-export function scrub(html, owners = []) {
+// MFL's own support address stays, as it's on every page; `logo@2x.png` isn't an address. With
+// `fields`, every value typed into a field comes out too.
+export function scrub(html, owners = [], {fields = false} = {}) {
     const SECRET = "auth|sid|session|token|apikey";
-    return withoutOwners(html, owners)
+    const typed = fields
+        ? html.replace(/<input\b[^>]*>/gi, (input) => (/\btype\s*=\s*["']?(?:hidden|radio|checkbox|submit|button|image|reset)\b/i.test(input)
+            ? input
+            : input.replace(/(\bvalue\s*=\s*)(["'])[^"']*\2/i, "$1$2$2").replace(/(\bvalue\s*=\s*)(?!["'])[^\s>]+/i, '$1""')))
+            .replace(/(<textarea\b[^>]*>)[\s\S]*?(<\/textarea>)/gi, "$1$2")
+        : html;
+    return withoutOwners(typed, owners)
         .replace(/[A-Za-z0-9._%+-]+(@|%40|&#64;|&#x40;)[A-Za-z0-9.-]+\.[A-Za-z]{2,}/gi, (address, at) => (/(myfantasyleague\.com|\.(png|jpe?g|gif|svg|webp))$/i.test(address) ? address : `owner${at}example.com`))
         .replace(/(apiKey\s*[=:]\s*)(["'])[^"']*\2/gi, "$1$2saved-sample$2")
         .replace(new RegExp(`([?&;](?:${SECRET})=)[^&;#"'\\s]+`, "gi"), "$1saved-sample")
