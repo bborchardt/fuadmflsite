@@ -55,7 +55,8 @@ NOW = "2026-10-18T18:30:00Z"
 WIDTHS = {"phone": 390, "desktop": 1280}
 PER_KIND = 2
 CHAIN = 6
-WORKERS = max(2, min(8, (os.cpu_count() or 4) - 1))
+# each worker is a browser, mostly waiting on the page (settling, a move's re-reads), so up to 16
+WORKERS = max(2, min(16, (os.cpu_count() or 4) - 1))
 
 # before the clone's trade deadline (Thu Oct 15), so proposing is open
 BEFORE_DEADLINE = "2026-10-13T18:00:00Z"
@@ -113,6 +114,10 @@ SEEDS = {
     **{f"drop-{how}": [["toggle", "drop"]] for how in ["lands", "fails", "fails-made", "refuses", "lags", "lags-twice", "fails-noteam", "fails-made-noteam", "refuses-noteam", "offline"]},
     # a drop is offered only once a player is activated
     **{f"ir-{how}": [["toIR", "save"], ["activate", "drop", "save"]] for how in ["lands", "fails", "fails-made", "lags", "refuses", "refuses-drop"]},
+    # a starting RB benched for one on the bench, then saved: no first-of-each-kind chain gets the
+    # lineup back to a full one
+    "lineup": [[{"css": '[data-toggle="14085"]'}, {"css": '[data-toggle="17476"]'}, {"css": ".fuad-save"}]],
+    "lineup-locked": [[{"css": '[data-toggle="14085"]'}, {"css": '[data-toggle="17476"]'}, {"css": ".fuad-save"}]],
     # a box ticked and unticked again, which no first-of-each-kind chain does
     "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["activate", "drop", "save"],
            [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
@@ -124,7 +129,9 @@ TRADE_SCREENS = ["trades", "trades-offer", "propose"]
 for _name in TRADE_SCREENS:
     for _how in ["lands", "fails", "fails-made", "refuses", "lands-unread"]:
         SCREENS[f"{_name}-{_how}"] = (SCREENS[_name][0], {**SCREENS[_name][1], "moves": _how})
-        SEEDS[f"{_name}-{_how}"] = SEEDS[_name]
+        # the seeds that end in a move (a counter opens the proposal page: counter-* has its moves)
+        SEEDS[f"{_name}-{_how}"] = [seed for seed in SEEDS[_name] if seed[-1] in ("withdraw", "send", "send-answer")
+                                    and not (isinstance(seed[0], tuple) and seed[0][1] == "counter")]
 SCREENS["trades-offer-gone"] = (SCREENS["trades-offer"][0], {**SCREENS["trades-offer"][1], "moves": "gone"})
 SEEDS["trades-offer-gone"] = [["answer", "send-answer"]]
 SCREENS["trades-taken"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves": "taken"})
@@ -141,7 +148,9 @@ for _how in ["lands", "fails", "fails-made", "refuses", "unread", "offline"]:
     SCREENS[f"add-{_how}"] = (SCREENS["add"][0], {"moves": _how})
     SEEDS[f"add-{_how}"] = [["start", "pick-fa", "pick-drop", "submit"]]
     SCREENS[f"add-claims-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-claims"][1], "moves": _how})
-    SEEDS[f"add-claims-{_how}"] = [["toggle", "copy"], ["remove"], ["edit", "bid-plus", "submit"]]
+    # an edit changes the length (the claims sample's team can't raise a bid); its copies are all over a
+# limit, so copies run on add-group-*
+    SEEDS[f"add-claims-{_how}"] = [["remove"], ["edit", {"css": "[data-act=year]:not([aria-pressed=true])"}, "submit"]]
     SCREENS[f"add-group-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-group"][1], "moves": _how})
     SEEDS[f"add-group-{_how}"] = [["up"], ["down"], ["toggle", "copy"], ["edit", "bid-plus", "submit"]]
 for _how in ["lands", "fails", "fails-made", "refuses", "unread", "lands-noteam", "offline", "lags", "board-fails"]:
@@ -201,6 +210,12 @@ FIND = "([sig, index]) => {" + CONTROLS_JS + """
 const found = controls.find((c) => c.sig === sig && c.index === index);
 if (found) found.el.setAttribute('data-screens-target', '1');
 return Boolean(found);
+}"""
+# the first control a CSS selector matches (a seed's {"css": …} step), as CONTROLS gives it; null
+# when none does (not there, hidden, disabled, or under a layer)
+CSS_FIND = "(css) => {" + CONTROLS_JS + """
+const found = controls.find((c) => c.el.matches(css));
+return found ? {kind: found.kind, sig: found.sig, index: found.index} : null;
 }"""
 
 
@@ -719,6 +734,8 @@ def explore(job):
     one page, each step a kind of control the chain hasn't used yet, by `priority`."""
     ref, name, width = job
     site = Site(ref)
+    # a screen where MFL keeps what moves change is there for its moves: only its seeds run
+    seeds_only = "moves" in SCREENS[name][1]
     out = {}
     start = time.time()
     label = lambda path: f"{name} {width} " + " > ".join(f"{s['sig']}#{s['index']}" for s in path)
@@ -728,14 +745,16 @@ def explore(job):
         browser = p.chromium.launch(headless=True, args=["--host-resolver-rules=MAP * ~NOTFOUND"])
         context, page, mfl, errors = open_screen(browser, site, name, width)
         out[label([])] = {"html": settle(page), "posts": [], "errors": list(errors)}
-        firsts = [c for c in ev(page, CONTROLS) if c["index"] < PER_KIND]
+        firsts = [] if seeds_only else [c for c in ev(page, CONTROLS) if c["index"] < PER_KIND]
         context.close()
         for seed in SEEDS.get(name, []) + [[first] for first in firsts]:
             context, page, mfl, errors = open_screen(browser, site, name, width)
             settle(page)
             path, used = [], set()
             for wanted in seed:
-                if isinstance(wanted, tuple):
+                if isinstance(wanted, dict) and "css" in wanted:
+                    wanted = ev(page, CSS_FIND, wanted["css"])
+                elif isinstance(wanted, tuple):
                     act_name, side, n = wanted
                     named = [c for c in ev(page, CONTROLS) if c["sig"].split("|")[2] == act_name and c["sig"].split("|")[5] == side]
                     wanted = named[n] if named else None
@@ -750,9 +769,9 @@ def explore(job):
                     path.append(wanted)
                     used.add(wanted["sig"])
                     out[label(path)] = {"html": settle(page), "posts": list(mfl.posts), "errors": list(errors)}
-                elif not path and isinstance(seed[0], dict):
+                elif not path and isinstance(seed[0], dict) and "sig" in seed[0]:
                     out[label([wanted])] = {"html": None, "posts": [], "errors": list(errors)}
-            limit = len(path) + CHAIN - 1
+            limit = len(path) + (0 if seeds_only else CHAIN - 1)
             step = next((c for c in sorted(ev(page, CONTROLS), key=priority) if c["sig"] not in used), None) if path else None
             while step and len(path) < limit:
                 used.add(step["sig"])
@@ -771,6 +790,8 @@ def explore(job):
 def record(refs, only=None):
     """{ref: {step: result}} for each ref, every screen and width, in parallel"""
     jobs = [(ref, name, width) for ref in refs for name in SCREENS if not only or name in only for width in WIDTHS]
+    # the longest first (fully explored, desktop), so none is left running alone at the end
+    jobs.sort(key=lambda job: ("moves" in SCREENS[job[1]][1], job[2] != "desktop"))
     found = {ref: {} for ref in refs}
     with ProcessPoolExecutor(WORKERS) as pool:
         for (ref, name, width), out, seconds in pool.map(explore, jobs):
@@ -806,6 +827,61 @@ def compare(base, head):
     return differ
 
 
+# What a move's screen says once MFL has answered, by how MFL answers it (Mfl's "moves"): a pattern
+# the move's lines (alerts and status lines, joined by " | ") must match in full. A move MFL made
+# says so, or nothing (a bid is shown highlighted); one it didn't make says why, or to try again;
+# one whose result can't be read says so, with no reason guessed.
+FAILED = r"Couldn’t [^:]+\. Reload the page and try again\."
+LOCKED = r"Couldn’t .+: Roster moves are locked for this team\."
+UNCHECKED = r"Couldn’t check whether MFL made it\. Reload the page to see your (?:roster|bids|trades)\."
+MADE = r"(?!.*Couldn’t).*"
+OUTCOMES = {
+    "lands": MADE, "fails-made": MADE, "lags": MADE, "lags-twice": MADE,
+    "fails": FAILED, "refuses": LOCKED, "unread": UNCHECKED, "lands-unread": UNCHECKED,
+    # Drop's and the window add's confirming reads don't reach MFL either; a claim's do
+    "offline": f"{FAILED}|{UNCHECKED}",
+    "gone": r"Couldn’t accept the offer from .+: it’s no longer open\.",
+    "taken": r"Couldn’t withdraw your offer to .+: they accepted it first\.",
+    "then-fails": r"Counter sent to .+ \| Your counter was sent, but this offer is still open\.",
+    "refuses-drop": r"Saved: [^|]+(?: \| Couldn’t drop .+: Roster moves are locked for this team\.)?",
+    "board-fails": r".+ added\b.* Couldn’t post the length “.+”; it’s due within the hour\.",
+}
+MOVE_URL = re.compile(r"/(?:add_drop|ir|trade_offer|trade_response|options|lineup|import)(?:\?|$)")
+
+
+def outcome(html):
+    """a step's alert and status lines, joined by " | " """
+    html = re.sub(r"<svg.*?</svg>", "", html or "", flags=re.S)
+    lines = [re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", line)).strip()
+             for line in re.findall(r'role="(?:status|alert)"[^>]*>(.*?)</(?:p|div|span)>', html, re.S)]
+    # Add's standing line about the bids as a whole isn't a move's
+    return " | ".join(line for line in lines if line and not line.startswith("Current bids"))
+
+
+def check(found):
+    """each failure-mode screen's seeds, at each width: the last step of each must have made a move
+    (one that stops short means a seed no longer reaches it) and say what OUTCOMES expects"""
+    wrong = 0
+    for name, (url, swaps) in SCREENS.items():
+        how = swaps.get("moves")
+        if not how:
+            continue
+        expect = UNCHECKED if how.endswith("-noteam") else OUTCOMES[how]
+        for width in WIDTHS:
+            # the steps after the screen first shows
+            steps = {key: result for key, result in found.items() if key.startswith(f"{name} {width} ") and key != f"{name} {width} "}
+            ends = [key for key in steps if not any(other.startswith(key + " > ") for other in steps)]
+            for key in ends:
+                posts = [post for post in steps[key]["posts"] if MOVE_URL.search(post["url"]) and "myWatchList" not in json.dumps(post)]
+                said = outcome(steps[key]["html"])
+                problem = "made no move" if not posts else None if re.fullmatch(expect, said) else f"says {said or '(nothing)'!r}"
+                if problem:
+                    wrong += 1
+                    print(f"## {key}: {problem}")
+    print(f"\n{len(found)} steps, {wrong} outcomes not as expected")
+    return wrong
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -813,6 +889,9 @@ def main():
     c.add_argument("--base", default="master")
     c.add_argument("--only")
     c.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
+    k = sub.add_parser("check")
+    k.add_argument("--only")
+    k.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
     r = sub.add_parser("record")
     r.add_argument("out")
     r.add_argument("--ref")
@@ -825,9 +904,14 @@ def main():
         Path(args.out).write_text(json.dumps(record([args.ref], only)[args.ref], indent=1))
         return
     head = build_working_copy() if args.built else None
+    if args.command == "check":
+        moves = {name for name, (url, swaps) in SCREENS.items() if "moves" in swaps}
+        sys.exit(1 if check(record([head], (only or moves) & moves)[head]) else 0)
     found = record([args.base, head], only)
     print(f"base: {args.base}, head: the working copy{', built' if args.built else ''}")
-    sys.exit(1 if compare(found[args.base], found[head]) else 0)
+    differ = compare(found[args.base], found[head])
+    # the moves' outcomes, from what the working copy just did
+    sys.exit(1 if differ + check(found[head]) else 0)
 
 
 if __name__ == "__main__":
