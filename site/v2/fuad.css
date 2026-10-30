@@ -4272,6 +4272,10 @@ body .fuad-side-back { display: flex; align-items: center; min-height: 44px; fon
 #fuad-add .fuad-add-quiet,
 #fuad-add .fuad-add-remove { border: 1px solid var(--fuad-raised-edge); }
 
+/* on the just-added row's tint their transparent fill lets the border wash out */
+#fuad-add .fuad-add-flash .fuad-add-quiet,
+#fuad-add .fuad-add-flash .fuad-add-remove { background: var(--fuad-panel); }
+
 #fuad-add .fuad-add-copies { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 #fuad-add .fuad-add-chip,
