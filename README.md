@@ -57,8 +57,9 @@ would do until they're switched on.
   live league page with and without your working copy and compares every area.
 - `uv run --no-project --with playwright python tools/verify/screens.py compare` uses v2's screens,
   loaded from pages saved from the clone league with no MFL requests, on master and on your working
-  copy, and lists every step whose HTML or moves to MFL differ; `--built` uses the working copy as
-  Pages publishes it.
+  copy, and lists every step whose HTML or moves to MFL differ, and every move whose message doesn't
+  match how MFL answered it (lands, fails, refuses, lags, can't be reached); `--built` uses the
+  working copy as Pages publishes it, and `check` checks the messages alone.
 - `uv run --no-project --with playwright python tools/verify/phases.py` draws every view on nine dates
   through the league's year (offseason, draft, cut-down, preseason, season, trade deadline, playoffs,
   season over), from the same saved pages reshaped for each date, with and without the trade

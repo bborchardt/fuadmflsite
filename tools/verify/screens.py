@@ -2,19 +2,27 @@
 """Check that a change to v2 leaves its screens as they were, without asking MFL anything.
 
     uv run --no-project --with playwright python tools/verify/screens.py compare [--base master] [--only add,trades] [--built]
+    uv run --no-project --with playwright python tools/verify/screens.py check [--only add,trades] [--built]
     uv run --no-project --with playwright python tools/verify/screens.py record OUT.json [--ref master]
 
 Each screen loads from pages and exports saved from the clone league (tools/verify/screens/; the
 repo is public, so new samples need emails, members' contact details and MFL's apiKey removed), with the clock fixed, at phone and desktop widths. From what it first
 shows, every kind of control starts a chain (the first two of each: buttons, links within the page,
 boxes, fields) of up to six steps, each a kind of control the chain hasn't used yet; SEEDS lead
-into each move's review and post first. Each chain runs from a fresh load. After each step it keeps
+into each move's review and post first, by kind or by CSS selector. A screen where MFL answers a
+move some other way (Mfl's "moves") runs only its SEEDS that make a move: the rest of it is the
+plain screen's. Each chain runs from a fresh load. After each step it keeps
 the HTML of v2's parts of the page and the moves the page made (POSTs, and GETs naming an ACTION),
 which are answered from the saved pages, never sent.
 
 compare  records --base (a git ref, default master) and the working copy (with --built, as Pages
          publishes it: bundled by tools/build.mjs), and lists every step whose HTML or moves differ. A refactor should show none; a visible change shows up as a review list.
          Runs of whitespace count as one space, as the browser draws them, so markup may be reindented.
+         It then checks the working copy's outcomes, as check does.
+check    records the working copy's screens where MFL answers a move some other way, and lists each
+         move whose last step doesn't say what OUTCOMES expects of how MFL answered (or made no move):
+         this sees a wrong message that master shares, but not a seed whose first step is gone, which
+         compare lists as steps master has and the working copy doesn't.
 record   writes one version's record, from the working copy or --ref.
 
 It sees HTML and moves, not CSS: a style change needs its own check. The site menu, team sheet and
@@ -149,7 +157,7 @@ for _how in ["lands", "fails", "fails-made", "refuses", "unread", "offline"]:
     SEEDS[f"add-{_how}"] = [["start", "pick-fa", "pick-drop", "submit"]]
     SCREENS[f"add-claims-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-claims"][1], "moves": _how})
     # an edit changes the length (the claims sample's team can't raise a bid); its copies are all over a
-# limit, so copies run on add-group-*
+    # limit, so copies run on add-group-*
     SEEDS[f"add-claims-{_how}"] = [["remove"], ["edit", {"css": "[data-act=year]:not([aria-pressed=true])"}, "submit"]]
     SCREENS[f"add-group-{_how}"] = (SCREENS["add-claims"][0], {**SCREENS["add-group"][1], "moves": _how})
     SEEDS[f"add-group-{_how}"] = [["up"], ["down"], ["toggle", "copy"], ["edit", "bid-plus", "submit"]]
@@ -906,6 +914,8 @@ def main():
     head = build_working_copy() if args.built else None
     if args.command == "check":
         moves = {name for name, (url, swaps) in SCREENS.items() if "moves" in swaps}
+        if only and not only & moves:
+            parser.error(f"none of these screens has moves of its own (such as {', '.join(sorted(moves)[:3])})")
         sys.exit(1 if check(record([head], (only or moves) & moves)[head]) else 0)
     found = record([args.base, head], only)
     print(f"base: {args.base}, head: the working copy{', built' if args.built else ''}")
