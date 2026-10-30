@@ -28,7 +28,7 @@ const version = process.env.RULES_VERSION || "v2";
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 // v1's lib has no payouts: the chore is skipped
-const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces} = version === "v1" ? {} : await lib("payouts.js");
+const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = version === "v1" ? {} : await lib("payouts.js");
 const {buildLeague, playersFromExport} = await lib("league.js");
 const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
@@ -319,6 +319,10 @@ async function payouts(loggedIn, {built}) {
         log(`The ${version} lib has no payouts; none recorded.`);
         return;
     }
+    if (!loggedIn) {
+        log("Reading MFL's accounting needs the commissioner login; no payouts recorded.");
+        return;
+    }
     if (!built.weeks) {
         throw new Error("the league export gives no last regular season week or end week, so no payouts were recorded");
     }
@@ -337,13 +341,9 @@ async function payouts(loggedIn, {built}) {
         log("No week's scores are final yet; no payouts to record.");
         return;
     }
-    if (!loggedIn) {
-        log("Reading MFL's accounting needs the commissioner login; no payouts recorded.");
-        return;
-    }
     const accounting = await fetchFrom(host, "accounting", {L: leagueId});
     let places = null;
-    if (finalWeek >= endWeek) {
+    if (finalWeek >= endWeek && unpaidPlaces(accounting).length) {
         const list = asArray((await fetchFrom(host, "playoffBrackets", {L: leagueId})).playoffBracket);
         const brackets = [];
         for (const bracket of placeBrackets(list)) {

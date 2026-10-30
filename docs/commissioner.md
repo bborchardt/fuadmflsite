@@ -66,8 +66,10 @@ Actions tab (GitHub can run it late on busy days). It:
 - sets contract years for added players, from the bid comment or a message board post;
 - records the payouts in MFL's accounting, as League › Winners works them out: "Most Points Week N"
   once the next week has kicked off, "All-play (W-L)" once week 14's scores are, and "1st Place",
-  "2nd Place", "3rd Place" once the championship's are. A payout already there under any team, as
-  you'd enter it by hand, isn't added again; the places need the pot's league-wide entries first;
+  "2nd Place", "3rd Place" once the championship's are. A payout already there under any team isn't
+  added again, if it's worded so: "Most Points Week 4" or "Most points weeks 3,8", "All-play (…)",
+  "2nd Place…"; other wording ("weeks 2-4", "All Play") gets it recorded twice. The places need the
+  pot's league-wide entries first;
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).

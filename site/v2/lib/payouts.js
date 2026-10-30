@@ -100,6 +100,13 @@ export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thir
     return final && third ? [final[0], final[1], third[0]] : null;
 }
 
+// The places (1, 2, 3…) the accounting has no "1st Place"… entry for, under any team
+export function unpaidPlaces(accounting) {
+    const paid = new Set(asArray(accounting && accounting.entry)
+        .map((entry) => (/^(\d+)(?:st|nd|rd|th) place\b/i.exec(entry.description || "") || [])[1]).filter(Boolean).map(Number));
+    return PRIZE_SHARES.map((share, i) => i + 1).filter((place) => !paid.has(place));
+}
+
 // The accounting records the payouts still need, through the last week whose scores are final: each
 // regular season week's high score, the all-play payouts once the regular season's last week is
 // final, and the places once the championship's is (`places`, from playoffPlaces). A payout already in
@@ -111,7 +118,6 @@ export function missingPayouts({accounting, weeklyResults, lastRegularWeek, endW
     const described = (pattern) => entries.map((entry) => ({entry, match: pattern.exec(entry.description || "")})).filter(({match}) => match);
     const paidWeeks = new Set(described(/^most points weeks?\s+([\d,\s]+)/i).flatMap(({match}) => match[1].split(/[,\s]+/).filter(Boolean).map(Number)));
     const paidAllPlay = new Set(described(/^all-play\b/i).map(({entry}) => entry.franchise_id));
-    const paidPlaces = new Set(described(/^(\d+)(?:st|nd|rd|th) place\b/i).map(({match}) => Number(match[1])));
     const records = [];
     for (const {week, teams} of weeklyWinners(weeklyResults, Math.min(lastRegularWeek, finalWeek))) {
         if (!paidWeeks.has(week)) {
@@ -128,7 +134,7 @@ export function missingPayouts({accounting, weeklyResults, lastRegularWeek, endW
             records.push({franchise: id, amount, description: `All-play (${recordText(record)})`});
         }
     }
-    const due = PRIZE_SHARES.map((share, i) => i + 1).filter((place) => !paidPlaces.has(place));
+    const due = unpaidPlaces(accounting);
     if (finalWeek < endWeek || !due.length) {
         return {records, problem: null};
     }

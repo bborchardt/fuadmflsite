@@ -371,3 +371,19 @@ test("payouts: all-play and the places once the championship week is final, or a
         "Dry run: would record \"All-play (9-4-1)\" $3.75 to Alpha."
     ]);
 });
+
+test("payouts: without the login, or with the places recorded, MFL isn't asked for what isn't needed", () => {
+    const exports = {...league(), "weeklyResults:YTD": scoredWeeks(17), accounting: {entry: [
+        {franchise_id: "0001", amount: "150", description: "Most points weeks 1,2,3,4,5,6,7,8,9,10"},
+        {franchise_id: "0002", amount: "60", description: "Most points weeks 11,12,13,14"},
+        {franchise_id: "0001", amount: "3.75", description: "All-play (9-4-1)"},
+        ...["1st", "2nd", "3rd"].map((place) => ({franchise_id: "0001", amount: "1", description: `${place} Place`}))
+    ]}};
+    const asked = (result, type) => result.requests.some((request) => request.url.includes(`TYPE=${type}`));
+    const done = run({scenario: {exports}, env: LOGIN, now: "2027-01-09T12:00:00Z"});
+    assert.equal(done.status, 0, done.stderr);
+    assert.deepEqual(payoutEntries(done), []);
+    assert.ok(asked(done, "accounting") && !asked(done, "playoffBrackets"));
+    const anonymous = run({scenario: {exports}, now: "2027-01-09T12:00:00Z"});
+    assert.ok(!asked(anonymous, "accounting") && !anonymous.requests.some((request) => /W=YTD/.test(request.url)));
+});
