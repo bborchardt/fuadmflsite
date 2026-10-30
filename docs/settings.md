@@ -71,7 +71,7 @@ How many bid groups a team can have is MFL's ("Maximum Number of Conditional Bli
 | `draftOrder` | "playoffFinish" | Next year's rookie draft order, worst first: `"playoffFinish"`, the teams out of the playoffs by the standings, then the playoff teams by how far they got; or `"standings"`, every team by the standings. |
 | `payouts.weeklyHighScore` | 15 | Dollars to each regular season week's high score, split on a tie. |
 | `payouts.allPlayPerGameOver500` | 0.75 | Dollars for each all-play win beyond the team's all-play losses in the regular season, never below $0. |
-| `payouts.places` | 0.55, 0.30, 0.15 | The playoff prizes, as shares of what's left of the pot after the weekly and all-play payouts: 1st, 2nd, 3rd, and so on for a longer list. The pot is the league-wide entries in MFL's accounting; until the commissioner records them, League › Winners shows the shares without amounts. |
+| `payouts.places` | 0.55, 0.30, 0.15 | The playoff prizes, as shares of what's left of the pot after the weekly and all-play payouts: 1st, 2nd, 3rd, and so on for a longer list. The pot is the league-wide entries in MFL's accounting; until the commissioner records them, League › Winners shows the shares without amounts and the daily job flags the places instead of recording them. |
 
 ## History
 

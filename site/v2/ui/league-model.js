@@ -5,14 +5,17 @@
 import {asArray} from "../lib/mfl.js";
 import {text} from "./player-page.js";
 import {scoreStats, statLine, winProbability} from "./live-scoring.js";
-import {cents} from "./format.js";
+import {
+    PRIZE_SHARES, WEEKLY_PRIZE, allPlayPayout, forPlayoffs, ordinal, potOf, prizeAmount, recordText, weeklyWinners, weeksOf
+} from "../lib/payouts.js";
 import settings from "../lib/settings.js";
 import {lineupPositions} from "../lib/rules.js";
 
+export {
+    WEEKLY_PRIZE, allPlayRecords, bracketCount, placeBrackets, playoffPlaces, recordText, weeklyWinners
+} from "../lib/payouts.js";
+
 export const PLAYOFF_TEAMS = settings.playoffs.teams;
-export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
-export const ALL_PLAY_RATE = settings.payouts.allPlayPerGameOver500;
-export const PRIZE_SHARES = settings.payouts.places;
 
 const record = (wlt) => {
     const [w, l, t] = String(wlt || "0-0-0").split("-").map(Number);
@@ -21,8 +24,6 @@ const record = (wlt) => {
 const pct = ({w, l, t}) => (w + l + t ? (w + t / 2) / (w + l + t) : 0);
 // "2.0", "0.5": games back of a record
 const gamesBack = (leader, team) => ((leader.w - team.w) + (team.l - leader.l)) / 2;
-// "24-11-1", "32-4": a tie shows only when there is one
-export const recordText = ({w, l, t}) => `${w}-${l}${t ? `-${t}` : ""}`;
 const points = (value) => (Number(value) || 0).toFixed(1);
 
 // the `league` export's divisions and each team's: {divisions: [{id, name}], of: Map(team → division id)}
@@ -58,27 +59,6 @@ export function standings(leagueStandings, league, names, allPlay = null) {
             rows: rows.map((team, i) => ({...team, rank: i + 1, gamesBack: i ? gamesBack(rows[0].h2h, team.h2h).toFixed(1) : "—"}))
         };
     }).filter((division) => division.rows.length);
-}
-
-// Each team's all-play record over the regular season's weeks with results: every week, a win
-// against each team it outscored (bylaws 1.3 and 1.7)
-export function allPlayRecords(weeklyResults, lastRegularWeek) {
-    const records = new Map();
-    for (const week of weeksOf(weeklyResults).filter((entry) => Number(entry.week) <= lastRegularWeek)) {
-        const scores = asArray(week.matchup).flatMap((matchup) => asArray(matchup.franchise))
-            .filter((team) => team.score !== undefined && team.score !== "")
-            .map((team) => ({id: team.id, score: Number(team.score)}));
-        for (const team of scores) {
-            const sum = records.get(team.id) || {w: 0, l: 0, t: 0};
-            for (const other of scores) {
-                if (other !== team) {
-                    sum[team.score > other.score ? "w" : team.score < other.score ? "l" : "t"]++;
-                }
-            }
-            records.set(team.id, sum);
-        }
-    }
-    return records;
 }
 
 // The playoff seeds (settings.playoffs): the division winners first, if the league seeds them so, in
@@ -147,7 +127,6 @@ export const powerFacts = (team) => [
     ["Alternate rank", team.alternate]
 ];
 
-const weeksOf = (weeklyResults) => asArray(weeklyResults && (weeklyResults.weeklyResults || weeklyResults));
 
 // Starter points by position, the season so far: each week's starters (`weeklyResults` for YTD)
 // summed by the player's position, in team order of the total; `order` the league's positions
@@ -176,66 +155,15 @@ export function positionPoints(weeklyResults, positions, names, order) {
     })).sort((a, b) => b.total - a.total);
 }
 
-// Each regular season week's high scorers: {week, teams}. Only weeks MFL has results for.
-export function weeklyWinners(weeklyResults, lastRegularWeek) {
-    return weeksOf(weeklyResults)
-        .filter((week) => Number(week.week) <= lastRegularWeek)
-        .map((week) => {
-            const scores = asArray(week.matchup).flatMap((matchup) => asArray(matchup.franchise))
-                .filter((team) => team.score !== undefined && team.score !== "")
-                .map((team) => ({id: team.id, score: Number(team.score)}));
-            const top = Math.max(...scores.map((team) => team.score));
-            return {week: Number(week.week), teams: scores.length && top > 0 ? scores.filter((team) => team.score === top).map((team) => team.id) : []};
-        })
-        .filter((week) => week.teams.length);
-}
-
-// "1st", "2nd", "3rd", "4th"…
-const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
-
 // Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00")
 export const ledger = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-
-// The brackets that decide the places, from MFL's `playoffBrackets` list: the championship's, and
-// the 3rd place game's if the league has one
-export const bracketCount = () => (settings.playoffs.thirdPlaceGame ? 2 : 1);
-export function placeBrackets(list) {
-    const champion = list.find((bracket) => /champion/i.test(bracket.bracketWinnerTitle || "")) || list[0];
-    const third = list.find((bracket) => /3rd/i.test(`${bracket.bracketWinnerTitle} ${bracket.name}`)) || list[1];
-    return settings.playoffs.thirdPlaceGame ? [champion, third] : [champion];
-}
-
-// The places once the playoffs are played: 1st and 2nd from the championship's last game, 3rd from
-// the 3rd place game if the league has one. `brackets` are the `playoffBracket` exports; a tie goes
-// to the higher seed (bylaw 1.5), which MFL marks as the home side.
-export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thirdPlaceGame} = {}) {
-    const lastGame = (bracket) => {
-        const rounds = asArray(bracket && bracket.playoffRound);
-        return rounds.length ? asArray(rounds[rounds.length - 1].playoffGame)[0] : null;
-    };
-    const decided = (game) => {
-        if (!game || !game.home || !game.away || game.home.points === undefined || game.away.points === undefined) {
-            return null;
-        }
-        const homeWins = Number(game.home.points) >= Number(game.away.points);
-        return homeWins ? [game.home.franchise_id, game.away.franchise_id] : [game.away.franchise_id, game.home.franchise_id];
-    };
-    const final = decided(lastGame(brackets[0]));
-    if (!thirdPlaceGame) {
-        return final;
-    }
-    const third = decided(lastGame(brackets[1]));
-    return final && third ? [final[0], final[1], third[0]] : null;
-}
 
 // The payouts (settings.payouts). The pot is the league-wide (0000) entries in MFL's accounting; the
 // weekly prizes (every regular season week, known up front) and the all-play payouts so far come out
 // of it, and what's left is split by the places' shares. Until the commissioner records the pot it's
 // null, and so are the playoffs' amounts. `places` names the prize winners once the playoffs are over.
 export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, names}) {
-    const entries = asArray(accounting && accounting.entry).filter((entry) => entry.franchise_id === "0000")
-        .map((entry) => ({description: entry.description, amount: Number(entry.amount) || 0}));
-    const pot = entries.length ? entries.reduce((sum, entry) => sum + entry.amount, 0) : null;
+    const {entries, pot} = potOf(accounting);
     const weekly = new Map();
     for (const {week, teams} of weeklyWinners(weeklyResults, lastRegularWeek)) {
         for (const id of teams) {
@@ -247,16 +175,16 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
     }
     const teams = standingRows.map((team) => {
         const won = weekly.get(team.id) || {weeks: [], amount: 0};
-        const allPlay = Math.max(0, team.allPlay.w - team.allPlay.l) * ALL_PLAY_RATE;
+        const allPlay = allPlayPayout(team.allPlay);
         return {id: team.id, name: names.get(team.id) || team.name, record: recordText(team.allPlay), net: team.allPlay.w - team.allPlay.l, weeks: won.weeks, weekly: won.amount, allPlay};
     });
     const weeklyTotal = lastRegularWeek * WEEKLY_PRIZE;
     const allPlayPaid = teams.reduce((sum, team) => sum + team.allPlay, 0);
-    const forPlayoffs = pot === null ? null : cents(pot - weeklyTotal - allPlayPaid);
+    const pool = forPlayoffs(pot, lastRegularWeek, allPlayPaid);
     const prizes = PRIZE_SHARES.map((share, i) => ({
         place: ordinal(i + 1),
         share,
-        amount: forPlayoffs === null ? null : cents(forPlayoffs * share),
+        amount: prizeAmount(pool, i),
         team: places ? places[i] : null
     }));
     const prizeOf = (id) => prizes.find((prize) => prize.team === id) || null;
@@ -264,7 +192,7 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
         const prize = prizeOf(team.id);
         return {...team, prize, total: team.weekly + team.allPlay + (prize && prize.amount ? prize.amount : 0)};
     }).sort((a, b) => b.total - a.total || b.net - a.net);
-    return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs, prizes, rows};
+    return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs: pool, prizes, rows};
 }
 
 // "Week 3 $15.00 · 17-19 all-play · 2nd $139.51": a team's winnings in one grey line

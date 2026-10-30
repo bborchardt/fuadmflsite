@@ -75,6 +75,11 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   - a last name is ambiguous only with another add waiting for years, not a player under contract
   - nothing stated in time: 1 year, applied on sight; the commissioner adjusts by hand for leniency
   - anything unclear is flagged, never defaulted
+- **Payouts** (`lib/payouts.js`, shared with League › Winners) are recorded once a week's scores
+  are final, taken to be when the next week kicks off, after the NFL's stat corrections usually
+  are. The job reads the accounting first and matches by description, so an entry the commissioner
+  made by hand, or a run that failed partway, is never doubled; a later correction is left to the
+  commissioner.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
   own reader while the hour is open, so owners see what will be set.
 
@@ -172,7 +177,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - **League history** (v2's League and Rosters, `ui/history-model.js`, display only): a title belongs
   to today's team holding the champion's franchise number, if MFL links that team to that year;
   franchise numbers MFL moved are listed in `RENUMBERED`.
-- **Playoff seeds and payouts** (v2's League, `ui/league-model.js`, display only): the division
+- **Playoff seeds and payouts** (v2's League, `ui/league-model.js` and `lib/payouts.js`): the division
   winners are seeds 1–2, the other four the best all-play records, ties by standings order (1.1–1.3);
   $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),
   never below $0 (1.6–1.7); what's left of the pot goes 55/30/15 (1.8). All-play counts weeks 1–14

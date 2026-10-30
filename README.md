@@ -18,6 +18,7 @@ runs inside MFL's own pages, loaded by a home page message.
 - snapshots franchise salaries at the trade deadline
 - charges cap penalties for dropped players
 - sets contract years for added players, from the bid comment or a message board post
+- records the payouts in MFL's accounting: each week's high score, all-play, and the places
 - flags rule problems (cap, roster limit, IR, anti-tanking) and anything it can't decide
 
 A flag fails the run, so GitHub emails the commissioner. Chores that write to MFL only log what they
@@ -38,8 +39,8 @@ would do until they're switched on.
   commissioner can be in the beta as their team and not as 0000. Delete the line to end the beta.
 - **Preview a version** in your browser only: add `?fuadPreview=v2` to any league page URL
   (`?fuadPreview=off` to stop).
-- **Turn chores on:** set the repository variables `DROP_PENALTIES` and `CONTRACT_YEARS` to
-  `apply`.
+- **Turn chores on:** set the repository variables `DROP_PENALTIES`, `CONTRACT_YEARS` and `PAYOUTS`
+  to `apply`.
 - **After a failed-run email:** the run page and the end of its log say what was flagged; the summary
   page also lists what the job did.
 - **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button produces the

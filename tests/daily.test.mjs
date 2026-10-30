@@ -304,3 +304,86 @@ test("contract years: held for a team over the cap, and none set without the log
     assert.deepEqual(contractEntries(early), []);
     assert.match(early.stdout, /2 add\(s\) still in their posting window will be decided at the next run\./);
 });
+
+// weeks 1..`weeks` scored: Alpha's high score through week 10, Beta's after; week 2 a tie
+function scoredWeeks(weeks) {
+    return {weeklyResults: Array.from({length: 17}, (_, i) => {
+        const week = i + 1;
+        const scores = week > weeks ? [{id: "0001"}, {id: "0002"}]
+            : [{id: "0001", score: week <= 10 ? "120" : "90"}, {id: "0002", score: week === 2 ? "120" : week <= 10 ? "100" : "130"}];
+        return {week: String(week), matchup: [{franchise: scores}]};
+    })};
+}
+const payoutEntries = (result) => result.entries.filter((entry) => /^Payouts|would record|^Recorded /.test(entry));
+const handWeek1 = {entry: [{franchise_id: "0001", amount: "15", description: "Most Points Week 1"}]};
+
+test("payouts: each week's high score once the next week has kicked off, logged in a dry run and recorded when applied", () => {
+    // week 7 is under way at MID_SEASON, so week 6 is the last final one; week 1 was entered by hand
+    const exports = {...league(), "weeklyResults:YTD": scoredWeeks(7), accounting: handWeek1};
+    const dry = run({scenario: {exports}, env: LOGIN});
+    assert.equal(dry.status, 0, dry.stderr);
+    assert.deepEqual(payoutEntries(dry), [
+        "Dry run: would record \"Most Points Week 2\" $7.50 to Alpha.",
+        "Dry run: would record \"Most Points Week 2\" $7.50 to Beta.",
+        ...[3, 4, 5, 6].map((week) => `Dry run: would record "Most Points Week ${week}" $15.00 to Alpha.`)
+    ]);
+    assert.deepEqual(imports(dry), []);
+    const applied = run({scenario: {exports}, env: {...LOGIN, PAYOUTS: "apply"}});
+    assert.equal(applied.status, 0, applied.stderr);
+    const posted = imports(applied);
+    assert.equal(posted.length, 6);
+    // the accounting import takes its fields as parameters, not DATA
+    assert.deepEqual(posted[0], {TYPE: "accounting", L: "48571", FRANCHISE: "0001", AMOUNT: "7.5", DESCRIPTION: "Most Points Week 2"});
+    assert.deepEqual(payoutEntries(applied)[5], "Recorded \"Most Points Week 6\" $15.00 to Alpha.");
+    // without the login the accounting isn't read, and nothing is recorded
+    const anonymous = run({scenario: {exports}, env: {PAYOUTS: "apply"}});
+    assert.deepEqual(payoutEntries(anonymous), []);
+    assert.ok(!anonymous.requests.some((request) => /TYPE=accounting/.test(request.url)));
+});
+
+test("payouts: all-play and the places once the championship week is final, or a flag if there's no pot", () => {
+    const weeklyPaid = {entry: [
+        {franchise_id: "0001", amount: "150", description: "Most points weeks 1,2,3,4,5,6,7,8,9,10"},
+        {franchise_id: "0002", amount: "60", description: "Most points weeks 11,12,13,14"}
+    ]};
+    const game = (home, away) => ({playoffRound: [{week: "17", playoffGame: [{home: {franchise_id: home[0], points: home[1]}, away: {franchise_id: away[0], points: away[1]}}]}]});
+    const exports = {
+        ...league(),
+        "weeklyResults:YTD": scoredWeeks(17),
+        playoffBrackets: {playoffBracket: [{id: "1", bracketWinnerTitle: "League Champion"}, {id: "2", name: "3rd Place Game"}]},
+        "playoffBracket:1": game(["0002", "90"], ["0001", "120"]),
+        "playoffBracket:2": game(["0003", "100"], ["0004", "80"])
+    };
+    // week 18 kicks off 8 Jan 2027; all-play 9-4-1 (week 2 a tie) pays Alpha $3.75, leaving $800 of a $1,013.75 pot
+    const after = "2027-01-09T12:00:00Z";
+    const pot = {franchise_id: "0000", amount: "1013.75", description: "Entry Fees"};
+    const result = run({scenario: {exports: {...exports, accounting: {entry: [...weeklyPaid.entry, pot]}}}, env: LOGIN, now: after});
+    assert.deepEqual(payoutEntries(result), [
+        "Dry run: would record \"All-play (9-4-1)\" $3.75 to Alpha.",
+        "Dry run: would record \"1st Place\" $440.00 to Alpha.",
+        "Dry run: would record \"2nd Place\" $240.00 to Beta.",
+        "Dry run: would record \"3rd Place\" $120.00 to 0003."
+    ]);
+    const noPot = run({scenario: {exports: {...exports, accounting: weeklyPaid}}, env: LOGIN, now: after});
+    assert.equal(noPot.status, 1);
+    assert.deepEqual(payoutEntries(noPot), [
+        "Payouts: the places can't be recorded: the accounting has no league-wide entries, so there's no pot to split. Left for the commissioner.",
+        "Dry run: would record \"All-play (9-4-1)\" $3.75 to Alpha."
+    ]);
+});
+
+test("payouts: without the login, or with the places recorded, MFL isn't asked for what isn't needed", () => {
+    const exports = {...league(), "weeklyResults:YTD": scoredWeeks(17), accounting: {entry: [
+        {franchise_id: "0001", amount: "150", description: "Most points weeks 1,2,3,4,5,6,7,8,9,10"},
+        {franchise_id: "0002", amount: "60", description: "Most points weeks 11,12,13,14"},
+        {franchise_id: "0001", amount: "3.75", description: "All-play (9-4-1)"},
+        ...["1st", "2nd", "3rd"].map((place) => ({franchise_id: "0001", amount: "1", description: `${place} Place`}))
+    ]}};
+    const asked = (result, type) => result.requests.some((request) => request.url.includes(`TYPE=${type}`));
+    const done = run({scenario: {exports}, env: LOGIN, now: "2027-01-09T12:00:00Z"});
+    assert.equal(done.status, 0, done.stderr);
+    assert.deepEqual(payoutEntries(done), []);
+    assert.ok(asked(done, "accounting") && !asked(done, "playoffBrackets"));
+    const anonymous = run({scenario: {exports}, now: "2027-01-09T12:00:00Z"});
+    assert.ok(!asked(anonymous, "accounting") && !anonymous.requests.some((request) => /W=YTD/.test(request.url)));
+});
