@@ -675,11 +675,12 @@ def ev(page, script, arg=None):
 
 def settle(page, timeout=15.0):
     """v2's parts once they've stopped changing for 0.3 s (compared by a hash, the HTML being large)
-    and no move is under way: a button saying "Saving…" may wait seconds between reads with nothing
-    changing (IR reads the roster back 1.5 s apart)"""
+    and no move or load is under way: a button saying "Saving…" may wait seconds between reads with
+    nothing changing (IR reads the roster back 1.5 s apart), and a panel's placeholders (aria-busy)
+    can sit still that long while the workers share the machine"""
     last, since, start = None, time.time(), time.time()
     while time.time() - start < timeout:
-        now = ev(page, f"() => {{ const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*</.test(s) ? 'busy:' : '') + h + ':' + s.length; }}")
+        now = ev(page, f"() => {{ const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*<|aria-busy=\"true\"/.test(s) ? 'busy:' : '') + h + ':' + s.length; }}")
         if now != last:
             last, since = now, time.time()
         elif time.time() - since >= 0.3 and not now.startswith("busy:"):
