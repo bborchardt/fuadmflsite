@@ -44,6 +44,10 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   and are saved by the form that also holds the team's logo.
 - **Three looks are team colours** (Vikings, Packers, Cowboys), for the league's fans of those teams,
   each saved as MFL's skin for that team, so MFL's own pages match.
+- **The commissioner's view is marked in v2's colours, not a skin:** the commissioner's skin is the
+  league's (docs/mfl.md), so one saved to tell the views apart would change the default look too.
+  Logged in as the commissioner, v2's accent is blue, with a bar along the top and a Commissioner
+  tag by the wordmark; the look is the league skin's, as for a member on Commish Choice.
 - **The header's loading cover is in the member's look**, read from the skin as v2 reads it, so a
   light look doesn't flash dark on a slow connection; the header keeps each look's two colours,
   which a test holds to the looks'.

@@ -35,6 +35,12 @@ export function applyLook(doc = document, look = lookOf(doc)) {
     return look;
 }
 
+// The commissioner (MFL's team 0000) has no skin of their own: theirs is the league's, the default
+// look a member may be on too, so the commissioner's view is marked in v2's colours instead (fuad.css)
+export function markCommish(doc = document, franchiseId = window.franchise_id) {
+    doc.documentElement.classList.toggle("fuad-commish", franchiseId === "0000");
+}
+
 // the looks, once there's more than one; a member's own choice, saved with their franchise
 export function looksMarkup(looks, current) {
     return looks.length > 1 ? `

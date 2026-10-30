@@ -6,7 +6,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {DOMParser, parseHTML} from "linkedom";
-import {LOOKS, applyLook, lookOf, looksMarkup, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
+import {LOOKS, applyLook, lookOf, looksMarkup, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
 
 const fixture = readFileSync(new URL("./fixtures/skin-setup.html", import.meta.url), "utf8");
 const doc = (html) => parseHTML(html).document;
@@ -24,6 +24,18 @@ test("the page's skin picks the look; any skin no look names is the default", ()
     const shown = page("RedSteel");
     applyLook(shown, lookOf(shown, looks));
     assert.equal(shown.documentElement.getAttribute("data-fuad-look"), "red");
+});
+
+test("the commissioner's view is marked, whatever the look; a member's isn't", () => {
+    const shown = page("BlueMesh");
+    applyLook(shown, lookOf(shown, looks));
+    markCommish(shown, "0000");
+    assert.ok(shown.documentElement.classList.contains("fuad-commish"));
+    assert.equal(shown.documentElement.getAttribute("data-fuad-look"), "night");
+    markCommish(shown, "0001");
+    assert.ok(!shown.documentElement.classList.contains("fuad-commish"));
+    markCommish(shown, null);
+    assert.ok(!shown.documentElement.classList.contains("fuad-commish"));
 });
 
 test("the default is saved as the commissioner's choice of skin", () => {

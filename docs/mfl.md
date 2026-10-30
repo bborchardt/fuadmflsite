@@ -186,7 +186,9 @@ Each is an ordinary page form, posted from the logged-in browser.
   ("Save Skin"). The form names no team: MFL saves the skin for whoever is logged in, and answers
   with a page still drawn in the skin before, headed "Skin Selection Saved" (an `h3`); from the
   next page on, on any device the member uses, it's the new one. Saved as Commish Choice, the form
-  shows the league's own skin chosen (Neon Blue in the clone), not Commish Choice.
+  shows the league's own skin chosen (Neon Blue in the clone), not Commish Choice. The
+  commissioner's form (team 0000) has no Commish Choice and shows the league's skin chosen: the
+  commissioner's skin is the league's.
 - **Trades** (`options?L=<league>&O=05`): "Trades Offered By You", "Trades Offered To You", and a
   "Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
   proposal page.
