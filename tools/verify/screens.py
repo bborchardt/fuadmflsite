@@ -84,6 +84,9 @@ SCREENS = {
     **{f"drop-{how}": (f"/2026/options?L={LEAGUE}&O=257", {"moves": how})
        for how in ["lags-twice", "fails-noteam", "fails-made-noteam", "refuses-noteam", "offline"]},
     "lineup": (f"/2026/lineup?L={LEAGUE}", {}),
+    # Sunday 11:33 a.m. CT, after the London game's kickoff: a starter whose game has started is locked
+    # in (his box disabled, kept by MFL's hidden input), as are Thursday's players
+    "lineup-locked": (f"/2026/lineup?L={LEAGUE}", {"page:lineup": "lineup-locked.html", "now": "2026-10-18T16:33:38Z"}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
     "power": (f"/2026/home/{LEAGUE}#league-power", {}),
@@ -466,7 +469,7 @@ class Mfl:
         if path.endswith("/add_drop"):
             return self.swaps.get("page:add_drop", "add_drop.html")
         if path.endswith("/lineup"):
-            return "lineup.html"
+            return self.swaps.get("page:lineup", "lineup.html")
         if path.endswith("/player"):
             return "player.html"
         if path.endswith("/ajax_ls"):
