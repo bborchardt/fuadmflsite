@@ -83,11 +83,14 @@ test("MFL's reason is a warning or error on its page, not its projections note",
 test("a move's send keeps MFL's answer, or the error it failed with", async (t) => {
     const answers = [new Response("OK", {status: 200}), new Response("", {status: 500})];
     const sent = [];
+    const fetch = globalThis.fetch;
     globalThis.fetch = async (url, init) => {
         sent.push({url, init});
         return answers.shift();
     };
-    t.after(() => delete globalThis.fetch);
+    t.after(() => {
+        globalThis.fetch = fetch;
+    });
     assert.deepEqual(await sendMove("https://mfl/add_drop", () => ({method: "POST", body: "a=1"})), {answer: "OK", error: null});
     const failed = await sendMove("https://mfl/add_drop", () => ({method: "POST"}));
     assert.equal(failed.answer, "");
