@@ -63,7 +63,7 @@ NOW = "2026-10-18T18:30:00Z"
 WIDTHS = {"phone": 390, "desktop": 1280}
 PER_KIND = 2
 CHAIN = 6
-# each worker is a browser, mostly waiting on the page (settling, a move's re-reads), so up to 16
+# each worker is a browser, mostly waiting on the page to settle, so up to 16
 WORKERS = max(2, min(16, (os.cpu_count() or 4) - 1))
 
 # before the clone's trade deadline (Thu Oct 15), so proposing is open
@@ -269,8 +269,17 @@ def sample(name):
 
 
 TEAM = "0001"
-# how many times v2 reads the roster to confirm a move
-READS = int(re.search(r"export const READS = (\d+);", (SAMPLES.parent.parent.parent / "site/v2/ui/moves.js").read_text()).group(1))
+# how many times v2 reads the roster to confirm a move, and how far apart
+MOVES_JS = (SAMPLES.parent.parent.parent / "site/v2/ui/moves.js").read_text()
+READS = int(re.search(r"export const READS = (\d+);", MOVES_JS).group(1))
+READ_GAP = int(re.search(r"export const READ_GAP = (\d+);", MOVES_JS).group(1))
+# the gaps between those reads pass at once: what's read, not when, decides a move's outcome (Mfl's
+# answers count reads), and they'd be a quarter of a run
+NO_READ_GAP = f"""(() => {{
+  const later = window.setTimeout.bind(window);
+  window.setTimeout = (run, ms, ...rest) => later(run, ms === {READ_GAP} ? 0 : ms, ...rest);
+}})();
+"""
 REFUSED = '<html><body><div class="pagebody"><span class="warning">Roster moves are locked for this team.</span></div></body></html>'
 # what Add's claim links name, the claim as ROUND_ADD_BID_DROP
 CLAIM_LINKS = ("DELETE", "MOVE_UP", "MOVE_DOWN")
@@ -675,8 +684,8 @@ def ev(page, script, arg=None):
 
 def settle(page, timeout=15.0):
     """v2's parts once they've stopped changing for 0.3 s (compared by a hash, the HTML being large)
-    and no move or load is under way: a button saying "Saving…" may wait seconds between reads with
-    nothing changing (IR reads the roster back 1.5 s apart), as may a panel's placeholders (aria-busy)"""
+    and no move or load is under way: a button saying "Saving…" may wait on MFL with nothing
+    changing, as may a panel's placeholders (aria-busy)"""
     last, since, start = None, time.time(), time.time()
     while time.time() - start < timeout:
         now = ev(page, f"() => {{ const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*<|aria-busy=\"true\"/.test(s) ? 'busy:' : '') + h + ':' + s.length; }}")
@@ -723,6 +732,7 @@ def open_screen(browser, site, name, width):
     context = browser.new_context(viewport={"width": WIDTHS[width], "height": 1000}, timezone_id="America/Los_Angeles")
     context.clock.set_fixed_time(swaps.get("now", NOW))
     context.add_init_script(INIT)
+    context.add_init_script(NO_READ_GAP)
     if "flash" in swaps:
         # once per chain: a reload a step causes leaves storage as the page left it
         key, value = swaps["flash"]
