@@ -1,0 +1,38 @@
+# The browser harnesses that pass or fail on their own, from the saved samples in tools/verify/screens/
+# and tests/fixtures/pages/; every request is answered by the harness, so nothing reaches MFL.
+# screens.py compare and phases.py list differences for a person to read, so they're run by hand.
+name: Browser checks
+
+on:
+  pull_request:
+    paths: ["site/**", "mfl/**", "tools/verify/**", "tools/build.mjs", "tests/fixtures/pages/**", "package.json", "package-lock.json",
+            ".github/workflows/browser-checks.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: pages, run: "tools/verify/pages.py", browsers: webkit}
+          - {name: header, run: "tools/verify/header.py --built", browsers: "chromium webkit"}
+          - {name: requests, run: "tools/verify/requests.py --built --base origin/${{ github.base_ref }}", browsers: webkit}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # requests.py reads the base branch's files to compare against
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: astral-sh/setup-uv@v10
+      - name: Install ${{ matrix.browsers }}
+        run: uv run --no-project --with playwright==1.64.1 playwright install --with-deps ${{ matrix.browsers }}
+      - run: uv run --no-project --with playwright==1.64.1 python ${{ matrix.run }}

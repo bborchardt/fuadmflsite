@@ -84,6 +84,9 @@ would do until they're switched on.
   with the look's MFL skin and without it, and lists every style the skin changes on v2's parts. MFL's
   stylesheets are fetched on the first run into `tools/verify/mfl-skins/`, which git ignores; `--refresh` fetches them again
   and updates their fingerprints in `tools/verify/skins.json`, so a skin MFL changed shows in git diff.
+- On a pull request that touches the site, the header or the harness, GitHub runs `pages.py`,
+  `header.py --built` and `requests.py --built` against the pull request's base
+  (`.github/workflows/browser-checks.yml`); the others list differences to read, and are run by hand.
 
 ## What's where
 
