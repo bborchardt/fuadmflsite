@@ -73,6 +73,44 @@ export class Refused extends Error {
     }
 }
 
+// A move whose answer failed may still have been made, so what MFL holds after it decides: MFL's
+// answer, or the error it failed with
+export async function sendMove(url, init) {
+    try {
+        return {answer: await send(url, init()), error: null};
+    } catch (error) {
+        return {answer: "", error};
+    }
+}
+
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// What MFL holds after a move (`read`), read again while it doesn't show the move (`shows`): the
+// last read that worked, as a later one failing says nothing of the move; null when none did
+export async function readBack(read, shows, {wait = pause} = {}) {
+    let found = null;
+    for (let tries = 0; tries < READS; tries += 1) {
+        if (tries) {
+            await wait(READ_GAP);
+        }
+        found = (await read().catch(() => null)) || found;
+        if (found && shows(found)) {
+            break;
+        }
+    }
+    return found;
+}
+
+// Whether a move was made, from sendMove's `sent` and readBack's `found`: "made", "unread" (no
+// telling: MFL's answer to a move it made can be its own page, whose header warnings aren't a
+// refusal), or the error to show, the one the answer failed with or MFL's refusal
+export function moveOutcome(sent, found, shows) {
+    if (!found) {
+        return "unread";
+    }
+    return shows(found) ? "made" : sent.error || new Refused(refusal(sent.answer));
+}
+
 // The line for a move that didn't happen: "Couldn't drop Jackson: <MFL's reason>." or, with no
 // reason, "Couldn't drop Jackson. Reload the page and try again." `changed`: MFL changed something
 // anyway, and the page reloads to show it.
