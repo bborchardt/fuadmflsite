@@ -86,9 +86,13 @@ function reveal() {
 
 function boot(beta) {
     window.fuadVersion = versionHere;
-    // before the page shows: the member's look is in MFL's page already
     try {
         keepResponsive(document);
+    } catch (error) {
+        console.warn("[fuad] couldn't restore the phone layout:", error);
+    }
+    // before the page shows: the member's look is in MFL's page already
+    try {
         applyLook(document);
         markCommish(document);
     } catch (error) {
