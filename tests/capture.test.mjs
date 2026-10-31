@@ -85,6 +85,15 @@ test("an owner's name in Franchise setup's fields comes out, one word or not", (
     assert.match(out, /value="Dana's Team"/);
 });
 
+test("a value holding the other kind of quote comes out whole", () => {
+    const out = scrub(`<input name="FRANCHISE_OWNER_NAME0002" value="Mary O'Brien"><input value='Say "Hi" Bo' name="FRANCHISE_OWNER_NAME0003">
+        <input data-value="x" name="FRANCHISE_OWNER_NAME0004" value="Dana Lee"><input type="hidden" name="auth" value="ab'cd">`);
+    assert.doesNotMatch(out, /Brien|Hi|Bo'|Dana|cd/);
+    assert.match(out, /name="FRANCHISE_OWNER_NAME0002" value="Owner 0002">/);
+    assert.match(out, /data-value="x"/);
+    assert.match(scrub(`<input type="text" name="PHONE" value="Jo's cell 6125550199">`, [], {fields: true}), /name="PHONE" value="">/);
+});
+
 test("the board's per-member token and private message subjects come out", () => {
     const html = `<a href="post_add.pl?tid=1;auth=f00d1e">Reply</a><input type="hidden" name="auth" value="f00d1e">
         <input type='hidden' value='5ec' name='sid'><input name="subject" value="Hi">

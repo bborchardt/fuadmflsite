@@ -31,7 +31,9 @@ const CHECKS = {
         ...(text.match(/Owner:\s*[^,"'<]+|"owner_name"\s*:\s*"[^"]*"/g) || [])
             .filter((found) => !/(Owner:\s*|"owner_name"\s*:\s*")(Owner \d{4}|Someone|Commissioner)\b/.test(found)),
         ...(text.match(/<input\b[^>]*\bname\s*=\s*["']?FRANCHISE_OWNER_NAME\d{4}\b[^>]*>/gi) || [])
-            .filter((input) => /\bvalue\s*=/i.test(input) && !/\bvalue\s*=\s*(["'])(?:Owner \d{4})?\1/i.test(input))
+            // a value cut short leaves the rest of the name as stray attributes
+            .filter((input) => !/^<input(?:\s+[\w-]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s*\/?>$/i.test(input)
+                || (/\svalue\s*=/i.test(input) && !/\svalue\s*=\s*(?:"(?:Owner \d{4})?"|'(?:Owner \d{4})?')(?=[\s/>])/i.test(input)))
     ]
 };
 

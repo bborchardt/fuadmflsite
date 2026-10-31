@@ -140,6 +140,10 @@ export function withoutOwners(text, owners) {
     return out;
 }
 
+// an input's value attribute, whichever quotes it's in: either kind can be inside the other, as in
+// "Mary O'Brien"; the space before it keeps out data-value
+const VALUE = /(\svalue\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s>"']+)/i;
+
 // pages whose fields hold a member's own contact details, in forms scrub can't recognize
 export const PRIVATE_FIELDS = new Set(["csetup-FCONTACT", "csetup-FMOBILE"]);
 
@@ -152,7 +156,7 @@ export function scrub(html, owners = [], {fields = false} = {}) {
     const typed = fields
         ? html.replace(/<input\b[^>]*>/gi, (input) => (/\btype\s*=\s*["']?(?:hidden|radio|checkbox|submit|button|image|reset)\b/i.test(input)
             ? input
-            : input.replace(/(\bvalue\s*=\s*)(["'])[^"']*\2/i, "$1$2$2").replace(/(\bvalue\s*=\s*)(?!["'])[^\s>]+/i, '$1""')))
+            : input.replace(VALUE, '$1""')))
             .replace(/(<textarea\b[^>]*>)[\s\S]*?(<\/textarea>)/gi, "$1$2")
         : html;
     return withoutOwners(typed, owners)
@@ -160,11 +164,11 @@ export function scrub(html, owners = [], {fields = false} = {}) {
         .replace(/(apiKey\s*[=:]\s*)(["'])[^"']*\2/gi, "$1$2saved-sample$2")
         .replace(new RegExp(`([?&;](?:${SECRET})=)[^&;#"'\\s]+`, "gi"), "$1saved-sample")
         .replace(/<input\b[^>]*>/gi, (input) => (new RegExp(`\\bname\\s*=\\s*["']?(?:${SECRET})\\b`, "i").test(input)
-            ? input.replace(/(\bvalue\s*=\s*)(["'])[^"']*\2/i, "$1$2saved-sample$2")
+            ? input.replace(VALUE, '$1"saved-sample"')
             : input))
         // Franchise setup › Basic names each owner in a field, where a one-word name isn't recognized
         .replace(/<input\b[^>]*\bname\s*=\s*["']?FRANCHISE_OWNER_NAME(\d{4})\b[^>]*>/gi, (input, id) =>
-            input.replace(/(\bvalue\s*=\s*)(?:(["'])[^"']*\2|[^\s>]+)/i, `$1"Owner ${id}"`))
+            input.replace(VALUE, `$1"Owner ${id}"`))
         // MFL's list gives each message's opening as the link's title, as well as its subject
         .replace(/(<a\b[^>]*message_show\.pl[^>]*>)[\s\S]*?(<\/a>)/gi, (link, open, close) => `${open.replace(/\btitle\s*=\s*(["'])[\s\S]*?\1/i, "title='A message'")}A message${close}`)
         .replace(/tel:[^"'\s>]+/gi, "tel:5550100")
