@@ -37,9 +37,16 @@ SCREEN_CLASSES = ["fuad-lineup-on", "fuad-add-on", "fuad-drop-on", "fuad-ir-on",
 
 # page: {viewer: the screen class v2 sets, or None when MFL's page stays}. A guest gets MFL's login page
 # for what needs one, and the commissioner MFL's team picker or its own page for the Moves pages, All
-# moves, All bids and Rules; Power, History, Looks and the player page stay MFL's, read by v2's views.
+# moves, All bids and Rules; Power, History, Looks and the player page stay MFL's, read by v2's views;
+# the rest of Franchise setup stays MFL's too.
 EXPECTED = {
     "add_drop": {"guest": None, "member": "fuad-add-on", "commish": None},
+    "csetup-FACCESS": {"member": None, "commish": None},
+    "csetup-FCONTACT": {"member": None, "commish": None},
+    "csetup-FCUSTOM": {"member": None, "commish": None},
+    "csetup-FMOBILE": {"member": None, "commish": None},
+    "csetup-FRANCHISE": {"member": None, "commish": None},
+    "csetup-HMPGMOD": {"member": None, "commish": None},
     "csetup-SKIN": {"guest": None, "member": None, "commish": None},
     "home": {"guest": "fuad-home-on", "member": "fuad-home-on", "commish": "fuad-home-on"},
     "lineup": {"guest": None, "member": "fuad-lineup-on", "commish": None},

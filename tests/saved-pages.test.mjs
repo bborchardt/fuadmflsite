@@ -23,7 +23,7 @@ const CHECKS = {
     "an email address": (text) => (text.match(/[A-Za-z0-9._%+-]+(?:@|%40|&#64;)[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])
         .filter((address) => !/(@|%40|&#64;)example\.com$|@myfantasyleague\.com$|\.(png|jpe?g|gif|svg|webp)$/i.test(address)),
     "an apiKey": (text) => (text.match(/apiKey\s*[=:]\s*["'][^"']*["']|[?&;]APIKEY=[^&"'\s]+/gi) || []).filter((found) => !/saved-sample/.test(found)),
-    "a board token": (text) => (text.match(/[?&;](?:auth|sid|session|token)=[^&;#"'\s]+|name=["']?(?:auth|sid|session|token)["']?[^>]*value=["'][^"']*["']/gi) || [])
+    "a board token": (text) => (text.match(/[?&;](?:auth|sid|session|token|upload_key)=[^&;#"'\s]+|name=["']?(?:auth|sid|session|token|upload_key)["']?[^>]*value=["'][^"']*["']/gi) || [])
         .filter((found) => !/saved-sample|value=["']["']/.test(found)),
     "a private message": (text) => (text.match(/<a\b[^>]*message_show\.pl[^>]*>[^<]*/gi) || [])
         .filter((link) => !/>A message$/.test(link) || /\btitle\s*=\s*["'](?!A message["'])/i.test(link)),
@@ -37,12 +37,13 @@ const CHECKS = {
     ]
 };
 
-test("the contact screens' saved pages hold no typed value", () => {
+test("the contact screens' saved pages hold no typed or chosen value", () => {
     const found = pages.filter(({path}) => /\/csetup-(FCONTACT|FMOBILE)\.html$/.test(path))
         .map(({path, text}) => ({path, found: [
             ...(text.match(/<input\b[^>]*>/gi) || []).filter((input) => !/\btype\s*=\s*["']?(?:hidden|radio|checkbox|submit|button|image|reset)\b/i.test(input)
                 && /\bvalue\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>"']+)/i.test(input)),
-            ...(text.match(/<textarea\b[^>]*>[^<]+</gi) || [])
+            ...(text.match(/<textarea\b[^>]*>[^<]+</gi) || []),
+            ...(text.match(/<option\b[^>]*["'\s]selected(?![\w-])[^>]*>[^<]*/gi) || [])
         ]}))
         .filter((page) => page.found.length);
     assert.deepEqual(found, []);

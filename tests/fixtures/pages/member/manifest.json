@@ -178,6 +178,42 @@
       "url": "https://www44.myfantasyleague.com/2026/mb/post_edit.pl?bid=202650965&pid=23216675",
       "served": "https://www44.myfantasyleague.com/2026/mb/post_edit.pl?bid=202650965&pid=23216675",
       "status": 200
+    },
+    {
+      "name": "csetup-FRANCHISE",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FRANCHISE",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FRANCHISE",
+      "status": 200
+    },
+    {
+      "name": "csetup-FACCESS",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FACCESS",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FACCESS",
+      "status": 200
+    },
+    {
+      "name": "csetup-FCUSTOM",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FCUSTOM",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FCUSTOM",
+      "status": 200
+    },
+    {
+      "name": "csetup-FCONTACT",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FCONTACT",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FCONTACT",
+      "status": 200
+    },
+    {
+      "name": "csetup-FMOBILE",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FMOBILE",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=FMOBILE",
+      "status": 200
+    },
+    {
+      "name": "csetup-HMPGMOD",
+      "url": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=HMPGMOD",
+      "served": "https://www44.myfantasyleague.com/2026/csetup?L=50965&C=HMPGMOD",
+      "status": 200
     }
   ]
 }
