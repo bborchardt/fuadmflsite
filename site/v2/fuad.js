@@ -50,9 +50,11 @@ function leaveLink(text) {
     return anchor;
 }
 
-// before the link loads the page, so the header finds no choice (loader.js: LEAVE_BETA)
+// before the link loads the page, so the header finds no choice (loader.js: LEAVE_BETA); not when
+// it opens in another tab or window, which would leave this one in the beta without its choice
 document.addEventListener("click", (event) => {
-    if (event.target.closest && event.target.closest(`a[${LEAVE_BETA}]`)) {
+    const elsewhere = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+    if (!elsewhere && event.target.closest && event.target.closest(`a[${LEAVE_BETA}]`)) {
         storage.set(BETA_KEY, null);
     }
 }, true);
