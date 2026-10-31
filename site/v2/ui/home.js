@@ -8,7 +8,7 @@ import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
-import {withParam} from "../loader.js";
+import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, dayText, homePhase, leagueAlerts,
@@ -85,7 +85,7 @@ function alertRows(alerts) {
 // the beta's way back, or the offer of one (docs/design.md: previews and the beta)
 function betaLine({inBeta, beta}) {
     if (inBeta) {
-        return `<p class="fuad-beta-line">You’re using the beta. ${inBeta.feedback ? `<a href="${esc(inBeta.feedback)}">Send feedback</a> · ` : ""}<a href="${esc(withParam(window.location.href, "fuadBeta", "off"))}">Back to the classic site</a></p>`;
+        return `<p class="fuad-beta-line">You’re using the beta. ${inBeta.feedback ? `<a href="${esc(inBeta.feedback)}">Send feedback</a> · ` : ""}<a href="${esc(leaveBetaHref(window.location))}" ${LEAVE_BETA}>Back to the classic site</a></p>`;
     }
     if (beta) {
         return `<p class="fuad-beta-line">A new version of the league site is in beta. <a href="${esc(withParam(window.location.href, "fuadBeta", "on"))}">Try it</a></p>`;

@@ -2,7 +2,7 @@
 // which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
 import {pageContext, start} from "./ui/app.js";
-import {PAGES_BASE, betaOffer, decide, offeredVersion, withParam} from "./loader.js";
+import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, withParam} from "./loader.js";
 import {applyLook, keepResponsive, markCommish} from "./ui/looks.js";
 
 const PREVIEW_KEY = "fuad.preview";
@@ -44,6 +44,21 @@ function link(text, href) {
     return anchor;
 }
 
+function leaveLink(text) {
+    const anchor = link(text, leaveBetaHref(window.location));
+    anchor.setAttribute(LEAVE_BETA, "");
+    return anchor;
+}
+
+// before the link loads the page, so the header finds no choice (loader.js: LEAVE_BETA); not when
+// it opens in another tab or window, which would leave this one in the beta without its choice
+document.addEventListener("click", (event) => {
+    const elsewhere = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+    if (!elsewhere && event.target.closest && event.target.closest(`a[${LEAVE_BETA}]`)) {
+        storage.set(BETA_KEY, null);
+    }
+}, true);
+
 function showBar({mode, base, feedback, failed}) {
     const drawn = document.getElementById("fuad-preview");
     if (drawn) {
@@ -54,7 +69,7 @@ function showBar({mode, base, feedback, failed}) {
     const label = isLocal(base) ? `local ${versionOf(base)}` : versionOf(base);
     if (failed && mode === "beta") {
         bar.textContent = "The beta couldn't load, so this is the current site. ";
-        bar.append(link("Leave the beta", withParam(window.location.href, "fuadBeta", "off")));
+        bar.append(leaveLink("Leave the beta"));
     } else if (failed) {
         bar.textContent = `Preview of ${label} failed to load, so it's been turned off. `
             + (isLocal(base)
@@ -65,7 +80,7 @@ function showBar({mode, base, feedback, failed}) {
         if (feedback) {
             bar.append(link("Send feedback", feedback), " · ");
         }
-        bar.append(link("Back to the current site", withParam(window.location.href, "fuadBeta", "off")));
+        bar.append(leaveLink("Back to the current site"));
     } else {
         bar.textContent = `Previewing ${label}. `;
         bar.append(link("Exit preview", withParam(window.location.href, "fuadPreview", "off")));

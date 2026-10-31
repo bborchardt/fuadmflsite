@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
 import {betaOffer, decide, offeredVersion, previewBase, withParam} from "../site/v1/loader.js";
-import {betaOffer as betaOfferV2} from "../site/v2/loader.js";
+import {betaOffer as betaOfferV2, leaveBetaHref} from "../site/v2/loader.js";
 
 const PAGES = "https://bborchardt.github.io/fuadmflsite/";
 const here = `${PAGES}v1/`;
@@ -104,4 +104,11 @@ test("v2 finds the repo's Pages address from where it runs; a local preview, fro
     assert.ok(allowed("http://localhost:8000/v2/"));
     assert.ok(!allowed("https://elsewhere.github.io/fuadmflsite/v2/"));
     assert.ok(!allowed(`${PAGES_BASE}v2/../x/`));
+});
+
+test("v2's way out of the beta is the page itself, loaded afresh, with no opt-out in the address to come back", () => {
+    const at = (href) => leaveBetaHref(new URL(href));
+    assert.equal(at("https://www44.myfantasyleague.com/2026/home/50965#home-page"), "/2026/home/50965");
+    assert.equal(at("https://www44.myfantasyleague.com/2026/lineup?L=50965"), "/2026/lineup?L=50965");
+    assert.doesNotMatch(at("https://www44.myfantasyleague.com/2026/home/50965?X=1#0"), /fuadBeta|#/);
 });

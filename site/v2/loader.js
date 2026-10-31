@@ -90,6 +90,13 @@ export function decide({here, versionHere, params, preview, beta, offer, offered
     return {preview, beta, load: null};
 }
 
+// The beta's way back: this page loaded afresh (without its #, which would only move within it), the
+// stored choice cleared as the link is followed (fuad.js). Not ?fuadBeta=off: switching Safari to
+// desktop mode loads the address a page was first opened with, so an opt-out kept there came back
+// after the member had opted in again.
+export const LEAVE_BETA = "data-fuad-leave-beta";
+export const leaveBetaHref = (location) => location.pathname + location.search;
+
 export function withParam(href, name, value) {
     const url = new URL(href);
     url.searchParams.set(name, value);
