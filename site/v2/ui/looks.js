@@ -27,14 +27,17 @@ export function skinFolder(doc) {
 
 // A member who turns off Franchise setup › Customize › Use Responsive View gets pages without the
 // viewport tag and the skin's responsive.css. v2 lays itself out by the window's width, so a phone
-// would get its desktop layout, shrunk; both go back as MFL would have written them. The browser's own
-// Request Desktop Site is the way to the desktop layout.
-export function keepResponsive(doc = document) {
-    if (!doc.querySelector('meta[name="viewport"]')) {
-        const meta = doc.createElement("meta");
+// would get its desktop layout, shrunk; both go back as MFL would have written them.
+export function keepResponsive(doc = document, browser = globalThis) {
+    let meta = doc.querySelector('meta[name="viewport"]');
+    if (!meta) {
+        meta = doc.createElement("meta");
         meta.setAttribute("name", "viewport");
         meta.setAttribute("content", "initial-scale=1.0, width=device-width");
         doc.head.appendChild(meta);
+    }
+    if (desktopOnPhone(browser)) {
+        meta.setAttribute("content", "width=980");
     }
     const skin = doc.querySelector("link#skin[href]");
     if (skinFolder(doc) && !doc.querySelector("link#responsive")) {
@@ -44,6 +47,14 @@ export function keepResponsive(doc = document) {
         link.setAttribute("href", skin.getAttribute("href").replace(/[^/]+\.css(?=[?#]|$)/i, "responsive.css"));
         skin.parentNode.insertBefore(link, skin.nextSibling);
     }
+}
+
+// An iPhone's Request Desktop Website: Safari says it's a Mac (with a touch screen, which no Mac has),
+// but MFL sends the same page with its viewport tag, which keeps the phone layout. The width is what
+// Safari gives a page without the tag. An iPad, whose screen fits the desktop layout, is left alone.
+function desktopOnPhone({navigator, screen}) {
+    return Boolean(navigator && screen) && /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1
+        && Math.min(screen.width, screen.height) < 600;
 }
 
 export function lookOf(doc, looks = LOOKS) {

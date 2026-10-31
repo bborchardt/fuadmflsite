@@ -44,6 +44,25 @@ test("a page without Responsive View gets the viewport tag and the skin's respon
     assert.equal(bare.querySelector("link#responsive"), null);
 });
 
+test("an iPhone asking for the desktop site gets the desktop width; an iPad, a Mac or a phone as itself doesn't", () => {
+    const mac = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15";
+    const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1";
+    const viewport = (userAgent, maxTouchPoints, width, height) => {
+        const shown = doc(readFileSync(new URL("./fixtures/pages/member/home.html", import.meta.url), "utf8"));
+        keepResponsive(shown, {navigator: {userAgent, maxTouchPoints}, screen: {width, height}});
+        return shown.querySelector('meta[name="viewport"]').getAttribute("content");
+    };
+    assert.equal(viewport(mac, 5, 390, 844), "width=980");
+    assert.equal(viewport(mac, 5, 932, 430), "width=980");
+    assert.equal(viewport(mac, 5, 744, 1133), "initial-scale=1.0, width=device-width");
+    assert.equal(viewport(mac, 0, 390, 844), "initial-scale=1.0, width=device-width");
+    assert.equal(viewport(iphone, 5, 390, 844), "initial-scale=1.0, width=device-width");
+    const off = doc("<html><head></head><body></body></html>");
+    keepResponsive(off, {navigator: {userAgent: mac, maxTouchPoints: 5}, screen: {width: 390, height: 844}});
+    assert.equal(off.querySelectorAll('meta[name="viewport"]').length, 1);
+    assert.equal(off.querySelector('meta[name="viewport"]').getAttribute("content"), "width=980");
+});
+
 test("the commissioner's view is marked, whatever the look; a member's isn't", () => {
     const shown = page("BlueMesh");
     applyLook(shown, lookOf(shown, looks));
