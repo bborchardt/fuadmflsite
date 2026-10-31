@@ -5,11 +5,12 @@
 
 import {API_BASE, displayName, exportUrl, fetchExport} from "../lib/mfl.js";
 import {playersFromExport} from "../lib/league.js";
+import {mflTime} from "../lib/zone.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
-import {recentMoves} from "./home-model.js";
+import {clock, dayText, recentMoves} from "./home-model.js";
 import {moveRows} from "./move-rows.js";
 import {playerIdOf, readBidRun, runPlayers} from "./bids-model.js";
 import {plural} from "./format.js";
@@ -125,10 +126,11 @@ export function drawAllMoves({context, franchiseId, teamHref}) {
 
 // ---- All bids ----
 
-// "Wed Oct 1 11:00:00 p.m. CT 2025" → {day: "Wed Oct 1", time: "11 p.m."}
-function runLabel(text) {
-    const match = /^(\w+ \w+ \d+) (\d+):(\d+):\d+ ([ap])\.m\./.exec(String(text).trim());
-    return match ? {day: match[1], time: `${match[2]}${match[3] === "00" ? "" : `:${match[3]}`} ${match[4]}.m.`} : {day: String(text).trim(), time: ""};
+// a run's day and time in the league's zone, from its moment, which the option's value is; else from
+// MFL's text ("Wed Oct 1 11:00:00 p.m. CT 2025"), written in the zone the member picked on MFL
+function runLabel(option) {
+    const at = /^\d{9,}$/.test(option.value) ? Number(option.value) : mflTime(option.textContent);
+    return at ? {day: dayText(at), time: clock(at).replace(":00 ", " ")} : {day: String(option.textContent).trim(), time: ""};
 }
 
 // the bids MFL awarded that have no won-bid transaction for that team and player: the commissioner
@@ -182,7 +184,7 @@ export function drawAllBids({context, franchiseId, teamHref}) {
     const options = [...select.options];
     const at = Math.max(0, options.findIndex((option) => option.selected));
     const period = options[at].value;
-    const label = runLabel(options[at].textContent);
+    const label = runLabel(options[at]);
     const list = runPlayers(groups);
     const bids = list.reduce((sum, player) => sum + (player.won ? 1 : 0) + player.bids.length, 0);
     // another run is MFL's own form with that run picked

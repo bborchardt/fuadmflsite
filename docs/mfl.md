@@ -275,6 +275,10 @@ Each is an ordinary page form, posted from the logged-in browser.
   phone lays the page out about 980px wide. v2 puts both back (`keepResponsive` in `ui/looks.js`).
 - **An iPhone's Request Desktop Website** gets the same pages, viewport tag and all, so Safari keeps
   the phone layout; v2 widens the viewport to 980px there (`keepResponsive`). An iPad is left as is.
+- **Time Zone** (Franchise setup › Customize, `TIME_ZONE<team>`: ET, CT, MT, PT, AKT, HT or GMT) is
+  the zone MFL's pages write times in for that member, as "Thu Oct 22 12:00:00 a.m. ET 2026"; guests
+  get the league's. The exports' times are seconds. v2 shows every time in the league's zone, MFL's
+  text read through `mflTime` (`lib/zone.js`); a bid run's `PERIOD` option is its moment in seconds.
 - **MFL's app** doesn't run home page messages, so none of this code.
 
 ## GitHub

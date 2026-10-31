@@ -6,11 +6,14 @@
 // the page is marked only once it's done, so a page v2 can't read stays as MFL drew it.
 
 import {clean, esc, initials} from "./html.js";
+import {clock, dayText} from "./home-model.js";
+import {mflTime} from "../lib/zone.js";
 
-// "Wed Sep 9 11:11:12 p.m. CT 2026" → "Wed Sep 9 · 11:11 p.m."
+// "Wed Sep 9 11:11:12 p.m. CT 2026" → "Wed Sep 9 · 11:11 p.m.", in the league's zone whatever zone the
+// member picked on MFL; text that isn't a time as it is
 export function shortDate(text) {
-    const match = clean(text).match(/^(\w{3} \w{3} \d{1,2}) (\d{1,2}:\d{2}):\d{2} ([ap]\.m\.)/);
-    return match ? `${match[1]} · ${match[2]} ${match[3]}` : clean(text);
+    const at = mflTime(clean(text));
+    return at ? `${dayText(at)} · ${clock(at)}` : clean(text);
 }
 
 // "… Message Board / Free Agent Contracts (1,204 hits)" → {title, hits}
@@ -121,8 +124,8 @@ export function restyleTopic(doc = document, {guest = false} = {}) {
 
 // "Sun Oct 18 3:29:08 p.m. CT 2026" → "Oct 18", as Home's list dates a topic
 export function dayOnly(text) {
-    const match = clean(text).match(/^\w{3} (\w{3} \d{1,2}) /);
-    return match ? match[1] : clean(text);
+    const at = mflTime(clean(text));
+    return at ? dayText(at).replace(/^\w+ /, "") : clean(text);
 }
 
 // a topic list row's parts, or null

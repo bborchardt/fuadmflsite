@@ -2,7 +2,8 @@
 // saved copies.
 
 import {asArray} from "../lib/mfl.js";
-import {ORDINAL, TOPICS} from "./home-model.js";
+import {ORDINAL, TOPICS, dayText} from "./home-model.js";
+import {mflTime} from "../lib/zone.js";
 
 const entities = {amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'"};
 const decode = (text) => String(text || "").replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (whole, code) => {
@@ -52,7 +53,8 @@ export function pageTopics(html, limit = TOPICS) {
         const id = (row.match(/href=["']?topic_show\.pl\?[^"'>]*\btid=(\d+)/i) || [])[1];
         const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((cell) => decode(cell[1].replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim());
         if (id && cells[0]) {
-            topics.push({id, title: cells[0], when: (/^\w+ (\w+ \d+)\b/.exec(cells[3] || "") || [])[1] || ""});
+            const at = mflTime(cells[3]);
+            topics.push({id, title: cells[0], when: at ? dayText(at).replace(/^\w+ /, "") : ""});
         }
     }
     return topics.slice(0, limit);
