@@ -141,8 +141,8 @@ export function withoutOwners(text, owners) {
 }
 
 // an input's value attribute, whichever quotes it's in: either kind can be inside the other, as in
-// "Mary O'Brien"; the space before it keeps out data-value
-const VALUE = /(\svalue\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s>"']+)/i;
+// "Mary O'Brien"; a space or the previous attribute's quote before it keeps out data-value
+const VALUE = /([\s"']value\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s>"']+)/i;
 
 // pages whose fields hold a member's own contact details, in forms scrub can't recognize
 export const PRIVATE_FIELDS = new Set(["csetup-FCONTACT", "csetup-FMOBILE"]);

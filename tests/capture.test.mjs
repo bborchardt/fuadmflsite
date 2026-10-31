@@ -91,6 +91,7 @@ test("a value holding the other kind of quote comes out whole", () => {
     assert.doesNotMatch(out, /Brien|Hi|Bo'|Dana|cd/);
     assert.match(out, /name="FRANCHISE_OWNER_NAME0002" value="Owner 0002">/);
     assert.match(out, /data-value="x"/);
+    assert.match(scrub('<input type="hidden" name="auth"value="f00d1e">'), /name="auth"value="saved-sample">/);
     assert.match(scrub(`<input type="text" name="PHONE" value="Jo's cell 6125550199">`, [], {fields: true}), /name="PHONE" value="">/);
 });
 
