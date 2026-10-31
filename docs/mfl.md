@@ -268,6 +268,8 @@ Each is an ordinary page form, posted from the logged-in browser.
 - **Use Responsive View** (Franchise setup › Customize, `USE_RESPONSIVE_SITE<team>`), when a member
   turns it off, leaves the viewport tag and `link#responsive` out of every page they're served, so a
   phone lays the page out about 980px wide. v2 puts both back (`keepResponsive` in `ui/looks.js`).
+- **An iPhone's Request Desktop Website** gets the same pages, viewport tag and all, so Safari keeps
+  the phone layout; v2 widens the viewport to 980px there (`keepResponsive`). An iPad is left as is.
 - **MFL's app** doesn't run home page messages, so none of this code.
 
 ## GitHub
