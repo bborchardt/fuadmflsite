@@ -15,7 +15,7 @@ import {
     lineupProblems, myAlerts, nextBidRun, recentMoves
 } from "./home-model.js";
 import {draftPicked, kickoffAt} from "./context.js";
-import {moduleTopics, readChat, tradeOffers} from "./home-feeds.js";
+import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";
 import {moveRows} from "./move-rows.js";
 
 const CHAT_POLL = 15 * 1000;
@@ -236,21 +236,17 @@ function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
             ? `<ul class="fuad-rows">${topics.map((topic) => `<li><a class="fuad-topic" href="${esc(threadHref(topic.id))}"><span class="fuad-row-title">${esc(topic.title)}</span><span class="fuad-meta">${esc(topic.when)}</span></a></li>`).join("")}</ul>`
             : '<p class="fuad-muted fuad-empty">No topics yet.</p>';
     };
-    // logged out the board's export isn't readable, so the topics come from MFL's own module on the
-    // page, when the home page has it
+    // logged out the board's export isn't readable, so the topics come from the board's own page
     if (!loggedIn) {
-        drawPanel(mount, {
-            heading: "Message board",
-            actions,
-            what: "the message board",
-            load: () => moduleTopics([...document.querySelectorAll("#message_board_summary td.topic a[href]")]
-                .map((a) => ({href: a.href, text: a.textContent}))).slice(0, 5),
-            render: (topics, body) => {
-                body.innerHTML = topics.length
-                    ? `<ul class="fuad-rows">${topics.map((topic) => `<li><a class="fuad-topic" href="${esc(threadHref(topic.id))}"><span class="fuad-row-title">${esc(topic.title)}</span></a></li>`).join("")}</ul>`
-                    : "";
+        const page = `${window.location.origin}/${context.season}/mb/board_show.pl?bid=${encodeURIComponent(`${context.season}${context.leagueId}`)}`;
+        const loadPage = async () => {
+            const response = await mflFetch(page, {cache: "no-store"});
+            if (!response.ok) {
+                throw Object.assign(new Error(`the board's page returned HTTP ${response.status}`), {status: response.status});
             }
-        });
+            return pageTopics(await response.text());
+        };
+        drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}.guest`, load: loadPage, render});
         return;
     }
     drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}`, load, render});

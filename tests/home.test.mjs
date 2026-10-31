@@ -7,7 +7,7 @@ import {
     boardTopics, calendarDates, comingUp, contractTopic, freeAgencyEnd, homePhase, leagueAlerts, lineupProblems,
     myAlerts, nextBidRun, recentMoves
 } from "../site/v2/ui/home-model.js";
-import {moduleTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";
+import {pageTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";
 import {cutDownAt} from "../site/v2/lib/violations.js";
 
 
@@ -314,11 +314,13 @@ test("chat: oldest first, private messages only to or from the viewer, as saved 
     assert.deepEqual(readChat('<messages><message id="1791682615a" franchise_id="0002" to="" message=":clear:"/></messages>', {viewer: "0001"}), []);
 });
 
-test("board topics from MFL's own home page module, for guests", () => {
-    assert.deepEqual(moduleTopics([
-        {href: "https://www44.myfantasyleague.com/2026/options?L=48571&O=28&TOPIC_ID=6749013", text: "Fuad bot"},
-        {href: "https://www44.myfantasyleague.com/2026/options?L=48571&O=28&ACTION=add", text: "Post New Topic"}
-    ]), [{id: "6749013", title: "Fuad bot"}]);
+test("board topics from the board's own page, for guests: the newest five, as saved 28 Oct 2026", () => {
+    const html = readFileSync(new URL("./fixtures/pages/guest/mb-board_show.html", import.meta.url), "utf8");
+    assert.deepEqual(pageTopics(html).map((t) => [t.id, t.title, t.when]), [
+        ["6758929", "New League Site", "Oct 25"], ["6737097", "Free Agent Contracts", "Oct 22"], ["6749013", "Fuad bot", "Oct 4"],
+        ["6744371", "Standings", "Oct 3"], ["6742184", "Conditional starters", "Oct 1"]
+    ]);
+    assert.deepEqual(pageTopics("<table><tr><th>Topic</th></tr></table>"), []);
 });
 
 test("trade offers waiting for the viewer, from pending trades", () => {
