@@ -41,8 +41,12 @@ export function readChat(xml, {viewer}) {
 }
 
 // MFL's board page (`mb/board_show.pl`), which guests can open though not the board's export: the
-// newest topics first, as [{id, title, when}], `when` the day of the last post ("Oct 25")
+// newest topics first, as [{id, title, when}], `when` the day of the last post ("Oct 25"); null with no
+// topic list, as on the login page a league that hides its board from guests answers with
 export function pageTopics(html, limit = TOPICS) {
+    if (!/\btopiclist\b/.test(String(html))) {
+        return null;
+    }
     const topics = [];
     for (const [, row] of String(html).matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
         const id = (row.match(/href=["']?topic_show\.pl\?[^"'>]*\btid=(\d+)/i) || [])[1];

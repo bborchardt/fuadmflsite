@@ -7,7 +7,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
 import {drawPanel} from "./panel.js";
-import {mflFetch, pageFetch} from "./page-fetch.js";
+import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
 import {
@@ -244,9 +244,14 @@ function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
             if (!response.ok) {
                 throw Object.assign(new Error(`the board's page returned HTTP ${response.status}`), {status: response.status});
             }
-            return pageTopics(await response.text());
+            const topics = pageTopics(await response.text());
+            if (!topics) {
+                throw new Error("the board's page has no topic list");
+            }
+            return topics;
         };
-        drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}.guest`, load: loadPage, render});
+        // kept as long as members' board export
+        drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}.guest`, maxAge: MOVES_KEPT, load: loadPage, render});
         return;
     }
     drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}`, load, render});

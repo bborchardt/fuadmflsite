@@ -320,7 +320,8 @@ test("board topics from the board's own page, for guests: the newest five, as sa
         ["6758929", "New League Site", "Oct 25"], ["6737097", "Free Agent Contracts", "Oct 22"], ["6749013", "Fuad bot", "Oct 4"],
         ["6744371", "Standings", "Oct 3"], ["6742184", "Conditional starters", "Oct 1"]
     ]);
-    assert.deepEqual(pageTopics("<table><tr><th>Topic</th></tr></table>"), []);
+    assert.deepEqual(pageTopics('<table class="topiclist"><tr><th>Topic</th></tr></table>'), []);
+    assert.equal(pageTopics(readFileSync(new URL("./fixtures/pages/guest/lineup.html", import.meta.url), "utf8")), null);
 });
 
 test("trade offers waiting for the viewer, from pending trades", () => {
