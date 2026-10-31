@@ -120,8 +120,9 @@ MFL documents little of this.
   `ADD_BID_DROP` (a claim with no drop ends `_0000`), and the comment's line breaks mangled to `br/`. Until the run, each group also shows in `transactions` as
   a `BBID_WAIVER_REQUEST` (`"transaction":"<round>|<claims>"`).
 - **The board's pages:** a topic is `options?L=<league>&O=28&TOPIC_ID=<thread id>`, a new one
-  `options?L=<league>&O=28&ACTION=add`. The home page's "10 Newest Message Board Topics" module
-  (`#message_board_summary`, links in `td.topic`) shows to guests too.
+  `options?L=<league>&O=28&ACTION=add`. The board's page, `mb/board_show.pl?bid=<season><league>`,
+  opens for guests too: a row per topic (Topic, Poster, Posts, Last Post), the latest post first, its
+  link `topic_show.pl?bid=…&tid=<thread id>`.
 - **Pending trades** (`export?TYPE=pendingTrades`) are the logged-in owner's, both offered and
   received; with none it's an empty `{"pendingTrades":{}}`. `transactions` also lists each offer as a
   `TRADE_PROPOSAL` and each refusal as a `TRADE_REJECTION` (`by_commish` when the commissioner acted

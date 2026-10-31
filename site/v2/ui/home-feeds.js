@@ -2,7 +2,7 @@
 // saved copies.
 
 import {asArray} from "../lib/mfl.js";
-import {ORDINAL} from "./home-model.js";
+import {ORDINAL, TOPICS} from "./home-model.js";
 
 const entities = {amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'"};
 const decode = (text) => String(text || "").replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (whole, code) => {
@@ -40,11 +40,22 @@ export function readChat(xml, {viewer}) {
     return messages.sort((a, b) => (a.at || 0) - (b.at || 0));
 }
 
-// MFL's own "Newest Message Board Topics" module on the home page, which guests can see too:
-// [{id, title}] from its links
-export function moduleTopics(links) {
-    return links.map((link) => ({id: (link.href.match(/[?&]TOPIC_ID=(\d+)/) || [])[1], title: link.text.trim()}))
-        .filter((topic) => topic.id && topic.title);
+// MFL's board page (`mb/board_show.pl`), which guests can open though not the board's export: the
+// newest topics first, as [{id, title, when}], `when` the day of the last post ("Oct 25"); null with no
+// topic list, as on the login page a league that hides its board from guests answers with
+export function pageTopics(html, limit = TOPICS) {
+    if (!/\btopiclist\b/.test(String(html))) {
+        return null;
+    }
+    const topics = [];
+    for (const [, row] of String(html).matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+        const id = (row.match(/href=["']?topic_show\.pl\?[^"'>]*\btid=(\d+)/i) || [])[1];
+        const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((cell) => decode(cell[1].replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim());
+        if (id && cells[0]) {
+            topics.push({id, title: cells[0], when: (/^\w+ (\w+ \d+)\b/.exec(cells[3] || "") || [])[1] || ""});
+        }
+    }
+    return topics.slice(0, limit);
 }
 
 const surname = (player) => String(player.fullName).split(" ").slice(1).join(" ") || player.fullName;

@@ -12,7 +12,7 @@ const DAY = 24 * HOUR;
 const KEEP = "fuad.keep.";
 const WAIT_KEY = "fuad.mflWait";
 const WAIT = 30 * 1000;
-const MOVES_KEPT = 2 * MINUTE;
+export const MOVES_KEPT = 2 * MINUTE;
 
 export const leagueDate = (date) => date.toLocaleDateString("en-CA", {timeZone: TIME_ZONE});
 
