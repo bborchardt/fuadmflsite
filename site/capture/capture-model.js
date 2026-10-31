@@ -144,20 +144,22 @@ export function withoutOwners(text, owners) {
 // "Mary O'Brien"; a space or the previous attribute's quote before it keeps out data-value
 const VALUE = /([\s"']value\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s>"']+)/i;
 
-// pages whose fields hold a member's own contact details, in forms scrub can't recognize
+// pages whose fields hold a member's own contact details, in forms scrub can't recognize: typed or chosen
 export const PRIVATE_FIELDS = new Set(["csetup-FCONTACT", "csetup-FMOBILE"]);
 
 // The repo is public: members' email addresses, phone numbers, owners' names, private message
 // subjects, MFL's apiKey and the board's per-member token (`auth`, which signs its actions) come out.
 // MFL's own support address stays, as it's on every page; `logo@2x.png` isn't an address. With
-// `fields`, every value typed into a field comes out too.
+// `fields`, every value typed into a field or chosen in a list comes out too.
 export function scrub(html, owners = [], {fields = false} = {}) {
-    const SECRET = "auth|sid|session|token|apikey";
+    const SECRET = "auth|sid|session|token|apikey|upload_key";
     const typed = fields
         ? html.replace(/<input\b[^>]*>/gi, (input) => (/\btype\s*=\s*["']?(?:hidden|radio|checkbox|submit|button|image|reset)\b/i.test(input)
             ? input
             : input.replace(VALUE, '$1""')))
             .replace(/(<textarea\b[^>]*>)[\s\S]*?(<\/textarea>)/gi, "$1$2")
+            // a select shows its first choice ("Select A State") without one marked
+            .replace(/(<option\b[^>]*?)\s+selected(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>"']+))?/gi, "$1")
         : html;
     return withoutOwners(typed, owners)
         .replace(/[A-Za-z0-9._%+-]+(@|%40|&#64;|&#x40;)[A-Za-z0-9.-]+\.[A-Za-z]{2,}/gi, (address, at) => (/(myfantasyleague\.com|\.(png|jpe?g|gif|svg|webp))$/i.test(address) ? address : `owner${at}example.com`))

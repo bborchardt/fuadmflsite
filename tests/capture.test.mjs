@@ -93,6 +93,10 @@ test("a value holding the other kind of quote comes out whole", () => {
     assert.match(out, /data-value="x"/);
     assert.match(scrub('<input type="hidden" name="auth"value="f00d1e">'), /name="auth"value="saved-sample">/);
     assert.match(scrub(`<input type="text" name="PHONE" value="Jo's cell 6125550199">`, [], {fields: true}), /name="PHONE" value="">/);
+    const chosen = scrub(`<select name="STATE"><option value="">Select A State</option><option value="MN" selected="selected">Minnesota</option><option value="WI" SELECTED>Wisconsin</option></select>`, [], {fields: true});
+    assert.doesNotMatch(chosen, /selected/i);
+    assert.match(chosen, /<option value="MN">Minnesota/);
+    assert.match(scrub('<input type="hidden" name="UPLOAD_KEY" value="0123abcd">'), /value="saved-sample"/);
 });
 
 test("the board's per-member token and private message subjects come out", () => {
