@@ -265,6 +265,9 @@ Each is an ordinary page form, posted from the logged-in browser.
   modules already scroll sideways.
 - **The skin** a page is drawn in is its `link#skin`, `skins17/<folder>/<folder>.css` (with
   `link#responsive` from the same folder): the member's own, or the league's.
+- **Use Responsive View** (Franchise setup › Customize, `USE_RESPONSIVE_SITE<team>`), when a member
+  turns it off, leaves the viewport tag and `link#responsive` out of every page they're served, so a
+  phone lays the page out about 980px wide. v2 puts both back (`keepResponsive` in `ui/looks.js`).
 - **MFL's app** doesn't run home page messages, so none of this code.
 
 ## GitHub
