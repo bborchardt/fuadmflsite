@@ -262,6 +262,10 @@ Each is an ordinary page form, posted from the logged-in browser.
 ## Layout
 
 - **Tabs:** up to 10 custom tabs ("Main" is fixed). MFL's nav bar and dropdown menu can't be changed.
+  With Main the only tab, the home page has no tabs at all (no `#homepagetabs`, no `#tabcontent0`),
+  only Main's `#homepagecolumns`, so v2 knows the home page by its address. The setup screen
+  (commissioner's Home Page Modules) shows a tab for a home page message still placed in it, though
+  the home page doesn't.
 - **Phones:** the BlueMesh skin hides the nav bar below 54.25em; `fuad.css` brings it back. Wide
   modules already scroll sideways.
 - **The skin** a page is drawn in is its `link#skin`, `skins17/<folder>/<folder>.css` (with

@@ -271,7 +271,8 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
-    if (!context || !document.getElementById("tabcontent0")) {
+    // the home page, known by its address: with only the Main tab, MFL draws its modules with no tabs
+    if (!context || here.path !== "home") {
         return false;
     }
 
