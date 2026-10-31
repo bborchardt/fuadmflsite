@@ -3,10 +3,10 @@
 # screens.py compare and phases.py list differences for a person to read, so they're run by hand.
 name: Browser checks
 
+# Runs on every pull request so its checks can be required: when nothing they cover changed, each job
+# passes without running the harness, as a paths filter would leave them waiting forever instead.
 on:
   pull_request:
-    paths: ["site/**", "mfl/**", "tools/verify/**", "tools/build.mjs", "tests/fixtures/pages/**", "package.json", "package-lock.json",
-            ".github/workflows/browser-checks.yml"]
 
 permissions:
   contents: read
@@ -32,14 +32,30 @@ jobs:
         with:
           # requests.py reads the base branch's files to compare against
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - name: See if anything checked changed
+        id: changed
+        run: |
+          if git diff --name-only "origin/$BASE_REF...HEAD" |
+             grep -qE '^(site/|mfl/|tools/verify/|tools/build\.mjs$|tests/fixtures/pages/|package(-lock)?\.json$|\.github/workflows/browser-checks\.yml$)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nothing these checks cover changed; passing without running them."
+          fi
+        env:
+          BASE_REF: ${{ github.base_ref }}
+      - if: steps.changed.outputs.run
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - uses: astral-sh/setup-uv@v10.3.3
-      - name: Install ${{ matrix.browsers }}
+      - if: steps.changed.outputs.run
+        run: npm ci
+      - if: steps.changed.outputs.run
+        uses: astral-sh/setup-uv@v10.3.3
+      - if: steps.changed.outputs.run
+        name: Install ${{ matrix.browsers }}
         run: uv run --no-project --with playwright==1.64.1 playwright install --with-deps ${{ matrix.browsers }}
-      - run: uv run --no-project --with playwright==1.64.1 python ${{ matrix.run }}
+      - if: steps.changed.outputs.run
+        run: uv run --no-project --with playwright==1.64.1 python ${{ matrix.run }}
         env:
           BASE_REF: ${{ github.base_ref }}
