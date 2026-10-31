@@ -158,6 +158,17 @@ export async function mflSend(url, init) {
     return response;
 }
 
+// Promise.all for reads asked at once: when several fail, a refusal (HTTP 429) is the error
+// thrown, whichever failed first, so the page says MFL asked us to wait
+export async function allAtOnce(reads) {
+    const settled = await Promise.allSettled(reads);
+    const failed = settled.filter((result) => result.status === "rejected").map((result) => result.reason);
+    if (failed.length) {
+        throw failed.find((error) => error && error.status === 429) || failed[0];
+    }
+    return settled.map((result) => result.value);
+}
+
 // how long until MFL may be asked again, in ms
 export function waitLeft() {
     return Math.max(0, (Number(storage.get(WAIT_KEY)) || 0) - Date.now());

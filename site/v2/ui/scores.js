@@ -9,6 +9,7 @@ import {gameStates, readStats} from "./live-scoring.js";
 import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
 import {ordinal} from "./format.js";
+import {allAtOnce} from "./page-fetch.js";
 
 const MINUTE = 60 * 1000;
 // MFL's live scoring page reads its stats feed this often
@@ -42,12 +43,39 @@ export function drawScores(mount, data) {
     let lastShown = null;
     const lastWeek = () => Math.max(currentWeek, data.lastScheduled || currentWeek);
 
-    // what a week shows: its cards, from the lineups and the stats feed
+    // who starts in a week: the page's own copy first (Home asks for the same), MFL again once it's
+    // old. DETAILS lists the bench too; without it only the starters
+    const lineupOf = async (week) => {
+        let lineup = lineups.get(week);
+        if (!lineup || Date.now() - lineup.at > LINEUP_POLL) {
+            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week, DETAILS: 1}, {fresh: Boolean(lineup)})};
+            lineups.set(week, lineup);
+        }
+        return lineup;
+    };
+    // a week MFL hasn't started a feed for yet reads as no stats, as MFL's page treats it
+    const statsOf = (week) => feed(`live_stats_${two(week)}.txt`).then(readStats, (error) => {
+        if (error.status === 404) {
+            return readStats("");
+        }
+        throw error;
+    });
+
+    // what a week shows: its cards, from the lineups and the stats feed. Everything is asked at once,
+    // as one after another kept Scores on placeholders; the projections too, though a week whose
+    // games are over doesn't use them
     const loadWeek = async (week) => {
-        const [names, players, rules, limits] = await Promise.all([namesFor(), data.players(), data.rules(), data.league().then(starterLimits, () => null)]);
-        const nflSchedule = await exp("nflSchedule", {W: week}, {base: API_BASE, optional: true});
-        if (before || week > currentWeek) {
-            const schedule = await data.schedule();
+        const preview = before || week > currentWeek;
+        const [names, players, rules, limits, nflSchedule, lineup, stats, rosters, schedule, projected] = await allAtOnce([
+            namesFor(), data.players(), data.rules(), data.league().then(starterLimits, () => null),
+            exp("nflSchedule", {W: week}, {base: API_BASE, optional: true}),
+            preview ? null : lineupOf(week),
+            preview ? null : statsOf(week),
+            !preview && week === currentWeek ? exp("rosters", {}, {optional: true}) : null,
+            preview ? data.schedule() : null,
+            !preview && week === currentWeek ? data.projections(week).catch(() => null) : null
+        ]);
+        if (preview) {
             const games = gameStates(nflSchedule, {players: new Map(), teams: new Map(), updated: 0});
             const matchups = asArray((asArray(schedule && schedule.weeklySchedule).find((entry) => Number(entry.week) === week) || {}).matchup);
             const cards = matchups.map((matchup) => ({
@@ -59,26 +87,9 @@ export function drawScores(mount, data) {
             const first = asArray(nflSchedule && nflSchedule.matchup).map((game) => Number(game.kickoff)).filter(Boolean);
             return {cards, names, state: {text: first.length ? dayText(Math.min(...first)) : "", live: false}, games, preview: true};
         }
-        let lineup = lineups.get(week);
-        if (!lineup || Date.now() - lineup.at > LINEUP_POLL) {
-            // the page's own copy first (Home asks for the same), MFL again once it's old
-            // DETAILS lists the bench too; without it only the starters
-            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week, DETAILS: 1}, {fresh: Boolean(lineup)})};
-            lineups.set(week, lineup);
-        }
-        // a week MFL hasn't started a feed for yet reads as no stats, as MFL's page treats it
-        const stats = readStats(await feed(`live_stats_${two(week)}.txt`).catch((error) => {
-            if (error.status === 404) {
-                return "";
-            }
-            throw error;
-        }));
         const games = gameStates(nflSchedule, stats);
         const anyLeft = !stats.updated || asArray(nflSchedule && nflSchedule.matchup).some((game) => games.of(asArray(game.team)[0] && asArray(game.team)[0].id).state !== "over");
-        const [projections, rosters] = await Promise.all([
-            week === currentWeek && anyLeft ? data.projections(week).catch(() => null) : null,
-            week === currentWeek ? exp("rosters", {}, {optional: true}) : null
-        ]);
+        const projections = anyLeft ? projected : null;
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
         const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || [], order: limits && Object.keys(limits.limits).length ? Object.keys(limits.limits) : undefined});
         return {cards, names, games, limits, state: weekState(cards, games, weekday)};
