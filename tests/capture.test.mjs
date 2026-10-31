@@ -96,6 +96,7 @@ test("a value holding the other kind of quote comes out whole", () => {
     const chosen = scrub(`<select name="STATE"><option value="">Select A State</option><option value="MN" selected="selected">Minnesota</option><option value="WI" SELECTED>Wisconsin</option></select>`, [], {fields: true});
     assert.doesNotMatch(chosen, /selected/i);
     assert.match(chosen, /<option value="MN">Minnesota/);
+    assert.equal(scrub('<option value="MN"selected data-selected="1" class="selected">', [], {fields: true}), '<option value="MN" data-selected="1" class="selected">');
     assert.match(scrub('<input type="hidden" name="UPLOAD_KEY" value="0123abcd">'), /value="saved-sample"/);
 });
 

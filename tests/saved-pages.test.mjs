@@ -43,7 +43,7 @@ test("the contact screens' saved pages hold no typed or chosen value", () => {
             ...(text.match(/<input\b[^>]*>/gi) || []).filter((input) => !/\btype\s*=\s*["']?(?:hidden|radio|checkbox|submit|button|image|reset)\b/i.test(input)
                 && /\bvalue\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>"']+)/i.test(input)),
             ...(text.match(/<textarea\b[^>]*>[^<]+</gi) || []),
-            ...(text.match(/<option\b[^>]*\sselected\b[^>]*>[^<]*/gi) || [])
+            ...(text.match(/<option\b[^>]*["'\s]selected(?![\w-])[^>]*>[^<]*/gi) || [])
         ]}))
         .filter((page) => page.found.length);
     assert.deepEqual(found, []);

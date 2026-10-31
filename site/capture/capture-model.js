@@ -159,7 +159,7 @@ export function scrub(html, owners = [], {fields = false} = {}) {
             : input.replace(VALUE, '$1""')))
             .replace(/(<textarea\b[^>]*>)[\s\S]*?(<\/textarea>)/gi, "$1$2")
             // a select shows its first choice ("Select A State") without one marked
-            .replace(/(<option\b[^>]*?)\s+selected(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>"']+))?/gi, "$1")
+            .replace(/<option\b[^>]*>/gi, (option) => option.replace(/([\s"'])selected(?![\w-])(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>"']+))?/i, (found, before) => before.trim()))
         : html;
     return withoutOwners(typed, owners)
         .replace(/[A-Za-z0-9._%+-]+(@|%40|&#64;|&#x40;)[A-Za-z0-9.-]+\.[A-Za-z]{2,}/gi, (address, at) => (/(myfantasyleague\.com|\.(png|jpe?g|gif|svg|webp))$/i.test(address) ? address : `owner${at}example.com`))
