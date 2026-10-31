@@ -61,17 +61,19 @@ export function drawScores(mount, data) {
         throw error;
     });
 
-    // what a week shows: its cards, from the lineups and the stats feed. What doesn't depend on
-    // another read is asked at once, as one after another kept Scores on placeholders
+    // what a week shows: its cards, from the lineups and the stats feed. Everything is asked at once,
+    // as one after another kept Scores on placeholders; the projections too, though a week whose
+    // games are over doesn't use them
     const loadWeek = async (week) => {
         const preview = before || week > currentWeek;
-        const [names, players, rules, limits, nflSchedule, lineup, stats, rosters, schedule] = await allAtOnce([
+        const [names, players, rules, limits, nflSchedule, lineup, stats, rosters, schedule, projected] = await allAtOnce([
             namesFor(), data.players(), data.rules(), data.league().then(starterLimits, () => null),
             exp("nflSchedule", {W: week}, {base: API_BASE, optional: true}),
             preview ? null : lineupOf(week),
             preview ? null : statsOf(week),
             !preview && week === currentWeek ? exp("rosters", {}, {optional: true}) : null,
-            preview ? data.schedule() : null
+            preview ? data.schedule() : null,
+            !preview && week === currentWeek ? data.projections(week).catch(() => null) : null
         ]);
         if (preview) {
             const games = gameStates(nflSchedule, {players: new Map(), teams: new Map(), updated: 0});
@@ -87,8 +89,7 @@ export function drawScores(mount, data) {
         }
         const games = gameStates(nflSchedule, stats);
         const anyLeft = !stats.updated || asArray(nflSchedule && nflSchedule.matchup).some((game) => games.of(asArray(game.team)[0] && asArray(game.team)[0].id).state !== "over");
-        // only while games are left: a week that's over doesn't need them
-        const projections = week === currentWeek && anyLeft ? await data.projections(week).catch(() => null) : null;
+        const projections = anyLeft ? projected : null;
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
         const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || [], order: limits && Object.keys(limits.limits).length ? Object.keys(limits.limits) : undefined});
         return {cards, names, games, limits, state: weekState(cards, games, weekday)};
