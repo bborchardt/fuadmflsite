@@ -56,7 +56,7 @@ test("from MFL's league export: the season's weeks and the league's positions", 
 
 test("the time zone is one MFL shows, labelled as MFL labels it", async () => {
     const {TIME_ZONE, ZONE, zoneOffset} = await import("../site/v2/lib/zone.js");
-    assert.ok(TIME_ZONE, `timeZone "${settings.timeZone}" is not ET, CT, MT or PT`);
+    assert.ok(TIME_ZONE, `timeZone "${settings.timeZone}" is not one MFL offers (ET, CT, MT, PT, AKT, HT, GMT)`);
     assert.equal(ZONE, settings.timeZone);
     // Central: daylight time in October, standard in December
     assert.equal(zoneOffset(Date.UTC(2026, 9, 18, 17) / 1000), -5 * 3600);
