@@ -126,10 +126,9 @@ export function drawLeague({context, franchiseId, teamHref}) {
     let visible = null;
     const views = {
         scores: async (mount) => {
-            const before = await beforeSeason();
             const schedule = once(() => exp("schedule"));
-            const lastScheduled = await schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
-                .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0);
+            const [before, lastScheduled] = await Promise.all([beforeSeason(), schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
+                .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0)]);
             return drawScores(mount, {
                 context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14,
                 names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),

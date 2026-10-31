@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {forget, gameToday, keepFor, keepable, mflFetch} from "../site/v2/ui/page-fetch.js";
+import {allAtOnce, forget, gameToday, keepFor, keepable, mflFetch} from "../site/v2/ui/page-fetch.js";
 
 const MINUTE = 60 * 1000;
 const league = (type, extra = "") => `https://www44.myfantasyleague.com/2026/export?TYPE=${type}&L=48571${extra}&JSON=1`;
@@ -130,4 +130,13 @@ test("what's expired goes when something new is kept; the viewer's own copy is u
         globalThis.fetch = realFetch;
         delete globalThis.window;
     }
+});
+
+test("reads asked at once fail with MFL's refusal, whichever failed first", async () => {
+    const refusal = Object.assign(new Error("HTTP 429"), {status: 429});
+    const early = Promise.reject(new Error("network"));
+    const late = new Promise((resolve, reject) => setTimeout(() => reject(refusal), 5));
+    await assert.rejects(allAtOnce([early, late, Promise.resolve(1)]), (error) => error === refusal);
+    await assert.rejects(allAtOnce([Promise.reject(new Error("first")), Promise.resolve(1)]), /first/);
+    assert.deepEqual(await allAtOnce([1, Promise.resolve(2), null]), [1, 2, null]);
 });
