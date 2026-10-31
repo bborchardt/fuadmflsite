@@ -2,6 +2,7 @@
 // which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
 import {pageContext, start} from "./ui/app.js";
+import {pageOf} from "./ui/nav.js";
 import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, withParam} from "./loader.js";
 import {applyLook, keepResponsive, markCommish} from "./ui/looks.js";
 
@@ -141,7 +142,7 @@ function boot(beta) {
         .finally(drawn)
         .then((alertsShown) => {
             // the home page without League Alerts would leave no way back
-            if (!alertsShown && document.getElementById("tabcontent0")) {
+            if (!alertsShown && pageOf(window.location).path === "home") {
                 onTrouble();
             }
         })
