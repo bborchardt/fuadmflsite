@@ -20,14 +20,18 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const host = window.location.origin;
     // the checks always use fresh rosters, penalties and pending bids
     const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
-    // MFL refuses bursts (HTTP 429), so the fresh exports go one after another; the rest is
-    // mostly cached for a day
-    const freshInTurn = async () => {
-        const found = {};
-        for (const type of ["rosters", "salaryAdjustments", "transactions", "freeAgents", "pendingWaivers", ...more]) {
-            found[type] = await fresh(type);
+    // asked at once, not in turn, whose round trips kept Moves on placeholders (a second on a phone):
+    // MFL refuses about 25 in a few seconds, not a page's 11–14 at once (docs/mfl.md). A refusal
+    // among the failures is the one thrown, so the page says MFL asked us to wait. The rest is mostly
+    // cached for a day.
+    const freshAtOnce = async () => {
+        const types = ["rosters", "salaryAdjustments", "transactions", "freeAgents", "pendingWaivers", ...more];
+        const settled = await Promise.allSettled(types.map((type) => fresh(type)));
+        const failed = settled.filter((result) => result.status === "rejected").map((result) => result.reason);
+        if (failed.length) {
+            throw failed.find((error) => error && error.status === 429) || failed[0];
         }
-        return found;
+        return Object.fromEntries(types.map((type, index) => [type, settled[index].value]));
     };
     const [players, leagueInfo, calendar, facts, found] = await Promise.all([
         cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
@@ -35,7 +39,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
         cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
         fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
         seasonFacts(context).catch(() => ({})),
-        freshInTurn()
+        freshAtOnce()
     ]);
     const {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers} = found;
     // this season's rookies, whose cut costs nothing while their length is due; only before week 1
