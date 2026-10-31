@@ -25,6 +25,27 @@ export function skinFolder(doc) {
     return match ? match[1] : null;
 }
 
+// A member who turns off Franchise setup › Customize › Use Responsive View gets pages without the
+// viewport tag and the skin's responsive.css. v2 lays itself out by the window's width, so a phone
+// would get its desktop layout, shrunk; both go back as MFL would have written them. The browser's own
+// Request Desktop Site is the way to the desktop layout.
+export function keepResponsive(doc = document) {
+    if (!doc.querySelector('meta[name="viewport"]')) {
+        const meta = doc.createElement("meta");
+        meta.setAttribute("name", "viewport");
+        meta.setAttribute("content", "initial-scale=1.0, width=device-width");
+        doc.head.appendChild(meta);
+    }
+    const skin = doc.querySelector("link#skin[href]");
+    if (skinFolder(doc) && !doc.querySelector("link#responsive")) {
+        const link = doc.createElement("link");
+        link.setAttribute("rel", "stylesheet");
+        link.setAttribute("id", "responsive");
+        link.setAttribute("href", skin.getAttribute("href").replace(/[^/]+\.css(?=[?#]|$)/i, "responsive.css"));
+        skin.parentNode.insertBefore(link, skin.nextSibling);
+    }
+}
+
 export function lookOf(doc, looks = LOOKS) {
     const folder = skinFolder(doc);
     return looks.find((look) => look.folder && folder && look.folder.toLowerCase() === folder.toLowerCase()) || looks[0];

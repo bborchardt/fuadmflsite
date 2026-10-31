@@ -3,7 +3,7 @@
 
 import {pageContext, start} from "./ui/app.js";
 import {PAGES_BASE, betaOffer, decide, offeredVersion, withParam} from "./loader.js";
-import {applyLook, markCommish} from "./ui/looks.js";
+import {applyLook, keepResponsive, markCommish} from "./ui/looks.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
@@ -86,6 +86,11 @@ function reveal() {
 
 function boot(beta) {
     window.fuadVersion = versionHere;
+    try {
+        keepResponsive(document);
+    } catch (error) {
+        console.warn("[fuad] couldn't restore the phone layout:", error);
+    }
     // before the page shows: the member's look is in MFL's page already
     try {
         applyLook(document);

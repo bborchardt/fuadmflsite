@@ -6,7 +6,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {DOMParser, parseHTML} from "linkedom";
-import {LOOKS, applyLook, lookOf, looksMarkup, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
+import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
 
 const fixture = readFileSync(new URL("./fixtures/skin-setup.html", import.meta.url), "utf8");
 const doc = (html) => parseHTML(html).document;
@@ -24,6 +24,24 @@ test("the page's skin picks the look; any skin no look names is the default", ()
     const shown = page("RedSteel");
     applyLook(shown, lookOf(shown, looks));
     assert.equal(shown.documentElement.getAttribute("data-fuad-look"), "red");
+});
+
+test("a page without Responsive View gets the viewport tag and the skin's responsive.css back, where MFL puts them", () => {
+    const off = doc(`<html><head><link rel="stylesheet" id="default" href="a.css"><link rel="stylesheet" id="skin" href="https://www44.myfantasyleague.com/skins17/OceanBlue/OceanBlue.css" type="text/css"><link rel="apple-touch-icon" href="i.png"></head><body></body></html>`);
+    keepResponsive(off);
+    assert.equal(off.querySelector('meta[name="viewport"]').getAttribute("content"), "initial-scale=1.0, width=device-width");
+    const added = off.querySelector("link#skin").nextElementSibling;
+    assert.equal(added.id, "responsive");
+    assert.equal(added.getAttribute("rel"), "stylesheet");
+    assert.equal(added.getAttribute("href"), "https://www44.myfantasyleague.com/skins17/OceanBlue/responsive.css");
+    const on = doc(readFileSync(new URL("./fixtures/pages/member/home.html", import.meta.url), "utf8"));
+    const before = on.head.innerHTML;
+    keepResponsive(on);
+    assert.equal(on.head.innerHTML, before);
+    const bare = doc("<html><head></head><body></body></html>");
+    keepResponsive(bare);
+    assert.ok(bare.querySelector('meta[name="viewport"]'));
+    assert.equal(bare.querySelector("link#responsive"), null);
 });
 
 test("the commissioner's view is marked, whatever the look; a member's isn't", () => {
