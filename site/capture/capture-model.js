@@ -162,6 +162,9 @@ export function scrub(html, owners = [], {fields = false} = {}) {
         .replace(/<input\b[^>]*>/gi, (input) => (new RegExp(`\\bname\\s*=\\s*["']?(?:${SECRET})\\b`, "i").test(input)
             ? input.replace(/(\bvalue\s*=\s*)(["'])[^"']*\2/i, "$1$2saved-sample$2")
             : input))
+        // Franchise setup › Basic names each owner in a field, where a one-word name isn't recognized
+        .replace(/<input\b[^>]*\bname\s*=\s*["']?FRANCHISE_OWNER_NAME(\d{4})\b[^>]*>/gi, (input, id) =>
+            input.replace(/(\bvalue\s*=\s*)(?:(["'])[^"']*\2|[^\s>]+)/i, `$1"Owner ${id}"`))
         // MFL's list gives each message's opening as the link's title, as well as its subject
         .replace(/(<a\b[^>]*message_show\.pl[^>]*>)[\s\S]*?(<\/a>)/gi, (link, open, close) => `${open.replace(/\btitle\s*=\s*(["'])[\s\S]*?\1/i, "title='A message'")}A message${close}`)
         .replace(/tel:[^"'\s>]+/gi, "tel:5550100")

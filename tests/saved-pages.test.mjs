@@ -27,8 +27,12 @@ const CHECKS = {
         .filter((found) => !/saved-sample|value=["']["']/.test(found)),
     "a private message": (text) => (text.match(/<a\b[^>]*message_show\.pl[^>]*>[^<]*/gi) || [])
         .filter((link) => !/>A message$/.test(link) || /\btitle\s*=\s*["'](?!A message["'])/i.test(link)),
-    "an owner's name": (text) => (text.match(/Owner:\s*[^,"'<]+|"owner_name"\s*:\s*"[^"]*"/g) || [])
-        .filter((found) => !/(Owner:\s*|"owner_name"\s*:\s*")(Owner \d{4}|Someone|Commissioner)\b/.test(found))
+    "an owner's name": (text) => [
+        ...(text.match(/Owner:\s*[^,"'<]+|"owner_name"\s*:\s*"[^"]*"/g) || [])
+            .filter((found) => !/(Owner:\s*|"owner_name"\s*:\s*")(Owner \d{4}|Someone|Commissioner)\b/.test(found)),
+        ...(text.match(/<input\b[^>]*\bname\s*=\s*["']?FRANCHISE_OWNER_NAME\d{4}\b[^>]*>/gi) || [])
+            .filter((input) => /\bvalue\s*=/i.test(input) && !/\bvalue\s*=\s*(["'])(?:Owner \d{4})?\1/i.test(input))
+    ]
 };
 
 test("the contact screens' saved pages hold no typed value", () => {

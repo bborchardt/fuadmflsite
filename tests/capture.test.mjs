@@ -76,6 +76,15 @@ test("with fields, what a member typed in a field comes out, and the form's own 
     assert.match(scrub('<input name="PHONE" value="6125550199">'), /6125550199/);
 });
 
+test("an owner's name in Franchise setup's fields comes out, one word or not", () => {
+    const html = `<input type="text" name="FRANCHISE_OWNER_NAME0002" value="Dana" size="20">
+        <input name=FRANCHISE_OWNER_NAME0003 value='Lee Ray'><input name="FRANCHISE_NAME0002" value="Dana's Team">`;
+    const out = scrub(html);
+    assert.match(out, /name="FRANCHISE_OWNER_NAME0002" value="Owner 0002" size="20"/);
+    assert.match(out, /name=FRANCHISE_OWNER_NAME0003 value="Owner 0003">/);
+    assert.match(out, /value="Dana's Team"/);
+});
+
 test("the board's per-member token and private message subjects come out", () => {
     const html = `<a href="post_add.pl?tid=1;auth=f00d1e">Reply</a><input type="hidden" name="auth" value="f00d1e">
         <input type='hidden' value='5ec' name='sid'><input name="subject" value="Hi">
