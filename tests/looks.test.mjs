@@ -6,7 +6,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {DOMParser, parseHTML} from "linkedom";
-import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, markCommish, pageLook, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
+import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, commishLook, keepTeamSkin, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
 
 const fixture = readFileSync(new URL("./fixtures/skin-setup.html", import.meta.url), "utf8");
 const doc = (html) => parseHTML(html).document;
@@ -80,28 +80,34 @@ test("the commissioner's view follows their team's look, per league, and only th
     const before = globalThis.window;
     globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, value)}};
     try {
-        const pageIn = (folder, link) => {
+        const pageIn = (folder, link = "") => {
             const shown = page(folder);
-            if (link) {
-                shown.body.innerHTML = '<a href="/2026/logout?L=1&BECOME=0000">Become Commissioner</a>';
-            }
+            shown.body.innerHTML = link;
             return shown;
         };
-        // nothing known yet: the default, as today
-        assert.deepEqual(pageLook(pageIn("NeonBlue"), "0000", "1"), {look: LOOKS[0], followed: false});
-        // a member without the link keeps nothing
-        assert.equal(pageLook(pageIn("Norseman"), "0002", "1").look.id, "purple");
+        const become = '<div class="welcome"><a href="/2026/logout?L=1&BECOME=0000">Become Commissioner</a></div>';
+        const id = (shown, league) => commishLook(shown, league).id;
+        // nothing known yet: the league skin's look
+        assert.equal(id(pageIn("NeonBlue"), "1"), "night");
+        assert.equal(id(pageIn("OceanBlue"), "1"), "day");
+        // another team keeps nothing, even with such a link in a post
+        keepTeamSkin(pageIn("Norseman", '<p><a href="/2026/logout?L=1&BECOME=0000">x</a></p>'), "0002", "1");
+        assert.equal(items.size, 0);
+        keepTeamSkin(pageIn("Norseman", become), "0000", "1");
         assert.equal(items.size, 0);
         // the commissioner's own team
-        assert.equal(pageLook(pageIn("Norseman", true), "0001", "1").look.id, "purple");
-        assert.deepEqual(pageLook(pageIn("NeonBlue"), "0000", "1"), {look: LOOKS.find((look) => look.id === "purple"), followed: true});
+        keepTeamSkin(pageIn("Norseman", become), "0001", "1");
+        assert.equal(id(pageIn("NeonBlue"), "1"), "purple");
         // another league's is its own
-        assert.equal(pageLook(pageIn("OceanBlue", true), "0001", "2").look.id, "day");
-        assert.equal(pageLook(pageIn("NeonBlue"), "0000", "1").look.id, "purple");
-        assert.equal(pageLook(pageIn("NeonBlue"), "0000", "2").look.id, "day");
-        // back on the default look: known, and the default
-        pageLook(pageIn("NeonBlue", true), "0001", "1");
-        assert.deepEqual(pageLook(pageIn("NeonBlue"), "0000", "1"), {look: LOOKS[0], followed: true});
+        keepTeamSkin(pageIn("OceanBlue", become), "0001", "2");
+        assert.equal(id(pageIn("NeonBlue"), "1"), "purple");
+        assert.equal(id(pageIn("NeonBlue"), "2"), "day");
+        // a skin no look names is the default, and a page with no readable skin leaves it
+        keepTeamSkin(pageIn("BlueMesh", become), "0001", "1");
+        assert.equal(id(pageIn("OceanBlue"), "1"), "night");
+        const none = parseHTML(`<html><body>${become}</body></html>`).document;
+        keepTeamSkin(none, "0001", "1");
+        assert.equal(items.get("fuad.teamSkin.1"), "BlueMesh");
     } finally {
         globalThis.window = before;
     }

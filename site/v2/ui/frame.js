@@ -10,7 +10,7 @@ import {REBUILT, leavesPage, locate, pageOf, sections, teamLinks} from "./nav.js
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
-import {LOOKS, looksMarkup, pageLook, wireLooks} from "./looks.js";
+import {LOOKS, looksMarkup, teamSkin, wireLooks} from "./looks.js";
 import {widthMarkup, wireWidth} from "./width.js";
 
 export {locate, pageOf, sections};
@@ -65,7 +65,7 @@ function siteMenu(groups) {
 }
 
 // why the commissioner's view is in this look, since it can differ by device
-export function commishLookNote({look, followed}) {
+function commishLookNote(look, followed) {
     return followed ? `Look: ${look.name}, from your team on this device` : "Visit as your team to use your look here";
 }
 
@@ -83,7 +83,7 @@ function teamSheet({team, member, setup, logout, become, franchiseId, look, wide
         </div>
         ${member ? looksMarkup(LOOKS, look) : ""}
         ${member ? widthMarkup(wide) : ""}
-        ${franchiseId === "0000" && switchTo ? `<p class="fuad-sheet-note fuad-muted">${esc(commishLookNote(pageLook(document)))}</p>` : ""}
+        ${franchiseId === "0000" && switchTo ? `<p class="fuad-sheet-note fuad-muted">${esc(commishLookNote(look, teamSkin() !== null))}</p>` : ""}
         ${switchTo ? `
         <div class="fuad-switch" role="group" aria-label="Viewing as">
             <span class="fuad-muted">Viewing as</span>

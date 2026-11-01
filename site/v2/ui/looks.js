@@ -8,6 +8,7 @@
 
 import {esc} from "./html.js";
 import {mflFetch, mflSend} from "./page-fetch.js";
+import {storage} from "./store.js";
 
 export const LOOKS = [
     {id: "night", name: "Night Game", skin: "-1", folder: null},
@@ -57,9 +58,10 @@ function desktopOnPhone({navigator, screen}) {
         && Math.min(screen.width, screen.height) < 600;
 }
 
+const lookOfFolder = (folder, looks) => looks.find((look) => look.folder && folder && look.folder.toLowerCase() === folder.toLowerCase()) || looks[0];
+
 export function lookOf(doc, looks = LOOKS) {
-    const folder = skinFolder(doc);
-    return looks.find((look) => look.folder && folder && look.folder.toLowerCase() === folder.toLowerCase()) || looks[0];
+    return lookOfFolder(skinFolder(doc), looks);
 }
 
 export function applyLook(doc = document, look = lookOf(doc)) {
@@ -74,38 +76,24 @@ export function applyLook(doc = document, look = lookOf(doc)) {
 // reads it too (mfl/message-header.html), for the loading cover.
 const TEAM_SKIN = "fuad.teamSkin.";
 const skinKey = (leagueId) => `${TEAM_SKIN}${leagueId}`;
+const isTeamOfCommish = (doc) => Boolean(doc.querySelector('.myfantasyleague_menu a[href*="BECOME=0000"], .welcome a[href*="BECOME=0000"]'));
 
-function readTeamSkin(leagueId) {
-    try {
-        return window.localStorage.getItem(skinKey(leagueId));
-    } catch (error) {
-        return null;
+// as the commissioner's own team, the skin it's in; a page whose skin can't be read leaves what's kept
+export function keepTeamSkin(doc = document, franchiseId = window.franchise_id, leagueId = window.league_id) {
+    const folder = skinFolder(doc);
+    if (folder && franchiseId !== "0000" && isTeamOfCommish(doc)) {
+        storage.set(skinKey(leagueId), folder);
     }
 }
 
-function keepTeamSkin(doc, folder, franchiseId, leagueId) {
-    if (franchiseId === "0000" || !doc.querySelector('a[href*="BECOME=0000"]')) {
-        return;
-    }
-    try {
-        if (window.localStorage.getItem(skinKey(leagueId)) !== folder) {
-            window.localStorage.setItem(skinKey(leagueId), folder);
-        }
-    } catch (error) {
-        // storage is blocked: the commissioner's view keeps the default look
-    }
-}
+// the skin their team was last seen in here, or null
+export const teamSkin = (leagueId = window.league_id) => storage.get(skinKey(leagueId));
 
-// the look to draw: the page's skin's, or for the commissioner, their team's. `followed` is whether
-// a team's skin is known here. As their team, the skin is kept for the commissioner's view.
-export function pageLook(doc = document, franchiseId = window.franchise_id, leagueId = window.league_id, looks = LOOKS) {
-    if (franchiseId !== "0000") {
-        keepTeamSkin(doc, skinFolder(doc) || "", franchiseId, leagueId);
-        return {look: lookOf(doc, looks), followed: false};
-    }
-    const folder = readTeamSkin(leagueId);
-    const look = looks.find((entry) => entry.folder && folder && entry.folder.toLowerCase() === folder.toLowerCase()) || looks[0];
-    return {look, followed: folder !== null};
+// the commissioner's look: their team's, or until it's known, the league skin's, as for a member on
+// Commish Choice
+export function commishLook(doc = document, leagueId = window.league_id, looks = LOOKS) {
+    const folder = teamSkin(leagueId);
+    return folder === null ? lookOf(doc, looks) : lookOfFolder(folder, looks);
 }
 
 // The commissioner's view is marked in v2's colours (fuad.css), whichever look it's in
@@ -176,7 +164,6 @@ export function wireLooks(group, context, current) {
     });
     const settle = (look) => {
         saved = look;
-        keepTeamSkin(doc, look.folder || "", doc.defaultView.franchise_id, doc.defaultView.league_id);
         doc.dispatchEvent(new doc.defaultView.CustomEvent(SAVED, {detail: {look, from: group}}));
     };
     buttons.forEach((button) => button.addEventListener("click", async () => {
@@ -195,6 +182,11 @@ export function wireLooks(group, context, current) {
         try {
             await saveLook(context, look);
             settle(look);
+            // the page's skin is still the one before, until the next page; the default look is the
+            // league's skin, which no look names
+            if (isTeamOfCommish(doc)) {
+                storage.set(skinKey(context.leagueId), look.folder || "");
+            }
             status.textContent = "";
         } catch (error) {
             if (error.unconfirmed) {
