@@ -90,7 +90,8 @@ MFL documents little of this.
   post pages instead; `salaries` needs the commissioner's cookie.
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
   Commissioner", `logout?L=<league>&BECOME=0000`. As the commissioner, "Become Owner" goes the other
-  way, with `BECOME=<team>` naming the commissioner's own team (a saved clone page).
+  way, to their own team, with no choice of team: `BECOME=9999` in the menu and `BECOME=<team>` in the
+  page's header (the clone, 1 Nov 2026).
 
 - **My Watch List** (a member's own): the `myWatchList` export lists it, and the `myWatchList` import
   changes it (`ADD` or `REMOVE`, comma-separated player ids, posted as the owner), answering
