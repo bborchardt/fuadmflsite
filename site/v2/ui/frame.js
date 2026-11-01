@@ -1,5 +1,5 @@
 // v2's frame on every league page: the header (site menu, wordmark and context line, team button),
-// the five sections, the current section's views, the team sheet (with the looks) and the player
+// the five sections, the current section's views, the team sheet (with the looks and Full width) and the player
 // popup. MFL's own menus are hidden only once the frame is drawn, so if this fails the page keeps
 // MFL's navigation.
 
@@ -10,6 +10,7 @@ import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
 import {LOOKS, looksMarkup, wireLooks} from "./looks.js";
+import {widthMarkup, wireWidth} from "./width.js";
 
 export {locate, pageOf, sections};
 
@@ -81,7 +82,7 @@ function siteMenu(groups) {
     </section>`;
 }
 
-function teamSheet({team, member, setup, logout, become, franchiseId, look}) {
+function teamSheet({team, member, setup, logout, become, franchiseId, look, wide}) {
     const switchTo = become && become.getAttribute("href");
     return `
     <section class="fuad-sheet" role="dialog" aria-modal="true" aria-labelledby="fuad-sheet-title">
@@ -94,6 +95,7 @@ function teamSheet({team, member, setup, logout, become, franchiseId, look}) {
             ${logout ? `<a class="fuad-button fuad-button-quiet" href="${esc(logout.getAttribute("href"))}">Log out</a>` : ""}
         </div>
         ${member ? looksMarkup(LOOKS, look) : ""}
+        ${member ? widthMarkup(wide) : ""}
         ${switchTo ? `
         <div class="fuad-switch" role="group" aria-label="Viewing as">
             <span class="fuad-muted">Viewing as</span>
@@ -186,7 +188,7 @@ export function drawFrame({context, storage}) {
     <nav class="fuad-views" hidden></nav>
     <nav class="fuad-sections fuad-sections-bottom" aria-label="Sections"></nav>
     <div class="fuad-layer fuad-menu-layer" hidden>${siteMenu(mflMenu())}</div>
-    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, setup, logout, become, franchiseId, look})}</div>` : ""}`;
+    ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, setup, logout, become, franchiseId, look, wide: document.body.classList.contains("full-width")})}</div>` : ""}`;
 
     const render = () => {
         const page = pageOf(window.location, tabs);
@@ -271,6 +273,7 @@ export function drawFrame({context, storage}) {
         const sheetLayer = root.querySelector(".fuad-sheet-layer");
         if (member) {
             wireLooks(sheetLayer.querySelector(".fuad-looks"), context, look);
+            wireWidth(sheetLayer.querySelector(".fuad-width"), context);
         }
         teamButton.addEventListener("click", () => {
             // the phone header's height varies with its context line; a short screen (landscape) scrolls the sheet

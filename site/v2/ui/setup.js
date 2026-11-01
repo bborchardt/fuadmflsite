@@ -24,13 +24,14 @@ const FOOT = {FACCESS: "Change franchise access code", FUNLINK: "Unlink this tea
 const FORMS = {
     FRANCHISE: {shown: {FRANCHISE_NAME: "Team name", FRANCHISE_OWNER_NAME: "Owner name"}, hidden: ["FRANCHISE_EMAIL"]},
     FCUSTOM: {
-        shown: {USE_FULL_WIDTH: "Full width on wide screens"},
+        shown: {},
         more: {
             TIME_ZONE: "Time zone", FRANCHISE_ABBREV: "Abbreviation", FRANCHISE_ICON: "Icon URL", FRANCHISE_ICON_FILE: "Or upload an icon",
             FRANCHISE_LOGO: "Logo URL", FRANCHISE_LOGO_FILE: "Or upload a logo", FRANCHISE_URL: "Home page URL", FRANCHISE_STADIUM: "Stadium",
             NOTES: "Notes", USE_ADVANCED_EDITOR: "Advanced editor for comments", PLAY_AUDIO: "Play audio clips"
         },
-        hidden: ["FRANCHISE_SOUND", "FRANCHISE_SOUND_FILE", "USE_RESPONSIVE_SITE", "DISPLAY_FRANCHISE_REMINDERS"]
+        // Full width is the team sheet's (width.js)
+        hidden: ["USE_FULL_WIDTH", "FRANCHISE_SOUND", "FRANCHISE_SOUND_FILE", "USE_RESPONSIVE_SITE", "DISPLAY_FRANCHISE_REMINDERS"]
     },
     FCONTACT: {
         shown: {FRANCHISE_EMAIL: "Email", FRANCHISE_EMAIL_VISIBLE: "Let leaguemates see my email", FRANCHISE_MAIL_EVENT: "Email me about"},
