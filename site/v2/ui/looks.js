@@ -82,7 +82,7 @@ const TEAM_OF_COMMISH = "fuad.commishTeam.";
 // is learned from their own page: its "Become Owner" names it (the menu's, 9999, asks which). Until
 // then, any team with the link counts.
 function learnTeam(doc, leagueId) {
-    const link = [...doc.querySelectorAll('.welcome a[href*="BECOME="]')].map((a) => /BECOME=(\d{4})/.exec(a.getAttribute("href"))).find((match) => match && match[1] !== "9999");
+    const link = [...doc.querySelectorAll('.welcome a[href*="BECOME="]')].map((a) => /BECOME=(\d{4})/.exec(a.getAttribute("href"))).find((match) => match && match[1] !== "9999" && match[1] !== "0000");
     if (link) {
         storage.set(`${TEAM_OF_COMMISH}${leagueId}`, link[1]);
     }
