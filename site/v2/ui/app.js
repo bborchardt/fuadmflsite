@@ -157,9 +157,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     };
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
-    // Lineup, Add, Drop, IR, Trades, All moves and All bids draw over MFL's page: it's hidden from the
-    // start, so it doesn't show while their
-    // code loads (the commissioner's view stays MFL's)
+    // Lineup, Add, Drop, IR, Trades, All moves, All bids, Rules and Franchise setup draw over or restyle
+    // MFL's page: it's hidden from the start, so it doesn't show while their code loads (the
+    // commissioner's view stays MFL's)
     const over = (className) => {
         if (window.franchise_id !== "0000") {
             document.documentElement.classList.add(className);
@@ -254,6 +254,21 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             onDrawn();
         }).catch(shown).catch((error) => {
             console.error("[fuad] couldn't draw Rules:", error);
+            onTrouble();
+        });
+        return false;
+    }
+    // Franchise setup: MFL's forms under v2's heading and tabs
+    if (context && here.path === "csetup") {
+        const shown = over("fuad-setup-on");
+        await import("./setup.js").then(({restyleSetup}) => {
+            // a screen v2 leaves as MFL's (the commissioner's, Home Page Modules, or changed) shows as it is
+            if (!restyleSetup(document, {context, franchiseId: window.franchise_id || null})) {
+                document.documentElement.classList.remove("fuad-setup-on");
+            }
+            onDrawn();
+        }).catch(shown).catch((error) => {
+            console.error("[fuad] couldn't restyle Franchise setup:", error);
             onTrouble();
         });
         return false;
