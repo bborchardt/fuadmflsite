@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "TZ=America/Los_Angeles node --test tests/*.test.mjs",
+    "test": "TZ=America/Los_Angeles MFL_LEAGUE_ID=48571 node --test tests/*.test.mjs",
     "daily": "node jobs/daily.mjs",
     "lint": "eslint .",
     "build": "node tools/build.mjs"

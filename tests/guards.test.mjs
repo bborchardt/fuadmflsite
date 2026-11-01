@@ -31,7 +31,7 @@ test("the daily job's needs are read from daily.mjs", () => {
     // every lib(...) call was read, so none is skipped silently
     assert.equal(Object.keys(needs).length, calls, JSON.stringify(needs));
     assert.ok(needs["league.js"].includes("buildLeague"));
-    assert.deepEqual(dailyNeeds().skipped, {"payouts.js": "v1"});
+    assert.deepEqual(dailyNeeds().skipped, {"payouts.js": "v1", "settings.js": "v1"});
 });
 
 for (const version of versions) {

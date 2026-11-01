@@ -1,18 +1,49 @@
 # League settings
 
-`site/v2/settings.json` holds the league's own numbers: the rules MFL doesn't know about, and the
+`site/v2/settings.json` holds the leagues' own numbers: the rules MFL doesn't know about, and the
 league's choices that MFL can't report. Everything else v2 reads from MFL. The site and the daily
 job both read this file, so its numbers apply as soon as master deploys and on the job's next run.
-Like any rule change, changing one in a version members already run means a new version.
+Like any rule change, changing a listed league's in a version members already run means a new version.
 
-The values below are this league's.
+The file has `defaults` and `leagues`, listed by the number in the league's pages (`L=`). A listed
+league's settings are the defaults under its entry, where nested values merge and lists replace. A
+test holds FUAD's to their values, so a change to the defaults can't quietly change its rules.
+
+The values below are FUAD's: the defaults, with the wordmark and renumbered franchises its own.
+
+## Test leagues
+
+A league that isn't listed is a test league. It runs without a change to the code: its commissioner
+pastes the site's header running v2, as its `MAIN` or a beta its members join (v1 has no settings), and
+it has the defaults, with the wordmark "MFL". One line in its header, above the `<!-- a beta offer` comment, changes any
+setting:
+
+```html
+<script>window.fuadSettings = {extends: "48571", wordmark: "FUAD CLONE", salaryCap: 250};</script>
+```
+
+- `extends` names a listed league to start from instead of the defaults, and is optional.
+- Everyone in a test league sees a "Test league" line. Its commissioner also sees what's in force and
+  any value that was ignored, for a name that isn't a setting or a value the rules can't use.
+- A listed league ignores the line.
+- Published franchise salaries show only with `extends`, as they're that league's. Otherwise they're
+  missing, as they're from no team in this league.
+- What v2 keeps in the browser is kept per league and per settings, so a changed value starts afresh.
+- It reaches the pages only. The daily job stops for a league that isn't listed in the version
+  `RULES_VERSION` names, unless that's v1, which has no settings.
+
+## Forking
+
+To run the site from your own repository, change the header's `BASE` to your Pages address, replace
+FUAD's entry in `settings.json` with your league's, and set the job's repository variables. You can
+still test on someone else's copy: paste their `BASE` and a settings line into a test league's header.
 
 ## The league
 
 | Setting | Value | Meaning |
 |---|---|---|
-| `wordmark` | "FUAD" | The league's short name, at the top of every page. |
-| `timeZone` | "CT" | MFL's Time Zone setting for the league: `"ET"`, `"CT"`, `"MT"` or `"PT"`. Times show in it, labelled with it. |
+| `wordmark` | "FUAD" | The league's short name, at the top of every page; the default is "MFL". |
+| `timeZone` | "CT" | MFL's Time Zone setting for the league: `"ET"`, `"CT"`, `"MT"`, `"PT"`, `"AKT"`, `"HT"` or `"GMT"`. Times show in it, labelled with it. |
 
 ## Money and roster
 
@@ -77,7 +108,7 @@ How many bid groups a team can have is MFL's ("Maximum Number of Conditional Bli
 
 | Setting | Value | Meaning |
 |---|---|---|
-| `renumberedFranchises` | 0009 → 0005 through 2020 | Franchise numbers MFL moved when teams left, so a past title goes to today's team: `was` is today's `now` up to and including `through`. Empty (`[]`) if no team ever moved. |
+| `renumberedFranchises` | 0009 → 0005 through 2020 | Franchise numbers MFL moved when teams left, so a past title goes to today's team: `was` is today's `now` up to and including `through`. Empty (`[]`), the default, if no team ever moved. |
 
 ## Where the league is
 
@@ -88,7 +119,7 @@ Not in the file either:
   every page runs.
 - The daily job's league is the repository variables `MFL_LEAGUE_ID` (the number in the league's
   pages, `L=`) and `MFL_HOST` (the start of its pages' address, as `https://www44.myfantasyleague.com`).
-  Without them it stops before reading MFL.
+  Without them, or for a league not listed in the file, it stops before reading MFL.
 
 ## Read from MFL
 

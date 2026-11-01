@@ -34,6 +34,11 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 - **League rules live once, in `lib/`,** shared by the page and the daily job, so League Alerts and
   the job's flags can't disagree. The job loads them from the version `RULES_VERSION` names, so a
   new version's `lib/` must keep the exports the job reads.
+- **A version is code; a league is data** (docs/settings.md). Only a league that runs the daily job
+  is listed, with its rules locked in `settings.json`. Any other league is a test league, set up from
+  its own header, so trying a value takes no code change and no version, and can't reach a listed
+  league. It works with defaults rather than stopping, and says so; the job refuses it, as assumed
+  rules are too little to write to MFL by.
 - **The job writes only to the `league-data` branch,** because master is protected.
 - **A member's look is their MFL skin** (v2's team sheet, `ui/looks.js`): each look is saved as one of
   MFL's skins, which MFL keeps with the franchise, so it follows the member to any device, and v2

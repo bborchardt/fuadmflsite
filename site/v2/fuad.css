@@ -1126,6 +1126,15 @@ body [tabindex]:focus-visible {
     vertical-align: 4px;
 }
 
+.fuad-test-league {
+    margin: 0 0 12px;
+    padding: 4px 16px;
+    background: var(--fuad-raised);
+    color: var(--fuad-muted);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
 .fuad-commish-short { display: none; }
 
 @media (max-width: 48em) {

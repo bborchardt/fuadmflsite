@@ -1,10 +1,8 @@
 // The league's time zone (settings.json), as MFL's own pages show times: in the zone set on MFL,
 // labelled with its abbreviation ("CT").
 
-import settings from "./settings.js";
+import settings, {ZONES} from "./settings.js";
 
-// the zones MFL's Franchise setup › Customize › Time Zone offers, by the letters it writes after a time
-const ZONES = {ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu", GMT: "UTC"};
 export const ZONE = settings.timeZone;
 export const TIME_ZONE = ZONES[ZONE];
 

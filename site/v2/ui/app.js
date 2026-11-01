@@ -5,7 +5,8 @@ import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/
 import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {seasonPhase} from "../lib/violations.js";
 import {seasonWeeks} from "../lib/rules.js";
-import {cached} from "./store.js";
+import {leagueIdIn} from "../lib/settings.js";
+import {cached, dropUnusedKeys} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {REBUILT, pageOf, sections, teamLinks} from "./nav.js";
 
@@ -13,9 +14,7 @@ const DAY = 24 * 60 * 60 * 1000;
 
 export function pageContext(location = window.location) {
     const season = (location.pathname.match(/^\/(\d{4})\//) || [])[1] || (window.year && String(window.year));
-    const leagueId = (location.pathname.match(/\/home\/(\d+)/) || [])[1]
-        || new URLSearchParams(location.search).get("L")
-        || window.league_id;
+    const leagueId = leagueIdIn(location, window.league_id);
     if (!season || !leagueId) {
         return null;
     }
@@ -149,6 +148,7 @@ function startHome(context, league, {beta, inBeta, drawn}) {
 // `onDrawn` is called once the page's own view has first drawn (its placeholders at least), so the
 // cover can come off without MFL's page showing first. Resolves to whether League Alerts was drawn.
 export async function start({dataBase, beta = null, inBeta = null, onTrouble = () => {}, onDrawn = () => {}}) {
+    dropUnusedKeys();
     const context = pageContext();
     // each view draws its placeholders before its first wait, so they're in the page once it returns
     const drawn = (value) => {

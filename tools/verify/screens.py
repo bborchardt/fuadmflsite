@@ -174,7 +174,9 @@ EXPORTS = {
 }
 
 # deterministic Math.random
+# the clone's settings line, as its header has it; its saved pages are from before
 INIT = """
+window.fuadSettings = {extends: "48571"};
 (() => {
   let seed = 42;
   Math.random = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
@@ -244,23 +246,28 @@ class Site:
         self.ref = ref
         self.cache = {}
 
+    def stored(self, path):
+        if self.ref and self.ref.startswith(BUILT):
+            local = Path(self.ref[len(BUILT):]) / path
+            return local.read_bytes() if local.exists() else None
+        if self.ref:
+            result = subprocess.run(["git", "show", f"{self.ref}:site/{path}"], cwd=REPO, capture_output=True)
+            return result.stdout if result.returncode == 0 else None
+        local = REPO / "site" / path
+        return local.read_bytes() if local.exists() else None
+
     def read(self, path):
         if path not in self.cache:
-            if path.endswith("/lib/settings.js") and not (self.ref and self.ref.startswith(BUILT)):
+            # a ref from before lib/settings-data.js has the JSON's reader in lib/settings.js
+            reader = path.endswith("/lib/settings-data.js") or (
+                path.endswith("/lib/settings.js") and self.stored(path[: -len("settings.js")] + "settings-data.js") is None)
+            if reader and not (self.ref and self.ref.startswith(BUILT)):
                 # as tools/build.mjs publishes it: the JSON itself, which a browser can't read through Node
-                settings = self.read(path[: -len("lib/settings.js")] + "settings.json")
+                settings = self.stored(path[: path.rindex("lib/")] + "settings.json")
                 if settings is not None:
                     self.cache[path] = f"export default {json.dumps(json.loads(settings))};\n".encode()
                     return self.cache[path]
-            if self.ref and self.ref.startswith(BUILT):
-                local = Path(self.ref[len(BUILT):]) / path
-                self.cache[path] = local.read_bytes() if local.exists() else None
-            elif self.ref:
-                result = subprocess.run(["git", "show", f"{self.ref}:site/{path}"], cwd=REPO, capture_output=True)
-                self.cache[path] = result.stdout if result.returncode == 0 else None
-            else:
-                local = REPO / "site" / path
-                self.cache[path] = local.read_bytes() if local.exists() else None
+            self.cache[path] = self.stored(path)
         return self.cache[path]
 
 

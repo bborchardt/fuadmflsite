@@ -21,11 +21,11 @@ cpSync(join(REPO, "site"), out, {recursive: true, filter: (path) => !path.starts
 for (const version of BUNDLED) {
     const from = join(REPO, "site", version);
     const target = join(out, version);
-    // lib/settings.js reads settings.json through Node; published, it is the JSON itself. The bundle is
-    // built from the copy so it takes that one too.
+    // lib/settings-data.js reads settings.json through Node; published, it is the JSON itself. The
+    // bundle is built from the copy so it takes that one too.
     const settings = join(from, "settings.json");
     if (existsSync(settings)) {
-        writeFileSync(join(target, "lib", "settings.js"), `export default ${JSON.stringify(JSON.parse(readFileSync(settings, "utf8")))};\n`);
+        writeFileSync(join(target, "lib", "settings-data.js"), `export default ${JSON.stringify(JSON.parse(readFileSync(settings, "utf8")))};\n`);
     }
     await build({
         entryPoints: [join(target, "fuad.js")],
