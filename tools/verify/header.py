@@ -36,6 +36,11 @@ CASES = {
     "beta look": (LINEUP, {"beta": "v2", "skin": "OceanBlue"},
                   {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "cover": ["rgb(245, 246, 248)", "rgb(84, 90, 102)"]}),
     "beta no look": (LINEUP, {"beta": "v2"}, {"ran": "v2", "requested": ["v2"], "cover": ["rgb(13, 17, 23)", "rgb(139, 148, 158)"]}),
+    # the commissioner's, from the skin their team was last seen in; with none known, Night Game's
+    "commissioner look": (LINEUP, {"beta": "v2", "team": "0000", "teams": ["0000"], "team_skin": "OceanBlue"},
+                          {"ran": "v2", "requested": ["v2"], "cover": ["rgb(245, 246, 248)", "rgb(84, 90, 102)"]}),
+    "commissioner no look": (LINEUP, {"beta": "v2", "team": "0000", "teams": ["0000"]},
+                             {"ran": "v2", "requested": ["v2"], "cover": ["rgb(13, 17, 23)", "rgb(139, 148, 158)"]}),
     "beta 404": (LINEUP, {"beta": "v2", "fail": ("v2", "404")},
                  {"ran": "v1", "requested": ["v2", "v1"], "beta": "v2", "cloaked": False, "bar": "The beta couldn’t load"}),
     "beta broken": (LINEUP, {"beta": "v2", "fail": ("v2", "syntax")},
@@ -98,6 +103,8 @@ def run(browser, site, name):
         }; })();""")
     if given.get("beta"):
         context.add_init_script(f"if (!sessionStorage.getItem('h.set')) {{ sessionStorage.setItem('h.set', '1'); localStorage.setItem('fuad.beta', '{given['beta']}'); }}")
+    if given.get("team_skin"):
+        context.add_init_script(f"localStorage.setItem('fuad.teamSkin.{LEAGUE}', '{given['team_skin']}');")
     swapped = header(given.get("main", "v1"), given.get("offer", True), given.get("teams"))
     team = given.get("team")
 

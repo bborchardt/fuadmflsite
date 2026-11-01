@@ -4,7 +4,7 @@
 import {pageContext, start} from "./ui/app.js";
 import {pageOf} from "./ui/nav.js";
 import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, withParam} from "./loader.js";
-import {applyLook, keepResponsive, markCommish} from "./ui/looks.js";
+import {applyLook, keepResponsive, markCommish, pageLook} from "./ui/looks.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
@@ -109,7 +109,7 @@ function boot(beta) {
     }
     // before the page shows: the member's look is in MFL's page already
     try {
-        applyLook(document);
+        applyLook(document, pageLook(document).look);
         markCommish(document);
     } catch (error) {
         console.warn("[fuad] couldn't apply the look:", error);

@@ -49,11 +49,16 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   and are saved by the form that also holds the team's logo.
 - **Three looks are team colours** (Vikings, Packers, Cowboys), for the league's fans of those teams,
   each saved as MFL's skin for that team, so MFL's own pages match.
-- **The commissioner's view is marked in v2's colours, not a skin:** the commissioner's skin is the
-  league's (docs/mfl.md), so one saved to tell the views apart would change the default look too.
-  Logged in as the commissioner, v2's accent is blue, with a bar along the top and a Commissioner
-  tag by the wordmark; the look is the league skin's, as for a member on Commish Choice.
-- **The header's loading cover is in the member's look**, read from the skin as v2 reads it, so a
+- **The commissioner's view follows their team's look, marked in v2's colours:** the commissioner's
+  skin is the league's (docs/mfl.md), so one saved for them would change the default look too, and MFL
+  shows a team's skin only to that team. So v2 keeps the skin in the browser, per league, when it sees
+  the commissioner's own team (the page with Become Commissioner), and draws it for team 0000. On a
+  device that hasn't seen their team it's the default look, and the team sheet says so. A look a
+  person picks is theirs, not a league's; a test league is told apart by its wordmark on any device.
+  Each look's accent becomes a blue, or magenta where the look's own is blue, with a bar along the top
+  and a Commissioner tag by the wordmark.
+- **The header's loading cover is in the member's look**, read from the skin as v2 reads it (for the
+  commissioner, the team's skin v2 keeps), so a
   light look doesn't flash dark on a slow connection; the header keeps each look's two colours,
   which a test holds to the looks'.
 

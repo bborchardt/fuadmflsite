@@ -6,7 +6,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {DOMParser, parseHTML} from "linkedom";
-import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
+import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, markCommish, pageLook, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
 
 const fixture = readFileSync(new URL("./fixtures/skin-setup.html", import.meta.url), "utf8");
 const doc = (html) => parseHTML(html).document;
@@ -73,6 +73,49 @@ test("the commissioner's view is marked, whatever the look; a member's isn't", (
     assert.ok(!shown.documentElement.classList.contains("fuad-commish"));
     markCommish(shown, null);
     assert.ok(!shown.documentElement.classList.contains("fuad-commish"));
+});
+
+test("the commissioner's view follows their team's look, per league, and only their team's", () => {
+    const items = new Map();
+    const before = globalThis.window;
+    globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, value)}};
+    try {
+        const pageIn = (folder, link) => {
+            const shown = page(folder);
+            if (link) {
+                shown.body.innerHTML = '<a href="/2026/logout?L=1&BECOME=0000">Become Commissioner</a>';
+            }
+            return shown;
+        };
+        // nothing known yet: the default, as today
+        assert.deepEqual(pageLook(pageIn("NeonBlue"), "0000", "1"), {look: LOOKS[0], followed: false});
+        // a member without the link keeps nothing
+        assert.equal(pageLook(pageIn("Norseman"), "0002", "1").look.id, "purple");
+        assert.equal(items.size, 0);
+        // the commissioner's own team
+        assert.equal(pageLook(pageIn("Norseman", true), "0001", "1").look.id, "purple");
+        assert.deepEqual(pageLook(pageIn("NeonBlue"), "0000", "1"), {look: LOOKS.find((look) => look.id === "purple"), followed: true});
+        // another league's is its own
+        assert.equal(pageLook(pageIn("OceanBlue", true), "0001", "2").look.id, "day");
+        assert.equal(pageLook(pageIn("NeonBlue"), "0000", "1").look.id, "purple");
+        assert.equal(pageLook(pageIn("NeonBlue"), "0000", "2").look.id, "day");
+        // back on the default look: known, and the default
+        pageLook(pageIn("NeonBlue", true), "0001", "1");
+        assert.deepEqual(pageLook(pageIn("NeonBlue"), "0000", "1"), {look: LOOKS[0], followed: true});
+    } finally {
+        globalThis.window = before;
+    }
+});
+
+test("each look's commissioner accent differs from its own", () => {
+    const css = readFileSync(new URL("../site/v2/fuad.css", import.meta.url), "utf8");
+    const accent = (selector) => (css.slice(css.indexOf(`${selector} {`)).match(/--fuad-accent: (#[0-9A-F]+)/) || [])[1];
+    const base = accent("html.fuad-commish");
+    assert.ok(base);
+    for (const {id} of LOOKS.slice(1)) {
+        const commish = css.includes(`html.fuad-commish[data-fuad-look="${id}"]`) ? accent(`html.fuad-commish[data-fuad-look="${id}"]`) : base;
+        assert.notEqual(commish, accent(`[data-fuad-look="${id}"]`), id);
+    }
 });
 
 test("the default is saved as the commissioner's choice of skin", () => {

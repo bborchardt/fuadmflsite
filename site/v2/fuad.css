@@ -237,6 +237,28 @@ html.fuad-commish {
     --fuad-accent-tint: rgba(56, 189, 248, 0.14);
 }
 
+html.fuad-commish[data-fuad-look="day"] {
+    --fuad-accent: #0369A1;
+    --fuad-accent-hover: #075985;
+    --fuad-on-accent: #FFFFFF;
+    --fuad-accent-tint: rgba(3, 105, 161, 0.1);
+}
+
+html.fuad-commish[data-fuad-look="paper"] {
+    --fuad-accent: #1D4ED8;
+    --fuad-accent-hover: #1E40AF;
+    --fuad-on-accent: #FFFFFF;
+    --fuad-accent-tint: rgba(29, 78, 216, 0.1);
+}
+
+/* the look's own accent is blue */
+html.fuad-commish[data-fuad-look="cowboys"] {
+    --fuad-accent: #86198F;
+    --fuad-accent-hover: #701A75;
+    --fuad-on-accent: #FFFFFF;
+    --fuad-accent-tint: rgba(134, 25, 143, 0.1);
+}
+
 /* ---- Page ---- */
 
 /* Each member can pick their own MFL skin (the league's is only the default), so these set every
@@ -1134,6 +1156,8 @@ body [tabindex]:focus-visible {
     font-size: 13px;
     overflow-wrap: anywhere;
 }
+
+.fuad-sheet-note { margin: 12px 0 0; font-size: 13px; }
 
 .fuad-commish-short { display: none; }
 

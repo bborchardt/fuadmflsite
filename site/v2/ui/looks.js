@@ -67,8 +67,48 @@ export function applyLook(doc = document, look = lookOf(doc)) {
     return look;
 }
 
-// The commissioner (MFL's team 0000) has no skin of their own: theirs is the league's, the default
-// look a member may be on too, so the commissioner's view is marked in v2's colours instead (fuad.css)
+// The commissioner (MFL's team 0000) has no skin of their own: theirs is the league's, and saving one
+// would change every member on the default look. MFL offers no other place for it and shows a team's
+// skin only to that team, so the commissioner's view follows the skin their own team was last seen in,
+// in this browser, per league. Only that team's pages have MFL's Become Commissioner link. The header
+// reads it too (mfl/message-header.html), for the loading cover.
+const TEAM_SKIN = "fuad.teamSkin.";
+const skinKey = (leagueId) => `${TEAM_SKIN}${leagueId}`;
+
+function readTeamSkin(leagueId) {
+    try {
+        return window.localStorage.getItem(skinKey(leagueId));
+    } catch (error) {
+        return null;
+    }
+}
+
+function keepTeamSkin(doc, folder, franchiseId, leagueId) {
+    if (franchiseId === "0000" || !doc.querySelector('a[href*="BECOME=0000"]')) {
+        return;
+    }
+    try {
+        if (window.localStorage.getItem(skinKey(leagueId)) !== folder) {
+            window.localStorage.setItem(skinKey(leagueId), folder);
+        }
+    } catch (error) {
+        // storage is blocked: the commissioner's view keeps the default look
+    }
+}
+
+// the look to draw: the page's skin's, or for the commissioner, their team's. `followed` is whether
+// a team's skin is known here. As their team, the skin is kept for the commissioner's view.
+export function pageLook(doc = document, franchiseId = window.franchise_id, leagueId = window.league_id, looks = LOOKS) {
+    if (franchiseId !== "0000") {
+        keepTeamSkin(doc, skinFolder(doc) || "", franchiseId, leagueId);
+        return {look: lookOf(doc, looks), followed: false};
+    }
+    const folder = readTeamSkin(leagueId);
+    const look = looks.find((entry) => entry.folder && folder && entry.folder.toLowerCase() === folder.toLowerCase()) || looks[0];
+    return {look, followed: folder !== null};
+}
+
+// The commissioner's view is marked in v2's colours (fuad.css), whichever look it's in
 export function markCommish(doc = document, franchiseId = window.franchise_id) {
     doc.documentElement.classList.toggle("fuad-commish", franchiseId === "0000");
 }
@@ -136,6 +176,7 @@ export function wireLooks(group, context, current) {
     });
     const settle = (look) => {
         saved = look;
+        keepTeamSkin(doc, look.folder || "", doc.defaultView.franchise_id, doc.defaultView.league_id);
         doc.dispatchEvent(new doc.defaultView.CustomEvent(SAVED, {detail: {look, from: group}}));
     };
     buttons.forEach((button) => button.addEventListener("click", async () => {
