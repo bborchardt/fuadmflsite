@@ -2,7 +2,7 @@
 // live until this season's trade deadline, then this season's snapshot, for Rosters › Draft.
 
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
-import {league} from "../lib/settings.js";
+import {league as leagueStatus} from "../lib/settings.js";
 import {franchisePhase, readSnapshot, snapshotFileName} from "../lib/franchise.js";
 import {kickoffAt} from "./context.js";
 import {whenText} from "./home-model.js";
@@ -14,9 +14,6 @@ async function kickoffs(season) {
 }
 
 async function loadSnapshot(season, dataBase) {
-    if (!league.snapshots) {
-        return null;
-    }
     const response = await fetch(new URL(snapshotFileName(season), dataBase), {cache: "no-cache"});
     if (response.status === 404) {
         return null;
@@ -31,6 +28,9 @@ const deadlineText = (date) => (date ? whenText(Math.floor(date.getTime() / 1000
 
 export async function franchiseView(season, league, dataBase) {
     const live = franchiseTopSalaries(league.rosteredPlayers);
+    if (!leagueStatus.snapshots) {
+        return {topSalaries: live, phase: "projected", note: "Projected franchise salaries, live: a test league has no trade deadline snapshots."};
+    }
     const times = await kickoffs(season);
     const phase = franchisePhase(new Date(), times.start, times.deadline);
     if (phase === "previous") {

@@ -5,13 +5,13 @@
 
 import data from "./settings-data.js";
 
-// tests/settings.test.mjs ties it to lib/zone.js, which reads the settings
-export const ZONES = ["ET", "CT", "MT", "PT", "AKT", "HT", "GMT"];
-const CHOICES = {timeZone: ZONES, "playoffs.wildcardsBy": ["allPlay", "standings"], draftOrder: ["playoffFinish", "standings"]};
+// the zones MFL's Franchise setup › Customize › Time Zone offers, by the letters it writes after a time
+export const ZONES = {ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu", GMT: "UTC"};
+const CHOICES = {timeZone: Object.keys(ZONES), "playoffs.wildcardsBy": ["allPlay", "standings"], draftOrder: ["playoffFinish", "standings"]};
 // taken whole: its positions are the ones a league uses
 const WHOLE = ["rookieScale.firstPick"];
 const LISTS = {
-    "payouts.places": (item) => isAmount(item),
+    "payouts.places": (item) => isAmount(item) && item <= 1,
     renumberedFranchises: (item) => isObject(item) && typeof item.was === "string" && typeof item.now === "string" && isAmount(item.through)
 };
 
@@ -25,7 +25,8 @@ const NUMBERS = {
     "franchiseTag.averageOfTop": COUNT,
     "rookieScale.dropPerPick": SHARE,
     "cutPenalty.shareOfRemainingContract": SHARE,
-    "contracts.maxYears": COUNT,
+    // lengths are drawn as a button each, as v2 loads
+    "contracts.maxYears": {...COUNT, max: 30},
     "contracts.defaultYears": COUNT,
     "playoffs.teams": COUNT,
     "playoffs.byes": {whole: true}
@@ -143,8 +144,9 @@ export function resolveSettings({defaults, leagues}, id, header) {
     ORDERED.forEach(([group, low, high]) => {
         const both = {...under[group], ...values[group]};
         if (both[low] > both[high]) {
-            delete values[group];
-            changes = changes.filter((change) => !change.path.startsWith(`${group}.`));
+            delete values[group][low];
+            delete values[group][high];
+            changes = changes.filter((change) => change.path !== `${group}.${low}` && change.path !== `${group}.${high}`);
             faults.push(`${group}.${low} can't be over ${group}.${high}`);
         }
     });

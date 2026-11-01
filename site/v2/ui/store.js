@@ -31,15 +31,15 @@ const TIDIED = "fuad.tidied";
 // for the settings a browser has, as MFL's pages fill this storage too and this is on every page.
 export function dropUnusedKeys() {
     try {
-        if (storage.get(TIDIED) === league.keyId) {
+        if (storage.get(`${TIDIED}.${league.id}`) === league.keyId) {
             return;
         }
         const own = `@${league.id}-`;
         const current = `@${league.keyId}`;
         Object.keys(window.localStorage)
-            .filter((name) => UNUSED.test(name) || (name.includes(own) && !name.endsWith(current)))
+            .filter((name) => UNUSED.test(name) || (name.startsWith("fuad.") && name.includes(own) && !name.endsWith(current)))
             .forEach((name) => window.localStorage.removeItem(name));
-        storage.set(TIDIED, league.keyId);
+        storage.set(`${TIDIED}.${league.id}`, league.keyId);
     } catch (error) {
         // storage is blocked: nothing is kept
     }
