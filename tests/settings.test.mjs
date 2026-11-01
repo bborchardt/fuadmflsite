@@ -7,7 +7,7 @@ import {execFileSync} from "node:child_process";
 import {mkdtempSync, readFileSync, rmSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
-import settings, {league, leagueIdIn, resolveSettings} from "../site/v2/lib/settings.js";
+import settings, {ZONES, league, leagueIdIn, resolveSettings} from "../site/v2/lib/settings.js";
 import {testLeagueNote} from "../site/v2/ui/test-league.js";
 import {CONTRACT_WINDOW_HOURS} from "../site/v2/lib/adds.js";
 import {MAX_YEARS, yearMentions} from "../site/v2/lib/contract-years.js";
@@ -77,7 +77,8 @@ test("from MFL's league export: the season's weeks and the league's positions", 
 });
 
 test("the time zone is one MFL shows, labelled as MFL labels it", async () => {
-    const {TIME_ZONE, ZONE, zoneOffset} = await import("../site/v2/lib/zone.js");
+    const {TIME_ZONE, ZONE, ZONES: named, zoneOffset} = await import("../site/v2/lib/zone.js");
+    assert.deepEqual(ZONES, Object.keys(named));
     assert.ok(TIME_ZONE, `timeZone "${settings.timeZone}" is not one MFL offers (ET, CT, MT, PT, AKT, HT, GMT)`);
     assert.equal(ZONE, settings.timeZone);
     // Central: daylight time in October, standard in December
@@ -123,6 +124,12 @@ test("a header's unusable values are ignored and named", () => {
         assert.ok(status.problems.some((problem) => problem.includes(name)), name);
     }
     assert.equal(({}).salaryCap, undefined);
+    for (const line2 of [{franchiseTag: {averageOfTop: 0}}, {contracts: {maxYears: 2.5}}, {roster: {min: 40}}, {rookieScale: {dropPerPick: 5}}, {playoffs: {teams: 0}}, {contracts: {defaultYears: 9}}]) {
+        const unusable = resolveSettings(file, "1", line2);
+        assert.deepEqual(unusable.settings, file.defaults, JSON.stringify(line2));
+        assert.equal(unusable.league.problems.length, 1, JSON.stringify(line2));
+        assert.deepEqual(unusable.league.changes, [], JSON.stringify(line2));
+    }
     assert.deepEqual(resolveSettings(file, "1", 5).league.problems, ["the settings line must be an object"]);
 });
 
@@ -170,9 +177,14 @@ test("what's kept is kept per league, but for what every league shares, and old 
             items.set(old, "{}");
         }
         items.set("fuad.beta", "v2");
+        items.set("fuad.home.recent.2026@48571-old", "{}");
+        items.set("fuad.home.recent.2026@50965-abc", "{}");
         globalThis.window.localStorage = new Proxy(globalThis.window.localStorage, {ownKeys: () => [...items.keys()], getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})});
         dropUnusedKeys();
-        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.league.power.2026@48571", "fuad.players.2026"]);
+        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.home.recent.2026@50965-abc", "fuad.league.power.2026@48571", "fuad.players.2026", "fuad.tidied"]);
+        items.set("fuad.homeTabs", "{}");
+        dropUnusedKeys();
+        assert.ok(items.has("fuad.homeTabs"), "once for the settings a browser has");
     } finally {
         delete globalThis.window;
     }

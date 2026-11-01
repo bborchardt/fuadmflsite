@@ -5,7 +5,8 @@
 
 import data from "./settings-data.js";
 
-const ZONES = ["ET", "CT", "MT", "PT", "AKT", "HT", "GMT"];
+// tests/settings.test.mjs ties it to lib/zone.js, which reads the settings
+export const ZONES = ["ET", "CT", "MT", "PT", "AKT", "HT", "GMT"];
 const CHOICES = {timeZone: ZONES, "playoffs.wildcardsBy": ["allPlay", "standings"], draftOrder: ["playoffFinish", "standings"]};
 // taken whole: its positions are the ones a league uses
 const WHOLE = ["rookieScale.firstPick"];
@@ -13,6 +14,24 @@ const LISTS = {
     "payouts.places": (item) => isAmount(item),
     renumberedFranchises: (item) => isObject(item) && typeof item.was === "string" && typeof item.now === "string" && isAmount(item.through)
 };
+
+// numbers the rules divide by, count with or take as a share; any other is an amount, 0 or more
+const COUNT = {min: 1, whole: true};
+const SHARE = {max: 1};
+const NUMBERS = {
+    "roster.min": {whole: true},
+    "roster.max": COUNT,
+    "weeks.tradeDeadline": COUNT,
+    "franchiseTag.averageOfTop": COUNT,
+    "rookieScale.dropPerPick": SHARE,
+    "cutPenalty.shareOfRemainingContract": SHARE,
+    "contracts.maxYears": COUNT,
+    "contracts.defaultYears": COUNT,
+    "playoffs.teams": COUNT,
+    "playoffs.byes": {whole: true}
+};
+// each pair's first can't be over its second
+const ORDERED = [["roster", "min", "max"], ["contracts", "defaultYears", "maxYears"]];
 
 const isObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 const isAmount = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0;
@@ -39,7 +58,11 @@ function fault(path, value, model) {
         return isObject(value) && Object.keys(value).length && Object.values(value).every(isAmount) ? null : "must name each position's amount";
     }
     if (typeof model === "number") {
-        return isAmount(value) ? null : "must be a number, 0 or more";
+        const {min = 0, max = Infinity, whole = false} = NUMBERS[path] || {};
+        if (!isAmount(value) || value < min || value > max || (whole && !Number.isInteger(value))) {
+            return `must be a ${whole ? "whole " : ""}number, ${min} or more${max < Infinity ? ` and at most ${max}` : ""}`;
+        }
+        return null;
     }
     if (typeof value !== typeof model || Array.isArray(value) !== Array.isArray(model)) {
         return `must be a ${typeof model}`;
@@ -115,7 +138,16 @@ export function resolveSettings({defaults, leagues}, id, header) {
         }
     }
     const under = base ? merged(defaults, leagues[base]) : defaults;
-    const {values, changes, problems: faults} = checked(rest, under);
+    const {values, changes: wanted, problems: faults} = checked(rest, under);
+    let changes = wanted;
+    ORDERED.forEach(([group, low, high]) => {
+        const both = {...under[group], ...values[group]};
+        if (both[low] > both[high]) {
+            delete values[group];
+            changes = changes.filter((change) => !change.path.startsWith(`${group}.`));
+            faults.push(`${group}.${low} can't be over ${group}.${high}`);
+        }
+    });
     const settings = merged(under, values);
     return {
         settings,
@@ -140,7 +172,8 @@ export function leagueIdIn(location, pageLeague) {
         || pageLeague;
 }
 
-const env = globalThis.process && globalThis.process.env;
+// Node's own, as a script on the page could define a `process`
+const env = globalThis.process && globalThis.process.versions && globalThis.process.versions.node ? globalThis.process.env : null;
 
 const resolved = env
     ? resolveSettings(data, env.MFL_LEAGUE_ID)

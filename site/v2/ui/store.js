@@ -25,10 +25,21 @@ const keyOf = (key) => (SHARED.test(key) ? key : `${key}@${league.keyId}`);
 
 // what's kept from before it was kept per league, a bid run for up to a year, and a list v2 no longer keeps
 const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids)\.[^@]*|homeTabs)$/;
+const TIDIED = "fuad.tidied";
 
+// Also what this league kept under settings it no longer has, nothing else would ever remove it. Once
+// for the settings a browser has, as MFL's pages fill this storage too and this is on every page.
 export function dropUnusedKeys() {
     try {
-        Object.keys(window.localStorage).filter((name) => UNUSED.test(name)).forEach((name) => window.localStorage.removeItem(name));
+        if (storage.get(TIDIED) === league.keyId) {
+            return;
+        }
+        const own = `@${league.id}-`;
+        const current = `@${league.keyId}`;
+        Object.keys(window.localStorage)
+            .filter((name) => UNUSED.test(name) || (name.includes(own) && !name.endsWith(current)))
+            .forEach((name) => window.localStorage.removeItem(name));
+        storage.set(TIDIED, league.keyId);
     } catch (error) {
         // storage is blocked: nothing is kept
     }

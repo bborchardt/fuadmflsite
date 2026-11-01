@@ -14,8 +14,9 @@ The values below are FUAD's: the defaults, with the wordmark and renumbered fran
 ## Test leagues
 
 A league that isn't listed is a test league. It runs without a change to the code: its commissioner
-pastes the site's header, and it has the defaults, with the wordmark "MFL". One line in its header,
-above the `<!-- a beta offer` comment, changes any setting:
+pastes the site's header running v2, as its `MAIN` or a beta its members join (v1 has no settings), and
+it has the defaults, with the wordmark "MFL". One line in its header, above the `<!-- a beta offer` comment, changes any
+setting:
 
 ```html
 <script>window.fuadSettings = {extends: "48571", wordmark: "FUAD CLONE", salaryCap: 250};</script>
@@ -23,12 +24,13 @@ above the `<!-- a beta offer` comment, changes any setting:
 
 - `extends` names a listed league to start from instead of the defaults, and is optional.
 - Everyone in a test league sees a "Test league" line. Its commissioner also sees what's in force and
-  any value that was ignored, for a name that isn't a setting or a value that can't be used.
+  any value that was ignored, for a name that isn't a setting or a value the rules can't use.
 - A listed league ignores the line.
 - Published franchise salaries show only with `extends`, as they're that league's. Otherwise they're
   missing, as they're from no team in this league.
 - What v2 keeps in the browser is kept per league and per settings, so a changed value starts afresh.
-- It reaches the pages only. The daily job stops for a league that isn't listed.
+- It reaches the pages only. The daily job stops for a league that isn't listed in the version
+  `RULES_VERSION` names, unless that's v1, which has no settings.
 
 ## Forking
 
@@ -41,7 +43,7 @@ still test on someone else's copy: paste their `BASE` and a settings line into a
 | Setting | Value | Meaning |
 |---|---|---|
 | `wordmark` | "FUAD" | The league's short name, at the top of every page; the default is "MFL". |
-| `timeZone` | "CT" | MFL's Time Zone setting for the league: `"ET"`, `"CT"`, `"MT"` or `"PT"`. Times show in it, labelled with it. |
+| `timeZone` | "CT" | MFL's Time Zone setting for the league: `"ET"`, `"CT"`, `"MT"`, `"PT"`, `"AKT"`, `"HT"` or `"GMT"`. Times show in it, labelled with it. |
 
 ## Money and roster
 
