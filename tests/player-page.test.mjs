@@ -35,7 +35,8 @@ test("a page MFL draws differently is left to MFL's own popup", () => {
 test("a news article: its source, time, update and analysis", () => {
     const article = readArticle(fixture("article-rotowire642709.html"));
     assert.equal(article.source, "Rotowire");
-    assert.equal(article.published, "Fri Oct 16 1:04:42 p.m. CT 2026");
+    assert.equal(article.published, "Fri Oct 16, 1:04 p.m.");
+    assert.equal(readArticle(fixture("article-rotowire642709.html").replace("1:04:42 p.m. CT", "2:04:42 p.m. ET")).published, "Fri Oct 16, 1:04 p.m.");
     assert.match(article.update, /^Head coach Jesse Minter said Friday/);
     assert.match(article.analysis, /^Considering Jackson hasn't practiced/);
     assert.doesNotMatch(article.analysis, /Article Link|Premium/);

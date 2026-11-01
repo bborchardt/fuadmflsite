@@ -4,6 +4,8 @@
 
 import {displayName} from "../lib/mfl.js";
 import {clean} from "./html.js";
+import {whenText} from "./home-model.js";
+import {mflTime} from "../lib/zone.js";
 
 export const NFL_TEAMS = {
     ARI: "Arizona Cardinals", ATL: "Atlanta Falcons", BAL: "Baltimore Ravens", BUF: "Buffalo Bills",
@@ -177,7 +179,9 @@ export function readArticle(html) {
     const split = body.search(/<p><b>Analysis:<\/b>/i);
     const update = text((split < 0 ? body : body.slice(0, split)).replace(/^\s*\(<a[^>]*>[^<]+<\/a>\)/, "").replace(/\(<a[^>]*>Article Link<\/a>\)[\s\S]*$/i, ""));
     const analysis = split < 0 ? "" : text(body.slice(split).replace(/<b>Analysis:<\/b>/i, "").replace(/\(<a[^>]*>Article Link<\/a>\)[\s\S]*$/i, ""));
-    return {published: text(published[1]), source: text(source), update, analysis};
+    // in the league's zone, as v2 shows every time; MFL writes it in the member's
+    const at = mflTime(text(published[1]));
+    return {published: at ? whenText(at) : text(published[1]), source: text(source), update, analysis};
 }
 
 // "Beck, Carson ARI QB" from MFL's link, until the page arrives

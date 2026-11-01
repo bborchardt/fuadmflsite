@@ -6,9 +6,15 @@ import {dayOnly, insertTags, restyleBoard, restyleTopic, shortDate, topicTitle} 
 
 const page = (name) => parseHTML(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")).document;
 
-test("a post's date drops the seconds, the time zone and the year", () => {
+test("a post's date is in the league's zone, whichever the member picked on MFL, without seconds or year", () => {
     assert.equal(shortDate("\n Wed Sep 9 11:11:12 p.m. CT 2026\n"), "Wed Sep 9 · 11:11 p.m.");
     assert.equal(shortDate("Sat Oct 17 10:53:42 a.m. CT 2026"), "Sat Oct 17 · 10:53 a.m.");
+    assert.equal(shortDate("Thu Sep 10 12:11:12 a.m. ET 2026"), "Wed Sep 9 · 11:11 p.m.");
+    assert.equal(shortDate("Wed Sep 9 6:11:12 p.m. HT 2026"), "Wed Sep 9 · 11:11 p.m.");
+    // a post edited later: the post's own time comes first
+    assert.equal(shortDate("Sun Oct 25 5:24:08 p.m. CT 2026 Sun Oct 25 7:27:31 p.m. CT 2026"), "Sun Oct 25 · 5:24 p.m.");
+    // letters MFL doesn't offer: as written
+    assert.equal(shortDate("Wed Sep 9 11:11:12 p.m. XT 2026"), "Wed Sep 9 11:11:12 p.m. XT 2026");
     assert.equal(shortDate("yesterday"), "yesterday");
 });
 
@@ -22,6 +28,7 @@ test("the topic bar gives the topic's name and views", () => {
 test("the topic list dates a topic by its last post's day, as Home does", () => {
     assert.equal(dayOnly("Sun Oct 18 3:29:08 p.m. CT 2026"), "Oct 18");
     assert.equal(dayOnly(" Tue Sep 8 1:44:30 p.m. CT 2026 "), "Sep 8");
+    assert.equal(dayOnly("Mon Oct 19 12:29:08 a.m. ET 2026"), "Oct 18");
     assert.equal(dayOnly("yesterday"), "yesterday");
 });
 
