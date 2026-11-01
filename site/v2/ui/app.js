@@ -260,7 +260,14 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     }
     // Franchise setup: MFL's forms under v2's heading and tabs
     if (context && here.path === "csetup") {
-        await import("./setup.js").then(({restyleSetup}) => restyleSetup(document, {context, franchiseId: window.franchise_id || null})).catch((error) => {
+        const shown = over("fuad-setup-on");
+        await import("./setup.js").then(({restyleSetup}) => {
+            // a screen v2 leaves as MFL's (the commissioner's, Home Page Modules, or changed) shows as it is
+            if (!restyleSetup(document, {context, franchiseId: window.franchise_id || null})) {
+                document.documentElement.classList.remove("fuad-setup-on");
+            }
+            onDrawn();
+        }).catch(shown).catch((error) => {
             console.error("[fuad] couldn't restyle Franchise setup:", error);
             onTrouble();
         });

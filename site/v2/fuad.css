@@ -3893,7 +3893,10 @@ body .fuad-side-foot a { display: inline-flex; align-items: center; min-height: 
 
 body .fuad-side-back { display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: none; }
 
-/* Franchise setup: its heading, then its tabs as view segments that wrap onto a second row on a phone */
+/* Franchise setup: MFL's link row and forms wait for v2's heading and styles, so they don't show unstyled first */
+.fuad-setup-on:not(.fuad-setup) body #withmenus { visibility: hidden; }
+
+/* its heading, then its tabs as view segments that wrap onto a second row on a phone */
 body .fuad-setup-head h2 { margin: 0 0 12px; padding: 0; font-size: 34px; line-height: 1.1; text-transform: none; text-align: left; }
 
 .fuad-setup-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px; background: var(--fuad-panel); }
