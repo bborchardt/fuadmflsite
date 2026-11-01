@@ -3009,14 +3009,18 @@ body #fuad-home select {
 #fuad-league .fuad-team-pic,
 #fuad-rosters .fuad-team-pic { display: inline-block; flex: none; width: 24px; height: 24px; margin-right: 8px; vertical-align: -6px; border-radius: 50%; overflow: hidden; background: var(--fuad-quiet); }
 
+/* margins, not gap: older iPhones (iOS 14.0–14.4) have no gap in flex rows */
 #fuad-league .fuad-with-pic,
-#fuad-rosters .fuad-with-pic { display: inline-flex; align-items: flex-start; gap: 8px; }
+#fuad-rosters .fuad-with-pic { display: inline-flex; align-items: flex-start; }
 
 #fuad-league .fuad-with-pic .fuad-team-pic,
-#fuad-rosters .fuad-with-pic .fuad-team-pic { margin: -2px 0 0; }
+#fuad-rosters .fuad-with-pic .fuad-team-pic { margin: -2px 8px 0 0; }
 
 #fuad-league .fuad-pic-after,
 #fuad-rosters .fuad-pic-after { flex-direction: row-reverse; }
+
+#fuad-league .fuad-pic-after .fuad-team-pic,
+#fuad-rosters .fuad-pic-after .fuad-team-pic { margin: -2px 0 0 8px; }
 
 #fuad-league .fuad-team-pic img,
 #fuad-rosters .fuad-team-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
