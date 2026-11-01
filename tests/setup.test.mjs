@@ -137,18 +137,22 @@ test("Customize shows Full width; what reaches only MFL's pages is under More se
     assert.ok(doc.querySelector('form[name="customize"] input[name="FRANCHISE_ICON0001"]'));
 });
 
-test("Contact: email and who sees it first, the alerts v2's league uses, the rest of the details closed", () => {
+test("Contact: email and who sees it first, then the alerts, the rarer ones and the rest of the details closed", () => {
     const {doc, shown, details} = restyled("FCONTACT");
     assert.deepEqual(labels(shown), ["Email", "Let leaguemates see my email", "Email me about"]);
-    assert.deepEqual([...shown.querySelectorAll(".fuad-setup-checks .fuad-setup-check > span")].map((span) => span.textContent), [
-        "Draft updates", "I'm on the clock in the draft", "Lineups set (mine and my opponent's)",
-        "Lineup reminder (Thursdays 6 a.m. ET, if I haven't set one)", "Trade offers and results", "Waiver and free agent moves", "IR moves",
-        "Weekly results", "Injury report", "New message board topics", "News on my players (daily, 3 a.m. ET)", "MFL site news",
-        "Promotions from MFL's partners"
+    const alerts = (root) => [...root.querySelectorAll(":scope > .fuad-setup-check > span")].map((span) => span.textContent);
+    const field = shown.querySelector(".fuad-setup-checks").parentElement;
+    assert.deepEqual(alerts(field.querySelector(":scope > .fuad-setup-checks")), [
+        "Lineups set (mine and my opponent's)", "Lineup reminder (Thursdays 6 a.m. ET, if I haven't set one)", "Trade offers and results",
+        "Waiver and free agent moves", "IR moves", "Weekly results", "Injury report", "New message board topics",
+        "News on my players (daily, 3 a.m. ET)", "MFL site news", "Promotions from MFL's partners"
     ]);
-    for (const value of ["AUCTION", "TAXI", "TBAIT", "POLL", "ARTICLE"]) {
-        assert.ok(doc.querySelector(`.fuad-setup-kept[hidden] input[value="${value}"]`), value);
-    }
+    // the draft's, once a year, and those for what the league doesn't have: closed, under Other emails
+    const others = field.querySelector(":scope > details.fuad-setup-other-alerts");
+    assert.equal(others.querySelector("summary").textContent, "Other emails");
+    assert.equal(others.hasAttribute("open"), false);
+    assert.deepEqual(alerts(others.querySelector(".fuad-setup-checks")), ["Draft updates", "I'm on the clock in the draft", "Auction updates",
+        "Trade bait updates", "Taxi squad moves", "New polls", "New articles and videos"]);
     assert.deepEqual(details.map((section) => section.querySelector("summary").textContent), ["Other contact details"]);
     assert.deepEqual(labels(inside(details[0])), ["Phone", "Street address", "City, state, zip, country"]);
     assert.ok(doc.querySelector('.fuad-setup-kept[hidden] input[name="TWITTER_USERNAME0001"]'));

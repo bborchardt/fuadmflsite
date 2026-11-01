@@ -45,16 +45,17 @@ const FORMS = {
     FACCESS: {shown: {FRANCHISE_NAME: "Team", ACCESS_CODE: "New access code", ACCESS_CODE2: "The new code again"}}
 };
 const MORE_NOTE = "These don't change the main pages (Home, Lineup, League, Moves, Rosters). They only affect MFL's original pages in the site menu.";
-// Contact's email alerts by MFL's value for each; v2's league has no auction, taxi squad, trade bait,
-// polls or articles
+// Contact's email alerts by MFL's value for each. The draft's, once a year, and those for what v2's
+// league doesn't have (an auction, a taxi squad, trade bait, polls, articles) are under Other emails.
 const ALERTS = {
-    DRAFT: "Draft updates", ONTHECLOCK: "I'm on the clock in the draft", LINEUP: "Lineups set (mine and my opponent's)",
+    DRAFT: "Draft updates", ONTHECLOCK: "I'm on the clock in the draft", AUCTION: "Auction updates", TAXI: "Taxi squad moves",
+    TBAIT: "Trade bait updates", POLL: "New polls", ARTICLE: "New articles and videos", LINEUP: "Lineups set (mine and my opponent's)",
     LREMINDER: "Lineup reminder (Thursdays 6 a.m. ET, if I haven't set one)", TRADE: "Trade offers and results",
     WAIVER: "Waiver and free agent moves", IR: "IR moves", RESULT: "Weekly results", INJURY: "Injury report",
     MSG_BOARD: "New message board topics", PLAYER_NEWS: "News on my players (daily, 3 a.m. ET)", MFL_NEWS: "MFL site news",
     PROMO_MESSAGES: "Promotions from MFL's partners"
 };
-const HIDDEN_ALERTS = ["AUCTION", "TAXI", "TBAIT", "POLL", "ARTICLE"];
+const OTHER_ALERTS = ["DRAFT", "ONTHECLOCK", "AUCTION", "TAXI", "TBAIT", "POLL", "ARTICLE"];
 
 // MFL's link row, "Franchise Setup: Basic | Unlink Franchise | …", the screen shown unlinked: the
 // screen shown and each screen's address, or null
@@ -164,7 +165,7 @@ const make = (doc, tag, className, text) => {
 };
 
 // A field's cell moved under v2's label: MFL's own inputs, so what the form sends doesn't change
-function field(doc, row, label, kept) {
+function field(doc, row, label) {
     const block = make(doc, "div", "fuad-setup-field");
     const radios = [...row.cell.querySelectorAll('input[type="radio"]')];
     const checks = [...row.cell.querySelectorAll('input[type="checkbox"]')];
@@ -182,21 +183,23 @@ function field(doc, row, label, kept) {
         line.append(make(doc, "span", "", label), checks[0]);
         block.append(line);
     } else if (checks.length) {
-        // Contact's email alerts: a switch each, the ones v2's league can't use kept but hidden
+        // Contact's email alerts: a switch each, the rarer ones under Other emails, closed
         block.append(make(doc, "span", "fuad-setup-label", label));
         const list = make(doc, "div", "fuad-setup-checks");
+        const others = make(doc, "div", "fuad-setup-checks");
         for (const check of checks) {
             const value = check.getAttribute("value");
             const mfls = check.id ? row.cell.querySelector(`label[for="${check.id}"]`) : null;
-            if (HIDDEN_ALERTS.includes(value)) {
-                kept.append(check);
-                continue;
-            }
             const line = make(doc, "label", "fuad-setup-check");
             line.append(make(doc, "span", "", ALERTS[value] || (mfls ? mfls.textContent.replace(/\u00a0/g, " ").trim() : value)), check);
-            list.append(line);
+            (OTHER_ALERTS.includes(value) ? others : list).append(line);
         }
         block.append(list);
+        if (others.firstChild) {
+            const details = make(doc, "details", "fuad-setup-more fuad-setup-other-alerts");
+            details.append(make(doc, "summary", "", "Other emails"), others);
+            block.append(details);
+        }
     } else {
         const control = row.cell.querySelector("input, select, textarea");
         const name = make(doc, control ? "label" : "span", "fuad-setup-label", label);
@@ -267,7 +270,7 @@ function restyleForm(doc, spec, franchiseId) {
             continue;
         }
         const label = {...spec.shown, ...spec.more, ...spec.other}[row.name] || row.label.textContent.replace(/\u00a0/g, " ").trim().replace(/:$/, "");
-        blocks[row.name] = field(doc, row, label, kept);
+        blocks[row.name] = field(doc, row, label);
         home(row.name).append(blocks[row.name]);
     }
     for (const row of rows.filter((each) => each.hint)) {

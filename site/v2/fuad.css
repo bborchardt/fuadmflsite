@@ -3988,6 +3988,8 @@ body .fuad-setup-yn input:focus-visible + label { outline: 2px solid var(--fuad-
 
 .fuad-setup-checks { display: flex; flex-direction: column; }
 
+.fuad-setup-other-alerts > summary { min-height: 44px; font-size: 15px; }
+
 .fuad-setup-checks > .fuad-setup-check + .fuad-setup-check { border-top: 1px solid var(--fuad-rule); }
 
 body .fuad-setup-check { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 15px; color: var(--fuad-text); cursor: pointer; }
