@@ -62,7 +62,7 @@ test("my alerts: invalid bids block, otherwise the deadline", () => {
     assert.deepEqual(over.map((a) => [a.title, a.detail, a.tone]), [["Current bids invalid", "If all high bids win: cap used $297 → $302 · Add", "red"]]);
     const fine = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run,
         groups: pendingGroups({blindBidWaiverRequest: [{round: "1", addsDrops: "1_1_"}, {round: "2", addsDrops: "2_1_"}]})});
-    assert.deepEqual(fine.map((a) => [a.title, a.detail]), [["2 blind bids pending", "They process Wed Oct 21, 11:00 p.m. CT · Add"]]);
+    assert.deepEqual(fine.map((a) => [a.title, a.detail]), [["2 blind bids pending", "They process Wed Oct 21, 11:00 p.m. · Add"]]);
     // the first run close by is the pending bids' alert, not one of its own
     const first = {what: "First blind bids", when: "Wed Oct 21, 11:00 p.m.", soon: true, kind: "bids"};
     const withBids = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run, coming: [first],
@@ -118,7 +118,7 @@ test("my alerts: a free agent add's contract length, as read from the board", ()
     const league = leagueOf([me], [waller], {pendingAdds: [{playerId: "7", name: "Waller, Darren", franchiseId: "0001", type: "FREE_AGENT", added}]});
     const base = {league, franchiseId: "0001", phase: "season", links, now};
     assert.deepEqual(titles(myAlerts(base)), ["Post a contract length for Waller"]);
-    assert.equal(myAlerts(base)[0].detail, "Free agent add, due 12:30 p.m. CT, or it’s 1 year · Message board");
+    assert.equal(myAlerts(base)[0].detail, "Free agent add, due 12:30 p.m., or it’s 1 year · Message board");
     assert.deepEqual(titles(myAlerts({...base, readings: new Map([["7", {state: "read", years: 2}]])})), ["Waller: 2 years"]);
     // past the hour it's the job's
     assert.deepEqual(myAlerts({...base, now: added + 3601}), []);

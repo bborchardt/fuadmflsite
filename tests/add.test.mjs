@@ -37,17 +37,17 @@ test("the banner: the window is open while MFL lets any free agent be added outr
     ]};
     const sunday = new Date("2026-10-18T10:00:00-05:00").getTime() / 1000;
     const {add} = readPlayerLists(page);
-    assert.deepEqual(banner({phase: "season", freeAgents: add, calendar, now: sunday}), {kind: "window", text: "Free agent window open until Sunday noon CT"});
+    assert.deepEqual(banner({phase: "season", freeAgents: add, calendar, now: sunday}), {kind: "window", text: "Free agent window open until Sunday noon"});
     const locked = add.filter((player) => player.mark);
-    assert.deepEqual(banner({phase: "season", freeAgents: locked, calendar, now: sunday}), {kind: "bids", text: "Blind bids only until Wednesday 11 p.m. CT"});
+    assert.deepEqual(banner({phase: "season", freeAgents: locked, calendar, now: sunday}), {kind: "bids", text: "Blind bids only until Wednesday 11 p.m."});
     // before week 1 the first run is named by its date
     const august = new Date("2026-09-05T12:00:00-05:00").getTime() / 1000;
-    assert.equal(banner({phase: "preseason", freeAgents: locked, calendar, now: august}).text, "Blind bids only until Wed Sep 9, 11 p.m. CT");
+    assert.equal(banner({phase: "preseason", freeAgents: locked, calendar, now: august}).text, "Blind bids only until Wed Sep 9, 11 p.m.");
     assert.deepEqual(banner({phase: "closed", freeAgents: add, calendar, now: august}), {kind: "closed", text: "Adds open after the draft."});
     assert.deepEqual(banner({phase: "over", freeAgents: add, calendar, now: sunday}), {kind: "closed", text: "Adds open after the draft."});
     // after the last bid run (Wed Jan 6), the window runs to the last lock (Sun Jan 10)
     const lastWeek = Date.parse("2027-01-08T12:00:00-06:00") / 1000;
-    assert.equal(banner({phase: "season", freeAgents: add, calendar, now: lastWeek}).text, "Free agent window open until Sunday noon CT");
+    assert.equal(banner({phase: "season", freeAgents: add, calendar, now: lastWeek}).text, "Free agent window open until Sunday noon");
     assert.equal(banner({phase: "season", freeAgents: locked, calendar, now: lastWeek}).text, "Blind bids only");
     // free agency is over at the last lock; bids once the last run has passed
     const closes = Date.parse("2027-01-10T12:00:00-06:00") / 1000;

@@ -3,7 +3,7 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {mflTime} from "../site/v2/lib/zone.js";
+import {mflTime, zoneLabel} from "../site/v2/lib/zone.js";
 
 test("a time MFL writes in any zone it offers is the same moment", () => {
     // a bid run, as its option's value gives it (saved 31 Oct 2026, with the member on ET)
@@ -28,4 +28,16 @@ test("text that isn't one of MFL's times is nothing", () => {
     assert.equal(mflTime("yesterday"), null);
     assert.equal(mflTime("Wed Oct 21 11:00:00 p.m. XT 2026"), null);
     assert.equal(mflTime("Wed Foo 21 11:00:00 p.m. CT 2026"), null);
+});
+
+test("a time is labelled with the league's zone only for a device on another clock at that moment", () => {
+    // Wed Oct 21 2026, 11 p.m. CT (daylight time, UTC−5); Wed Dec 2, 11 p.m. CT (standard, UTC−6)
+    const october = 1792641600;
+    const december = october + 42 * 86400 + 3600;
+    assert.equal(zoneLabel(october, -5 * 3600), "");
+    assert.equal(zoneLabel(december, -6 * 3600), "");
+    assert.equal(zoneLabel(october, -4 * 3600), " CT");
+    assert.equal(zoneLabel(october, -6 * 3600), " CT");
+    // Arizona keeps UTC−7 all year: on Central's clock never
+    assert.equal(zoneLabel(december, -7 * 3600), " CT");
 });

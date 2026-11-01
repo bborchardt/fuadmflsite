@@ -5,7 +5,7 @@
 import {esc} from "./html.js";
 import {save, saved} from "./store.js";
 import {waitLeft} from "./page-fetch.js";
-import {TIME_ZONE} from "../lib/zone.js";
+import {TIME_ZONE, zoneLabel} from "../lib/zone.js";
 
 // MFL refusing a burst (HTTP 429), as against any other failure
 export const refused = (error) => Boolean(error && error.status === 429);
@@ -26,10 +26,10 @@ export function armRetry(button, error, retry) {
     }
 }
 
-// "7:42 p.m.", as the league's pages write times
+// "7:42 p.m.", as the league's pages write times (" CT" after it where the device's clock differs)
 export function clockText(date) {
     return date.toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE})
-        .replace(/\s?AM$/, " a.m.").replace(/\s?PM$/, " p.m.");
+        .replace(/\s?AM$/, " a.m.").replace(/\s?PM$/, " p.m.") + zoneLabel(Math.floor(date.getTime() / 1000));
 }
 
 export function placeholders(rows = 3) {

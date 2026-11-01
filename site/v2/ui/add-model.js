@@ -8,7 +8,7 @@ import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
 import {cents, money} from "./format.js";
 import settings from "../lib/settings.js";
-import {TIME_ZONE, ZONE} from "../lib/zone.js";
+import {TIME_ZONE} from "../lib/zone.js";
 
 // the league's contract lengths (lib/contract-years.js has them too, but its regular expressions
 // need Safari 16.4+, so it isn't imported here)
@@ -133,8 +133,7 @@ export function freeAgencyOver({phase, calendar, now}) {
 // "Sunday noon", "Wednesday 11 p.m."
 const weekdayTime = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "long", timeZone: TIME_ZONE})} ${timeText(seconds)}`;
 const timeText = (seconds) => {
-    const text = clock(seconds).replace(":00", "");
-    return text === "12 p.m." ? "noon" : text;
+    return clock(seconds).replace(":00", "").replace(/^12 p\.m\./, "noon");
 };
 
 // The banner: MFL decides per player, so the free agent window is open while any free agent can be
@@ -146,11 +145,11 @@ export function banner({phase, freeAgents, calendar, now}) {
     const open = freeAgents.some((player) => !bidOnly(player));
     if (open) {
         const lock = nextWeekly(calendar, "WAIVER_LOCK", now);
-        return {kind: "window", text: `Free agent window open${lock ? ` until ${weekdayTime(lock)} ${ZONE}` : ""}`};
+        return {kind: "window", text: `Free agent window open${lock ? ` until ${weekdayTime(lock)}` : ""}`};
     }
     const run = nextWeekly(calendar, "WAIVER_BBID", now);
     // before week 1 the first run is a date to name
-    const until = !run ? "" : phase === "preseason" ? ` until ${dayText(run)}, ${timeText(run)} ${ZONE}` : ` until ${weekdayTime(run)} ${ZONE}`;
+    const until = !run ? "" : phase === "preseason" ? ` until ${dayText(run)}, ${timeText(run)}` : ` until ${weekdayTime(run)}`;
     return {kind: "bids", text: `Blind bids only${until}`};
 }
 
