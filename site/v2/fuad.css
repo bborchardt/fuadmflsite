@@ -228,8 +228,8 @@
     --fuad-scheme: light;
 }
 
-/* the commissioner's view (looks.js): blue where a look has its accent, a bar along the top and a tag
-   by the wordmark, so it can't be taken for a member's */
+/* the commissioner's view (looks.js): blue where a look has its accent, magenta on a light look, a bar
+   along the top and a tag by the wordmark, so it can't be taken for a member's */
 html.fuad-commish {
     --fuad-accent: #38BDF8;
     --fuad-accent-hover: #7DD3FC;

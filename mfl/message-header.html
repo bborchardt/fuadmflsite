@@ -37,7 +37,7 @@
         };
         var skin = document.getElementById("skin");
         var folder = skin && /\/skins\d*\/([^\/]+)\//.exec(skin.getAttribute("href") || "");
-        var teamSkin = window.franchise_id === "0000" ? stored("fuad.teamSkin." + window.league_id) : null;
+        var teamSkin = viewer === "0000" && version !== "v1" ? stored("fuad.teamSkin." + window.league_id) : null;
         var cover = (teamSkin !== null ? teamSkin : folder ? folder[1] : "").toLowerCase();
         if (Object.prototype.hasOwnProperty.call(COVERS, cover)) {
             root.style.setProperty("--fuad-cover", COVERS[cover][0]);

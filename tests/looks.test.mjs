@@ -102,6 +102,11 @@ test("the commissioner's view follows their team's look, per league, and only th
         keepTeamSkin(pageIn("OceanBlue", become), "0001", "2");
         assert.equal(id(pageIn("NeonBlue"), "1"), "purple");
         assert.equal(id(pageIn("NeonBlue"), "2"), "day");
+        // their own page names their team, and viewing as another team then keeps nothing
+        const own = pageIn("NeonBlue", '<td class="welcome"><a href="/2026/logout?L=1&BECOME=0001">Become Owner</a></td>');
+        keepTeamSkin(own, "0000", "1");
+        keepTeamSkin(pageIn("OceanBlue", become), "0005", "1");
+        assert.equal(id(pageIn("NeonBlue"), "1"), "purple");
         // a skin no look names is the default, and a page with no readable skin leaves it
         keepTeamSkin(pageIn("BlueMesh", become), "0001", "1");
         assert.equal(id(pageIn("OceanBlue"), "1"), "night");

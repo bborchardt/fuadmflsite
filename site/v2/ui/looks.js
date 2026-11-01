@@ -76,12 +76,31 @@ export function applyLook(doc = document, look = lookOf(doc)) {
 // reads it too (mfl/message-header.html), for the loading cover.
 const TEAM_SKIN = "fuad.teamSkin.";
 const skinKey = (leagueId) => `${TEAM_SKIN}${leagueId}`;
-const isTeamOfCommish = (doc) => Boolean(doc.querySelector('.myfantasyleague_menu a[href*="BECOME=0000"], .welcome a[href*="BECOME=0000"]'));
+const TEAM_OF_COMMISH = "fuad.commishTeam.";
+
+// The commissioner viewing as another team is that team to MFL, with the same link back, so their own
+// is learned from their own page: its "Become Owner" names it (the menu's, 9999, asks which). Until
+// then, any team with the link counts.
+function learnTeam(doc, leagueId) {
+    const link = [...doc.querySelectorAll('.welcome a[href*="BECOME="]')].map((a) => /BECOME=(\d{4})/.exec(a.getAttribute("href"))).find((match) => match && match[1] !== "9999");
+    if (link) {
+        storage.set(`${TEAM_OF_COMMISH}${leagueId}`, link[1]);
+    }
+}
+
+function isTeamOfCommish(doc, franchiseId, leagueId) {
+    const known = storage.get(`${TEAM_OF_COMMISH}${leagueId}`);
+    return (known === null || known === franchiseId) && Boolean(doc.querySelector('.myfantasyleague_menu a[href*="BECOME=0000"], .welcome a[href*="BECOME=0000"]'));
+}
 
 // as the commissioner's own team, the skin it's in; a page whose skin can't be read leaves what's kept
 export function keepTeamSkin(doc = document, franchiseId = window.franchise_id, leagueId = window.league_id) {
+    if (franchiseId === "0000") {
+        learnTeam(doc, leagueId);
+        return;
+    }
     const folder = skinFolder(doc);
-    if (folder && franchiseId !== "0000" && isTeamOfCommish(doc)) {
+    if (folder && isTeamOfCommish(doc, franchiseId, leagueId)) {
         storage.set(skinKey(leagueId), folder);
     }
 }
@@ -184,8 +203,8 @@ export function wireLooks(group, context, current) {
             settle(look);
             // the page's skin is still the one before, until the next page; the default look is the
             // league's skin, which no look names
-            if (isTeamOfCommish(doc)) {
-                storage.set(skinKey(context.leagueId), look.folder || "");
+            if (isTeamOfCommish(doc, window.franchise_id, window.league_id)) {
+                storage.set(skinKey(window.league_id), look.folder || "");
             }
             status.textContent = "";
         } catch (error) {
