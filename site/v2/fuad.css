@@ -4002,6 +4002,10 @@ body .fuad-setup-check input[type="checkbox"] {
     width: 46px;
     height: 28px;
     margin: 0;
+    /* MFL's phone stylesheet scales every checkbox 1.5x, and its skin pads and borders them */
+    transform: none;
+    padding: 0 !important;
+    border: 0;
     border-radius: 14px;
     background: var(--fuad-field);
     cursor: pointer;
