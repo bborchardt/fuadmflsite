@@ -47,6 +47,12 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   no look names. MFL's own pages, v1's included, take the skin too, so each look saves a skin in its
   colors. Browser storage would keep a look per device; a franchise's notes aren't in any export,
   and are saved by the form that also holds the team's logo.
+- **Team pictures** (`ui/team-pictures.js`): each team's icon, cropped round, beside its name in
+  Standings, Scores, Rosters and on the message board, from the still the daily job makes, so a list
+  costs a few KB and nothing moves; a team's page shows the upload itself, moving if it moves, and on
+  desktop the logo above it, as there's room. Each picture is downloaded only at the width it shows,
+  and one that won't load leaves the name, the logo giving way to the icon. The addresses come from
+  MFL's page (`franchiseDatabase`), so nothing more is asked of MFL.
 - **Three looks are team colours** (Vikings, Packers, Cowboys), for the league's fans of those teams,
   each saved as MFL's skin for that team, so MFL's own pages match.
 - **The commissioner's view follows their team's look, marked in v2's colours:** the commissioner's

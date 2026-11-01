@@ -6,6 +6,7 @@
 // the page is marked only once it's done, so a page v2 can't read stays as MFL drew it.
 
 import {clean, esc, initials} from "./html.js";
+import {stillOf} from "./team-pictures.js";
 import {clock, dayText} from "./home-model.js";
 import {mflTime} from "../lib/zone.js";
 
@@ -71,6 +72,13 @@ function card(parts) {
     article.querySelector(".fuad-post-team").append(commish ? parts.team.textContent : parts.team);
     if (parts.avatar) {
         parts.avatar.alt = "";
+        // MFL's is the upload itself; the still doesn't move, as in v2's other lists
+        const team = (/[?&]F=(\d{4})(&|$)/.exec(parts.team.getAttribute("href") || "") || [])[1];
+        const still = team ? stillOf(team) : "";
+        if (still) {
+            parts.avatar.setAttribute("data-fuad-upload", parts.avatar.getAttribute("src"));
+            parts.avatar.src = still;
+        }
         article.querySelector(".fuad-post-avatar").replaceChildren(parts.avatar);
     }
     article.querySelector(".fuad-post-text").append(...parts.body.childNodes);
