@@ -3931,6 +3931,104 @@ body .fuad-setup-head h3.fuad-setup-screen { margin: 14px 0 0; padding: 0; font-
 
 .fuad-setup-foot { display: flex; flex-direction: column; }
 
+/* its forms: a label over each field, Yes/No and checkboxes as switches, one Save (ui/setup.js) */
+.fuad-setup-form { display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
+
+.fuad-setup-section { display: flex; flex-direction: column; gap: 18px; padding: 16px; border: 1px solid var(--fuad-hairline); border-radius: 16px; background: var(--fuad-panel); }
+
+.fuad-setup-more > summary { min-height: 28px; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; list-style: none; }
+
+.fuad-setup-more > summary::-webkit-details-marker { display: none; }
+
+.fuad-setup-more > summary::before { content: "\203A"; display: inline-block; width: 12px; font-size: 20px; line-height: 1; color: var(--fuad-muted); transition: transform 0.15s; }
+
+.fuad-setup-more[open] > summary::before { transform: rotate(90deg); }
+
+body details.fuad-setup-more { display: block; }
+
+.fuad-setup-more-body { display: flex; flex-direction: column; gap: 18px; margin-top: 14px; }
+
+.fuad-setup-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+body .fuad-setup-label { font-weight: 600; font-size: 15px; color: var(--fuad-text); }
+
+.fuad-setup-control { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+
+body .fuad-setup-control > input:where([type="text"], [type="password"]),
+body .fuad-setup-control > textarea { flex: 1 1 100%; width: 100%; min-width: 0; box-sizing: border-box; }
+
+body .fuad-setup-control > select { flex: 1 1 auto; min-width: 0; max-width: 100%; min-height: 42px; }
+
+body .fuad-setup-control > input[type="file"] { max-width: 100%; font-size: 14px; }
+
+body .fuad-setup-hint { margin: 0; font-size: 13px; line-height: 1.4; color: var(--fuad-muted); }
+
+body .fuad-setup-hint a { color: inherit; }
+
+.fuad-setup-yn { position: relative; align-self: flex-start; display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--fuad-page); }
+
+.fuad-setup-yn input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+
+body .fuad-setup-yn label {
+    min-width: 52px;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--fuad-muted);
+    cursor: pointer;
+}
+
+body .fuad-setup-yn input:checked + label { background: var(--fuad-accent); color: var(--fuad-on-accent); }
+
+body .fuad-setup-yn input:focus-visible + label { outline: 2px solid var(--fuad-accent); outline-offset: 1px; }
+
+.fuad-setup-checks { display: flex; flex-direction: column; }
+
+.fuad-setup-checks > .fuad-setup-check + .fuad-setup-check { border-top: 1px solid var(--fuad-rule); }
+
+body .fuad-setup-check { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 15px; color: var(--fuad-text); cursor: pointer; }
+
+body .fuad-setup-check input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 46px;
+    height: 28px;
+    margin: 0;
+    border-radius: 14px;
+    background: var(--fuad-field);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+body .fuad-setup-check input[type="checkbox"]::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s;
+}
+
+body .fuad-setup-check input[type="checkbox"]:checked { background: var(--fuad-accent); }
+
+body .fuad-setup-check input[type="checkbox"]:checked::before { transform: translateX(18px); }
+
+body .fuad-setup-check input[type="checkbox"]:focus-visible { outline: 2px solid var(--fuad-accent); outline-offset: 2px; }
+
+body .fuad-setup-save button { width: 100%; min-height: 48px; border-radius: 12px; }
+
+body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
+
 .fuad-side-head a.fuad-chip {
     display: inline-flex;
     align-items: center;
