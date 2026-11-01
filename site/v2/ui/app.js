@@ -5,9 +5,9 @@ import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/
 import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {seasonPhase} from "../lib/violations.js";
 import {seasonWeeks} from "../lib/rules.js";
-import {cached, storage} from "./store.js";
+import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
-import {REBUILT, pageOf, sections, storedTabs, teamLinks} from "./nav.js";
+import {REBUILT, pageOf, sections, teamLinks} from "./nav.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -110,7 +110,7 @@ function whenShown(className) {
 // the href of a section, or of one of its views
 function viewLinks(context, franchiseId) {
     const base = `${window.location.origin}/${context.season}`;
-    const all = sections({base, leagueId: context.leagueId, franchiseId, tabs: storedTabs(storage), rebuilt: REBUILT});
+    const all = sections({base, leagueId: context.leagueId, franchiseId, rebuilt: REBUILT});
     return (section, name) => {
         const found = all.find((entry) => entry.name === section);
         return name ? found.views.find((entry) => entry.name === name).href : found.href;

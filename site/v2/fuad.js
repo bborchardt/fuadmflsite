@@ -129,7 +129,7 @@ function boot(beta) {
         drawn = resolve;
     });
     // loaded on its own, so a failure here leaves MFL's menus and the rest of the page working
-    (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context, storage})) : Promise.resolve())
+    (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context})) : Promise.resolve())
         .catch((error) => {
             console.error("[fuad] couldn't draw the frame:", error);
             onTrouble();
