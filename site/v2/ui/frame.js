@@ -3,8 +3,9 @@
 // popup. MFL's own menus are hidden only once the frame is drawn, so if this fails the page keeps
 // MFL's navigation.
 
-import settings from "../lib/settings.js";
+import settings, {league} from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
+import {testLeagueNote} from "./test-league.js";
 import {REBUILT, leavesPage, locate, pageOf, sections, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
@@ -164,6 +165,7 @@ export function drawFrame({context}) {
             ? `<button type="button" class="fuad-team" aria-label="${esc(team ? `${team.name}: your team` : "Commissioner")}" aria-haspopup="dialog">${esc(initials(team ? team.name : "Commissioner"))}</button>`
             : `<a class="fuad-login" href="${esc(login ? login.getAttribute("href") : `${base}/login?L=${leagueId}`)}">Log in</a>`}
     </header>
+    ${testLeagueNote(league, settings, franchiseId === "0000")}
     <h1 class="fuad-hidden"></h1>
     <nav class="fuad-views" hidden></nav>
     <nav class="fuad-sections fuad-sections-bottom" aria-label="Sections"></nav>

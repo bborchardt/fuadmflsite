@@ -49,6 +49,9 @@ would do until they're switched on.
 
 ## Developing
 
+A second league can try the site with no code change, and any setting can be tried on one: see
+"Test leagues" and "Forking" in docs/settings.md.
+
 - `npm test` runs the unit tests (Node 24+); after `npm ci`, `npm run lint` runs ESLint's standard
   rules and checks that what runs in members' browsers stays within ES2020 (Safari since iOS 14).
 - `npm run build` makes `dist/` as GitHub Pages publishes it, v2 bundled into one minified file.

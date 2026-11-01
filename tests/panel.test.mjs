@@ -17,7 +17,7 @@ const NEW = [{team: "New", teamIds: ["0001"]}];
 
 // as Home's My alerts and the Rosters pages: a count and the panel's class changed before the rows
 function draw({maxAge = 0, load = async () => NEW} = {}) {
-    items.set("fuad.test", JSON.stringify({storedAt: Date.now(), value: OLD}));
+    items.set("fuad.test@48571", JSON.stringify({storedAt: Date.now(), value: OLD}));
     const mount = document.getElementById("mount");
     mount.className = "";
     const render = (moves, body) => {
@@ -40,7 +40,7 @@ test("a saved copy render can't draw is dropped and loaded afresh", async () => 
     const {value, mount} = await draw();
     assert.deepEqual(value, NEW);
     assert.equal(bodyOf(mount).textContent, "0001");
-    assert.deepEqual(JSON.parse(items.get("fuad.test")).value, NEW);
+    assert.deepEqual(JSON.parse(items.get("fuad.test@48571")).value, NEW);
 });
 
 test("even while the saved copy is new enough not to load again", async () => {

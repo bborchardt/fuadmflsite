@@ -30,11 +30,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
-        # lib/settings.js reads settings.json through Node; a browser gets the JSON itself, as
+        # lib/settings-data.js reads settings.json through Node; a browser gets the JSON itself, as
         # tools/build.mjs publishes it
         path = self.path.split("?")[0]
-        settings = SITE / path.lstrip("/").removesuffix("lib/settings.js") / "settings.json"
-        if path.endswith("/lib/settings.js") and settings.is_file():
+        settings = SITE / path.lstrip("/").removesuffix("lib/settings-data.js") / "settings.json"
+        if path.endswith("/lib/settings-data.js") and settings.is_file():
             body = f"export default {json.dumps(json.loads(settings.read_text()))};\n".encode()
             self.send_response(200)
             self.send_header("Content-Type", "text/javascript")

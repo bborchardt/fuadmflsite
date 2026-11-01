@@ -2,6 +2,7 @@
 // live until this season's trade deadline, then this season's snapshot, for Rosters › Draft.
 
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
+import {league} from "../lib/settings.js";
 import {franchisePhase, readSnapshot, snapshotFileName} from "../lib/franchise.js";
 import {kickoffAt} from "./context.js";
 import {whenText} from "./home-model.js";
@@ -13,6 +14,9 @@ async function kickoffs(season) {
 }
 
 async function loadSnapshot(season, dataBase) {
+    if (!league.snapshots) {
+        return null;
+    }
     const response = await fetch(new URL(snapshotFileName(season), dataBase), {cache: "no-cache"});
     if (response.status === 404) {
         return null;

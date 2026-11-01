@@ -55,7 +55,7 @@ test("before week 1: its kickoff, the season's end, whether the draft is in, and
         week1: WEEK1 * 1000, seasonEnd: Date.parse("2027-01-04T01:25:00Z"), drafted: true, draftKnown: true, draftDays: ["2026-05-02"]
     });
     // kept a day in the browser, so the line under the wordmark doesn't ask again on every page
-    assert.deepEqual(JSON.parse(globalThis.window.localStorage.getItem("fuad.context.2101")).value, facts);
+    assert.deepEqual(JSON.parse(globalThis.window.localStorage.getItem("fuad.context.2101@48571")).value, facts);
     globalThis.window.liveScoringWeek = "1";
     assert.equal(await loadContext({season: 2101, leagueId: "48571"}), "Draft day");
 });

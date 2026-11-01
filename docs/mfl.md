@@ -89,8 +89,8 @@ MFL documents little of this.
   `<status>OK</status>` or `<error>`, and a post's line breaks are lost, so v2 links to MFL's own
   post pages instead; `salaries` needs the commissioner's cookie.
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
-  Commissioner", `logout?L=<league>&BECOME=0000`; presumably `BECOME=<team>` goes the other way (not
-  yet seen).
+  Commissioner", `logout?L=<league>&BECOME=0000`. As the commissioner, "Become Owner" goes the other
+  way, with `BECOME=<team>` naming the commissioner's own team (a saved clone page).
 
 - **My Watch List** (a member's own): the `myWatchList` export lists it, and the `myWatchList` import
   changes it (`ADD` or `REMOVE`, comma-separated player ids, posted as the owner), answering
@@ -268,6 +268,8 @@ Each is an ordinary page form, posted from the logged-in browser.
   the home page doesn't.
 - **Phones:** the BlueMesh skin hides the nav bar below 54.25em; `fuad.css` brings it back. Wide
   modules already scroll sideways.
+- **Leagues on one host** share a browser's storage (the clone and the league are both on `www44`), so
+  v2 keeps what it stores per league (`ui/store.js`).
 - **The skin** a page is drawn in is its `link#skin`, `skins17/<folder>/<folder>.css` (with
   `link#responsive` from the same folder): the member's own, or the league's.
 - **Use Responsive View** (Franchise setup › Customize, `USE_RESPONSIVE_SITE<team>`), when a member

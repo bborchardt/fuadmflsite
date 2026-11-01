@@ -49,6 +49,11 @@ if (!process.env.MFL_LEAGUE_ID || !/^https:\/\/[^/]+\/?$/.test(process.env.MFL_H
     throw new Error("MFL_LEAGUE_ID and MFL_HOST must name the league (the repository variables of the same names; MFL_HOST as https://www44.myfantasyleague.com)");
 }
 const leagueId = process.env.MFL_LEAGUE_ID;
+// v1's lib has no settings file. A league with no entry has only assumed rules, too little to go by.
+const {league: leagueSettings} = version === "v1" ? {} : await lib("settings.js");
+if (leagueSettings && !leagueSettings.listed) {
+    throw new Error(`League ${leagueId} isn't listed in site/${version}/settings.json`);
+}
 const host = process.env.MFL_HOST.replace(/\/+$/, "");
 const repo = process.env.GITHUB_REPOSITORY || "";
 const [owner = "", repoName = ""] = repo.split("/");

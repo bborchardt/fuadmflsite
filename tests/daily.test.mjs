@@ -167,6 +167,13 @@ test("the league is named by the repository's variables, never assumed", () => {
     assert.equal(run({env: {MFL_HOST: "www44.myfantasyleague.com"}}).status, 1);
 });
 
+test("a league with no entry in the settings gets no run, as its rules are only assumed", () => {
+    const result = run({env: {MFL_LEAGUE_ID: "99999"}});
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /League 99999 isn't listed/);
+    assert.equal(result.requests.length, 0);
+});
+
 test("a refused login is flagged, and no penalty is charged without it", () => {
     const result = run({scenario: {login: "refused"}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(result.status, 1);
