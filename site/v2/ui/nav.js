@@ -2,10 +2,8 @@
 // has rebuilt lives on the home page under its own # (`#league-standings`); until then it's the
 // nearest MFL page or home page tab.
 
-const TABS_KEY = "fuad.homeTabs";
-// MFL picks a home page tab by its position in the URL's #; positions are learned from the home
-// page and remembered, these until then
-export const DEFAULT_TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
+// MFL picks a home page tab by its position in the URL's #, as in a link kept from v1
+const TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
 
 // the views v2 draws itself, on the home page
 export const REBUILT = ["Home", "League/Scores", "League/Standings", "League/Power", "League/Winners", "Rosters/My team", "Rosters/Teams", "Rosters/Players", "Rosters/Draft"];
@@ -30,10 +28,10 @@ export function viewHash(section, view) {
 }
 
 // `rebuilt` lists the "Section" or "Section/View" names v2 draws itself
-export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebuilt = []}) {
+export function sections({base, leagueId, franchiseId, rebuilt = []}) {
     const page = (path) => `${base}/${path}${path.includes("?") ? "&" : "?"}L=${leagueId}`;
     const option = (code, extra = "") => `${base}/options?L=${leagueId}&O=${code}${extra}`;
-    const tab = (name) => `${base}/home/${leagueId}#${tabs[name] === undefined ? DEFAULT_TABS[name] : tabs[name]}`;
+    const tab = (name) => `${base}/home/${leagueId}#${TABS[name]}`;
     const member = franchiseId && franchiseId !== "0000";
     // `after` is where a view's login page leads once logged in
     const own = (href, sectionName, viewName) => {
@@ -80,14 +78,6 @@ export function sections({base, leagueId, franchiseId, tabs = DEFAULT_TABS, rebu
     });
 }
 
-// where a section's link goes: the view last seen in it (`lastViews`, view names by section), so
-// leaving a page by another section returns there; the section you're in goes to its first view
-export function sectionHref(section, current, lastViews = {}) {
-    // a login page isn't kept to: logged out, Rosters still opens on Teams
-    const view = section.views && section.name !== current && section.views.find((entry) => entry.name === lastViews[section.name] && !entry.login);
-    return view ? view.href : section.href;
-}
-
 // a team's page under Teams (`teams`, Rosters › Teams' href), rebuilt or MFL's: id → href
 export function teamLinks(teams) {
     return (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`);
@@ -101,7 +91,7 @@ export function leavesPage(href, here = window.location) {
 
 // {path, option, team, tab, hash} for a page: the MFL page name, its O= report, its F= team, and on
 // the home page the name of the tab a numeric # picks, or v2's own view #
-export function pageOf(location, tabs = DEFAULT_TABS) {
+export function pageOf(location) {
     const path = (location.pathname.match(/^\/\d{4}\/([a-z_]+)/) || [])[1] || "";
     const params = new URLSearchParams(location.search);
     let tab = null;
@@ -109,11 +99,11 @@ export function pageOf(location, tabs = DEFAULT_TABS) {
     if (path === "home") {
         const number = location.hash.match(/^#(\d+)/);
         if (number) {
-            tab = Object.keys(tabs).find((name) => tabs[name] === Number(number[1])) || null;
+            tab = Object.keys(TABS).find((name) => TABS[name] === Number(number[1])) || null;
         } else if (/^#[a-z]/.test(location.hash)) {
             hash = location.hash;
         } else {
-            tab = Object.keys(tabs).find((name) => tabs[name] === 0) || null;
+            tab = "Main";
         }
     }
     return {path, option: params.get("O"), team: params.get("F"), tab, hash};
@@ -156,21 +146,4 @@ function find(all, page, franchiseId) {
         }
     }
     return null;
-}
-
-export function storedTabs(storage, doc = document) {
-    const names = [...doc.querySelectorAll("#homepagetabs > li")].map((li) => li.textContent.trim());
-    if (names.length) {
-        const tabs = {};
-        names.forEach((name, index) => {
-            tabs[name] = index;
-        });
-        storage.set(TABS_KEY, JSON.stringify(tabs));
-        return tabs;
-    }
-    try {
-        return JSON.parse(storage.get(TABS_KEY)) || DEFAULT_TABS;
-    } catch (error) {
-        return DEFAULT_TABS;
-    }
 }

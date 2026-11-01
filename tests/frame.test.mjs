@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {REBUILT, leavesPage, locate, pageOf, sectionHref, sections, viewHash} from "../site/v2/ui/nav.js";
+import {REBUILT, leavesPage, locate, pageOf, sections, viewHash} from "../site/v2/ui/nav.js";
 import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
@@ -52,7 +52,6 @@ test("logged out, the views that need a login are v2's pages saying so, and Rost
     assert.deepEqual([view("Rosters", "My team").href, view("Rosters", "My team").after], [`${home}#rosters-my-team`, `${home}#rosters-my-team`]);
     assert.equal(guest.find((s) => s.name === "Rosters").href, `${home}#rosters-teams`);
     assert.equal(view("Rosters", "Teams").login, undefined);
-    assert.equal(sectionHref(guest.find((s) => s.name === "Rosters"), "Home", {Rosters: "My team"}), `${home}#rosters-teams`);
     const found = locate(guest, pageOf(new URL(`${home}#moves-trades`)), null);
     assert.deepEqual([found.section.name, found.view.name], ["Moves", "Trades"]);
 });
@@ -77,9 +76,6 @@ test("pages left to the site menu belong to no section", () => {
 test("a section opens on its first view, and My team is your own roster", () => {
     assert.equal(all.find((s) => s.name === "Moves").href, `${base}/add_drop?L=48571`);
     assert.equal(all.find((s) => s.name === "Rosters").href, `${base}/options?L=48571&O=07&F=0001`);
-    // MFL's home page tabs are picked by position, learned from the page
-    const moved = sections({base, leagueId: "48571", franchiseId: "0001", tabs: {Main: 0, Contracts: 1, Standings: 2}});
-    assert.equal(moved.find((s) => s.name === "League").views[1].href, `${base}/home/48571#2`);
 });
 
 test("a rebuilt view lives on the home page under its own #", () => {
@@ -126,18 +122,6 @@ test("draft day from the league's calendar export, as saved 17 Oct 2026", () => 
     const {calendar} = JSON.parse(readFileSync(new URL("./fixtures/calendar.json", import.meta.url), "utf8"));
     // "draft" on Sep 6, 2026; the trade deadline's start_time is a week number, not a time
     assert.deepEqual(draftDays(calendar), ["2026-09-06"]);
-});
-
-test("a section's link returns to the view last seen in it; the section you're in, to its first", () => {
-    const league = all.find((s) => s.name === "League");
-    const view = (name) => league.views.find((v) => v.name === name).href;
-    assert.equal(sectionHref(league, "Rosters", {League: "Standings"}), view("Standings"));
-    assert.equal(sectionHref(league, "League", {League: "Standings"}), view("Scores"));
-    assert.equal(sectionHref(league, "Rosters", {}), view("Scores"));
-    // a view no longer offered (My team, logged out) falls back to the first
-    assert.equal(sectionHref(league, "Rosters", {League: "Gone"}), view("Scores"));
-    const home = all.find((s) => s.name === "Home");
-    assert.equal(sectionHref(home, "League", {Home: "Anything"}), home.href);
 });
 
 test("a link loads another page unless only its # differs", () => {

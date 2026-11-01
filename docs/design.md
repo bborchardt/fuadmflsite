@@ -10,8 +10,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   custom tabs rather than adding to them; whatever they leave out stays reachable from MFL's own
   menu, inside v2's site menu (☰). v1 keeps the custom tabs as members know them.
 - **One Back, the browser's:** a page reached by a link (a team's page, All moves, the message board)
-  lights the section and view it lives under, which leads up; a section returns to the view last
-  seen in it this session. A page gets a link of its own only up to a parent the sections can't
+  lights the section and view it lives under, which leads up; a section's link always opens its
+  first view. A page gets a link of its own only up to a parent the sections can't
   reach, named for it (the board's ‹ Messages). Steps of a move (Add, Trades on phones) and v2's
   dialogs are history entries, so Back steps back through them or closes them, Android's Back and
   an iPhone's edge swipe included.

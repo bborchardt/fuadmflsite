@@ -5,7 +5,7 @@
 
 import settings from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
-import {REBUILT, leavesPage, locate, pageOf, sectionHref, sections, storedTabs, teamLinks} from "./nav.js";
+import {REBUILT, leavesPage, locate, pageOf, sections, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
@@ -27,25 +27,6 @@ const MENU_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" s
 const BACK_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>';
 const CLOSE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 const SEARCH_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>';
-
-// kept for the browser session: a new visit starts on each section's first view (Scores on game day)
-const LAST_VIEWS_KEY = "fuad.lastViews";
-
-function lastViews() {
-    try {
-        return JSON.parse(window.sessionStorage.getItem(LAST_VIEWS_KEY) || "null") || {};
-    } catch (error) {
-        return {};
-    }
-}
-
-function keepLastView(section, view) {
-    try {
-        window.sessionStorage.setItem(LAST_VIEWS_KEY, JSON.stringify({...lastViews(), [section]: view}));
-    } catch (error) {
-        // storage is blocked: each section opens on its first view
-    }
-}
 
 // MFL's own league menu, in its groups, for the site menu
 export function mflMenu(doc = document) {
@@ -153,13 +134,12 @@ function loginPage(view, loginHref) {
     document.documentElement.classList.toggle("fuad-login-page-on", Boolean(view));
 }
 
-export function drawFrame({context, storage}) {
+export function drawFrame({context}) {
     const {season, leagueId} = context;
     const base = `${window.location.origin}/${season}`;
     const franchiseId = window.franchise_id || null;
     const member = Boolean(franchiseId && franchiseId !== "0000");
-    const tabs = storedTabs(storage);
-    const all = sections({base, leagueId, franchiseId, tabs, rebuilt: REBUILT});
+    const all = sections({base, leagueId, franchiseId, rebuilt: REBUILT});
     const database = window.franchiseDatabase || {};
     const team = franchiseId && database[`fid_${franchiseId}`] ? database[`fid_${franchiseId}`] : null;
     const logout = mflLink((a) => /^log\s*out$/i.test(clean(a.textContent)));
@@ -191,7 +171,7 @@ export function drawFrame({context, storage}) {
     ${loggedIn ? `<div class="fuad-layer fuad-sheet-layer" hidden>${teamSheet({team, member, setup, logout, become, franchiseId, look, wide: document.body.classList.contains("full-width")})}</div>` : ""}`;
 
     const render = () => {
-        const page = pageOf(window.location, tabs);
+        const page = pageOf(window.location);
         const here = locate(all, page, franchiseId);
         const current = here && here.section.name;
         const gated = page.path === "home" && page.hash && here && (here.view || here.section).login ? here.view || here.section : null;
@@ -200,11 +180,7 @@ export function drawFrame({context, storage}) {
         document.documentElement.classList.toggle("fuad-league-on", page.path === "home" && Boolean(page.hash) && current === "League");
         document.documentElement.classList.toggle("fuad-rosters-on", page.path === "home" && Boolean(page.hash) && current === "Rosters" && !gated);
         loginPage(gated, `${base}/login?L=${encodeURIComponent(leagueId)}`);
-        if (here && here.view) {
-            keepLastView(current, here.view.name);
-        }
-        const last = lastViews();
-        const sectionLinks = all.map((section) => `<a href="${esc(sectionHref(section, current, last))}"${section.name === current ? ' aria-current="page"' : ""}>${icon(section.name)}<span>${esc(section.name)}</span></a>`).join("");
+        const sectionLinks = all.map((section) => `<a href="${esc(section.href)}"${section.name === current ? ' aria-current="page"' : ""}>${icon(section.name)}<span>${esc(section.name)}</span></a>`).join("");
         root.querySelectorAll(".fuad-sections").forEach((nav) => {
             nav.innerHTML = sectionLinks;
         });

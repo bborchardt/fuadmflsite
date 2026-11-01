@@ -4,11 +4,11 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
-import {cached, storage} from "./store.js";
+import {cached} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
 import {lineupPositions} from "../lib/rules.js";
 import {beforeWeek1} from "./context.js";
-import {REBUILT, sections, storedTabs} from "./nav.js";
+import {REBUILT, sections} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
 import {watchList, whenPopupClosed} from "./watch.js";
@@ -38,7 +38,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     const host = window.location.origin;
     const season = context.season;
     const base = `${host}/${season}`;
-    const nav = sections({base, leagueId: context.leagueId, franchiseId, tabs: storedTabs(storage), rebuilt: REBUILT});
+    const nav = sections({base, leagueId: context.leagueId, franchiseId, rebuilt: REBUILT});
     const moves = nav.find((section) => section.name === "Moves").views;
     const moveHref = (name) => (moves.find((view) => view.name === name) || {}).href || null;
     const actions = {
