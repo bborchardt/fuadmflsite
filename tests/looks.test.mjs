@@ -6,7 +6,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {DOMParser, parseHTML} from "linkedom";
-import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
+import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, commishLook, keepTeamSkin, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
 
 const fixture = readFileSync(new URL("./fixtures/skin-setup.html", import.meta.url), "utf8");
 const doc = (html) => parseHTML(html).document;
@@ -73,6 +73,57 @@ test("the commissioner's view is marked, whatever the look; a member's isn't", (
     assert.ok(!shown.documentElement.classList.contains("fuad-commish"));
     markCommish(shown, null);
     assert.ok(!shown.documentElement.classList.contains("fuad-commish"));
+});
+
+test("the commissioner's view follows their team's look, per league, and only their team's", () => {
+    const items = new Map();
+    const before = globalThis.window;
+    globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, value)}};
+    try {
+        const pageIn = (folder, link = "") => {
+            const shown = page(folder);
+            shown.body.innerHTML = link;
+            return shown;
+        };
+        const become = '<div class="welcome"><a href="/2026/logout?L=1&BECOME=0000">Become Commissioner</a></div>';
+        const id = (shown, league) => commishLook(shown, league).id;
+        // nothing known yet: the league skin's look
+        assert.equal(id(pageIn("NeonBlue"), "1"), "night");
+        assert.equal(id(pageIn("OceanBlue"), "1"), "day");
+        // another team keeps nothing, even with such a link in a post
+        keepTeamSkin(pageIn("Norseman", '<p><a href="/2026/logout?L=1&BECOME=0000">x</a></p>'), "0002", "1");
+        assert.equal(items.size, 0);
+        keepTeamSkin(pageIn("Norseman", become), "0000", "1");
+        assert.equal(items.size, 0);
+        // the commissioner's own team
+        keepTeamSkin(pageIn("Norseman", become), "0001", "1");
+        assert.equal(id(pageIn("NeonBlue"), "1"), "purple");
+        // another league's is its own
+        keepTeamSkin(pageIn("OceanBlue", become), "0001", "2");
+        assert.equal(id(pageIn("NeonBlue"), "1"), "purple");
+        assert.equal(id(pageIn("NeonBlue"), "2"), "day");
+        // a skin no look names is the default, and a page with no readable skin leaves it
+        keepTeamSkin(pageIn("BlueMesh", become), "0001", "1");
+        assert.equal(id(pageIn("OceanBlue"), "1"), "night");
+        const none = parseHTML(`<html><body>${become}</body></html>`).document;
+        keepTeamSkin(none, "0001", "1");
+        assert.equal(items.get("fuad.teamSkin.1"), "BlueMesh");
+    } finally {
+        globalThis.window = before;
+    }
+});
+
+test("each look's commissioner accent differs from its own", () => {
+    const css = readFileSync(new URL("../site/v2/fuad.css", import.meta.url), "utf8");
+    // the first rule naming the selector, which may be one of several sharing it
+    const accent = (selector) => (css.slice(css.search(new RegExp(`(^|\\n)${selector.replace(/[[\]]/g, "\\$&")}[ ,]`))).match(/--fuad-accent: (#[0-9A-F]+)/) || [])[1];
+    const base = accent("html.fuad-commish");
+    assert.ok(base);
+    for (const {id} of LOOKS.slice(1)) {
+        const commish = css.includes(`html.fuad-commish[data-fuad-look="${id}"]`) ? accent(`html.fuad-commish[data-fuad-look="${id}"]`) : base;
+        assert.ok(commish && accent(`[data-fuad-look="${id}"]`), id);
+        assert.notEqual(commish, accent(`[data-fuad-look="${id}"]`), id);
+    }
 });
 
 test("the default is saved as the commissioner's choice of skin", () => {

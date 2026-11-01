@@ -8,6 +8,7 @@
 
 import {esc} from "./html.js";
 import {mflFetch, mflSend} from "./page-fetch.js";
+import {storage} from "./store.js";
 
 export const LOOKS = [
     {id: "night", name: "Night Game", skin: "-1", folder: null},
@@ -57,9 +58,10 @@ function desktopOnPhone({navigator, screen}) {
         && Math.min(screen.width, screen.height) < 600;
 }
 
+const lookOfFolder = (folder, looks) => looks.find((look) => look.folder && folder && look.folder.toLowerCase() === folder.toLowerCase()) || looks[0];
+
 export function lookOf(doc, looks = LOOKS) {
-    const folder = skinFolder(doc);
-    return looks.find((look) => look.folder && folder && look.folder.toLowerCase() === folder.toLowerCase()) || looks[0];
+    return lookOfFolder(skinFolder(doc), looks);
 }
 
 export function applyLook(doc = document, look = lookOf(doc)) {
@@ -67,8 +69,34 @@ export function applyLook(doc = document, look = lookOf(doc)) {
     return look;
 }
 
-// The commissioner (MFL's team 0000) has no skin of their own: theirs is the league's, the default
-// look a member may be on too, so the commissioner's view is marked in v2's colours instead (fuad.css)
+// The commissioner (MFL's team 0000) has no skin of their own: theirs is the league's, and saving one
+// would change every member on the default look. MFL offers no other place for it and shows a team's
+// skin only to that team, so the commissioner's view follows the skin their own team was last seen in,
+// in this browser, per league. Only that team's pages have MFL's Become Commissioner link. The header
+// reads it too (mfl/message-header.html), for the loading cover.
+const TEAM_SKIN = "fuad.teamSkin.";
+const skinKey = (leagueId) => `${TEAM_SKIN}${leagueId}`;
+const isTeamOfCommish = (doc) => Boolean(doc.querySelector('.myfantasyleague_menu a[href*="BECOME=0000"], .welcome a[href*="BECOME=0000"]'));
+
+// as the commissioner's own team, the skin it's in; a page whose skin can't be read leaves what's kept
+export function keepTeamSkin(doc = document, franchiseId = window.franchise_id, leagueId = window.league_id) {
+    const folder = skinFolder(doc);
+    if (folder && franchiseId !== "0000" && isTeamOfCommish(doc)) {
+        storage.set(skinKey(leagueId), folder);
+    }
+}
+
+// the skin their team was last seen in here, or null
+export const teamSkin = (leagueId = window.league_id) => storage.get(skinKey(leagueId));
+
+// the commissioner's look: their team's, or until it's known, the league skin's, as for a member on
+// Commish Choice
+export function commishLook(doc = document, leagueId = window.league_id, looks = LOOKS) {
+    const folder = teamSkin(leagueId);
+    return folder === null ? lookOf(doc, looks) : lookOfFolder(folder, looks);
+}
+
+// The commissioner's view is marked in v2's colours (fuad.css), whichever look it's in
 export function markCommish(doc = document, franchiseId = window.franchise_id) {
     doc.documentElement.classList.toggle("fuad-commish", franchiseId === "0000");
 }
@@ -154,6 +182,11 @@ export function wireLooks(group, context, current) {
         try {
             await saveLook(context, look);
             settle(look);
+            // the page's skin is still the one before, until the next page; the default look is the
+            // league's skin, which no look names
+            if (isTeamOfCommish(doc)) {
+                storage.set(skinKey(window.league_id), look.folder || "");
+            }
             status.textContent = "";
         } catch (error) {
             if (error.unconfirmed) {

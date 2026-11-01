@@ -26,7 +26,8 @@
         var version = direct ? offer.version : MAIN;
 
         // the cover in the member's look (site/v2/ui/looks.js: its page and muted colours), from the skin
-        // MFL draws the page in; any other skin, Night Game's
+        // MFL draws the page in, or for the commissioner the skin their team was last seen in here; any
+        // other skin, Night Game's
         var COVERS = {
             oceanblue: ["#F5F6F8", "#545A66"],
             norseman: ["#160A24", "#B8A6CF"],
@@ -36,9 +37,11 @@
         };
         var skin = document.getElementById("skin");
         var folder = skin && /\/skins\d*\/([^\/]+)\//.exec(skin.getAttribute("href") || "");
-        if (folder && Object.prototype.hasOwnProperty.call(COVERS, folder[1].toLowerCase())) {
-            root.style.setProperty("--fuad-cover", COVERS[folder[1].toLowerCase()][0]);
-            root.style.setProperty("--fuad-cover-text", COVERS[folder[1].toLowerCase()][1]);
+        var teamSkin = viewer === "0000" && version !== "v1" ? stored("fuad.teamSkin." + window.league_id) : null;
+        var cover = (teamSkin !== null ? teamSkin : folder ? folder[1] : "").toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(COVERS, cover)) {
+            root.style.setProperty("--fuad-cover", COVERS[cover][0]);
+            root.style.setProperty("--fuad-cover-text", COVERS[cover][1]);
         }
 
         // hidden until the version has drawn (it shows the page again), so MFL's page doesn't show first;
