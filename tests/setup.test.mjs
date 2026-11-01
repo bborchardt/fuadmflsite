@@ -172,3 +172,14 @@ test("a form of rows v2 doesn't know stays MFL's, under v2's heading", () => {
     assert.ok(doc.querySelector('form[name="franchise"] table.report'));
     assert.equal(doc.querySelector(".fuad-setup-form"), null);
 });
+
+test("a restyle that fails partway leaves every field in the form, with MFL's Save", () => {
+    const before = page("member", "FCONTACT").querySelector('form[name="contact"]');
+    const doc = page("member", "FCONTACT");
+    // an id the alerts' label lookup can't take
+    doc.querySelector('input[value="TRADE"]').id = 'odd"id';
+    assert.throws(() => restyleSetup(doc, {context, franchiseId: "0001"}));
+    const form = doc.querySelector('form[name="contact"]');
+    assert.deepEqual(sent(form), sent(before));
+    assert.deepEqual(pressed(form), pressed(before));
+});

@@ -250,6 +250,10 @@ function restyleForm(doc, spec, franchiseId) {
     };
     const more = disclosure("More settings", MORE_NOTE);
     const other = disclosure("Other contact details");
+    // in the form before a field moves, so whatever happens, every field stays in it and is sent
+    const body = make(doc, "div", "fuad-setup-form");
+    body.append(shown, more.parentElement, other.parentElement, kept);
+    table.before(body);
     const blocks = {};
     const order = (names) => Object.keys(names || {});
     const home = (name) => (spec.more && name in spec.more ? more : spec.other && name in spec.other ? other : shown);
@@ -282,11 +286,11 @@ function restyleForm(doc, spec, franchiseId) {
     doc.defaultView.addEventListener("pageshow", () => save.classList.remove("fuad-saving"));
     const foot = make(doc, "div", "fuad-setup-save");
     foot.append(save);
-    const body = make(doc, "div", "fuad-setup-form");
+    body.append(foot);
+    [shown, more.parentElement, other.parentElement].filter((section) => !section.querySelector(".fuad-setup-field")).forEach((section) => section.remove());
     submit.remove();
     // whatever input is left (in a hint, or a cell v2 doesn't read) is still sent
     kept.append(...table.querySelectorAll("input, select, textarea"));
-    body.append(...[shown, more.parentElement, other.parentElement].filter((section) => section.querySelector(".fuad-setup-field")), kept, foot);
-    table.replaceWith(body);
+    table.remove();
     return true;
 }
