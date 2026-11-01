@@ -41,6 +41,10 @@ would do until they're switched on.
   (`?fuadPreview=off` to stop).
 - **Turn chores on:** set the repository variables `DROP_PENALTIES`, `CONTRACT_YEARS` and `PAYOUTS`
   to `apply`.
+- **Try the job on another league or settings:** Actions › Daily chores › Run workflow. Dry run is
+  ticked by default and writes nothing; results are on the run's summary page. Fill in only what to
+  change: league, host (when that league is on another server), settings (a header line's, for an unlisted league), version, season, time. A
+  real run by hand means unticking it, which ignores those. Each run reads as much from MFL as a daily one.
 - **After a failed-run email:** the run page and the end of its log say what was flagged; the summary
   page also lists what the job did.
 - **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button produces the

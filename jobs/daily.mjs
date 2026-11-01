@@ -18,6 +18,10 @@
 //   PAYOUTS                     "apply" to record the league's payouts in MFL's accounting; anything
 //                               else only logs them
 //   NOW                         optional ISO time, for testing
+//   DRY_RUN                     "true": writes nothing to MFL or DATA_DIR, whatever the variables above
+//                               say, and may name a league the version doesn't list
+//   MFL_SETTINGS                on a dry run, an unlisted league's settings, as its header line's
+//   DATA_LEAGUE_ID              on a dry run, the league DATA_DIR's files are from; another starts with none
 
 import {existsSync, readFileSync, readdirSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
 import {dirname, join, resolve} from "node:path";
@@ -25,6 +29,9 @@ import {fileURLToPath, pathToFileURL} from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = process.env.RULES_VERSION || "v2";
+if (!/^v\d+$/.test(version)) {
+    throw new Error(`RULES_VERSION must name a version, as v2, not "${version}"`);
+}
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
 // v1's lib has no payouts: the chore is skipped
@@ -49,19 +56,43 @@ if (!process.env.MFL_LEAGUE_ID || !/^https:\/\/[^/]+\/?$/.test(process.env.MFL_H
     throw new Error("MFL_LEAGUE_ID and MFL_HOST must name the league (the repository variables of the same names; MFL_HOST as https://www44.myfantasyleague.com)");
 }
 const leagueId = process.env.MFL_LEAGUE_ID;
+const dryRun = process.env.DRY_RUN === "true";
+if (dryRun && !/^\d+$/.test(leagueId)) {
+    throw new Error(`A dry run's league must be its id, a number, not "${leagueId}"`);
+}
+// a dry run's host is typed in, and is sent the commissioner's session
+if (dryRun && !/^https:\/\/([a-z0-9-]+\.)*myfantasyleague\.com\/?$/i.test(process.env.MFL_HOST)) {
+    throw new Error(`A dry run's host must be on myfantasyleague.com, not ${process.env.MFL_HOST}`);
+}
 // v1's lib has no settings file. A league with no entry has only assumed rules, too little to go by.
 const {league: leagueSettings} = version === "v1" ? {} : await lib("settings.js");
-if (leagueSettings && !leagueSettings.listed) {
+if (leagueSettings && !leagueSettings.listed && !dryRun) {
     throw new Error(`League ${leagueId} isn't listed in site/${version}/settings.json`);
+}
+if (dryRun && process.env.MFL_SETTINGS) {
+    if (!leagueSettings) {
+        throw new Error("v1 has no settings, so a dry run on it can't take any");
+    }
+    if (leagueSettings.listed) {
+        throw new Error(`League ${leagueId} is listed in site/${version}/settings.json, which ignores settings given for a run`);
+    }
+    if (leagueSettings.problems.length) {
+        throw new Error(`The run's settings can't be used: ${leagueSettings.problems.join("; ")}`);
+    }
 }
 const host = process.env.MFL_HOST.replace(/\/+$/, "");
 const repo = process.env.GITHUB_REPOSITORY || "";
 const [owner = "", repoName = ""] = repo.split("/");
 const now = process.env.NOW ? new Date(process.env.NOW) : new Date();
+if (Number.isNaN(now.getTime()) || (process.env.SEASON && !/^\d{4}$/.test(process.env.SEASON))) {
+    throw new Error(`NOW must be an ISO time and SEASON a year, not "${process.env.NOW}" and "${process.env.SEASON}"`);
+}
 let season;
 const userAgent = process.env.MFL_USER_AGENT || `${repoName || "league-site"}-daily-chores${repo ? ` (github.com/${repo})` : ""}`;
 // after login these carry the commissioner's session cookie: never send them anywhere else
 const mflHeaders = {"User-Agent": userAgent};
+// what the login's leagues are, once it's known to work
+let loginLeagues = [];
 // a repository named owner.github.io publishes at the site's root
 const pagesData = process.env.PAGES_DATA_URL || (repo
     ? `https://${owner.toLowerCase()}.github.io/${repoName.toLowerCase() === `${owner.toLowerCase()}.github.io` ? "" : `${repoName}/`}data/`
@@ -70,12 +101,15 @@ if (!pagesData) {
     throw new Error("PAGES_DATA_URL must be set outside GitHub Actions");
 }
 const LATE_AFTER_DAYS = 7;
-const applyDropPenalties = process.env.DROP_PENALTIES === "apply";
-const applyContractYears = process.env.CONTRACT_YEARS === "apply";
-const applyPayouts = process.env.PAYOUTS === "apply";
+const applyDropPenalties = !dryRun && process.env.DROP_PENALTIES === "apply";
+const applyContractYears = !dryRun && process.env.CONTRACT_YEARS === "apply";
+const applyPayouts = !dryRun && process.env.PAYOUTS === "apply";
+const dataIsThisLeagues = !dryRun || process.env.DATA_LEAGUE_ID === leagueId;
 // a season's weekly prizes and all-play payouts, with room for a backfill: more means something's wrong
 const MAX_PAYOUTS_PER_RUN = 30;
 const entries = [];
+// at the top of a dry run's summary
+const dryRunNotes = [];
 
 function log(message) {
     console.log(message);
@@ -192,6 +226,7 @@ async function loginWorks(cookie) {
             const leagues = await fetchExport(exportUrl(API_BASE, year, "myleagues", {YEAR: year}), "leagues",
                 {fetchImpl: mflFetch, init: {headers: {...mflHeaders, Cookie: cookie}}});
             if (asArray(leagues.league).length > 0) {
+                loginLeagues = asArray(leagues.league);
                 return true;
             }
         } catch (error) {
@@ -200,6 +235,10 @@ async function loginWorks(cookie) {
     }
     return false;
 }
+
+// a dry run can name any league; the session is only for one the login is in
+const loginIsInLeague = () => loginLeagues.some((entry) => entry.league_id === leagueId
+    || (/\/home\/(\d+)/.exec(entry.url || "") || [])[1] === leagueId);
 
 const fetchFrom = (base, type, params, section = type, year = season) =>
     fetchExport(exportUrl(base, year, type, params), section, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
@@ -210,8 +249,9 @@ function writeSummary() {
     }
     const outcome = attention.length ? "Needs attention" : "OK";
     const lines = entries.length ? entries.map((entry) => `- ${entry}`).join("\n") : "Nothing to do.";
+    const notes = dryRunNotes.map((note) => `${note}\n\n`).join("");
     try {
-        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores: ${outcome}\n\n${lines}\n`);
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores${dryRun ? " (dry run)" : ""}: ${outcome}\n\n${notes}${lines}\n`);
     } catch (error) {
         // the summary is a convenience; the chore log already has everything
         log(`Couldn't write the run summary: ${error.message}`);
@@ -221,6 +261,9 @@ function writeSummary() {
 // MFL reports errors with HTTP 200, so anything but <status>OK</status> throws. `data` null: an
 // import that takes its fields as parameters
 async function mflImport(type, data, params = {}) {
+    if (dryRun) {
+        throw new Error(`A dry run reached MFL's ${type} import, which it must never send`);
+    }
     let response, body;
     try {
         response = await mflFetch(`${host}/${season}/import`, {
@@ -275,6 +318,10 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
         log("No added players are waiting for contract years.");
         return;
     }
+    if (!loggedIn && dryRun) {
+        choreLog(`Contract years: not checked for ${adds.length} added player(s), as the run isn't logged in.`);
+        return;
+    }
     if (!loggedIn) {
         throw new Error(`${adds.length} added player(s) are waiting for contract years, but reading the bids `
             + "and the message board needs the commissioner login, so none were set.");
@@ -305,13 +352,13 @@ async function contractYears(loggedIn, {rosters, transactions, playerNames}, ove
     if (!contracts.length) {
         return;
     }
+    if ((applyContractYears || dryRun) && contracts.length > MAX_CONTRACTS_PER_RUN) {
+        throw new Error(`${contracts.length} added players are waiting for contract years, more than the `
+            + `${MAX_CONTRACTS_PER_RUN} expected in a day, so none were set. Check the Commish tab and set them by hand.`);
+    }
     if (!applyContractYears) {
         contracts.forEach((contract) => choreLog(`Dry run: would set ${describe(contract)}.`));
         return;
-    }
-    if (contracts.length > MAX_CONTRACTS_PER_RUN) {
-        throw new Error(`${contracts.length} added players are waiting for contract years, more than the `
-            + `${MAX_CONTRACTS_PER_RUN} expected in a day, so none were set. Check the Commish tab and set them by hand.`);
     }
     await mflImport("salaries", contractsXml(contracts), {APPEND: "1"});
     contracts.forEach((contract) => choreLog(`Set ${describe(contract)}.`));
@@ -366,13 +413,13 @@ async function payouts(loggedIn, {built}) {
     }
     const teamName = (id) => (built.franchises.get(id) || {}).teamName || id;
     const describe = (record) => `"${record.description}" $${record.amount.toFixed(2)} to ${teamName(record.franchise)}`;
+    if ((applyPayouts || dryRun) && records.length > MAX_PAYOUTS_PER_RUN) {
+        throw new Error(`${records.length} payouts are waiting to be recorded, more than the ${MAX_PAYOUTS_PER_RUN} expected, so none were. `
+            + "Check MFL's accounting and enter them by hand.");
+    }
     if (!applyPayouts) {
         records.forEach((record) => choreLog(`Dry run: would record ${describe(record)}.`));
         return;
-    }
-    if (records.length > MAX_PAYOUTS_PER_RUN) {
-        throw new Error(`${records.length} payouts are waiting to be recorded, more than the ${MAX_PAYOUTS_PER_RUN} expected, so none were. `
-            + "Check MFL's accounting and enter them by hand.");
     }
     for (const record of records) {
         await mflImport("accounting", null, {FRANCHISE: record.franchise, AMOUNT: String(record.amount), DESCRIPTION: record.description});
@@ -496,6 +543,11 @@ async function dropPenalties(loggedIn, {penalties}, over) {
     const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
     const noCharge = (penalty) => penalty.amount > 0 ? "penalty already charged" : "no penalty owed";
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId));
+    // held penalties don't count: they can wait for weeks on a team over the cap
+    if ((applyDropPenalties || dryRun) && toApply.length > MAX_PENALTIES_PER_RUN) {
+        throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
+            + `expected in a day, so none were charged. Check the Commish tab and charge them by hand.`);
+    }
     if (!applyDropPenalties) {
         for (const penalty of toApply) {
             choreLog(needsCharge(penalty)
@@ -503,11 +555,6 @@ async function dropPenalties(loggedIn, {penalties}, over) {
                 : `Dry run: would reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
         }
         return;
-    }
-    // held penalties don't count: they can wait for weeks on a team over the cap
-    if (toApply.length > MAX_PENALTIES_PER_RUN) {
-        throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
-            + `expected in a day, so none were charged. Check the Commish tab and charge them by hand.`);
     }
     if (toApply.length && !loggedIn) {
         throw new Error(`${toApply.length} dropped player(s) owe a cap penalty, but the job isn't logged in, so none were charged.`);
@@ -526,7 +573,7 @@ async function dropPenalties(loggedIn, {penalties}, over) {
 
 async function franchiseSnapshot(year) {
     const file = join(dataDir, "data", snapshotFileName(year));
-    if (existsSync(file)) {
+    if (dataIsThisLeagues && existsSync(file)) {
         log(`The ${year} franchise snapshot already exists.`);
         return false;
     }
@@ -552,9 +599,13 @@ async function franchiseSnapshot(year) {
         ? `Daily job, ${daysLate} days after the trade deadline: rosters may have changed since, so check it`
         : "Daily job, after the trade deadline";
     const snapshot = makeSnapshot(year, top, {takenAt: now.toISOString(), source});
+    const summary = Object.entries(top).map(([position, list]) => `${position} $${franchiseSalary(list)}`).join(", ");
+    if (dryRun) {
+        choreLog(`Dry run: would take the ${year} franchise salary snapshot${late ? ` ${daysLate} days late` : ""} (${summary}).`);
+        return false;
+    }
     mkdirSync(dirname(file), {recursive: true});
     writeFileSync(file, JSON.stringify(snapshot, null, 2) + "\n");
-    const summary = Object.entries(top).map(([position, list]) => `${position} $${franchiseSalary(list)}`).join(", ");
     choreLog(late
         ? `Took the ${year} franchise salary snapshot ${daysLate} days late (${summary}). Rosters may have changed since the deadline; check it.`
         : `Took the ${year} franchise salary snapshot (${summary}).`);
@@ -563,6 +614,9 @@ async function franchiseSnapshot(year) {
 
 // including ones committed or corrected by hand on league-data
 async function snapshotsToPublish() {
+    if (!dataIsThisLeagues) {
+        return [];
+    }
     const dir = join(dataDir, "data");
     const files = existsSync(dir) ? readdirSync(dir).filter((file) => file.endsWith(".json")) : [];
     const stale = [];
@@ -603,13 +657,24 @@ let snapshotWritten = false;
 let publish = false;
 try {
     season = await leagueSeason();
+    if (dryRun) {
+        const given = process.env.MFL_SETTINGS ? `, with the settings ${process.env.MFL_SETTINGS}` : "";
+        dryRunNotes.push(`League ${leagueId}, the ${season} season, ${version}'s rules, as of ${now.toISOString()}${given}. Nothing was written to MFL, committed or published, and writes to MFL weren't tested.`);
+    }
     log(`Working on the ${season} league site.`);
     // snapshots only need public data, so a failed login doesn't stop them
     const loginProblem = await login();
     if (loginProblem) {
         needsAttention(`${loginProblem}. Continuing with public league data.`);
     }
-    const loggedIn = !loginProblem && Boolean(process.env.MFL_USERNAME && process.env.MFL_PASSWORD);
+    if (dryRun && mflHeaders.Cookie && !loginIsInLeague()) {
+        delete mflHeaders.Cookie;
+        log(`League ${leagueId} isn't among the login's leagues, so the session isn't used on it.`);
+    }
+    const loggedIn = !loginProblem && Boolean(mflHeaders.Cookie);
+    if (dryRun && !loggedIn) {
+        dryRunNotes.push("**Public data only:** the run isn't logged in to this league. Contract years, payouts and the final cut-down date weren't checked, so roster limits start with week 1.");
+    }
     // each chore fails on its own; the snapshot doesn't depend on any of them
     let state = null;
     try {
@@ -650,19 +715,20 @@ try {
             needsAttention(`Payouts: ${error.message}`);
         }
     }
-    for (const year of [season - 1, season]) {
+    // last season is for a job that missed its snapshot; a test league may have no site for it
+    for (const year of dataIsThisLeagues ? [season - 1, season] : [season]) {
         snapshotWritten = (await franchiseSnapshot(year)) || snapshotWritten;
     }
     const stale = snapshotWritten ? [] : await snapshotsToPublish();
     if (stale.length) {
-        choreLog(`Publishing snapshots that are new or changed since the site was last published: ${stale.join(", ")}.`);
+        choreLog(`${dryRun ? "Dry run: would publish" : "Publishing"} snapshots that are new or changed since the site was last published: ${stale.join(", ")}.`);
     }
-    publish = snapshotWritten || stale.length > 0;
+    publish = !dryRun && (snapshotWritten || stale.length > 0);
 } catch (error) {
     needsAttention(`Failed: ${error.message}`);
 } finally {
     explainFailure();
-    const logChanged = updateChoreLog();
+    const logChanged = !dryRun && updateChoreLog();
     setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
     setOutput("publish", publish ? "true" : "false");
     writeSummary();

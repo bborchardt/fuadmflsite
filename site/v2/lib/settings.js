@@ -1,7 +1,8 @@
 // The settings of the league a page or the daily job is for (docs/settings.md): the defaults, under a
 // listed league's own entry. An unlisted league is a test league: the defaults or a listed league's
-// values (`extends`), under the settings line in its header, which only the pages can read. A listed
-// league ignores that line, so a test league's header pasted into it changes nothing.
+// values (`extends`), under the settings line in its header. The daily job can't read a header, so
+// only its dry run takes the same line, from MFL_SETTINGS. A listed league ignores that line, so a test
+// league's header pasted into it changes nothing.
 
 import data from "./settings-data.js";
 
@@ -174,11 +175,21 @@ export function leagueIdIn(location, pageLeague) {
         || pageLeague;
 }
 
+// what can't be parsed is left as text, which resolveSettings reports as a problem
+function runSettings(text) {
+    try {
+        const parsed = JSON.parse(text);
+        return parsed === null ? text : parsed;
+    } catch (error) {
+        return text;
+    }
+}
+
 // Node's own, as a script on the page could define a `process`
 const env = globalThis.process && globalThis.process.versions && globalThis.process.versions.node ? globalThis.process.env : null;
 
 const resolved = env
-    ? resolveSettings(data, env.MFL_LEAGUE_ID)
+    ? resolveSettings(data, env.MFL_LEAGUE_ID, env.DRY_RUN === "true" && env.MFL_SETTINGS ? runSettings(env.MFL_SETTINGS) : undefined)
     : resolveSettings(data, leagueIdIn(window.location, window.league_id), window.fuadSettings);
 
 export const league = resolved.league;

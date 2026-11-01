@@ -5,6 +5,10 @@
 # dropped players, contract years for added ones, and the payouts in the league's accounting.
 # master is protected and takes changes through pull requests, so nothing here pushes to it.
 #
+# A manual run is a dry run unless unticked: jobs/daily.mjs then writes nothing to MFL or league-data,
+# so the commit and publish steps below don't run. Its other inputs apply only to a dry run; unticked,
+# a manual run is the same as a scheduled one.
+#
 # GitHub turns off scheduled workflows after 60 days without repository activity, so the
 # last step re-enables this workflow on every run.
 name: Daily chores
@@ -14,13 +18,37 @@ on:
     # off the top of the hour, when GitHub delays scheduled runs the most
     - cron: "37 7 * * *"
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: write nothing. The inputs below apply only to a dry run."
+        type: boolean
+        default: true
+      league:
+        description: "League id (default: the real league)"
+        type: string
+      host:
+        description: "League's host, as https://www44.myfantasyleague.com; give it when the league is on another (default: the real league's)"
+        type: string
+      settings:
+        description: "An unlisted league's settings, as its header line's: {\"extends\": \"48571\", ...}"
+        type: string
+      version:
+        description: "Rules version, as v2 (default: the real job's)"
+        type: string
+      season:
+        description: "Season (default: the newest the league has a site for)"
+        type: string
+      now:
+        description: "Run as of this ISO time, as 2026-09-10T12:00:00Z (default: now)"
+        type: string
 
 permissions:
   contents: write
   actions: write
 
 concurrency:
-  group: daily-chores
+  # a dry run waiting here would otherwise replace a scheduled run waiting here
+  group: daily-chores${{ inputs.dry_run == true && '-dry-run' || '' }}
   cancel-in-progress: false
 
 jobs:
@@ -31,7 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: master
+          # a dry run tests the code of the branch it's started from
+          ref: ${{ inputs.dry_run == true && github.ref || 'master' }}
 
       - uses: actions/setup-node@v7
         with:
@@ -60,10 +89,15 @@ jobs:
           DATA_DIR: league-data
           MFL_USERNAME: ${{ secrets.MFL_USERNAME }}
           MFL_PASSWORD: ${{ secrets.MFL_PASSWORD }}
-          MFL_LEAGUE_ID: ${{ vars.MFL_LEAGUE_ID }}
-          MFL_HOST: ${{ vars.MFL_HOST }}
+          MFL_LEAGUE_ID: ${{ inputs.dry_run == true && inputs.league || vars.MFL_LEAGUE_ID }}
+          MFL_HOST: ${{ inputs.dry_run == true && inputs.host || vars.MFL_HOST }}
           MFL_USER_AGENT: ${{ secrets.MFL_USER_AGENT }}
-          RULES_VERSION: ${{ vars.RULES_VERSION || 'v2' }}
+          RULES_VERSION: ${{ inputs.dry_run == true && inputs.version || vars.RULES_VERSION || 'v2' }}
+          DRY_RUN: ${{ inputs.dry_run == true && 'true' || 'false' }}
+          MFL_SETTINGS: ${{ inputs.dry_run == true && inputs.settings || '' }}
+          DATA_LEAGUE_ID: ${{ vars.MFL_LEAGUE_ID }}
+          SEASON: ${{ inputs.dry_run == true && inputs.season || '' }}
+          NOW: ${{ inputs.dry_run == true && inputs.now || '' }}
           DROP_PENALTIES: ${{ vars.DROP_PENALTIES }}
           CONTRACT_YEARS: ${{ vars.CONTRACT_YEARS }}
           PAYOUTS: ${{ vars.PAYOUTS }}
