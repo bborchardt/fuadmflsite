@@ -7,12 +7,12 @@ import {dayOnly, insertTags, restyleBoard, restyleTopic, shortDate, topicTitle} 
 const page = (name) => parseHTML(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")).document;
 
 test("a post's date is in the league's zone, whichever the member picked on MFL, without seconds or year", () => {
-    assert.equal(shortDate("\n Wed Sep 9 11:11:12 p.m. CT 2026\n"), "Wed Sep 9 · 11:11 p.m.");
-    assert.equal(shortDate("Sat Oct 17 10:53:42 a.m. CT 2026"), "Sat Oct 17 · 10:53 a.m.");
-    assert.equal(shortDate("Thu Sep 10 12:11:12 a.m. ET 2026"), "Wed Sep 9 · 11:11 p.m.");
-    assert.equal(shortDate("Wed Sep 9 6:11:12 p.m. HT 2026"), "Wed Sep 9 · 11:11 p.m.");
+    assert.equal(shortDate("\n Wed Sep 9 11:11:12 p.m. CT 2026\n"), "Wed Sep 9 · 11:11 p.m. CT");
+    assert.equal(shortDate("Sat Oct 17 10:53:42 a.m. CT 2026"), "Sat Oct 17 · 10:53 a.m. CT");
+    assert.equal(shortDate("Thu Sep 10 12:11:12 a.m. ET 2026"), "Wed Sep 9 · 11:11 p.m. CT");
+    assert.equal(shortDate("Wed Sep 9 6:11:12 p.m. HT 2026"), "Wed Sep 9 · 11:11 p.m. CT");
     // a post edited later: the post's own time comes first
-    assert.equal(shortDate("Sun Oct 25 5:24:08 p.m. CT 2026 Sun Oct 25 7:27:31 p.m. CT 2026"), "Sun Oct 25 · 5:24 p.m.");
+    assert.equal(shortDate("Sun Oct 25 5:24:08 p.m. CT 2026 Sun Oct 25 7:27:31 p.m. CT 2026"), "Sun Oct 25 · 5:24 p.m. CT");
     // letters MFL doesn't offer: as written
     assert.equal(shortDate("Wed Sep 9 11:11:12 p.m. XT 2026"), "Wed Sep 9 11:11:12 p.m. XT 2026");
     assert.equal(shortDate("yesterday"), "yesterday");
@@ -59,7 +59,7 @@ test("logged out, a topic's posts are cards without Reply", () => {
     assert.equal(post.querySelector(".fuad-post-team").textContent, "Commissioner");
     // the commissioner has no team page to lead to
     assert.equal(post.querySelectorAll(".fuad-post-team a").length, 0);
-    assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m.");
+    assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m. CT");
     assert.equal(post.querySelector(".fuad-post-actions").children.length, 0);
     assert.equal(restyleTopic(page("pages/guest/mb-topic_show.html")), false);
 });

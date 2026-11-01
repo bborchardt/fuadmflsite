@@ -6,7 +6,7 @@ import {onNflIR, ruleViolations, titleKind} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {money, plural} from "./format.js";
-import {TIME_ZONE, ZONE, zoneOffset} from "../lib/zone.js";
+import {TIME_ZONE, zoneLabel, zoneOffset} from "../lib/zone.js";
 
 const DAY = 24 * 60 * 60;
 // a date members act by is also in My alerts this close to it
@@ -26,9 +26,9 @@ export const TOPICS = 5;
 
 // "Thu Oct 8"
 export const dayText = (seconds) => new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", timeZone: TIME_ZONE}).replace(",", "");
-// "7:42 p.m."
+// "7:42 p.m.", or "7:42 p.m. CT" where the device's clock differs
 export const clock = (seconds) => new Date(seconds * 1000).toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE})
-    .replace(/\s?AM$/, " a.m.").replace(/\s?PM$/, " p.m.");
+    .replace(/\s?AM$/, " a.m.").replace(/\s?PM$/, " p.m.") + zoneLabel(seconds);
 // "Thu Oct 8, 7:42 p.m."
 export const whenText = (seconds) => `${dayText(seconds)}, ${clock(seconds)}`;
 const lastName = (player) => String(player.fullName).split(" ").slice(1).join(" ") || player.fullName;
@@ -281,7 +281,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
                 : `If all high bids win: ${franchise.numPlayers} → ${projected.roster} active`, links.add, "Add");
         } else {
             bidsTimed = Boolean(bidRun);
-            push(tones.orange, "$", `${plural(projected.bids, "blind bid")} pending`, bidRun ? `They process ${whenText(bidRun)} ${ZONE}` : "", links.add, "Add");
+            push(tones.orange, "$", `${plural(projected.bids, "blind bid")} pending`, bidRun ? `They process ${whenText(bidRun)}` : "", links.add, "Add");
         }
     }
 
@@ -289,7 +289,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     for (const add of (league.pendingAdds || []).filter((entry) => entry.franchiseId === franchiseId && entry.type !== "BBID_WAIVER" && !windowClosed(entry, now))) {
         const player = league.players.get(add.playerId) || {fullName: add.name};
         const reading = readings.get(add.playerId);
-        const due = `${clock(contractDeadline(add))} ${ZONE}`;
+        const due = clock(contractDeadline(add));
         if (reading && reading.state === "read") {
             push(tones.accent, "Y", `${lastName(player)}: ${plural(reading.years, "year")}`, `Read from the message board; to change it, post again by ${due}`, links.contracts, "Message board");
         } else if (reading && reading.state === "problem") {

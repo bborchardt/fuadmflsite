@@ -15,6 +15,12 @@ export function zoneOffset(seconds, timeZone = TIME_ZONE) {
     return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour % 24, parts.minute) / 1000 - Math.floor(seconds / 60) * 60;
 }
 
+// " CT" after a time for a member whose device is on another clock at that moment, so they know the
+// league's times aren't theirs; nothing for the rest
+export function zoneLabel(seconds, deviceOffset = -new Date(seconds * 1000).getTimezoneOffset() * 60) {
+    return deviceOffset === zoneOffset(seconds) ? "" : ` ${ZONE}`;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // A time as MFL's pages write it, "Thu Oct 22 12:00:00 a.m. ET 2026", in the zone the member picked

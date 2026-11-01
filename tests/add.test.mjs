@@ -161,7 +161,7 @@ test("a re-add is blocked for 48 hours after the team's own drop (9.4)", () => {
     const blocked = droppedByTeam(players, "0001", dropped + 3600);
     assert.deepEqual([...blocked.keys()], ["a"]);
     const rows = freeAgentRows([{id: "a", name: "A A", mflName: "A, A", mark: "#", pos: "WR", proj: 2}, {id: "c", name: "C C", mflName: "C, C", mark: null, pos: "WR", proj: 5}], {blocked});
-    assert.deepEqual(rows.map((row) => [row.player.id, row.off, row.why]), [["c", false, ""], ["a", true, "Dropped by you · bid from Sun 3:12 p.m."]]);
+    assert.deepEqual(rows.map((row) => [row.player.id, row.off, row.why]), [["c", false, ""], ["a", true, "Dropped by you · bid from Sun 3:12 p.m. CT"]]);
     assert.equal(droppedByTeam(players, "0001", dropped + 49 * 3600).size, 0);
     // with no bid run left, a bid-only player is off
     const late = freeAgentRows([{id: "a", name: "A A", mflName: "A, A", mark: "#", pos: "WR", proj: 2}, {id: "c", name: "C C", mflName: "C, C", mark: null, pos: "WR", proj: 5}], {bids: false});

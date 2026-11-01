@@ -4,7 +4,7 @@
 import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries} from "../lib/rules.js";
 import {franchisePhase, readSnapshot, snapshotFileName} from "../lib/franchise.js";
 import {kickoffAt} from "./context.js";
-import {TIME_ZONE} from "../lib/zone.js";
+import {whenText} from "./home-model.js";
 
 // null until MFL publishes the schedule
 async function kickoffs(season) {
@@ -23,9 +23,7 @@ async function loadSnapshot(season, dataBase) {
     return readSnapshot(await response.json(), season);
 }
 
-const deadlineText = (date) => date
-    ? date.toLocaleString("en-US", {weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE, timeZoneName: "short"})
-    : "the trade deadline";
+const deadlineText = (date) => (date ? whenText(Math.floor(date.getTime() / 1000)) : "the trade deadline");
 
 export async function franchiseView(season, league, dataBase) {
     const live = franchiseTopSalaries(league.rosteredPlayers);
