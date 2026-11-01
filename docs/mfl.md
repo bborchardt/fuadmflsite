@@ -273,6 +273,11 @@ Each is an ordinary page form, posted from the logged-in browser.
 - **Use Responsive View** (Franchise setup › Customize, `USE_RESPONSIVE_SITE<team>`), when a member
   turns it off, leaves the viewport tag and `link#responsive` out of every page they're served, so a
   phone lays the page out about 980px wide. v2 puts both back (`keepResponsive` in `ui/looks.js`).
+- **Full width** (Franchise setup › Customize, `USE_FULL_WIDTH<team>`, Yes/No) marks every page the
+  member is served `body.full-width`, which most skins widen the page for. v2's column is
+  `--fuad-column` in fuad.css, the window's width under `full-width`. The team sheet's switch saves
+  it (`ui/width.js`) by sending back the whole Customize form (`multipart/form-data`, its file
+  fields empty, as a browser sends them) with only Full width changed.
 - **An iPhone's Request Desktop Website** gets the same pages, viewport tag and all, so Safari keeps
   the phone layout; v2 widens the viewport to 980px there (`keepResponsive`). An iPad is left as is.
 - **Time Zone** (Franchise setup › Customize, `TIME_ZONE<team>`: ET, CT, MT, PT, AKT, HT or GMT) is

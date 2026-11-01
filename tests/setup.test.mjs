@@ -117,22 +117,22 @@ test("Basic shows the team and owner names; its email is Contact's, kept but hid
     assert.ok(doc.querySelector('.fuad-setup-kept[hidden] input[name="FRANCHISE_EMAIL0001"]'));
 });
 
-test("Customize shows Full width; what reaches only MFL's pages is under More settings, closed", () => {
+test("Customize has only what reaches MFL's pages, under More settings, closed; Full width is the team sheet's", () => {
     const {doc, shown, details} = restyled("FCUSTOM");
-    assert.deepEqual(labels(shown), ["Full width on wide screens"]);
+    assert.equal(shown, undefined);
     assert.equal(details.length, 1);
     assert.equal(details[0].querySelector("summary").textContent, "More settings");
     assert.equal(details[0].hasAttribute("open"), false);
     assert.match(inside(details[0]).querySelector(":scope > .fuad-setup-hint").textContent, /only affect MFL's original pages in the site menu/);
     assert.deepEqual(labels(inside(details[0])), ["Time zone", "Abbreviation", "Icon URL", "Or upload an icon", "Logo URL", "Or upload a logo",
         "Home page URL", "Stadium", "Notes", "Advanced editor for comments", "Play audio clips"]);
-    for (const name of ["FRANCHISE_SOUND0001", "FRANCHISE_SOUND_FILE0001", "USE_RESPONSIVE_SITE0001", "DISPLAY_FRANCHISE_REMINDERS0001"]) {
+    for (const name of ["USE_FULL_WIDTH0001", "FRANCHISE_SOUND0001", "FRANCHISE_SOUND_FILE0001", "USE_RESPONSIVE_SITE0001", "DISPLAY_FRANCHISE_REMINDERS0001"]) {
         assert.ok(doc.querySelector(`.fuad-setup-kept[hidden] [name="${name}"]`), name);
     }
     // Yes/No as a switch of MFL's own radios
-    const yesNo = shown.querySelector(".fuad-setup-yn");
+    const yesNo = details[0].querySelector(".fuad-setup-yn");
     assert.deepEqual([...yesNo.querySelectorAll("label")].map((label) => label.textContent), ["Yes", "No"]);
-    assert.equal(yesNo.querySelectorAll('input[name="USE_FULL_WIDTH0001"]').length, 2);
+    assert.equal(yesNo.querySelectorAll('input[name="USE_ADVANCED_EDITOR0001"]').length, 2);
     // the icon pickers write to the field by its name in the form MFL names
     assert.ok(doc.querySelector('form[name="customize"] input[name="FRANCHISE_ICON0001"]'));
 });
