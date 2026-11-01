@@ -45,8 +45,8 @@ const FORMS = {
     FACCESS: {shown: {FRANCHISE_NAME: "Team", ACCESS_CODE: "New access code", ACCESS_CODE2: "The new code again"}}
 };
 const MORE_NOTE = "These don't change the main pages (Home, Lineup, League, Moves, Rosters). They only affect MFL's original pages in the site menu.";
-// Contact's email alerts by MFL's value for each. The draft's, once a year, and those for what v2's
-// league doesn't have (an auction, a taxi squad, trade bait, polls, articles) are under Other emails.
+// Contact's email alerts by MFL's value for each. The draft's (once a year), MFL's own, and those for
+// what v2's league doesn't have (an auction, a taxi squad, trade bait, polls, articles) are under Other emails.
 const ALERTS = {
     DRAFT: "Draft updates", ONTHECLOCK: "I'm on the clock in the draft", AUCTION: "Auction updates", TAXI: "Taxi squad moves",
     TBAIT: "Trade bait updates", POLL: "New polls", ARTICLE: "New articles and videos", LINEUP: "Lineups set (mine and my opponent's)",
@@ -55,7 +55,7 @@ const ALERTS = {
     MSG_BOARD: "New message board topics", PLAYER_NEWS: "News on my players (daily, 3 a.m. ET)", MFL_NEWS: "MFL site news",
     PROMO_MESSAGES: "Promotions from MFL's partners"
 };
-const OTHER_ALERTS = ["DRAFT", "ONTHECLOCK", "AUCTION", "TAXI", "TBAIT", "POLL", "ARTICLE"];
+const OTHER_ALERTS = ["DRAFT", "ONTHECLOCK", "AUCTION", "TAXI", "TBAIT", "POLL", "ARTICLE", "MFL_NEWS", "PROMO_MESSAGES"];
 
 // MFL's link row, "Franchise Setup: Basic | Unlink Franchise | …", the screen shown unlinked: the
 // screen shown and each screen's address, or null
