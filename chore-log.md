@@ -67,3 +67,4 @@ Santos: 1 year").
 - 2026-10-30 03:27 UTC: Recorded "Most Points Week 6" $15.00 to The Fighting Injured Reserves!.
 - 2026-10-30 03:27 UTC: Recorded "Most Points Week 7" $15.00 to Smooth City Styles!.
 - 2026-11-01 14:26 UTC: Charged $1 to Not 100% A Dick for Jason Myers (1yrs@1, 11/01), and reset the player to $1 / 0 years.
+- 2026-11-01 22:46 UTC: Updated the team icons of All Hands on Beck, So your saying there’s a chance?, The Obliterators , Smooth City Styles!, Golden Ratio, We Made a Kicker, The Fighting Injured Reserves!, Not 100% A Dick, The Wheelchair Massacre.
