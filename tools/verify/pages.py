@@ -33,21 +33,21 @@ _spec.loader.exec_module(harness)
 
 # the classes v2's screens set on <html> when they take a page
 SCREEN_CLASSES = ["fuad-lineup-on", "fuad-add-on", "fuad-drop-on", "fuad-ir-on", "fuad-trades-on", "fuad-all-moves-on",
-                  "fuad-all-bids-on", "fuad-rules-on", "fuad-board", "fuad-topic", "fuad-reply", "fuad-side", "fuad-home-on"]
+                  "fuad-all-bids-on", "fuad-rules-on", "fuad-board", "fuad-topic", "fuad-reply", "fuad-setup", "fuad-side", "fuad-home-on"]
 
 # page: {viewer: the screen class v2 sets, or None when MFL's page stays}. A guest gets MFL's login page
 # for what needs one, and the commissioner MFL's team picker or its own page for the Moves pages, All
-# moves, All bids and Rules; Power, History, Looks and the player page stay MFL's, read by v2's views;
-# the rest of Franchise setup stays MFL's too.
+# moves, All bids, Rules and Franchise setup; Power, History and the player page stay MFL's, read by
+# v2's views, and so does a member's Home Page Modules.
 EXPECTED = {
     "add_drop": {"guest": None, "member": "fuad-add-on", "commish": None},
-    "csetup-FACCESS": {"member": None, "commish": None},
-    "csetup-FCONTACT": {"member": None, "commish": None},
-    "csetup-FCUSTOM": {"member": None, "commish": None},
-    "csetup-FMOBILE": {"member": None, "commish": None},
-    "csetup-FRANCHISE": {"member": None, "commish": None},
+    "csetup-FACCESS": {"member": "fuad-setup", "commish": None},
+    "csetup-FCONTACT": {"member": "fuad-setup", "commish": None},
+    "csetup-FCUSTOM": {"member": "fuad-setup", "commish": None},
+    "csetup-FMOBILE": {"member": "fuad-setup", "commish": None},
+    "csetup-FRANCHISE": {"member": "fuad-setup", "commish": None},
     "csetup-HMPGMOD": {"member": None, "commish": None},
-    "csetup-SKIN": {"guest": None, "member": None, "commish": None},
+    "csetup-SKIN": {"guest": None, "member": "fuad-setup", "commish": None},
     "home": {"guest": "fuad-home-on", "member": "fuad-home-on", "commish": "fuad-home-on"},
     "lineup": {"guest": None, "member": "fuad-lineup-on", "commish": None},
     "mb-board_show": {"guest": "fuad-board", "member": "fuad-board", "commish": "fuad-board"},

@@ -9,7 +9,7 @@ import {REBUILT, leavesPage, locate, pageOf, sectionHref, sections, storedTabs, 
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
-import {LOOKS, applyLook, looksMarkup, saveLook} from "./looks.js";
+import {LOOKS, looksMarkup, wireLooks} from "./looks.js";
 
 export {locate, pageOf, sections};
 
@@ -104,59 +104,6 @@ function teamSheet({team, member, setup, logout, become, franchiseId, look}) {
             </div>
         </div>` : ""}
     </section>`;
-}
-
-// A look shows as soon as it's picked and stays if MFL saves it; if MFL doesn't, the one before comes
-// back and the sheet says so. Picks are taken one at a time. The default is shown for skins no look
-// names too, so picking it saves it even when it's the one shown.
-function wireLooks(layer, context, current) {
-    const group = layer.querySelector(".fuad-looks");
-    if (!group) {
-        return;
-    }
-    const buttons = [...group.querySelectorAll("button[data-look]")];
-    const status = group.querySelector(".fuad-looks-status");
-    let shown = current;
-    let saved = current === LOOKS[0] ? null : current;
-    const show = (look) => {
-        applyLook(document, look);
-        buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.look === look.id)));
-    };
-    buttons.forEach((button) => button.addEventListener("click", async () => {
-        const look = LOOKS.find((entry) => entry.id === button.dataset.look);
-        if (!look || look === saved) {
-            return;
-        }
-        const before = shown;
-        shown = look;
-        show(look);
-        buttons.forEach((each) => {
-            each.disabled = true;
-        });
-        status.classList.remove("fuad-looks-failed");
-        status.textContent = "Saving…";
-        try {
-            await saveLook(context, look);
-            saved = look;
-            status.textContent = "";
-        } catch (error) {
-            if (error.unconfirmed) {
-                saved = look;
-                status.textContent = "Sent, but MFL didn’t confirm it. Reload the page to check.";
-                return;
-            }
-            console.warn("[fuad] couldn't save the look:", error);
-            shown = before;
-            show(before);
-            status.classList.add("fuad-looks-failed");
-            status.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a few seconds."
-                : error.noForm ? "Couldn’t open MFL’s skin page. Reload and try again." : "Couldn’t save your look. Try again.";
-        } finally {
-            buttons.forEach((each) => {
-                each.disabled = false;
-            });
-        }
-    }));
 }
 
 function wireMenu(layer) {
@@ -323,7 +270,7 @@ export function drawFrame({context, storage}) {
     if (teamButton) {
         const sheetLayer = root.querySelector(".fuad-sheet-layer");
         if (member) {
-            wireLooks(sheetLayer, context, look);
+            wireLooks(sheetLayer.querySelector(".fuad-looks"), context, look);
         }
         teamButton.addEventListener("click", () => {
             // the phone header's height varies with its context line; a short screen (landscape) scrolls the sheet

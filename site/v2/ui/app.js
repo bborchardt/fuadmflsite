@@ -258,6 +258,14 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         });
         return false;
     }
+    // Franchise setup: MFL's forms under v2's heading and tabs
+    if (context && here.path === "csetup") {
+        await import("./setup.js").then(({restyleSetup}) => restyleSetup(document, {context, franchiseId: window.franchise_id || null})).catch((error) => {
+            console.error("[fuad] couldn't restyle Franchise setup:", error);
+            onTrouble();
+        });
+        return false;
+    }
     // the message board's pages: MFL's, restyled
     const boardPage = (window.location.pathname.match(/\/mb\/(\w+)\.pl$/) || [])[1];
     if (context && boardPage) {

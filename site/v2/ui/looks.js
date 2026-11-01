@@ -73,11 +73,12 @@ export function markCommish(doc = document, franchiseId = window.franchise_id) {
     doc.documentElement.classList.toggle("fuad-commish", franchiseId === "0000");
 }
 
-// the looks, once there's more than one; a member's own choice, saved with their franchise
-export function looksMarkup(looks, current) {
+// the looks, once there's more than one; a member's own choice, saved with their franchise. `id` names
+// the label, as a page can have two pickers
+export function looksMarkup(looks, current, id = "fuad-looks-label") {
     return looks.length > 1 ? `
-        <div class="fuad-looks" role="group" aria-labelledby="fuad-looks-label">
-            <span class="fuad-muted" id="fuad-looks-label">Look</span>
+        <div class="fuad-looks" role="group" aria-labelledby="${esc(id)}">
+            <span class="fuad-muted" id="${esc(id)}">Look</span>
             <div class="fuad-looks-options">
                 ${looks.map((look) => `<button type="button" data-look="${esc(look.id)}" aria-pressed="${look === current}"><span class="fuad-look-swatch" data-fuad-look="${esc(look.id)}" aria-hidden="true"></span><span>${esc(look.name)}</span></button>`).join("")}
             </div>
@@ -105,6 +106,73 @@ export function readSkinForm(doc) {
         skins: radios.map((radio) => radio.getAttribute("value")),
         chosen: checked ? checked.getAttribute("value") : null
     };
+}
+
+const SAVED = "fuad-look-saved";
+
+// A look shows as soon as it's picked and stays if MFL saves it; if MFL doesn't, the one before comes
+// back and the picker says so. Picks are taken one at a time. The default is shown for skins no look
+// names too, so picking it saves it even when it's the one shown. A page with two pickers (the team
+// sheet's and Franchise setup's Look) keeps both on the look saved.
+export function wireLooks(group, context, current) {
+    if (!group) {
+        return;
+    }
+    const doc = group.ownerDocument;
+    const buttons = [...group.querySelectorAll("button[data-look]")];
+    const status = group.querySelector(".fuad-looks-status");
+    let shown = current;
+    let saved = current === LOOKS[0] ? null : current;
+    const show = (look) => {
+        applyLook(doc, look);
+        buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.look === look.id)));
+    };
+    doc.addEventListener(SAVED, (event) => {
+        if (event.detail.from !== group) {
+            shown = event.detail.look;
+            saved = event.detail.look;
+            show(event.detail.look);
+        }
+    });
+    const settle = (look) => {
+        saved = look;
+        doc.dispatchEvent(new doc.defaultView.CustomEvent(SAVED, {detail: {look, from: group}}));
+    };
+    buttons.forEach((button) => button.addEventListener("click", async () => {
+        const look = LOOKS.find((entry) => entry.id === button.dataset.look);
+        if (!look || look === saved) {
+            return;
+        }
+        const before = shown;
+        shown = look;
+        show(look);
+        buttons.forEach((each) => {
+            each.disabled = true;
+        });
+        status.classList.remove("fuad-looks-failed");
+        status.textContent = "Saving…";
+        try {
+            await saveLook(context, look);
+            settle(look);
+            status.textContent = "";
+        } catch (error) {
+            if (error.unconfirmed) {
+                settle(look);
+                status.textContent = "Sent, but MFL didn’t confirm it. Reload the page to check.";
+                return;
+            }
+            console.warn("[fuad] couldn't save the look:", error);
+            shown = before;
+            show(before);
+            status.classList.add("fuad-looks-failed");
+            status.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a few seconds."
+                : error.noForm ? "Couldn’t open MFL’s skin page. Reload and try again." : "Couldn’t save your look. Try again.";
+        } finally {
+            buttons.forEach((each) => {
+                each.disabled = false;
+            });
+        }
+    }));
 }
 
 const failure = (message, status) => Object.assign(new Error(message), {status});
