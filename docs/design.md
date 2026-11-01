@@ -55,8 +55,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   the commissioner's own team (the page with Become Commissioner), and draws it for team 0000. On a
   device that hasn't seen their team it's the default look, and the team sheet says so. A look a
   person picks is theirs, not a league's; a test league is told apart by its wordmark on any device.
-  Each look's accent becomes a blue, or magenta where the look's own is blue, with a bar along the top
-  and a Commissioner tag by the wordmark.
+  The accent is blue on a dark look and magenta on a light one, in place of the look's own, so the view
+  is marked even scrolled past the header, with a bar along the top and a Commissioner tag by the wordmark.
 - **The header's loading cover is in the member's look**, read from the skin as v2 reads it (for the
   commissioner, the team's skin v2 keeps), so a
   light look doesn't flash dark on a slow connection; the header keeps each look's two colours,

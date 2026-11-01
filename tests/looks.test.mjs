@@ -115,11 +115,13 @@ test("the commissioner's view follows their team's look, per league, and only th
 
 test("each look's commissioner accent differs from its own", () => {
     const css = readFileSync(new URL("../site/v2/fuad.css", import.meta.url), "utf8");
-    const accent = (selector) => (css.slice(css.indexOf(`${selector} {`)).match(/--fuad-accent: (#[0-9A-F]+)/) || [])[1];
+    // the first rule naming the selector, which may be one of several sharing it
+    const accent = (selector) => (css.slice(css.search(new RegExp(`(^|\\n)${selector.replace(/[[\]]/g, "\\$&")}[ ,]`))).match(/--fuad-accent: (#[0-9A-F]+)/) || [])[1];
     const base = accent("html.fuad-commish");
     assert.ok(base);
     for (const {id} of LOOKS.slice(1)) {
         const commish = css.includes(`html.fuad-commish[data-fuad-look="${id}"]`) ? accent(`html.fuad-commish[data-fuad-look="${id}"]`) : base;
+        assert.ok(commish && accent(`[data-fuad-look="${id}"]`), id);
         assert.notEqual(commish, accent(`[data-fuad-look="${id}"]`), id);
     }
 });
