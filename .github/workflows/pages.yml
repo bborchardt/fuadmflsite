@@ -1,10 +1,10 @@
 # Publishes the site to GitHub Pages, at https://<owner>.github.io/<repository>/
 # Code comes from master's site/ folder, built by tools/build.mjs (v2 bundled into one minified
-# fuad.js); franchise snapshots come from the league-data branch's data/ folder and are published
-# under data/.
+# fuad.js); franchise snapshots and the team icons' stills come from the league-data branch's data/
+# folder and are published under data/.
 #
 # Runs on every push to master that touches site/ or the build, on demand, and from the daily job when
-# league-data has a snapshot the site doesn't (pushes made by a workflow don't trigger others).
+# league-data has a snapshot or still the site doesn't (pushes made by a workflow don't trigger others).
 name: Publish site
 
 on:

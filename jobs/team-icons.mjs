@@ -10,6 +10,8 @@ import sharp from "sharp";
 export const ICON_PIXELS = 96;
 export const MAX_ICON_BYTES = 8 * 1024 * 1024;
 const TIMEOUT_MS = 30000;
+// most pictures are on MFL's servers, which throttle bursts
+const SPACING_MS = 1000;
 // what a picture may decode to: a few times the largest a phone takes, well short of a bomb
 const MAX_INPUT_PIXELS = 40_000_000;
 
@@ -54,10 +56,17 @@ async function download(url, known, userAgent, fetchImpl) {
     if (Number(response.headers.get("content-length")) > MAX_ICON_BYTES) {
         throw new Error("larger than the job takes");
     }
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (bytes.length > MAX_ICON_BYTES) {
-        throw new Error("larger than the job takes");
+    // counted as it comes, as a reply needn't say its length
+    const chunks = [];
+    let size = 0;
+    for await (const chunk of response.body || []) {
+        size += chunk.length;
+        if (size > MAX_ICON_BYTES) {
+            throw new Error("larger than the job takes");
+        }
+        chunks.push(chunk);
     }
+    const bytes = Buffer.concat(chunks);
     return {bytes, etag: response.headers.get("etag"), lastModified: response.headers.get("last-modified")};
 }
 
@@ -65,13 +74,18 @@ async function download(url, known, userAgent, fetchImpl) {
 // picture's address and its validators, so an unchanged one is answered 304 and not re-made; a
 // re-upload keeps its address, so the address alone can't tell. A picture that can't be read keeps
 // the team's still as it was. Writes nothing when `write` is false.
-export async function updateIcons({sources, dataDir, userAgent, fetchImpl = fetch, write = true}) {
+export async function updateIcons({sources, dataDir, userAgent, fetchImpl = fetch, write = true, spacing = SPACING_MS}) {
     const dir = join(dataDir, "data", "icons");
     const knownFile = join(dataDir, "icon-sources.json");
     const known = existsSync(knownFile) ? JSON.parse(readFileSync(knownFile, "utf8")) : {};
     const next = {};
     const result = {written: [], removed: [], failed: []};
+    let first = true;
     for (const [team, url] of sources) {
+        if (!first) {
+            await new Promise((resolve) => setTimeout(resolve, spacing));
+        }
+        first = false;
         const file = join(dir, `${team}.webp`);
         const had = existsSync(file);
         try {
@@ -96,8 +110,9 @@ export async function updateIcons({sources, dataDir, userAgent, fetchImpl = fetc
             }
         }
     }
-    // a team whose owner took their icon away
-    for (const file of existsSync(dir) ? readdirSync(dir) : []) {
+    // a team whose owner took their icon away; an export with no icons at all is taken for MFL's
+    // glitch, not every owner's choice
+    for (const file of existsSync(dir) && sources.size ? readdirSync(dir) : []) {
         const team = file.replace(/\.webp$/, "");
         if (file.endsWith(".webp") && !sources.has(team)) {
             result.removed.push(team);

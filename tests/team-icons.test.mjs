@@ -63,7 +63,7 @@ test("stills are made when a picture is new or changed, kept when it can't be re
         return new Response(picture.bytes, {headers: picture.etag ? {ETag: picture.etag} : {}});
     };
     const sources = new Map([["0001", "https://a.example/1.png"], ["0002", "https://a.example/2.gif"]]);
-    const update = (options = {}) => updateIcons({sources, dataDir, userAgent: "league-site-icons", fetchImpl, ...options});
+    const update = (options = {}) => updateIcons({sources, dataDir, userAgent: "league-site-icons", fetchImpl, spacing: 0, ...options});
     const file = (team) => join(dataDir, "data", "icons", `${team}.webp`);
 
     let result = await update();
@@ -105,10 +105,25 @@ test("stills are made when a picture is new or changed, kept when it can't be re
     assert.ok(!existsSync(file("0002")));
     assert.deepEqual(Object.keys(JSON.parse(readFileSync(join(dataDir, "icon-sources.json"), "utf8"))), ["0001"]);
 
-    // too large to take
-    pictures["https://a.example/1.png"] = {bytes: Buffer.alloc(9 * 1024 * 1024), etag: '"big"'};
+    // too large to take, though the reply doesn't say its length
+    pictures["https://a.example/1.png"] = {bytes: new ReadableStream({
+        pull(controller) {
+            controller.enqueue(new Uint8Array(1024 * 1024));
+        }
+    }), etag: '"big"'};
     result = await update();
     assert.deepEqual(result.failed, [{team: "0001", reason: "larger than the job takes"}]);
+    // a request that fails outright
+    pictures["https://a.example/1.png"] = {get bytes() {
+        throw new TypeError("fetch failed");
+    }};
+    result = await update();
+    assert.deepEqual(result.failed, [{team: "0001", reason: "fetch failed"}]);
+    assert.ok(existsSync(file("0001")));
+    // an export with no icons at all removes none
+    result = await update({sources: new Map()});
+    assert.deepEqual(result.removed, []);
+    assert.ok(existsSync(file("0001")));
 });
 
 test("a still left from a picture's earlier address is made again from the new one", async () => {
@@ -119,7 +134,7 @@ test("a still left from a picture's earlier address is made again from the new o
     writeFileSync(join(dataDir, "icon-sources.json"), JSON.stringify({"0001": {url: "https://a.example/old.png", etag: '"r"'}}));
     const sent = [];
     const result = await updateIcons({
-        sources: new Map([["0001", "https://a.example/new.png"]]), dataDir, userAgent: "x",
+        sources: new Map([["0001", "https://a.example/new.png"]]), dataDir, userAgent: "x", spacing: 0,
         fetchImpl: async (url, init) => {
             sent.push(init.headers);
             return new Response(await colour("#0000ff"), {headers: {ETag: '"r"'}});
