@@ -164,9 +164,11 @@ const make = (doc, tag, className, text) => {
     return element;
 };
 
-// A field's cell moved under v2's label: MFL's own inputs, so what the form sends doesn't change
-function field(doc, row, label) {
+// A field's cell moved under v2's label: MFL's own inputs, so what the form sends doesn't change. Each
+// box is in the form (in `parent`) before an input moves into it, so a throw midway loses none.
+function field(doc, row, label, parent) {
     const block = make(doc, "div", "fuad-setup-field");
+    parent.append(block);
     const radios = [...row.cell.querySelectorAll('input[type="radio"]')];
     const checks = [...row.cell.querySelectorAll('input[type="checkbox"]')];
     if (radios.length === 2 && radios.every((radio) => /^(Yes|No)$/.test(radio.getAttribute("value")))) {
@@ -175,30 +177,29 @@ function field(doc, row, label) {
         const parts = make(doc, "div", "fuad-setup-yn");
         parts.setAttribute("role", "radiogroup");
         parts.setAttribute("aria-label", label);
-        parts.append(...row.cell.childNodes);
         block.append(make(doc, "span", "fuad-setup-label", label), parts);
+        parts.append(...row.cell.childNodes);
     } else if (checks.length === 1 && !row.cell.querySelector("label")) {
         // a checkbox MFL labels with the text beside it
         const line = make(doc, "label", "fuad-setup-check");
-        line.append(make(doc, "span", "", label), checks[0]);
         block.append(line);
+        line.append(make(doc, "span", "", label), checks[0]);
     } else if (checks.length) {
         // Contact's email alerts: a switch each, the rarer ones under Other emails, closed
-        block.append(make(doc, "span", "fuad-setup-label", label));
         const list = make(doc, "div", "fuad-setup-checks");
         const others = make(doc, "div", "fuad-setup-checks");
+        const details = make(doc, "details", "fuad-setup-more fuad-setup-other-alerts");
+        details.append(make(doc, "summary", "", "Other emails"), others);
+        block.append(make(doc, "span", "fuad-setup-label", label), list, details);
         for (const check of checks) {
             const value = check.getAttribute("value");
             const mfls = check.id ? row.cell.querySelector(`label[for="${check.id}"]`) : null;
             const line = make(doc, "label", "fuad-setup-check");
-            line.append(make(doc, "span", "", ALERTS[value] || (mfls ? mfls.textContent.replace(/\u00a0/g, " ").trim() : value)), check);
             (OTHER_ALERTS.includes(value) ? others : list).append(line);
+            line.append(make(doc, "span", "", ALERTS[value] || (mfls ? mfls.textContent.replace(/\u00a0/g, " ").trim() : value)), check);
         }
-        block.append(list);
-        if (others.firstChild) {
-            const details = make(doc, "details", "fuad-setup-more fuad-setup-other-alerts");
-            details.append(make(doc, "summary", "", "Other emails"), others);
-            block.append(details);
+        if (!others.firstChild) {
+            details.remove();
         }
     } else {
         const control = row.cell.querySelector("input, select, textarea");
@@ -207,14 +208,15 @@ function field(doc, row, label) {
             name.setAttribute("for", control.id);
         }
         const value = make(doc, "div", "fuad-setup-control");
-        value.append(...row.cell.childNodes);
         block.append(name, value);
+        value.append(...row.cell.childNodes);
     }
     return block;
 }
 
-function hint(doc, cell) {
+function hint(doc, cell, parent) {
     const text = make(doc, "p", "fuad-setup-hint");
+    parent.append(text);
     text.append(...cell.childNodes);
     const first = text.firstElementChild;
     if (first && first.tagName === "B" && /^\s*Hint:\s*$/.test(first.textContent)) {
@@ -270,12 +272,11 @@ function restyleForm(doc, spec, franchiseId) {
             continue;
         }
         const label = {...spec.shown, ...spec.more, ...spec.other}[row.name] || row.label.textContent.replace(/\u00a0/g, " ").trim().replace(/:$/, "");
-        blocks[row.name] = field(doc, row, label);
-        home(row.name).append(blocks[row.name]);
+        blocks[row.name] = field(doc, row, label, home(row.name));
     }
     for (const row of rows.filter((each) => each.hint)) {
         if (blocks[row.hint]) {
-            blocks[row.hint].append(hint(doc, row.cell));
+            hint(doc, row.cell, blocks[row.hint]);
         }
     }
     const {submit} = rows.find((row) => row.submit);

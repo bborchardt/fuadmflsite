@@ -180,10 +180,13 @@ test("a form of rows v2 doesn't know stays MFL's, under v2's heading", () => {
 test("a restyle that fails partway leaves every field in the form, with MFL's Save", () => {
     const before = page("member", "FCONTACT").querySelector('form[name="contact"]');
     const doc = page("member", "FCONTACT");
-    // an id the alerts' label lookup can't take
-    doc.querySelector('input[value="TRADE"]').id = 'odd"id';
+    // an id the alerts' label lookup can't take, late in the list, after alerts both on and off
+    doc.querySelector('input[value="PLAYER_NEWS"]').id = 'odd"id';
     assert.throws(() => restyleSetup(doc, {context, franchiseId: "0001"}));
     const form = doc.querySelector('form[name="contact"]');
     assert.deepEqual(sent(form), sent(before));
+    // the unchecked too, which sent() can't see
+    const names = (root) => [...root.querySelectorAll("[name]")].map((control) => control.getAttribute("name")).sort();
+    assert.deepEqual(names(form), names(before));
     assert.deepEqual(pressed(form), pressed(before));
 });
