@@ -35,8 +35,8 @@ test("a page MFL draws differently is left to MFL's own popup", () => {
 test("a news article: its source, time, update and analysis", () => {
     const article = readArticle(fixture("article-rotowire642709.html"));
     assert.equal(article.source, "Rotowire");
-    assert.equal(article.published, "Fri Oct 16, 1:04 p.m.");
-    assert.equal(readArticle(fixture("article-rotowire642709.html").replace("1:04:42 p.m. CT", "2:04:42 p.m. ET")).published, "Fri Oct 16, 1:04 p.m.");
+    assert.equal(article.published, "Fri Oct 16, 1:04 p.m. CT");
+    assert.equal(readArticle(fixture("article-rotowire642709.html").replace("1:04:42 p.m. CT", "2:04:42 p.m. ET")).published, "Fri Oct 16, 1:04 p.m. CT");
     assert.match(article.update, /^Head coach Jesse Minter said Friday/);
     assert.match(article.analysis, /^Considering Jackson hasn't practiced/);
     assert.doesNotMatch(article.analysis, /Article Link|Premium/);
@@ -47,8 +47,8 @@ test("text: tags out, entities in, spaces collapsed", () => {
 });
 
 test("times read as the league writes them", () => {
-    assert.equal(clockText(new Date("2026-10-17T19:42:00-05:00")), "7:42 p.m.");
-    assert.equal(clockText(new Date("2026-10-17T09:05:00-05:00")), "9:05 a.m.");
+    assert.equal(clockText(new Date("2026-10-17T19:42:00-05:00")), "7:42 p.m. CT");
+    assert.equal(clockText(new Date("2026-10-17T09:05:00-05:00")), "9:05 a.m. CT");
 });
 
 test("a free agent has no owner, whatever MFL writes for him", () => {

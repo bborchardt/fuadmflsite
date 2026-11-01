@@ -251,9 +251,9 @@ test("the heads-up for accepting within 3 hours of a traded player's kickoff", (
     const waller = {player: league.players.get("waller"), surname: "Waller"};
     assert.equal(kickoffText([higbee], kickoffs, SUNDAY - 4 * HOUR), null);
     assert.equal(kickoffText([higbee], kickoffs, SUNDAY - 90 * 60),
-        "Higbee’s game starts at 12:00 p.m., in 1 hour 30 minutes. Accepting moves him now, so both teams’ lineups need fixing before kickoff.");
+        "Higbee’s game starts at 12:00 p.m. CT, in 1 hour 30 minutes. Accepting moves him now, so both teams’ lineups need fixing before kickoff.");
     assert.equal(kickoffText([waller, higbee], kickoffs, SUNDAY - 60),
-        "Higbee’s and Waller’s games start from 12:00 p.m., the first in 1 minute. Accepting moves them now, so both teams’ lineups need fixing before kickoff.");
+        "Higbee’s and Waller’s games start from 12:00 p.m. CT, the first in 1 minute. Accepting moves them now, so both teams’ lineups need fixing before kickoff.");
     assert.equal(kickoffText([higbee], kickoffs, SUNDAY + 60), null);
 });
 

@@ -1,5 +1,7 @@
 // Times as MFL's pages write them, in the zone each member picks on MFL (Franchise setup › Customize ›
-// Time Zone), read as the moment they are, so v2 shows them in the league's zone.
+// Time Zone), read as the moment they are, so v2 shows them in the league's zone. `npm test` runs on
+// a Pacific clock, as screens.py does, so a time taken from the device's clock rather than the
+// league's comes out wrong, and every time shown carries the league's label.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";

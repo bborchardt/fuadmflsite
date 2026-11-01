@@ -62,9 +62,9 @@ test("my alerts: invalid bids block, otherwise the deadline", () => {
     assert.deepEqual(over.map((a) => [a.title, a.detail, a.tone]), [["Current bids invalid", "If all high bids win: cap used $297 → $302 · Add", "red"]]);
     const fine = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run,
         groups: pendingGroups({blindBidWaiverRequest: [{round: "1", addsDrops: "1_1_"}, {round: "2", addsDrops: "2_1_"}]})});
-    assert.deepEqual(fine.map((a) => [a.title, a.detail]), [["2 blind bids pending", "They process Wed Oct 21, 11:00 p.m. · Add"]]);
+    assert.deepEqual(fine.map((a) => [a.title, a.detail]), [["2 blind bids pending", "They process Wed Oct 21, 11:00 p.m. CT · Add"]]);
     // the first run close by is the pending bids' alert, not one of its own
-    const first = {what: "First blind bids", when: "Wed Oct 21, 11:00 p.m.", soon: true, kind: "bids"};
+    const first = {what: "First blind bids", when: "Wed Oct 21, 11:00 p.m. CT", soon: true, kind: "bids"};
     const withBids = myAlerts({league, franchiseId: "0001", phase: "season", links, now, bidRun: run, coming: [first],
         groups: pendingGroups({blindBidWaiverRequest: {round: "1", addsDrops: "1_1_"}})});
     assert.deepEqual(withBids.map((a) => a.title), ["1 blind bid pending"]);
@@ -118,7 +118,7 @@ test("my alerts: a free agent add's contract length, as read from the board", ()
     const league = leagueOf([me], [waller], {pendingAdds: [{playerId: "7", name: "Waller, Darren", franchiseId: "0001", type: "FREE_AGENT", added}]});
     const base = {league, franchiseId: "0001", phase: "season", links, now};
     assert.deepEqual(titles(myAlerts(base)), ["Post a contract length for Waller"]);
-    assert.equal(myAlerts(base)[0].detail, "Free agent add, due 12:30 p.m., or it’s 1 year · Message board");
+    assert.equal(myAlerts(base)[0].detail, "Free agent add, due 12:30 p.m. CT, or it’s 1 year · Message board");
     assert.deepEqual(titles(myAlerts({...base, readings: new Map([["7", {state: "read", years: 2}]])})), ["Waller: 2 years"]);
     // past the hour it's the job's
     assert.deepEqual(myAlerts({...base, now: added + 3601}), []);
@@ -128,12 +128,12 @@ test("my alerts: trade offers and dates within three days", () => {
     const alerts = myAlerts({league: leagueOf([team("0001", "Me")]), franchiseId: "0001", phase: "season", links, now,
         trades: [{from: "The Obliterators", summary: "Herbert for Hurts", expires: at("2026-10-23T12:00:00-05:00")}],
         coming: [{what: "Trade deadline", when: "Wed Nov 25 · Week 12 kickoff", soon: false}, {what: "Final cut-down", when: "Sun Oct 18", soon: true, kind: "cut"},
-            {what: "Draft", when: "Sun Oct 18, 6:00 p.m.", soon: true, kind: "draft"}, {what: "Contract year ends", when: "Mon Oct 19, 3:00 p.m.", soon: true, kind: "rollover"}]});
+            {what: "Draft", when: "Sun Oct 18, 6:00 p.m. CT", soon: true, kind: "draft"}, {what: "Contract year ends", when: "Mon Oct 19, 3:00 p.m. CT", soon: true, kind: "rollover"}]});
     assert.deepEqual(alerts.map((a) => [a.title, a.detail]), [
         ["Trade offer from The Obliterators", "Herbert for Hurts · expires Fri Oct 23 · Trades"],
         ["Final cut-down", "Sun Oct 18 · Drop"],
-        ["Draft", "Sun Oct 18, 6:00 p.m."],
-        ["Contract year ends", "Mon Oct 19, 3:00 p.m. · Cut by then for the penalty to clear before next season · Drop"]
+        ["Draft", "Sun Oct 18, 6:00 p.m. CT"],
+        ["Contract year ends", "Mon Oct 19, 3:00 p.m. CT · Cut by then for the penalty to clear before next season · Drop"]
     ]);
     assert.equal(alerts[1].href, links.drop);
 });
@@ -178,9 +178,9 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
         ["Rookie/Franchise Player Salaries Calculated for Next Year", "Wed Nov 25 · Week 12 kickoff", false],
         ["Playoffs begin", "Thu Dec 17 · Week 15 kickoff", false],
         ["Championship week", "Thu Dec 31 · Week 17 kickoff", false],
-        ["Trades reopen", "Wed Jan 6, 12:00 p.m.", false],
-        ["Free agency closes", "Sun Jan 10, 12:00 p.m.", false],
-        ["Contract Year Ends - Lengths Reduced by 1", "Thu Mar 11, 3:00 p.m.", false]
+        ["Trades reopen", "Wed Jan 6, 12:00 p.m. CT", false],
+        ["Free agency closes", "Sun Jan 10, 12:00 p.m. CT", false],
+        ["Contract Year Ends - Lengths Reduced by 1", "Thu Mar 11, 3:00 p.m. CT", false]
     ]);
     // 16 more weeks ends it on Sun Jan 3; a lock that happens one time only ends it then, unless a
     // bid run comes after it; a second lock gives no second date
@@ -207,13 +207,13 @@ test("coming up, from the league's calendar as saved 17 Oct 2026", () => {
         .map((d) => [d.what, d.when, d.detail || "", d.soon]);
     assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, calendar, now}).slice(0, 3).map((d) => d.what), ["Free agent window closes", "Blind bids process", "Trade deadline"]);
     assert.deepEqual(cycle(now), [
-        ["Free agent window closes", "Sun Oct 18, 12:00 p.m.", "then blind bids only", false],
-        ["Blind bids process", "Wed Oct 21, 11:00 p.m.", "then the free agent window opens", false]
+        ["Free agent window closes", "Sun Oct 18, 12:00 p.m. CT", "then blind bids only", false],
+        ["Blind bids process", "Wed Oct 21, 11:00 p.m. CT", "then the free agent window opens", false]
     ]);
     // before the first run, "First blind bids" stands for it
     assert.deepEqual(cycle(at("2026-09-08T12:00:00-05:00")), []);
     // the last week: the last run reopens the window, whose close is free agency's
-    assert.deepEqual(cycle(at("2027-01-04T12:00:00-06:00")), [["Blind bids process", "Wed Jan 6, 11:00 p.m.", "then the free agent window opens", false]]);
+    assert.deepEqual(cycle(at("2027-01-04T12:00:00-06:00")), [["Blind bids process", "Wed Jan 6, 11:00 p.m. CT", "then the free agent window opens", false]]);
     // after the last run, only "Free agency closes" is left
     assert.deepEqual(cycle(at("2027-01-07T12:00:00-06:00")), []);
     assert.deepEqual(comingUp({dates, kickoffs, weeks: WEEKS, calendar, now: at("2027-01-07T12:00:00-06:00")}).map((d) => d.what), ["Free agency closes", "Contract Year Ends - Lengths Reduced by 1"]);

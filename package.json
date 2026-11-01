@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "TZ=America/Chicago node --test tests/*.test.mjs",
+    "test": "TZ=America/Los_Angeles node --test tests/*.test.mjs",
     "daily": "node jobs/daily.mjs",
     "lint": "eslint .",
     "build": "node tools/build.mjs"

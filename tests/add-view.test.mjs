@@ -23,7 +23,7 @@ const names = (id) => {
 };
 
 // add-view's `v`, with `groups` as MFL's pending groups: [{round, claims: [{add, bid, drop}], comment}]
-function viewOf({groups = [], state = {}, banner = {kind: "bids", text: "Blind bids only until Wednesday 11 p.m."}, numPlayers = 29, ...rest} = {}) {
+function viewOf({groups = [], state = {}, banner = {kind: "bids", text: "Blind bids only until Wednesday 11 p.m. CT"}, numPlayers = 29, ...rest} = {}) {
     const team = teamOf(groups, numPlayers);
     const rounds = groups.map((group) => group.round);
     return {
@@ -98,7 +98,7 @@ test("the phone's Add: Start group for bids, and nothing to start over the roste
 });
 
 test("the free agents: bid only in the window, and no Add while the team is over the limit", () => {
-    const window_ = {kind: "window", text: "Free agent window open until Sunday noon"};
+    const window_ = {kind: "window", text: "Free agent window open until Sunday noon CT"};
     const phone = phonePlayers(viewOf({banner: window_}));
     assert.ok(phone.indexOf("Tyler Higbee") < phone.indexOf("Simi Fehoko"), "by projection");
     assert.match(phone, /WR · @SF · bye 8 · <span class="fuad-bid-only">bid only<\/span>/);
