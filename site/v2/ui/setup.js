@@ -15,6 +15,8 @@ const SCREENS = {
 const TABS = [["FRANCHISE", "Basic"], ["FCUSTOM", "Customize"], ["SKIN", "Look"], ["FCONTACT", "Contact"], ["FMOBILE", "Mobile"]];
 // Home Page Modules arranges MFL's home page modules, which v2's Home doesn't show: MFL's, as it is
 const RESTYLED = ["FRANCHISE", "FCUSTOM", "SKIN", "FCONTACT", "FMOBILE", "FACCESS", "FUNLINK"];
+// Basic's foot links, and the name a screen reached from one goes by, as no tab is lit there
+const FOOT = {FACCESS: "Change franchise access code", FUNLINK: "Unlink this team from your login"};
 
 // MFL's link row, "Franchise Setup: Basic | Unlink Franchise | …", the screen shown unlinked: the
 // screen shown and each screen's address, or null
@@ -58,7 +60,8 @@ export function restyleSetup(doc, {context, franchiseId}) {
         <h2>Franchise setup</h2>
         <nav class="fuad-setup-tabs" aria-label="Franchise setup">
             ${TABS.map(([tab, name]) => `<a href="${esc(hrefs[tab] || "")}"${tab === screen ? ' aria-current="page"' : ""}>${esc(name)}</a>`).join("")}
-        </nav>`;
+        </nav>
+        ${FOOT[screen] ? `<h3 class="fuad-setup-screen">${esc(FOOT[screen])}</h3>` : ""}`;
     nav.replaceWith(head);
     if (screen === "FRANCHISE") {
         const foot = doc.createElement("p");
@@ -66,8 +69,8 @@ export function restyleSetup(doc, {context, franchiseId}) {
         foot.innerHTML = [
             // MFL's account page, where the login's password changes (the access code is only for linking)
             [`/${context.season}/public?O=03`, "Change your login password"],
-            [hrefs.FACCESS, "Change franchise access code"],
-            [hrefs.FUNLINK, "Unlink this team from your login"]
+            [hrefs.FACCESS, FOOT.FACCESS],
+            [hrefs.FUNLINK, FOOT.FUNLINK]
         ].filter(([href]) => href).map(([href, text]) => `<a href="${esc(href)}">${esc(text)}</a>`).join("");
         head.parentElement.append(foot);
     }

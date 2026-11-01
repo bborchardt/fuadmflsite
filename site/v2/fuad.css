@@ -3922,6 +3922,8 @@ body .fuad-setup-head h2 { margin: 0 0 12px; padding: 0; font-size: 34px; line-h
     .fuad-setup-tabs a { min-width: 0; }
 }
 
+body .fuad-setup-head h3.fuad-setup-screen { margin: 14px 0 0; padding: 0; font-size: 20px; text-transform: none; text-align: left; }
+
 .fuad-setup-looks { max-width: 420px; padding: 14px 16px; border: 1px solid var(--fuad-hairline); border-radius: 16px; background: var(--fuad-panel); }
 
 .fuad-setup-foot { display: flex; flex-direction: column; }

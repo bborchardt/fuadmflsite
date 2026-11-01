@@ -34,12 +34,13 @@ test("a member's Basic: v2's heading and five tabs in place of MFL's link row, a
     assert.ok(doc.documentElement.classList.contains("fuad-setup"));
 });
 
-test("each tab lights its own screen; Change Access Code lights none", () => {
+test("each tab lights its own screen; Change Access Code lights none and names itself", () => {
     for (const [name, lit] of [["FCUSTOM", "Customize"], ["FCONTACT", "Contact"], ["FMOBILE", "Mobile"], ["SKIN", "Look"], ["FACCESS", null]]) {
         const doc = page("member", name);
         assert.equal(restyleSetup(doc, {context, franchiseId: "0001"}), true, name);
         assert.deepEqual(tabs(doc).filter(([, , current]) => current).map(([text]) => text), lit ? [lit] : [], name);
         assert.equal(doc.querySelector(".fuad-setup-foot"), null, name);
+        assert.equal(doc.querySelector(".fuad-setup-screen")?.textContent ?? null, lit ? null : "Change franchise access code", name);
     }
 });
 
