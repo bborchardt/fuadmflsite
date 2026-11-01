@@ -157,9 +157,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     };
     const here = pageOf(window.location);
     // MFL's menu also reaches Submit Lineup as options?O=02
-    // Lineup, Add, Drop, IR, Trades, All moves and All bids draw over MFL's page: it's hidden from the
-    // start, so it doesn't show while their
-    // code loads (the commissioner's view stays MFL's)
+    // Lineup, Add, Drop, IR, Trades, All moves, All bids, Rules and Franchise setup draw over or restyle
+    // MFL's page: it's hidden from the start, so it doesn't show while their code loads (the
+    // commissioner's view stays MFL's)
     const over = (className) => {
         if (window.franchise_id !== "0000") {
             document.documentElement.classList.add(className);
