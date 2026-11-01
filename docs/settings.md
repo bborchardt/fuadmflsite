@@ -29,8 +29,9 @@ setting:
 - Published franchise salaries show only with `extends`, as they're that league's. Otherwise they're
   missing, as they're from no team in this league.
 - What v2 keeps in the browser is kept per league and per settings, so a changed value starts afresh.
-- It reaches the pages only. The daily job stops for a league that isn't listed in the version
-  `RULES_VERSION` names, unless that's v1, which has no settings.
+- The daily job can't read a header. It stops for a league that isn't listed in the version
+  `RULES_VERSION` names, unless that's v1, which has no settings. A dry run (the manual run's default)
+  doesn't stop, and takes the same line, as JSON, in its settings input; a listed league refuses it.
 
 ## Forking
 

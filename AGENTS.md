@@ -9,7 +9,9 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - The daily job loads `lib/` from the version `RULES_VERSION` names (default v2, even while v2 is
   the beta): a change there reaches the job's writes to MFL on its next run, and a new version must
   keep the exports it reads, or its flags silently stop. It stops for a league not listed in that
-  version's `settings.json`, so `MFL_LEAGUE_ID` must be listed.
+  version's `settings.json`, so `MFL_LEAGUE_ID` must be listed; a dry run, the manual run's default, may
+  name any league and writes nothing. A new chore that writes must go through `mflImport`, which refuses
+  a dry run.
 - Members include older iPhones: a syntax error (e.g. regex lookbehind, Safari 16.4+) in a file
   breaks every tab. v1 loads such code with a dynamic `import()`; v2 is published as one file
   (`tools/build.mjs`), where `import()` doesn't keep it out, so the build fails on syntax past

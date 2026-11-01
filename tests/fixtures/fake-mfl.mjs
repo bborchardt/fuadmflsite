@@ -12,6 +12,8 @@
 //                 game three days after its first, and other seasons' 52 weeks earlier or later a year
 //   login         "ok" (default), "refused", or "escaped": MFL takes the session cookie only with
 //                 its +, / and = escaped
+//   myLeagues     the leagues the login is in, default ["48571"]
+//   leagueUrls    more of them, as entries with only a url
 //   importError   MFL's <error> for every import, or none
 //   published     {file: text} on GitHub Pages; others answer 404
 //   waivers       the processed waivers page's HTML
@@ -40,7 +42,7 @@ function exportAnswer(host, year, params, cookie) {
     }
     if (type === "myleagues") {
         const accepted = scenario.login === "escaped" ? cookie === "MFL_USER_ID=abc%2Bdef%3D" : Boolean(cookie);
-        return json({leagues: {league: accepted ? [{league_id: "48571"}] : []}});
+        return json({leagues: {league: accepted ? [...(scenario.myLeagues || ["48571"]).map((league_id) => ({league_id})), ...(scenario.leagueUrls || []).map((url) => ({url}))] : []}});
     }
     const exports = scenario.exports || {};
     const keyed = params.get("W") || params.get("BRACKET_ID");

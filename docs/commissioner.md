@@ -88,7 +88,8 @@ It records what it did in the chore log (`chore-log.md`, on the `league-data` br
 - **A flag:** anything it can't decide, or a rule problem, fails the run on purpose, so GitHub emails
   you. Open the run from the email: its summary lists what it did and what needs you. Then fix it in
   MFL by hand.
-- **Run it now:** Actions › Daily chores › Run workflow.
+- **Run it now:** Actions › Daily chores › Run workflow, unticking **Dry run**. Left ticked, it only
+  reports what it would do, and can try another league or settings (README).
 - **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button shows the
   snapshot as text. Save that text as `franchise-<season>.json` (e.g. `franchise-2026.json`), commit
   it to the `league-data` branch's `data/` folder, and the next run publishes it.
@@ -103,7 +104,7 @@ copies the home page messages forward, so the site keeps running without a paste
 **At renewal:**
 - **The daily job** moves to the new season by itself: it uses the newest season the league has a
   site for. If MFL moves the league to another server, update the `MFL_HOST` variable. Then run the
-  job by hand once (Actions › Daily chores › Run workflow) and check its summary.
+  job by hand once (Actions › Daily chores › Run workflow, unticking **Dry run**) and check its summary.
 - **The contract-year rollover:** in MFL, lower every player's contract years by 1. Players going
   from 1 year to 0 (the new RFAs) get a salary of $0.01, since MFL won't take $0; the roster report
   shows it as $0. The Commish tab's contract form fills in $0.01 for 0-year players from renewal

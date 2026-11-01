@@ -394,3 +394,160 @@ test("payouts: without the login, or with the places recorded, MFL isn't asked f
     const anonymous = run({scenario: {exports}, now: "2027-01-09T12:00:00Z"});
     assert.ok(!asked(anonymous, "accounting") && !anonymous.requests.some((request) => /W=YTD/.test(request.url)));
 });
+
+const DRY = {DRY_RUN: "true", DATA_LEAGUE_ID: "48571"};
+const ALL_APPLY = {DROP_PENALTIES: "apply", CONTRACT_YEARS: "apply", PAYOUTS: "apply"};
+
+test("a dry run writes nothing, with every chore set to apply and work for each", () => {
+    const result = run({
+        scenario: {exports: {...withAdds(league()), ...scoredWeeks(9), accounting: {}}, waivers: waiversPage("2 years")},
+        env: {...DRY, ...LOGIN, ...ALL_APPLY},
+        now: "2026-12-01T12:00:00Z",
+        files: {}
+    });
+    assert.deepEqual(imports(result), []);
+    assert.ok(!result.requests.some((request) => request.url.includes("/import")));
+    assert.deepEqual(result.output, {changed: "false", publish: "false"});
+    assert.ok(!existsSync(join(result.dataDir, "chore-log.md")));
+    assert.ok(!existsSync(join(result.dataDir, "data")));
+    assert.match(result.stdout, /Dry run: would charge/);
+    assert.match(result.stdout, /Dry run: would set/);
+    assert.match(result.stdout, /Dry run: would record/);
+    assert.match(result.stdout, /Dry run: would take the 2026 franchise salary snapshot/);
+    assert.match(result.summary, /^## Daily chores \(dry run\): /);
+    assert.match(result.summary, /League 48571, the 2026 season, v2's rules.*writes to MFL weren't tested/);
+});
+
+test("without DRY_RUN, a run's settings are ignored and an unlisted league is still refused", () => {
+    const refused = run({env: {DRY_RUN: "false", MFL_LEAGUE_ID: "99999", MFL_SETTINGS: '{"wordmark": "X"}'}});
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /League 99999 isn't listed/);
+    const real = run({env: {DRY_RUN: "false", MFL_SETTINGS: "not json", DROP_PENALTIES: "apply", ...LOGIN}});
+    assert.ok(imports(real).length);
+});
+
+test("a dry run may name an unlisted league, and takes its settings", () => {
+    const over = league({alphaSalary: 150});
+    const plain = run({scenario: {exports: over}, env: {...DRY, MFL_LEAGUE_ID: "99999"}});
+    assert.equal(plain.status, 0, plain.stdout);
+    const capped = run({scenario: {exports: over}, env: {...DRY, MFL_LEAGUE_ID: "99999", MFL_SETTINGS: '{"salaryCap": 100}'}});
+    assert.equal(capped.status, 1, capped.stderr);
+    assert.match(capped.stdout, /Over the cap: Alpha/);
+    assert.match(capped.summary, /with the settings \{"salaryCap": 100\}/);
+});
+
+test("a dry run refuses settings it can't use, and any on a listed league or v1", () => {
+    const cases = [
+        [{MFL_LEAGUE_ID: "99999", MFL_SETTINGS: "not json"}, /settings line must be an object/],
+        [{MFL_LEAGUE_ID: "99999", MFL_SETTINGS: "null"}, /settings line must be an object/],
+        [{MFL_LEAGUE_ID: "99999", MFL_SETTINGS: '{"nope": 1}'}, /nope isn't a setting/],
+        [{MFL_SETTINGS: '{"wordmark": "X"}'}, /League 48571 is listed/],
+        [{RULES_VERSION: "v1", MFL_SETTINGS: '{"wordmark": "X"}'}, /v1 has no settings/]
+    ];
+    for (const [env, message] of cases) {
+        const result = run({env: {...DRY, ...env}});
+        assert.equal(result.status, 1, JSON.stringify(env));
+        assert.match(result.stderr, message);
+        assert.equal(result.requests.length, 0);
+    }
+});
+
+test("a dry run's host, version and time are checked before anything is sent", () => {
+    const cases = [
+        [{MFL_LEAGUE_ID: " 48571"}, /league must be its id/],
+        [{MFL_HOST: "https://example.com"}, /host must be on myfantasyleague\.com/],
+        [{MFL_HOST: "https://myfantasyleague.com.example.com"}, /host must be on myfantasyleague\.com/],
+        [{RULES_VERSION: "../../x"}, /RULES_VERSION must name a version/],
+        [{NOW: "soon"}, /NOW must be an ISO time/],
+        [{SEASON: "last"}, /SEASON a year/]
+    ];
+    for (const [env, message] of cases) {
+        const result = run({env: {...DRY, ...LOGIN, ...env}});
+        assert.equal(result.status, 1, JSON.stringify(env));
+        assert.match(result.stderr, message);
+        assert.equal(result.requests.length, 0);
+    }
+});
+
+test("a dry run on a league the login isn't in sends it no session, and says what wasn't checked", () => {
+    const result = run({
+        scenario: {exports: withAdds(league())},
+        env: {...DRY, ...LOGIN, MFL_LEAGUE_ID: "99999"}
+    });
+    assert.equal(result.status, 0, result.stdout);
+    const league99999 = result.requests.filter((request) => request.url.includes("L=99999"));
+    assert.ok(league99999.length);
+    const afterLogin = result.requests.slice(result.requests.findIndex((request) => request.url.includes("/login")));
+    assert.ok(afterLogin.filter((request) => request.url.includes("www44.")).every((request) => request.cookie === null));
+    assert.ok(!result.requests.some((request) => /TYPE=(messageBoard|calendar|accounting)/.test(request.url)));
+    assert.match(result.summary, /Public data only.*Contract years, payouts and the final cut-down date weren't checked/);
+    assert.match(result.summary, /Contract years: not checked for 2 added player\(s\)/);
+});
+
+test("a dry run on a league the login is in uses the session", () => {
+    const result = run({
+        scenario: {myLeagues: ["48571", "99999"], exports: {...withAdds(league()), accounting: {}, weeklyResults: {}}, waivers: waiversPage("2 years")},
+        env: {...DRY, ...LOGIN, MFL_LEAGUE_ID: "99999"}
+    });
+    assert.ok(result.requests.some((request) => request.url.includes("TYPE=messageBoard") && request.cookie));
+    assert.doesNotMatch(result.summary, /Public data only/);
+});
+
+test("a dry run in a league the login is in but doesn't run fails on what MFL won't show it, like the real job", () => {
+    const result = run({
+        scenario: {myLeagues: ["99999"], exports: {...league(), ...scoredWeeks(9), accounting: 403}},
+        env: {...DRY, ...LOGIN, MFL_LEAGUE_ID: "99999"}
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.summary, /Payouts: /);
+    assert.doesNotMatch(result.summary, /Public data only/);
+});
+
+test("a dry run on the real league goes by its snapshots; another league's aren't taken for its own", () => {
+    const after = "2026-12-01T12:00:00Z";
+    const files = {"data/franchise-2025.json": SNAPSHOT_2025, "data/franchise-2026.json": '{"season":2026}\n'};
+    const own = run({env: DRY, files, now: after});
+    assert.match(own.stdout, /The 2026 franchise snapshot already exists/);
+    assert.match(own.stdout, /Dry run: would publish snapshots.*franchise-2026\.json/);
+    assert.deepEqual(own.output, {changed: "false", publish: "false"});
+    const other = run({env: {...DRY, MFL_LEAGUE_ID: "99999"}, files, now: after});
+    assert.doesNotMatch(other.stdout, /already exists/);
+    assert.match(other.stdout, /Dry run: would take the 2026 franchise salary snapshot/);
+    assert.doesNotMatch(other.stdout, /would publish/);
+    assert.ok(!other.requests.some((request) => request.url.includes("github.io")));
+});
+
+test("a dry run keeps the real job's limits on how much it would write", () => {
+    const players = Array.from({length: 8}, (_, i) => ({id: String(400 + i), name: `Dropped, Player${i}`, position: "WR", team: "BUF"}));
+    const exports = league();
+    exports.players.player.push(...players);
+    exports.transactions.transaction.push(...players.map((player) => ({type: "FREE_AGENT", franchise: "0002", transaction: `|${player.id},`, timestamp: String(DROPPED)})));
+    exports.freeAgents.leagueUnit.player.push(...players.map((player) => ({id: player.id, salary: "1", contractYear: "1"})));
+    const result = run({scenario: {exports}, env: DRY});
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.summary, /Cap chores: \d+ dropped players owe a cap penalty, more than the/);
+    const real = run({scenario: {exports}});
+    assert.equal(real.status, 0, real.stdout);
+});
+
+test("the login's leagues are recognized by their address too", () => {
+    const result = run({
+        scenario: {myLeagues: [], leagueUrls: ["https://www44.myfantasyleague.com/2026/home/99999"], exports: league()},
+        env: {...DRY, ...LOGIN, MFL_LEAGUE_ID: "99999"}
+    });
+    assert.doesNotMatch(result.summary, /Public data only/);
+});
+
+test("a dry run on a league new this season doesn't need a site for last season", () => {
+    const result = run({scenario: {seasons: [2026]}, env: {...DRY, MFL_LEAGUE_ID: "99999"}, now: "2026-12-01T12:00:00Z"});
+    assert.equal(result.status, 0, result.stdout);
+    assert.match(result.stdout, /Dry run: would take the 2026 franchise salary snapshot/);
+});
+
+test("a dry run fails on a flag, as the real job does", () => {
+    const result = run({scenario: {exports: league({alphaSalary: 290})}, env: DRY});
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /::error title=Daily chores need attention::/);
+    assert.match(result.summary, /Needs attention/);
+    assert.deepEqual(result.output, {changed: "false", publish: "false"});
+});

@@ -66,6 +66,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 
 - **Dry run first:** each chore that writes to MFL only logs until its repository variable is
   `apply`, so the commissioner can check its decisions first.
+- **A test run is a dry run of the same job,** started by hand: `DRY_RUN` overrides the variables
+  above, so nothing reaches MFL, `league-data` or the site. It can name another league, host, settings,
+  version, season or time, and only a dry run can: unticked, a manual run ignores them. It fails and
+  emails like the real job, flags included, and shows what it found on the run's summary page. MFL's
+  writes aren't exercised. A league the login isn't in gets no session, so it reads public data and the
+  summary lists what that leaves unchecked. Only the real league's run sees `league-data`'s snapshots,
+  as they're all that branch holds.
 - **Apply what's deterministic, flag what's risky, log everything.** A flag fails the run, so
   GitHub emails the commissioner, with the run's summary page listing the flags.
 - **Nothing is reversed automatically.** A team over the cap or 30 players has its drop penalties
