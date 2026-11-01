@@ -19,5 +19,8 @@
     "eslint-plugin-es-x": "8.4.1",
     "globals": "15.15.0",
     "linkedom": "0.18.12"
+  },
+  "dependencies": {
+    "sharp": "0.34.3"
   }
 }

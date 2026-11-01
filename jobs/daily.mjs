@@ -47,6 +47,7 @@ const {cutDownAt = null, ruleViolations, seasonPhase} = await lib("violations.js
 const {decideYears, readProcessedWaivers, teamPlayers} = await lib("contract-years.js");
 const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
+const {iconSources, updateIcons} = await import("./team-icons.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -473,6 +474,7 @@ async function leagueState({loggedIn}) {
     return {
         players: playerMap,
         built,
+        league,
         cutDown: cutDownAt ? cutDownAt(calendar, season) : null,
         penalties: pendingPenalties(built),
         transactions: asArray(transactions.transaction),
@@ -634,6 +636,44 @@ async function snapshotsToPublish() {
     return stale;
 }
 
+// the stills of the team icons v2's lists show (jobs/team-icons.mjs). A picture that can't be read
+// is only logged: it's its owner's, and the team's still stays as it was.
+async function teamIcons({league}) {
+    const names = new Map(asArray(((league || {}).franchises || {}).franchise).map((team) => [team.id, team.name]));
+    const named = (teams) => teams.map((team) => names.get(team) || team).join(", ");
+    const sources = iconSources(league, asArray);
+    const {written, removed, failed, knownChanged} = await updateIcons({
+        sources, dataDir, userAgent: `${repoName || "league-site"}-icons${repo ? ` (github.com/${repo})` : ""}`, write: !dryRun
+    });
+    if (written.length) {
+        choreLog(`${dryRun ? "Dry run: would update" : "Updated"} the team icons of ${named(written)}.`);
+    }
+    if (removed.length) {
+        choreLog(`${dryRun ? "Dry run: would remove" : "Removed"} the team icons of ${named(removed)}, who no longer have one.`);
+    }
+    for (const {team, reason} of failed) {
+        log(`Couldn't make ${named([team])}'s icon from ${sources.get(team)} (${reason}); its still is left as it was.`);
+    }
+    return {changed: !dryRun && (written.length > 0 || removed.length > 0 || knownChanged), publish: !dryRun && (written.length > 0 || removed.length > 0)};
+}
+
+// icon stills on league-data that the site doesn't have, as for snapshots
+async function iconsToPublish() {
+    const dir = join(dataDir, "data", "icons");
+    const stale = [];
+    for (const file of existsSync(dir) ? readdirSync(dir).filter((name) => name.endsWith(".webp")) : []) {
+        try {
+            const response = await fetch(new URL(`icons/${file}`, pagesData), {headers: {"User-Agent": userAgent}, cache: "no-store"});
+            if (response.status === 404 || (response.ok && !Buffer.from(await response.arrayBuffer()).equals(readFileSync(join(dir, file))))) {
+                stale.push(file);
+            }
+        } catch (error) {
+            log(`Couldn't check whether icons/${file} is published (${error.message}); will check again tomorrow.`);
+        }
+    }
+    return stale;
+}
+
 // a monthly heartbeat when nothing happened
 function updateChoreLog() {
     const file = join(dataDir, "chore-log.md");
@@ -654,6 +694,7 @@ function updateChoreLog() {
 }
 
 let snapshotWritten = false;
+let iconsChanged = false;
 let publish = false;
 try {
     season = await leagueSeason();
@@ -723,13 +764,25 @@ try {
     if (stale.length) {
         choreLog(`${dryRun ? "Dry run: would publish" : "Publishing"} snapshots that are new or changed since the site was last published: ${stale.join(", ")}.`);
     }
-    publish = !dryRun && (snapshotWritten || stale.length > 0);
+    // a dry run of another league leaves this league's icons alone; without the league export (the
+    // chores' failure says so) they wait for tomorrow
+    let iconsPublish = false;
+    if (dataIsThisLeagues && state) {
+        try {
+            const icons = await teamIcons(state);
+            iconsChanged = icons.changed;
+            iconsPublish = icons.publish || (!dryRun && (await iconsToPublish()).length > 0);
+        } catch (error) {
+            needsAttention(`Team icons: ${error.message}`);
+        }
+    }
+    publish = !dryRun && (snapshotWritten || stale.length > 0 || iconsPublish);
 } catch (error) {
     needsAttention(`Failed: ${error.message}`);
 } finally {
     explainFailure();
     const logChanged = !dryRun && updateChoreLog();
-    setOutput("changed", snapshotWritten || logChanged ? "true" : "false");
+    setOutput("changed", snapshotWritten || iconsChanged || logChanged ? "true" : "false");
     setOutput("publish", publish ? "true" : "false");
     writeSummary();
 }

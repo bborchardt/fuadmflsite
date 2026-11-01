@@ -16,6 +16,7 @@ runs inside MFL's own pages, loaded by a home page message.
 
 **For the commissioner**, a job every morning (about 07:40 UTC):
 - snapshots franchise salaries at the trade deadline
+- makes small stills of the team icons for v2's lists
 - charges cap penalties for dropped players
 - sets contract years for added players, from the bid comment or a message board post
 - records the payouts in MFL's accounting: each week's high score, all-play, and the places
@@ -109,4 +110,5 @@ A second league can try the site with no code change, and any setting can be tri
 | `tools/` | The build for Pages, local preview server, the live-page comparison, and the offline comparison and timing of v2's screens with its saved pages |
 | `docs/` | [Design decisions](docs/design.md), [MFL facts](docs/mfl.md), [league settings](docs/settings.md) and the [commissioner's guide](docs/commissioner.md) |
 
-The `league-data` branch holds what the job writes: franchise salary snapshots and its chore log.
+The `league-data` branch holds what the job writes: franchise salary snapshots, the team icons' stills
+and its chore log.

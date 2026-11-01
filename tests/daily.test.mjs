@@ -8,6 +8,7 @@ import {existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync}
 import {tmpdir} from "node:os";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
+import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const at = (iso) => Date.parse(iso) / 1000;
@@ -550,4 +551,44 @@ test("a dry run fails on a flag, as the real job does", () => {
     assert.match(result.stdout, /::error title=Daily chores need attention::/);
     assert.match(result.summary, /Needs attention/);
     assert.deepEqual(result.output, {changed: "false", publish: "false"});
+});
+
+test("the team icons' stills are made, committed and published, from wherever the pictures are", async () => {
+    const red = await sharp({create: {width: 40, height: 20, channels: 3, background: "#ff0000"}}).png().toBuffer();
+    const exports = league();
+    exports.league.franchises.franchise[0].icon = "https://www44.myfantasyleague.com/fflnetdynamic2026/48571_franchise_icon0001.png";
+    exports.league.franchises.franchise[1].icon = "https://pictures.example/beta.gif";
+    const pictures = {
+        "https://www44.myfantasyleague.com/fflnetdynamic2026/48571_franchise_icon0001.png": {base64: red.toString("base64"), etag: '"a1"'},
+        "https://pictures.example/beta.gif": 404
+    };
+    const env = {...LOGIN, MFL_USER_AGENT: "registered-name"};
+    const first = run({scenario: {exports, pictures}, env});
+    assert.equal(first.status, 0, first.stdout);
+    assert.ok(first.entries.includes("Updated the team icons of Alpha."), first.entries.join("\n"));
+    assert.match(first.stdout, /Couldn't make Beta's icon from https:\/\/pictures\.example\/beta\.gif \(HTTP 404\)/);
+    assert.ok(existsSync(join(first.dataDir, "data", "icons", "0001.webp")));
+    assert.deepEqual(first.output, {changed: "true", publish: "true"});
+    // neither the session nor the name registered with MFL goes with a picture's request
+    const asked = first.requests.filter((request) => request.url in pictures);
+    assert.equal(asked.length, 2);
+    assert.ok(asked.every((request) => request.cookie === null && request.userAgent === "fuadmflsite-icons (github.com/bborchardt/fuadmflsite)"));
+
+    // the next day, with the still published: nothing to do
+    const still = readFileSync(join(first.dataDir, "data", "icons", "0001.webp"));
+    const next = run({
+        scenario: {exports, pictures, published: {"franchise-2025.json": SNAPSHOT_2025, "icons/0001.webp": {base64: still.toString("base64")}}},
+        env,
+        files: {"data/franchise-2025.json": SNAPSHOT_2025, "data/icons/0001.webp": still, "icon-sources.json": readFileSync(join(first.dataDir, "icon-sources.json"), "utf8")}
+    });
+    assert.equal(next.requests.find((request) => request.url.endsWith("icon0001.png")).ifNoneMatch, '"a1"');
+    assert.ok(!next.entries.some((entry) => /team icons/.test(entry)));
+    assert.equal(next.output.publish, "false");
+    // a still on league-data the site doesn't have yet is published
+    const unpublished = run({scenario: {exports, pictures}, env, files: {"data/franchise-2025.json": SNAPSHOT_2025, "data/icons/0001.webp": still, "icon-sources.json": readFileSync(join(first.dataDir, "icon-sources.json"), "utf8")}});
+    assert.equal(unpublished.output.publish, "true");
+    // a dry run makes none
+    const dry = run({scenario: {exports, pictures}, env: {...env, ...DRY}});
+    assert.match(dry.summary, /- Dry run: would update the team icons of Alpha\./);
+    assert.ok(!existsSync(join(dry.dataDir, "data", "icons")));
 });

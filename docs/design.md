@@ -71,14 +71,21 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   version, season or time, and only a dry run can: unticked, a manual run ignores them. It fails and
   emails like the real job, flags included, and shows what it found on the run's summary page. MFL's
   writes aren't exercised. A league the login isn't in gets no session, so it reads public data and the
-  summary lists what that leaves unchecked. Only the real league's run sees `league-data`'s snapshots,
-  as they're all that branch holds.
+  summary lists what that leaves unchecked. Only the real league's run sees `league-data`'s snapshots
+  and icons, as they're all that branch holds.
 - **Apply what's deterministic, flag what's risky, log everything.** A flag fails the run, so
   GitHub emails the commissioner, with the run's summary page listing the flags.
 - **Nothing is reversed automatically.** A team over the cap or 30 players has its drop penalties
   and contract years held, so the commissioner can reverse the move cleanly.
 - **Franchise salaries are snapshotted at the trade deadline,** because MFL reports today's salary
   for every past week.
+- **Team icons are stills the job makes** (`jobs/team-icons.mjs`), published with the site: MFL
+  serves the picture an owner uploaded, often hundreds of KB and sometimes animated, for a spot about
+  30px wide, so a list of ten would cost a phone over a megabyte and keep moving. Each is its first
+  frame, cropped square, a few KB. A re-upload keeps its address, so the job asks each day with the
+  picture's validators and remakes it only on a change; one it can't read is logged and the team's
+  still left as it was, as a picture is its owner's to fix. Nothing of the job's goes with those
+  requests, since a picture can be anywhere on the web.
 - **Contract lengths:**
   - blind bids: read from the bid comment on MFL's Previously Processed Waivers page, the only
     place comments appear (the commissioner judged reading their own league's page within the

@@ -15,8 +15,11 @@
 //   myLeagues     the leagues the login is in, default ["48571"]
 //   leagueUrls    more of them, as entries with only a url
 //   importError   MFL's <error> for every import, or none
-//   published     {file: text} on GitHub Pages; others answer 404
+//   published     {file: text} on GitHub Pages, an icon's still as "icons/<file>": {base64}; others
+//                 answer 404
 //   waivers       the processed waivers page's HTML
+//   pictures      {address: {base64, etag}} for the team icons, anywhere; an etag the request sends
+//                 back is answered 304, a number in place of one is an HTTP status
 
 import {appendFileSync, readFileSync} from "node:fs";
 
@@ -57,10 +60,23 @@ function exportAnswer(host, year, params, cookie) {
 globalThis.fetch = async (input, init = {}) => {
     const url = new URL(String(input));
     const body = init.body ? String(init.body) : "";
-    record({method: init.method || "GET", url: url.href, body, userAgent: (init.headers || {})["User-Agent"] || null, cookie: (init.headers || {}).Cookie || null});
+    record({method: init.method || "GET", url: url.href, body, userAgent: (init.headers || {})["User-Agent"] || null, cookie: (init.headers || {}).Cookie || null, ifNoneMatch: (init.headers || {})["If-None-Match"] || null});
+    const picture = (scenario.pictures || {})[url.href];
+    if (picture !== undefined) {
+        if (typeof picture === "number") {
+            return text("", picture);
+        }
+        if (picture.etag && (init.headers || {})["If-None-Match"] === picture.etag) {
+            return new Response(null, {status: 304});
+        }
+        return new Response(Buffer.from(picture.base64, "base64"), {status: 200, headers: picture.etag ? {ETag: picture.etag} : {}});
+    }
     if (url.hostname === "bborchardt.github.io") {
         const file = url.pathname.split("/").pop();
-        const published = (scenario.published || {})[file];
+        const published = (scenario.published || {})[url.pathname.includes("/data/icons/") ? `icons/${file}` : file];
+        if (published && published.base64) {
+            return new Response(Buffer.from(published.base64, "base64"));
+        }
         return published === undefined ? text("", 404) : text(published);
     }
     if (![LEAGUE_HOST, "api.myfantasyleague.com"].includes(url.hostname)) {

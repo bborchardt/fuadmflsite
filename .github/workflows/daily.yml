@@ -1,8 +1,9 @@
 # Daily league chores. See jobs/daily.mjs for what it does.
 #
-# The job writes only to the league-data branch (franchise snapshots and the chore log), and,
-# to MFL when the DROP_PENALTIES, CONTRACT_YEARS or PAYOUTS variable is "apply": cap penalties for
-# dropped players, contract years for added ones, and the payouts in the league's accounting.
+# The job writes only to the league-data branch (franchise snapshots, team icons' stills and the
+# chore log), and, to MFL when the DROP_PENALTIES, CONTRACT_YEARS or PAYOUTS variable is "apply": cap
+# penalties for dropped players, contract years for added ones, and the payouts in the league's
+# accounting.
 # master is protected and takes changes through pull requests, so nothing here pushes to it.
 #
 # A manual run is a dry run unless unticked: jobs/daily.mjs then writes nothing to MFL or league-data,
@@ -65,6 +66,9 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: npm
+      # the team icons' stills are made with sharp
+      - run: npm ci --omit=dev
 
       - name: Check out league-data
         run: |
