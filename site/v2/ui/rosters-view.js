@@ -178,8 +178,8 @@ export function scalePanel() {
 
 // ---- A team's page and Teams ----
 
-// a team in My team's layout, headed by its picture, name, owner (filled in for a member, fillOwners)
-// and record. `fromTeams`: opened from Teams (the browser's Back and the Teams view lead out), where
+// a team in My team's layout, headed by its picture, name, owner (filled in for anyone logged in,
+// fillOwners) and record. `fromTeams`: opened from Teams (the browser's Back and the Teams view lead out), where
 // `tradeHref` is Propose a trade, on another team's page for a member logged in
 export function teamMarkup({sheet, picks, live, own, fromTeams, tradeHref, season}) {
     const {banner, icon} = teamPicturesMarkup(sheet.id);
@@ -199,8 +199,8 @@ ${rosterTable(sheet, {cut: own, pointsLabel: live ? "Pts" : `${season - 1} pts`}
 }
 
 // Each team's owner, and on a team's page their email, filled into the page's [data-owner] spots.
-// They're for members only and are never part of a saved copy (store.js), which could be shown to
-// whoever opens the page next on that device, so they're filled in after it's drawn.
+// They're for whoever is logged in only and are never part of a saved copy (store.js), which could be
+// shown to whoever opens the page next on that device, so they're filled in after it's drawn.
 export function fillOwners(root, owners) {
     for (const spot of root.querySelectorAll("[data-owner]")) {
         const owner = owners.get(spot.getAttribute("data-owner"));
@@ -212,7 +212,7 @@ export function fillOwners(root, owners) {
     }
 }
 
-// {team: {name, emails}} from MFL's league export, which names owners only to a logged-in member; an
+// {team: {name, emails}} from MFL's league export, which names owners only to someone logged in; an
 // owner may give more than one address
 export function ownersOf(league) {
     const owners = new Map();
