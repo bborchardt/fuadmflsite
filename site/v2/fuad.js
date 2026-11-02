@@ -3,7 +3,7 @@
 
 import {pageContext, start} from "./ui/app.js";
 import {pageOf} from "./ui/nav.js";
-import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, withParam} from "./loader.js";
+import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, reportUse, withParam} from "./loader.js";
 import {applyLook, commishLook, keepResponsive, keepTeamSkin, lookOf, markCommish} from "./ui/looks.js";
 
 const PREVIEW_KEY = "fuad.preview";
@@ -197,6 +197,16 @@ if (window.fuadLoader) {
     window.fuadLoader.started = true;
     if (!window.fuadLoader.barShown) {
         showBar({mode: window.fuadLoader.mode, base: here, feedback: window.fuadLoader.feedback});
+    }
+    if (window.fuadLoader.mode === "beta") {
+        reportUse(versionHere, {
+            leagueId: window.league_id,
+            teamId: window.franchise_id,
+            storage,
+            today: new Date().toDateString(),
+            // keepalive: a member moving on to another page mustn't cancel the day's only row
+            send: (url, body) => fetch(url, {method: "POST", mode: "no-cors", keepalive: true, body})
+        });
     }
     boot(null);
 } else {

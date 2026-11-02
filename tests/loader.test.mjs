@@ -1,8 +1,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
-import {betaOffer, decide, offeredVersion, previewBase, withParam} from "../site/v1/loader.js";
-import {betaOffer as betaOfferV2, leaveBetaHref} from "../site/v2/loader.js";
+import {betaOffer, decide, offeredVersion, previewBase, reportUse, withParam} from "../site/v1/loader.js";
+import {betaOffer as betaOfferV2, leaveBetaHref, reportUse as reportUseV2} from "../site/v2/loader.js";
 
 const PAGES = "https://bborchardt.github.io/fuadmflsite/";
 const here = `${PAGES}v1/`;
@@ -112,3 +112,54 @@ test("v2's way out of the beta is the page itself, loaded afresh, with no opt-ou
     assert.equal(at("https://www44.myfantasyleague.com/2026/lineup?L=50965"), "/2026/lineup?L=50965");
     assert.doesNotMatch(at("https://www44.myfantasyleague.com/2026/home/50965?X=1#0"), /fuadBeta|#/);
 });
+
+for (const [name, report] of [["v1", reportUse], ["v2", reportUseV2]]) {
+    const browser = (stored = {}) => {
+        const sent = [];
+        const storage = {get: (key) => stored[key] || null, set: (key, value) => { stored[key] = value; }};
+        const use = (used, {leagueId = "48571", teamId = "0001", today = "Sun Nov 01 2026"} = {}) =>
+            report(used, {leagueId, teamId, today, storage, send: async (url, body) => { sent.push([url, Object.fromEntries(body)]); }});
+        return {sent, use, stored};
+    };
+
+    test(`${name}: a browser reports a team's version once a day, and again on a change`, () => {
+        const {sent, use} = browser();
+        use("v2");
+        use("v2");
+        assert.equal(sent.length, 1);
+        assert.match(sent[0][0], /^https:\/\/docs\.google\.com\/forms\/d\/e\/[^/]+\/formResponse$/);
+        assert.deepEqual(sent[0][1], {"entry.1372416416": "0001", "entry.2014716310": "v2"});
+        use("v1");
+        use("v2", {today: "Mon Nov 02 2026"});
+        use("v2", {today: "Mon Nov 02 2026", teamId: 3});
+        assert.deepEqual(sent.slice(1).map(([, row]) => Object.values(row)), [["0001", "v1"], ["0001", "v2"], ["0003", "v2"]]);
+    });
+
+    test(`${name}: other leagues, guests and a browser that has been the commissioner report nothing`, () => {
+        const {sent, use} = browser();
+        use("v2", {leagueId: "50965"});
+        use("v2", {teamId: ""});
+        use("v2", {teamId: "0000"});
+        use("v2");
+        assert.deepEqual(sent, []);
+    });
+
+    test(`${name}: a report that can't send or store costs the page nothing`, () => {
+        const warn = console.warn;
+        console.warn = () => {};
+        try {
+            const stored = {};
+            const storage = {get: (key) => stored[key] || null, set: (key, value) => { stored[key] = value; }};
+            const row = {leagueId: "48571", teamId: "0001", today: "Sun Nov 01 2026"};
+            report("v2", {...row, storage, send: () => { throw new Error("no fetch"); }});
+            report("v2", {...row, storage: {...storage, get: () => { throw new Error("blocked"); }}, send: () => {}});
+            // rejected: no unhandled rejection fails this test run
+            report("v2", {...row, today: "tomorrow", storage, send: () => Promise.reject(new Error("offline"))});
+            let sent = 0;
+            report("v2", {...row, storage: {get: () => null, set() {}}, send: () => { sent += 1; }});
+            assert.equal(sent, 0);
+        } finally {
+            console.warn = warn;
+        }
+    });
+}

@@ -145,6 +145,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   only its own tabs), for at most 30 seconds, so MFL's page doesn't show before the version draws;
   whichever version runs shows it again, v2 once its frame and any view it draws over MFL's page have
   first drawn.
+- While a beta is on offer, each member's browser sends the commissioner's Google Form a row a day
+  saying which version it runs: `v1`, the beta's version, or `v1-fallback` when the beta couldn't load
+  or start (`reportUse`, loader.js). It sends the team id and version, nothing else, so the
+  commissioner can see the league has moved before promoting a beta. It is only this league's logged-in
+  teams, and not a browser that has been the commissioner, whose Become would count as that team. MFL's
+  app runs none of this, so a team with no rows may just be using the app. Only the v1 file and a
+  beta report: once promoted, v2 sends nothing.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`, v2 by default
   (v2's `lib/` holds v1's rules).
 
@@ -269,4 +276,4 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - The commissioner viewing as another team (MFL's Become) is that team to MFL, so a look picked then
   is saved as that team's skin.
 - A preview or beta whose features fail after starting shows their errors, with its bar there to
-  leave. The beta is per browser, isn't in MFL's app, and nothing reports who's using it.
+  leave. The beta is per browser and isn't in MFL's app.

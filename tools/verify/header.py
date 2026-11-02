@@ -14,6 +14,7 @@ import re
 import sys
 import time
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from playwright.sync_api import sync_playwright
 
@@ -69,6 +70,18 @@ CASES = {
     # a later beta (v3, not published: 404) over v2 as MAIN: v2 runs as itself, not as the beta, with the bar out
     "v3 beta 404": (LINEUP, {"main": "v2", "offer": "v3", "beta": "v3"},
                     {"ran": "v2", "requested": ["v3", "v2"], "beta": "v3", "cloaked": False, "bar": "The beta couldn’t load", "inBeta": False}),
+    # the version reported in the league that reports (loader.js: reportUse); a form's rows, team and version
+    "reports v1": (LINEUP, {"listed": True}, {"ran": "v1", "requested": ["v1"], "reported": [["0001", "v1"]]}),
+    "reports beta": (LINEUP, {"listed": True, "beta": "v2"}, {"ran": "v2", "requested": ["v2"], "reported": [["0001", "v2"]]}),
+    "reports opt in": (LINEUP + "&fuadBeta=on", {"listed": True}, {"ran": "v2", "requested": ["v1", "v2"], "reported": [["0001", "v2"]]}),
+    "reports 404": (LINEUP, {"listed": True, "beta": "v2", "fail": ("v2", "404")},
+                    {"ran": "v1", "requested": ["v2", "v1"], "reported": [["0001", "v1-fallback"]]}),
+    "reports broken": (LINEUP, {"listed": True, "beta": "v2", "fail": ("v2", "syntax")},
+                       {"ran": "v1", "requested": ["v2", "v1"], "reported": [["0001", "v1-fallback"]]}),
+    "reports no offer": (LINEUP, {"listed": True, "offer": False}, {"ran": "v1", "requested": ["v1"], "reported": []}),
+    "reports no guest": (LINEUP, {"listed": True, "team": "guest", "teams": ["guest"]}, {"ran": "v1", "requested": ["v1"], "reported": []}),
+    "reports no commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "requested": ["v1"], "reported": []}),
+    "reports no v2 main": (LINEUP, {"listed": True, "main": "v2", "offer": False}, {"ran": "v2", "requested": ["v2"], "reported": []}),
 }
 
 
@@ -87,6 +100,7 @@ def run(browser, site, name):
     url, given, expected = CASES[name]
     mfl = Mfl(site, {})
     requested = []
+    reported = []
     context = browser.new_context(viewport={"width": 390, "height": 844}, timezone_id="America/Los_Angeles")
     context.clock.set_fixed_time(NOW)
     context.add_init_script(INIT)
@@ -121,6 +135,9 @@ def run(browser, site, name):
 
     def handle(route):
         request = route.request
+        if request.url.startswith("https://docs.google.com/forms/"):
+            reported.append([values[0] for values in parse_qs(request.post_data or "").values()])
+            return route.abort()
         match = re.search(r"/fuadmflsite/(v\d+)/fuad\.js$", request.url)
         if match:
             requested.append(match.group(1))
@@ -137,6 +154,8 @@ def run(browser, site, name):
         if request.resource_type == "document":
             body = args["body"]
             body = SAVED.sub(lambda _: swapped, body, count=1)
+            if given.get("listed"):
+                body = body.replace(f"league_id = '{LEAGUE}'", "league_id = '48571'")
             if given.get("skin"):
                 body = re.sub(r"skins17/(?!MFLBaseCSS)[^/\"]+/", f"skins17/{given['skin']}/", body)
             if team == "guest":
@@ -168,8 +187,12 @@ def run(browser, site, name):
         };
     }""")
     got["requested"] = requested
+    got["reported"] = reported
     context.close()
     problems = []
+    # the clone's pages report nothing
+    if not given.get("listed") and reported:
+        problems.append(f"reported {reported!r} from an unlisted league")
     for key, want in expected.items():
         have = got.get(key)
         if key == "bar" and want != "hidden":
