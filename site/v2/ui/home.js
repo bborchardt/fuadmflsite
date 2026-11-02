@@ -10,7 +10,7 @@ import {drawPanel} from "./panel.js";
 import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
-import {formLengths, lengthTopics} from "../lib/lengths.js";
+import {addedSince, formLengths, lengthTopics} from "../lib/lengths.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, dayText, draftDayUnsigned, homePhase, leagueAlerts,
     lineupProblems, myAlerts, nextBidRun, recentMoves
@@ -291,9 +291,11 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times, weeks}) => comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}));
 
     // the viewer's players still due a length before the season, read against their posts in the
-    // board's contract topics (lib/lengths.js), reaching back as far as the daily job does
-    const lengthsOf = async (built) => {
-        const due = draftDayUnsigned(built.franchises.get(franchiseId) || {}).map((player) => player.playerId);
+    // board's contract topics (lib/lengths.js), reaching back as far as the daily job does. `from`: when
+    // the form gives way to an add's hour (the cut-down date)
+    const lengthsOf = async (built, from) => {
+        const due = draftDayUnsigned(built.franchises.get(franchiseId) || {}).map((player) => player.playerId)
+            .filter((id) => !from || !addedSince(built, id, from));
         if (!due.length) {
             return {due: [], sent: false, unread: []};
         }
@@ -354,7 +356,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 });
                 const topic = contractTopic(board);
                 const cutDown = cutDownAt(timeline.calendar, context.season);
-                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built).catch(() => null) : null;
+                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, cutDown || timeline.kickoffs.get(1)).catch(() => null) : null;
                 return myAlerts({
                     league: built,
                     franchiseId,

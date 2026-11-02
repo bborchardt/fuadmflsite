@@ -109,9 +109,11 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
     with Home's form, which posts them to the newest contract topic as `Name, First TEAM POS: N
     years` lines under a fixed heading, read the same with or without MFL's line breaks
     (`lib/lengths.js`). It needs every one at once and the roster within the limit, since every player
-    kept needs a length; once posted it gives way to "sent" until the job sets them. Moves › Add
-    asks no length before week 1, pointing to the form. From week 1's kickoff a player still without
-    one gets 1 year, unless he's been moved since: in-season adds keep the hour.
+    kept needs a length; once posted it gives way to "sent" until the job sets them. A player added
+    after the cut-down date owes his within the hour, as in season, and Moves › Add asks for it
+    then; before it, Add's immediate adds point to the form, while a bid's length stays in its
+    comment, as bids first run after the cut-down date. From week 1's kickoff a draft player still
+    without one gets 1 year.
   - blind bids: read from the bid comment on MFL's Previously Processed Waivers page, the only
     place comments appear (the commissioner judged reading their own league's page within the
     spirit of MFL's terms)
@@ -209,7 +211,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   counted (5.5). A player the NFL no longer lists on IR must be activated (11.1): he's in every save
   until he is. Who can go on IR, and whose game has started, is MFL's own page's say.
 - **Contract length on adds:** 1 to 5 years, in the bid comment or a post within an hour of a free
-  agent add; none in time means 1 year. Before week 1, by the cut-down date with Home's form.
+  agent add; none in time means 1 year. An add before the cut-down date has until then, with Home's
+  form.
 - **Best in League › Scores** (`bestLineup`, `bestCard` in `ui/league-model.js`, display only): each
   side's best lineup by MFL's own method (its live scoring page's `get_best_lineup`) on the points so
   far, from the league's lineup rules; it gives MFL's recorded best score for every team in weeks
@@ -253,7 +256,9 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
     players by nickname, misspelling or "all rookies", which no reading gets right
   - a form post's line is matched by MFL's name for the player, by NFL team and position only when a
     team has two of that name; a renamed player stays due, and the form shows again
-  - in season, a player added and traded before the job runs stays at 0 years, unflagged
+  - after the cut-down date, a player added and traded before the job runs stays at 0 years,
+    unflagged
+  - a blind bid processed before the cut-down date has its length from the form, not its comment
   - a length without a digit or "year" ("Hill for two") isn't read
   - before reversing an add for a team under the cap, set the player's years to 0, or the drop is
     charged a penalty

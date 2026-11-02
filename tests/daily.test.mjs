@@ -695,13 +695,12 @@ test("offseason lengths: read from the form's posts only, flagged past the cut-d
     assert.ok(kicked.entries.includes("Dry run: would set B0 Player (Beta) to 1 year (none by week 1: the default)."));
     assert.ok(kicked.entries.includes("Dry run: would set A0 Player (Alpha) to 3 years (the form)."));
 
-    // but not a player moved since the kickoff: an in-season move's, due within the hour
-    const traded = structuredClone(exports);
-    traded.transactions.transaction.push({type: "TRADE", franchise: "0001", franchise2: "0002", franchise1_gave_up: "FP_0001_2027_1,", franchise2_gave_up: "102,", timestamp: String(at("2026-09-11T01:00:00Z"))});
-    traded.transactions.transaction.push({type: "BBID_WAIVER", franchise: "0002", transaction: "999,|200.00|", timestamp: String(at("2026-09-11T01:00:00Z"))});
-    const later = run({scenario: {exports: traded}, env: LOGIN, now: "2026-09-11T12:00:00Z"});
-    assert.ok(!later.entries.some((entry) => /A2 Player/.test(entry)), later.entries.join("\n"));
-    assert.ok(later.entries.includes("Dry run: would set B0 Player (Beta) to 1 year (none by week 1: the default)."));
+    // one added after the cut-down date owes his within the hour, as in season: never late for the form
+    const added = structuredClone(exports);
+    added.transactions.transaction.push({type: "FREE_AGENT", franchise: "0001", transaction: "102,|", timestamp: String(at("2026-09-09T12:00:00Z"))});
+    const after = run({scenario: {exports: added, waivers: waiversPage("")}, env: LOGIN, now: "2026-09-09T18:00:00Z"});
+    assert.ok(!after.entries.some((entry) => /late penalty.*A2 Player/.test(entry)), after.entries.join("\n"));
+    assert.ok(after.entries.some((entry) => /A2 Player.*default/.test(entry) && !/week 1/.test(entry)), after.entries.join("\n"));
 });
 
 test("offseason lengths: an add before week 1 waits for the form, not the hour", () => {

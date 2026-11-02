@@ -212,8 +212,8 @@ export function lineupProblems({starters, kickoffs, now}) {
 // players the commissioner's draft-day loads put on the roster without a length yet (12.4–12.5)
 export const draftDayUnsigned = (franchise) => (franchise.signedPlayers || []).filter((player) => player.salary >= 1);
 
-// the phases before week 1, when an add's length is due by the cut-down date rather than its hour
-const OFFSEASON = new Set(["before-draft", "before-cut", "preseason"]);
+// the phases before the cut-down date, when an add's length is due by then rather than its hour
+const OFFSEASON = new Set(["before-draft", "before-cut"]);
 
 // `trades` are offers waiting for the viewer's answer: [{from, summary, expires}]. `lengths`, before
 // the season: the viewer's players still due a length (`due`, ids), whether some were sent with the

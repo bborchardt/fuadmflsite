@@ -261,8 +261,9 @@ export function reviewForm(v, {withPicks}) {
     const cap = capLine(bids || state.data.groups.length ? "Projected cap" : "Cap used", "", check.cap.from, dropPicked ? check.cap.to : check.cap.from);
     const blocked = dropPicked && !check.fits && check.why && check.why !== "Bids start at $1." && !check.tooHigh;
     const blockText = check.why === "already in this group" ? `Blocked: group ${c.round} already has this claim.` : blockedText(check.why, bids);
-    const ready = dropPicked && check.fits && !state.busy;
-    const label = !dropPicked ? "Pick a drop" : state.busy ? "Sending…"
+    const lengthPicked = Boolean(c.years || c.editing || v.lengthsOnHome);
+    const ready = dropPicked && lengthPicked && check.fits && !state.busy;
+    const label = !dropPicked ? "Pick a drop" : !lengthPicked ? "Pick a length" : state.busy ? "Sending…"
         : bids && c.editing ? `Save $${check.bid} bid`
             : bids ? `Submit $${check.bid} bid to group ${c.round}`
                 : v.lengthsOnHome ? `Add ${surname(fa.mflName)} now` : `Add ${surname(fa.mflName)} now · posts “${line}”`;

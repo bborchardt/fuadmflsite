@@ -91,6 +91,12 @@ export function formLengths({posts, franchiseId, due, players}) {
     return {years, unread: due.every((id) => years.has(id)) ? [] : unread};
 }
 
+// Whether a player was added (a free agent, waiver or blind bid add, by any team) from `seconds` on,
+// in a league as lib/league.js builds it: one added after the cut-down date owes his length within
+// the hour, like an add in season, so the form isn't for him
+export const addedSince = (league, playerId, seconds) => ((league.players.get(playerId) || {}).transactions || [])
+    .some((move) => move.added && move.timestamp >= seconds);
+
 // the board topics a form post may be in: any with "contract" in its name (home-model.js's
 // contractTopic picks the newest for a new post)
 export const lengthTopics = (messageBoard) => asList(messageBoard && messageBoard.thread).filter((thread) => /contract/i.test(thread.subject || ""));

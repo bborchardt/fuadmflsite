@@ -165,14 +165,15 @@ test("between the draft and the cut-down: the lengths form and the roster limits
     ]);
 });
 
-test("before the season, an add's length isn't due within the hour", () => {
+test("before the cut-down date, an add's length isn't due within the hour; after it, it is", () => {
     const me = team("0001", "Me");
     const waller = player("7", "Darren Waller");
     const added = at("2026-08-20T11:30:00-05:00");
     const league = leagueOf([me], [waller], {started: false, pendingAdds: [{playerId: "7", name: "Waller, Darren", franchiseId: "0001", type: "FREE_AGENT", added}]});
-    for (const phase of ["before-draft", "before-cut", "preseason"]) {
+    for (const phase of ["before-draft", "before-cut"]) {
         assert.deepEqual(myAlerts({league, franchiseId: "0001", phase, links, now: added + 600}).filter((a) => /Waller/.test(a.title)), [], phase);
     }
+    assert.equal(myAlerts({league, franchiseId: "0001", phase: "preseason", links, now: added + 600}).filter((a) => /Waller/.test(a.title)).length, 1);
 });
 
 test("the phase: before the draft, draft to cut-down, preseason, season, over", () => {

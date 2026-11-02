@@ -63,10 +63,11 @@ GitHub runs it every morning at about 07:40 UTC, as the "Daily chores" workflow 
 Actions tab (GitHub can run it late on busy days). It:
 - snapshots each franchise's salaries at the trade deadline;
 - charges cap penalties for dropped players;
-- sets contract years for players added in season, from the bid comment or a message board post;
+- sets contract years for players added after the cut-down date, from the bid comment or a message
+  board post within the hour;
 - before the season, sets the lengths members send with v2's form (Home › My alerts, from the draft
   until week 1), the morning after they send them. Everyone at 0 years with a salary of $1 or more
-  owes one: auction buys, kept and matched RFAs, rookies and offseason adds. It reads only the form's
+  owes one: auction buys, kept and matched RFAs, rookies and adds before the cut-down date. It reads only the form's
   posts in topics with "contract" in their name; a length posted by hand is flagged for you to set.
   Past the cut-down date it flags each team still missing lengths, for the $5 a day (bylaw 12.6), and
   from week 1's kickoff it sets 1 year for any still missing;

@@ -49,7 +49,7 @@ const {cutDownAt = null, ruleViolations, seasonPhase} = await lib("violations.js
 const {DEFAULT_YEARS, decideYears, postText, readProcessedWaivers, teamPlayers} = await lib("contract-years.js");
 const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
 // v1's lib reads lengths only from in-season adds
-const {formLengths, lengthTopics, lengthsDue} = version === "v1" ? {} : await lib("lengths.js");
+const {addedSince, formLengths, lengthTopics, lengthsDue} = version === "v1" ? {} : await lib("lengths.js");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
 const {MAX_RFA_SHARE, RFA_SALARY, rfaSalaries} = await import("./rfa-salaries.mjs");
@@ -310,10 +310,14 @@ async function processedWaivers(period) {
 
 // teams over the cap or 30 players are held: the add may be reversed, and a dropped player with
 // contract years would owe a penalty
-async function contractYears(loggedIn, {built, rosters, transactions, playerNames}, over) {
+async function contractYears(loggedIn, {built, rosters, transactions, playerNames, cutDown}, over) {
     const pending = pendingAdds({rosters, transactions, players: playerNames});
-    // an add before week 1 has until the cut-down date, through the form (offseasonLengths)
-    const inSeason = (add) => !formLengths || inSeasonAdd(add, built);
+    // an add before the cut-down date has until then, through the form (offseasonLengths)
+    const from = formsEnd(built, cutDown);
+    if (formLengths && !from) {
+        log("Neither the cut-down date nor week 1's kickoff is known, so no add is taken as owing its length within the hour.");
+    }
+    const inSeason = (add) => !formLengths || (Boolean(from) && add.added >= from);
     const held = pending.filter((add) => inSeason(add) && over.has(add.franchiseId));
     for (const add of held) {
         choreLog(`Contract years: ${add.name} held, since the team is over the cap or the roster limit. Left for the commissioner.`);
@@ -373,33 +377,18 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
     contracts.forEach((contract) => choreLog(`Set ${describe(contract)}.`));
 }
 
-// an add once week 1 has kicked off, whose length is due within the hour
 // a run setting more players to the default than this share of those rostered is likely misreading
 // the season, and sets none
 const MAX_DEFAULT_SHARE = 0.25;
 
-// The players in any transaction from `seconds` on: an add's, a drop's, or a trade's
-function movedSince(transactions, seconds) {
-    const ids = new Set();
-    for (const move of asArray(transactions)) {
-        if (Number(move.timestamp) < seconds) {
-            continue;
-        }
-        for (const field of ["transaction", "added", "dropped", "franchise1_gave_up", "franchise2_gave_up"]) {
-            // a bid's amount is a part of its own, between the bars ("13604,|5.00|")
-            String(move[field] || "").split("|").filter((part) => !/^[\d.]+$/.test(part))
-                .flatMap((part) => part.split(",")).filter((token) => /^\d+$/.test(token)).forEach((id) => ids.add(id));
-        }
-    }
-    return ids;
-}
-
-const inSeasonAdd = (add, built) => Boolean(built.week1Kickoff) && add.added >= built.week1Kickoff.getTime() / 1000;
+// when the form's lengths give way to the hour's, in seconds: the cut-down date, or week 1's kickoff
+// when the calendar has none (or the run isn't logged in to read it)
+const formsEnd = (built, cutDown) => cutDown || (built.week1Kickoff ? built.week1Kickoff.getTime() / 1000 : null);
 
 // Lengths due before the season (bylaws 4.4, 12.4–12.6): every player at 0 years with a salary, but
-// an in-season add, gets his from the team's form post. Before the cut-down date a missing one
+// one added after the cut-down date, gets his from the team's form post. Before the cut-down date a missing one
 // waits; after it the commissioner is told, for the $5 a day; from week 1's kickoff it's 1 year.
-async function offseasonLengths(loggedIn, {built, rosters, transactions, playerNames, cutDown}, over, rfas) {
+async function offseasonLengths(loggedIn, {built, rosters, playerNames, cutDown}, over, rfas) {
     if (!formLengths) {
         log(`The ${version} lib has no form for offseason lengths; none set.`);
         return;
@@ -408,13 +397,14 @@ async function offseasonLengths(loggedIn, {built, rosters, transactions, playerN
         log("The season's start isn't known; offseason contract lengths skipped.");
         return;
     }
-    if (built.started && !built.week1Kickoff) {
-        log("Week 1's kickoff isn't known, so in-season moves can't be told apart; offseason contract lengths skipped.");
+    const from = formsEnd(built, cutDown);
+    if (!from) {
+        log("Neither the cut-down date nor week 1's kickoff is known, so later adds can't be told apart; offseason contract lengths skipped.");
         return;
     }
-    // a player moved since week 1's kickoff is an in-season add's, due within the hour (contractYears)
-    const later = built.started ? movedSince(transactions, built.week1Kickoff.getTime() / 1000) : new Set();
-    const teams = asArray(rosters.franchise).map((team) => ({id: team.id, due: lengthsDue(rosters, team.id).filter((id) => !later.has(id) && !rfas.has(id))}))
+    // one added since owes his within the hour (contractYears), even once traded on
+    const later = (id) => addedSince(built, id, from);
+    const teams = asArray(rosters.franchise).map((team) => ({id: team.id, due: lengthsDue(rosters, team.id).filter((id) => !later(id) && !rfas.has(id))}))
         .filter((team) => team.due.length);
     if (!teams.length) {
         log("No players are waiting for an offseason contract length.");
