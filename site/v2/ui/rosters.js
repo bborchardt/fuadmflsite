@@ -81,8 +81,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const built = await pageLeague();
         const {league: settings, salaryAdjustments, freeAgents} = built.raw;
         const names = new Map(asArray(settings.franchises && settings.franchises.franchise).map((team) => [team.id, team.name]));
-        // for a member only, and kept out of what the panels save (fillOwners)
-        const owners = viewer ? ownersOf(settings) : new Map();
+        // for a member or the commissioner only, and kept out of what the panels save (fillOwners)
+        const owners = franchiseId ? ownersOf(settings) : new Map();
         return {built, settings, salaryAdjustments, freeAgents, names, owners};
     });
     const extras = once(async () => {
@@ -160,7 +160,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     });
 
     const showOwners = (body) => {
-        if (viewer) {
+        if (franchiseId) {
             league().then(({owners}) => fillOwners(body, owners))
                 .catch((error) => console.warn("[fuad] couldn't load the owners:", error));
         }

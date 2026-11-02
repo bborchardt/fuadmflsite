@@ -53,11 +53,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   desktop the logo, beside the name, as there's room. Each picture is downloaded only at the width it shows,
   and one that won't load leaves the name, the logo giving way to the icon. The addresses come from
   MFL's page (`franchiseDatabase`), so nothing more is asked of MFL.
-- **Owners on Rosters, for members:** each team's owner under its name in Teams, and on a team's page
+- **Owners on Rosters, for members and the commissioner:** each team's owner under its name in Teams, and on a team's page
   (My team too) their email beside it, from the league export MFL gives a logged-in member. MFL gives
   every owner's email there whatever their "let leaguemates see" choice; the league shares its emails
   anyway, so all are shown. They're filled in after a panel draws, never into what it saves, as a
-  saved copy is shown to whoever opens the page next on that device.
+  saved copy is shown to whoever opens the page next on that device, and Moves keeps its copy of the
+  export without them. The export itself is kept a day per viewer (page-fetch.js), so they cost no
+  request of MFL.
 - **Three looks are team colours** (Vikings, Packers, Cowboys), for the league's fans of those teams,
   each saved as MFL's skin for that team, so MFL's own pages match.
 - **The commissioner's view follows their team's look, marked in v2's colours:** the commissioner's

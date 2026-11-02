@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DOMParser} from "linkedom";
-import {READ_GAP, READS, Refused, moveOutcome, readBack, refusal, sendMove} from "../site/v2/ui/moves.js";
+import {READ_GAP, READS, Refused, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads
 function reads(...answers) {
@@ -96,4 +96,16 @@ test("a move's send keeps MFL's answer, or the error it failed with", async (t) 
     assert.equal(failed.answer, "");
     assert.match(failed.error.message, /HTTP 500/);
     assert.deepEqual(sent[0].init, {credentials: "include", method: "POST", body: "a=1"});
+});
+
+test("Moves keeps the league export without its owners' names and emails", () => {
+    const league = {maxWaiverRounds: "3", franchises: {franchise: [
+        {id: "0001", name: "Alpha", owner_name: "Owner 0001", email: "owner@example.com", lastVisit: "1", icon: "x"},
+        {id: "0002", name: "Beta"}
+    ]}};
+    assert.deepEqual(withoutOwners(league), {maxWaiverRounds: "3", franchises: {franchise: [{id: "0001", name: "Alpha", icon: "x"}, {id: "0002", name: "Beta"}]}});
+    // MFL gives a one-team league its team bare
+    assert.deepEqual(withoutOwners({franchises: {franchise: {id: "0001", owner_name: "Owner 0001"}}}), {franchises: {franchise: {id: "0001"}}});
+    assert.equal(league.franchises.franchise[0].owner_name, "Owner 0001");
+    assert.deepEqual(withoutOwners({}), {});
 });

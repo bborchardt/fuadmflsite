@@ -23,9 +23,11 @@ export const storage = {
 const SHARED = /^fuad\.(players|kickoff|byes)\./;
 const keyOf = (key) => (SHARED.test(key) ? key : `${key}@${league.keyId}`);
 
-// what's kept from before it was kept per league, a bid run for up to a year, and a list v2 no longer keeps
-const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids)\.[^@]*|homeTabs)$/;
-const TIDIED = "fuad.tidied";
+// what's kept from before it was kept per league, a bid run for up to a year, a list v2 no longer
+// keeps, and Moves' copy of the league export from when it kept the owners' names and emails
+const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids)\.[^@]*|homeTabs|tidied\.\d+|league\.\d+\.\d+@.*)$/;
+// a new name when there's more to tidy, so each browser tidies once more
+const TIDIED = "fuad.tidied2";
 
 // Also what this league kept under settings it no longer has, nothing else would ever remove it. Once
 // for the settings a browser has, as MFL's pages fill this storage too and this is on every page.
