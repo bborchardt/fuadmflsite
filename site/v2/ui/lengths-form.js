@@ -72,7 +72,7 @@ export function lengthsFormMarkup({players, active, due, unread = null, dropHref
 // Opens the form; `onSent` once the post is made
 export function openLengthsForm({context, layer, players, active, due, unread, dropHref, opener, onSent}) {
     layer.innerHTML = lengthsFormMarkup({players, active, due, unread, dropHref});
-    const close = openDialog(layer, {opener, history: true});
+    openDialog(layer, {opener, history: true});
     const form = layer.querySelector("form");
     const button = form.querySelector("button[type=submit]");
     const error = form.querySelector(".fuad-lengths-error");
@@ -92,7 +92,7 @@ export function openLengthsForm({context, layer, players, active, due, unread, d
         const lines = players.map(({player}, i) => ({player, years: Number(selects[i].value)}));
         try {
             await postToContractTopic(context, formPost(lines));
-            close();
+            // the reload drops the dialog's history entry (dialog.js); closing first would race it
             onSent();
         } catch (failure) {
             error.textContent = `Couldn’t post them: ${failure.message}. Try again.`;

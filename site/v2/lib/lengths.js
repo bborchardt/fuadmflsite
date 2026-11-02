@@ -44,7 +44,8 @@ export function readFormPost(body) {
         return null;
     }
     const entries = [];
-    const pattern = /([^\n:]+?) ([A-Za-z]{2,3}) ([A-Za-z]{1,3}): (\d+) years?/g;
+    // MFL gives a free agent the team "FA" or "FA*"
+    const pattern = /([^\n:]+?) ([A-Za-z]{2,3}\*?) ([A-Za-z]{1,3}): (\d+) years?/g;
     let found = pattern.exec(text);
     while (found) {
         entries.push({name: found[1].trim(), team: found[2], position: found[3], years: Number(found[4])});

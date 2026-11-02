@@ -248,7 +248,10 @@ export function reviewForm(v, {withPicks}) {
         ${!dropPicked ? "" : check.bid < 1 ? '<span class="fuad-add-error">Bids start at $1.</span>' : check.tooHigh ? `<span class="fuad-add-error">Over the max: with your other groups’ max bids, $${check.bid} would exceed the cap.</span>` : ""}
     </div>` : "";
     const lengthNote = !c.years ? (line ? `keeps “${line}”` : "") : bids ? `written as “${line}”` : `posted as “${line}” once the add goes through`;
-    const lengths = `<div class="fuad-add-field">
+    const lengths = v.lengthsOnHome ? `<div class="fuad-add-field">
+        <span class="fuad-add-label">Contract length</span>
+        <span class="fuad-meta">Set with the form on Home, due by the cut-down date.</span>
+    </div>` : `<div class="fuad-add-field">
         <span class="fuad-add-label-row"><span class="fuad-add-label">Contract length</span><span class="fuad-meta">${esc(lengthNote)}</span></span>
         <div class="fuad-add-years" role="group" aria-label="Contract years">${LENGTHS.map((n) => `<button type="button" class="fuad-add-year" data-act="year" data-n="${n}" aria-pressed="${c.years === n}">
             <span class="fuad-add-year-n">${n}</span><span>${n === 1 ? "year" : "years"}</span><span class="fuad-add-year-cut">cut $${cutLater(salary, n)}</span>
@@ -262,7 +265,7 @@ export function reviewForm(v, {withPicks}) {
     const label = !dropPicked ? "Pick a drop" : state.busy ? "Sending…"
         : bids && c.editing ? `Save $${check.bid} bid`
             : bids ? `Submit $${check.bid} bid to group ${c.round}`
-                : `Add ${surname(fa.mflName)} now · posts “${line}”`;
+                : v.lengthsOnHome ? `Add ${surname(fa.mflName)} now` : `Add ${surname(fa.mflName)} now · posts “${line}”`;
     return `${groupSummary}${picks}${v.wide ? groupChips : ""}${bidField}${lengths}
     <section class="fuad-add-total">${cap}</section>
     ${blocked ? `<p class="fuad-move-alert" role="alert">${esc(blockText)}</p>` : ""}

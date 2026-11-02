@@ -374,12 +374,32 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
 }
 
 // an add once week 1 has kicked off, whose length is due within the hour
+// a run setting more players to the default than this share of those rostered is likely misreading
+// the season, and sets none
+const MAX_DEFAULT_SHARE = 0.25;
+
+// The players in any transaction from `seconds` on: an add's, a drop's, or a trade's
+function movedSince(transactions, seconds) {
+    const ids = new Set();
+    for (const move of asArray(transactions)) {
+        if (Number(move.timestamp) < seconds) {
+            continue;
+        }
+        for (const field of ["transaction", "added", "dropped", "franchise1_gave_up", "franchise2_gave_up"]) {
+            // a bid's amount is a part of its own, between the bars ("13604,|5.00|")
+            String(move[field] || "").split("|").filter((part) => !/^[\d.]+$/.test(part))
+                .flatMap((part) => part.split(",")).filter((token) => /^\d+$/.test(token)).forEach((id) => ids.add(id));
+        }
+    }
+    return ids;
+}
+
 const inSeasonAdd = (add, built) => Boolean(built.week1Kickoff) && add.added >= built.week1Kickoff.getTime() / 1000;
 
 // Lengths due before the season (bylaws 4.4, 12.4–12.6): every player at 0 years with a salary, but
 // an in-season add, gets his from the team's form post. Before the cut-down date a missing one
 // waits; after it the commissioner is told, for the $5 a day; from week 1's kickoff it's 1 year.
-async function offseasonLengths(loggedIn, {built, rosters, transactions, playerNames, cutDown}, over) {
+async function offseasonLengths(loggedIn, {built, rosters, transactions, playerNames, cutDown}, over, rfas) {
     if (!formLengths) {
         log(`The ${version} lib has no form for offseason lengths; none set.`);
         return;
@@ -388,9 +408,13 @@ async function offseasonLengths(loggedIn, {built, rosters, transactions, playerN
         log("The season's start isn't known; offseason contract lengths skipped.");
         return;
     }
-    const later = new Set(pendingAdds({rosters, transactions, players: playerNames})
-        .filter((add) => inSeasonAdd(add, built)).map((add) => add.playerId));
-    const teams = asArray(rosters.franchise).map((team) => ({id: team.id, due: lengthsDue(rosters, team.id).filter((id) => !later.has(id))}))
+    if (built.started && !built.week1Kickoff) {
+        log("Week 1's kickoff isn't known, so in-season moves can't be told apart; offseason contract lengths skipped.");
+        return;
+    }
+    // a player moved since week 1's kickoff is an in-season add's, due within the hour (contractYears)
+    const later = built.started ? movedSince(transactions, built.week1Kickoff.getTime() / 1000) : new Set();
+    const teams = asArray(rosters.franchise).map((team) => ({id: team.id, due: lengthsDue(rosters, team.id).filter((id) => !later.has(id) && !rfas.has(id))}))
         .filter((team) => team.due.length);
     if (!teams.length) {
         log("No players are waiting for an offseason contract length.");
@@ -433,6 +457,11 @@ async function offseasonLengths(loggedIn, {built, rosters, transactions, playerN
     }
     if (!contracts.length) {
         return;
+    }
+    const defaults = contracts.filter((contract) => contract.years === DEFAULT_YEARS && contract.source !== "the form").length;
+    const rostered = salaries.size;
+    if (defaults > rostered * MAX_DEFAULT_SHARE) {
+        throw new Error(`${defaults} of ${rostered} rostered players would get the default ${DEFAULT_YEARS} year, more than expected, so no lengths were set. Check the rosters and set them on MFL's Salaries page by hand.`);
     }
     const describe = (contract) => `${name(contract.playerId)} (${teamName(contract.team)}) to ${contract.years} year${contract.years === 1 ? "" : "s"} (${contract.source})`;
     if (!applyContractYears) {
@@ -507,11 +536,12 @@ async function payouts(loggedIn, {built}) {
 }
 
 // From renewal to week 1's kickoff, the window v1's Commish tab filled in $0.01 for: before the
-// commissioner's rollover no one has gone from 1 year to 0, so there's nothing to do
+// commissioner's rollover no one has gone from 1 year to 0, so there's nothing to do. Resolves to
+// the players it set (or would, in a dry run), which aren't due a length.
 async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerNames}) {
     if (built.started !== false) {
         log(built.started ? "Week 1 has kicked off; RFA salaries are set only before it." : "The season's start isn't known; RFA salaries skipped.");
-        return;
+        return [];
     }
     const lastRosters = await fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
         throw new Error(`last season's rosters couldn't be read (${error.message}), so no RFA salaries were set`);
@@ -525,7 +555,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     const rfas = rfaSalaries({lastRosters, rosters, asArray, added}).filter((rfa) => !done.has(rfa.playerId));
     if (!rfas.length) {
         log("No players have gone from 1 contract year to 0 without $0.01.");
-        return;
+        return [];
     }
     const rostered = asArray(rosters.franchise).reduce((total, team) => total + asArray(team.player).length, 0);
     if (rfas.length > rostered * MAX_RFA_SHARE) {
@@ -540,7 +570,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     const describe = (rfa) => `${name(rfa)} (${team(rfa)})`;
     if (!applyRfaSalaries) {
         rfas.forEach((rfa) => choreLog(`Dry run: would set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
-        return;
+        return rfas.map((rfa) => rfa.playerId);
     }
     if (!loggedIn) {
         throw new Error(`${rfas.length} RFA(s) are waiting for $${RFA_SALARY}, but the job isn't logged in, so none were set.`);
@@ -548,6 +578,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     await mflImport("salaries", contractsXml(rfas.map((rfa) => ({playerId: rfa.playerId, salary: RFA_SALARY, years: 0}))), {APPEND: "1"});
     writeFileSync(file, JSON.stringify({...record, [season]: [...done, ...rfas.map((rfa) => rfa.playerId)]}, null, 2) + "\n");
     rfas.forEach((rfa) => choreLog(`Set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
+    return rfas.map((rfa) => rfa.playerId);
 }
 
 async function leagueState({loggedIn}) {
@@ -872,11 +903,21 @@ try {
         } catch (error) {
             needsAttention(`Contract years: ${error.message}`);
         }
+        // before offseasonLengths, as an unsettled RFA looks due a length until he has $0.01
+        let rfas = null;
+        try {
+            rfas = await rfaSalariesChore(loggedIn, state);
+        } catch (error) {
+            needsAttention(`RFA salaries: ${error.message}`);
+        }
         try {
             if (!over) {
                 throw new Error("skipped: the cap check didn't finish, so it isn't known which teams are held");
             }
-            await offseasonLengths(loggedIn, state, over);
+            if (!rfas && state.built.started === false) {
+                throw new Error("skipped: the RFA salaries didn't finish, so it isn't known which players are RFAs");
+            }
+            await offseasonLengths(loggedIn, state, over, new Set(rfas || []));
         } catch (error) {
             needsAttention(`Contract lengths: ${error.message}`);
         }
@@ -884,11 +925,6 @@ try {
             await payouts(loggedIn, state);
         } catch (error) {
             needsAttention(`Payouts: ${error.message}`);
-        }
-        try {
-            await rfaSalariesChore(loggedIn, state);
-        } catch (error) {
-            needsAttention(`RFA salaries: ${error.message}`);
         }
     }
     // last season is for a job that missed its snapshot; a test league may have no site for it

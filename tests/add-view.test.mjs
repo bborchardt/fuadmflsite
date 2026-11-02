@@ -49,6 +49,15 @@ test("the review's button says what it'll do, and waits for a drop and for a mov
     assert.match(add, /Lamar Jackson · −\$40/);
 });
 
+test("before week 1 the review asks no length: it's sent with Home's form", () => {
+    const add = reviewForm(viewOf({lengthsOnHome: true, banner: {kind: "window", text: ""}, state: {compose: bid({drop: null, kind: "add", round: null, years: null})}}), {withPicks: true});
+    assert.match(submitButton(add), /data-act="submit">Add Higbee now</);
+    assert.match(add, /Set with the form on Home, due by the cut-down date\./);
+    assert.doesNotMatch(add, /data-act="year"/);
+    const placed = reviewForm(viewOf({lengthsOnHome: true, state: {compose: bid({drop: null, years: null})}}), {withPicks: true});
+    assert.doesNotMatch(placed, /data-act="year"|written as/);
+});
+
 test("the review blocks a bid past the cap, naming the limit", () => {
     // $300 − $293 leaves $7
     const html = reviewForm(viewOf({state: {compose: bid({drop: null, bid: "8"})}}), {withPicks: false});

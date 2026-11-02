@@ -224,6 +224,8 @@ export async function drawAdd({context, franchiseId}) {
     const runsLeft = () => bidsLeft(movesPhase(state.data.facts), state.data.calendar, now());
     // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
     const checks = () => (limitsApply(state.data) ? "season" : phase());
+    // before week 1 a length is sent with Home's form, which the daily job reads (lib/lengths.js)
+    const lengthsOnHome = () => phase() === "preseason";
     const names = (id) => {
         const listed = lists.add.find((player) => player.id === id) || lists.drop.find((player) => player.id === id);
         const mflName = state.data.mflNames.get(id) || (listed && listed.mflName) || id;
@@ -241,7 +243,7 @@ export async function drawAdd({context, franchiseId}) {
     function view() {
         return {
             state, team: team(), phase: checks(), banner: theBanner(), groups: views(), rounds: rounds(), nextRound: nextRound(), maxGroups: state.data.maxGroups, positions: state.data.positions, lists, names,
-            wide: wide.matches, watched, runsLeft: runsLeft(), now: now(), franchiseId, canMove: (action, key) => Boolean(claimLink(action, key))
+            wide: wide.matches, watched, runsLeft: runsLeft(), now: now(), franchiseId, lengthsOnHome: lengthsOnHome(), canMove: (action, key) => Boolean(claimLink(action, key))
         };
     }
 
@@ -396,7 +398,7 @@ export async function drawAdd({context, franchiseId}) {
             return;
         }
         const kind = fa.mark || theBanner().kind === "bids" ? "bid" : "add";
-        state.compose = {add, drop: undefined, round: kind === "bid" ? round || newBidRound() : null, bid: "1", years: 1, editing: null, kind};
+        state.compose = {add, drop: undefined, round: kind === "bid" ? round || newBidRound() : null, bid: "1", years: lengthsOnHome() ? null : 1, editing: null, kind};
         state.error = "";
         state.done = null;
         go("drops", {replace});
@@ -502,7 +504,7 @@ export async function drawAdd({context, franchiseId}) {
             if (c.kind === "bid") {
                 const view = views().find((group) => group.round === c.round);
                 const others = view ? view.claims.map((claim) => claim.addMfl) : [];
-                const line = lengthLine(fa.mflName, c.years, others);
+                const line = c.years ? lengthLine(fa.mflName, c.years, others) : "";
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
                 const body = fillForm(form, lists, {...claim, round: c.round, comment: line});
                 await claimMade(await sendMove(form.action, () => ({method: "POST", body})), c.round, claim);
@@ -512,9 +514,13 @@ export async function drawAdd({context, franchiseId}) {
             }
             const body = fillForm(form, lists, {add: c.add, drop: c.drop || null});
             await confirm(await sendMove(form.action, () => ({method: "POST", body})), () => rosterStatuses(context, franchiseId), (found) => found.has(c.add), "roster");
-            const line = lengthLine(fa.mflName, c.years);
             const dropped = c.drop ? surname(names(c.drop).mflName) : null;
             const made = `${surname(fa.mflName)} added${dropped ? `, ${dropped} dropped.` : "."}`;
+            if (!c.years) {
+                reloadWith({done: {text: `${made} Set the contract length with the form on Home.`}});
+                return;
+            }
+            const line = lengthLine(fa.mflName, c.years);
             let done;
             try {
                 await postToContractTopic(context, line);
@@ -688,7 +694,7 @@ export async function drawAdd({context, franchiseId}) {
             if (found) {
                 state.done = null;
                 state.compose = {add: found.claim.add, drop: found.claim.drop || null, round: found.group.round, bid: String(found.claim.bid),
-                    years: yearsIn(found.claim.line), editing: found.claim.key, kind: "bid"};
+                    years: lengthsOnHome() ? null : yearsIn(found.claim.line), editing: found.claim.key, kind: "bid"};
                 state.open = null;
                 go("review");
             }

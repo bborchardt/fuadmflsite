@@ -32,6 +32,9 @@ test("the form's post reads back, with or without its line breaks", () => {
     assert.deepEqual(readFormPost(body), expected);
     assert.deepEqual(readFormPost(body.replace(/\n/g, "<br />")), expected);
     assert.deepEqual(readFormPost(body.replace(/\n/g, " ")), expected);
+    // a free agent's "FA*" doesn't swallow the next player
+    const free = formPost([{player: {name: "Jones, Aaron", team: "FA*", position: "RB"}, years: 2}, {player: players.get("1"), years: 3}]);
+    assert.deepEqual(readFormPost(free.replace(/\n/g, " ")), [{name: "Jones, Aaron", team: "FA*", position: "RB", years: 2}, expected[0]]);
     // any other post isn't the form's
     assert.equal(readFormPost("Mahomes, Patrick KCC QB: 3 years"), null);
     assert.equal(readFormPost("Allar - 4 years"), null);

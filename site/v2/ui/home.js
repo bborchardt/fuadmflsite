@@ -291,14 +291,14 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times, weeks}) => comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}));
 
     // the viewer's players still due a length before the season, read against their posts in the
-    // board's contract topics (lib/lengths.js)
-    const lengthsOf = async (built, board) => {
+    // board's contract topics (lib/lengths.js), reaching back as far as the daily job does
+    const lengthsOf = async (built) => {
         const due = draftDayUnsigned(built.franchises.get(franchiseId) || {}).map((player) => player.playerId);
         if (!due.length) {
             return {due: [], sent: false, unread: []};
         }
         const posts = [];
-        for (const thread of lengthTopics(board)) {
+        for (const thread of lengthTopics(await exp("messageBoard", {COUNT: 100}))) {
             posts.push(...asArray((await exp("messageBoardThread", {THREAD: thread.id})).post));
         }
         const {years, unread} = formLengths({posts, franchiseId, due, players: built.boardContext.playerNames});
@@ -354,7 +354,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 });
                 const topic = contractTopic(board);
                 const cutDown = cutDownAt(timeline.calendar, context.season);
-                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, board).catch(() => null) : null;
+                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built).catch(() => null) : null;
                 return myAlerts({
                     league: built,
                     franchiseId,
@@ -381,7 +381,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 const lengthsAlert = alerts.find((alert) => alert.action === "lengths");
                 const button = body.querySelector('[data-action="lengths"]');
                 if (button && lengthsAlert) {
-                    button.addEventListener("click", () => openLengths(lengthsAlert, button));
+                    button.addEventListener("click", () => openLengths(lengthsAlert, button).catch((error) => console.warn("[fuad] couldn't open the lengths form:", error)));
                 }
             }
         });
