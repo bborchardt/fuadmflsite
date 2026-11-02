@@ -20,6 +20,7 @@ runs inside MFL's own pages, loaded by a home page message.
 - charges cap penalties for dropped players
 - sets contract years for added players, from the bid comment or a message board post
 - records the payouts in MFL's accounting: each week's high score, all-play, and the places
+- after the commissioner's contract-year rollover, sets the new RFAs (1 year to 0) to $0.01
 - flags rule problems (cap, roster limit, IR, anti-tanking) and anything it can't decide
 
 A flag fails the run, so GitHub emails the commissioner. Chores that write to MFL only log what they
@@ -40,8 +41,8 @@ would do until they're switched on.
   commissioner can be in the beta as their team and not as 0000. Delete the line to end the beta.
 - **Preview a version** in your browser only: add `?fuadPreview=v2` to any league page URL
   (`?fuadPreview=off` to stop).
-- **Turn chores on:** set the repository variables `DROP_PENALTIES`, `CONTRACT_YEARS` and `PAYOUTS`
-  to `apply`.
+- **Turn chores on:** set the repository variables `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`
+  and `RFA_SALARIES` to `apply`.
 - **Try the job on another league or settings:** Actions › Daily chores › Run workflow. Dry run is
   ticked by default and writes nothing; results are on the run's summary page. Fill in only what to
   change: league, host (when that league is on another server), settings (a header line's, for an unlisted league), version, season, time. A

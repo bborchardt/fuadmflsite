@@ -6,7 +6,8 @@
 //   exports       {TYPE: section body}, answered as {TYPE: body}; a number in place of a body is an
 //                 HTTP status ("rosters": 500). "TYPE:W" or "TYPE:BRACKET_ID" ("weeklyResults:YTD",
 //                 "playoffBracket:1") answers that request ahead of TYPE's; the year to date's
-//                 section is allWeeklyResults, as MFL names it
+//                 section is allWeeklyResults, as MFL names it; "TYPE@YEAR" ("rosters@2026") answers
+//                 that season's request ahead of either
 //   seasons       the years the league has a site (others answer 404)
 //   week1         the 2026 season's first kickoff, in seconds; week n's is a week later each, its last
 //                 game three days after its first, and other seasons' 52 weeks earlier or later a year
@@ -49,7 +50,8 @@ function exportAnswer(host, year, params, cookie) {
     }
     const exports = scenario.exports || {};
     const keyed = params.get("W") || params.get("BRACKET_ID");
-    const body = keyed && `${type}:${keyed}` in exports ? exports[`${type}:${keyed}`] : exports[type];
+    const body = `${type}@${year}` in exports ? exports[`${type}@${year}`]
+        : keyed && `${type}:${keyed}` in exports ? exports[`${type}:${keyed}`] : exports[type];
     if (typeof body === "number") {
         return text("", body);
     }

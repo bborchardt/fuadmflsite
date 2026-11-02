@@ -70,6 +70,10 @@ Actions tab (GitHub can run it late on busy days). It:
   added again, if it's worded so: "Most Points Week 4" or "Most points weeks 3,8", "All-play (…)",
   "2nd Place…"; other wording ("weeks 2-4", "All Play") gets it recorded twice. The places need the
   pot's league-wide entries first;
+- from renewal until week 1's kickoff, sets each player your rollover took from 1 contract year to 0
+  to $0.01: anyone rostered at 0 years who ended last season at 1 on the same salary, on any team.
+  A rookie, an offseason add (even of last season's player) and a player whose salary you've changed
+  since aren't. If more than half the rostered players look like RFAs, it sets none and flags it;
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
@@ -82,7 +86,7 @@ It records what it did in the chore log (`chore-log.md`, on the `league-data` br
   | `MFL_USER_AGENT` | secret | the client name registered with MFL; only for the job, never from your own computer |
   | `MFL_LEAGUE_ID` | variable | the league's id |
   | `MFL_HOST` | variable | the league's host, as `https://www44.myfantasyleague.com` |
-  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS` | variable | `apply` to write that chore to MFL; anything else only logs what it would do |
+  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`, `RFA_SALARIES` | variable | `apply` to write that chore to MFL; anything else only logs what it would do |
   | `RULES_VERSION` | variable | which version's league rules it uses; `v2` when unset |
 
 - **A flag:** anything it can't decide, or a rule problem, fails the run on purpose, so GitHub emails
@@ -107,8 +111,8 @@ copies the home page messages forward, so the site keeps running without a paste
   job by hand once (Actions › Daily chores › Run workflow, unticking **Dry run**) and check its summary.
 - **The contract-year rollover:** in MFL, lower every player's contract years by 1. Players going
   from 1 year to 0 (the new RFAs) get a salary of $0.01, since MFL won't take $0; the roster report
-  shows it as $0. The Commish tab's contract form fills in $0.01 for 0-year players from renewal
-  until week 1's kickoff.
+  shows it as $0. The daily job sets it, on its next run or when you run it by hand; check the run's
+  summary for the list.
 - **League Alerts:** look once for anything flagged wrongly before the season.
 
 **On MFL's calendar:** Home's Coming up, and the alerts that date members' deadlines, read these

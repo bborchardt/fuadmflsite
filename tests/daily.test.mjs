@@ -592,3 +592,54 @@ test("the team icons' stills are made, committed and published, from wherever th
     assert.match(dry.summary, /- Dry run: would update the team icons of Alpha\./);
     assert.ok(!existsSync(join(dry.dataDir, "data", "icons")));
 });
+
+test("RFA salaries: after the rollover and before week 1, players gone from 1 year to 0 are set to $0.01", () => {
+    // 2027, renewed; Alpha's 100 went from 1 year to 0, Beta's 200 too after a trade from Alpha; 101 is
+    // already at $0.01, 102 went from 2 to 1, and 900 is a rookie
+    const last = league();
+    const exports = league();
+    const alpha = exports.rosters.franchise[0].player;
+    const beta = exports.rosters.franchise[1].player;
+    Object.assign(alpha[0], {contractYear: "0"});
+    Object.assign(alpha[1], {contractYear: "0", salary: "0.01"});
+    Object.assign(beta[0], {contractYear: "0", salary: "3"});
+    last.rosters.franchise[1].player[0].salary = "3";
+    last.rosters.franchise[0].player[2].contractYear = "2";
+    alpha.push({id: "900", salary: "2", contractYear: "0", status: "ROSTER"});
+    exports.players.player.push({id: "900", name: "Rookie, Some", position: "WR", team: "BUF"});
+    // last season's 1-year players since: 103 dropped and won back by Beta at the same $1, waiting
+    // for his years; 104 re-signed at $6
+    const won = alpha.splice(3, 1)[0];
+    beta.push({...won, contractYear: "0"});
+    exports.transactions.transaction.push({type: "BBID_WAIVER", franchise: "0002", transaction: "103,|1.00|", timestamp: String(at("2027-03-30T12:00:00Z"))});
+    Object.assign(alpha[3], {contractYear: "0", salary: "6"});
+    const scenario = {seasons: [2026, 2027], exports: {...exports, "rosters@2026": last.rosters, "weeklyResults:YTD": {}}, published: {}};
+    const rfaEntries = (result) => result.entries.filter((entry) => /RFA/.test(entry));
+    const spring = "2027-04-01T12:00:00Z";
+
+    const dry = run({scenario, now: spring, files: {}});
+    assert.deepEqual(rfaEntries(dry), [
+        "Dry run: would set RFA A0 Player (Alpha) to $0.01.",
+        "Dry run: would set RFA B0 Player (Beta) to $0.01."
+    ]);
+    const applied = run({scenario, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {}});
+    assert.deepEqual(rfaEntries(applied), ["Set RFA A0 Player (Alpha) to $0.01.", "Set RFA B0 Player (Beta) to $0.01."]);
+    const posted = imports(applied).filter((body) => body.TYPE === "salaries" && /0\.01/.test(body.DATA));
+    assert.deepEqual(posted.map((body) => [body.APPEND, body.DATA]), [["1",
+        '<salaries><leagueUnit unit="LEAGUE"><player id="100" salary="0.01" contractYear="0"/><player id="200" salary="0.01" contractYear="0"/></leagueUnit></salaries>']]);
+
+    // once week 1 has kicked off, nothing
+    const fall = run({scenario, env: {...LOGIN, RFA_SALARIES: "apply"}, now: "2027-09-20T12:00:00Z", files: {}});
+    assert.deepEqual(rfaEntries(fall), []);
+    assert.match(fall.stdout, /Week 1 has kicked off; RFA salaries are set only before it\./);
+
+    // most of the league at 0 looks like a misread: none set, and a flag
+    const misread = structuredClone(scenario);
+    misread.exports.rosters.franchise.forEach((team) => team.player.forEach((player) => {
+        player.contractYear = "0";
+    }));
+    const flagged = run({scenario: misread, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {}});
+    assert.equal(flagged.status, 1);
+    assert.match(flagged.summary, /RFA salaries: 4\d of 47 rostered players look like RFAs/);
+    assert.ok(!imports(flagged).some((body) => /0\.01/.test(body.DATA || "")));
+});
