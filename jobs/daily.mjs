@@ -17,6 +17,8 @@
 //   CONTRACT_YEARS              "apply" to set contract years for adds; anything else only logs them
 //   PAYOUTS                     "apply" to record the league's payouts in MFL's accounting; anything
 //                               else only logs them
+//   RFA_SALARIES                "apply" to set the renewal's RFAs (1 year to 0) to $0.01; anything else
+//                               only logs them
 //   NOW                         optional ISO time, for testing
 //   DRY_RUN                     "true": writes nothing to MFL or DATA_DIR, whatever the variables above
 //                               say, and may name a league the version doesn't list
@@ -48,6 +50,7 @@ const {decideYears, readProcessedWaivers, teamPlayers} = await lib("contract-yea
 const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
+const {MAX_RFA_SHARE, RFA_SALARY, rfaSalaries} = await import("./rfa-salaries.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -105,6 +108,7 @@ const LATE_AFTER_DAYS = 7;
 const applyDropPenalties = !dryRun && process.env.DROP_PENALTIES === "apply";
 const applyContractYears = !dryRun && process.env.CONTRACT_YEARS === "apply";
 const applyPayouts = !dryRun && process.env.PAYOUTS === "apply";
+const applyRfaSalaries = !dryRun && process.env.RFA_SALARIES === "apply";
 const dataIsThisLeagues = !dryRun || process.env.DATA_LEAGUE_ID === leagueId;
 // a season's weekly prizes and all-play payouts, with room for a backfill: more means something's wrong
 const MAX_PAYOUTS_PER_RUN = 30;
@@ -426,6 +430,43 @@ async function payouts(loggedIn, {built}) {
         await mflImport("accounting", null, {FRANCHISE: record.franchise, AMOUNT: String(record.amount), DESCRIPTION: record.description});
         choreLog(`Recorded ${describe(record)}.`);
     }
+}
+
+// From renewal to week 1's kickoff, the window v1's Commish tab filled in $0.01 for: before the
+// commissioner's rollover no one has gone from 1 year to 0, so there's nothing to do
+async function rfaSalariesChore(loggedIn, {built, rosters, playerNames}) {
+    if (built.started !== false) {
+        log(built.started ? "Week 1 has kicked off; RFA salaries are set only before it." : "The season's start isn't known; RFA salaries skipped.");
+        return;
+    }
+    const lastRosters = await fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
+        throw new Error(`last season's rosters couldn't be read (${error.message}), so no RFA salaries were set`);
+    });
+    const rfas = rfaSalaries({lastRosters, rosters, asArray});
+    if (!rfas.length) {
+        log("No players have gone from 1 contract year to 0 without $0.01.");
+        return;
+    }
+    const rostered = asArray(rosters.franchise).reduce((total, team) => total + asArray(team.player).length, 0);
+    if (rfas.length > rostered * MAX_RFA_SHARE) {
+        throw new Error(`${rfas.length} of ${rostered} rostered players look like RFAs, more than expected, so none were set to $${RFA_SALARY}. `
+            + "Check the rosters against last season's and set them on MFL's Salaries page by hand.");
+    }
+    const name = (rfa) => {
+        const player = playerNames.get(rfa.playerId);
+        return player ? player.name.split(",").reverse().map((part) => part.trim()).join(" ") : rfa.playerId;
+    };
+    const team = (rfa) => (built.franchises.get(rfa.franchiseId) || {}).teamName || rfa.franchiseId;
+    const describe = (rfa) => `${name(rfa)} (${team(rfa)})`;
+    if (!applyRfaSalaries) {
+        rfas.forEach((rfa) => choreLog(`Dry run: would set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
+        return;
+    }
+    if (!loggedIn) {
+        throw new Error(`${rfas.length} RFA(s) are waiting for $${RFA_SALARY}, but the job isn't logged in, so none were set.`);
+    }
+    await mflImport("salaries", contractsXml(rfas.map((rfa) => ({playerId: rfa.playerId, salary: RFA_SALARY, years: 0}))), {APPEND: "1"});
+    rfas.forEach((rfa) => choreLog(`Set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
 }
 
 async function leagueState({loggedIn}) {
@@ -754,6 +795,11 @@ try {
             await payouts(loggedIn, state);
         } catch (error) {
             needsAttention(`Payouts: ${error.message}`);
+        }
+        try {
+            await rfaSalariesChore(loggedIn, state);
+        } catch (error) {
+            needsAttention(`RFA salaries: ${error.message}`);
         }
     }
     // last season is for a job that missed its snapshot; a test league may have no site for it
