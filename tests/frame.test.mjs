@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {REBUILT, leavesPage, locate, pageOf, sections, viewHash} from "../site/v2/ui/nav.js";
+import {REBUILT, leavesPage, locate, ownHref, pageOf, sections, teamLinks, viewHash} from "../site/v2/ui/nav.js";
 import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
@@ -70,6 +70,9 @@ test("Rules, over League Rules or League Settings, lives under Home", () => {
 
 test("pages left to the site menu belong to no section", () => {
     assert.equal(at(`${base}/options?L=48571&O=156`), null);
+    // Fantasy Schedule and Future Draft Picks show more than Scores and Draft
+    assert.equal(at(`${base}/options?L=48571&O=15`), null);
+    assert.equal(at(`${base}/options?L=48571&O=100`), null);
     assert.equal(at(`${base}/home/48571#4`), null);
 });
 
@@ -130,4 +133,36 @@ test("a link loads another page unless only its # differs", () => {
     assert.equal(leavesPage("#rosters-teams", here), false);
     assert.equal(leavesPage(`${base}/lineup?L=48571`, here), true);
     assert.equal(leavesPage(`${base}/options?L=48571&O=257`, new URL(`${base}/options?L=48571&O=255`)), true);
+});
+
+test("a link to MFL's page that a v2 view draws instead leads to the view", () => {
+    const rebuilt = (franchiseId) => sections({base, leagueId: "48571", franchiseId, rebuilt: REBUILT});
+    const home = `${base}/home/48571`;
+    const own = (href, franchiseId = "0001") => ownHref(rebuilt(franchiseId), href, {
+        origin: "https://www44.myfantasyleague.com", season: 2026, leagueId: "48571", franchiseId, teamHref: teamLinks(`${home}#rosters-teams`)
+    });
+    // the site menu's
+    assert.equal(own(`${base}/ajax_ls?L=48571`), `${home}#league-scores`);
+    assert.equal(own(`${base}/options?L=48571&O=22`), `${home}#league-scores`);
+    assert.equal(own(`${base}/standings?L=48571`), `${home}#league-standings`);
+    assert.equal(own(`${base}/options?L=48571&O=101`), `${home}#league-power`);
+    assert.equal(own(`${base}/options?L=48571&O=07`), `${home}#rosters-teams`);
+    assert.equal(own(`${base}/options?L=48571&O=17`), `${home}#rosters-draft`);
+    assert.equal(own(`${base}/options?L=48571&O=07`, null), `${home}#rosters-teams`);
+    assert.equal(own(`${base}/options?L=48571&O=07`, "0000"), `${home}#rosters-teams`);
+    // a team's page
+    assert.equal(own(`${base}/options?L=48571&O=01&F=0004`), `${home}#rosters-teams/0004`);
+    assert.equal(own(`${base}/options?L=48571&O=07&F=0004`), `${home}#rosters-teams/0004`);
+    // left as they are: MFL's pages v2 draws over or leaves, Home's pages, a page with more in its
+    // address, another league or season
+    for (const href of [
+        `${base}/lineup?L=48571`, `${base}/options?L=48571&O=05`, `${base}/add_drop?L=48571`, `${base}/options?L=48571&O=03`,
+        `${base}/options?L=48571&O=09`, `${base}/options?L=48571&O=15`, `${base}/options?L=48571&O=100`,
+        `${base}/options?L=48571&O=01`, `${base}/options?L=48571&O=07&F=0000`, `${base}/options?L=48571&O=22&W=3`,
+        `${base}/options?L=50965&O=101`, "https://www44.myfantasyleague.com/2025/options?L=48571&O=101", "javascript:chat_window('x')"
+    ]) {
+        assert.equal(own(href), null, href);
+    }
+    // logged out, Lineup's page is v2's login page: MFL's own login screen stays MFL's
+    assert.equal(own(`${base}/lineup?L=48571`, null), null);
 });

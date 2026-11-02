@@ -8,7 +8,11 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 - Works well in a **phone browser**; members can't be assumed to use an app.
 - **One navigation layer:** v2's five sections (Home, Lineup, League, Moves, Rosters) replace the
   custom tabs rather than adding to them; whatever they leave out stays reachable from MFL's own
-  menu, inside v2's site menu (☰). v1 keeps the custom tabs as members know them.
+  menu, inside v2's site menu (☰). A link there or in MFL's pages to a page one of v2's views draws
+  instead (Live Scoring, Weekly Results, Standings, Power Rank, Rosters, Draft Results, a team's
+  page) leads to the view, so a page goes by one name; MFL's pages that show more than the view
+  (Fantasy Schedule, Future Draft Picks) stay MFL's, under no section. v1 keeps the custom tabs as
+  members know them.
 - **One Back, the browser's:** a page reached by a link (a team's page, All moves, the message board)
   lights the section and view it lives under, which leads up; a section's link always opens its
   first view. A page gets a link of its own only up to a parent the sections can't
