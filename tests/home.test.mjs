@@ -174,6 +174,8 @@ test("before the cut-down date, an add's length isn't due within the hour; after
         assert.deepEqual(myAlerts({league, franchiseId: "0001", phase, links, now: added + 600}).filter((a) => /Waller/.test(a.title)), [], phase);
     }
     assert.equal(myAlerts({league, franchiseId: "0001", phase: "preseason", links, now: added + 600}).filter((a) => /Waller/.test(a.title)).length, 1);
+    // added in the cut-down date's last hour: the form's, not the hour's
+    assert.deepEqual(myAlerts({league, franchiseId: "0001", phase: "preseason", links, cutDown: added + 300, now: added + 600}).filter((a) => /Waller/.test(a.title) && !/contract length/i.test(a.title)), []);
 });
 
 test("the phase: before the draft, draft to cut-down, preseason, season, over", () => {

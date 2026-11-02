@@ -315,9 +315,9 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
     // an add before the cut-down date has until then, through the form (offseasonLengths)
     const from = formsEnd(built, cutDown);
     if (formLengths && !from) {
-        log("Neither the cut-down date nor week 1's kickoff is known, so no add is taken as owing its length within the hour.");
+        log(`Neither the cut-down date nor week 1's kickoff is known; ${built.started ? "every" : "no"} add is taken as owing its length within the hour.`);
     }
-    const inSeason = (add) => !formLengths || (Boolean(from) && add.added >= from);
+    const inSeason = (add) => !formLengths || (from ? add.added >= from : built.started === true);
     const held = pending.filter((add) => inSeason(add) && over.has(add.franchiseId));
     for (const add of held) {
         choreLog(`Contract years: ${add.name} held, since the team is over the cap or the roster limit. Left for the commissioner.`);

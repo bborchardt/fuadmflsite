@@ -304,7 +304,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     }
 
     // free agent and waiver adds still in their hour; a blind bid's length is in its comment
-    for (const add of (league.pendingAdds || []).filter((entry) => !OFFSEASON.has(phase) && entry.franchiseId === franchiseId && entry.type !== "BBID_WAIVER" && !windowClosed(entry, now))) {
+    for (const add of (league.pendingAdds || []).filter((entry) => !OFFSEASON.has(phase) && !(phase === "preseason" && cutDown && entry.added < cutDown) && entry.franchiseId === franchiseId && entry.type !== "BBID_WAIVER" && !windowClosed(entry, now))) {
         const player = league.players.get(add.playerId) || {fullName: add.name};
         const reading = readings.get(add.playerId);
         const due = clock(contractDeadline(add));
