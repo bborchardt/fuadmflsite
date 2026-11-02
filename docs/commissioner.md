@@ -71,9 +71,9 @@ Actions tab (GitHub can run it late on busy days). It:
   "2nd Place…"; other wording ("weeks 2-4", "All Play") gets it recorded twice. The places need the
   pot's league-wide entries first;
 - from renewal until week 1's kickoff, sets each player your rollover took from 1 contract year to 0
-  to $0.01: anyone rostered at 0 years who ended last season at 1, on any team. A rookie or an
-  offseason add isn't one. If more than half the rostered players look like RFAs, it sets none and
-  flags it;
+  to $0.01: anyone rostered at 0 years who ended last season at 1 on the same salary, on any team.
+  A rookie, an offseason add (even of last season's player) and a player whose salary you've changed
+  since aren't. If more than half the rostered players look like RFAs, it sets none and flags it;
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).

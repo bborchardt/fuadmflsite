@@ -607,6 +607,12 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
     last.rosters.franchise[0].player[2].contractYear = "2";
     alpha.push({id: "900", salary: "2", contractYear: "0", status: "ROSTER"});
     exports.players.player.push({id: "900", name: "Rookie, Some", position: "WR", team: "BUF"});
+    // last season's 1-year players since: 103 dropped and won back by Beta at the same $1, waiting
+    // for his years; 104 re-signed at $6
+    const won = alpha.splice(3, 1)[0];
+    beta.push({...won, contractYear: "0"});
+    exports.transactions.transaction.push({type: "BBID_WAIVER", franchise: "0002", transaction: "103,|1.00|", timestamp: String(at("2027-03-30T12:00:00Z"))});
+    Object.assign(alpha[3], {contractYear: "0", salary: "6"});
     const scenario = {seasons: [2026, 2027], exports: {...exports, "rosters@2026": last.rosters, "weeklyResults:YTD": {}}, published: {}};
     const rfaEntries = (result) => result.entries.filter((entry) => /RFA/.test(entry));
     const spring = "2027-04-01T12:00:00Z";

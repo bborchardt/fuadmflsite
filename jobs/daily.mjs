@@ -434,7 +434,7 @@ async function payouts(loggedIn, {built}) {
 
 // From renewal to week 1's kickoff, the window v1's Commish tab filled in $0.01 for: before the
 // commissioner's rollover no one has gone from 1 year to 0, so there's nothing to do
-async function rfaSalariesChore(loggedIn, {built, rosters, playerNames}) {
+async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerNames}) {
     if (built.started !== false) {
         log(built.started ? "Week 1 has kicked off; RFA salaries are set only before it." : "The season's start isn't known; RFA salaries skipped.");
         return;
@@ -442,7 +442,8 @@ async function rfaSalariesChore(loggedIn, {built, rosters, playerNames}) {
     const lastRosters = await fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
         throw new Error(`last season's rosters couldn't be read (${error.message}), so no RFA salaries were set`);
     });
-    const rfas = rfaSalaries({lastRosters, rosters, asArray});
+    const added = new Set(pendingAdds({rosters, transactions, players: playerNames}).map((add) => add.playerId));
+    const rfas = rfaSalaries({lastRosters, rosters, asArray, added});
     if (!rfas.length) {
         log("No players have gone from 1 contract year to 0 without $0.01.");
         return;
