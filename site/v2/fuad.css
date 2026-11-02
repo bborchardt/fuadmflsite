@@ -2998,6 +2998,16 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-team-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 
+#fuad-rosters .fuad-team-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+/* the owner, for a member (rosters-view.js fillOwners): under the name, in a list too */
+#fuad-rosters .fuad-owner:empty { display: none; }
+
+#fuad-rosters .fuad-owner a { color: inherit; text-decoration: underline; text-decoration-color: var(--fuad-faint); overflow-wrap: anywhere; }
+
+#fuad-rosters .fuad-team-list .fuad-owner,
+#fuad-rosters .fuad-teams .fuad-owner { display: block; margin-top: 2px; font-weight: 400; }
+
 #fuad-rosters .fuad-team-name { flex: 1; margin: 0; font-family: var(--fuad-display); font-size: 26px; font-weight: 700; color: var(--fuad-text); text-transform: none; background: none; border: 0; padding: 0; }
 
 #fuad-rosters .fuad-team-row { display: flex; flex-direction: column; gap: 5px; padding: 10px 0; color: var(--fuad-text); }
@@ -3030,9 +3040,9 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-team-pic-xl { width: 56px; height: 56px; margin: 0; vertical-align: middle; }
 
-#fuad-rosters .fuad-team-banner { display: flex; justify-content: center; height: 160px; border-radius: 10px; overflow: hidden; background: var(--fuad-raised); }
+#fuad-rosters .fuad-team-banner { flex: none; height: 110px; max-width: 260px; border-radius: 8px; overflow: hidden; }
 
-#fuad-rosters .fuad-team-banner img { width: 100%; height: 100%; object-fit: contain; }
+#fuad-rosters .fuad-team-banner img { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
 
 #fuad-rosters .fuad-figure { flex: none; font-family: var(--fuad-display); font-weight: 700; font-size: 18px; }
 
