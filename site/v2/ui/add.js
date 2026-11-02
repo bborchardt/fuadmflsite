@@ -5,7 +5,6 @@
 // so its comment line goes with it. An immediate add's length is posted to the board once MFL has
 // made the add. MFL's form stays in the page underneath; anything v2 can't read leaves MFL's page.
 
-import {exportUrl, fetchExport} from "../lib/mfl.js";
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {openDialog, replaceEntry} from "./dialog.js";
@@ -13,7 +12,7 @@ import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
     sendMove, takeFlash
 } from "./moves.js";
-import {contractTopic} from "./home-model.js";
+import {postToContractTopic} from "./lengths-form.js";
 import {watchList, whenPopupClosed} from "./watch.js";
 import {
     addBlock, addsClosed, banner, bidsLeft, claimKey, commentLines, findClaim, firstLast, freeAgencyOver, fullNameLines, groupViews, isLengthLine,
@@ -24,8 +23,6 @@ import {
 } from "./add-view.js";
 
 const FLASH_KEY = "fuad.addFlash";
-// the board topic a length post starts when the league has none with "contract" in its name
-const NEW_TOPIC = "Contract lengths";
 
 // ---- MFL's page ----
 
@@ -125,18 +122,6 @@ async function confirm(sent, read, shows, what) {
     }
     if (outcome !== "made") {
         throw outcome;
-    }
-}
-
-// Posts the length to the board (messageBoard import): a reply in the contract topic, or a new one
-async function postLength(context, line) {
-    const {season, leagueId} = context;
-    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {init: {cache: "no-store"}});
-    const topic = contractTopic(board);
-    const fields = new URLSearchParams(topic ? {THREAD: topic.id, BODY: line} : {SUBJECT: NEW_TOPIC, BODY: line});
-    const answer = await send(`${window.location.origin}/${season}/import?TYPE=messageBoard&L=${encodeURIComponent(leagueId)}`, {method: "POST", body: fields});
-    if (/<error/i.test(answer) || !/OK/i.test(answer)) {
-        throw new Error((answer.match(/<error[^>]*>([^<]*)/i) || [])[1] || "MFL didn't take the post");
     }
 }
 
@@ -532,7 +517,7 @@ export async function drawAdd({context, franchiseId}) {
             const made = `${surname(fa.mflName)} added${dropped ? `, ${dropped} dropped.` : "."}`;
             let done;
             try {
-                await postLength(context, line);
+                await postToContractTopic(context, line);
                 done = {text: `${made} Posted “${line}”.`};
             } catch (error) {
                 console.warn("[fuad] couldn't post the length:", error);
@@ -607,7 +592,7 @@ export async function drawAdd({context, franchiseId}) {
         state.busy = true;
         render();
         try {
-            await postLength(context, line);
+            await postToContractTopic(context, line);
             state.done = {text: `Posted “${line}”.`};
         } catch (error) {
             console.warn("[fuad] couldn't post the length:", error);

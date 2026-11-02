@@ -18,6 +18,8 @@ export async function seasonPhase(season, now, options, weeks) {
     return {
         // the injured reserve check starts with week 1's kickoff, whatever week MFL reports before it
         started: Boolean(start) && now >= start,
+        // null until MFL publishes the schedule
+        week1Kickoff: start || null,
         tankingOver: !weeks || (Boolean(playoffs) && now >= playoffs),
         seasonOver: !weeks || (Boolean(end) && now >= end)
     };

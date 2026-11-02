@@ -63,7 +63,13 @@ GitHub runs it every morning at about 07:40 UTC, as the "Daily chores" workflow 
 Actions tab (GitHub can run it late on busy days). It:
 - snapshots each franchise's salaries at the trade deadline;
 - charges cap penalties for dropped players;
-- sets contract years for added players, from the bid comment or a message board post;
+- sets contract years for players added in season, from the bid comment or a message board post;
+- before the season, sets the lengths members send with v2's form (Home › My alerts, from the draft
+  until week 1), the morning after they send them. Everyone at 0 years with a salary of $1 or more
+  owes one: auction buys, kept and matched RFAs, rookies and offseason adds. It reads only the form's
+  posts in topics with "contract" in their name; a length posted by hand is flagged for you to set.
+  Past the cut-down date it flags each team still missing lengths, for the $5 a day (bylaw 12.6), and
+  from week 1's kickoff it sets 1 year for any still missing;
 - records the payouts in MFL's accounting, as League › Winners works them out: "Most Points Week N"
   once the next week has kicked off, "All-play (W-L)" once week 14's scores are, and "1st Place",
   "2nd Place", "3rd Place" once the championship's are. A payout already there under any team isn't
@@ -73,7 +79,8 @@ Actions tab (GitHub can run it late on busy days). It:
 - from renewal until week 1's kickoff, sets each player your rollover took from 1 contract year to 0
   to $0.01: anyone rostered at 0 years who ended last season at 1 on the same salary, on any team.
   A rookie, an offseason add (even of last season's player) and a player whose salary you've changed
-  since aren't. If more than half the rostered players look like RFAs, it sets none and flags it;
+  since aren't. It sets a player once a season, so an RFA you keep for $1 at the auction stays at $1.
+  If more than half the rostered players look like RFAs, it sets none and flags it;
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).

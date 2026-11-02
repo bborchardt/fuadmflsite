@@ -104,6 +104,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   still left as it was, as a picture is its owner's to fix. Nothing of the job's goes with those
   requests, since a picture can be anywhere on the web.
 - **Contract lengths:**
+  - before the season (bylaws 4.4, 12.4–12.6), every player at 0 years with a salary owes one by the
+    cut-down date, whatever brought him; an unsettled RFA's $0.01 marks him out. Members send them
+    with Home's form, which posts them to the newest contract topic as `Name, First TEAM POS: N
+    years` lines under a fixed heading, read the same with or without MFL's line breaks
+    (`lib/lengths.js`). It needs every one at once and the roster within the limit, since every player
+    kept needs a length; once posted it gives way to "sent" until the job sets them. In-season adds
+    (from week 1's kickoff) keep the hour
   - blind bids: read from the bid comment on MFL's Previously Processed Waivers page, the only
     place comments appear (the commissioner judged reading their own league's page within the
     spirit of MFL's terms)
@@ -241,6 +248,10 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - The over-cap flag lists the last 7 days' moves, so a team over for longer shows none.
 - The Commish tab's penalty form pre-fills penalties already charged but not yet reset.
 - Contract years:
+  - before the season only the form's posts are read: this year's cut-down posts by hand named
+    players by nickname, misspelling or "all rookies", which no reading gets right
+  - a form post's line is matched by MFL's name for the player, by NFL team and position only when a
+    team has two of that name; a renamed player stays due, and the form shows again
   - a player added and traded before the job runs stays at 0 years, unflagged
   - a length without a digit or "year" ("Hill for two") isn't read
   - before reversing an add for a team under the cap, set the player's years to 0, or the drop is

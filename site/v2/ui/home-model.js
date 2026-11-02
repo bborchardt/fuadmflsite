@@ -212,8 +212,14 @@ export function lineupProblems({starters, kickoffs, now}) {
 // players the commissioner's draft-day loads put on the roster without a length yet (12.4–12.5)
 export const draftDayUnsigned = (franchise) => (franchise.signedPlayers || []).filter((player) => player.salary >= 1);
 
-// `trades` are offers waiting for the viewer's answer: [{from, summary, expires}]
-export function myAlerts({league, franchiseId, phase, links, lineup = null, groups = [], bidRun = null, trades = [], readings = new Map(), coming = [], cutDown = null, now}) {
+// the phases before week 1, when an add's length is due by the cut-down date rather than its hour
+const OFFSEASON = new Set(["before-draft", "before-cut", "preseason"]);
+
+// `trades` are offers waiting for the viewer's answer: [{from, summary, expires}]. `lengths`, before
+// the season: the viewer's players still due a length (`due`, ids), whether some were sent with the
+// form (`sent`), and the posts made by hand that couldn't be read (`unread`, their times); null when
+// the board couldn't be read.
+export function myAlerts({league, franchiseId, phase, links, lineup = null, groups = [], bidRun = null, trades = [], readings = new Map(), coming = [], cutDown = null, lengths = null, now}) {
     const franchise = league.franchises.get(franchiseId);
     if (!franchise) {
         return [];
@@ -249,12 +255,24 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         }
     }
 
-    if (phase === "before-cut") {
+    if (phase === "before-cut" || phase === "preseason") {
         const unsigned = draftDayUnsigned(franchise);
-        if (unsigned.length) {
+        const late = phase === "preseason";
+        if (lengths && lengths.due.length) {
+            const first = league.players.get(lengths.due[0]) || unsigned[0];
+            const title = lengths.due.length === 1 && first ? `Set a contract length for ${lastName(first)}` : `Set contract lengths for ${plural(lengths.due.length, "player")}`;
+            const detail = lengths.unread.length ? `Your post on ${dayText(lengths.unread[lengths.unread.length - 1])} couldn’t be read; use the form`
+                : late ? "Past the cut-down date: $5 a day until they’re in" : `Due ${byCut}`;
+            alerts.push({tone: late || lengths.unread.length ? tones.red : tones.orange, mark: "Y", title, detail, href: null, action: "lengths", players: lengths.due});
+        } else if (lengths && lengths.sent) {
+            push(tones.accent, "Y", "Contract lengths sent", "They’re set on MFL by the next morning", links.contracts, "Message board");
+        } else if (!lengths && unsigned.length) {
+            // the board couldn't be read: where to post them
             push(tones.orange, "Y", unsigned.length === 1 ? `Post a contract length for ${lastName(unsigned[0])}` : `Post contract lengths for ${unsigned.length} players`,
                 `Draft-day players need them ${byCut}`, links.contracts, "Message board");
         }
+    }
+    if (phase === "before-cut") {
         if (franchise.numPlayers > ROSTER_MAX) {
             push(tones.orange, String(ROSTER_MAX), `Get to ${ROSTER_MAX} active ${byCut}`, `You have ${franchise.numPlayers}`, links.drop, "Drop");
         } else if (franchise.numPlayers < ROSTER_MIN) {
@@ -286,7 +304,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     }
 
     // free agent and waiver adds still in their hour; a blind bid's length is in its comment
-    for (const add of (league.pendingAdds || []).filter((entry) => entry.franchiseId === franchiseId && entry.type !== "BBID_WAIVER" && !windowClosed(entry, now))) {
+    for (const add of (league.pendingAdds || []).filter((entry) => !OFFSEASON.has(phase) && entry.franchiseId === franchiseId && entry.type !== "BBID_WAIVER" && !windowClosed(entry, now))) {
         const player = league.players.get(add.playerId) || {fullName: add.name};
         const reading = readings.get(add.playerId);
         const due = clock(contractDeadline(add));

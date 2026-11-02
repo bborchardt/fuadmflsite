@@ -627,6 +627,11 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
     const posted = imports(applied).filter((body) => body.TYPE === "salaries" && /0\.01/.test(body.DATA));
     assert.deepEqual(posted.map((body) => [body.APPEND, body.DATA]), [["1",
         '<salaries><leagueUnit unit="LEAGUE"><player id="100" salary="0.01" contractYear="0"/><player id="200" salary="0.01" contractYear="0"/></leagueUnit></salaries>']]);
+    assert.deepEqual(JSON.parse(readFileSync(join(applied.dataDir, "rfa-salaries.json"), "utf8")), {2027: ["100", "200"]});
+    // one set before is settled since: 100 kept at the auction for $1, last season's salary too
+    const kept = run({scenario, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {"rfa-salaries.json": JSON.stringify({2027: ["100"]})}});
+    assert.deepEqual(rfaEntries(kept), ["Set RFA B0 Player (Beta) to $0.01."]);
+    assert.deepEqual(JSON.parse(readFileSync(join(kept.dataDir, "rfa-salaries.json"), "utf8")), {2027: ["100", "200"]});
 
     // once week 1 has kicked off, nothing
     const fall = run({scenario, env: {...LOGIN, RFA_SALARIES: "apply"}, now: "2027-09-20T12:00:00Z", files: {}});
@@ -642,4 +647,61 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
     assert.equal(flagged.status, 1);
     assert.match(flagged.summary, /RFA salaries: 4\d of 47 rostered players look like RFAs/);
     assert.ok(!imports(flagged).some((body) => /0\.01/.test(body.DATA || "")));
+});
+
+test("offseason lengths: read from the form's posts only, flagged past the cut-down, 1 year from week 1", () => {
+    // draft day: Alpha's A0–A2 and Beta's B0 at 0 years with a salary; Alpha posted A0 and A1 with the
+    // form, Beta by hand
+    const exports = league();
+    const [alpha, beta] = exports.rosters.franchise.map((team) => team.player);
+    alpha.slice(0, 3).forEach((player) => Object.assign(player, {contractYear: "0", salary: "2"}));
+    Object.assign(beta[0], {contractYear: "0", salary: "5"});
+    const posted = at("2026-09-01T18:00:00Z");
+    const formBody = "Contract lengths, sent from the league site:<br />Player, A0 BUF WR: 3 years<br />Player, A1 BUF WR: 1 year";
+    Object.assign(exports, {
+        messageBoard: {thread: [{id: "8001", subject: "Rosters loaded, contract lengths due", lastPostTime: String(posted)}, {id: "8002", subject: "Trade talk", lastPostTime: String(posted)}]},
+        messageBoardThread: {post: [
+            {franchise: "0001", postTime: String(posted), body: formBody},
+            {franchise: "0002", postTime: String(posted), body: "B0 - 2 years"}
+        ]},
+        calendar: {event: [{type: "CUSTOM", start_time: String(at("2026-09-08T23:00:00Z")), title: "Final cut-down"}]}
+    });
+    const lengthEntries = (result) => result.entries.filter((entry) => /would set|^Set |Contract lengths/.test(entry));
+    const draftWeek = "2026-09-02T12:00:00Z";
+
+    const dry = run({scenario: {exports}, env: LOGIN, now: draftWeek});
+    assert.deepEqual(lengthEntries(dry), [
+        "Contract lengths: Beta posted lengths without the form, which the job doesn't read: \"B0 - 2 years\". Set them by hand, or ask them to use the form.",
+        "Dry run: would set A0 Player (Alpha) to 3 years (the form).",
+        "Dry run: would set A1 Player (Alpha) to 1 year (the form)."
+    ]);
+    assert.equal(dry.status, 1);
+    // only topics about contracts are read
+    assert.deepEqual(dry.requests.filter((request) => /TYPE=messageBoardThread/.test(request.url)).map((request) => new URL(request.url).searchParams.get("THREAD")), ["8001"]);
+
+    const applied = run({scenario: {exports}, env: {...LOGIN, CONTRACT_YEARS: "apply"}, now: draftWeek});
+    assert.deepEqual(imports(applied).filter((body) => body.TYPE === "salaries").map((body) => body.DATA), [
+        '<salaries><leagueUnit unit="LEAGUE"><player id="100" salary="2" contractYear="3"/><player id="101" salary="2" contractYear="1"/></leagueUnit></salaries>'
+    ]);
+
+    // past the cut-down, what's missing is flagged, for the late penalty
+    const late = run({scenario: {exports}, env: LOGIN, now: "2026-09-09T12:00:00Z"});
+    assert.ok(late.entries.includes("Contract lengths: Alpha has 1 player(s) without a length since the cut-down date: A2 Player. Charge the late penalty by hand (bylaw 12.6)."));
+    assert.ok(late.entries.includes("Contract lengths: Beta has 1 player(s) without a length since the cut-down date: B0 Player. Charge the late penalty by hand (bylaw 12.6)."));
+
+    // from week 1's kickoff, 1 year for what's missing
+    const kicked = run({scenario: {exports}, env: LOGIN, now: "2026-09-11T12:00:00Z"});
+    assert.ok(kicked.entries.includes("Dry run: would set A2 Player (Alpha) to 1 year (none by week 1: the default)."));
+    assert.ok(kicked.entries.includes("Dry run: would set B0 Player (Beta) to 1 year (none by week 1: the default)."));
+    assert.ok(kicked.entries.includes("Dry run: would set A0 Player (Alpha) to 3 years (the form)."));
+});
+
+test("offseason lengths: an add before week 1 waits for the form, not the hour", () => {
+    // Olave and Waddle added in the offseason, nothing posted: no default at the hour
+    const exports = {...withAdds(league()), messageBoard: {thread: []}};
+    exports.transactions.transaction.forEach((transaction) => {
+        transaction.timestamp = String(at("2026-08-20T12:00:00Z"));
+    });
+    const result = run({scenario: {exports, waivers: waiversPage("")}, env: LOGIN, now: "2026-08-25T12:00:00Z"});
+    assert.ok(!result.entries.some((entry) => /Olave|Waddle/.test(entry)), result.entries.join("\n"));
 });

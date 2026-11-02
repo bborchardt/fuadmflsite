@@ -18,7 +18,8 @@ runs inside MFL's own pages, loaded by a home page message.
 - snapshots franchise salaries at the trade deadline
 - makes small stills of the team icons for v2's lists
 - charges cap penalties for dropped players
-- sets contract years for added players, from the bid comment or a message board post
+- sets contract years for added players, from the bid comment or a message board post; before the
+  season, for every player due one, from the lengths members send with v2's form
 - records the payouts in MFL's accounting: each week's high score, all-play, and the places
 - after the commissioner's contract-year rollover, sets the new RFAs (1 year to 0) to $0.01
 - flags rule problems (cap, roster limit, IR, anti-tanking) and anything it can't decide

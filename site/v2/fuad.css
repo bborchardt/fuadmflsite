@@ -1568,6 +1568,58 @@ body [tabindex]:focus-visible {
 
 .fuad-popup-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 
+/* Home's contract lengths form (ui/lengths-form.js); margins rather than gap for iOS 14.0–14.4 */
+.fuad-lengths { max-width: 560px; }
+.fuad-lengths-note { margin: 0; color: var(--fuad-text); }
+.fuad-lengths-over { color: var(--fuad-bad); }
+.fuad-lengths-form .fuad-rows { margin: 0; padding: 0; list-style: none; }
+.fuad-lengths-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 56px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--fuad-hairline);
+}
+.fuad-lengths-row .fuad-row-text { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin-right: 12px; }
+.fuad-lengths-row .fuad-row-text > * + * { margin-top: 2px; }
+.fuad-lengths-form > * + * { margin-top: 16px; }
+body .fuad-lengths select {
+    flex: 0 0 auto;
+    width: 9.5em;
+    min-height: 44px;
+    box-sizing: border-box;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background-color: var(--fuad-page);
+    color: var(--fuad-text);
+    /* 16 px, so iPhones don't zoom in on focus */
+    font: 16px var(--fuad-body);
+    padding: 0 36px 0 12px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--fuad-muted) 50%), linear-gradient(135deg, var(--fuad-muted) 50%, transparent 50%);
+    background-position: calc(100% - 19px) 50%, calc(100% - 14px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+}
+.fuad-lengths select:focus { border-color: var(--fuad-accent); }
+.fuad-lengths-error { margin: 0; color: var(--fuad-bad); }
+.fuad-lengths .fuad-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--fuad-accent);
+    color: var(--fuad-on-accent) !important;
+    font: 600 15px var(--fuad-body);
+    cursor: pointer;
+}
+.fuad-lengths .fuad-cta:disabled { opacity: 0.6; cursor: default; }
+
 .fuad-popup-title { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
 /* the member's watch list: a star by the close button, filled when watched */
@@ -1908,6 +1960,17 @@ body [tabindex]:focus-visible {
 }
 
 #fuad-home .fuad-alert svg { color: var(--fuad-muted); }
+
+/* an alert that opens a form: a button laid out as the links are */
+#fuad-home button.fuad-alert {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
 
 #fuad-home .fuad-alert-still { grid-template-columns: 32px minmax(0, 1fr); }
 

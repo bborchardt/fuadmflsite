@@ -182,7 +182,11 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
         const week = new URL(url).searchParams.get("W");
         return {ok: true, json: async () => ({nflSchedule: {matchup: (schedule[week] || []).map((kickoff) => ({kickoff}))}})};
     };
-    const phase = (iso) => seasonPhase(2026, new Date(iso), {fetchImpl}, WEEKS);
+    // the phase without week 1's kickoff, which is checked once
+    const withoutKickoff = (found) => Object.fromEntries(Object.entries(found).filter(([key]) => key !== "week1Kickoff"));
+    const phase = (iso) => seasonPhase(2026, new Date(iso), {fetchImpl}, WEEKS).then(withoutKickoff);
+    const {week1Kickoff} = await seasonPhase(2026, new Date("2026-09-01T12:00:00Z"), {fetchImpl}, WEEKS);
+    assert.ok(week1Kickoff instanceof Date);
     assert.deepEqual(await phase("2026-09-01T12:00:00Z"), {started: false, tankingOver: false, seasonOver: false});
     assert.deepEqual(await phase("2026-12-16T12:00:00Z"), {started: true, tankingOver: false, seasonOver: false});
     assert.deepEqual(await phase("2026-12-17T01:15:00Z"), {started: true, tankingOver: true, seasonOver: false});
@@ -191,9 +195,9 @@ test("season phases come from MFL's NFL schedule: playoffs' first kickoff, and t
     assert.deepEqual(await phase("2027-01-05T05:15:00Z"), {started: true, tankingOver: true, seasonOver: true});
     // a schedule MFL hasn't published counts as not yet
     const unpublished = async () => ({ok: false, status: 404});
-    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}, WEEKS), {started: false, tankingOver: false, seasonOver: false});
+    assert.deepEqual(await seasonPhase(2027, new Date("2027-03-01T00:00:00Z"), {fetchImpl: unpublished}, WEEKS), {started: false, week1Kickoff: null, tankingOver: false, seasonOver: false});
     // without the league's weeks the playoffs and the end can't be told: the in-season checks are off
-    assert.deepEqual(await seasonPhase(2026, new Date("2026-10-01T00:00:00Z"), {fetchImpl}, null), {started: true, tankingOver: true, seasonOver: true});
+    assert.deepEqual(await seasonPhase(2026, new Date("2026-10-01T00:00:00Z"), {fetchImpl}, null).then(withoutKickoff), {started: true, tankingOver: true, seasonOver: true});
 });
 
 test("the cut-down date is the commissioner's first one-off event named for a cut, at a set time", async () => {
