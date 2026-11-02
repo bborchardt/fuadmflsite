@@ -7,6 +7,7 @@ import {seasonPhase} from "../lib/violations.js";
 import {seasonWeeks} from "../lib/rules.js";
 import {leagueIdIn} from "../lib/settings.js";
 import {cached, dropUnusedKeys} from "./store.js";
+import {useTeamPictures} from "./team-pictures.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {REBUILT, pageOf, sections, teamLinks} from "./nav.js";
 
@@ -149,6 +150,7 @@ function startHome(context, league, {beta, inBeta, drawn}) {
 // cover can come off without MFL's page showing first. Resolves to whether League Alerts was drawn.
 export async function start({dataBase, beta = null, inBeta = null, onTrouble = () => {}, onDrawn = () => {}}) {
     dropUnusedKeys();
+    useTeamPictures({dataBase});
     const context = pageContext();
     // each view draws its placeholders before its first wait, so they're in the page once it returns
     const drawn = (value) => {

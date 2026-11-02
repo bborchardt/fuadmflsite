@@ -3004,6 +3004,36 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-team-line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 
+/* a team's icon (team-pictures.js): the job's still, cropped round, beside its name; on its own page
+   the upload, larger, and on desktop its logo above */
+#fuad-league .fuad-team-pic,
+#fuad-rosters .fuad-team-pic { display: inline-block; flex: none; width: 24px; height: 24px; margin-right: 8px; vertical-align: -6px; border-radius: 50%; overflow: hidden; background: var(--fuad-quiet); }
+
+/* margins, not gap: older iPhones (iOS 14.0–14.4) have no gap in flex rows */
+#fuad-league .fuad-with-pic,
+#fuad-rosters .fuad-with-pic { display: inline-flex; align-items: flex-start; }
+
+#fuad-league .fuad-with-pic .fuad-team-pic,
+#fuad-rosters .fuad-with-pic .fuad-team-pic { margin: -2px 8px 0 0; }
+
+#fuad-league .fuad-pic-after,
+#fuad-rosters .fuad-pic-after { flex-direction: row-reverse; }
+
+#fuad-league .fuad-pic-after .fuad-team-pic,
+#fuad-rosters .fuad-pic-after .fuad-team-pic { margin: -2px 0 0 8px; }
+
+#fuad-league .fuad-team-pic img,
+#fuad-rosters .fuad-team-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+#fuad-rosters .fuad-team-pic picture,
+#fuad-rosters .fuad-team-banner picture { display: contents; }
+
+#fuad-rosters .fuad-team-pic-xl { width: 56px; height: 56px; margin: 0; vertical-align: middle; }
+
+#fuad-rosters .fuad-team-banner { display: flex; justify-content: center; height: 160px; border-radius: 10px; overflow: hidden; background: var(--fuad-raised); }
+
+#fuad-rosters .fuad-team-banner img { width: 100%; height: 100%; object-fit: contain; }
+
 #fuad-rosters .fuad-figure { flex: none; font-family: var(--fuad-display); font-weight: 700; font-size: 18px; }
 
 #fuad-league .fuad-team a,

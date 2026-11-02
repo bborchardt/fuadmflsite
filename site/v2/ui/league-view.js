@@ -4,6 +4,7 @@
 import {esc} from "./html.js";
 import {clock, dayText} from "./home-model.js";
 import {WEEKLY_PRIZE, gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
+import {withIcon} from "./team-pictures.js";
 
 // "R. Stevenson" on phones, the full name on desktop
 const shortName = (name) => {
@@ -20,7 +21,7 @@ function teamHead(team, {names, viewer, leader, side, started, preview}) {
     const projection = team.actual !== undefined ? `actual ${team.actual.toFixed(1)}`
         : team.projected !== null ? `proj ${team.projected.toFixed(1)}` : team.done && team.started ? "Final" : "";
     return `<span class="fuad-face fuad-face-${side ? "right" : "left"}${tone}">
-        <span class="fuad-face-name${team.id === viewer ? " fuad-face-mine" : ""}">${esc(names.get(team.id) || team.id)}</span>
+        <span class="fuad-face-name${team.id === viewer ? " fuad-face-mine" : ""}">${withIcon(team.id, esc(names.get(team.id) || team.id), {after: Boolean(side)})}</span>
         <span class="fuad-face-score">${started ? esc(team.score.toFixed(1)) : preview ? "" : "—"}</span>
         <span class="fuad-meta">${esc(projection)}</span>
     </span>`;
@@ -142,7 +143,7 @@ export function standingsMarkup(divisions, {viewer, final, teamHref}) {
             <div class="fuad-table-scroll"><table class="fuad-table fuad-standings">
                 <thead>${head}</thead>
                 <tbody>${division.rows.map((row) => `<tr${row.id === viewer ? ' class="fuad-row-mine"' : ""}>
-                    <td class="fuad-num fuad-muted">${row.rank}</td><th scope="row" class="fuad-team"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></th>
+                    <td class="fuad-num fuad-muted">${row.rank}</td><th scope="row" class="fuad-team">${withIcon(row.id, `<a href="${esc(teamHref(row.id))}">${esc(row.name)}</a>`)}</th>
                     <td class="fuad-num">${esc(`${row.h2h.w}-${row.h2h.l}-${row.h2h.t}`)}</td><td class="fuad-num fuad-wide">${esc(row.pct)}</td>
                     <td class="fuad-num fuad-muted">${esc(row.gamesBack)}</td><td class="fuad-num fuad-wide">${esc(row.divisionRecord)}</td>
                     <td class="fuad-num fuad-wide">${esc(recordText(row.allPlay))}</td><td class="fuad-num">${esc(row.pf.toFixed(1))}</td>
