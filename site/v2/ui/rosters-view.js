@@ -178,18 +178,53 @@ export function scalePanel() {
 
 // ---- A team's page and Teams ----
 
-// a team in My team's layout. `fromTeams`: under Teams, headed by its name (the browser's Back and
-// the Teams view lead out); `tradeHref`: Propose a trade, on another team's page for a member logged in
+// a team in My team's layout, headed by its picture, name, owner (filled in for a member, fillOwners)
+// and record. `fromTeams`: opened from Teams (the browser's Back and the Teams view lead out), where
+// `tradeHref` is Propose a trade, on another team's page for a member logged in
 export function teamMarkup({sheet, picks, live, own, fromTeams, tradeHref, season}) {
+    const {banner, icon} = teamPicturesMarkup(sheet.id);
     return `
-${fromTeams ? `${teamPicturesMarkup(sheet.id).banner}<div class="fuad-team-head">
-    ${teamPicturesMarkup(sheet.id).icon}<h2 class="fuad-team-name">${esc(sheet.name)}</h2>
-    ${tradeHref ? `<a class="fuad-cta" href="${esc(tradeHref)}">Propose a trade</a>` : ""}
-</div>` : ""}
-<div class="fuad-meta fuad-history" data-history></div>
+<div class="fuad-team-head">
+    ${banner}${icon}
+    <div class="fuad-team-title">
+        <h2 class="fuad-team-name">${esc(sheet.name)}</h2>
+        <div class="fuad-meta fuad-owner" data-owner="${esc(sheet.id)}"></div>
+        <div class="fuad-meta fuad-history" data-history></div>
+    </div>
+    ${fromTeams && tradeHref ? `<a class="fuad-cta" href="${esc(tradeHref)}">Propose a trade</a>` : ""}
+</div>
 ${capPanel(sheet)}
 ${rosterTable(sheet, {cut: own, pointsLabel: live ? "Pts" : `${season - 1} pts`})}
 <div class="fuad-picks-mount">${picksPanels(picks, {nextYear: season + 1, live})}</div>`;
+}
+
+// Each team's owner, and on a team's page their email, filled into the page's [data-owner] spots.
+// They're for members only and are never part of a saved copy (store.js), which could be shown to
+// whoever opens the page next on that device, so they're filled in after it's drawn.
+export function fillOwners(root, owners) {
+    for (const spot of root.querySelectorAll("[data-owner]")) {
+        const owner = owners.get(spot.getAttribute("data-owner"));
+        if (!owner) {
+            continue;
+        }
+        const emails = spot.hasAttribute("data-name-only") ? [] : owner.emails;
+        spot.innerHTML = [esc(owner.name), ...emails.map((email) => `<a href="mailto:${esc(encodeURI(email))}">${esc(email)}</a>`)].join(" · ");
+    }
+}
+
+// {team: {name, emails}} from MFL's league export, which names owners only to a logged-in member; an
+// owner may give more than one address
+export function ownersOf(league) {
+    const owners = new Map();
+    for (const team of [].concat(((league || {}).franchises || {}).franchise || [])) {
+        const name = team && typeof team.owner_name === "string" ? team.owner_name.trim() : "";
+        const emails = (team && typeof team.email === "string" ? team.email : "").split(/[\s,;]+/)
+            .filter((email) => /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/.test(email));
+        if (team && team.id && name) {
+            owners.set(team.id, {name, emails});
+        }
+    }
+    return owners;
 }
 
 // the team's all-time record and titles, then on another team's page the viewer's record against it
@@ -206,7 +241,7 @@ export function teamsMarkup(list, {viewer, season}) {
     return `<section class="fuad-panel" aria-label="Teams by cap used">
     <ul class="fuad-rows fuad-team-list fuad-phone-only">${list.map((team) => `<li class="${team.id === viewer ? "fuad-row-mine" : ""}">
         <a class="fuad-team-row" href="#rosters-teams/${esc(team.id)}">
-            <span class="fuad-team-line"><span class="fuad-row-title">${withIcon(team.id, esc(team.name))}</span><span class="fuad-figure ${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span>
+            <span class="fuad-team-line"><span class="fuad-row-title">${withIcon(team.id, `${esc(team.name)}<span class="fuad-meta fuad-owner" data-owner="${esc(team.id)}" data-name-only></span>`)}</span><span class="fuad-figure ${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span>
             ${capBar(team, viewer)}
             <span class="fuad-meta">${team.picksYear} picks ${esc(team.picksLine)} · ${team.active} / 30${team.ir ? ` + ${team.ir} IR` : ""}</span>
         </a></li>`).join("")}</ul>
@@ -214,7 +249,7 @@ export function teamsMarkup(list, {viewer, season}) {
         <thead><tr><th scope="col">Team</th><th scope="col">Cap used</th><th scope="col" class="fuad-num">${list.length ? list[0].picksYear : season + 1} picks</th>
             ${later.map((entry) => `<th scope="col" class="fuad-num">’${String(entry.season).slice(2)}</th>`).join("")}<th scope="col" class="fuad-num">Roster</th><th scope="col"><span class="fuad-hidden">Open</span></th></tr></thead>
         <tbody>${list.map((team) => `<tr class="fuad-row-link${team.id === viewer ? " fuad-row-mine" : ""}" data-href="#rosters-teams/${esc(team.id)}">
-            <th scope="row" class="fuad-team">${withIcon(team.id, `<a href="#rosters-teams/${esc(team.id)}">${esc(team.name)}</a>`)}</th>
+            <th scope="row" class="fuad-team">${withIcon(team.id, `<a href="#rosters-teams/${esc(team.id)}">${esc(team.name)}</a><span class="fuad-meta fuad-owner" data-owner="${esc(team.id)}" data-name-only></span>`)}</th>
             <td><span class="fuad-power-cell">${capBar(team, viewer)}<span class="${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span></td>
             <td class="fuad-num">${esc(team.picksLine)}</td>
             ${team.seasons.slice(1).map((entry) => `<td class="fuad-num ${entry.tight ? "fuad-caution" : "fuad-muted"}">${esc(money(entry.used))}</td>`).join("")}

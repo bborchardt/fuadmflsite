@@ -17,7 +17,7 @@ import {
     FIRST_DIRECTION, boardPicksOf, byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf, playerPool, playoffFinish, pointsById,
     sortPlayers, teamSheets
 } from "./rosters-model.js";
-import {draftMarkup, historyMarkup, picksPanels, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "./rosters-view.js";
+import {draftMarkup, fillOwners, historyMarkup, ownersOf, picksPanels, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "./rosters-view.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -81,7 +81,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const built = await pageLeague();
         const {league: settings, salaryAdjustments, freeAgents} = built.raw;
         const names = new Map(asArray(settings.franchises && settings.franchises.franchise).map((team) => [team.id, team.name]));
-        return {built, settings, salaryAdjustments, freeAgents, names};
+        // for a member only, and kept out of what the panels save (fillOwners)
+        const owners = viewer ? ownersOf(settings) : new Map();
+        return {built, settings, salaryAdjustments, freeAgents, names, owners};
     });
     const extras = once(async () => {
         const [futureDraftPicks, byes, points] = await Promise.all([
@@ -157,6 +159,13 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         }
     });
 
+    const showOwners = (body) => {
+        if (viewer) {
+            league().then(({owners}) => fillOwners(body, owners))
+                .catch((error) => console.warn("[fuad] couldn't load the owners:", error));
+        }
+    };
+
     // a team in My team's layout: yours with the cut columns, another's with Propose a trade
     // `fromTeams`: opened from Teams, with Propose a trade
     const teamPage = (mount, teamId, {fromTeams}) => {
@@ -177,6 +186,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 const own = teamId === viewer;
                 mount.classList.remove("fuad-panel");
                 body.innerHTML = teamMarkup({sheet, picks, live, own, fromTeams, tradeHref: fromTeams && viewer && !own ? actions.trade(teamId) : null, season});
+                showOwners(body);
                 // the team's all-time record and titles (the record alone if the champions can't be had),
                 // then on another team's page the viewer's record against it, from the viewer's series
                 Promise.all([
@@ -216,6 +226,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 render: (list, body) => {
                     mount.classList.remove("fuad-panel");
                     body.innerHTML = teamsMarkup(list, {viewer, season});
+                    showOwners(body);
                 }
             });
         },

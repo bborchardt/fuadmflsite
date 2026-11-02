@@ -1,10 +1,11 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {draftMarkup, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "../site/v2/ui/rosters-view.js";
+import {parseHTML} from "linkedom";
+import {draftMarkup, fillOwners, ownersOf, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "../site/v2/ui/rosters-view.js";
 
 const seasons = [{season: 2026, used: 293, tight: true}, {season: 2027, used: 180, tight: false}];
 const sheet = {
-    name: "Smooth City Styles!", capUsed: 293, tight: true, salaries: 289, penaltyTotal: 4, active: 30, ir: 1, seasons,
+    id: "0004", name: "Smooth City Styles!", capUsed: 293, tight: true, salaries: 289, penaltyTotal: 4, active: 30, ir: 1, seasons,
     groups: [{position: "QB", salary: 68, players: [{id: "13", name: "Lamar Jackson", nfl: "BAL", bye: 7, points: 101.25, salary: 68, years: 1, cutPenalty: 28, capAfterCut: 253, ir: false}]}],
     penalties: [{who: "Darren Waller", when: "Sep 2", terms: "$8 · 3 yrs", amount: 4}]
 };
@@ -15,6 +16,8 @@ test("a team's page: your own with the cut columns, another's under its name wit
     assert.match(own, /Cut penalty<\/th><th scope="col" class="fuad-num fuad-wide">Cap used after cut/);
     assert.match(own, /<td class="fuad-num fuad-wide">\$28<\/td><td class="fuad-num fuad-wide">\$253<\/td>/);
     assert.doesNotMatch(own, /Teams<\/a>|Propose a trade/);
+    // your own page has the head too, without Propose a trade
+    assert.match(own, /<h2 class="fuad-team-name">Smooth City Styles!<\/h2>/);
     assert.match(own, /\$293<\/span><span class="fuad-meta"> of \$300/);
     assert.match(own, /\+ 1 on IR/);
     // this season's penalties as the roster's last group
@@ -22,7 +25,7 @@ test("a team's page: your own with the cut columns, another's under its name wit
     assert.match(own, /Darren Waller<span class="fuad-meta">Cut Sep 2 · \$8 · 3 yrs<\/span>/);
     assert.match(own, /If the season ended today/);
     const other = teamMarkup({sheet, picks, live: false, own: false, fromTeams: true, tradeHref: "/trade?x", season: 2026});
-    assert.match(other, /<div class="fuad-team-head">\s*<h2 class="fuad-team-name">/);
+    assert.match(other, /<div class="fuad-team-title">\s*<h2 class="fuad-team-name">Smooth City Styles!<\/h2>\s*<div class="fuad-meta fuad-owner" data-owner="0004"><\/div>/);
     assert.doesNotMatch(other, /fuad-back|‹/);
     assert.match(other, /<a class="fuad-cta" href="\/trade\?x">Propose a trade<\/a>/);
     assert.doesNotMatch(other, /Cut penalty/);
@@ -115,4 +118,32 @@ test("Draft: before the draft the viewer's picks and the board; after it next ye
     assert.equal((desk.match(/aria-expanded="true" aria-controls="fuad-round-/g) || []).length, 2);
     // drafted but not yet in week 1: the results alone, without the tags
     assert.doesNotMatch(draftMarkup({board: done, before: true, tags, order: null, viewer: "0001", season: 2026, phone: true}), /franchise tags/);
+});
+
+test("owners: named for a member under each team, with their email on the team's page, filled in after the page is drawn", () => {
+    const owners = ownersOf({franchises: {franchise: [
+        {id: "0004", owner_name: " Owner 0004 ", email: "owner@example.com, second@example.com"},
+        {id: "0002", owner_name: "Owner 0002", email: "not an address"},
+        {id: "0003", email: "owner3@example.com"}
+    ]}});
+    assert.deepEqual([...owners], [["0004", {name: "Owner 0004", emails: ["owner@example.com", "second@example.com"]}], ["0002", {name: "Owner 0002", emails: []}]]);
+    // a guest's export names no one
+    assert.equal(ownersOf({franchises: {franchise: [{id: "0001", name: "Alpha"}]}}).size, 0);
+    assert.equal(ownersOf(null).size, 0);
+
+    // what's drawn, and so what a panel saves, has only the empty spots
+    const page = teamMarkup({sheet, picks, live: true, own: false, fromTeams: true, tradeHref: "/t", season: 2026});
+    assert.doesNotMatch(page, /Owner 0004|example\.com/);
+    const {document} = parseHTML(`<html><body><div id="page">${page}</div><div id="list">${teamsMarkup([{id: "0004", name: "Smooth City Styles!", capUsed: 293, tight: true, picksLine: "1", picksYear: 2027, active: 30, ir: 0, seasons}], {viewer: "0001", season: 2026})}</div></body></html>`);
+    fillOwners(document.getElementById("page"), owners);
+    const line = document.querySelector("#page [data-owner]");
+    assert.equal(line.textContent, "Owner 0004 · owner@example.com · second@example.com");
+    assert.equal(line.querySelector("a").getAttribute("href"), "mailto:owner@example.com");
+    // the list names the owner only
+    fillOwners(document.getElementById("list"), owners);
+    assert.deepEqual([...document.querySelectorAll("#list [data-owner]")].map((spot) => spot.textContent), ["Owner 0004", "Owner 0004"]);
+    // an owner's text is text
+    const odd = new Map([["0004", {name: "<b>x</b>", emails: []}]]);
+    fillOwners(document.getElementById("page"), odd);
+    assert.equal(document.querySelector("#page [data-owner]").innerHTML, "&lt;b&gt;x&lt;/b&gt;");
 });
