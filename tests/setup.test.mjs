@@ -117,15 +117,15 @@ test("Basic shows the team and owner names; its email is Contact's, kept but hid
     assert.ok(doc.querySelector('.fuad-setup-kept[hidden] input[name="FRANCHISE_EMAIL0001"]'));
 });
 
-test("Customize has only what reaches MFL's pages, under More settings, closed; Full width is the team sheet's", () => {
+test("Customize: the icon and logo first; what only reaches MFL's pages under More settings, closed; Full width is the team sheet's", () => {
     const {doc, shown, details} = restyled("FCUSTOM");
-    assert.equal(shown, undefined);
+    assert.deepEqual(labels(shown), ["Icon URL", "Or upload an icon", "Logo URL", "Or upload a logo"]);
+    assert.match(shown.querySelector(":scope > .fuad-setup-hint").textContent, /^Logo shows on your team page\. .*up to 24 hours/);
     assert.equal(details.length, 1);
     assert.equal(details[0].querySelector("summary").textContent, "More settings");
     assert.equal(details[0].hasAttribute("open"), false);
     assert.match(inside(details[0]).querySelector(":scope > .fuad-setup-hint").textContent, /only affect MFL's original pages in the site menu/);
-    assert.deepEqual(labels(inside(details[0])), ["Time zone", "Abbreviation", "Icon URL", "Or upload an icon", "Logo URL", "Or upload a logo",
-        "Home page URL", "Stadium", "Notes", "Advanced editor for comments", "Play audio clips"]);
+    assert.deepEqual(labels(inside(details[0])), ["Time zone", "Abbreviation", "Home page URL", "Stadium", "Notes", "Advanced editor for comments", "Play audio clips"]);
     for (const name of ["USE_FULL_WIDTH0001", "FRANCHISE_SOUND0001", "FRANCHISE_SOUND_FILE0001", "USE_RESPONSIVE_SITE0001", "DISPLAY_FRANCHISE_REMINDERS0001"]) {
         assert.ok(doc.querySelector(`.fuad-setup-kept[hidden] [name="${name}"]`), name);
     }
