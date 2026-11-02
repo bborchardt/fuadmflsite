@@ -40,7 +40,7 @@ test("the form's post reads back, with or without its line breaks", () => {
     assert.equal(readFormPost("Allar - 4 years"), null);
 });
 
-test("a team's lengths: its latest form post per player; posts by hand are flagged while any is missing", () => {
+test("a team's lengths: the latest form post per player, any team's; its own posts by hand are flagged while any is missing", () => {
     const at = (franchise, postTime, body) => ({franchise, postTime: String(postTime), body});
     const posts = [
         at("0001", 100, formPost([{player: players.get("1"), years: 2}, {player: players.get("2"), years: 9}])),
@@ -49,11 +49,16 @@ test("a team's lengths: its latest form post per player; posts by hand are flagg
         at("0001", 400, "Thanks all, good draft"),
         at("0002", 150, formPost([{player: players.get("2"), years: 1}]))
     ];
-    // 9 years isn't a length; another team's post isn't this one's
+    // 9 years isn't a length; Beta's 1 year for Kelce holds once he's traded to Alpha
     const some = formLengths({posts, franchiseId: "0001", due: ["1", "2"], players});
-    assert.deepEqual([...some.years], [["1", 4]]);
-    assert.deepEqual(some.unread.map((post) => post.body), ["Mahomes 3, Kelce 2"]);
-    // nothing missing: nothing to flag
+    assert.deepEqual([[...some.years], some.unread], [[["1", 4], ["2", 1]], []]);
+    // with Kelce still missing, Alpha's own hand post is flagged, never another team's
+    const missing = formLengths({posts: posts.filter((post) => post.franchise === "0001"), franchiseId: "0001", due: ["1", "2"], players});
+    assert.deepEqual(missing.unread.map((post) => post.body), ["Mahomes 3, Kelce 2"]);
+    assert.deepEqual(formLengths({posts, franchiseId: "0002", due: ["3"], players}).unread, []);
+    // another team's post must name his position: Beta's Kelce line isn't for a TE-less namesake
+    const namesake = new Map([...players, ["6", {id: "6", name: "Kelce, Travis", team: "KCC", position: "WR"}]]);
+    assert.deepEqual([...formLengths({posts, franchiseId: "0003", due: ["6"], players: namesake}).years], []);
     const all = formLengths({posts, franchiseId: "0001", due: ["1"], players});
     assert.deepEqual([[...all.years], all.unread], [[["1", 4]], []]);
 });

@@ -57,32 +57,32 @@ export function readFormPost(body) {
 // a post that looks like it gives a length: a figure or "year" in it
 const looksLikeLengths = (text) => /\d|\byears?\b|\byrs?\b/i.test(text);
 
-// What a team's board posts say about the players it owes a length (`due`, ids):
-// `{years: Map(id → years), unread: [posts]}`. The latest form post naming a player wins; `unread`
-// are the team's posts that look like lengths but weren't made with the form, while any player is
-// still without one. `players` is MFL's players export by id.
+// What the board's form posts say about the players a team owes a length (`due`, ids):
+// `{years: Map(id → years), unread: [posts]}`. The latest form post naming a player wins, whichever
+// team sent it, as a length sent before a trade holds after it; another team's must name his
+// position too. `unread` are the team's own posts that look like lengths but weren't made with the
+// form, while any player is still without one. `players` is MFL's players export by id.
 export function formLengths({posts, franchiseId, due, players}) {
     const owed = due.map((id) => players.get(id)).filter(Boolean);
     // by name alone, as a player's NFL team can change between the post and its reading
-    const named = (entry) => {
-        const same = owed.filter((player) => player.name === entry.name);
+    const named = (entry, own) => {
+        const same = owed.filter((player) => player.name === entry.name && (own || player.position === entry.position));
         const exact = same.length > 1 ? same.filter((player) => player.team === entry.team && player.position === entry.position) : same;
         return exact.length === 1 ? exact[0].id : null;
     };
     const years = new Map();
     const unread = [];
-    const own = asList(posts).filter((post) => post.franchise === franchiseId)
-        .sort((a, b) => Number(a.postTime) - Number(b.postTime));
-    for (const post of own) {
+    for (const post of [...asList(posts)].sort((a, b) => Number(a.postTime) - Number(b.postTime))) {
+        const own = post.franchise === franchiseId;
         const entries = readFormPost(post.body);
         if (!entries) {
-            if (looksLikeLengths(decode(post.body))) {
+            if (own && looksLikeLengths(decode(post.body))) {
                 unread.push(post);
             }
             continue;
         }
         for (const entry of entries) {
-            const id = named(entry);
+            const id = named(entry, own);
             if (id && entry.years >= MIN_YEARS && entry.years <= MAX_YEARS) {
                 years.set(id, entry.years);
             }

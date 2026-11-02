@@ -224,9 +224,6 @@ export async function drawAdd({context, franchiseId}) {
     const runsLeft = () => bidsLeft(movesPhase(state.data.facts), state.data.calendar, now());
     // the checks' phase: in season once the roster limits hold, from the cut-down date (2.5)
     const checks = () => (limitsApply(state.data) ? "season" : phase());
-    // an add before the cut-down date sends its length with Home's form, which the daily job reads
-    // (lib/lengths.js); a bid's is in its comment, as its run usually comes after the cut-down date
-    const lengthsOnHome = (kind) => kind === "add" && phase() === "preseason" && !limitsApply(state.data);
     const names = (id) => {
         const listed = lists.add.find((player) => player.id === id) || lists.drop.find((player) => player.id === id);
         const mflName = state.data.mflNames.get(id) || (listed && listed.mflName) || id;
@@ -244,7 +241,7 @@ export async function drawAdd({context, franchiseId}) {
     function view() {
         return {
             state, team: team(), phase: checks(), banner: theBanner(), groups: views(), rounds: rounds(), nextRound: nextRound(), maxGroups: state.data.maxGroups, positions: state.data.positions, lists, names,
-            wide: wide.matches, watched, runsLeft: runsLeft(), now: now(), franchiseId, lengthsOnHome: Boolean(state.compose) && lengthsOnHome(state.compose.kind), canMove: (action, key) => Boolean(claimLink(action, key))
+            wide: wide.matches, watched, runsLeft: runsLeft(), now: now(), franchiseId, canMove: (action, key) => Boolean(claimLink(action, key))
         };
     }
 
@@ -399,7 +396,7 @@ export async function drawAdd({context, franchiseId}) {
             return;
         }
         const kind = fa.mark || theBanner().kind === "bids" ? "bid" : "add";
-        state.compose = {add, drop: undefined, round: kind === "bid" ? round || newBidRound() : null, bid: "1", years: lengthsOnHome(kind) ? null : 1, editing: null, kind};
+        state.compose = {add, drop: undefined, round: kind === "bid" ? round || newBidRound() : null, bid: "1", years: 1, editing: null, kind};
         state.error = "";
         state.done = null;
         go("drops", {replace});
@@ -467,8 +464,7 @@ export async function drawAdd({context, franchiseId}) {
     async function submit() {
         const c = state.compose;
         const checks = moveChecks(view());
-        // an add begun before the cut-down date and sent after it needs a length now
-        if (!checks.fits || c.drop === undefined || (!c.years && !c.editing && !lengthsOnHome(c.kind))) {
+        if (!checks.fits || c.drop === undefined) {
             return;
         }
         // free agency may have closed, or the last bid run passed, while the move was being made
@@ -518,10 +514,6 @@ export async function drawAdd({context, franchiseId}) {
             await confirm(await sendMove(form.action, () => ({method: "POST", body})), () => rosterStatuses(context, franchiseId), (found) => found.has(c.add), "roster");
             const dropped = c.drop ? surname(names(c.drop).mflName) : null;
             const made = `${surname(fa.mflName)} added${dropped ? `, ${dropped} dropped.` : "."}`;
-            if (!c.years) {
-                reloadWith({done: {text: `${made} Set the contract length with the form on Home.`}});
-                return;
-            }
             const line = lengthLine(fa.mflName, c.years);
             let done;
             try {

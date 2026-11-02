@@ -67,8 +67,9 @@ Actions tab (GitHub can run it late on busy days). It:
   board post within the hour;
 - before the season, sets the lengths members send with v2's form (Home › My alerts, from the draft
   until week 1), the morning after they send them. Everyone at 0 years with a salary of $1 or more
-  owes one: auction buys, kept and matched RFAs, rookies and adds before the cut-down date. It reads only the form's
-  posts in topics with "contract" in their name; a length posted by hand is flagged for you to set.
+  owes one: auction buys, kept and matched RFAs, and rookies. It reads only the form's posts in topics
+  with "contract" in their name, the length holding through a trade; a length posted by hand is
+  flagged for you to set.
   Past the cut-down date it flags each team still missing lengths, for the $5 a day (bylaw 12.6), and
   from week 1's kickoff it sets 1 year for any still missing;
 - records the payouts in MFL's accounting, as League › Winners works them out: "Most Points Week N"
