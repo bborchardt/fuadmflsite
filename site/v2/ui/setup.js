@@ -18,16 +18,17 @@ const RESTYLED = ["FRANCHISE", "FCUSTOM", "SKIN", "FCONTACT", "FMOBILE", "FACCES
 // Basic's foot links, and the name a screen reached from one goes by, as no tab is lit there
 const FOOT = {FACCESS: "Change franchise access code", FUNLINK: "Unlink this team from your login"};
 
-// Each form's fields by MFL's name (its row's id, less the franchise): shown, under More settings (those
-// that only reach MFL's own pages), or hidden (MFL's own way to do what v2 does, or nothing v2 has), the
-// hidden still sent as they are. A field MFL adds is shown under MFL's label.
+// Each form's fields by MFL's name (its row's id, less the franchise): shown (with `note` under them),
+// under More settings (those that only reach MFL's own pages), or hidden (MFL's own way to do what v2
+// does, or nothing v2 has), the hidden still sent as they are. A field MFL adds is shown under MFL's label.
 const FORMS = {
     FRANCHISE: {shown: {FRANCHISE_NAME: "Team name", FRANCHISE_OWNER_NAME: "Owner name"}, hidden: ["FRANCHISE_EMAIL"]},
     FCUSTOM: {
-        shown: {},
+        shown: {FRANCHISE_ICON: "Icon URL", FRANCHISE_ICON_FILE: "Or upload an icon", FRANCHISE_LOGO: "Logo URL", FRANCHISE_LOGO_FILE: "Or upload a logo"},
+        // lists show the daily job's still of the icon (team-pictures.js)
+        note: "Logo shows on your team page. Icon shows next to your team name on other pages. Icons may take up to 24 hours to refresh.",
         more: {
-            TIME_ZONE: "Time zone", FRANCHISE_ABBREV: "Abbreviation", FRANCHISE_ICON: "Icon URL", FRANCHISE_ICON_FILE: "Or upload an icon",
-            FRANCHISE_LOGO: "Logo URL", FRANCHISE_LOGO_FILE: "Or upload a logo", FRANCHISE_URL: "Home page URL", FRANCHISE_STADIUM: "Stadium",
+            TIME_ZONE: "Time zone", FRANCHISE_ABBREV: "Abbreviation", FRANCHISE_URL: "Home page URL", FRANCHISE_STADIUM: "Stadium",
             NOTES: "Notes", USE_ADVANCED_EDITOR: "Advanced editor for comments", PLAY_AUDIO: "Play audio clips"
         },
         // Full width is the team sheet's (width.js)
@@ -274,6 +275,9 @@ function restyleForm(doc, spec, franchiseId) {
         }
         const label = {...spec.shown, ...spec.more, ...spec.other}[row.name] || row.label.textContent.replace(/\u00a0/g, " ").trim().replace(/:$/, "");
         blocks[row.name] = field(doc, row, label, home(row.name));
+    }
+    if (spec.note) {
+        shown.append(make(doc, "p", "fuad-setup-hint", spec.note));
     }
     for (const row of rows.filter((each) => each.hint)) {
         if (blocks[row.hint]) {
