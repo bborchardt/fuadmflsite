@@ -102,3 +102,35 @@ export function withParam(href, name, value) {
     url.searchParams.set(name, value);
     return url.href;
 }
+
+// A daily row per browser saying which version a member runs, to the commissioner's Google Form
+// (docs/design.md: previews and the beta). A browser that has been the commissioner stops for good, as
+// their Become would be counted as that team. With storage blocked it sends nothing, as it couldn't
+// tell it had already sent today. Never throws: this can't cost a member the page.
+const USE_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSc3OR5vn4qGC-ZOcdF35MwqWQT7hzep_9mE1axKzBya3m-DwA/formResponse";
+const USE_LEAGUE = "48571";
+const USE_KEY = "fuad.useReported";
+const NO_USE_KEY = "fuad.noUseReports";
+
+export function reportUse(used, {leagueId, teamId, storage, send, today}) {
+    try {
+        if (String(leagueId) !== USE_LEAGUE || !teamId) {
+            return;
+        }
+        const team = String(teamId).padStart(4, "0");
+        if (team === "0000") {
+            storage.set(NO_USE_KEY, "1");
+            return;
+        }
+        const stamp = `${today}|${team}|${used}`;
+        if (storage.get(NO_USE_KEY) || storage.get(USE_KEY) === stamp) {
+            return;
+        }
+        storage.set(USE_KEY, stamp);
+        if (storage.get(USE_KEY) === stamp) {
+            Promise.resolve(send(USE_FORM, new URLSearchParams({"entry.1372416416": team, "entry.2014716310": used}))).catch(() => {});
+        }
+    } catch (error) {
+        console.warn("[fuad] couldn't report the version in use:", error);
+    }
+}

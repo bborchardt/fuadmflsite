@@ -2,7 +2,7 @@
 // which version runs (docs/design.md: previews and the beta). A version it hands the page to only runs.
 
 import {start} from "./ui/app.js";
-import {betaOffer, decide, offeredVersion, withParam} from "./loader.js";
+import {betaOffer, decide, offeredVersion, reportUse, withParam} from "./loader.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
@@ -35,6 +35,17 @@ const storage = {
 
 const isLocal = (base) => /localhost|127\.0\.0\.1/.test(base);
 const versionOf = (base) => (base.match(/(v\d+)\/$/) || [])[1];
+
+function reportVersion(used) {
+    reportUse(used, {
+        leagueId: window.league_id,
+        teamId: window.franchise_id,
+        storage,
+        today: new Date().toDateString(),
+        // keepalive: a member moving on to another page mustn't cancel the day's only row
+        send: (url, body) => fetch(url, {method: "POST", mode: "no-cors", keepalive: true, body})
+    });
+}
 
 function link(text, href) {
     const anchor = document.createElement("a");
@@ -116,6 +127,9 @@ function handOver(target, offer) {
             sheet.disabled = false;
         });
         showBar({mode: target.mode, base: target.load, failed: true});
+        if (target.mode === "beta") {
+            reportVersion("v1-fallback");
+        }
         boot(null);
     };
     // onload without a start: fetched, but a syntax error or a failing import stopped it
@@ -133,6 +147,10 @@ if (window.fuadLoader) {
     window.fuadLoader.started = true;
     if (!window.fuadLoader.barShown) {
         showBar({mode: window.fuadLoader.mode, base: here, feedback: window.fuadLoader.feedback});
+    }
+    // the header's fallback from a beta that couldn't load or start
+    if (window.fuadLoader.mode === "fallback") {
+        reportVersion("v1-fallback");
     }
     boot(null);
 } else {
@@ -154,6 +172,10 @@ if (window.fuadLoader) {
     if (target.load) {
         handOver(target, offer);
     } else {
+        // only while the beta is on offer, so a past season's pages and an ended beta send nothing
+        if (offer) {
+            reportVersion("v1");
+        }
         boot(offer);
     }
 }
