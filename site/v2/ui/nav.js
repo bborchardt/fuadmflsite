@@ -46,7 +46,7 @@ export function sections({base, leagueId, franchiseId, rebuilt = []}) {
         {name: "Home", href: tab("Main"), match: {tabs: ["Main"], paths: ["mb", "processed_waivers"], options: ["03", "76", "09", "26"]}},
         {name: "Lineup", href: page("lineup"), match: {paths: ["lineup"], options: ["02"]}},
         {name: "League", views: [
-            {name: "Scores", href: page("ajax_ls"), match: {paths: ["ajax_ls"], options: ["22", "15"]}},
+            {name: "Scores", href: page("ajax_ls"), match: {paths: ["ajax_ls"], options: ["22"]}},
             {name: "Standings", href: tab("Standings"), match: {paths: ["standings"], tabs: ["Standings"]}},
             {name: "Power", href: option("101"), match: {options: ["101"]}},
             // MFL has no page for it, so it shows once v2 draws it
@@ -63,7 +63,7 @@ export function sections({base, leagueId, franchiseId, rebuilt = []}) {
             ...(member || !franchiseId ? [{name: "My team", href: option("07", `&F=${franchiseId}`), match: {options: ["07"], mine: true}}] : []),
             {name: "Teams", href: option("07"), match: {options: ["07"]}},
             {name: "Players", href: tab("Contracts"), match: {tabs: ["Contracts"]}},
-            {name: "Draft", href: option("17"), match: {options: ["17", "100"]}}
+            {name: "Draft", href: option("17"), match: {options: ["17"]}}
         ]}
     ];
     return all.map((section) => {
@@ -81,6 +81,32 @@ export function sections({base, leagueId, franchiseId, rebuilt = []}) {
 // a team's page under Teams (`teams`, Rosters › Teams' href), rebuilt or MFL's: id → href
 export function teamLinks(teams) {
     return (id) => (teams.includes("#") ? `${teams}/${encodeURIComponent(id)}` : `${teams}&F=${encodeURIComponent(id)}`);
+}
+
+// v2's page for a link to MFL's page that one of v2's views draws in its place (the site menu's
+// Standings, a team's roster in MFL's reports), so a page goes by one name only; null for any other,
+// and for one with more in its address (a week, a sort), which v2's view may not show
+export function ownHref(all, href, {origin, season, leagueId, franchiseId, teamHref}) {
+    let url;
+    try {
+        url = new URL(href);
+    } catch (error) {
+        return null;
+    }
+    const params = url.searchParams;
+    if (url.origin !== origin || !url.pathname.startsWith(`/${season}/`) || params.get("L") !== String(leagueId)
+        || ![...params.keys()].every((key) => ["L", "O", "F"].includes(key))) {
+        return null;
+    }
+    const team = params.get("F");
+    if (team !== null) {
+        return url.pathname === `/${season}/options` && ["01", "07"].includes(params.get("O")) && /^\d{4}$/.test(team) && team !== "0000"
+            ? teamHref(team) : null;
+    }
+    // a view v2 draws, not a login page or MFL's page itself; Home's pages (All moves, Rules) are pages of their own
+    const found = locate(all, pageOf(url), franchiseId);
+    const view = found && found.view;
+    return view && !view.login && view.href.includes("/home/") ? view.href : null;
 }
 
 // whether following `href` loads another page, rather than changing this one's #

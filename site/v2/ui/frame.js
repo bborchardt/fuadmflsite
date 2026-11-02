@@ -6,7 +6,7 @@
 import settings, {league} from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
 import {testLeagueNote} from "./test-league.js";
-import {REBUILT, leavesPage, locate, pageOf, sections, teamLinks} from "./nav.js";
+import {REBUILT, leavesPage, locate, ownHref, pageOf, sections, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
 import {installPopup} from "./popup.js";
@@ -308,28 +308,15 @@ export function drawFrame({context}) {
     const rosters = all.find((section) => section.name === "Rosters");
     const teamHref = teamLinks(rosters.views.find((view) => view.name === "Teams").href);
     installPopup({context, franchiseId, teamHref});
-    toOwnTeamPages({season, leagueId, teamHref});
+    toOwnPages(all, {origin: window.location.origin, season, leagueId, franchiseId, teamHref});
 }
 
-// MFL's links to a team's page this season (the message board's posters, MFL's own reports) lead to
-// v2's instead, set as the link is used, so a new tab or a copied link gets it too
-function toOwnTeamPages({season, leagueId, teamHref}) {
-    const ours = (link) => {
-        let url;
-        try {
-            url = new URL(link.href);
-        } catch (error) {
-            return null;
-        }
-        const params = url.searchParams;
-        const team = params.get("F") || "";
-        const only = [...params.keys()].every((key) => ["L", "F", "O"].includes(key));
-        return url.origin === window.location.origin && url.pathname === `/${season}/options` && only && params.get("L") === String(leagueId)
-            && ["01", "07"].includes(params.get("O")) && /^\d{4}$/.test(team) && team !== "0000" ? teamHref(team) : null;
-    };
+// MFL's links to a page one of v2's views draws instead (the site menu's, MFL's own reports', the
+// message board's posters) lead to v2's, set as the link is used, so a new tab or a copied link gets it too
+function toOwnPages(all, options) {
     ["click", "auxclick", "contextmenu"].forEach((type) => document.addEventListener(type, (event) => {
         const link = event.target.closest && event.target.closest("a[href]");
-        const href = link && ours(link);
+        const href = link && ownHref(all, link.href, options);
         if (href) {
             link.href = href;
         }
