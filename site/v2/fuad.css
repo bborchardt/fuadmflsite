@@ -2996,17 +2996,26 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-pick-number { font-variant-numeric: tabular-nums; font-weight: 600; }
 
-#fuad-rosters .fuad-team-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+#fuad-rosters .fuad-team-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 0; }
 
-#fuad-rosters .fuad-team-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+/* margins, not gap, inside: older iPhones (iOS 14.0–14.4) have no gap in flex rows. Room for the name
+   before Propose a trade, which wraps below on a narrow phone */
+#fuad-rosters .fuad-team-title { flex: 1 1 12em; min-width: 0; display: flex; flex-direction: column; padding-right: 16px; }
+
+#fuad-rosters .fuad-team-title > * + * { margin-top: 4px; }
+
+#fuad-rosters .fuad-team-head > .fuad-team-pic-xl,
+#fuad-rosters .fuad-team-head > .fuad-team-banner { margin-right: 16px; }
+
+#fuad-rosters .fuad-team-name { overflow-wrap: anywhere; }
 
 /* the owner, for a member (rosters-view.js fillOwners): under the name, in a list too */
 #fuad-rosters .fuad-owner:empty { display: none; }
 
 #fuad-rosters .fuad-owner a { color: inherit; text-decoration: underline; text-decoration-color: var(--fuad-faint); overflow-wrap: anywhere; }
 
-#fuad-rosters .fuad-team-list .fuad-owner,
-#fuad-rosters .fuad-teams .fuad-owner { display: block; margin-top: 2px; font-weight: 400; }
+#fuad-rosters .fuad-team-list .fuad-owner:not(:empty),
+#fuad-rosters .fuad-teams .fuad-owner:not(:empty) { display: block; margin-top: 2px; font-weight: 400; }
 
 #fuad-rosters .fuad-team-name { flex: 1; margin: 0; font-family: var(--fuad-display); font-size: 26px; font-weight: 700; color: var(--fuad-text); text-transform: none; background: none; border: 0; padding: 0; }
 

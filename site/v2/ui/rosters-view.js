@@ -178,10 +178,9 @@ export function scalePanel() {
 
 // ---- A team's page and Teams ----
 
-// a team in My team's layout. `fromTeams`: under Teams, headed by its name (the browser's Back and
-// the Teams view lead out); `tradeHref`: Propose a trade, on another team's page for a member logged in
-// the head: the team's picture, its name, its owner (filled in for a member, ownerMarkup) and record,
-// and on another team's page from Teams, Propose a trade
+// a team in My team's layout, headed by its picture, name, owner (filled in for a member, fillOwners)
+// and record. `fromTeams`: opened from Teams (the browser's Back and the Teams view lead out), where
+// `tradeHref` is Propose a trade, on another team's page for a member logged in
 export function teamMarkup({sheet, picks, live, own, fromTeams, tradeHref, season}) {
     const {banner, icon} = teamPicturesMarkup(sheet.id);
     return `
