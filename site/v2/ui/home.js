@@ -10,7 +10,7 @@ import {drawPanel} from "./panel.js";
 import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
-import {addedSince, formLengths, lengthTopics} from "../lib/lengths.js";
+import {addedSince, formLengths, lengthTopics, readFormPost} from "../lib/lengths.js";
 import {
     boardTopics, calendarDates, clock, comingUp, contractTopic, dayText, draftDayUnsigned, homePhase, leagueAlerts,
     lineupProblems, myAlerts, nextBidRun, recentMoves
@@ -304,7 +304,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             posts.push(...asArray((await exp("messageBoardThread", {THREAD: thread.id})).post));
         }
         const {years, unread} = formLengths({posts, franchiseId, due, players: built.boardContext.playerNames});
-        return {due: due.filter((id) => !years.has(id)), sent: years.size > 0, unread: unread.map((post) => Number(post.postTime))};
+        return {due: due.filter((id) => !years.has(id)), sent: posts.some((post) => post.franchise === franchiseId && readFormPost(post.body)), unread: unread.map((post) => Number(post.postTime))};
     };
     let lengthsLayer = null;
     const openLengths = async (alert, opener) => {

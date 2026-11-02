@@ -258,8 +258,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
     unflagged
   - an add before the cut-down date would be taken as the form's, and its bid comment or post not
     read: the league has none
-  - another team's form post counts for a player only with his name and position, so two players
-    of one name and position on two teams could take each other's
+  - another team's form post counts for a player only with his name, NFL team and position: one
+    who changed NFL teams between the post and a trade stays due, and the form shows again
   - a length without a digit or "year" ("Hill for two") isn't read
   - before reversing an add for a team under the cap, set the player's years to 0, or the drop is
     charged a penalty

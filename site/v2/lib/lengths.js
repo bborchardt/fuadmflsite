@@ -59,15 +59,15 @@ const looksLikeLengths = (text) => /\d|\byears?\b|\byrs?\b/i.test(text);
 
 // What the board's form posts say about the players a team owes a length (`due`, ids):
 // `{years: Map(id → years), unread: [posts]}`. The latest form post naming a player wins, whichever
-// team sent it, as a length sent before a trade holds after it; another team's must name his
-// position too. `unread` are the team's own posts that look like lengths but weren't made with the
+// team sent it, as a length sent before a trade holds after it; another team's must name his NFL
+// team and position too, so a namesake's isn't taken (one who changed NFL teams since stays due). `unread` are the team's own posts that look like lengths but weren't made with the
 // form, while any player is still without one. `players` is MFL's players export by id.
 export function formLengths({posts, franchiseId, due, players}) {
     const owed = due.map((id) => players.get(id)).filter(Boolean);
-    // by name alone, as a player's NFL team can change between the post and its reading
+    // the team's own by name alone, as a player's NFL team can change between the post and its reading
     const named = (entry, own) => {
-        const same = owed.filter((player) => player.name === entry.name && (own || player.position === entry.position));
-        const exact = same.length > 1 ? same.filter((player) => player.team === entry.team && player.position === entry.position) : same;
+        const same = owed.filter((player) => player.name === entry.name);
+        const exact = same.length > 1 || !own ? same.filter((player) => player.team === entry.team && player.position === entry.position) : same;
         return exact.length === 1 ? exact[0].id : null;
     };
     const years = new Map();

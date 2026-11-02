@@ -56,9 +56,11 @@ test("a team's lengths: the latest form post per player, any team's; its own pos
     const missing = formLengths({posts: posts.filter((post) => post.franchise === "0001"), franchiseId: "0001", due: ["1", "2"], players});
     assert.deepEqual(missing.unread.map((post) => post.body), ["Mahomes 3, Kelce 2"]);
     assert.deepEqual(formLengths({posts, franchiseId: "0002", due: ["3"], players}).unread, []);
-    // another team's post must name his position: Beta's Kelce line isn't for a TE-less namesake
-    const namesake = new Map([...players, ["6", {id: "6", name: "Kelce, Travis", team: "KCC", position: "WR"}]]);
-    assert.deepEqual([...formLengths({posts, franchiseId: "0003", due: ["6"], players: namesake}).years], []);
+    // another team's post must name his NFL team and position: Beta's Kelce line isn't a namesake's
+    for (const other of [{team: "KCC", position: "WR"}, {team: "FA", position: "TE"}]) {
+        const namesake = new Map([...players, ["6", {id: "6", name: "Kelce, Travis", ...other}]]);
+        assert.deepEqual([...formLengths({posts, franchiseId: "0003", due: ["6"], players: namesake}).years], [], other.team);
+    }
     const all = formLengths({posts, franchiseId: "0001", due: ["1"], players});
     assert.deepEqual([[...all.years], all.unread], [[["1", 4]], []]);
 });
