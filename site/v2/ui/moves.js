@@ -31,7 +31,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const [players, leagueInfo, calendar, facts, found] = await Promise.all([
         cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
         // only the teams' names and the league's settings, which don't change in a day
-        cached(`fuad.league.${season}.${leagueId}`, DAY, () => fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch})),
+        cached(`fuad.leagueSettings.${season}.${leagueId}`, DAY, async () => withoutOwners(await fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch}))),
         fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
         seasonFacts(context).catch(() => ({})),
         freshAtOnce()
@@ -46,6 +46,17 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     // MFL's limit on conditional bid groups
     const maxGroups = Number(leagueInfo.maxWaiverRounds) || 1;
     return {season, league, mflNames, groups, maxGroups, positions: lineupPositions(leagueInfo), pending: pendingWithComments(pendingWaivers, groups), calendar, facts, franchiseId, fresh: found};
+}
+
+// A member's league export names each owner, with their email: kept under a key any viewer of the
+// device reads, it mustn't carry them (rosters-view.js fillOwners)
+export function withoutOwners(league) {
+    const teams = league && league.franchises && league.franchises.franchise;
+    if (!teams) {
+        return league;
+    }
+    const strip = (team) => Object.fromEntries(Object.entries(team || {}).filter(([field]) => !["owner_name", "email", "lastVisit"].includes(field)));
+    return {...league, franchises: {...league.franchises, franchise: Array.isArray(teams) ? teams.map(strip) : strip(teams)}};
 }
 
 // what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
