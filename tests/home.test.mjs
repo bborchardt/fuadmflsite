@@ -316,11 +316,13 @@ test("recent moves: the latest 10 adds, bids, IR moves and trades, as saved 4 Oc
     assert.ok(!trade.parts.some((part) => part.player && /2028/.test(part.text)));
 });
 
-test("board topics: the newest five, and the contracts topic for lengths", () => {
+test("board topics: up to the newest ten, and the contracts topic for lengths", () => {
     const board = fixture("message-board.json").messageBoard;
     assert.deepEqual(boardTopics(board).map((t) => [t.title, t.when]), [
-        ["Standings", "Oct 3"], ["Conditional starters", "Oct 1"], ["Free Agent Contracts", "Oct 1"], ["Bateman Pickup", "Sep 27"], ["Tua pickup", "Sep 8"]
+        ["Standings", "Oct 3"], ["Conditional starters", "Oct 1"], ["Free Agent Contracts", "Oct 1"], ["Bateman Pickup", "Sep 27"], ["Tua pickup", "Sep 8"],
+        ["Rosters loaded, contract lengths due by EOD", "Sep 7"], ["Rule Change Proposal", "Sep 6"]
     ]);
+    assert.equal(boardTopics(board, 3).length, 3);
     assert.equal(contractTopic(board).subject, "Free Agent Contracts");
     assert.equal(contractTopic({}), null);
 });
@@ -338,11 +340,12 @@ test("chat: oldest first, private messages only to or from the viewer, as saved 
     assert.deepEqual(readChat('<messages><message id="1791682615a" franchise_id="0002" to="" message=":clear:"/></messages>', {viewer: "0001"}), []);
 });
 
-test("board topics from the board's own page, for guests: the newest five, as saved 28 Oct 2026", () => {
+test("board topics from the board's own page, for guests: up to the newest ten, as saved 28 Oct 2026", () => {
     const html = readFileSync(new URL("./fixtures/pages/guest/mb-board_show.html", import.meta.url), "utf8");
     assert.deepEqual(pageTopics(html).map((t) => [t.id, t.title, t.when]), [
         ["6758929", "New League Site", "Oct 25"], ["6737097", "Free Agent Contracts", "Oct 22"], ["6749013", "Fuad bot", "Oct 4"],
-        ["6744371", "Standings", "Oct 3"], ["6742184", "Conditional starters", "Oct 1"]
+        ["6744371", "Standings", "Oct 3"], ["6742184", "Conditional starters", "Oct 1"], ["6745531", "Bateman Pickup", "Sep 27"],
+        ["6734927", "Tua pickup", "Sep 8"], ["6734096", "Rosters loaded, contract lengths due by EOD", "Sep 7"], ["6732561", "Rule Change Proposal", "Sep 6"]
     ]);
     assert.deepEqual(pageTopics('<table class="topiclist"><tr><th>Topic</th></tr></table>'), []);
     assert.equal(pageTopics(readFileSync(new URL("./fixtures/pages/guest/lineup.html", import.meta.url), "utf8")), null);
