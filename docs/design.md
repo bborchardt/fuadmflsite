@@ -35,6 +35,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   messages forward at renewal, so a past season keeps the version, and the rules, it was played
   under. Rule changes and visible redesigns get a new version; small fixes go in place. A version
   offered only as the beta changes in place, redesigns included: only its testers run it.
+- **The commissioner's results screen** (Home › Load auction or rookie draft, `ui/load-form.js`,
+  `lib/load.js`) reads the league's sheet as pasted from the spreadsheet and sends only what differs
+  from MFL, so a run that stops partway is finished by reading the sheet again. Rosters go through
+  Load/Unload Rosters, the commissioner's tool: it skips the add rules, and its `LOAD_ROSTERS`
+  transactions are neither adds owing a length within the hour nor drops owing a penalty, so auction
+  buys and rookies get theirs with Home's form. Names are matched to MFL's ignoring periods,
+  apostrophes, hyphens and suffixes; one still unmatched is picked from a list, never guessed.
 - **League rules live once, in `lib/`,** shared by the page and the daily job, so League Alerts and
   the job's flags can't disagree. The job loads them from the version `RULES_VERSION` names, so a
   new version's `lib/` must keep the exports the job reads.

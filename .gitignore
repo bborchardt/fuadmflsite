@@ -9,3 +9,6 @@ node_modules/
 dist/
 # MFL's skin stylesheets, fetched by tools/verify/skins.py: MFL's, not the repo's to publish
 tools/verify/mfl-skins/
+# spreadsheets name owners; the repo is public
+*.xlsx
+~$*

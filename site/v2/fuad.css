@@ -1620,6 +1620,49 @@ body .fuad-lengths select {
 }
 .fuad-lengths .fuad-cta:disabled { opacity: 0.6; cursor: default; }
 
+/* the commissioner's Load results (ui/load-form.js), on the lengths form's fields */
+.fuad-load .fuad-load-body > * + * { margin-top: 16px; }
+.fuad-load-kinds { display: flex; flex-wrap: wrap; }
+.fuad-load-kinds > * { margin: 0 8px 8px 0; }
+.fuad-load .fuad-add-chip {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--fuad-raised-edge);
+    border-radius: 10px;
+    background: none;
+    color: var(--fuad-text);
+    font: 14px var(--fuad-body);
+    cursor: pointer;
+}
+.fuad-load .fuad-add-chip[aria-pressed="true"] { border-color: var(--fuad-text); background: var(--fuad-text); color: var(--fuad-page); }
+.fuad-load-paste { display: block; }
+.fuad-load-paste .fuad-meta { display: block; margin-bottom: 6px; }
+body .fuad-load textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--fuad-field);
+    border-radius: 10px;
+    background: var(--fuad-page);
+    color: var(--fuad-text);
+    /* 16 px, so iPhones don't zoom in on focus */
+    font: 16px var(--fuad-body);
+    padding: 10px 12px;
+    resize: vertical;
+}
+.fuad-load textarea:focus { border-color: var(--fuad-accent); outline: 0; }
+.fuad-load-note { margin: 0; color: var(--fuad-text); }
+.fuad-load-bad { color: var(--fuad-bad) !important; }
+.fuad-load-choices .fuad-rows,
+.fuad-load-list,
+.fuad-load-log { margin: 0; padding: 0; list-style: none; }
+.fuad-load-team h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 4px; font: 600 15px var(--fuad-body); }
+.fuad-load-team h3 .fuad-meta { margin-left: 12px; font-weight: 400; }
+.fuad-load-team + .fuad-load-team { margin-top: 20px; }
+.fuad-load-list li { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--fuad-hairline); }
+.fuad-load-list li > .fuad-meta { flex: 0 0 auto; margin-left: 12px; text-align: right; }
+.fuad-load-log li { padding: 2px 0; color: var(--fuad-muted); }
+
 .fuad-popup-title { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 
 /* the member's watch list: a star by the close button, filled when watched */
