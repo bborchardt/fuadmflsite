@@ -128,7 +128,8 @@ copies the home page messages forward, so the site keeps running without a paste
 alerts has **Load auction or rookie draft**. Copy the whole Franchises tab (or the Rookie tab) from
 the league's sheet and paste it in; it lists, team by team, who is unloaded, loaded and set, and
 asks about any owner or player name it can't place. **Send to MFL** goes through MFL's Load/Unload
-Rosters, so no add rules or locks apply, then sets the salaries and years; the rookie draft loads
+Rosters, so no add rules or locks apply, then sets the salaries and years, clearing those of
+players unloaded to no team; the rookie draft loads
 the picks through MFL's draft import at the rookie scale, 0 years. Afterwards it reads MFL back and
 lists anything still different; reading the sheet again sends just that.
 

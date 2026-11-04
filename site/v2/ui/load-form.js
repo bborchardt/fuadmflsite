@@ -90,7 +90,7 @@ function readSheet(kind, text, {players, rosters, franchises, chosen}) {
     return {kind, sheet, owners, entries, bad};
 }
 
-function plan(read, {chosen, rosters, players, draft, teamCount}) {
+function plan(read, {chosen, rosters, players, draft, teamCount, clearing = new Set()}) {
     if (read.kind === "auction") {
         const teams = read.sheet.map((team) => ({
             franchiseId: chosen.owners.get(team.owner),
@@ -98,7 +98,11 @@ function plan(read, {chosen, rosters, players, draft, teamCount}) {
                 id: chosen.players.get(`${team.owner}:${player.row}:${player.name}`), salary: player.salary, years: player.years
             }))
         }));
-        return {kind: "auction", teams, ...planAuction({teams, rosters})};
+        const result = planAuction({teams, rosters});
+        // unloaded in an earlier send whose salaries step didn't go through
+        const rostered = new Set(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => entry.id)));
+        const clear = [...new Set(result.clear.concat([...clearing].filter((id) => !rostered.has(id))))];
+        return {kind: "auction", teams, ...result, clear};
     }
     const picks = planRookies({
         picks: read.sheet.map((pick, index) => ({franchiseId: chosen.owners.get(pick.owner), id: chosen.players.get(`${index}:${pick.name}`)})),
@@ -141,7 +145,7 @@ function notOnTeam(picks, rosters) {
 }
 
 const nothingLeft = (result) => !result.conflicts.length && (result.kind === "auction"
-    ? !result.release.length && !result.add.length && !result.salaries.length
+    ? !result.release.length && !result.add.length && !result.salaries.length && !result.clear.length
     : !result.loadDraft && !result.release.length && !result.add.length && !result.salaries.length);
 
 // the review, team by team: what goes, what comes, and what's set
@@ -165,12 +169,13 @@ export function previewMarkup(result, {players, teams, rosters}) {
         const going = result.release.filter((entry) => entry.franchiseId === franchiseId);
         const coming = new Set(result.add.filter((entry) => entry.franchiseId === franchiseId).map((entry) => entry.id));
         const set = result.salaries.filter((entry) => sheet && sheet.players.some((player) => player.id === entry.id));
+        const cleared = new Set(result.clear);
         if (!going.length && !set.length) {
             return "";
         }
         const total = sheet ? sheet.players.reduce((sum, player) => sum + (result.conflicts.some((conflict) => conflict.id === player.id) ? 0 : player.salary), 0) : 0;
         const rows = [
-            ...going.map((entry) => `<li><span>Unload ${esc(name(entry.id))}</span><span class="fuad-meta${entry.years > 0 ? " fuad-load-bad" : ""}">${esc(money(entry.salary))}, ${esc(yearsText(entry.years))}${entry.years > 0 ? " left" : ""}</span></li>`),
+            ...going.map((entry) => `<li><span>Unload ${esc(name(entry.id))}</span><span class="fuad-meta${entry.years > 0 ? " fuad-load-bad" : ""}">${esc(money(entry.salary))}, ${esc(yearsText(entry.years))}${entry.years > 0 ? " left" : ""}${cleared.has(entry.id) ? " → cleared" : ""}</span></li>`),
             ...set.map((entry) => {
                 const was = now.get(entry.id);
                 const from = coming.has(entry.id) || !was ? "" : `${money(Number(was.salary))}, ${yearsText(Number(was.contractYear))} → `;
@@ -179,7 +184,10 @@ export function previewMarkup(result, {players, teams, rosters}) {
         ];
         return `<section class="fuad-load-team"><h3><span>${esc(team(franchiseId))}</span><span class="fuad-meta">${sheet ? `${sheet.players.length} players · ${esc(money(total))}` : ""}</span></h3><ul class="fuad-rows fuad-load-list">${rows.join("")}</ul></section>`;
     }).join("");
-    return `${conflicts}${sections}`;
+    const released = new Set(result.release.map((entry) => entry.id));
+    const only = result.clear.filter((id) => !released.has(id));
+    const clearing = only.length ? `<section class="fuad-load-team"><h3><span>Off every roster</span></h3><ul class="fuad-rows fuad-load-list">${only.map((id) => `<li><span>Clear ${esc(name(id))}</span><span class="fuad-meta">salary and years</span></li>`).join("")}</ul></section>` : "";
+    return `${conflicts}${sections}${clearing}`;
 }
 
 // a commissioner's import, from the logged-in page: MFL answers <status>OK</status> or <error>
@@ -220,6 +228,8 @@ export function openLoadForm({context, built, opener}) {
     const franchises = asList(built.raw.league.franchises && built.raw.league.franchises.franchise);
     const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {init: {cache: "no-store"}});
     const teamCount = teams.size;
+    // players unloaded whose salaries aren't cleared yet, kept across reads
+    const clearing = new Set();
     const state = {kind: "auction", text: "", read: null, result: null, rosters: null, draft: null, busy: false, log: [], error: "", chosen: {owners: new Map(), players: new Map()}};
 
     const choices = () => (state.read ? choicesNeeded(state.read, {players, teams, chosen: state.chosen}) : []);
@@ -267,7 +277,7 @@ export function openLoadForm({context, built, opener}) {
             state.rosters = await fresh("rosters");
             state.draft = state.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
-            state.result = choices().length || !state.read.sheet.length ? null : plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount});
+            state.result = choices().length || !state.read.sheet.length ? null : plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
         } catch (error) {
             state.error = `Couldn’t read MFL’s rosters: ${error.message}`;
         }
@@ -300,12 +310,17 @@ export function openLoadForm({context, built, opener}) {
                 result.add = notOnTeam(result.picks, rosters);
                 result.release = movedFrom(result.picks, rosters);
             }
+            // remembered before any unload, so a send stopped partway still clears them on the next
+            const clear = result.clear || [];
+            clear.forEach((id) => clearing.add(id));
             for (const entry of rosterSteps({rosters, release: result.release, add: result.add})) {
                 const what = entry.unloaded.length ? `Unloaded ${entry.unloaded.length} from` : `Loaded ${entry.loaded.length} onto`;
                 await step(`${what} ${teams.get(entry.franchiseId)}`, () => loadRoster(context, entry.franchiseId, entry.ids, () => fresh("rosters")));
             }
-            if (result.salaries.length) {
-                await step(`Set ${result.salaries.length} salaries and lengths`, () => mflImport(context, "salaries", {DATA: salariesXml(result.salaries), APPEND: "1"}));
+            if (result.salaries.length || clear.length) {
+                const line = [result.salaries.length ? `Set ${result.salaries.length} salaries and lengths` : "", clear.length ? `cleared ${clear.length}` : ""].filter(Boolean).join(", ");
+                await step(line.charAt(0).toUpperCase() + line.slice(1), () => mflImport(context, "salaries", {DATA: salariesXml(result.salaries, clear), APPEND: "1"}));
+                clear.forEach((id) => clearing.delete(id));
             }
         } catch (error) {
             state.error = `MFL refused the last step: ${error.message}. Read the sheet again to send the rest.`;
@@ -314,7 +329,7 @@ export function openLoadForm({context, built, opener}) {
         try {
             state.rosters = await fresh("rosters");
             state.draft = result.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
-            state.result = plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount});
+            state.result = plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
             if (!state.error) {
                 state.log.push(nothingLeft(state.result) ? "Done: MFL matches the sheet." : "MFL doesn’t match the sheet yet: what’s left is below.");
             }
@@ -345,7 +360,7 @@ export function openLoadForm({context, built, opener}) {
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
         }
         if (!choices().length) {
-            state.result = plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount});
+            state.result = plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
         }
         render();
     });

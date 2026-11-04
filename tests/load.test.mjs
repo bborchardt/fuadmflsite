@@ -81,6 +81,7 @@ test("the auction's changes: releases, adds and salaries, a player on two sheets
         release: [{franchiseId: "0001", id: "2", years: 0, salary: 20}, {franchiseId: "0002", id: "11", years: 2, salary: 1}],
         add: [{franchiseId: "0002", id: "5"}, {franchiseId: "0002", id: "6"}],
         salaries: [{id: "1", salary: 68, years: 0}, {id: "5", salary: 1, years: 0}, {id: "6", salary: 1, years: 3}],
+        clear: ["2", "11"],
         conflicts: [{id: "9", franchiseIds: ["0002", "0004"]}]
     });
     // bought from a team the sheet doesn't have: unloading him isn't the sheet's to say
@@ -110,6 +111,7 @@ test("the rookie tab: its Pick, Owner and Player columns in pick order, on the r
         + '<draftPick round="01" pick="01" franchise="0001" player="9"/><draftPick round="01" pick="02" franchise="0002" player="1"/>'
         + '<draftPick round="02" pick="01" franchise="0002" player="3"/></draftUnit></draftResults>');
     assert.equal(salariesXml([{id: "9", salary: 10, years: 0}]), '<salaries><leagueUnit unit="LEAGUE"><player id="9" salary="10" contractYear="0"/></leagueUnit></salaries>');
+    assert.equal(salariesXml([], ["2"]), '<salaries><leagueUnit unit="LEAGUE"><player id="2" salary="" contractYear=""/></leagueUnit></salaries>');
 });
 
 test("the rosters sent: every team's whole roster, unloads before loads so a player can change teams", () => {

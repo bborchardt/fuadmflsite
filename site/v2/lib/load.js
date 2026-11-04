@@ -117,8 +117,9 @@ export function matchOwner(owner, franchises) {
 // What the auction's sheet changes on MFL, team by team, once every team and player is matched:
 // `teams` [{franchiseId, players: [{id, salary, years}]}] (salary null: released), `rosters` MFL's
 // export. Resolves to {release: [{franchiseId, id, years, salary}], add: [{franchiseId, id}],
-// salaries: [{id, salary, years}], conflicts: [{id, franchiseIds}]}. A player on two teams' sheets
-// with a $ is a conflict, left out of the rest.
+// salaries: [{id, salary, years}], clear: [ids], conflicts: [{id, franchiseIds}]}. `clear` is who's
+// released to no team: MFL keeps an unloaded player's salary and years until they're cleared. A
+// player on two teams' sheets with a $ is a conflict, left out of the rest.
 export function planAuction({teams, rosters}) {
     const held = new Map();
     for (const team of asList(rosters && rosters.franchise)) {
@@ -166,7 +167,8 @@ export function planAuction({teams, rosters}) {
             salaries.push({id, salary: player.salary, years});
         }
     }
-    return {release, add, salaries, conflicts};
+    const clear = release.filter((entry) => !kept.has(entry.id)).map((entry) => entry.id);
+    return {release, add, salaries, clear, conflicts};
 }
 
 // The Load/Unload Rosters posts that make the plan's `release` and `add`, each a team's whole roster
@@ -212,8 +214,9 @@ export function draftResultsXml(picks) {
         `<draftPick round="${two(entry.round)}" pick="${two(entry.pick)}" franchise="${attr(entry.franchiseId)}" player="${attr(entry.id)}"/>`).join("")}</draftUnit></draftResults>`;
 }
 
-// MFL's salaries import, laid over what MFL has (APPEND)
-export function salariesXml(entries) {
-    return `<salaries><leagueUnit unit="LEAGUE">${entries.map((entry) =>
+// MFL's salaries import, laid over what MFL has (APPEND); `clear` (ids) set blank, as a player on no
+// roster has (the clone, 3 Nov 2026)
+export function salariesXml(entries, clear = []) {
+    return `<salaries><leagueUnit unit="LEAGUE">${entries.concat(clear.map((id) => ({id, salary: "", years: ""}))).map((entry) =>
         `<player id="${attr(entry.id)}" salary="${attr(entry.salary)}" contractYear="${attr(entry.years)}"/>`).join("")}</leagueUnit></salaries>`;
 }

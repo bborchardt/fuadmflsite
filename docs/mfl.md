@@ -93,7 +93,8 @@ MFL documents little of this.
   player: the team's whole roster, anyone left out unloaded. It loads a locked player, keeps the
   others' salaries, years and IR, and logs a `LOAD_ROSTERS` transaction ("added,|dropped,"). The
   commissioner's `fcfsWaiver` import refuses a locked player ("Cannot Be Added Because Is Locked").
-  The `draftResults` import puts each pick on its team's roster but, unlike its documentation says,
+  An unloaded player keeps his salary and years; the `salaries` import (APPEND) with
+  `salary="" contractYear=""` clears them. The `draftResults` import puts each pick on its team's roster but, unlike its documentation says,
   overwrites only the picks it's sent, keeping the others. `auctionResults` needs the auction set up
   on MFL ("Auction has not been setup yet").
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
