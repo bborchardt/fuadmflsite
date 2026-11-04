@@ -633,6 +633,12 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
     assert.deepEqual(rfaEntries(kept), ["Set RFA B0 Player (Beta) to $0.01."]);
     assert.deepEqual(JSON.parse(readFileSync(join(kept.dataDir, "rfa-salaries.json"), "utf8")), {2027: ["100", "200"]});
 
+    // a league in its first season (or a test league without last season) has no RFAs, and isn't flagged
+    const first = run({scenario: {...scenario, seasons: [2027]}, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {}});
+    assert.deepEqual(rfaEntries(first), []);
+    assert.match(first.stdout, /The league has no 2026 site, so it has no RFAs\./);
+    assert.ok(!/RFA salaries:/.test(first.summary), first.summary);
+
     // once week 1 has kicked off, nothing
     const fall = run({scenario, env: {...LOGIN, RFA_SALARIES: "apply"}, now: "2027-09-20T12:00:00Z", files: {}});
     assert.deepEqual(rfaEntries(fall), []);

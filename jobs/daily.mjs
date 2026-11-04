@@ -533,9 +533,17 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
         log(built.started ? "Week 1 has kicked off; RFA salaries are set only before it." : "The season's start isn't known; RFA salaries skipped.");
         return [];
     }
+    // a season with no site answers 404 or an error document, as leagueSeason finds
     const lastRosters = await fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
+        if (error.status === 404 || /Invalid league ID/i.test(error.message)) {
+            return null;
+        }
         throw new Error(`last season's rosters couldn't be read (${error.message}), so no RFA salaries were set`);
     });
+    if (!lastRosters) {
+        log(`The league has no ${season - 1} site, so it has no RFAs.`);
+        return [];
+    }
     const added = new Set(pendingAdds({rosters, transactions, players: playerNames}).map((add) => add.playerId));
     // a player set once is settled after: an RFA kept for $1 with no bids (bylaw 6.5) looks like an
     // unsettled one when last season's salary was $1 too
