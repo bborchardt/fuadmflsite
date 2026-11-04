@@ -22,7 +22,7 @@ const TO_DO = new Map([
     ["trades", {page: "trades", where: "Trades"}]
 ]);
 export const RECENT_MOVES = 10;
-export const TOPICS = 5;
+export const TOPICS = 10;
 
 // "Thu Oct 8"
 export const dayText = (seconds) => new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", timeZone: TIME_ZONE}).replace(",", "");
