@@ -88,6 +88,14 @@ MFL documents little of this.
   `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers
   `<status>OK</status>` or `<error>`, and a post's line breaks are lost, so v2 links to MFL's own
   post pages instead; `salaries` needs the commissioner's cookie.
+- **Loading results (the clone, 3 Nov 2026):** Load/Unload Rosters (`csetup?C=LOADROST&FRANCHISE=…`)
+  posts to `/<year>/load_rosters` with `L`, `FRANCHISE_ID`, `C=LOADROST` and a `ROSTER` field per
+  player: the team's whole roster, anyone left out unloaded. It loads a locked player, keeps the
+  others' salaries, years and IR, and logs a `LOAD_ROSTERS` transaction ("added,|dropped,"). The
+  commissioner's `fcfsWaiver` import refuses a locked player ("Cannot Be Added Because Is Locked").
+  The `draftResults` import puts each pick on its team's roster but, unlike its documentation says,
+  overwrites only the picks it's sent, keeping the others. `auctionResults` needs the auction set up
+  on MFL ("Auction has not been setup yet").
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
   Commissioner", `logout?L=<league>&BECOME=0000`. As the commissioner, "Become Owner" goes the other
   way, to their own team, with no choice of team: `BECOME=9999` in the menu and `BECOME=<team>` in the

@@ -388,14 +388,27 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             }
         });
     } else if (loggedIn) {
+        const commish = franchiseId === "0000";
         drawPanel(panels.alerts, {
             heading: "My alerts",
+            // the auction's and rookie draft's results, from the league's sheet (ui/load-form.js)
+            actions: commish ? '<button type="button" class="fuad-text-button fuad-load-open">Load auction or rookie draft</button>' : "",
             what: "my alerts",
             load: () => null,
             render: (value, body) => {
                 body.innerHTML = '<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>';
             }
         });
+        if (commish) {
+            panels.alerts.addEventListener("click", (event) => {
+                const button = event.target.closest(".fuad-load-open");
+                if (button) {
+                    Promise.all([league(), import("./load-form.js")])
+                        .then(([built, form]) => form.openLoadForm({context, built, opener: button}))
+                        .catch((error) => console.warn("[fuad] couldn't open Load results:", error));
+                }
+            });
+        }
     }
 
     const leagueShown = drawPanel(panels.league, {
