@@ -217,6 +217,8 @@ export function draftResultsXml(picks) {
 // MFL's salaries import, laid over what MFL has (APPEND); `clear` (ids) set blank, as a player on no
 // roster has (the clone, 3 Nov 2026)
 export function salariesXml(entries, clear = []) {
-    return `<salaries><leagueUnit unit="LEAGUE">${entries.concat(clear.map((id) => ({id, salary: "", years: ""}))).map((entry) =>
+    const set = new Set(entries.map((entry) => entry.id));
+    const blank = clear.filter((id) => !set.has(id)).map((id) => ({id, salary: "", years: ""}));
+    return `<salaries><leagueUnit unit="LEAGUE">${entries.concat(blank).map((entry) =>
         `<player id="${attr(entry.id)}" salary="${attr(entry.salary)}" contractYear="${attr(entry.years)}"/>`).join("")}</leagueUnit></salaries>`;
 }

@@ -101,7 +101,8 @@ function plan(read, {chosen, rosters, players, draft, teamCount, clearing = new 
         const result = planAuction({teams, rosters});
         // unloaded in an earlier send whose salaries step didn't go through
         const rostered = new Set(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => entry.id)));
-        const clear = [...new Set(result.clear.concat([...clearing].filter((id) => !rostered.has(id))))];
+        const placed = new Set(result.add.map((entry) => entry.id).concat(result.salaries.map((entry) => entry.id)));
+        const clear = [...new Set(result.clear.concat([...clearing].filter((id) => !rostered.has(id) && !placed.has(id))))];
         return {kind: "auction", teams, ...result, clear};
     }
     const picks = planRookies({

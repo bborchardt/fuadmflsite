@@ -112,6 +112,8 @@ test("the rookie tab: its Pick, Owner and Player columns in pick order, on the r
         + '<draftPick round="02" pick="01" franchise="0002" player="3"/></draftUnit></draftResults>');
     assert.equal(salariesXml([{id: "9", salary: 10, years: 0}]), '<salaries><leagueUnit unit="LEAGUE"><player id="9" salary="10" contractYear="0"/></leagueUnit></salaries>');
     assert.equal(salariesXml([], ["2"]), '<salaries><leagueUnit unit="LEAGUE"><player id="2" salary="" contractYear=""/></leagueUnit></salaries>');
+    // one set a salary is never also cleared
+    assert.equal(salariesXml([{id: "9", salary: 10, years: 0}], ["9"]), '<salaries><leagueUnit unit="LEAGUE"><player id="9" salary="10" contractYear="0"/></leagueUnit></salaries>');
 });
 
 test("the rosters sent: every team's whole roster, unloads before loads so a player can change teams", () => {
