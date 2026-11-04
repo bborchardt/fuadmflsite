@@ -83,6 +83,15 @@ test("the auction's changes: releases, adds and salaries, a player on two sheets
         salaries: [{id: "1", salary: 68, years: 0}, {id: "5", salary: 1, years: 0}, {id: "6", salary: 1, years: 3}],
         conflicts: [{id: "9", franchiseIds: ["0002", "0004"]}]
     });
+    // bought from a team the sheet doesn't have: unloading him isn't the sheet's to say
+    const off = planAuction({teams: [{franchiseId: "0001", players: [{id: "8", salary: 4, years: 1}]}], rosters});
+    assert.deepEqual(off.conflicts, [{id: "8", franchiseIds: ["0003", "0001"]}]);
+    assert.deepEqual([off.add, off.salaries], [[], []]);
+});
+
+test("a $ or Yrs that isn't a number is read as such, not as nothing", () => {
+    const [team] = readAuction(tsv([["Ann", "", "$", "Yrs"], ["Lamar Jackson", "QB2", "-", "1"], ["AJ Brown", "WR7", "35", "x"]]));
+    assert.deepEqual(team.players.map(({salary, years}) => [salary, years]), [[NaN, 1], [35, NaN]]);
 });
 
 test("the rookie tab: its Pick, Owner and Player columns in pick order, on the rookie scale", () => {

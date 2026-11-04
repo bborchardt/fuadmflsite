@@ -135,6 +135,14 @@ export function planAuction({teams, rosters}) {
     const conflicts = [...kept].filter(([, list]) => list.length > 1).map(([id, list]) => ({id, franchiseIds: list.map((entry) => entry.franchiseId)}));
     const conflicted = new Set(conflicts.map((conflict) => conflict.id));
     const sheetTeams = new Set(teams.map((team) => team.franchiseId));
+    // a player bought from a team the sheet doesn't have would be on both rosters
+    for (const [id, list] of kept) {
+        const now = held.get(id);
+        if (list.length === 1 && now && !sheetTeams.has(now.franchiseId) && now.franchiseId !== list[0].franchiseId) {
+            conflicts.push({id, franchiseIds: [now.franchiseId, list[0].franchiseId]});
+            conflicted.add(id);
+        }
+    }
     const release = [];
     for (const [id, now] of held) {
         const going = kept.get(id);
