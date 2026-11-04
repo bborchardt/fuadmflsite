@@ -10,8 +10,9 @@ import {drawPanel} from "./panel.js";
 import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
+import {addedSince, formLengths, lengthTopics, readFormPost} from "../lib/lengths.js";
 import {
-    boardTopics, calendarDates, clock, comingUp, contractTopic, dayText, homePhase, leagueAlerts,
+    boardTopics, calendarDates, clock, comingUp, contractTopic, dayText, draftDayUnsigned, homePhase, leagueAlerts,
     lineupProblems, myAlerts, nextBidRun, recentMoves
 } from "./home-model.js";
 import {draftPicked, kickoffAt} from "./context.js";
@@ -76,6 +77,9 @@ function alertRows(alerts) {
     return `<ul class="fuad-rows">${alerts.map((alert) => {
         const inner = `<span class="fuad-mark fuad-tone-${esc(alert.tone)}" aria-hidden="true">${esc(alert.mark)}</span>
             <span class="fuad-row-text"><span class="fuad-row-title">${esc(alert.title)}</span>${alert.detail ? `<span class="fuad-meta">${esc(alert.detail)}</span>` : ""}</span>`;
+        if (alert.action) {
+            return `<li><button type="button" class="fuad-alert" data-action="${esc(alert.action)}">${inner}${CHEVRON}</button></li>`;
+        }
         return alert.href
             ? `<li><a class="fuad-alert" href="${esc(alert.href)}">${inner}${CHEVRON}</a></li>`
             : `<li><div class="fuad-alert fuad-alert-still">${inner}</div></li>`;
@@ -286,6 +290,40 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     });
     const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times, weeks}) => comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}));
 
+    // the viewer's players still due a length before the season, read against their posts in the
+    // board's contract topics (lib/lengths.js), reaching back as far as the daily job does. `from`: when
+    // the form gives way to an add's hour (the cut-down date)
+    const lengthsOf = async (built, from) => {
+        const due = draftDayUnsigned(built.franchises.get(franchiseId) || {}).map((player) => player.playerId)
+            .filter((id) => !from || !addedSince(built, id, from));
+        if (!due.length) {
+            return {due: [], sent: false, unread: []};
+        }
+        const posts = [];
+        for (const thread of lengthTopics(await exp("messageBoard", {COUNT: 100}))) {
+            posts.push(...asArray((await exp("messageBoardThread", {THREAD: thread.id})).post));
+        }
+        const {years, unread} = formLengths({posts, franchiseId, due, players: built.boardContext.playerNames});
+        return {due: due.filter((id) => !years.has(id)), sent: posts.some((post) => post.franchise === franchiseId && readFormPost(post.body)), unread: unread.map((post) => Number(post.postTime))};
+    };
+    let lengthsLayer = null;
+    const openLengths = async (alert, opener) => {
+        const [built, form] = await Promise.all([league(), import("./lengths-form.js")]);
+        const franchise = built.franchises.get(franchiseId);
+        const players = alert.players.map((id) => built.boardContext.playerNames.get(id)).filter(Boolean)
+            .map((player) => ({player, salary: (built.players.get(player.id) || {}).salary || 0}));
+        if (!lengthsLayer) {
+            lengthsLayer = document.createElement("div");
+            lengthsLayer.className = "fuad-layer fuad-popup-layer";
+            lengthsLayer.hidden = true;
+            document.body.append(lengthsLayer);
+        }
+        form.openLengthsForm({
+            context, layer: lengthsLayer, players, active: franchise ? franchise.numPlayers : 0, due: alert.due, unread: alert.unread,
+            dropHref: links.drop, opener, onSent: () => window.location.reload()
+        });
+    };
+
     if (member) {
         drawPanel(panels.alerts, {
             heading: "My alerts",
@@ -317,6 +355,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     cutDown: cutDownAt(timeline.calendar, context.season)
                 });
                 const topic = contractTopic(board);
+                const cutDown = cutDownAt(timeline.calendar, context.season);
+                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, cutDown || timeline.kickoffs.get(1)).catch(() => null) : null;
                 return myAlerts({
                     league: built,
                     franchiseId,
@@ -328,15 +368,23 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                     trades: tradeOffers(trades, {franchiseId, players: built.players, teams}),
                     readings: lengths || new Map(),
                     coming: upcoming,
-                    cutDown: cutDownAt(timeline.calendar, context.season),
+                    cutDown,
+                    lengths: owed,
                     now
-                });
+                }).map((alert) => (alert.action === "lengths"
+                    ? {...alert, due: phase === "before-cut" ? (cutDown ? `by ${dayText(cutDown)}` : "before the season") : null, unread: owed.unread.length ? dayText(owed.unread[owed.unread.length - 1]) : null}
+                    : alert));
             },
             render: (alerts, body) => {
                 panels.alerts.querySelector(".fuad-alert-count").textContent = alerts.length ? `${alerts.length} to do` : "";
                 body.innerHTML = alerts.length
                     ? alertRows(alerts)
                     : `<div class="fuad-all-clear"><span class="fuad-mark fuad-tone-accent" aria-hidden="true">${CHECK}</span><span class="fuad-muted">All clear.</span></div>`;
+                const lengthsAlert = alerts.find((alert) => alert.action === "lengths");
+                const button = body.querySelector('[data-action="lengths"]');
+                if (button && lengthsAlert) {
+                    button.addEventListener("click", () => openLengths(lengthsAlert, button).catch((error) => console.warn("[fuad] couldn't open the lengths form:", error)));
+                }
             }
         });
     } else if (loggedIn) {

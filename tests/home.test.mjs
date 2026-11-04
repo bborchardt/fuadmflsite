@@ -138,18 +138,42 @@ test("my alerts: trade offers and dates within three days", () => {
     assert.equal(alerts[1].href, links.drop);
 });
 
-test("between the draft and the cut-down: lengths to post and the roster limits", () => {
+test("between the draft and the cut-down: the lengths form and the roster limits", () => {
     const signed = [player("1", "Auction Buy", {salary: 12}), player("2", "Another One", {salary: 3}), player("3", "New RFA", {salary: 0})];
     const me = team("0001", "Me", {numPlayers: 34, signedPlayers: signed});
     const cutDown = at("2026-09-07T22:00:00-05:00");
-    const alerts = myAlerts({league: leagueOf([me], [], {started: false}), franchiseId: "0001", phase: "before-cut", links, now: at("2026-09-01T12:00:00-05:00"), cutDown});
-    assert.deepEqual(alerts.map((a) => [a.title, a.detail]), [
-        ["Post contract lengths for 2 players", "Draft-day players need them by Mon Sep 7 · Message board"],
-        ["Get to 30 active by Mon Sep 7", "You have 34 · Drop"]
+    const league = leagueOf([me], signed, {started: false});
+    const before = (lengths) => myAlerts({league, franchiseId: "0001", phase: "before-cut", links, now: at("2026-09-01T12:00:00-05:00"), cutDown, lengths});
+    const due = before({due: ["1", "2"], sent: false, unread: []});
+    assert.deepEqual(due.map((a) => [a.title, a.detail, a.action || null]), [
+        ["Set contract lengths for 2 players", "Due by Mon Sep 7", "lengths"],
+        ["Get to 30 active by Mon Sep 7", "You have 34 · Drop", null]
     ]);
-    // after the cut-down the limits hold (2.5): over 30 is a violation, fixed by dropping
-    const after = myAlerts({league: leagueOf([me], [], {started: false}), franchiseId: "0001", phase: "preseason", links, now: at("2026-09-08T12:00:00-05:00"), cutDown});
-    assert.deepEqual(after.map((a) => [a.title, a.detail]), [["Over the roster limit: 34 active of 30", "Drop"]]);
+    assert.deepEqual(due[0].players, ["1", "2"]);
+    // one left, after a post by hand the job can't read
+    const unread = before({due: ["2"], sent: false, unread: [at("2026-08-31T20:00:00-05:00")]});
+    assert.deepEqual([unread[0].title, unread[0].detail, unread[0].tone], ["Set a contract length for One", "Your post on Mon Aug 31 couldn’t be read; use the form", "red"]);
+    // all sent with the form: set by the next morning
+    assert.deepEqual(before({due: [], sent: true, unread: []})[0].title, "Contract lengths sent");
+    // the board couldn't be read: where to post them
+    assert.deepEqual(before(null)[0].title, "Post contract lengths for 2 players");
+    // after the cut-down the limits hold (2.5): over 30 is a violation, fixed by dropping; lengths are late
+    const after = myAlerts({league, franchiseId: "0001", phase: "preseason", links, now: at("2026-09-08T12:00:00-05:00"), cutDown, lengths: {due: ["1"], sent: false, unread: []}});
+    assert.deepEqual(after.map((a) => [a.title, a.detail]), [
+        ["Over the roster limit: 34 active of 30", "Drop"],
+        ["Set a contract length for Buy", "Past the cut-down date: $5 a day until they’re in"]
+    ]);
+});
+
+test("before the cut-down date, an add's length isn't due within the hour; after it, it is", () => {
+    const me = team("0001", "Me");
+    const waller = player("7", "Darren Waller");
+    const added = at("2026-08-20T11:30:00-05:00");
+    const league = leagueOf([me], [waller], {started: false, pendingAdds: [{playerId: "7", name: "Waller, Darren", franchiseId: "0001", type: "FREE_AGENT", added}]});
+    for (const phase of ["before-draft", "before-cut"]) {
+        assert.deepEqual(myAlerts({league, franchiseId: "0001", phase, links, now: added + 600}).filter((a) => /Waller/.test(a.title)), [], phase);
+    }
+    assert.equal(myAlerts({league, franchiseId: "0001", phase: "preseason", links, now: added + 600}).filter((a) => /Waller/.test(a.title)).length, 1);
 });
 
 test("the phase: before the draft, draft to cut-down, preseason, season, over", () => {
