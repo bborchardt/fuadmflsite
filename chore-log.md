@@ -68,3 +68,14 @@ Santos: 1 year").
 - 2026-10-30 03:27 UTC: Recorded "Most Points Week 7" $15.00 to Smooth City Styles!.
 - 2026-11-01 14:26 UTC: Charged $1 to Not 100% A Dick for Jason Myers (1yrs@1, 11/01), and reset the player to $1 / 0 years.
 - 2026-11-01 22:46 UTC: Updated the team icons of All Hands on Beck, So your saying there’s a chance?, The Obliterators , Smooth City Styles!, Golden Ratio, We Made a Kicker, The Fighting Injured Reserves!, Not 100% A Dick, The Wheelchair Massacre.
+- 2026-11-05 15:44 UTC: Charged $1 to All Hands on Beck for Darren Waller (1yrs@1, 11/05), and reset the player to $1 / 0 years.
+- 2026-11-05 15:44 UTC: Charged $1 to The Fighting Injured Reserves! for Harrison Butker (1yrs@1, 11/05), and reset the player to $1 / 0 years.
+- 2026-11-05 15:44 UTC: Contract years: Gardner Minshew: blind bid comment: "1 year
+1 year
+5 years
+5 years
+1 year" gives 1, 1, 5, 5, 1 years for Minshew, Gardner and Coleman, Kevin and Gay, Matt. Left for the commissioner.
+- 2026-11-05 15:44 UTC: Set Joe Milton to 1 year (blind bid comment "Minshew: 1 year
+Milton: 1 year").
+- 2026-11-05 15:44 UTC: Set Matt Gay to 1 year (no length stated: the default).
+- 2026-11-05 15:44 UTC: Set Chigoziem Okonkwo to 1 year (blind bid comment "1 year.").
