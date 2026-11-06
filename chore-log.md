@@ -79,3 +79,12 @@ Santos: 1 year").
 Milton: 1 year").
 - 2026-11-05 15:44 UTC: Set Matt Gay to 1 year (no length stated: the default).
 - 2026-11-05 15:44 UTC: Set Chigoziem Okonkwo to 1 year (blind bid comment "1 year.").
+- 2026-11-06 15:18 UTC: Charged $5 to Smooth City Styles! for CJ Daniels (5yrs@1, 11/05), and reset the player to $1 / 0 years.
+- 2026-11-06 15:18 UTC: Charged $1 to Smooth City Styles! for Spencer Shrader (1yrs@1, 11/05), and reset the player to $1 / 0 years.
+- 2026-11-06 15:18 UTC: Contract years: Gardner Minshew: blind bid comment: "1 year
+1 year
+5 years
+5 years
+1 year" gives 1, 1, 5, 5, 1 years for Minshew, Gardner and Coleman, Kevin and Gay, Matt. Left for the commissioner.
+- 2026-11-06 15:18 UTC: Set Chad Ryland to 1 year (no length stated: the default).
+- 2026-11-06 15:18 UTC: Recorded "Most Points Week 8" $15.00 to Not 100% A Dick.
