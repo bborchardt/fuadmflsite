@@ -3,9 +3,9 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {contractsXml} from "../jobs/contract-years.mjs";
 import {decideYears as decide_, postReadings, readProcessedWaivers, readYears, yearMentions} from "../site/v2/lib/contract-years.js";
 import {contractDeadline, pendingAdds, windowClosed} from "../site/v2/lib/adds.js";
+import {salariesImportXml} from "../site/v2/lib/mfl.js";
 
 const decideYears = (options) => decide_({contractDeadline, ...options});
 
@@ -371,7 +371,7 @@ test("League Alerts reads the posts so far the way the job will", () => {
 });
 
 test("the import keeps each salary exactly as MFL has it", () => {
-    assert.equal(contractsXml([{playerId: "6", salary: "0.01", years: 2}, {playerId: "3", salary: "2.00", years: 1}]),
+    assert.equal(salariesImportXml([{id: "6", salary: "0.01", years: 2}, {id: "3", salary: "2.00", years: 1}]),
         `<salaries><leagueUnit unit="LEAGUE"><player id="6" salary="0.01" contractYear="2"/>`
         + `<player id="3" salary="2.00" contractYear="1"/></leagueUnit></salaries>`);
 });
