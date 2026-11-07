@@ -64,6 +64,8 @@ test("over 30: a trade that did it is named with the bylaws' deadline, any other
     assert.equal(tradeOverRoster([trade], "0002", since), null);
     // an add since the trade is the move that broke the limit
     assert.equal(tradeOverRoster([trade, {...add, franchise: "0001"}], "0001", since), null);
+    // nor does activating a player from IR since
+    assert.equal(tradeOverRoster([trade, {type: "IR", franchise: "0001", activated: "3,", deactivated: "", timestamp: String(DAY)}], "0001", since), null);
     // a drop since doesn't change which
     assert.equal(tradeOverRoster([trade, {...add, franchise: "0001", transaction: "|3,"}], "0001", since), trade);
     const text = "Alpha is over the roster limit with 31 players!";

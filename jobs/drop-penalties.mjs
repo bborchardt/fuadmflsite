@@ -19,6 +19,7 @@ export function pendingPenalties(league) {
             fullName: player.fullName,
             amount: player.capPenalty,
             charged: player.penaltyCharged,
+            lengthDue: player.years === 0,
             dropped,
             explanation: `${player.fullName} (${player.years}yrs@${player.salary}${player.years === 0 ? ", length due" : ""}, ${dropDate(dropped)})`
         };

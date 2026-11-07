@@ -73,6 +73,8 @@ export function tradeOverRoster(transactions, franchiseId, since) {
         }
         case "WAIVER":
             return playerCount(transaction.added) - playerCount(transaction.dropped);
+        case "IR":
+            return playerCount(transaction.activated) - playerCount(transaction.deactivated);
         case "BBID_WAIVER": {
             const [added, , dropped] = String(transaction.transaction).split("|");
             return playerCount(added) - playerCount(dropped);

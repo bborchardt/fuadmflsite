@@ -59,6 +59,9 @@ test("a tie for the week's high score splits the prize, and a run that stopped b
     const first = {franchise_id: "0001", amount: "7.5", description: "Most Points Week 1"};
     assert.deepEqual(brief(tie([first])), ["0002 7.5 Most Points Week 1"]);
     assert.deepEqual(tie([first, {...first, franchise_id: "0002"}]), []);
+    // the first's twice, or another team's, still leaves the second's to add
+    assert.deepEqual(brief(tie([first, first])), ["0002 7.5 Most Points Week 1"]);
+    assert.deepEqual(brief(tie([first, {...first, franchise_id: "0003"}])), ["0002 7.5 Most Points Week 1"]);
     // a list of weeks entered by hand is the commissioner's own reckoning of each
     assert.deepEqual(tie([{franchise_id: "0001", amount: "22.5", description: "Most points weeks 1,4"}]), []);
 });

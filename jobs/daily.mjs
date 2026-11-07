@@ -51,7 +51,7 @@ const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.j
 const {mflImport: sendImport} = await import("./mfl-import.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
-const {MAX_RFA_SHARE, RFA_SALARY, rfaSalaries} = await import("./rfa-salaries.mjs");
+const {MAX_RFA_SHARE, RFA_SALARY, atOneYear, rfaSalaries} = await import("./rfa-salaries.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -502,11 +502,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
         log(built.started ? "Week 1 has kicked off; RFA salaries are set only before it." : "The season's start isn't known; RFA salaries skipped.");
         return [];
     }
-    // a season with no site answers 404 or an error document, as leagueSeason finds
-    const lastRosters = await fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
-        if (error.status === 404 || /Invalid league ID/i.test(error.message)) {
-            return null;
-        }
+    const lastRosters = await lastSeasonRosters().catch((error) => {
         throw new Error(`last season's rosters couldn't be read (${error.message}), so no RFA salaries were set`);
     });
     if (!lastRosters) {
@@ -548,8 +544,21 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     return rfas.map((rfa) => rfa.playerId);
 }
 
+// last season's rosters, read once a run; null when the league had no site then, as a season with
+// none answers 404 or an error document (leagueSeason)
+let lastRostersRead = null;
+function lastSeasonRosters() {
+    lastRostersRead = lastRostersRead || fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
+        if (error.status === 404 || /Invalid league ID/i.test(error.message)) {
+            return null;
+        }
+        throw error;
+    });
+    return lastRostersRead;
+}
+
 async function leagueState({loggedIn}) {
-    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar, draftResults] = await Promise.all([
+    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar, lengthDueFacts] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
         fetchFrom(host, "salaryAdjustments", {L: leagueId}),
@@ -567,8 +576,12 @@ async function leagueState({loggedIn}) {
             log(`Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
             return null;
         }) : null,
-        // this season's rookies, whose cut before the cut-down date costs nothing
-        fetchFrom(host, "draftResults", {L: leagueId})
+        // what a drop whose length was due costs (lib/league.js lengthDuePenalty): nothing for this
+        // season's rookies before the cut-down date, or for last season's 1-year players the rollover
+        // left at 0; without them such a drop is held for the commissioner
+        Promise.all([fetchFrom(host, "draftResults", {L: leagueId}), lastSeasonRosters()])
+            .then(([draftResults, lastRosters]) => ({rookies: draftedIds(draftResults), expired: atOneYear(lastRosters, asArray)}))
+            .catch((error) => ({unknown: error.message}))
     ]);
     const cutDown = cutDownAt(calendar, season);
     // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
@@ -583,7 +596,7 @@ async function leagueState({loggedIn}) {
     });
     const playerMap = playersFromExport(players);
     const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries,
-        lengthDue: {rookies: draftedIds(draftResults), freeUntil: cutDown}});
+        lengthDue: {...lengthDueFacts, freeUntil: cutDown}});
     // if the season's phase can't be told, skip the league rules rather than flag the offseason
     try {
         // v2's lib reads the playoff and championship weeks from the league export (v1's has them fixed)
@@ -601,6 +614,7 @@ async function leagueState({loggedIn}) {
         league,
         cutDown,
         penalties: pendingPenalties(built),
+        lengthDueUnknown: lengthDueFacts.unknown || null,
         transactions: asArray(transactions.transaction),
         rosters,
         // players as MFL names them ("Last, First"), which the waivers page uses too
@@ -660,14 +674,19 @@ function overCap({players, built, penalties, transactions}) {
 
 // a penalty already charged (by a run that failed before the reset, or by hand), or a $0 one,
 // only gets the reset
-async function dropPenalties(loggedIn, {penalties}, over) {
+async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     if (!penalties.length) {
         log("No dropped players owe a cap penalty.");
         return;
     }
     const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
     const noCharge = (penalty) => penalty.amount > 0 ? "penalty already charged" : "no penalty owed";
-    const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId));
+    const unpriced = lengthDueUnknown ? penalties.filter((penalty) => penalty.lengthDue && !over.has(penalty.franchiseId)) : [];
+    if (unpriced.length) {
+        needsAttention(`Cap chores: couldn't tell whether ${unpriced.map((penalty) => penalty.explanation).join(", ")} owe a penalty `
+            + `(${lengthDueUnknown}), so they're left as they are. Charge any owed by hand.`);
+    }
+    const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
     // held penalties don't count: they can wait for weeks on a team over the cap
     if ((applyDropPenalties || dryRun) && toApply.length > MAX_PENALTIES_PER_RUN) {
         throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `

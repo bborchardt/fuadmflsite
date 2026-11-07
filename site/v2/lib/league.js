@@ -222,11 +222,13 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
 // Cutting a player whose length is still due (0 years, $1 or more: draft day, or an add's hour) costs
 // the 1-year penalty, the shortest he can end up with, except a rookie from this season's draft
 // (`rookies`, player ids) cut before the final cut-down date (`freeUntil`, in seconds; null when it
-// isn't known, which leaves him free), if the league lets one go free. `at`: when he's cut. A $1 one
-// cut isn't told from a player the job has charged and reset to $1 / 0 years, so it isn't charged.
-export function lengthDuePenalty(player, {rookies = new Set(), freeUntil = null, at}) {
+// isn't known, which leaves him free), if the league lets one go free. `at`: when he's cut. One the
+// rollover took from 1 year to 0 on the same salary (`expired`, id → last season's salary) is an RFA
+// not yet at $0.01, whose contract ran out: nothing. A $1 one cut isn't told from a player the job
+// has charged and reset to $1 / 0 years, so it isn't charged.
+export function lengthDuePenalty(player, {rookies = new Set(), freeUntil = null, expired = new Map(), at}) {
     const free = settings.rookieCutFreeUntilLengthSet && rookies.has(player.playerId) && (freeUntil === null || at < freeUntil);
-    return free ? 0 : capPenalty(1, player.salary);
+    return free || expired.get(player.playerId) === player.salary ? 0 : capPenalty(1, player.salary);
 }
 
 // v2's pages only: rostered players with no contract years are the commissioner's RFAs ($0.01 after

@@ -151,6 +151,17 @@ test("a player cut while his length is due costs the 1-year penalty; this season
         "Dry run: would reset Ray Rookie to $1 / 0 years (no penalty owed).",
         "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then reset the player to $1 / 0 years."
     ]);
+    // Kamara ended last season at 1 year on $20: the rollover left him an RFA not yet at $0.01, whose
+    // contract ran out
+    const lastSeason = {franchise: [{id: "0002", player: [{id: "6", salary: "20", contractYear: "1"}]}]};
+    const rfa = run({scenario: {exports: {...exports, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
+    assert.ok(rfa.entries.includes("Dry run: would reset Alvin Kamara to $1 / 0 years (no penalty owed)."), rfa.entries.join("\n"));
+    // without the draft's results, length-due drops are left for the commissioner; the rest go on
+    const unknown = run({scenario: {exports: {...exports, draftResults: 500, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(unknown.status, 1);
+    assert.ok(unknown.entries.some((entry) => /^Cap chores: couldn't tell whether Ray Rookie \(0yrs@6, length due, 10\/23\), Alvin Kamara \(0yrs@20, length due, 10\/23\) owe a penalty \(.*\), so they're left as they are\. Charge any owed by hand\.$/.test(entry)), unknown.entries.join("\n"));
+    assert.ok(!imports(unknown).some((data) => /id="[67]"/.test(data.DATA || "")));
+    assert.ok(unknown.entries.includes("Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and reset the player to $1 / 0 years."), unknown.entries.join("\n"));
 });
 
 test("a team over the cap fails the run and holds its penalty; the other team's is charged", () => {

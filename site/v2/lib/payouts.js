@@ -124,8 +124,10 @@ export function missingPayouts({accounting, weeklyResults, lastRegularWeek, endW
     const records = [];
     for (const {week, teams} of weeklyWinners(weeklyResults, Math.min(lastRegularWeek, finalWeek))) {
         const paid = weekEntries.filter((entry) => entry.week === week);
-        if (paid.length < teams.length && !paid.some((entry) => entry.franchise === null)) {
-            teams.filter((id) => !paid.some((entry) => entry.franchise === id))
+        const has = (id) => paid.some((entry) => entry.franchise === id);
+        const done = paid.some((entry) => entry.franchise === null) || (teams.length === 1 ? paid.length > 0 : teams.every(has));
+        if (!done) {
+            teams.filter((id) => !has(id))
                 .forEach((id) => records.push({franchise: id, amount: cents(WEEKLY_PRIZE / teams.length), description: `Most Points Week ${week}`}));
         }
     }
