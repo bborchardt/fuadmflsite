@@ -10,7 +10,7 @@ import {dropUnusedKeys} from "./store.js";
 import {useTeamPictures} from "./team-pictures.js";
 import {playerList} from "./player-list.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
-import {REBUILT, pageOf, sections, teamLinks} from "./nav.js";
+import {REBUILT, pageOf, routeFor, sections, teamLinks} from "./nav.js";
 
 export function pageContext(location = window.location) {
     const season = (location.pathname.match(/^\/(\d{4})\//) || [])[1] || (window.year && String(window.year));
@@ -158,134 +158,31 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         return value;
     };
     const here = pageOf(window.location);
-    // MFL's menu also reaches Submit Lineup as options?O=02
-    // Lineup, Add, Drop, IR, Trades, All moves, All bids, Rules and Franchise setup draw over or restyle
-    // MFL's page: it's hidden from the start, so it doesn't show while their code loads (the
-    // commissioner's view stays MFL's)
-    const over = (className) => {
-        if (window.franchise_id !== "0000") {
-            document.documentElement.classList.add(className);
+    const franchiseId = window.franchise_id || null;
+    const route = context && routeFor(here, franchiseId);
+    if (route) {
+        const on = route.on && franchiseId !== "0000" ? route.on : null;
+        if (on) {
+            document.documentElement.classList.add(on);
         }
-        return (error) => {
-            document.documentElement.classList.remove(className);
-            throw error;
-        };
-    };
-    if (context && (here.path === "lineup" || (here.path === "options" && here.option === "02"))) {
-        const franchiseId = window.franchise_id || null;
-        const shown = over("fuad-lineup-on");
-        const view = viewLinks(context, franchiseId);
-        await import("./lineup.js").then(({drawLineup}) => drawn(drawLineup({
-            context, franchiseId, irHref: view("Moves", "IR"), addHref: view("Moves", "Add")
-        }))).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw Lineup:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    if (context && here.path === "add_drop") {
-        const shown = over("fuad-add-on");
-        await import("./add.js").then(({drawAdd}) => drawn(drawAdd({context, franchiseId: window.franchise_id || null}))).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw Add:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    if (context && here.path === "options" && here.option === "257") {
-        const shown = over("fuad-drop-on");
-        await import("./drop.js").then(({drawDrop}) => drawn(drawDrop({context, franchiseId: window.franchise_id || null}))).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw Drop:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    if (context && here.path === "options" && here.option === "18") {
-        const franchiseId = window.franchise_id || null;
-        const shown = over("fuad-ir-on");
-        await import("./ir.js").then(({drawIR}) => drawn(drawIR({
-            context, franchiseId, dropHref: viewLinks(context, franchiseId)("Moves", "Drop")
-        }))).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw IR:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    // Trades and its proposal page (`O=05&FRANCHISE=<mine>,<theirs>`)
-    if (context && here.path === "options" && here.option === "05") {
-        const franchiseId = window.franchise_id || null;
-        const shown = over("fuad-trades-on");
-        await import("./trades.js").then(({drawTrades}) => drawn(drawTrades({
-            context, franchiseId, addHref: viewLinks(context, franchiseId)("Moves", "Add"), teamHref: teamLink(viewLinks(context, franchiseId))
-        }))).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw Trades:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    // Home's All moves and All bids: MFL's Transactions and Processed Waivers pages
-    if (context && here.path === "options" && here.option === "03") {
-        const shown = over("fuad-all-moves-on");
-        await import("./all-moves.js").then(({drawAllMoves}) => drawn(drawAllMoves({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))}))).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw All moves:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    if (context && (here.path === "processed_waivers" || (here.path === "options" && here.option === "76"))) {
-        const shown = over("fuad-all-bids-on");
-        await import("./all-moves.js").then(({drawAllBids}) => {
-            // a page v2 can't read (logged out, or changed) stays MFL's
-            if (!drawAllBids({context, franchiseId: window.franchise_id || null, teamHref: teamLink(viewLinks(context, window.franchise_id || null))})) {
-                document.documentElement.classList.remove("fuad-all-bids-on");
+        try {
+            const view = viewLinks(context, franchiseId);
+            // a screen draws its placeholders before its first wait, so the cover comes off at once
+            const result = route.draw(await route.load(), {context, franchiseId, view, teamHref: teamLink(view), page: here, location: window.location});
+            if (result === false && on) {
+                document.documentElement.classList.remove(on);
             }
-            onDrawn();
-        }).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw All bids:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    // League Rules and League Settings: one Rules page over either (the commissioner's view stays MFL's)
-    if (context && here.path === "options" && (here.option === "09" || here.option === "26") && window.franchise_id !== "0000") {
-        const shown = over("fuad-rules-on");
-        await import("./rules.js").then(({drawRules}) => {
-            // a page v2 can't read (changed) stays MFL's
-            if (!drawRules({context, option: here.option})) {
-                document.documentElement.classList.remove("fuad-rules-on");
+            if (route.on) {
+                onDrawn();
             }
-            onDrawn();
-        }).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't draw Rules:", error);
-            onTrouble();
-        });
-        return false;
-    }
-    // Franchise setup: MFL's forms under v2's heading and tabs
-    if (context && here.path === "csetup") {
-        const shown = over("fuad-setup-on");
-        await import("./setup.js").then(({restyleSetup}) => {
-            // a screen v2 leaves as MFL's (the commissioner's, Home Page Modules, or changed) shows as it is
-            if (!restyleSetup(document, {context, franchiseId: window.franchise_id || null})) {
-                document.documentElement.classList.remove("fuad-setup-on");
+            await result;
+        } catch (error) {
+            if (on) {
+                document.documentElement.classList.remove(on);
             }
-            onDrawn();
-        }).catch(shown).catch((error) => {
-            console.error("[fuad] couldn't restyle Franchise setup:", error);
+            console.error(`[fuad] couldn't draw ${route.name}:`, error);
             onTrouble();
-        });
-        return false;
-    }
-    // the message board's pages: MFL's, restyled
-    const boardPage = (window.location.pathname.match(/\/mb\/(\w+)\.pl$/) || [])[1];
-    if (context && boardPage) {
-        const boardHref = `${window.location.origin}/${context.season}/options?L=${context.leagueId}&O=28`;
-        await import("./topic.js").then((board) => {
-            const restyle = {board_show: board.restyleBoard, topic_show: board.restyleTopic, post_add: board.restyleReply, topic_add: board.restyleReply, post_edit: board.restyleReply, message_show: board.restyleMessage}[boardPage];
-            return restyle ? restyle(document, {guest: !window.franchise_id}) : board.restyleSidePage(boardPage, boardHref);
-        }).catch((error) => {
-            console.error("[fuad] couldn't restyle the message board page:", error);
-            onTrouble();
-        });
+        }
         return false;
     }
     // the home page, known by its address: with only the Main tab, MFL draws its modules with no tabs
