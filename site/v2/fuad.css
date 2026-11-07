@@ -1098,11 +1098,9 @@ body [tabindex]:focus-visible {
         font-weight: 600;
     }
 
-    /* colour alone is too faint on the light looks: a pill behind the icon too, the soft fill that
-       marks the current section and view elsewhere */
-    .fuad-sections-bottom a[aria-current="page"] { color: var(--fuad-accent) !important; }
-
-    .fuad-sections-bottom a[aria-current="page"] svg { box-sizing: content-box; margin: -3px 0; padding: 3px 18px; border-radius: 14px; background: var(--fuad-pill); }
+    /* colour alone is too faint on the light looks: a fill behind the icon and its name too, the soft
+       fill that marks the current section and view elsewhere */
+    .fuad-sections-bottom a[aria-current="page"] { margin: 0 3px; border-radius: 16px; background: var(--fuad-pill); color: var(--fuad-accent) !important; }
 
     .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
