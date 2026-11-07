@@ -4,6 +4,7 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {esc} from "./html.js";
+import {oneLineTimes} from "./format.js";
 import {forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
 import {draftPicked, seasonFacts} from "./context.js";
@@ -20,7 +21,7 @@ function tag(player) {
     return found ? `<span class="fuad-tag fuad-tag-${found.tone}">${esc(found.text)}</span>` : "";
 }
 
-const oppText = (player) => (player.onBye ? "bye week" : player.opp);
+const oppText = (player) => (player.onBye ? "bye week" : oneLineTimes(player.opp));
 
 function phoneRow(player, on) {
     const starting = on.has(player.id);
@@ -45,7 +46,7 @@ function deskRow(player, on) {
         <span role="cell" class="fuad-lineup-name"><button type="button" class="fuad-name" data-player="${esc(player.id)}">${esc(player.name)}</button>${tag(player)}</span>
         <span role="cell" class="fuad-num fuad-lineup-projected${player.proj ? "" : " fuad-muted"}">${esc(pts(player.proj || 0))}</span>
         <span role="cell" class="fuad-mid fuad-muted">${esc(player.nfl)}</span>
-        <span role="cell" class="fuad-muted">${esc(player.onBye ? "Bye week" : player.opp)}</span>
+        <span role="cell" class="fuad-muted">${esc(player.onBye ? "Bye week" : oneLineTimes(player.opp))}</span>
         <span role="cell" class="fuad-num fuad-muted">${esc(player.oppRank || "—")}</span>
         <span role="cell" class="fuad-num">${esc(pts(player.ytd))}</span>
         <span role="cell" class="fuad-num fuad-muted">${esc(pts(player.avg))}</span>
