@@ -260,7 +260,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 
 ## Accepted limits
 
-- Chores run once a day (08:00 UTC): snapshots, penalties and contract years land up to a day late.
+- Chores run once a day (about 07:40 UTC): snapshots, penalties and contract years land up to a day late.
 - The commissioner's own moves aren't in the history the job reads, and a hand-entered penalty must
   spell the player's name as MFL does to be recognized.
 - The over-cap flag lists the last 7 days' moves, so a team over for longer shows none.

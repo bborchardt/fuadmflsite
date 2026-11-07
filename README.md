@@ -6,13 +6,13 @@ runs inside MFL's own pages, loaded by a home page message.
 
 ## What it does
 
-**For members**, on the league site:
-- **Contracts tab:** every roster's salaries and contract years, a cut calculator, rookie salaries and
-  franchise salaries (last season's, live, or this season's, depending on the date).
-- **League Alerts** on the Main tab: teams over the salary cap or outside the 23–30 roster limit,
-  players on IR the NFL doesn't list there, injured or suspended starters, and the one-hour window
-  to post a free agent's contract length, with the length it read from the message board.
-- **Commish tab:** forms for the commissioner's manual work. **Links tab:** league links.
+**For members**, on the league site: the version the header loads (`site/v<N>/`).
+- **v2**, the beta: MFL's pages redrawn for phones, in sections (Home, Lineup, League, Moves,
+  Rosters), with a team sheet, a player popup and a choice of looks. Home has the alerts (cap, roster
+  limit, IR, injured starters, contract lengths due), the commissioner's results screen, and the form
+  members send their contract lengths with; Moves keeps add, drop, IR and trades within the rules.
+- **v1**, the main version: the Contracts tab (salaries, contract years, a cut calculator, rookie and
+  franchise salaries), League Alerts on the Main tab, and the Commish and Links tabs.
 
 **For the commissioner**, a job every morning (about 07:40 UTC):
 - snapshots franchise salaries at the trade deadline
@@ -29,30 +29,8 @@ would do until they're switched on.
 
 ## How to use it
 
-- **Switch versions:** the home page message on all pages ([`mfl/message-header.html`](mfl/message-header.html))
-  loads one version (`site/v<N>/`), its `MAIN`. Edit `MAIN` to switch, or back to revert. Past seasons
-  keep the version they ended on.
-- **Offer a beta:** add a line where that message's "beta offer" comment marks, and League Alerts invites
-  members to try it:
-  ```html
-  <script>window.fuadBeta = {version: "v2", feedback: "<link to a feedback thread>", teams: ["0001"]};</script>
-  ```
-  `teams` limits it to those franchise ids, and `"guest"` to visitors who aren't logged in; leave it
-  out for everyone, the commissioner (0000) included. Someone left out keeps their choice, so the
-  commissioner can be in the beta as their team and not as 0000. Delete the line to end the beta.
-- **Preview a version** in your browser only: add `?fuadPreview=v2` to any league page URL
-  (`?fuadPreview=off` to stop).
-- **Turn chores on:** set the repository variables `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`
-  and `RFA_SALARIES` to `apply`.
-- **Try the job on another league or settings:** Actions › Daily chores › Run workflow. Dry run is
-  ticked by default and writes nothing; results are on the run's summary page. Fill in only what to
-  change: league, host (when that league is on another server), settings (a header line's, for an unlisted league), version, season, time. A
-  real run by hand means unticking it, which ignores those. Each run reads as much from MFL as a daily one.
-- **After a failed-run email:** the run page and the end of its log say what was flagged; the summary
-  page also lists what the job did.
-- **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button produces the
-  file; commit it to the `league-data` branch and the next run publishes it.
-- **If GitHub Pages is down,** the custom tabs say so and MFL's own pages keep working.
+The [commissioner's guide](docs/commissioner.md) covers pasting into MFL, betas and versions, the
+daily job's settings and runs, each season's steps, and what to do when something breaks.
 
 ## Developing
 

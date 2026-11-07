@@ -186,8 +186,18 @@ def run(browser, site, name):
             inBeta: document.documentElement.classList.contains('fuad-beta'),
         };
     }""")
-    got["requested"] = requested
-    got["reported"] = reported
+    got["requested"] = list(requested)
+    got["reported"] = list(reported)
+    # the way out of a failed beta: followed, the page comes back afresh without the choice; not by
+    # ?fuadBeta=off, which Safari's desktop mode would load again later (site/v2/loader.js: LEAVE_BETA)
+    left = None
+    if "bar" in expected and expected["bar"] != "hidden" and got["leave"]:
+        before = len(requested)
+        with page.expect_navigation(wait_until="load"):
+            page.click("#fuad-preview a")
+        page.wait_for_timeout(3000)
+        left = page.evaluate("() => ({beta: localStorage.getItem('fuad.beta'), ran: window.fuadVersion || null})")
+        left["requested"] = requested[before:]
     context.close()
     problems = []
     # the clone's pages report nothing
@@ -200,8 +210,9 @@ def run(browser, site, name):
                 problems.append(f"bar {have!r}, wanted {want!r}")
         elif have != want:
             problems.append(f"{key} {have!r}, wanted {want!r}")
-    if "bar" in expected and expected["bar"] != "hidden" and (not got["leave"] or "fuadBeta=off" not in got["leave"]):
-        problems.append(f"leave link {got['leave']!r}")
+    if "bar" in expected and expected["bar"] != "hidden" and (
+            "fuadBeta" in (got["leave"] or "") or not left or left["beta"] is not None or left["requested"] != [given.get("main", "v1")]):
+        problems.append(f"leave link {got['leave']!r}: then {left!r}")
     # covered whenever a version other than v1 may run: one loaded first, or a beta choice to settle
     should = expected["requested"][0] != "v1" or bool(given.get("beta")) or "fuadBeta=" in url
     if got["covered"] != should:
