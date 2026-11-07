@@ -2,6 +2,8 @@
 // has rebuilt lives on the home page under its own # (`#league-standings`); until then it's the
 // nearest MFL page or home page tab.
 
+import {ROUTES, routesMatch} from "./routes.js";
+
 // MFL picks a home page tab by its position in the URL's #, as in a link kept from v1
 const TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4, Commish: 5, Links: 6};
 
@@ -41,10 +43,9 @@ export function sections({base, leagueId, franchiseId, rebuilt = []}) {
         return !franchiseId && NEEDS_LOGIN[name] ? {href: home, after, login: NEEDS_LOGIN[name]} : {href: after};
     };
     const all = [
-        // the message board's pages (`mb/…`), All moves (Transactions), All bids (Processed Waivers) and
-        // Rules (League Rules, League Settings) are reached from Home
-        {name: "Home", href: tab("Main"), match: {tabs: ["Main"], paths: ["mb", "processed_waivers"], options: ["03", "76", "09", "26"]}},
-        {name: "Lineup", href: page("lineup"), match: {paths: ["lineup"], options: ["02"]}},
+        // with the pages v2 draws for it (routes.js): the message board's, All moves, All bids and Rules
+        {name: "Home", href: tab("Main"), match: routesMatch("Home", {tabs: ["Main"]})},
+        {name: "Lineup", href: page("lineup"), match: routesMatch("Lineup")},
         {name: "League", views: [
             {name: "Scores", href: page("ajax_ls"), match: {paths: ["ajax_ls"], options: ["22"]}},
             {name: "Standings", href: tab("Standings"), match: {paths: ["standings"], tabs: ["Standings"]}},
@@ -53,10 +54,11 @@ export function sections({base, leagueId, franchiseId, rebuilt = []}) {
             {name: "Winners", href: null, match: {}}
         ]},
         {name: "Moves", views: [
-            {name: "Add", href: page("add_drop"), match: {paths: ["add_drop"], options: ["255"]}},
-            {name: "Drop", href: option("257"), match: {options: ["257"]}},
-            {name: "Trades", href: option("05"), match: {paths: ["trade_offer", "trade_response"], options: ["05"]}},
-            {name: "IR", href: option("18"), match: {paths: ["ir"], options: ["18"]}}
+            // and MFL's own pages under them: editing a claim (O=255), offering or answering a trade, IR's form
+            {name: "Add", href: page("add_drop"), match: routesMatch("Moves/Add", {options: ["255"]})},
+            {name: "Drop", href: option("257"), match: routesMatch("Moves/Drop")},
+            {name: "Trades", href: option("05"), match: routesMatch("Moves/Trades", {paths: ["trade_offer", "trade_response"]})},
+            {name: "IR", href: option("18"), match: routesMatch("Moves/IR", {paths: ["ir"]})}
         ]},
         {name: "Rosters", views: [
             // the commissioner has no team of their own
@@ -135,12 +137,8 @@ export function pageOf(location) {
     return {path, option: params.get("O"), team: params.get("F"), tab, hash};
 }
 
-function matches(item, page, franchiseId) {
-    const {match} = item;
-    // a view's own page under it (`#rosters-teams/0004`, one team) belongs to the view
-    if (page.hash) {
-        return item.href.endsWith(page.hash.split("/")[0]) && item.href.includes("/home/");
-    }
+// whether `page` (pageOf) is one of the pages a `match` names: home page tabs, MFL page names, O= reports
+export function pageMatches(match, page, franchiseId) {
     if (match.tabs && page.tab && match.tabs.includes(page.tab)) {
         return true;
     }
@@ -151,6 +149,19 @@ function matches(item, page, franchiseId) {
         return match.mine === undefined || match.mine === Boolean(franchiseId && page.team === franchiseId);
     }
     return false;
+}
+
+function matches(item, page, franchiseId) {
+    // a view's own page under it (`#rosters-teams/0004`, one team) belongs to the view
+    if (page.hash) {
+        return item.href.endsWith(page.hash.split("/")[0]) && item.href.includes("/home/");
+    }
+    return pageMatches(item.match, page, franchiseId);
+}
+
+// the screen v2 draws over MFL's page (routes.js), if any; the commissioner keeps `members` pages whole
+export function routeFor(page, franchiseId) {
+    return ROUTES.find((route) => pageMatches(route.match, page, franchiseId) && !(route.members && franchiseId === "0000")) || null;
 }
 
 // the section and view a page belongs to; null for pages left to the site menu

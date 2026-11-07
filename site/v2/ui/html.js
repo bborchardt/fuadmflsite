@@ -8,20 +8,6 @@ export function esc(value) {
 // MFL's text with its runs of spaces, non-breaking ones too ("League&nbsp;Calendar"), as one space
 export const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
 
-export function rowStriper() {
-    let odd = false;
-    return () => {
-        odd = !odd;
-        return odd ? "oddtablerow" : "eventablerow";
-    };
-}
-
-export function fragment(markup) {
-    const template = document.createElement("template");
-    template.innerHTML = markup;
-    return template.content;
-}
-
 // "All Hands on Beck" → "AH"
 export function initials(name) {
     return String(name || "").split(/\s+/).filter((word) => /^[A-Za-z0-9]/.test(word)).slice(0, 2).map((word) => word[0]).join("").toUpperCase();

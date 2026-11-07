@@ -15,6 +15,12 @@ export const storage = {
             window.localStorage.setItem(key, value);
         } catch (error) {
         }
+    },
+    remove(key) {
+        try {
+            window.localStorage.removeItem(key);
+        } catch (error) {
+        }
     }
 };
 

@@ -3,6 +3,7 @@
 
 import {pageContext, start} from "./ui/app.js";
 import {pageOf} from "./ui/nav.js";
+import {storage} from "./ui/store.js";
 import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, reportUse, withParam} from "./loader.js";
 import {applyLook, commishLook, keepResponsive, keepTeamSkin, lookOf, markCommish} from "./ui/looks.js";
 
@@ -14,26 +15,8 @@ const DATA_BASE = new URL("data/", PAGES_BASE);
 const here = new URL("./", import.meta.url).href;
 const versionHere = (here.match(/\/(v\d+)\/$/) || [])[1] || "v1";
 
-const storage = {
-    get(key) {
-        try {
-            return window.localStorage.getItem(key);
-        } catch (error) {
-            return null;
-        }
-    },
-    set(key, value) {
-        try {
-            if (value) {
-                window.localStorage.setItem(key, value);
-            } else {
-                window.localStorage.removeItem(key);
-            }
-        } catch (error) {
-            // storage is blocked; the choice just won't stick
-        }
-    }
-};
+// a choice kept, or forgotten when there's none; with storage blocked it just won't stick
+const keep = (key, value) => (value ? storage.set(key, value) : storage.remove(key));
 
 const isLocal = (base) => /localhost|127\.0\.0\.1/.test(base);
 const versionOf = (base) => (base.match(/(v\d+)\/$/) || [])[1];
@@ -56,7 +39,7 @@ function leaveLink(text) {
 document.addEventListener("click", (event) => {
     const elsewhere = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
     if (!elsewhere && event.target.closest && event.target.closest(`a[${LEAVE_BETA}]`)) {
-        storage.set(BETA_KEY, null);
+        keep(BETA_KEY, null);
     }
 }, true);
 
@@ -173,7 +156,7 @@ function handOver(target, offer) {
         // a broken preview is forgotten, so a shared ?fuadPreview= link can't leave someone stuck; a beta is
         // kept, since the failure may pass
         if (target.mode === "preview") {
-            storage.set(PREVIEW_KEY, null);
+            keep(PREVIEW_KEY, null);
         }
         style.remove();
         ours.forEach((sheet) => {
@@ -217,8 +200,8 @@ if (window.fuadLoader) {
         here, versionHere, params, preview: storage.get(PREVIEW_KEY), beta: storage.get(BETA_KEY), offer,
         offered: offeredVersion(window.fuadBeta, versionHere)
     });
-    storage.set(PREVIEW_KEY, target.preview);
-    storage.set(BETA_KEY, target.beta);
+    keep(PREVIEW_KEY, target.preview);
+    keep(BETA_KEY, target.beta);
     if (params.has("fuadPreview") || params.has("fuadBeta")) {
         params.delete("fuadPreview");
         params.delete("fuadBeta");
