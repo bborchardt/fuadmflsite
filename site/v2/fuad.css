@@ -1091,13 +1091,13 @@ body [tabindex]:focus-visible {
         color: var(--fuad-muted) !important;
         font-size: 12px;
         font-weight: 600;
-        position: relative;
     }
 
-    /* colour alone is too faint on the light looks: a bar along the top edge too */
+    /* colour alone is too faint on the light looks: a pill behind the icon too, the soft fill that
+       marks the current section and view elsewhere */
     .fuad-sections-bottom a[aria-current="page"] { color: var(--fuad-accent) !important; }
 
-    .fuad-sections-bottom a[aria-current="page"]::before { content: ""; position: absolute; top: -6px; left: 50%; width: 28px; height: 3px; margin-left: -14px; border-radius: 0 0 3px 3px; background: var(--fuad-accent); }
+    .fuad-sections-bottom a[aria-current="page"] svg { box-sizing: content-box; margin: -3px 0; padding: 3px 18px; border-radius: 14px; background: var(--fuad-quiet); }
 
     .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
