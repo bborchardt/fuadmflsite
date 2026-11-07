@@ -1,9 +1,10 @@
 # Daily league chores. See jobs/daily.mjs for what it does.
 #
 # The job writes only to the league-data branch (franchise snapshots, team icons' stills and the
-# chore log), and, to MFL when the DROP_PENALTIES, CONTRACT_YEARS, PAYOUTS or RFA_SALARIES variable is
-# "apply": cap penalties for dropped players, contract years for added ones, the payouts in the
-# league's accounting, and $0.01 for the renewal's RFAs.
+# chore log, the weeks whose backup starters are settled), and, to MFL when the DROP_PENALTIES,
+# CONTRACT_YEARS, PAYOUTS, RFA_SALARIES or BACKUP_STARTERS variable is "apply": cap penalties for
+# dropped players, contract years for added ones, the payouts in the league's accounting, $0.01 for
+# the renewal's RFAs, and backups for inactive starters.
 # master is protected and takes changes through pull requests, so nothing here pushes to it.
 #
 # A manual run is a dry run unless unticked: jobs/daily.mjs then writes nothing to MFL or league-data,
@@ -106,6 +107,7 @@ jobs:
           CONTRACT_YEARS: ${{ vars.CONTRACT_YEARS }}
           PAYOUTS: ${{ vars.PAYOUTS }}
           RFA_SALARIES: ${{ vars.RFA_SALARIES }}
+          BACKUP_STARTERS: ${{ vars.BACKUP_STARTERS }}
         run: node jobs/daily.mjs
 
       - name: Commit to league-data

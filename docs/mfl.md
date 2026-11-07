@@ -100,7 +100,11 @@ MFL documents little of this.
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become
   Commissioner", `logout?L=<league>&BECOME=0000`. As the commissioner, "Become Owner" goes the other
   way, to their own team, with no choice of team: `BECOME=9999` in the menu and `BECOME=<team>` in the
-  page's header (the clone, 1 Nov 2026).
+  page's header (the clone, 1 Nov 2026). The job becomes the commissioner with a GET of
+  `logout?L=<league>&BECOME=0000`, which answers a 302 setting `MFL_IS_COMMISH`; without that cookie
+  the commissioner's pages show no form.
+- **The `lineup` import** refuses a past week ("Error(s) submitting lineup: The lineup deadline for
+  Adams, Davante LAR WR has passed …"), even for the commissioner.
 
 - **My Watch List** (a member's own): the `myWatchList` export lists it, and the `myWatchList` import
   changes it (`ADD` or `REMOVE`, comma-separated player ids, posted as the owner), answering
@@ -145,6 +149,8 @@ MFL documents little of this.
   a few minutes of posting: edits half a minute and a minute after got no mark, one at four minutes
   did (the clone, 7 Nov 2026). The edit form (`post_edit.pl`) also deletes; deleting a topic's only
   post removes the topic.
+- **The `messageBoard` import** (`SUBJECT` and `BODY` for a new topic, `THREAD` and `BODY` for a
+  reply) works as the commissioner too; the post shows "Commissioner" (franchise 0000).
 
 ## Forms
 
@@ -244,6 +250,19 @@ Each is an ordinary page form, posted from the logged-in browser.
   - Then `MESSAGE<team>` ("Optional Message"), and `SUBMIT` ("Submit Lineup"; with nothing checked
     it asks to confirm "un-submitting" the lineup). IR players are listed below the table ("you must
     first activate them on the Injured Reserve page").
+  - The commissioner (`MFL_IS_COMMISH`) can open a past week, `lineup?L=…&WEEK=<n>&F=<team>`, with
+    a box for every player whose game has started too (one on a bye still has none). It saves despite the deadline, answering "Week N lineup SUBMITTED" with a
+    warning per player whose deadline passed. Live scoring and the Weekly Results page show the new
+    lineup at once; the saved result and standings wait for a recalculation.
+- **Lineup Details** (`options?O=210&FRANCHISE=<team>&W=<week>`) lists every lineup submitted, a row
+  each: week, "(C)" when the commissioner submitted it, the starters ("Addison, Jordan MIN WR", …,
+  with notes such as "Reserved … after kickoff" after a `<br>`), comments and time. A refused one
+  reads "Lineup Submission Failed: … Error(s) …".
+- **Recalculate Standings** (`csetup?L=<league>&C=RECALC`), a form posted to `csetup`: hidden
+  `form_name=recalc`, `LEAGUE_ID`, `C`, `input_expires`; `WEEK`, `SENDMAIL` and `PREVWEEK` (Yes/No);
+  `SUBMIT`. It answers with the same form. Weekly results, `weeklyResults`, standings and power rank
+  change only once it runs, score adjustments included; the Weekly Results page recalculates on the
+  fly, so the two can disagree until then (the clone, Nov 2026).
 
 ## Chat
 

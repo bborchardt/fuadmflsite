@@ -22,6 +22,8 @@ runs inside MFL's own pages, loaded by a home page message.
   season, for every player due one, from the lengths members send with v2's form
 - records the payouts in MFL's accounting: each week's high score, all-play, and the places
 - after the commissioner's contract-year rollover, sets the new RFAs (1 year to 0) to $0.01
+- puts in members' backup starters for inactive starters (bylaw 16.5), from the "Conditional
+  starters" thread, and recalculates the week
 - flags rule problems (cap, roster limit, IR, anti-tanking) and anything it can't decide
 
 A flag fails the run, so GitHub emails the commissioner. Chores that write to MFL only log what they

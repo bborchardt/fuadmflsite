@@ -23,6 +23,11 @@
 //   waivers       the processed waivers page's HTML
 //   pictures      {address: {base64, etag}} for the team icons, anywhere; an etag the request sends
 //                 back is answered 304, a number in place of one is an HTTP status
+//   pages         {"/2026/path?query": html}: MFL's pages, by the address the job asks for
+//   forms         {"/2026/lineup": html}: what a form posted there answers (default: Submit
+//                 Lineup's "SUBMITTED", and Recalculate Standings' page as `pages` has it)
+//   files         {address: text}: anywhere else, as nflverse's files on GitHub
+//   "nflSchedule:W" in `exports` answers that week's schedule, with its teams, ahead of week1's
 
 import {appendFileSync, readFileSync} from "node:fs";
 
@@ -46,6 +51,9 @@ function exportAnswer(host, year, params, cookie) {
     if (type === "nflSchedule" && scenario.nflSchedule) {
         return text("", scenario.nflSchedule);
     }
+    if (type === "nflSchedule" && `nflSchedule:${params.get("W")}` in (scenario.exports || {})) {
+        return json({nflSchedule: scenario.exports[`nflSchedule:${params.get("W")}`]});
+    }
     if (type === "nflSchedule") {
         const week = Number(params.get("W"));
         const first = scenario.week1 + (year - 2026) * 52 * WEEK + (week - 1) * WEEK;
@@ -63,6 +71,10 @@ function exportAnswer(host, year, params, cookie) {
         return text("", body);
     }
     const section = type === "weeklyResults" && keyed === "YTD" ? "allWeeklyResults" : type;
+    // a board without threads, unless the scenario has one
+    if (body === undefined && type === "messageBoard") {
+        return json({messageBoard: {}});
+    }
     return body === undefined ? json({error: `no ${type} in the scenario`}) : json({[section]: body});
 }
 
@@ -89,9 +101,21 @@ globalThis.fetch = async (input, init = {}) => {
         return published === undefined ? text("", 404) : text(published);
     }
     if (![LEAGUE_HOST, "api.myfantasyleague.com"].includes(url.hostname)) {
-        return text("", 404);
+        const file = (scenario.files || {})[url.href];
+        return file === undefined ? text("", 404) : text(file);
     }
     const [, year, page] = url.pathname.split("/");
+    const address = url.pathname + url.search;
+    if (page === "logout" && url.searchParams.get("BECOME") === "0000") {
+        return new Response(null, {status: 302, headers: {Location: `/${year}/home/48571`, "Set-Cookie": "MFL_IS_COMMISH=yes; domain=.myfantasyleague.com; path=/"}});
+    }
+    if ((init.method || "GET") === "POST" && ["lineup", "csetup"].includes(page)) {
+        const answer = (scenario.forms || {})[url.pathname];
+        return text(answer !== undefined ? answer : page === "lineup" ? "Week lineup SUBMITTED" : (scenario.pages || {})[`/${year}/csetup?L=48571&C=RECALC`] || "");
+    }
+    if ((scenario.pages || {})[address] !== undefined) {
+        return text(scenario.pages[address]);
+    }
     if (page === "login") {
         return scenario.login === "refused" ? text("<error>Invalid password</error>") : text('<status MFL_USER_ID="abc+def=">OK</status>');
     }
