@@ -11,8 +11,7 @@ test("a post's date is in the league's zone, whichever the member picked on MFL,
     assert.equal(shortDate("Sat Oct 17 10:53:42 a.m. CT 2026"), "Sat Oct 17 · 10:53 a.m. CT");
     assert.equal(shortDate("Thu Sep 10 12:11:12 a.m. ET 2026"), "Wed Sep 9 · 11:11 p.m. CT");
     assert.equal(shortDate("Wed Sep 9 6:11:12 p.m. HT 2026"), "Wed Sep 9 · 11:11 p.m. CT");
-    // a post edited later: the post's own time comes first
-    assert.equal(shortDate("Sun Oct 25 5:24:08 p.m. CT 2026 Sun Oct 25 7:27:31 p.m. CT 2026"), "Sun Oct 25 · 5:24 p.m. CT");
+    // a post edited later: its own time, then the edit's, the day too when it differs
     assert.equal(postedText("Sun Oct 25 5:24:08 p.m. CT 2026", ""), "Sun Oct 25 · 5:24 p.m. CT");
     assert.equal(postedText("Sun Oct 25 5:24:08 p.m. CT 2026", " Sun Oct 25 7:27:31 p.m. CT 2026 "), "Sun Oct 25 · 5:24 p.m. CT · edited 7:27 p.m. CT");
     assert.equal(postedText("Sun Oct 25 5:24:08 p.m. CT 2026", "Tue Oct 27 9:01:00 a.m. CT 2026"), "Sun Oct 25 · 5:24 p.m. CT · edited Tue Oct 27 · 9:01 a.m. CT");

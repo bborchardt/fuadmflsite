@@ -27,13 +27,15 @@ export function topicTitle(text) {
 // a post's time, then its last edit's when MFL marks one ("… · edited 7:27 p.m."), the day only if
 // the edit's differs
 export function postedText(posted, edited) {
-    const at = mflTime(clean(posted));
-    const then = clean(edited) ? mflTime(clean(edited)) : null;
-    if (!clean(edited)) {
-        return shortDate(posted);
+    const own = shortDate(posted);
+    const editText = clean(edited);
+    if (!editText) {
+        return own;
     }
-    const editedAt = then ? (at && dayText(at) === dayText(then) ? clock(then) : shortDate(edited)) : clean(edited);
-    return `${shortDate(posted)} · edited ${editedAt}`;
+    const at = mflTime(clean(posted));
+    const then = mflTime(editText);
+    const sameDay = at && then && then - at < 86400 && dayText(at) === dayText(then);
+    return `${own} · edited ${sameDay ? clock(then) : shortDate(editText)}`;
 }
 
 // a post head's own text, before and after MFL's Edited mark
@@ -41,7 +43,7 @@ function headTimes(head) {
     const times = {posted: [], edited: []};
     let edited = false;
     for (const node of head.childNodes) {
-        if (node.nodeType === 1 && node.matches(".warning") && /edited/i.test(node.textContent)) {
+        if (node.nodeType === 1 && node.matches(".warning") && /^edited$/i.test(clean(node.textContent))) {
             edited = true;
         } else if (node.nodeType === 3) {
             times[edited ? "edited" : "posted"].push(node.textContent);
