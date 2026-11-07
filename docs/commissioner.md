@@ -3,9 +3,6 @@
 What the commissioner does, on MFL and GitHub, to run the league site from this repo. How the code
 works is in `README.md` and `docs/`.
 
-The Commish tab is v1's: it's there while v1 is the main version, and for the commissioner (0000),
-whose view stays v1 unless the commissioner is in a beta as 0000.
-
 ## Pasting into MFL
 
 The site reaches members through MFL home page messages. Their text lives in `mfl/`:
@@ -30,11 +27,13 @@ To paste one:
    and save.
 3. For the header: the beta offer line (see Betas and versions) is only in MFL's copy, not the repo's.
    Copy it from the live header before replacing, and put it back on the line the comment
-   `<!-- a beta offer, if any, goes here (README: Offer a beta) -->` marks; leaving it out ends the
+   `<!-- a beta offer, if any, goes here (docs/commissioner.md: Offer a beta) -->` marks; leaving it out ends the
    beta.
 4. When more than one file changed, paste the tab messages first and the header last. The header
    loads code that looks for the tabs' messages, so the tabs need to be in place before it.
 5. Reload the league's home page and check that the site loads and the changed tab looks right.
+   A change to the site's code shows a few minutes after its pull request merges; browsers keep the
+   old copy up to 10 minutes more.
 
 ## Betas and versions
 
@@ -56,36 +55,33 @@ home page (League Alerts in v1, Home in v2), and can switch back.
   address. It lasts in your browser only, until `?fuadPreview=off`.
 - **Make a version the default:** change `MAIN` in `mfl/message-header.html` through a pull request,
   then paste the header. Past seasons keep the version they ended on.
+- MFL's app doesn't run home page messages, so members using it see MFL's own pages, whichever version.
 
 ## The daily job
 
 GitHub runs it every morning at about 07:40 UTC, as the "Daily chores" workflow under the repo's
-Actions tab (GitHub can run it late on busy days). It:
+Actions tab. It:
 - snapshots each franchise's salaries at the trade deadline;
 - charges cap penalties for dropped players;
 - sets contract years for players added after the cut-down date, from the bid comment or a message
   board post within the hour;
-- before the season, sets the lengths members send with v2's form (Home › My alerts, from the draft
-  until week 1), the morning after they send them. Everyone at 0 years with a salary of $1 or more
-  owes one: auction buys, kept and matched RFAs, and rookies. It reads only the form's posts in topics
-  with "contract" in their name, the length holding through a trade; a length posted by hand is
-  flagged for you to set.
-  Past the cut-down date it flags each team still missing lengths, for the $5 a day (bylaw 12.6), and
-  from week 1's kickoff it sets 1 year for any still missing;
+- before the season, sets the lengths members send with v2's form (Home › My alerts), and from week
+  1's kickoff 1 year for any still missing. Left for you: a length posted by hand in a "contract" topic (flagged), and the
+  $5 a day for teams it flags as late past the cut-down (bylaw 12.6);
 - records the payouts in MFL's accounting, as League › Winners works them out: "Most Points Week N"
-  once the next week has kicked off, "All-play (W-L)" once week 14's scores are, and "1st Place",
-  "2nd Place", "3rd Place" once the championship's are. A payout already there under any team isn't
-  added again, if it's worded so: "Most Points Week 4" or "Most points weeks 3,8", "All-play (…)",
-  "2nd Place…"; other wording ("weeks 2-4", "All Play") gets it recorded twice. The places need the
-  pot's league-wide entries first;
-- from renewal until week 1's kickoff, sets each player your rollover took from 1 contract year to 0
-  to $0.01: anyone rostered at 0 years who ended last season at 1 on the same salary, on any team.
-  A rookie, an offseason add (even of last season's player) and a player whose salary you've changed
-  since aren't. It sets a player once a season, so an RFA you keep for $1 at the auction stays at $1.
-  If more than half the rostered players look like RFAs, it sets none and flags it;
+  once the next week has kicked off (split between the teams tied for it), "All-play (W-L)" once week 14's
+  scores are, and "1st Place", "2nd Place", "3rd Place" once the championship's are. Left for you:
+  the pot's league-wide entries, before the championship (the places need them);
+- after your contract-year rollover, sets the new RFAs (1 year to 0) to $0.01, once a season, so a
+  salary you set later stays. Left for you: nothing, unless it flags that too many look like RFAs;
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
+
+A payout you enter by hand isn't recorded again if it's worded as the job words it, under any team:
+"Most Points Week 4" pays that week to that team, and a list of weeks, "Most points weeks 3,8",
+counts as those weeks paid; "All-play (…)" under that team; "2nd Place…". Other wording ("weeks 2-4", "All Play")
+gets it recorded twice.
 
 - **Settings:** the repo's Settings › Secrets and variables › Actions.
 
@@ -102,27 +98,27 @@ It records what it did in the chore log (`chore-log.md`, on the `league-data` br
   you. Open the run from the email: its summary lists what it did and what needs you. Then fix it in
   MFL by hand.
 - **Run it now:** Actions › Daily chores › Run workflow, unticking **Dry run**. Left ticked, it only
-  reports what it would do, and can try another league or settings (README).
-- **A missing franchise snapshot:** the Commish tab's **Show franchise snapshot** button shows the
-  snapshot as text. Save that text as `franchise-<season>.json` (e.g. `franchise-2026.json`), commit
-  it to the `league-data` branch's `data/` folder, and the next run publishes it.
-- **The schedule keeps itself on.** GitHub turns off a scheduled workflow after 60 days without
-  activity in the repo, so each run switches it back on.
+  reports what it would do, on the run's summary page, and can try another league or settings: fill
+  in only what to change (league, host when that league is on another server, settings as a header
+  line's for an unlisted league, version, season, time). Unticked, those are ignored. Each run reads
+  as much from MFL as a daily one.
+- **A missing franchise snapshot:** v1's Commish tab (as 0000, outside the beta) has a **Show
+  franchise snapshot** button that shows the snapshot as text. Save that text as
+  `franchise-<season>.json` (e.g. `franchise-2026.json`), commit it to the `league-data` branch's
+  `data/` folder, and the next run publishes it.
 
 ## Each season
 
-The league renews in mid-March or later, never on a fixed date. MFL keeps past seasons' sites and
-copies the home page messages forward, so the site keeps running without a paste.
+The league renews in mid-March or later, never on a fixed date. The daily job moves to the new
+season by itself.
 
-**At renewal:**
-- **The daily job** moves to the new season by itself: it uses the newest season the league has a
-  site for. If MFL moves the league to another server, update the `MFL_HOST` variable. Then run the
-  job by hand once (Actions › Daily chores › Run workflow, unticking **Dry run**) and check its summary.
-- **The contract-year rollover:** in MFL, lower every player's contract years by 1. Players going
-  from 1 year to 0 (the new RFAs) get a salary of $0.01, since MFL won't take $0; the roster report
-  shows it as $0. The daily job sets it, on its next run or when you run it by hand; check the run's
-  summary for the list.
-- **League Alerts:** look once for anything flagged wrongly before the season.
+**At renewal**, in order:
+1. If MFL moved the league to another server, update the `MFL_HOST` variable.
+2. Do the contract-year rollover in MFL: lower every player's contract years by 1.
+3. Run the job by hand (Run it now). It sets the new RFAs (1 year to 0) to $0.01, since MFL won't
+   take $0; the roster report shows it as $0.
+4. Check the run's summary for that list.
+5. Add the season's events to MFL's calendar (below).
 
 **After the auction and the rookie draft:** as the commissioner (Become Commissioner), Home's My
 alerts has **Load auction or rookie draft**. Copy the whole Franchises tab (or the Rookie tab) from
@@ -159,11 +155,6 @@ week 12's kickoff.
 - **The beta fails to load or start:** that member gets `MAIN` instead, with a bar that leads out of
   the beta. To take the beta down for everyone, delete its offer line from MFL's header (Betas and
   versions).
-- **A change was published:** GitHub Pages publishes `master` within a few minutes of a merge that
-  touches the site, and after a daily run that adds a franchise snapshot. Browsers can keep the old
-  copy for up to 10 minutes, so reload after that to see it.
-- **MFL's app:** it doesn't run home page messages, so members using it see none of the site. That
-  isn't a fault.
 - **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
   (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
   again, or you can run it by hand.

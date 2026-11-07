@@ -4,7 +4,7 @@
     html.fuad-cloak body { visibility: hidden; }
     html.fuad-cloak::after { content: "Loading\2026"; position: fixed; top: 40%; left: 0; right: 0; text-align: center; font: 15px -apple-system, system-ui, sans-serif; color: var(--fuad-cover-text, #8B949E); }
 </style>
-<!-- a beta offer, if any, goes here (README: Offer a beta) -->
+<!-- a beta offer, if any, goes here (docs/commissioner.md: Offer a beta) -->
 <script>
     // Loads MAIN, or the beta a member chose straight away (not through MAIN, a second download on a
     // slow phone). A choice being made or changed (?fuadBeta=, ?fuadPreview=, a stored preview) goes
@@ -66,7 +66,9 @@
             });
         };
         // the beta didn't load or start: MAIN runs the page, with the bar that leads out of the beta. As
-        // handed the page, but not in the beta ("fallback", not "beta"), so MAIN doesn't act as the beta
+        // handed the page, but not in the beta ("fallback", not "beta"), so MAIN doesn't act as the beta.
+        // The way out is v2's (site/v2/loader.js: LEAVE_BETA): this page afresh, the choice cleared as
+        // the link is followed in this tab
         var fallen = false;
         var fallBack = function () {
             var sheet = document.getElementById("fuad-css");
@@ -75,12 +77,15 @@
             window.fuadLoader = {mode: "fallback", barShown: true};
             whenBody(function () {
                 var bar = document.createElement("div");
-                var out = new URL(location.href);
-                out.searchParams.set("fuadBeta", "off");
                 bar.id = "fuad-preview";
                 bar.textContent = "The beta couldn\u2019t load, so this is the current site. ";
                 var link = document.createElement("a");
-                link.href = out.href;
+                link.href = location.pathname + location.search;
+                link.addEventListener("click", function (event) {
+                    if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) {
+                        try { localStorage.removeItem("fuad.beta"); } catch (e) {}
+                    }
+                });
                 link.textContent = "Leave the beta";
                 bar.appendChild(link);
                 document.body.appendChild(bar);
