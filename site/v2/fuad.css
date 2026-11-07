@@ -23,6 +23,8 @@
     --fuad-panel: #161B22;
     --fuad-raised: #1C232D;
     --fuad-quiet: #262D37;
+    /* the bottom bar's mark for the current section, as clear on every look as on Night Game */
+    --fuad-pill: var(--fuad-quiet);
     --fuad-hairline: #262D37;
     --fuad-rule: #222934;
     --fuad-field: #6B7583;
@@ -80,6 +82,7 @@
     --fuad-panel: #FFFFFF;
     --fuad-raised: #FAFBFC;
     --fuad-quiet: #EBEDF1;
+    --fuad-pill: #D0D5DD;
     --fuad-hairline: #E1E4E9;
     --fuad-rule: #ECEEF2;
     --fuad-field: #808A98;
@@ -165,6 +168,7 @@
     --fuad-panel: #E4E8EC;
     --fuad-raised: #EDF0F3;
     --fuad-quiet: #C5CCD4;
+    --fuad-pill: #ADB6C1;
     --fuad-hairline: #B3BCC6;
     --fuad-rule: #BEC6CF;
     --fuad-field: #6A778A;
@@ -199,6 +203,7 @@
     --fuad-panel: #FFFCF6;
     --fuad-raised: #FAF6EE;
     --fuad-quiet: #E8E1D3;
+    --fuad-pill: #D6CDBB;
     --fuad-hairline: #DDD5C5;
     --fuad-rule: #E6DFD1;
     --fuad-field: #887E6E;
@@ -1091,13 +1096,13 @@ body [tabindex]:focus-visible {
         color: var(--fuad-muted) !important;
         font-size: 12px;
         font-weight: 600;
-        position: relative;
     }
 
-    /* colour alone is too faint on the light looks: a bar along the top edge too */
+    /* colour alone is too faint on the light looks: a pill behind the icon too, the soft fill that
+       marks the current section and view elsewhere */
     .fuad-sections-bottom a[aria-current="page"] { color: var(--fuad-accent) !important; }
 
-    .fuad-sections-bottom a[aria-current="page"]::before { content: ""; position: absolute; top: -6px; left: 50%; width: 28px; height: 3px; margin-left: -14px; border-radius: 0 0 3px 3px; background: var(--fuad-accent); }
+    .fuad-sections-bottom a[aria-current="page"] svg { box-sizing: content-box; margin: -3px 0; padding: 3px 18px; border-radius: 14px; background: var(--fuad-pill); }
 
     .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
