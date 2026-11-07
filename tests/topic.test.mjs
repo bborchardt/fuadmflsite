@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {parseHTML} from "linkedom";
-import {dayOnly, insertTags, restyleBoard, restyleTopic, shortDate, topicTitle} from "../site/v2/ui/topic.js";
+import {dayOnly, insertTags, postedText, restyleBoard, restyleTopic, shortDate, topicTitle} from "../site/v2/ui/topic.js";
 
 const page = (name) => parseHTML(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")).document;
 
@@ -13,6 +13,9 @@ test("a post's date is in the league's zone, whichever the member picked on MFL,
     assert.equal(shortDate("Wed Sep 9 6:11:12 p.m. HT 2026"), "Wed Sep 9 · 11:11 p.m. CT");
     // a post edited later: the post's own time comes first
     assert.equal(shortDate("Sun Oct 25 5:24:08 p.m. CT 2026 Sun Oct 25 7:27:31 p.m. CT 2026"), "Sun Oct 25 · 5:24 p.m. CT");
+    assert.equal(postedText("Sun Oct 25 5:24:08 p.m. CT 2026", ""), "Sun Oct 25 · 5:24 p.m. CT");
+    assert.equal(postedText("Sun Oct 25 5:24:08 p.m. CT 2026", " Sun Oct 25 7:27:31 p.m. CT 2026 "), "Sun Oct 25 · 5:24 p.m. CT · edited 7:27 p.m. CT");
+    assert.equal(postedText("Sun Oct 25 5:24:08 p.m. CT 2026", "Tue Oct 27 9:01:00 a.m. CT 2026"), "Sun Oct 25 · 5:24 p.m. CT · edited Tue Oct 27 · 9:01 a.m. CT");
     // letters MFL doesn't offer: as written
     assert.equal(shortDate("Wed Sep 9 11:11:12 p.m. XT 2026"), "Wed Sep 9 11:11:12 p.m. XT 2026");
     assert.equal(shortDate("yesterday"), "yesterday");
@@ -59,7 +62,8 @@ test("logged out, a topic's posts are cards without Reply", () => {
     assert.equal(post.querySelector(".fuad-post-team").textContent, "Commissioner");
     // the commissioner has no team page to lead to
     assert.equal(post.querySelectorAll(".fuad-post-team a").length, 0);
-    assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m. CT");
+    // edited later the same day, as MFL marks it
+    assert.equal(post.querySelector(".fuad-post-when").textContent, "Sun Oct 25 · 5:24 p.m. CT · edited 7:27 p.m. CT");
     assert.equal(post.querySelector(".fuad-post-actions").children.length, 0);
     assert.equal(restyleTopic(page("pages/guest/mb-topic_show.html")), false);
 });

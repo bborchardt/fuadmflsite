@@ -140,7 +140,11 @@ MFL documents little of this.
 - **Message board API** (`messageBoard`, `messageBoardThread`) needs a login and returns nothing for
   2024 and earlier; past seasons' boards are a public archive at `/<season>/options?L=<league>&O=28`.
 - **Edited posts** keep their original `postTime` and return the edited text; the API has no edit
-  time (the board's page shows "Edited …").
+  time. The topic page, guests' too, shows the last edit's time after the post's (`<span
+  class='warning'><B>Edited</B></span> Sun Oct 25 7:27:31 p.m. CT 2026`), but not for an edit within
+  a few minutes of posting: edits half a minute and a minute after got no mark, one at four minutes
+  did (the clone, 7 Nov 2026). The edit form (`post_edit.pl`) also deletes; deleting a topic's only
+  post removes the topic.
 
 ## Forms
 
