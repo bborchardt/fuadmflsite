@@ -2,6 +2,7 @@
 // Winners and Champions, from what league.js and scores.js load (league-model.js's shapes).
 
 import {esc} from "./html.js";
+import {oneLineTimes} from "./format.js";
 import {clock, dayText} from "./home-model.js";
 import {WEEKLY_PRIZE, gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
 import {withIcon} from "./team-pictures.js";
@@ -12,7 +13,7 @@ const shortName = (name) => {
     return parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(" ")}` : name;
 };
 const pts = (value) => (value === null || value === undefined ? "—" : value.toFixed(1));
-const kickoffText = (seconds) => `${dayText(seconds).split(" ")[0]} ${clock(seconds)}`;
+const kickoffText = (seconds) => oneLineTimes(`${dayText(seconds).split(" ")[0]} ${clock(seconds)}`);
 
 // ---- Scores ----
 

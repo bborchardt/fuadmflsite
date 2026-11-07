@@ -13,5 +13,8 @@ export const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"
 
 export const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
 
+// a time's "p.m." kept with it, where a narrow column breaks a line: "Sun 12:00\u00a0p.m."
+export const oneLineTimes = (text) => String(text).replace(/\b(\d{1,2}:\d{2}) ([ap]\.m\.)/g, "$1\u00a0$2");
+
 // a contract's length: "1 yr", "3 yrs"
 export const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;

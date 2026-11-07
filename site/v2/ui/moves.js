@@ -216,5 +216,5 @@ export const alertLine = (text) => `<p class="fuad-move-alert" role="alert">${es
 // Retry, off until the wait is over, or MFL's own page
 export function failedBox(what, failed) {
     const busy = failed === "busy";
-    return `<div class="fuad-move-alert fuad-move-failed" role="alert"><span>Couldn’t check ${what}.${busy ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry" data-act="retry"${busy && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-move-retry" data-act="mfl">MFL’s page</button></span></div>`;
+    return `<div class="fuad-move-failed" role="alert"><span>Couldn’t check ${what}.${busy ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry" data-act="retry"${busy && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-move-retry" data-act="mfl">MFL’s page</button></span></div>`;
 }

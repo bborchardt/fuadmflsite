@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {cents, money, ordinal, plural, yearsText} from "../site/v2/ui/format.js";
+import {cents, money, oneLineTimes, ordinal, plural, yearsText} from "../site/v2/ui/format.js";
 import {displayName} from "../site/v2/lib/mfl.js";
 
 test("amounts: whole dollars bare, anything else to the cent", () => {
@@ -26,4 +26,10 @@ test("MFL's names, last name first, as written everywhere else", () => {
     assert.equal(displayName("St. Brown, Amon-Ra"), "Amon-Ra St. Brown");
     assert.equal(displayName("Bears"), "Bears");
     assert.equal(displayName(" Jackson ,Lamar"), "Lamar Jackson");
+});
+
+test("a time keeps its p.m.", () => {
+    assert.equal(oneLineTimes("@DAL Sun 12:00 p.m."), "@DAL Sun 12:00\u00a0p.m.");
+    assert.equal(oneLineTimes("Mon 7:15 a.m. CT · 12.3"), "Mon 7:15\u00a0a.m. CT · 12.3");
+    assert.equal(oneLineTimes("Bye"), "Bye");
 });
