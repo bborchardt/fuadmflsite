@@ -20,14 +20,15 @@ export const storage = {
 
 // Leagues on one MFL host share a browser's storage, so what's kept is kept per league, and per
 // settings for a test league. MFL's player list, NFL kickoffs and byes are the same for every league.
-const SHARED = /^fuad\.(players|kickoff|byes)\./;
+const SHARED = /^fuad\.(playerList|kickoff|byes)\./;
 const keyOf = (key) => (SHARED.test(key) ? key : `${key}@${league.keyId}`);
 
 // what's kept from before it was kept per league, a bid run for up to a year, a list v2 no longer
-// keeps, and Moves' copy of the league export from when it kept the owners' names and emails
-const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids)\.[^@]*|homeTabs|tidied\.\d+|league\.\d+\.\d+@.*)$/;
+// keeps, Moves' copy of the league export from when it kept the owners' names and emails, and the
+// player list as the export's objects
+const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids|players)\.[^@]*|homeTabs|tidied2?\.\d+|league\.\d+\.\d+@.*)$/;
 // a new name when there's more to tidy, so each browser tidies once more
-const TIDIED = "fuad.tidied2";
+const TIDIED = "fuad.tidied3";
 
 // Also what this league kept under settings it no longer has, nothing else would ever remove it. Once
 // for the settings a browser has, as MFL's pages fill this storage too and this is on every page.
@@ -69,4 +70,17 @@ export async function cached(key, maxAge, load) {
     const value = await load();
     save(key, value);
     return value;
+}
+
+// A copy older than `maxAge` but within `staleAge` is used, so the page draws at once, and is asked
+// for again behind it, for the next page. Only for what's shown.
+export async function cachedOrStale(key, maxAge, staleAge, load) {
+    const entry = saved(key);
+    if (!entry || Date.now() - entry.storedAt >= staleAge) {
+        return cached(key, maxAge, load);
+    }
+    if (Date.now() - entry.storedAt >= maxAge) {
+        Promise.resolve().then(load).then((value) => save(key, value)).catch((error) => console.warn(`[fuad] couldn't refresh ${key}:`, error));
+    }
+    return entry.value;
 }

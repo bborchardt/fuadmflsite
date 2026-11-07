@@ -19,7 +19,7 @@ import {
     lengthLine, lineFor, maxBid, readPlayerLists, rewriteComment, surname, teamState, yearsIn
 } from "./add-model.js";
 import {
-    bannerMarkup, controlSelector, deskHome, dialogMarkup, dropList, freeAgentList, loadingMarkup, moveChecks, phoneHome, phonePlayers, phoneTitle, reviewForm
+    bannerMarkup, controlSelector, deskHome, dialogMarkup, dropList, freeAgentList, freeAgentRowsMarkup, loadingMarkup, moveChecks, phoneHome, phonePlayers, phoneTitle, reviewForm
 } from "./add-view.js";
 
 const FLASH_KEY = "fuad.addFlash";
@@ -720,6 +720,23 @@ export async function drawAdd({context, franchiseId}) {
         }
     }
 
+    let listFrame = 0;
+    function drawList() {
+        listFrame = 0;
+        const rows = mount.querySelector("[data-fa-list]");
+        if (!rows || !state.data) {
+            render();
+            return;
+        }
+        const v = view();
+        const list = freeAgentList(v);
+        rows.innerHTML = freeAgentRowsMarkup(v, list);
+        const none = mount.querySelector("[data-fa-none]");
+        if (none) {
+            none.hidden = list.length > 0;
+        }
+    }
+
     function onInput(event) {
         const field = event.target;
         if (!field.dataset || !field.dataset.focus) {
@@ -727,7 +744,14 @@ export async function drawAdd({context, franchiseId}) {
         }
         if (field.dataset.focus === "q") {
             state.q = field.value;
-        } else if (field.dataset.focus === "bid" && state.compose) {
+            // only the list changes, redrawn once a frame however fast the typing: clearing the box
+            // back to every free agent took a phone a frame or more
+            if (!listFrame) {
+                listFrame = window.requestAnimationFrame(drawList);
+            }
+            return;
+        }
+        if (field.dataset.focus === "bid" && state.compose) {
             state.compose = {...state.compose, bid: field.value.replace(/[^0-9]/g, "")};
         }
         render();

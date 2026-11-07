@@ -167,18 +167,29 @@ function searchMarkup(state) {
     return `<label class="fuad-add-search">${SEARCH}<input type="search" data-focus="q" value="${esc(state.q)}" placeholder="Search free agents" aria-label="Search free agents" autocomplete="off"></label>`;
 }
 
-// the phone's list of free agents to pick from
-export function phonePlayers(v) {
+const noMatch = (list) => `<p class="fuad-meta" data-fa-none${list.length ? " hidden" : ""}>No free agents match.</p>`;
+
+// the free agents' rows alone, redrawn as a search is typed (`data-fa-list`)
+export function freeAgentRowsMarkup(v, list = freeAgentList(v)) {
     const window_ = v.banner.kind === "window";
-    const list = freeAgentList(v);
-    return `${searchMarkup(v.state)}${chipsMarkup(v)}
-    <div class="fuad-add-sorted fuad-meta"><span>Proj ↓</span></div>
-    <ul class="fuad-add-fas">${list.map((row) => `<li><button type="button" class="fuad-add-fa" data-act="pick-fa" data-id="${esc(row.player.id)}"${row.off ? " disabled" : ""}>
+    if (v.wide) {
+        const block = addBlock(v.team, {phase: v.phase});
+        return list.map((row) => freeAgentLine(row, {window_, block})).join("");
+    }
+    return list.map((row) => `<li><button type="button" class="fuad-add-fa" data-act="pick-fa" data-id="${esc(row.player.id)}"${row.off ? " disabled" : ""}>
         <span class="fuad-add-name">${esc(row.player.name)}</span>
         <span class="fuad-add-proj${row.player.proj ? "" : " fuad-muted"}">${esc(fmtProj(row.player.proj || 0))}</span>
         <span class="fuad-meta">${faMeta(row.player, {showBidOnly: window_ && row.bid})}${row.why ? ` · <strong>${esc(row.why)}</strong>` : ""}</span>
-    </button></li>`).join("")}</ul>
-    ${list.length ? "" : '<p class="fuad-meta">No free agents match.</p>'}`;
+    </button></li>`).join("");
+}
+
+// the phone's list of free agents to pick from
+export function phonePlayers(v) {
+    const list = freeAgentList(v);
+    return `${searchMarkup(v.state)}${chipsMarkup(v)}
+    <div class="fuad-add-sorted fuad-meta"><span>Proj ↓</span></div>
+    <ul class="fuad-add-fas" data-fa-list>${freeAgentRowsMarkup(v, list)}</ul>
+    ${noMatch(list)}`;
 }
 
 // the team's players to drop for the composed move, by position, and No drop
@@ -328,7 +339,6 @@ export function deskHome(v) {
     const {state, banner} = v;
     const block = addBlock(v.team, {phase: v.phase});
     const list = freeAgentList(v);
-    const window_ = banner.kind === "window";
     const head = (key, label, cls = "") => `<button type="button" class="fuad-add-sort${cls}" data-act="sort" data-sort="${key}" aria-pressed="${state.sort === key}">${label}${state.sort === key ? (key === "name" ? " ↑" : " ↓") : ""}</button>`;
     return `<div class="fuad-add-desk-top">${bannerMarkup(banner)}</div>${statusMarkup(state)}
     ${block ? `<p class="fuad-move-alert" role="alert">${esc(overLimitText(v.team))}</p>` : ""}
@@ -337,9 +347,9 @@ export function deskHome(v) {
         <div class="fuad-add-free-head"><h2 id="fuad-add-free">Free agents</h2>${searchMarkup(state)}${chipsMarkup(v)}</div>
         <div class="fuad-table-scroll"><div class="fuad-add-fa-table" role="table" aria-label="Free agents">
             <div class="fuad-add-fa-line fuad-add-columns" role="row"><span role="columnheader">${head("name", "Player")}</span><span role="columnheader" class="fuad-mid">Pos</span><span role="columnheader" class="fuad-num">${head("proj", "Proj", " fuad-num")}</span><span role="columnheader" class="fuad-num">${head("pts", "Pts", " fuad-num")}</span><span role="columnheader" class="fuad-mid">NFL</span><span role="columnheader" class="fuad-mid">Opp</span><span role="columnheader" class="fuad-mid">Bye</span><span role="columnheader"></span></div>
-            ${list.map((row) => freeAgentLine(row, {window_, block})).join("")}
+            <div role="rowgroup" data-fa-list>${freeAgentRowsMarkup(v, list)}</div>
         </div></div>
-        ${list.length ? "" : '<p class="fuad-meta">No free agents match.</p>'}
+        ${noMatch(list)}
     </section>`;
 }
 

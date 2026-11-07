@@ -64,6 +64,37 @@ test("a move made in v2 forgets what it changes, and keeps the rest", () => {
     delete globalThis.window;
 });
 
+test("after a move, the page asks again for what it changes, and not for the rest", async () => {
+    const items = new Map();
+    globalThis.window = {franchise_id: "0001", location: {pathname: "/2026/home/48571"}, localStorage: new Proxy({
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => items.set(key, String(value)),
+        removeItem: (key) => items.delete(key)
+    }, {ownKeys: () => [...items.keys()], getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})})};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        const type = new URL(url).searchParams.get("TYPE");
+        return new Response(JSON.stringify({[type]: {}}), {status: 200});
+    };
+    try {
+        // a copy of its own, so the page's first sweep is left to the test below
+        const {forget: forgetHere, pageFetch} = await import("../site/v2/ui/page-fetch.js?forget");
+        const rosters = league("rosters", "&FRANCHISE=0001");
+        const settings = league("league", "&X=forget");
+        await pageFetch(rosters);
+        await pageFetch(settings);
+        forgetHere();
+        await pageFetch(rosters);
+        await pageFetch(settings);
+        assert.deepEqual(asked, [rosters, settings, rosters]);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
 test("after MFL answers 429, nothing is asked of it for 30 seconds", async () => {
     const items = new Map();
     globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))}};
@@ -95,7 +126,7 @@ test("only an answer with its section is kept, never MFL's error", () => {
     assert.equal(keepable(league("calendar"), "<html>"), false);
 });
 
-test("what's expired goes when something new is kept; the viewer's own copy is used", async () => {
+test("what's expired goes when the page first keeps something, not each time; the viewer's own copy is used", async () => {
     const items = new Map();
     const localStorage = {
         getItem: (key) => (items.has(key) ? items.get(key) : null),
@@ -115,7 +146,8 @@ test("what's expired goes when something new is kept; the viewer's own copy is u
     const asked = [];
     globalThis.fetch = async (url) => {
         asked.push(url);
-        return new Response('{"league":{"name":"FUAD"}}', {status: 200});
+        const type = new URL(url).searchParams.get("TYPE");
+        return new Response(JSON.stringify({[type]: {name: "FUAD"}}), {status: 200});
     };
     try {
         const old = league("injuries", "&W=1");
@@ -126,6 +158,10 @@ test("what's expired goes when something new is kept; the viewer's own copy is u
         assert.deepEqual(asked, [league("league")]);
         assert.equal(items.has(`fuad.keep.0001|${old}`), false);
         assert.equal(items.has(`fuad.keep.0001|${league("league")}`), true);
+        items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
+        await pageFetch(league("calendar"));
+        assert.equal(items.has(`fuad.keep.0001|${league("calendar")}`), true);
+        assert.equal(items.has(`fuad.keep.0001|${old}`), true, "swept once a page");
     } finally {
         globalThis.fetch = realFetch;
         delete globalThis.window;

@@ -2,12 +2,13 @@
 // (`#league-standings`) and loaded the first time it shows. Before week 1 the new site has no games,
 // so Standings, Power and Winners show last season's final, which MFL keeps on the previous site.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup} from "./panel.js";
 import {cached} from "./store.js";
 import {lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {beforeWeek1} from "./context.js";
+import {playerList} from "./player-list.js";
 import {readProjections, readRules} from "./live-scoring.js";
 import {careers, champions} from "./history.js";
 import {titles} from "./history-model.js";
@@ -98,7 +99,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
     // before week 1's kickoff the new site has no games: last season's final stands in. MFL's page
     // says so once a week is done; otherwise week 1's kickoff, and if that can't be had, in season.
     const beforeSeason = once(() => beforeWeek1(season));
-    const players = once(async () => playersMap(await cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player}))));
+    const players = once(async () => playersMap(await playerList(season)));
     const rules = once(async () => readRules(await cached(`fuad.rules.${season}`, DAY, () => exp("rules"))));
     // the projections don't change during a week: read once, as MFL's page does
     const projected = new Map();

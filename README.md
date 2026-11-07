@@ -80,9 +80,10 @@ A second league can try the site with no code change, and any setting can be tri
   view twice, first with nothing stored and then again, on master and on your working copy, and
   fails if a step asks MFL for more than it did, listing what it adds.
 - `uv run --no-project --with playwright python tools/verify/speed.py` times Lineup and Home from the
-  same saved pages over a simulated slow phone connection: when the page shows, how long MFL's own
-  page shows first, and when v2's screen is drawn; `--built` times the bundle, `--no-lookbehind`
-  makes lookbehind regexes throw, as on iPhones before iOS 16.4.
+  same saved pages over a simulated slow phone connection, pictures, fonts and third-party scripts
+  at typical sizes: when the page shows, how long MFL's own page shows first, when v2's screen is
+  drawn and when its data is in; `--cache nextday` times a visit a day after the last, `--built`
+  times the bundle, `--no-lookbehind` makes lookbehind regexes throw, as on iPhones before iOS 16.4.
 - `uv run --no-project --with playwright python tools/verify/header.py --built` loads saved pages with
   `mfl/message-header.html` as their header, in Chromium and WebKit, through each beta, fallback and
   failure case, before the commissioner pastes it; `speed.py --header` times it.
