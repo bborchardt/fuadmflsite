@@ -5,7 +5,7 @@
 // sent again from where it stopped.
 
 import {asArray as asList, exportUrl, fetchExport} from "../lib/mfl.js";
-import {draftResultsXml, matchOwner, matchPlayer, planAuction, planRookies, readAuction, readRookies, rosterSteps, salariesXml} from "../lib/load.js";
+import {contractProblem, draftResultsXml, matchOwner, matchPlayer, movedFrom, notOnTeam, planSend, readAuction, readRookies, rosterSteps, salariesXml} from "../lib/load.js";
 import {openDialog} from "./dialog.js";
 import {money} from "./format.js";
 import {esc} from "./html.js";
@@ -29,7 +29,7 @@ const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;
 function choicesNeeded(read, {players, teams, chosen}) {
     const needed = [];
     for (const entry of read.bad) {
-        needed.push({key: `bad:${entry.row}`, label: `${entry.name} (${entry.owner}, row ${entry.row}): its $ or Yrs isn’t a number`, options: []});
+        needed.push({key: `bad:${entry.row}`, label: `${entry.name} (${entry.owner}, row ${entry.row}): ${entry.problem}`, options: []});
     }
     for (const owner of read.owners) {
         if (!chosen.owners.get(owner)) {
@@ -77,8 +77,9 @@ function readSheet(kind, text, {players, rosters, franchises, chosen}) {
         for (const team of sheet) {
             // a released player needs no match: the team's roster says who goes
             for (const player of team.players.filter((entry) => entry.salary !== null)) {
-                if (Number.isNaN(player.salary) || Number.isNaN(player.years)) {
-                    bad.push({...player, owner: team.owner});
+                const problem = contractProblem(player);
+                if (problem) {
+                    bad.push({...player, owner: team.owner, problem});
                     continue;
                 }
                 add({...player, owner: team.owner, key: `${team.owner}:${player.row}:${player.name}`}, rosterOf.get(chosen.owners.get(team.owner)) || []);
@@ -88,61 +89,6 @@ function readSheet(kind, text, {players, rosters, franchises, chosen}) {
         sheet.forEach((pick, index) => add({...pick, position: null, key: `${index}:${pick.name}`}, []));
     }
     return {kind, sheet, owners, entries, bad};
-}
-
-function plan(read, {chosen, rosters, players, draft, teamCount, clearing = new Set()}) {
-    if (read.kind === "auction") {
-        const teams = read.sheet.map((team) => ({
-            franchiseId: chosen.owners.get(team.owner),
-            players: team.players.filter((player) => player.salary !== null).map((player) => ({
-                id: chosen.players.get(`${team.owner}:${player.row}:${player.name}`), salary: player.salary, years: player.years
-            }))
-        }));
-        const result = planAuction({teams, rosters});
-        // unloaded in an earlier send whose salaries step didn't go through
-        const rostered = new Set(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => entry.id)));
-        const placed = new Set(result.add.map((entry) => entry.id).concat(result.salaries.map((entry) => entry.id)));
-        const clear = [...new Set(result.clear.concat([...clearing].filter((id) => !rostered.has(id) && !placed.has(id))))];
-        return {kind: "auction", teams, ...result, clear};
-    }
-    const picks = planRookies({
-        picks: read.sheet.map((pick, index) => ({franchiseId: chosen.owners.get(pick.owner), id: chosen.players.get(`${index}:${pick.name}`)})),
-        // the league's teams, not the sheet's owners: a team that traded all its picks is still in the order
-        teams: teamCount,
-        players
-    });
-    const held = new Map(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => [entry.id, entry])));
-    // MFL's import overwrites the picks it's sent and keeps the others (the clone, 3 Nov 2026)
-    const atPick = new Map(asList(draft && draft.draftPick).map((entry) => [`${Number(entry.round)}.${Number(entry.pick)}`, entry]));
-    const seen = new Map();
-    picks.forEach((pick) => seen.set(pick.id, [...(seen.get(pick.id) || []), pick.franchiseId]));
-    const conflicts = [...seen].filter(([, list]) => list.length > 1).map(([id, franchiseIds]) => ({id, franchiseIds}));
-    const differs = picks.filter((pick) => {
-        const found = atPick.get(`${pick.round}.${pick.pick}`);
-        return !found || found.player !== pick.id || found.franchise !== pick.franchiseId;
-    });
-    return {
-        kind: "rookies", picks, conflicts, release: movedFrom(picks, rosters), existing: differs.filter((pick) => (atPick.get(`${pick.round}.${pick.pick}`) || {}).player).length, loadDraft: differs.length > 0,
-        add: notOnTeam(picks, rosters),
-        salaries: picks.filter((pick) => {
-            const now = held.get(pick.id);
-            return !now || Number(now.salary) !== pick.salary || Number(now.contractYear) !== 0;
-        }).map((pick) => ({id: pick.id, salary: pick.salary, years: 0}))
-    };
-}
-
-// a pick on another team's roster comes off it, so he isn't on two
-function movedFrom(picks, rosters) {
-    const drafted = new Map(picks.map((pick) => [pick.id, pick.franchiseId]));
-    return asList(rosters.franchise).flatMap((team) => asList(team.player)
-        .filter((entry) => drafted.has(entry.id) && drafted.get(entry.id) !== team.id)
-        .map((entry) => ({franchiseId: team.id, id: entry.id})));
-}
-
-// the picks not yet on their team's roster
-function notOnTeam(picks, rosters) {
-    const roster = new Map(asList(rosters.franchise).map((team) => [team.id, new Set(asList(team.player).map((entry) => entry.id))]));
-    return picks.filter((pick) => !(roster.get(pick.franchiseId) || new Set()).has(pick.id));
 }
 
 const nothingLeft = (result) => !result.conflicts.length && (result.kind === "auction"
@@ -278,7 +224,7 @@ export function openLoadForm({context, built, opener}) {
             state.rosters = await fresh("rosters");
             state.draft = state.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
-            state.result = choices().length || !state.read.sheet.length ? null : plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
+            state.result = choices().length || !state.read.sheet.length ? null : planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
         } catch (error) {
             state.error = `Couldn’t read MFL’s rosters: ${error.message}`;
         }
@@ -330,7 +276,7 @@ export function openLoadForm({context, built, opener}) {
         try {
             state.rosters = await fresh("rosters");
             state.draft = result.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
-            state.result = plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
+            state.result = planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
             if (!state.error) {
                 state.log.push(nothingLeft(state.result) ? "Done: MFL matches the sheet." : "MFL doesn’t match the sheet yet: what’s left is below.");
             }
@@ -361,7 +307,7 @@ export function openLoadForm({context, built, opener}) {
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
         }
         if (!choices().length) {
-            state.result = plan(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
+            state.result = planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
         }
         render();
     });

@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {draftResultsXml, matchOwner, matchPlayer, planAuction, planRookies, plainName, readAuction, readRookies, rosterSteps, salariesXml} from "../site/v2/lib/load.js";
+import {contractProblem, draftResultsXml, matchOwner, matchPlayer, planAuction, planRookies, planSend, plainName, readAuction, readRookies, rosterSteps, salariesXml} from "../site/v2/lib/load.js";
 
 const tsv = (rows) => rows.map((row) => row.join("\t")).join("\n");
 
@@ -93,6 +93,42 @@ test("the auction's changes: releases, adds and salaries, a player on two sheets
 test("a $ or Yrs that isn't a number is read as such, not as nothing", () => {
     const [team] = readAuction(tsv([["Ann", "", "$", "Yrs"], ["Lamar Jackson", "QB2", "-", "1"], ["AJ Brown", "WR7", "35", "x"]]));
     assert.deepEqual(team.players.map(({salary, years}) => [salary, years]), [[NaN, 1], [35, NaN]]);
+});
+
+test("a sheet row's $ and Yrs are sent only when MFL could hold them as a contract", () => {
+    for (const ok of [{salary: 1, years: 0}, {salary: 68, years: null}, {salary: 20, years: 5}]) {
+        assert.equal(contractProblem(ok), null, JSON.stringify(ok));
+    }
+    assert.equal(contractProblem({salary: NaN, years: 1}), "its $ or Yrs isn’t a number");
+    assert.equal(contractProblem({salary: 0, years: 1}), "$0: a salary is at least $1");
+    assert.equal(contractProblem({salary: 0.5, years: 1}), "$0.5: a salary is at least $1");
+    assert.equal(contractProblem({salary: 10, years: 7}), "7 yrs: a length is a whole number of years, 0 to 5");
+    assert.equal(contractProblem({salary: 10, years: 2.5}), "2.5 yrs: a length is a whole number of years, 0 to 5");
+    assert.equal(contractProblem({salary: 10, years: -1}), "-1 yrs: a length is a whole number of years, 0 to 5");
+});
+
+test("an auction send clears who's unloaded to no team, an earlier send's too, but never a player the sheet places", () => {
+    const rosters = {franchise: [{id: "0001", player: [{id: "1", salary: "20", contractYear: "1"}, {id: "2", salary: "5", contractYear: "1"}]}, {id: "0002", player: {id: "3", salary: "4", contractYear: "2"}}]};
+    const read = {kind: "auction", sheet: [{owner: "Ann", players: [{name: "Lamar Jackson", row: 2, salary: 68, years: 0}]}]};
+    const chosen = {owners: new Map([["Ann", "0001"]]), players: new Map([["Ann:2:Lamar Jackson", "1"]])};
+    // 1 is placed and 3 is on a roster, so only the 7 left unloaded by an earlier send is cleared, with 2
+    const result = planSend(read, {chosen, rosters, players, clearing: new Set(["1", "3", "7"])});
+    assert.deepEqual(result.clear, ["2", "7"]);
+    assert.deepEqual(result.salaries, [{id: "1", salary: 68, years: 0}]);
+});
+
+test("a rookie send: the same player picked twice is a conflict, and a draft MFL already has isn't sent again", () => {
+    const rosters = {franchise: [{id: "0001", player: []}, {id: "0002", player: []}]};
+    const read = {kind: "rookies", sheet: [{owner: "Ann", name: "Josh Johnson"}, {owner: "Bob", name: "Josh Johnson"}]};
+    const chosen = {owners: new Map([["Ann", "0001"], ["Bob", "0002"]]), players: new Map([["0:Josh Johnson", "9"], ["1:Josh Johnson", "9"]])};
+    assert.deepEqual(planSend(read, {chosen, rosters, players, teamCount: 2}).conflicts, [{id: "9", franchiseIds: ["0001", "0002"]}]);
+    const once = {...read, sheet: [read.sheet[0]]};
+    const draft = {draftPick: [{round: "01", pick: "01", franchise: "0001", player: "9"}]};
+    const sent = planSend(once, {chosen, rosters, players, teamCount: 2, draft});
+    assert.equal(sent.loadDraft, false);
+    // still to load onto the roster at the scale's salary
+    assert.deepEqual([sent.add.map((pick) => pick.id), sent.salaries], [["9"], [{id: "9", salary: 10, years: 0}]]);
+    assert.equal(planSend(once, {chosen, rosters, players, teamCount: 2}).loadDraft, true);
 });
 
 test("the rookie tab: its Pick, Owner and Player columns in pick order, on the rookie scale", () => {

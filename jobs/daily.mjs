@@ -36,17 +36,20 @@ if (!/^v\d+$/.test(version) || version === "v1") {
     throw new Error(`RULES_VERSION must name a version from v2 on, as v2, not "${version}"`);
 }
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
-const {API_BASE, asArray, displayName, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
+const {API_BASE, asArray, displayName, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
 const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
 const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
-const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
+const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, salaryAdjXml} =
     await import("./drop-penalties.mjs");
 const {contractDeadline, pendingAdds, windowClosed} = await lib("adds.js");
 const {cutDownAt, ruleViolations, seasonPhase} = await lib("violations.js");
 const {DEFAULT_YEARS, decideYears, postText, readProcessedWaivers, teamPlayers} = await lib("contract-years.js");
-const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
+const {MAX_CONTRACTS_PER_RUN} = await import("./contract-years.mjs");
+// MFL's salaries import for [{playerId, salary, years}]; only sent with APPEND=1, or MFL replaces every salary
+const contractsXml = (contracts) => salariesImportXml(contracts.map(({playerId, salary, years}) => ({id: playerId, salary, years})));
+const resetSalaryXml = (penalty) => contractsXml([{playerId: penalty.playerId, salary: 1, years: 0}]);
 const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.js");
 const {mflImport: sendImport} = await import("./mfl-import.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");

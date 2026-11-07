@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
-import {dropDate, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} from "../jobs/drop-penalties.mjs";
+import {dropDate, needsCharge, pendingPenalties, salaryAdjXml} from "../jobs/drop-penalties.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
 const DROPPED = Date.UTC(2026, 9, 3, 16) / 1000;
@@ -96,11 +96,9 @@ test("a penalty needs charging unless it's $0 or already charged", () => {
     assert.equal(needsCharge({...penalty, amount: 0}), false);
 });
 
-test("import data escapes text and resets to $1 / 0 years", () => {
+test("import data escapes text", () => {
     const penalty = {franchiseId: "0002", playerId: "4", amount: 8, explanation: `Ja'Marr "J" <Chase> & Co (2yrs@10, 10/03)`};
     assert.equal(salaryAdjXml(penalty),
         `<salary_adjustments><salary_adjustment franchise_id="0002" amount="8" `
         + `explanation="Ja'Marr &quot;J&quot; &lt;Chase&gt; &amp; Co (2yrs@10, 10/03)"/></salary_adjustments>`);
-    assert.equal(resetSalaryXml(penalty),
-        `<salaries><leagueUnit unit="LEAGUE"><player id="4" salary="1" contractYear="0"/></leagueUnit></salaries>`);
 });

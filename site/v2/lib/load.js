@@ -6,6 +6,8 @@
 // people write them ("AJ Brown", "Marvin Harrison Jr."); MFL names them "Brown, A.J.".
 
 import {rookieSalary, POSITIONS} from "./rules.js";
+import {salariesImportXml} from "./mfl.js";
+import settings from "./settings.js";
 
 const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
 
@@ -204,6 +206,82 @@ export function planRookies({picks, teams, players}) {
     }));
 }
 
+// Why a sheet row's $ and Yrs can't be sent, or null: a salary of $1 or more and a whole number of
+// years from 0 (due one with Home's form) to the league's most. Yrs left blank is 0.
+export function contractProblem({salary, years}) {
+    if (Number.isNaN(salary) || Number.isNaN(years)) {
+        return "its $ or Yrs isn’t a number";
+    }
+    if (!(salary >= 1)) {
+        return `$${salary}: a salary is at least $1`;
+    }
+    const maxYears = settings.contracts.maxYears;
+    if (years !== null && !(Number.isInteger(years) && years >= 0 && years <= maxYears)) {
+        return `${years} yrs: a length is a whole number of years, 0 to ${maxYears}`;
+    }
+    return null;
+}
+
+// What a send makes of the sheet as read (ui/load-form.js readSheet) against MFL now: the auction's
+// planAuction, its `clear` taking in any player an earlier send unloaded (`clearing`) whose salaries
+// step didn't go through, unless the sheet places him; or the rookie draft's picks, with what differs
+// from MFL's draft results, rosters and salaries. `chosen` maps the sheet's owners to teams and its
+// entries to players.
+export function planSend(read, {chosen, rosters, players, draft, teamCount, clearing = new Set()}) {
+    if (read.kind === "auction") {
+        const teams = read.sheet.map((team) => ({
+            franchiseId: chosen.owners.get(team.owner),
+            players: team.players.filter((player) => player.salary !== null).map((player) => ({
+                id: chosen.players.get(`${team.owner}:${player.row}:${player.name}`), salary: player.salary, years: player.years
+            }))
+        }));
+        const result = planAuction({teams, rosters});
+        // unloaded in an earlier send whose salaries step didn't go through
+        const rostered = new Set(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => entry.id)));
+        const placed = new Set(result.add.map((entry) => entry.id).concat(result.salaries.map((entry) => entry.id)));
+        const clear = [...new Set(result.clear.concat([...clearing].filter((id) => !rostered.has(id) && !placed.has(id))))];
+        return {kind: "auction", teams, ...result, clear};
+    }
+    const picks = planRookies({
+        picks: read.sheet.map((pick, index) => ({franchiseId: chosen.owners.get(pick.owner), id: chosen.players.get(`${index}:${pick.name}`)})),
+        // the league's teams, not the sheet's owners: a team that traded all its picks is still in the order
+        teams: teamCount,
+        players
+    });
+    const held = new Map(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => [entry.id, entry])));
+    // MFL's import overwrites the picks it's sent and keeps the others (the clone, 3 Nov 2026)
+    const atPick = new Map(asList(draft && draft.draftPick).map((entry) => [`${Number(entry.round)}.${Number(entry.pick)}`, entry]));
+    const seen = new Map();
+    picks.forEach((pick) => seen.set(pick.id, [...(seen.get(pick.id) || []), pick.franchiseId]));
+    const conflicts = [...seen].filter(([, list]) => list.length > 1).map(([id, franchiseIds]) => ({id, franchiseIds}));
+    const differs = picks.filter((pick) => {
+        const found = atPick.get(`${pick.round}.${pick.pick}`);
+        return !found || found.player !== pick.id || found.franchise !== pick.franchiseId;
+    });
+    return {
+        kind: "rookies", picks, conflicts, release: movedFrom(picks, rosters), existing: differs.filter((pick) => (atPick.get(`${pick.round}.${pick.pick}`) || {}).player).length, loadDraft: differs.length > 0,
+        add: notOnTeam(picks, rosters),
+        salaries: picks.filter((pick) => {
+            const now = held.get(pick.id);
+            return !now || Number(now.salary) !== pick.salary || Number(now.contractYear) !== 0;
+        }).map((pick) => ({id: pick.id, salary: pick.salary, years: 0}))
+    };
+}
+
+// a pick on another team's roster comes off it, so he isn't on two
+export function movedFrom(picks, rosters) {
+    const drafted = new Map(picks.map((pick) => [pick.id, pick.franchiseId]));
+    return asList(rosters.franchise).flatMap((team) => asList(team.player)
+        .filter((entry) => drafted.has(entry.id) && drafted.get(entry.id) !== team.id)
+        .map((entry) => ({franchiseId: team.id, id: entry.id})));
+}
+
+// the picks not yet on their team's roster
+export function notOnTeam(picks, rosters) {
+    const roster = new Map(asList(rosters.franchise).map((team) => [team.id, new Set(asList(team.player).map((entry) => entry.id))]));
+    return picks.filter((pick) => !(roster.get(pick.franchiseId) || new Set()).has(pick.id));
+}
+
 const two = (number) => String(number).padStart(2, "0");
 const attr = (value) => String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
@@ -218,7 +296,5 @@ export function draftResultsXml(picks) {
 // roster has (the clone, 3 Nov 2026)
 export function salariesXml(entries, clear = []) {
     const set = new Set(entries.map((entry) => entry.id));
-    const blank = clear.filter((id) => !set.has(id)).map((id) => ({id, salary: "", years: ""}));
-    return `<salaries><leagueUnit unit="LEAGUE">${entries.concat(blank).map((entry) =>
-        `<player id="${attr(entry.id)}" salary="${attr(entry.salary)}" contractYear="${attr(entry.years)}"/>`).join("")}</leagueUnit></salaries>`;
+    return salariesImportXml(entries.concat(clear.filter((id) => !set.has(id)).map((id) => ({id, salary: "", years: ""}))));
 }

@@ -42,8 +42,3 @@ export function salaryAdjXml(penalty) {
         + ` amount="${xmlAttr(penalty.amount)}" explanation="${xmlAttr(penalty.explanation)}"/></salary_adjustments>`;
 }
 
-// only send it with APPEND=1, or MFL replaces every salary
-export function resetSalaryXml(penalty) {
-    return `<salaries><leagueUnit unit="LEAGUE"><player id="${xmlAttr(penalty.playerId)}" salary="1" contractYear="0"/>`
-        + `</leagueUnit></salaries>`;
-}

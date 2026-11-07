@@ -16,6 +16,14 @@ export function displayName(mflName) {
 
 // MFL's team codes where they differ from the usual ones ("KCC" for "KC")
 const NFL_CODES = {GBP: "GB", JAC: "JAX", KCC: "KC", LVR: "LV", NEP: "NE", NOS: "NO", SFO: "SF", TBB: "TB"};
+// MFL's salaries import, `players` [{id, salary, years}]; sent with APPEND=1 it's laid over what MFL
+// has, and without it it replaces every salary
+export function salariesImportXml(players) {
+    const attr = (value) => String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    return `<salaries><leagueUnit unit="LEAGUE">${players.map((player) =>
+        `<player id="${attr(player.id)}" salary="${attr(player.salary)}" contractYear="${attr(player.years)}"/>`).join("")}</leagueUnit></salaries>`;
+}
+
 export const nflCode = (team) => NFL_CODES[team] || team;
 
 // league-independent exports (players, injuries, nflSchedule) live on the api host
