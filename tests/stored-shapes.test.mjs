@@ -1,4 +1,4 @@
-// What v2 builds from MFL's pages and keeps in members' browsers (store.js `cached`) is used as found
+// What v2 builds from MFL's pages and exports and keeps in members' browsers (store.js `cached`) is used as found
 // until it expires, a year for a bid run, so a copy kept by an older version must not be read by a
 // newer one expecting another shape. Each such value's outline, from the saved pages, is pinned
 // here beside its key: a change to the outline changes the key too, so old copies are ignored.
@@ -10,6 +10,7 @@ import {readBidRun} from "../site/v2/ui/bids-model.js";
 import {readCareer, readChampions, readSeries} from "../site/v2/ui/history-model.js";
 import {BIDS_KEY} from "../site/v2/ui/move-rows.js";
 import {KEYS} from "../site/v2/ui/history.js";
+import {PLAYERS_KEY, playerRows} from "../site/v2/ui/player-list.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
@@ -49,7 +50,8 @@ const stored = [
         "[{awarded: null|number, claims: [{amount: number, name: string, nfl: string, position: string}], comment: string, refused: {*: string}, team: string}]"],
     ["fuad.history.champions", KEYS.champions, () => [readChampions(fixture("history-champions.html"))], "[{name: string, team: string, year: number}]"],
     ["fuad.history.career", KEYS.career, () => [readCareer(fixture("history-career.html"))], "{*: {l: number, seasons: [number], t: number, w: number}}"],
-    ["fuad.history.series", KEYS.series, () => [readSeries(fixture("history-series-0005.html"))], "{*: {l: number, t: number, w: number}}"]
+    ["fuad.history.series", KEYS.series, () => [readSeries(fixture("history-series-0005.html"))], "{*: {l: number, t: number, w: number}}"],
+    ["fuad.playerList", PLAYERS_KEY, () => [playerRows(JSON.parse(fixture("players-league.json")).players)], "[[string]]"]
 ];
 
 for (const [pinnedKey, key, read, pinned] of stored) {

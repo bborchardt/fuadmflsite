@@ -3,7 +3,7 @@
 // except opened from Rosters (`window.fuadOpenPlayer`), where it offers the move that fits: Drop
 // and IR for the member's own, Propose a trade for another team's, Add for a free agent.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {capPenalty} from "../lib/rules.js";
 import {NFL_TEAMS, holderOf, openerName, readArticle, readPlayerPage} from "./player-page.js";
@@ -12,10 +12,10 @@ import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
+import {playerList} from "./player-list.js";
 import {setWatched, watchList, watchState} from "./watch.js";
 import {cents, money, ordinal, yearsText} from "./format.js";
 
-const DAY = 24 * 60 * 60 * 1000;
 const CAP_AGE = 2 * 60 * 1000;
 
 const STAR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9z"></path></svg>';
@@ -55,7 +55,7 @@ function capUsed(context, franchiseId) {
     const league = (type) => leagueExport(context, type);
     return cached(`fuad.capUsed.${season}.${franchiseId}`, CAP_AGE, async () => {
         const [players, leagueInfo, rosters, salaryAdjustments, transactions, freeAgents] = await Promise.all([
-            cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
+            playerList(season),
             league("league"), league("rosters"), league("salaryAdjustments"), league("transactions"), league("freeAgents")
         ]);
         const built = buildLeague({players: playersFromExport(players), league: leagueInfo, rosters, salaryAdjustments, transactions, freeAgents});

@@ -6,19 +6,22 @@
 
 Each request is answered from tools/verify/screens/ (as screens.py does) after the delay a phone
 connection would add: a round trip per request, a connection setup per host, and the response's
-gzipped size through one shared link. MFL's page arrives whole, so its progressive drawing isn't
-modeled.
+gzipped size through one shared link. What the saved pages lack takes its typical size: pictures,
+Google's fonts, MFL's own styles and scripts, and the third-party scripts MFL's page loads, which are
+then refused as before. MFL's page arrives whole, so its progressive drawing isn't modeled.
 
 --path   beta: the header loads v1, which hands the page to v2 (a beta member today); direct: the
          header loads v2 itself
 --header the saved pages' header replaced by mfl/message-header.html: beta is a beta member (MAIN
          v1, the beta loaded directly), direct is MAIN v2
---cache  cold: nothing cached; stale: cached more than GitHub Pages' 10 minutes, so every site file is
-         asked again and answered unchanged (a round trip, no body)
+--cache  cold: nothing cached; stale: cached more than GitHub Pages' 10 minutes, so every site file,
+         picture, font and script is asked again and answered unchanged (a round trip, no body);
+         nextday: stale, after a visit whose saved copies (localStorage) are then made a day older
 --film   saves a screenshot every second there
 
 Per run: when the page first shows anything, how long MFL's own content shows (the flash v2 should
-hide), when v2's screen is drawn, and the requests and bytes it took.
+hide), when v2's screen is drawn and when it last changed (final: its data in), and the requests and
+bytes it took.
 """
 import argparse
 import asyncio
@@ -42,6 +45,28 @@ NETS = {
     "fast": (0.03, 3, 2_000_000),
 }
 
+# typical gzipped sizes of what the saved pages lack, in bytes
+PICTURES = {".gif": 30_000, ".jpg": 15_000, ".jpeg": 15_000, ".png": 15_000, ".webp": 4_000, ".svg": 1_500}
+THIRD_PARTY = {"fonts.googleapis.com": 2_000, "fonts.gstatic.com": 25_000, "www.googletagmanager.com": 90_000}
+OTHER_THIRD_PARTY = 5_000
+MFL_STYLE_OR_SCRIPT = 15_000
+
+
+def stand_in(url, resource_type, body):
+    """the size to deliver for what the saved pages lack, or None to use the body as it is"""
+    path = url.path.lower()
+    picture = next((size for ext, size in PICTURES.items() if path.endswith(ext)), None)
+    if resource_type == "image" or picture:
+        return picture or PICTURES[".png"]
+    if url.netloc in THIRD_PARTY:
+        return THIRD_PARTY[url.netloc]
+    if not url.netloc.endswith("myfantasyleague.com") and url.netloc != "bborchardt.github.io":
+        return OTHER_THIRD_PARTY
+    if url.netloc.endswith("myfantasyleague.com") and not body and path.endswith((".js", ".css")):
+        return MFL_STYLE_OR_SCRIPT
+    return None
+
+
 # what the page shows, sampled every 50 ms: hidden by the cover, MFL's own content in the page body,
 # v2's screen (its mount, or the page body's v2 parts)
 PROBE = """
@@ -59,6 +84,9 @@ PROBE = """
     const ours = body_ && kids.some((el) => /^fuad/.test(el.id) && shown(el) && el.textContent.trim().length > 40);
     const s = (body_ ? 'v' : '-') + (mfl ? 'M' : '-') + (ours ? 'O' : '-');
     if (!log.length || log[log.length - 1][1] !== s) log.push([performance.now(), s]);
+    // when v2's screen last changed: its data drawn over what it saved
+    const text = kids.filter((el) => /^fuad/.test(el.id)).map((el) => el.textContent).join('');
+    if (text !== window.__speedText) { window.__speedText = text; window.__speedFinal = performance.now(); }
   };
   setInterval(tick, 50);
   document.addEventListener('readystatechange', tick);
@@ -132,35 +160,51 @@ def header_v1(html):
 async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, new_header=False):
     url, swaps = SCREENS[name]
     mfl = Mfl(site, swaps)
-    link = Link(net)
-    context = await browser.new_context(viewport={"width": 390, "height": 844}, timezone_id="America/Los_Angeles")
-    await context.clock.set_fixed_time(swaps.get("now", NOW))
-    await context.add_init_script(INIT)
-    await context.add_init_script(PROBE)
-    if no_lookbehind:
-        await context.add_init_script(NO_LOOKBEHIND)
-    if path == "beta":
-        await context.add_init_script("try { localStorage.setItem('fuad.beta', 'v2'); } catch (e) {}")
+    links = [Link(net)]
 
     async def handle(route):
         request = route.request
-        host = urlparse(request.url).netloc
+        url = urlparse(request.url)
         captured = Captured(request)
         mfl.handle(captured)
         kind, args = captured.answer
-        if kind == "abort":
-            return await route.abort()
         body = args.get("body", "")
         body = body.encode() if isinstance(body, str) else body
         if request.resource_type == "document" and (new_header or path == "beta"):
             body = (swap_header(body.decode(), path) if new_header else header_v1(body.decode())).encode()
             args = {**args, "body": body}
-        site_file = host == "bborchardt.github.io"
-        size = 0 if (cache == "stale" and site_file) else len(gzip.compress(body)) if body else 0
-        await link.deliver(host, size + 300)
+        standing_in = stand_in(url, request.resource_type, body)
+        if standing_in is None and kind == "abort":
+            return await route.abort()
+        # MFL's page and exports are asked fresh; the rest a returning browser has, and asks again
+        kept = cache in ("stale", "nextday") and (standing_in is not None or url.netloc == "bborchardt.github.io")
+        size = 0 if kept else standing_in if standing_in is not None else len(gzip.compress(body)) if body else 0
+        await links[-1].deliver(url.netloc, size + 300)
+        if kind == "abort":
+            return await route.abort()
         await route.fulfill(**args)
 
-    await context.route("**/*", handle)
+    # a context of its own for the visit timed, as the page clock counts from its context's start
+    async def new_context(storage_state=None):
+        context = await browser.new_context(viewport={"width": 390, "height": 844}, timezone_id="America/Los_Angeles", storage_state=storage_state)
+        await context.clock.set_fixed_time(swaps.get("now", NOW))
+        await context.add_init_script(INIT)
+        await context.add_init_script(PROBE)
+        if no_lookbehind:
+            await context.add_init_script(NO_LOOKBEHIND)
+        if path == "beta":
+            await context.add_init_script("try { localStorage.setItem('fuad.beta', 'v2'); } catch (e) {}")
+        await context.route("**/*", handle)
+        return context
+
+    storage_state = None
+    if cache == "nextday":
+        yesterday = await new_context()
+        storage_state = await visit_and_age(yesterday, HOST + url)
+        await yesterday.close()
+        links.append(Link(net))
+    link = links[-1]
+    context = await new_context(storage_state)
     page = await context.new_page()
     errors = []
     # MFL's chart script isn't among the saved pages
@@ -170,12 +214,13 @@ async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, 
     shots = 0
     if film:
         film.mkdir(parents=True, exist_ok=True)
-    # until v2's screen has been drawn and nothing changed for 2 s, at most 60 s
-    last_change, last = time.monotonic(), None
+    # until v2's screen has been drawn and hasn't changed for 5 s (data can land a few seconds after
+    # the draw on a slow link), at most 60 s
+    last_change, last, log, final = time.monotonic(), None, [], 0
     while time.monotonic() - t0 < 60:
         await asyncio.sleep(0.25)
         try:
-            log = await page.evaluate("() => window.__speed || []")
+            log, final = await page.evaluate("() => [window.__speed || [], window.__speedFinal || 0]")
         except Exception:
             continue
         if film and time.monotonic() - t0 >= shots:
@@ -184,16 +229,43 @@ async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, 
             except Exception:
                 pass
             shots += 1
-        if log != last:
-            last, last_change = log, time.monotonic()
-        if log and log[-1][1].endswith("O") and time.monotonic() - last_change > 2:
+        if (log, final) != last:
+            last, last_change = (log, final), time.monotonic()
+        if log and log[-1][1].endswith("O") and time.monotonic() - last_change > 5:
             break
     await nav
     await context.close()
-    return summarize(log or [], link, errors)
+    return summarize(log or [], link, errors, final)
 
 
-def summarize(log, link, errors):
+# what v2 saved, a day older: `storedAt` (store.js) and `expires` (page-fetch.js)
+AGE_A_DAY = """
+(() => {
+  for (const name of Object.keys(localStorage)) {
+    try {
+      const entry = JSON.parse(localStorage.getItem(name));
+      if (entry && typeof entry === 'object') {
+        for (const field of ['storedAt', 'expires']) if (typeof entry[field] === 'number') entry[field] -= 25 * 3600 * 1000;
+        localStorage.setItem(name, JSON.stringify(entry));
+      }
+    } catch (e) {}
+  }
+})()
+"""
+
+
+async def visit_and_age(context, url):
+    """yesterday's visit: the page drawn, then what it saved aged a day"""
+    page = await context.new_page()
+    await page.goto(url, wait_until="load", timeout=120_000)
+    await page.wait_for_timeout(5000)
+    await page.evaluate(AGE_A_DAY)
+    state = await context.storage_state()
+    await page.close()
+    return state
+
+
+def summarize(log, link, errors, final=0):
     t = lambda ms: f"{ms / 1000:5.1f}s"
     first = next((ms for ms, s in log if s[0] == "v"), None)
     ours = next((ms for ms, s in log if s.endswith("O")), None)
@@ -206,6 +278,7 @@ def summarize(log, link, errors):
         "shows": t(first) if first is not None else "  never",
         "mfl flash": t(flash),
         "drawn": t(ours) if ours is not None else "  never",
+        "final": t(final),
         "requests": link.requests,
         "kB": round(link.bytes / 1000),
         "timeline": " ".join(f"{ms / 1000:.1f}:{s}" for ms, s in log),
@@ -230,13 +303,13 @@ async def main():
     site = Site(build_working_copy() if args.built else args.ref)
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--host-resolver-rules=MAP * ~NOTFOUND"])
-        print(f"{'screen':8} {'path':6} {'net':5} {'cache':5}  shows  mfl flash  drawn  requests   kB")
+        print(f"{'screen':8} {'path':6} {'net':5} {'cache':7}  shows  mfl flash  drawn  final  requests   kB")
         for name in args.screens.split(","):
             for net in args.net.split(","):
                 for path in args.path.split(","):
                     for cache in args.cache.split(","):
                         r = await run(browser, site, name, net, path, cache, args.film, args.no_lookbehind, args.header)
-                        print(f"{name:8} {path:6} {net:5} {cache:5}  {r['shows']}  {r['mfl flash']}    {r['drawn']}  {r['requests']:8} {r['kB']:4}")
+                        print(f"{name:8} {path:6} {net:5} {cache:7}  {r['shows']}  {r['mfl flash']}    {r['drawn']}  {r['final']}  {r['requests']:8} {r['kB']:4}")
                         if args.timeline:
                             print("   ", r["timeline"])
                         for error in r["errors"]:

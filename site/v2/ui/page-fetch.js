@@ -87,16 +87,21 @@ function kept(key) {
     }
 }
 
-// MFL's own pages share this browser storage, so what's expired goes as something new is kept
+// MFL's own pages share this browser storage, so what's expired goes as the first thing a page keeps
+// is kept: reading every entry is slow on a phone, so once a page
+let swept = false;
 function keep(key, body, maxAge) {
     const now = Date.now();
-    try {
-        for (const name of Object.keys(window.localStorage)) {
-            if (name.startsWith(KEEP) && !((JSON.parse(window.localStorage.getItem(name)) || {}).expires > now)) {
-                window.localStorage.removeItem(name);
+    if (!swept) {
+        swept = true;
+        try {
+            for (const name of Object.keys(window.localStorage)) {
+                if (name.startsWith(KEEP) && !((JSON.parse(window.localStorage.getItem(name)) || {}).expires > now)) {
+                    window.localStorage.removeItem(name);
+                }
             }
+        } catch (error) {
         }
-    } catch (error) {
     }
     storage.set(key, JSON.stringify({expires: now + maxAge, body}));
 }

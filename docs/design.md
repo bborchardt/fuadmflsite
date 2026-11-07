@@ -292,7 +292,11 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   pages until the next week's results or a week, League Champions for a day; a processed bid run,
   for good. So a move made on
   MFL's own pages, or by another team, can take 2 minutes to show. Moves' checks and who starts in
-  League › Scores always ask MFL.
+  League › Scores always ask MFL. MFL's player list (`ui/player-list.js`) is kept a day as bare
+  rows; where it's only shown (League, Recent moves, a player's card), a copy up to two days old
+  draws the page and a fresh one is asked for behind it. Moves' checks and Home, whose forms write to
+  MFL, wait for a fresh one. On the home page, MFL's hidden chat module stops reading the chat every
+  few seconds, as Home reads its own.
 - After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel
   with nothing to show says MFL asked us to wait, with Retry off until then. Moves aren't held.
 - League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from

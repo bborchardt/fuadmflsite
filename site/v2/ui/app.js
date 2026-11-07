@@ -6,12 +6,11 @@ import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {cutDownAt, seasonPhase} from "../lib/violations.js";
 import {seasonWeeks} from "../lib/rules.js";
 import {leagueIdIn} from "../lib/settings.js";
-import {cached, dropUnusedKeys} from "./store.js";
+import {dropUnusedKeys} from "./store.js";
 import {useTeamPictures} from "./team-pictures.js";
+import {playerList} from "./player-list.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {REBUILT, pageOf, sections, teamLinks} from "./nav.js";
-
-const DAY = 24 * 60 * 60 * 1000;
 
 export function pageContext(location = window.location) {
     const season = (location.pathname.match(/^\/(\d{4})\//) || [])[1] || (window.year && String(window.year));
@@ -30,10 +29,8 @@ export function pageContext(location = window.location) {
 async function loadLeague({season, leagueId}) {
     const host = window.location.origin;
     const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
-    const playersPromise = cached(`fuad.players.${season}`, DAY, async () => {
-        const players = await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch});
-        return {player: players.player};
-    });
+    // fresh: Home's alerts, and the Load and Lengths forms, which write to MFL, match names in it
+    const playersPromise = playerList(season, {fresh: true});
     // only the injured-starter check needs the results, so without them (a new site has none) that
     // check flags nothing and the rest still loads
     const weeklyResultsPromise = league("weeklyResults").catch(() => null);
@@ -295,6 +292,13 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     if (!context || here.path !== "home") {
         return false;
     }
+    // MFL's chat module, hidden under v2, reads the chat every few seconds for two hours; Home draws its
+    // own. Its timer calls this by name, so the next tick stops it.
+    const mflReadMessages = window.readMessages;
+    let chatStopped = false;
+    window.readMessages = () => {
+        chatStopped = true;
+    };
 
     // one load shared by every panel; a failed one is tried again by the next Retry
     let loading = null;
@@ -309,6 +313,14 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
     };
     const homeShown = whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn})).catch((error) => {
         console.error("[fuad] couldn't draw Home:", error);
+        // MFL's chat may be what's left, so it reads again; restarted only if it was stopped, as a
+        // timer still pending would start a second one
+        if (typeof mflReadMessages === "function") {
+            window.readMessages = mflReadMessages;
+            if (chatStopped) {
+                mflReadMessages(true);
+            }
+        }
         onDrawn();
         return false;
     });

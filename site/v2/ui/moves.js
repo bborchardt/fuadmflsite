@@ -1,7 +1,7 @@
 // What Moves' pages share: the team's data as their checks need it, fresh where the cap and roster
 // limits depend on it, posting MFL's own forms and links from the page, and the lines a move leaves.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingGroups} from "../lib/bids.js";
 import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
@@ -9,6 +9,7 @@ import {esc} from "./html.js";
 import {cached} from "./store.js";
 import {allAtOnce, forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
+import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
 import {cutDownAt} from "../lib/violations.js";
 
@@ -29,7 +30,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
         return Object.fromEntries(types.map((type, index) => [type, answers[index]]));
     };
     const [players, leagueInfo, calendar, facts, found] = await Promise.all([
-        cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player})),
+        playerList(season, {fresh: true}),
         // only the teams' names and the league's settings, which don't change in a day
         cached(`fuad.leagueSettings.${season}.${leagueId}`, DAY, async () => withoutOwners(await fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch}))),
         fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),

@@ -3,19 +3,18 @@
 // All moves draws the season's transactions in Recent moves' rows; All bids reads the run from the
 // page itself, so anything v2 can't read leaves MFL's page as it is.
 
-import {API_BASE, displayName, exportUrl, fetchExport} from "../lib/mfl.js";
+import {displayName, exportUrl, fetchExport} from "../lib/mfl.js";
 import {playersFromExport} from "../lib/league.js";
 import {mflTime} from "../lib/zone.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
-import {cached} from "./store.js";
-import {mflFetch, pageFetch} from "./page-fetch.js";
+import {pageFetch} from "./page-fetch.js";
 import {clock, dayText, recentMoves} from "./home-model.js";
 import {moveRows} from "./move-rows.js";
+import {playerList} from "./player-list.js";
 import {playerIdOf, readBidRun, runPlayers} from "./bids-model.js";
 import {plural} from "./format.js";
 
-const DAY = 24 * 60 * 60 * 1000;
 const KINDS = [["All", null], ["Adds", "Add"], ["Drops", "Drop"], ["Bids", "Bid"], ["Trades", "Trade"], ["IR", "IR"]];
 const CHEVRON_DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
@@ -27,8 +26,7 @@ function teamNames() {
 }
 
 function players(season) {
-    return cached(`fuad.players.${season}`, DAY, async () => ({player: (await fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch})).player}))
-        .then(playersFromExport);
+    return playerList(season).then(playersFromExport);
 }
 
 const transactions = ({season, leagueId}) => fetchExport(exportUrl(window.location.origin, season, "transactions", {L: leagueId}), "transactions", {fetchImpl: pageFetch, init: {cache: "no-store"}});

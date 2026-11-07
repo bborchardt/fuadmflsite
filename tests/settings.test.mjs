@@ -172,10 +172,11 @@ test("what's kept is kept per league, but for what every league shares, and old 
     try {
         const {dropUnusedKeys, save, saved} = await import("../site/v2/ui/store.js");
         save("fuad.league.power.2026", 1);
-        save("fuad.players.2026", 2);
-        assert.deepEqual([...items.keys()], ["fuad.league.power.2026@48571", "fuad.players.2026"]);
+        save("fuad.playerList.2026", 2);
+        assert.deepEqual([...items.keys()], ["fuad.league.power.2026@48571", "fuad.playerList.2026"]);
         assert.equal(saved("fuad.league.power.2026").value, 1);
-        for (const old of ["fuad.league.power.2026", "fuad.bids.2026.1", "fuad.homeTabs", "fuad.capUsed.2026.0001"]) {
+        // the player list as the export's objects
+        for (const old of ["fuad.league.power.2026", "fuad.bids.2026.1", "fuad.homeTabs", "fuad.capUsed.2026.0001", "fuad.players.2026"]) {
             items.set(old, "{}");
         }
         items.set("fuad.beta", "v2");
@@ -185,9 +186,10 @@ test("what's kept is kept per league, but for what every league shares, and old 
         items.set("fuad.league.2026.48571@48571", "{}");
         items.set("fuad.league.2026.50965@50965-abc", "{}");
         items.set("fuad.tidied.48571", "x");
+        items.set("fuad.tidied2.48571", "x");
         globalThis.window.localStorage = new Proxy(globalThis.window.localStorage, {ownKeys: () => [...items.keys()], getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})});
         dropUnusedKeys();
-        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.home.recent.2026@50965-abc", "fuad.league.power.2026@48571", "fuad.players.2026", "fuad.tidied2.48571"]);
+        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.home.recent.2026@50965-abc", "fuad.league.power.2026@48571", "fuad.playerList.2026", "fuad.tidied3.48571"]);
         items.set("fuad.homeTabs", "{}");
         dropUnusedKeys();
         assert.ok(items.has("fuad.homeTabs"), "once for the settings a browser has");
