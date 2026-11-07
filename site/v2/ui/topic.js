@@ -24,6 +24,34 @@ export function topicTitle(text) {
     return match ? {title: match[1].replace(/\s*\(Page \d+\)$/i, ""), hits: Number(match[2].replace(/,/g, ""))} : null;
 }
 
+// a post's time, then its last edit's when MFL marks one ("… · edited 7:27 p.m."), the day only if
+// the edit's differs
+export function postedText(posted, edited) {
+    const own = shortDate(posted);
+    const editText = clean(edited);
+    if (!editText) {
+        return own;
+    }
+    const at = mflTime(clean(posted));
+    const then = mflTime(editText);
+    const sameDay = at && then && then - at < 86400 && dayText(at) === dayText(then);
+    return `${own} · edited ${sameDay ? clock(then) : shortDate(editText)}`;
+}
+
+// a post head's own text, before and after MFL's Edited mark
+function headTimes(head) {
+    const times = {posted: [], edited: []};
+    let edited = false;
+    for (const node of head.childNodes) {
+        if (node.nodeType === 1 && node.matches(".warning") && /^edited$/i.test(clean(node.textContent))) {
+            edited = true;
+        } else if (node.nodeType === 3) {
+            times[edited ? "edited" : "posted"].push(node.textContent);
+        }
+    }
+    return postedText(times.posted.join(" "), times.edited.join(" "));
+}
+
 const plural = (count, word) => `${count.toLocaleString("en-US")} ${word}${count === 1 ? "" : "s"}`;
 
 // MFL indents a reply by 3% a level; capped, so a deep thread stays inside the column
@@ -51,7 +79,7 @@ function readPost(post, guest) {
         quote: quote ? quote.getAttribute("href") : null,
         edit: edit ? edit.getAttribute("href") : null,
         unread: Boolean(status && /unread/i.test(status.getAttribute("title"))),
-        when: shortDate([...head.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join(" ")),
+        when: headTimes(head),
         avatar: rows[1].querySelector("img.ava[src]")
     };
 }
