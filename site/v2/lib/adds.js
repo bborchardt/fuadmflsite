@@ -1,6 +1,7 @@
 // Adds waiting for a contract length. Shared by League Alerts and the daily job.
 
 import settings from "./settings.js";
+import {asArray} from "./mfl.js";
 
 // league rule: a free agent or waiver add's length must be posted within this long of the add
 export const CONTRACT_WINDOW_HOURS = settings.contracts.postWithinHours;
@@ -15,7 +16,6 @@ export function windowClosed(add, now) {
 
 const ADD_TYPES = new Set(["FREE_AGENT", "WAIVER", "BBID_WAIVER"]);
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
-const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
 
 function moves(transaction) {
     switch (transaction.type) {
@@ -51,8 +51,8 @@ export function pendingAdds({rosters, transactions, players}) {
         }
     }
     const pending = [];
-    for (const franchise of asList(rosters.franchise)) {
-        for (const entry of asList(franchise.player)) {
+    for (const franchise of asArray(rosters.franchise)) {
+        for (const entry of asArray(franchise.player)) {
             const transaction = latest.get(entry.id);
             if (parseFloat(entry.contractYear) !== 0 || !transaction || !ADD_TYPES.has(transaction.type)
                 || transaction.franchise !== franchise.id || !moves(transaction).added.includes(entry.id)) {

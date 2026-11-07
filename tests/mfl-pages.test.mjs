@@ -1,8 +1,9 @@
 // MFL's pages as each kind of viewer gets them (the capture bookmark's, in tests/fixtures/pages): what
 // v2 reads or restyles on each, and what each viewer is shown. Guest pages are the real league's,
-// the member's (0001) and the commissioner's the clone's. Which of v2's screens takes each page in a
-// browser, the IR and Trades pages included (their readers need a browser's forms), is
-// tools/verify/pages.py's to check.
+// the member's (0001) and the commissioner's the clone's. The Trades pages' readers are tested in
+// trades.test.mjs (a stand-in for a browser's forms). The IR page's reader isn't tested here: linkedom
+// leaves its table without MFL's rows, which a browser repairs. Which of v2's screens takes each page
+// in a browser, IR's included, is tools/verify/pages.py's to check.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";

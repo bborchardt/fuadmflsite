@@ -6,10 +6,8 @@
 // people write them ("AJ Brown", "Marvin Harrison Jr."); MFL names them "Brown, A.J.".
 
 import {rookieSalary, POSITIONS} from "./rules.js";
-import {salariesImportXml} from "./mfl.js";
+import {asArray, salariesImportXml} from "./mfl.js";
 import settings from "./settings.js";
-
-const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
 
 const cells = (text) => String(text).replace(/\r/g, "").split("\n").map((line) => line.split("\t").map((cell) => cell.trim()));
 
@@ -112,7 +110,7 @@ export function matchPlayer({name, position}, players, roster = []) {
 // when none or more than one has that first name
 export function matchOwner(owner, franchises) {
     const first = plainName(owner).split(" ")[0];
-    const found = asList(franchises).filter((team) => plainName(team.owner_name || "").split(" ")[0] === first);
+    const found = asArray(franchises).filter((team) => plainName(team.owner_name || "").split(" ")[0] === first);
     return found.length === 1 ? found[0].id : null;
 }
 
@@ -124,8 +122,8 @@ export function matchOwner(owner, franchises) {
 // player on two teams' sheets with a $ is a conflict, left out of the rest.
 export function planAuction({teams, rosters}) {
     const held = new Map();
-    for (const team of asList(rosters && rosters.franchise)) {
-        for (const entry of asList(team.player)) {
+    for (const team of asArray(rosters && rosters.franchise)) {
+        for (const entry of asArray(team.player)) {
             held.set(entry.id, {franchiseId: team.id, salary: Number(entry.salary), years: Number(entry.contractYear)});
         }
     }
@@ -177,7 +175,7 @@ export function planAuction({teams, rosters}) {
 // (`rosters` as MFL has them now): every team's unloads before any team's loads, so a player can move
 // between teams. [{franchiseId, ids, unloaded: [ids], loaded: [ids]}]
 export function rosterSteps({rosters, release = [], add = []}) {
-    const roster = new Map(asList(rosters && rosters.franchise).map((team) => [team.id, asList(team.player).map((entry) => entry.id)]));
+    const roster = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).map((entry) => entry.id)]));
     const steps = [];
     for (const franchiseId of [...new Set(release.map((entry) => entry.franchiseId))]) {
         const unloaded = release.filter((entry) => entry.franchiseId === franchiseId).map((entry) => entry.id);
@@ -237,7 +235,7 @@ export function planSend(read, {chosen, rosters, players, draft, teamCount, clea
         }));
         const result = planAuction({teams, rosters});
         // unloaded in an earlier send whose salaries step didn't go through
-        const rostered = new Set(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => entry.id)));
+        const rostered = new Set(asArray(rosters.franchise).flatMap((team) => asArray(team.player).map((entry) => entry.id)));
         const placed = new Set(result.add.map((entry) => entry.id).concat(result.salaries.map((entry) => entry.id)));
         const clear = [...new Set(result.clear.concat([...clearing].filter((id) => !rostered.has(id) && !placed.has(id))))];
         return {kind: "auction", teams, ...result, clear};
@@ -248,9 +246,9 @@ export function planSend(read, {chosen, rosters, players, draft, teamCount, clea
         teams: teamCount,
         players
     });
-    const held = new Map(asList(rosters.franchise).flatMap((team) => asList(team.player).map((entry) => [entry.id, entry])));
+    const held = new Map(asArray(rosters.franchise).flatMap((team) => asArray(team.player).map((entry) => [entry.id, entry])));
     // MFL's import overwrites the picks it's sent and keeps the others (the clone, 3 Nov 2026)
-    const atPick = new Map(asList(draft && draft.draftPick).map((entry) => [`${Number(entry.round)}.${Number(entry.pick)}`, entry]));
+    const atPick = new Map(asArray(draft && draft.draftPick).map((entry) => [`${Number(entry.round)}.${Number(entry.pick)}`, entry]));
     const seen = new Map();
     picks.forEach((pick) => seen.set(pick.id, [...(seen.get(pick.id) || []), pick.franchiseId]));
     const conflicts = [...seen].filter(([, list]) => list.length > 1).map(([id, franchiseIds]) => ({id, franchiseIds}));
@@ -271,14 +269,14 @@ export function planSend(read, {chosen, rosters, players, draft, teamCount, clea
 // a pick on another team's roster comes off it, so he isn't on two
 export function movedFrom(picks, rosters) {
     const drafted = new Map(picks.map((pick) => [pick.id, pick.franchiseId]));
-    return asList(rosters.franchise).flatMap((team) => asList(team.player)
+    return asArray(rosters.franchise).flatMap((team) => asArray(team.player)
         .filter((entry) => drafted.has(entry.id) && drafted.get(entry.id) !== team.id)
         .map((entry) => ({franchiseId: team.id, id: entry.id})));
 }
 
 // the picks not yet on their team's roster
 export function notOnTeam(picks, rosters) {
-    const roster = new Map(asList(rosters.franchise).map((team) => [team.id, new Set(asList(team.player).map((entry) => entry.id))]));
+    const roster = new Map(asArray(rosters.franchise).map((team) => [team.id, new Set(asArray(team.player).map((entry) => entry.id))]));
     return picks.filter((pick) => !(roster.get(pick.franchiseId) || new Set()).has(pick.id));
 }
 

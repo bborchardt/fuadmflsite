@@ -4,7 +4,7 @@
 // sends is the difference between the sheet and MFL, read afresh each time, so after a failure it's
 // sent again from where it stopped.
 
-import {asArray as asList, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {contractProblem, draftResultsXml, matchOwner, matchPlayer, movedFrom, notOnTeam, planSend, readAuction, readRookies, rosterSteps, salariesXml} from "../lib/load.js";
 import {openDialog} from "./dialog.js";
 import {money} from "./format.js";
@@ -48,7 +48,7 @@ function choicesNeeded(read, {players, teams, chosen}) {
 // the sheet read: its owners, and the entries that need a player ({key, owner, name, position, row,
 // choices}), matched where one fits
 function readSheet(kind, text, {players, rosters, franchises, chosen}) {
-    const rosterOf = new Map(asList(rosters.franchise).map((team) => [team.id, asList(team.player).map((entry) => entry.id)]));
+    const rosterOf = new Map(asArray(rosters.franchise).map((team) => [team.id, asArray(team.player).map((entry) => entry.id)]));
     const sheet = kind === "auction" ? readAuction(text) : readRookies(text);
     const owners = [...new Set(sheet.map((entry) => entry.owner))];
     for (const owner of owners) {
@@ -109,7 +109,7 @@ export function previewMarkup(result, {players, teams, rosters}) {
         return `${conflicts}${result.loadDraft ? `<p class="fuad-load-note">Loads the draft’s ${result.picks.length} picks${result.existing ? `, replacing another player at ${result.existing} of them` : ""}.</p>` : ""}
         <ul class="fuad-rows fuad-load-list">${result.picks.map((pick) => `<li><span>${pick.round}.${String(pick.pick).padStart(2, "0")} ${esc(name(pick.id))} <span class="fuad-meta">${esc(about(pick.id))}</span></span><span class="fuad-meta">${esc(team(pick.franchiseId))} · ${esc(money(pick.salary))}${from.has(pick.id) ? `<span class="fuad-load-bad"> · from ${esc(team(from.get(pick.id)))}</span>` : ""}</span></li>`).join("")}</ul>`;
     }
-    const now = new Map(asList(rosters.franchise).flatMap((entry) => asList(entry.player).map((player) => [player.id, player])));
+    const now = new Map(asArray(rosters.franchise).flatMap((entry) => asArray(entry.player).map((player) => [player.id, player])));
     const ids = [...new Set([...result.release, ...result.add].map((entry) => entry.franchiseId).concat(result.teams.map((entry) => entry.franchiseId)))];
     const sections = ids.map((franchiseId) => {
         const sheet = result.teams.find((entry) => entry.franchiseId === franchiseId);
@@ -158,8 +158,8 @@ async function loadRoster(context, franchiseId, ids, rosters) {
     }
     const wanted = [...ids].sort().join(",");
     const has = (found) => {
-        const team = asList(found.franchise).find((entry) => entry.id === franchiseId);
-        return Boolean(team) && asList(team.player).map((entry) => entry.id).sort().join(",") === wanted;
+        const team = asArray(found.franchise).find((entry) => entry.id === franchiseId);
+        return Boolean(team) && asArray(team.player).map((entry) => entry.id).sort().join(",") === wanted;
     };
     const found = await readBack(rosters, has);
     if (!found || !has(found)) {
@@ -172,7 +172,7 @@ async function loadRoster(context, franchiseId, ids, rosters) {
 export function openLoadForm({context, built, opener}) {
     const players = built.boardContext.playerNames;
     const teams = new Map([...built.franchises].map(([id, franchise]) => [id, franchise.teamName]));
-    const franchises = asList(built.raw.league.franchises && built.raw.league.franchises.franchise);
+    const franchises = asArray(built.raw.league.franchises && built.raw.league.franchises.franchise);
     const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {init: {cache: "no-store"}});
     const teamCount = teams.size;
     // players unloaded whose salaries aren't cleared yet, kept across reads

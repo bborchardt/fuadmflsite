@@ -4,19 +4,18 @@
 // only that form, as lengths posted by hand come in too many shapes to read (docs/design.md).
 
 import settings from "./settings.js";
+import {asArray} from "./mfl.js";
 
 const MIN_YEARS = 1;
 const MAX_YEARS = settings.contracts.maxYears;
 
 export const FORM_HEADING = "Contract lengths, sent from the league site:";
 
-const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
-
 // Players at 0 years with a salary: a restricted free agent the rollover left at 0 years has $0.01
 // until the auction settles him, so only a salary of $1 or more is due a length
 export function lengthsDue(rosters, franchiseId) {
-    const team = asList(rosters && rosters.franchise).find((franchise) => franchise.id === franchiseId);
-    return asList(team && team.player)
+    const team = asArray(rosters && rosters.franchise).find((franchise) => franchise.id === franchiseId);
+    return asArray(team && team.player)
         .filter((entry) => Number(entry.contractYear) === 0 && Number(entry.salary) >= 1)
         .map((entry) => entry.id);
 }
@@ -72,7 +71,7 @@ export function formLengths({posts, franchiseId, due, players}) {
     };
     const years = new Map();
     const unread = [];
-    for (const post of [...asList(posts)].sort((a, b) => Number(a.postTime) - Number(b.postTime))) {
+    for (const post of [...asArray(posts)].sort((a, b) => Number(a.postTime) - Number(b.postTime))) {
         const own = post.franchise === franchiseId;
         const entries = readFormPost(post.body);
         if (!entries) {
@@ -99,4 +98,4 @@ export const addedSince = (league, playerId, seconds) => ((league.players.get(pl
 
 // the board topics a form post may be in: any with "contract" in its name (home-model.js's
 // contractTopic picks the newest for a new post)
-export const lengthTopics = (messageBoard) => asList(messageBoard && messageBoard.thread).filter((thread) => /contract/i.test(thread.subject || ""));
+export const lengthTopics = (messageBoard) => asArray(messageBoard && messageBoard.thread).filter((thread) => /contract/i.test(thread.subject || ""));

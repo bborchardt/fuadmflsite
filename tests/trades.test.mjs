@@ -1,9 +1,11 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {parseHTML} from "linkedom";
+import {withForms} from "./fixtures/forms.mjs";
 import {
     answerFields, assetView, bidsAfter, blockReason, zoneParts, zoneSeconds, deadlineWeek, expiryChoices, findOffer,
-    kickoffText, lockedText, offersOf, pickedSummary, pickGroups, proposalFields, readPick, rosterNotices,
+    kickoffText, lockedText, offersOf, pickedSummary, pickGroups, proposalFields, readPick, readProposal, readTradesPage, rosterNotices,
     teamKickoffs, throughGames, tradeEffect
 } from "../site/v2/ui/trades-model.js";
 
@@ -271,4 +273,31 @@ test("the trade deadline's week comes from the calendar's TRADE event", () => {
     assert.equal(deadlineWeek(calendar, 11), 12);
     assert.equal(deadlineWeek({event: []}, 11), 11);
     assert.equal(deadlineWeek({event: {type: "TRADE", start_time: "1799258400"}}, 11), 11);
+});
+
+const savedPage = (name) => withForms(parseHTML(readFileSync(new URL(`./fixtures/pages/member/${name}`, import.meta.url), "utf8")).document);
+
+test("MFL's Trades page: the teams to trade with, and no offers or revoke links when there are none", () => {
+    const {answers, revokes, partners} = readTradesPage(savedPage("options-O05.html"));
+    assert.equal(answers.size, 0);
+    assert.equal(revokes.size, 0);
+    assert.equal(partners.length, 9);
+    assert.deepEqual(partners[0], {id: "0002", name: "So your saying there’s a chance?"});
+    assert.ok(!partners.some((team) => team.id === "0001"), "not the member's own team");
+});
+
+test("MFL's proposal page: each side's players and picks, its expiry, and only for the member's own pair", () => {
+    const page = savedPage("options-O05-propose.html");
+    const proposal = readProposal(page, "0001");
+    assert.equal(proposal.partner, "0002");
+    assert.equal(proposal.mine.length, 41);
+    assert.equal(proposal.theirs.length, 38);
+    assert.equal(proposal.mine[0].id, "17466");
+    assert.equal(proposal.mine[0].pick, null);
+    assert.match(proposal.mine[0].label, /^Beck, Carson ARI QB/);
+    assert.deepEqual(proposal.mine.find((item) => item.pick).pick, {year: 2027, round: 1, from: "All Hands on Beck"});
+    assert.equal(proposal.theirs.filter((item) => item.pick).length, 10);
+    assert.equal(proposal.expiry, 1793826000);
+    assert.deepEqual(proposal.years, [2026, 2027]);
+    assert.equal(readProposal(page, "0003"), null);
 });

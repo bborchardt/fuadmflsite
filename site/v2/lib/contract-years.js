@@ -3,12 +3,11 @@
 
 import {contractDeadline as deadline} from "./adds.js";
 import settings from "./settings.js";
+import {asArray} from "./mfl.js";
 
 export const MIN_YEARS = 1;
 export const MAX_YEARS = settings.contracts.maxYears;
 export const DEFAULT_YEARS = settings.contracts.defaultYears;
-
-const asList = (value) => value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
 
 const SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 
@@ -210,7 +209,7 @@ export function readProcessedWaivers(html) {
 }
 
 export function teamPlayers({rosters, players}) {
-    return new Map(asList(rosters.franchise).map((franchise) => [franchise.id, asList(franchise.player).map((entry) =>
+    return new Map(asArray(rosters.franchise).map((franchise) => [franchise.id, asArray(franchise.player).map((entry) =>
         ({playerId: entry.id, name: (players.get(entry.id) || {name: ""}).name}))]));
 }
 
