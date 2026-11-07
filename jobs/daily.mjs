@@ -696,7 +696,7 @@ function overCap({players, built, penalties, transactions}) {
 // season and not set to $0.01 by this job. One won back at the auction looks the same, so they're
 // left for the commissioner, never guessed. Throws when last season's rosters can't be read.
 async function maybeRfas(penalties) {
-    const candidates = penalties.filter((penalty) => penalty.lengthDue && penalty.amount > 0 && !penalty.addedThisSeason);
+    const candidates = penalties.filter((penalty) => penalty.lengthDue && needsCharge(penalty) && !penalty.addedThisSeason);
     if (!candidates.length) {
         return [];
     }
@@ -715,18 +715,20 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     const lengthDue = penalties.filter((penalty) => penalty.lengthDue && !over.has(penalty.franchiseId));
     let unpriced = [];
     let why = lengthDueUnknown;
+    // one charged already, by hand or by an earlier run, only needs the reset
     if (lengthDueUnknown) {
-        unpriced = lengthDue;
+        unpriced = lengthDue.filter(needsCharge);
     } else {
         unpriced = await maybeRfas(lengthDue).catch((error) => {
             why = `last season's rosters couldn't be read: ${error.message}`;
-            return lengthDue.filter((penalty) => penalty.amount > 0 && !penalty.addedThisSeason);
+            return lengthDue.filter((penalty) => needsCharge(penalty) && !penalty.addedThisSeason);
         });
         why = why || "each ended last season at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's";
     }
     if (unpriced.length) {
         needsAttention(`Cap chores: left as they are, since it can't be told whether they owe a penalty (${why}): `
-            + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand.`);
+            + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand, naming the player, and the next run `
+            + "resets him; set one who owes nothing to $1 / 0 years on MFL's Salaries page.");
     }
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
     // held penalties don't count: they can wait for weeks on a team over the cap

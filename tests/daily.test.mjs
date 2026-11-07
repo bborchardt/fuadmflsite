@@ -159,8 +159,14 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     assert.equal(rfa.status, 1);
     assert.ok(rfa.entries.includes("Cap chores: left as they are, since it can't be told whether they owe a penalty (each ended last season "
         + "at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's): "
-        + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand."), rfa.entries.join("\n"));
+        + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand, naming the player, and the next run resets him; "
+        + "set one who owes nothing to $1 / 0 years on MFL's Salaries page."), rfa.entries.join("\n"));
     assert.ok(!imports(rfa).some((data) => /id="6"/.test(data.DATA || "")));
+    // charged by hand as the flag asks: the next run only resets him
+    const byHand = {salaryAdjustment: [{franchise_id: "0002", amount: "8", description: "Alvin Kamara (1yr@20)", timestamp: String(DROPPED + 3600)}]};
+    const charged = run({scenario: {exports: {...exports, salaryAdjustments: byHand, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
+    assert.ok(charged.entries.includes("Dry run: would reset Alvin Kamara to $1 / 0 years (penalty already charged)."), charged.entries.join("\n"));
+    assert.ok(!charged.entries.some((entry) => /can't be told/.test(entry)));
     // one the job set to $0.01 this season isn't one of them: he was settled, then won back
     const settled = run({scenario: {exports: {...exports, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN,
         files: {"data/franchise-2025.json": SNAPSHOT_2025, "rfa-salaries.json": '{"2026": ["6"]}'}});
@@ -168,7 +174,7 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     // without the draft's results, length-due drops are left for the commissioner; the rest go on
     const unknown = run({scenario: {exports: {...exports, draftResults: 500, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(unknown.status, 1);
-    assert.ok(unknown.entries.some((entry) => /^Cap chores: left as they are, since it can't be told whether they owe a penalty \(this season's draft couldn't be read: .*\): Ray Rookie \(0yrs@6, length due, 10\/23\), Alvin Kamara \(0yrs@20, length due, 10\/23\)\. Charge any owed by hand\.$/.test(entry)), unknown.entries.join("\n"));
+    assert.ok(unknown.entries.some((entry) => /^Cap chores: left as they are, since it can't be told whether they owe a penalty \(this season's draft couldn't be read: .*\): Ray Rookie \(0yrs@6, length due, 10\/23\), Alvin Kamara \(0yrs@20, length due, 10\/23\)\. Charge any owed by hand, .*$/.test(entry)), unknown.entries.join("\n"));
     assert.ok(!imports(unknown).some((data) => /id="[67]"/.test(data.DATA || "")));
     assert.ok(unknown.entries.includes("Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and reset the player to $1 / 0 years."), unknown.entries.join("\n"));
 });
