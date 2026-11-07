@@ -169,7 +169,7 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   app runs none of this, so a team with no rows may just be using the app. Only the v1 file and a
   beta report: once promoted, v2 sends nothing.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`, v2 by default
-  (v2's `lib/` holds v1's rules).
+  and never v1 (v2's `lib/` holds v1's rules).
 
 ## League rules the code relies on
 
@@ -189,8 +189,10 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   from week 1's kickoff.
 - **Drop penalty:** `max(ceil(max(1, 0.4 × salary × years)), years)`. A player whose length is
   still due (0 years, $1 or more: draft day, or an add's hour) costs the 1-year penalty, except a
-  rookie from this season's draft, who costs nothing (v2's pages, `markContracts`; the daily job
-  charges none). 0 years at under $1 is an RFA after the rollover.
+  rookie from this season's draft cut before the final cut-down date, who costs nothing
+  (`lengthDuePenalty`, for v2's pages and the daily job alike). One at $1 isn't charged by the job:
+  it can't be told from a player already charged and reset to $1 / 0 years. 0 years at under $1 is
+  an RFA after the rollover.
 - **Rookie salaries:** first pick QB $6, RB $10, WR $10, TE $4, PK $1; each later pick 80% of the
   one before, never under $1.
 - **Franchise salary:** the average of the position's top 5 salaries at the trade deadline (the first

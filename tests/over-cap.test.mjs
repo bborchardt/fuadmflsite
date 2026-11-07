@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {overCapMessage, recentMoves} from "../jobs/over-cap.mjs";
+import {overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} from "../jobs/over-cap.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
 const DAY = Date.UTC(2026, 9, 3, 16) / 1000;
@@ -53,4 +53,24 @@ test("the flag names the total, the moves and any held drop penalties", () => {
     assert.equal(overCapMessage({teamName: "Beta", total: 301, cap: 300, moves: [], held: ["Joe Mixon (1yrs@1, 10/03)"]}),
         "Beta is at $301, over the $300 cap. Moves in the last 7 days: none. "
         + "Drop penalties held so the move can be reversed: Joe Mixon (1yrs@1, 10/03).");
+});
+
+test("over 30: a trade that did it is named with the bylaws' deadline, any other move may be reversed", () => {
+    const trade = {type: "TRADE", franchise: "0001", franchise2: "0002", franchise1_gave_up: "1,", franchise2_gave_up: "2,3,FP_0002_2027_1,", timestamp: String(DAY - 3600)};
+    const add = {type: "FREE_AGENT", franchise: "0002", transaction: "3,|", timestamp: String(DAY)};
+    const since = DAY - 86400;
+    // Alpha got two players for one; Beta gave them up
+    assert.equal(tradeOverRoster([trade], "0001", since), trade);
+    assert.equal(tradeOverRoster([trade], "0002", since), null);
+    // an add since the trade is the move that broke the limit
+    assert.equal(tradeOverRoster([trade, {...add, franchise: "0001"}], "0001", since), null);
+    // a drop since doesn't change which
+    assert.equal(tradeOverRoster([trade, {...add, franchise: "0001", transaction: "|3,"}], "0001", since), trade);
+    const text = "Alpha is over the roster limit with 31 players!";
+    assert.equal(overRosterMessage({text, moves: ["10/03 trade with Beta: got Joe Mixon, Tez Johnson; gave Ollie Gordon"], held: ["Ollie Gordon (2yrs@10, 10/03)"], trade}),
+        `${text} Moves in the last 7 days: 10/03 trade with Beta: got Joe Mixon, Tez Johnson; gave Ollie Gordon. `
+        + "Over 30 after the 10/03 trade, which the bylaws allow: it must be back to 30 by the next game, the next blind-bid deadline or 12 hours after the trade, whichever is first. "
+        + "Drop penalties held until it's back to 30: Ollie Gordon (2yrs@10, 10/03).");
+    assert.equal(overRosterMessage({text, moves: [], held: ["Ollie Gordon (2yrs@10, 10/03)"], trade: null}),
+        `${text} Moves in the last 7 days: none. Drop penalties held so the move can be reversed: Ollie Gordon (2yrs@10, 10/03).`);
 });

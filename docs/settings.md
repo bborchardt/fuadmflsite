@@ -30,7 +30,7 @@ setting:
   missing, as they're from no team in this league.
 - What v2 keeps in the browser is kept per league and per settings, so a changed value starts afresh.
 - The daily job can't read a header. It stops for a league that isn't listed in the version
-  `RULES_VERSION` names, unless that's v1, which has no settings. A dry run (the manual run's default)
+  `RULES_VERSION` names (v2 or later). A dry run (the manual run's default)
   doesn't stop, and takes the same line, as JSON, in its settings input; a listed league refuses it.
 
 ## Forking
@@ -73,7 +73,7 @@ roster checks run until the championship is over.
 | `franchiseTag.averageOfTop` | 5 | A franchise salary is the average of this many top salaries at the position, at the trade deadline. |
 | `cutPenalty.shareOfRemainingContract` | 0.40 | A cut costs this share of the remaining contract (salary × years left), rounded up to a whole dollar and never under $1. |
 | `cutPenalty.minimumPerYear` | 1 | …and never under this many dollars per year left. |
-| `rookieCutFreeUntilLengthSet` | true | A rookie from this season's draft can be cut for nothing until their length is set (and before week 1). With false, a cut costs what any player's does. |
+| `rookieCutFreeUntilLengthSet` | true | A rookie from this season's draft can be cut for nothing until their length is set, if before the final cut-down date. With false, a cut costs what any player's does. |
 
 ## Rookie scale
 

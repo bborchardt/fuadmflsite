@@ -39,7 +39,8 @@ function league({alphaSalary = 100} = {}) {
         ]},
         freeAgents: {leagueUnit: {player: [{id: "4", salary: "10", contractYear: "2"}, {id: "5", salary: "1", contractYear: "1"}]}},
         weeklyResults: {},
-        injuries: {injury: []}
+        injuries: {injury: []},
+        draftResults: {}
     };
 }
 
@@ -124,6 +125,34 @@ test("an ordinary day without the login: penalties only logged, nothing posted, 
     assert.doesNotMatch(result.stdout, /::error/);
 });
 
+test("a player cut while his length is due costs the 1-year penalty; this season's rookie's only from the cut-down", () => {
+    const base = league();
+    const exports = {
+        ...base,
+        players: {player: [...base.players.player, {id: "6", name: "Kamara, Alvin", position: "RB", team: "NOS"}, {id: "7", name: "Rookie, Ray", position: "WR", team: "BUF"}]},
+        transactions: {transaction: [...base.transactions.transaction,
+            {type: "FREE_AGENT", franchise: "0002", transaction: "|6,", timestamp: String(DROPPED)},
+            {type: "FREE_AGENT", franchise: "0001", transaction: "|7,", timestamp: String(DROPPED)}]},
+        freeAgents: {leagueUnit: {player: [...base.freeAgents.leagueUnit.player, {id: "6", salary: "20", contractYear: "0"}, {id: "7", salary: "6", contractYear: "0"}]}},
+        draftResults: {draftUnit: {draftPick: [{player: "7"}]}}
+    };
+    const cutDown = (iso) => ({event: [{type: "CUSTOM", title: "Final cut-down", start_time: String(at(iso))}]});
+    const lengthDue = (result) => result.entries.filter((entry) => /Kamara|Rookie/.test(entry));
+    // cut after the cut-down date: both pay a year's, 20 × 0.4 and 6 × 0.4 rounded up
+    const after = run({scenario: {exports: {...exports, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
+    assert.equal(after.status, 0, after.stderr);
+    assert.deepEqual(lengthDue(after), [
+        "Dry run: would charge $3 to Alpha for Ray Rookie (0yrs@6, length due, 10/23), then reset the player to $1 / 0 years.",
+        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then reset the player to $1 / 0 years."
+    ]);
+    // cut before it: the rookie goes free
+    const before = run({scenario: {exports: {...exports, calendar: cutDown("2026-10-30T23:00:00Z")}}, env: LOGIN});
+    assert.deepEqual(lengthDue(before), [
+        "Dry run: would reset Ray Rookie to $1 / 0 years (no penalty owed).",
+        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then reset the player to $1 / 0 years."
+    ]);
+});
+
 test("a team over the cap fails the run and holds its penalty; the other team's is charged", () => {
     const result = run({scenario: {exports: league({alphaSalary: 290})}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(result.status, 1);
@@ -173,6 +202,21 @@ test("a league with no entry in the settings gets no run, as its rules are only 
     assert.equal(result.status, 1);
     assert.match(result.stderr, /League 99999 isn't listed/);
     assert.equal(result.requests.length, 0);
+});
+
+test("a penalty charged whose reset then failed is only reset the next day, not charged again", () => {
+    // Alpha is over the cap, so only Beta's penalty goes: the charge lands, the reset is refused
+    const exports = league({alphaSalary: 290});
+    const first = run({scenario: {exports, importError: [null, "Invalid data"]}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(first.status, 1);
+    assert.deepEqual(imports(first).map((data) => data.TYPE), ["salaryAdj", "salaries"]);
+    assert.ok(first.entries.includes("Cap chores: MFL's salaries import failed: Invalid data"), first.entries.join("\n"));
+    // the next day MFL has the charge, and Gordon still carries his contract
+    const charged = {salaryAdjustment: [{franchise_id: "0002", amount: "8", description: "Ollie Gordon (2yrs@10, 10/23)", timestamp: String(DROPPED + 3600)}]};
+    const next = run({scenario: {exports: {...exports, salaryAdjustments: charged}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.deepEqual(imports(next).map((data) => data.TYPE), ["salaries"]);
+    assert.match(imports(next)[0].DATA, /<player id="4" salary="1" contractYear="0"\/>/);
+    assert.ok(next.entries.includes("Reset Ollie Gordon to $1 / 0 years (penalty already charged)."), next.entries.join("\n"));
 });
 
 test("a refused login is flagged, and no penalty is charged without it", () => {
@@ -249,13 +293,26 @@ test("before week 1 the roster limits start at the cut-down date on MFL's calend
     assert.deepEqual(flagged(run({scenario: {exports: {...crowded, calendar: stale}}, env: LOGIN, now: preseason})), []);
 });
 
-test("v2's lib, the default, runs the same day as v1's", () => {
-    const day = {scenario: {exports: league({alphaSalary: 290})}, env: {...LOGIN, DROP_PENALTIES: "apply"}};
-    const v1 = run({...day, env: {...day.env, RULES_VERSION: "v1"}});
-    const v2 = run(day);
-    assert.equal(v2.status, v1.status, v2.stderr);
-    assert.deepEqual(v2.entries, v1.entries);
-    assert.deepEqual(imports(v2), imports(v1));
+test("when the season's phase can't be told, the League Alerts checks are skipped and a team over 30 is still held", () => {
+    const crowded = league();
+    for (let i = 0; i < 8; i++) {
+        crowded.players.player.push({id: String(400 + i), name: `Player, Extra${i}`, position: "WR", team: "BUF"});
+        crowded.rosters.franchise[0].player.push({id: String(400 + i), salary: "1", contractYear: "1", status: "ROSTER"});
+    }
+    const result = run({scenario: {exports: crowded, nflSchedule: 500}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => /^Couldn't tell where the 2026 season is \(.*\); the League Alerts checks were skipped, and teams over 30 are held\.$/.test(entry)), result.entries.join("\n"));
+    assert.ok(!result.entries.some((entry) => /over the roster limit/.test(entry)));
+    // Alpha, over 30, keeps Mixon's penalty held; Beta's is charged
+    assert.deepEqual(imports(result).map((data) => data.TYPE), ["salaryAdj", "salaries"]);
+    assert.match(imports(result)[0].DATA, /franchise_id="0002"/);
+});
+
+test("v1's lib is refused: it lacks what the job needs", () => {
+    const result = run({scenario: {exports: league()}, env: {...LOGIN, DROP_PENALTIES: "apply", RULES_VERSION: "v1"}});
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /from v2 on/);
+    assert.deepEqual(imports(result), []);
 });
 
 const contractEntries = (result) => result.entries.filter((entry) => /Contract years|would set|^Set /.test(entry));
@@ -437,13 +494,12 @@ test("a dry run may name an unlisted league, and takes its settings", () => {
     assert.match(capped.summary, /with the settings \{"salaryCap": 100\}/);
 });
 
-test("a dry run refuses settings it can't use, and any on a listed league or v1", () => {
+test("a dry run refuses settings it can't use, and any on a listed league", () => {
     const cases = [
         [{MFL_LEAGUE_ID: "99999", MFL_SETTINGS: "not json"}, /settings line must be an object/],
         [{MFL_LEAGUE_ID: "99999", MFL_SETTINGS: "null"}, /settings line must be an object/],
         [{MFL_LEAGUE_ID: "99999", MFL_SETTINGS: '{"nope": 1}'}, /nope isn't a setting/],
-        [{MFL_SETTINGS: '{"wordmark": "X"}'}, /League 48571 is listed/],
-        [{RULES_VERSION: "v1", MFL_SETTINGS: '{"wordmark": "X"}'}, /v1 has no settings/]
+        [{MFL_SETTINGS: '{"wordmark": "X"}'}, /League 48571 is listed/]
     ];
     for (const [env, message] of cases) {
         const result = run({env: {...DRY, ...env}});
@@ -529,6 +585,46 @@ test("a dry run keeps the real job's limits on how much it would write", () => {
     assert.match(result.summary, /Cap chores: \d+ dropped players owe a cap penalty, more than the/);
     const real = run({scenario: {exports}});
     assert.equal(real.status, 0, real.stdout);
+});
+
+// each per-run limit stops a misread export from writing at scale: nothing is sent and the run fails
+test("more contract years than a day's limit: none set", () => {
+    const exports = league();
+    const beta = exports.rosters.franchise[1].player;
+    for (let i = 0; i < 16; i++) {
+        const id = String(500 + i);
+        exports.players.player.push({id, name: `Added, Player${i}`, position: "WR", team: "BUF"});
+        beta[i + 1] = {id, salary: "1", contractYear: "0", status: "ROSTER"};
+        exports.transactions.transaction.push({type: "FREE_AGENT", franchise: "0002", transaction: `${id},|`, timestamp: String(ADDED)});
+    }
+    Object.assign(exports, {messageBoard: {thread: []}, messageBoardThread: {post: []}});
+    const result = run({scenario: {exports}, env: {...LOGIN, CONTRACT_YEARS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => /^Contract years: 16 added players are waiting for contract years, more than the 15 expected in a day, so none were set\./.test(entry)), result.entries.join("\n"));
+    assert.ok(!imports(result).some((data) => data.TYPE === "salaries"));
+});
+
+test("more default lengths than a quarter of the rostered players: none set", () => {
+    const exports = league();
+    exports.rosters.franchise.forEach((team) => team.player.slice(0, 7).forEach((player) => Object.assign(player, {contractYear: "0", salary: "2"})));
+    Object.assign(exports, {
+        messageBoard: {thread: []},
+        calendar: {event: [{type: "CUSTOM", start_time: String(at("2026-09-08T23:00:00Z")), title: "Final cut-down"}]}
+    });
+    const result = run({scenario: {exports}, env: {...LOGIN, CONTRACT_YEARS: "apply"}, now: "2026-09-11T12:00:00Z"});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => /14 of 46 rostered players would get the default 1 year, more than expected, so no lengths were set/.test(entry)), result.entries.join("\n"));
+    assert.ok(!imports(result).some((data) => data.TYPE === "salaries"));
+});
+
+test("more payouts than a run's limit: none recorded", () => {
+    // every regular season week a three-way tie: 42 weekly records once week 15 has kicked off
+    const weeklyResults = Array.from({length: 17}, (_, i) => ({week: String(i + 1), matchup: [{franchise: ["0001", "0002", "0003"].map((id) => ({id, score: "100"}))}]}));
+    const exports = {...league(), "weeklyResults:YTD": {weeklyResults}, accounting: {entry: []}};
+    const result = run({scenario: {exports}, env: {...LOGIN, PAYOUTS: "apply"}, now: "2026-12-19T12:00:00Z"});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => /payouts are waiting to be recorded, more than the 30 expected, so none were/.test(entry)), result.entries.join("\n"));
+    assert.ok(!imports(result).some((data) => data.TYPE === "accounting"));
 });
 
 test("the login's leagues are recognized by their address too", () => {

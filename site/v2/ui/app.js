@@ -3,7 +3,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
-import {seasonPhase} from "../lib/violations.js";
+import {cutDownAt, seasonPhase} from "../lib/violations.js";
 import {seasonWeeks} from "../lib/rules.js";
 import {leagueIdIn} from "../lib/settings.js";
 import {cached, dropUnusedKeys} from "./store.js";
@@ -49,18 +49,21 @@ async function loadLeague({season, leagueId}) {
     weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
     const phasePromise = leaguePromise.then((info) => seasonPhase(season, new Date(), {fetchImpl: pageFetch}, seasonWeeks(info)))
         .catch(() => ({started: false, tankingOver: true, seasonOver: true}));
-    // this season's rookies, whose cut costs nothing while their length is due; only before week 1
-    const draftPromise = phasePromise.then((phase) => (phase.started ? null : league("draftResults"))).catch(() => null);
-    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase, draftResults] = await Promise.all([
+    // this season's rookies, whose cut costs nothing while their length is due, until the cut-down
+    // date (lib/league.js lengthDuePenalty); only before week 1
+    const lengthDuePromise = phasePromise.then((phase) => (phase.started ? {} : Promise.all([
+        league("draftResults"), league("calendar").catch(() => null)
+    ]).then(([draftResults, calendar]) => ({rookies: draftedIds(draftResults), freeUntil: cutDownAt(calendar, season)})))).catch(() => ({}));
+    const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase, lengthDue] = await Promise.all([
         playersPromise, leaguePromise, league("salaryAdjustments"), league("rosters"),
-        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise, draftPromise
+        league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise, lengthDuePromise
     ]);
     const built = buildLeague({
         players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters,
-        transactions, weeklyResults, freeAgents, injuries, currentInjuries
+        transactions, weeklyResults, freeAgents, injuries, currentInjuries, lengthDue
     });
     Object.assign(built, phase);
-    markContracts(built, draftedIds(draftResults));
+    markContracts(built, lengthDue);
     const playerNames = new Map(asArray(players.player).map((player) => [player.id, player]));
     built.raw = {transactions, league: leagueInfo, salaryAdjustments, freeAgents};
     built.pendingAdds = pendingAdds({rosters, transactions: asArray(transactions.transaction), players: playerNames});

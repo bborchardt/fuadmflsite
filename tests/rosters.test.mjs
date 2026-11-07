@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {buildLeague, draftedIds, markContracts, playersFromExport} from "../site/v2/lib/league.js";
+import {buildLeague, draftedIds, lengthDuePenalty, markContracts, playersFromExport} from "../site/v2/lib/league.js";
 import {SALARY_CAP} from "../site/v2/lib/rules.js";
 import leagueSettings from "../site/v2/lib/settings.js";
 import {playoffPicture, standings} from "../site/v2/ui/league-model.js";
@@ -170,7 +170,7 @@ test("0-year contracts: an RFA at $0.01, a length due costing a 1-year cut, a ro
     Object.assign(auction, {salary: "12", contractYear: "0"});
     Object.assign(rookie, {salary: "6", contractYear: "0"});
     const built = buildLeague({players: playersFromExport(playersExport), league: settings, salaryAdjustments: fixture("salary-adjustments.json").salaryAdjustments, rosters, freeAgents: fixture("free-agents.json").freeAgents});
-    markContracts(built, draftedIds({draftUnit: {draftPick: [{player: rookie.id}, {player: ""}]}}));
+    markContracts(built, {rookies: draftedIds({draftUnit: {draftPick: [{player: rookie.id}, {player: ""}]}})});
     const [a, b, c] = [rfa, auction, rookie].map((entry) => built.players.get(entry.id));
     assert.deepEqual([a, b, c].map(contractYears), ["RFA", "length due", "length due"]);
     // 12 × 0.4 × 1 = 4.8, rounded up
@@ -180,11 +180,27 @@ test("0-year contracts: an RFA at $0.01, a length due costing a 1-year cut, a ro
     leagueSettings.rookieCutFreeUntilLengthSet = false;
     try {
         const again = buildLeague({players: playersFromExport(playersExport), league: settings, salaryAdjustments: fixture("salary-adjustments.json").salaryAdjustments, rosters, freeAgents: fixture("free-agents.json").freeAgents});
-        markContracts(again, draftedIds({draftUnit: {draftPick: [{player: rookie.id}]}}));
+        markContracts(again, {rookies: draftedIds({draftUnit: {draftPick: [{player: rookie.id}]}})});
         assert.equal(again.players.get(rookie.id).capPenalty, 3);
     } finally {
         leagueSettings.rookieCutFreeUntilLengthSet = true;
     }
+});
+
+test("a length-due cut's penalty: a year's, but nothing for this season's rookie before the cut-down date", () => {
+    const player = {playerId: "9", salary: 20};
+    assert.equal(lengthDuePenalty(player, {at: 100}), 8);
+    const rookies = new Set(["9"]);
+    assert.equal(lengthDuePenalty(player, {rookies, freeUntil: 200, at: 100}), 0);
+    assert.equal(lengthDuePenalty(player, {rookies, freeUntil: 200, at: 300}), 8);
+    // with no cut-down date known, a rookie stays free
+    assert.equal(lengthDuePenalty(player, {rookies, freeUntil: null, at: 300}), 0);
+    const rosters = JSON.parse(JSON.stringify(fixture("rosters.json").rosters));
+    const [rookie] = rosters.franchise[0].player;
+    Object.assign(rookie, {salary: "6", contractYear: "0"});
+    const built = buildLeague({players: playersFromExport(playersExport), league: settings, rosters});
+    markContracts(built, {rookies: new Set([rookie.id]), freeUntil: 200}, 300);
+    assert.equal(built.players.get(rookie.id).capPenalty, 3);
 });
 
 test("before the draft, a team's picks in it come from the board: held ones numbered, its own traded away", () => {

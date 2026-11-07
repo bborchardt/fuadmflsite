@@ -52,7 +52,9 @@ export function capPenalty(years, salary) {
     if (!(years > 0)) {
         return 0;
     }
-    return Math.max(Math.ceil(Math.max(1, settings.cutPenalty.shareOfRemainingContract * salary * years)), years * settings.cutPenalty.minimumPerYear);
+    // rounded first: 0.4 × 3 × 5 is 6.000000000000001 in floating point, which would round up to 7
+    const share = Math.round(settings.cutPenalty.shareOfRemainingContract * salary * years * 1e6) / 1e6;
+    return Math.max(Math.ceil(Math.max(1, share)), years * settings.cutPenalty.minimumPerYear);
 }
 
 export function netCapSpace(years, salary) {

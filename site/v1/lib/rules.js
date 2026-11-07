@@ -42,7 +42,8 @@ export function capPenalty(years, salary) {
     if (!(years > 0)) {
         return 0;
     }
-    return Math.max(Math.ceil(Math.max(1, 0.4 * salary * years)), years);
+    // rounded first: 0.4 × 3 × 5 is 6.000000000000001 in floating point, which would round up to 7
+    return Math.max(Math.ceil(Math.max(1, Math.round(0.4 * salary * years * 1e6) / 1e6)), years);
 }
 
 export function netCapSpace(years, salary) {

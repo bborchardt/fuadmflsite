@@ -20,7 +20,7 @@ export function pendingPenalties(league) {
             amount: player.capPenalty,
             charged: player.penaltyCharged,
             dropped,
-            explanation: `${player.fullName} (${player.years}yrs@${player.salary}, ${dropDate(dropped)})`
+            explanation: `${player.fullName} (${player.years}yrs@${player.salary}${player.years === 0 ? ", length due" : ""}, ${dropDate(dropped)})`
         };
     }));
 }

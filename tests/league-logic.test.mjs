@@ -14,6 +14,20 @@ test("cap penalty is 40% of salary per year, at least $1 and at least $1 a year"
     assert.equal(capPenalty("3", "20"), 24);
 });
 
+test("cap penalty isn't pushed up a dollar by floating point, in v1 or v2", async () => {
+    const v1 = await import("../site/v1/lib/rules.js");
+    assert.equal(capPenalty(5, 3), 6);
+    assert.equal(v1.capPenalty(5, 3), 6);
+    for (let years = 1; years <= 5; years++) {
+        for (let salary = 1; salary <= 120; salary++) {
+            // 40% in whole numbers: ceil(4 × salary × years / 10)
+            const exact = Math.max(Math.ceil(4 * salary * years / 10), years);
+            assert.equal(capPenalty(years, salary), exact, `$${salary} for ${years}`);
+            assert.equal(v1.capPenalty(years, salary), exact, `v1: $${salary} for ${years}`);
+        }
+    }
+});
+
 test("net cap space is salary less penalty, nothing for an expiring contract", () => {
     assert.equal(netCapSpace(2, 10), 2);
     assert.equal(netCapSpace(0, 10), 0);

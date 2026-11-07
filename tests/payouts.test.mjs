@@ -52,10 +52,15 @@ test("places that are due but can't be worked out say why, and nothing is guesse
     assert.deepEqual(missingPayouts({...season, accounting, finalWeek: 17, places: null}), {records: [], problem: "MFL's playoff brackets don't name them"});
 });
 
-test("a tie for the week's high score splits the prize", () => {
+test("a tie for the week's high score splits the prize, and a run that stopped between them finishes it", () => {
     const week = (scores) => ({week: "1", matchup: [{franchise: scores.map(([id, score]) => ({id, score: String(score)}))}]});
-    const {records} = missingPayouts({weeklyResults: {weeklyResults: [week([["0001", 120], ["0002", 120], ["0003", 90]])]}, accounting: {}, lastRegularWeek: 14, endWeek: 17, finalWeek: 1, places: null});
-    assert.deepEqual(brief(records), ["0001 7.5 Most Points Week 1", "0002 7.5 Most Points Week 1"]);
+    const tie = (entry) => missingPayouts({weeklyResults: {weeklyResults: [week([["0001", 120], ["0002", 120], ["0003", 90]])]}, accounting: {entry}, lastRegularWeek: 14, endWeek: 17, finalWeek: 1, places: null}).records;
+    assert.deepEqual(brief(tie([])), ["0001 7.5 Most Points Week 1", "0002 7.5 Most Points Week 1"]);
+    const first = {franchise_id: "0001", amount: "7.5", description: "Most Points Week 1"};
+    assert.deepEqual(brief(tie([first])), ["0002 7.5 Most Points Week 1"]);
+    assert.deepEqual(tie([first, {...first, franchise_id: "0002"}]), []);
+    // a list of weeks entered by hand is the commissioner's own reckoning of each
+    assert.deepEqual(tie([{franchise_id: "0001", amount: "22.5", description: "Most points weeks 1,4"}]), []);
 });
 
 test("the newest week with scores, not the scheduled ones still empty", () => {
