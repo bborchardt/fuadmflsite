@@ -20,6 +20,9 @@ export function pendingPenalties(league) {
             amount: player.capPenalty,
             charged: player.penaltyCharged,
             lengthDue: player.years === 0,
+            salary: player.salary,
+            // added this season by a free agent, waiver or blind bid move
+            addedThisSeason: player.transactions.some((transaction) => transaction.added),
             dropped,
             explanation: `${player.fullName} (${player.years}yrs@${player.salary}${player.years === 0 ? ", length due" : ""}, ${dropDate(dropped)})`
         };

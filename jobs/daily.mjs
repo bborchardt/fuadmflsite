@@ -514,7 +514,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     // unsettled one when last season's salary was $1 too
     const file = join(dataDir, "rfa-salaries.json");
     const record = dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
-    const done = new Set(record[season] || []);
+    const done = rfasSet();
     const rfas = rfaSalaries({lastRosters, rosters, asArray, added}).filter((rfa) => !done.has(rfa.playerId));
     if (!rfas.length) {
         log("No players have gone from 1 contract year to 0 without $0.01.");
@@ -544,6 +544,13 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     return rfas.map((rfa) => rfa.playerId);
 }
 
+// the players this job has set to $0.01 this season (rfa-salaries.json)
+function rfasSet() {
+    const file = join(dataDir, "rfa-salaries.json");
+    const record = dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+    return new Set(record[season] || []);
+}
+
 // last season's rosters, read once a run; null when the league had no site then, as a season with
 // none answers 404 or an error document (leagueSeason)
 let lastRostersRead = null;
@@ -558,7 +565,7 @@ function lastSeasonRosters() {
 }
 
 async function leagueState({loggedIn}) {
-    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar, lengthDueFacts] = await Promise.all([
+    const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar] = await Promise.all([
         fetchFrom(API_BASE, "players"),
         fetchFrom(host, "league", {L: leagueId}),
         fetchFrom(host, "salaryAdjustments", {L: leagueId}),
@@ -575,13 +582,7 @@ async function leagueState({loggedIn}) {
         loggedIn ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
             log(`Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
             return null;
-        }) : null,
-        // what a drop whose length was due costs (lib/league.js lengthDuePenalty): nothing for this
-        // season's rookies before the cut-down date, or for last season's 1-year players the rollover
-        // left at 0; without them such a drop is held for the commissioner
-        Promise.all([fetchFrom(host, "draftResults", {L: leagueId}), lastSeasonRosters()])
-            .then(([draftResults, lastRosters]) => ({rookies: draftedIds(draftResults), expired: atOneYear(lastRosters, asArray)}))
-            .catch((error) => ({unknown: error.message}))
+        }) : null
     ]);
     const cutDown = cutDownAt(calendar, season);
     // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
@@ -594,9 +595,25 @@ async function leagueState({loggedIn}) {
         log(`Couldn't load the week ${weeklyResults.week || "(unknown)"} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
         return null;
     });
-    const playerMap = playersFromExport(players);
-    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries,
-        lengthDue: {...lengthDueFacts, freeUntil: cutDown}});
+    // buildLeague fills in the players it's given, so each build takes its own
+    let playerMap;
+    const build = (rookies) => {
+        playerMap = playersFromExport(players);
+        return buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries,
+            lengthDue: {rookies, freeUntil: cutDown}});
+    };
+    let built = build();
+    // a drop whose length was due is free for this season's rookie before the cut-down date
+    // (lib/league.js lengthDuePenalty): the draft is read only when there's such a drop, and without
+    // it they're held for the commissioner
+    let lengthDueUnknown = null;
+    if ([...built.franchises.values()].some((franchise) => franchise.pendingDroppedPlayers.some((player) => player.years === 0))) {
+        try {
+            built = build(draftedIds(await fetchFrom(host, "draftResults", {L: leagueId})));
+        } catch (error) {
+            lengthDueUnknown = `this season's draft couldn't be read: ${error.message}`;
+        }
+    }
     // if the season's phase can't be told, skip the league rules rather than flag the offseason
     try {
         // v2's lib reads the playoff and championship weeks from the league export (v1's has them fixed)
@@ -614,7 +631,7 @@ async function leagueState({loggedIn}) {
         league,
         cutDown,
         penalties: pendingPenalties(built),
-        lengthDueUnknown: lengthDueFacts.unknown || null,
+        lengthDueUnknown,
         transactions: asArray(transactions.transaction),
         rosters,
         // players as MFL names them ("Last, First"), which the waivers page uses too
@@ -674,6 +691,20 @@ function overCap({players, built, penalties, transactions}) {
 
 // a penalty already charged (by a run that failed before the reset, or by hand), or a $0 one,
 // only gets the reset
+// Of `penalties` for drops whose length was due, the ones that may be renewal RFAs not yet at $0.01,
+// whose contract ran out and owe nothing: at 1 year last season on the same salary, with no add this
+// season and not set to $0.01 by this job. One won back at the auction looks the same, so they're
+// left for the commissioner, never guessed. Throws when last season's rosters can't be read.
+async function maybeRfas(penalties) {
+    const candidates = penalties.filter((penalty) => penalty.lengthDue && penalty.amount > 0 && !penalty.addedThisSeason);
+    if (!candidates.length) {
+        return [];
+    }
+    const atOne = atOneYear(await lastSeasonRosters(), asArray);
+    const done = rfasSet();
+    return candidates.filter((penalty) => atOne.get(penalty.playerId) === penalty.salary && !done.has(penalty.playerId));
+}
+
 async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     if (!penalties.length) {
         log("No dropped players owe a cap penalty.");
@@ -681,10 +712,21 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     }
     const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
     const noCharge = (penalty) => penalty.amount > 0 ? "penalty already charged" : "no penalty owed";
-    const unpriced = lengthDueUnknown ? penalties.filter((penalty) => penalty.lengthDue && !over.has(penalty.franchiseId)) : [];
+    const lengthDue = penalties.filter((penalty) => penalty.lengthDue && !over.has(penalty.franchiseId));
+    let unpriced = [];
+    let why = lengthDueUnknown;
+    if (lengthDueUnknown) {
+        unpriced = lengthDue;
+    } else {
+        unpriced = await maybeRfas(lengthDue).catch((error) => {
+            why = `last season's rosters couldn't be read: ${error.message}`;
+            return lengthDue.filter((penalty) => penalty.amount > 0 && !penalty.addedThisSeason);
+        });
+        why = why || "each ended last season at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's";
+    }
     if (unpriced.length) {
-        needsAttention(`Cap chores: couldn't tell whether ${unpriced.map((penalty) => penalty.explanation).join(", ")} owe a penalty `
-            + `(${lengthDueUnknown}), so they're left as they are. Charge any owed by hand.`);
+        needsAttention(`Cap chores: left as they are, since it can't be told whether they owe a penalty (${why}): `
+            + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand.`);
     }
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
     // held penalties don't count: they can wait for weeks on a team over the cap
