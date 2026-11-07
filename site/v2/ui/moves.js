@@ -37,10 +37,12 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
         freshAtOnce()
     ]);
     const {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers} = found;
-    // this season's rookies, whose cut costs nothing while their length is due; only before week 1
+    // this season's rookies, whose cut costs nothing while their length is due, until the cut-down
+    // date (lib/league.js lengthDuePenalty); only before week 1
     const draftResults = facts.week1 && Date.now() >= facts.week1 ? null
         : await fetchExport(exportUrl(host, season, "draftResults", {L: leagueId}), "draftResults", {fetchImpl: pageFetch}).catch(() => null);
-    const league = markContracts(buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents}), draftedIds(draftResults));
+    const lengthDue = {rookies: draftedIds(draftResults), freeUntil: cutDownAt(calendar, season)};
+    const league = markContracts(buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents, lengthDue}), lengthDue);
     const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
     const groups = pendingGroups(pendingWaivers);
     // MFL's limit on conditional bid groups

@@ -111,17 +111,24 @@ export function unpaidPlaces(accounting) {
 // regular season week's high score, the all-play payouts once the regular season's last week is
 // final, and the places once the championship's is (`places`, from playoffPlaces). A payout already in
 // the accounting under any team, by hand or by an earlier run, isn't added again: "Most Points Week
-// 3", "Most points weeks 1,4" (2025's), "All-play (82-44)", "1st Place". `problem` says why places
+// 3", "Most points weeks 1,4" (2025's), "All-play (82-44)", "1st Place". A week tied between teams,
+// unless a list of weeks entered by hand names it, is paid once it has an entry for each; short of
+// that, the winners without one are added, as a run can stop between them. `problem` says why places
 // that are due can't be recorded. Records: [{franchise, amount, description}].
 export function missingPayouts({accounting, weeklyResults, lastRegularWeek, endWeek, finalWeek, places}) {
     const entries = asArray(accounting && accounting.entry);
     const described = (pattern) => entries.map((entry) => ({entry, match: pattern.exec(entry.description || "")})).filter(({match}) => match);
-    const paidWeeks = new Set(described(/^most points weeks?\s+([\d,\s]+)/i).flatMap(({match}) => match[1].split(/[,\s]+/).filter(Boolean).map(Number)));
+    const weekEntries = described(/^most points weeks?\s+([\d,\s]+)/i).flatMap(({entry, match}) =>
+        match[1].split(/[,\s]+/).filter(Boolean).map((week, index, weeks) => ({week: Number(week), franchise: weeks.length > 1 ? null : entry.franchise_id})));
     const paidAllPlay = new Set(described(/^all-play\b/i).map(({entry}) => entry.franchise_id));
     const records = [];
     for (const {week, teams} of weeklyWinners(weeklyResults, Math.min(lastRegularWeek, finalWeek))) {
-        if (!paidWeeks.has(week)) {
-            teams.forEach((id) => records.push({franchise: id, amount: cents(WEEKLY_PRIZE / teams.length), description: `Most Points Week ${week}`}));
+        const paid = weekEntries.filter((entry) => entry.week === week);
+        const has = (id) => paid.some((entry) => entry.franchise === id);
+        const done = paid.some((entry) => entry.franchise === null) || (teams.length === 1 ? paid.length > 0 : teams.every(has));
+        if (!done) {
+            teams.filter((id) => !has(id))
+                .forEach((id) => records.push({franchise: id, amount: cents(WEEKLY_PRIZE / teams.length), description: `Most Points Week ${week}`}));
         }
     }
     if (finalWeek < lastRegularWeek) {

@@ -59,6 +59,57 @@ export function recentMoves(transactions, franchiseId, {players, franchises, sin
         .filter(Boolean);
 }
 
+// players only, not draft picks
+const playerCount = (list) => ids(list).filter((id) => !id.startsWith("FP_") && !id.startsWith("DP_")).length;
+
+// The team's newest move since `since` that left it with more players, if that was a trade: the
+// bylaws (10) allow going over 30 in one, until the team gets back. Commissioner loads aren't moves.
+export function tradeOverRoster(transactions, franchiseId, since) {
+    const gain = (transaction) => {
+        switch (transaction.type) {
+        case "FREE_AGENT": {
+            const [added, dropped] = String(transaction.transaction).split("|");
+            return playerCount(added) - playerCount(dropped);
+        }
+        case "WAIVER":
+            return playerCount(transaction.added) - playerCount(transaction.dropped);
+        case "IR":
+            return playerCount(transaction.activated) - playerCount(transaction.deactivated);
+        case "BBID_WAIVER": {
+            const [added, , dropped] = String(transaction.transaction).split("|");
+            return playerCount(added) - playerCount(dropped);
+        }
+        case "TRADE": {
+            const first = transaction.franchise === franchiseId;
+            return playerCount(first ? transaction.franchise2_gave_up : transaction.franchise1_gave_up)
+                - playerCount(first ? transaction.franchise1_gave_up : transaction.franchise2_gave_up);
+        }
+        default:
+            return 0;
+        }
+    };
+    const grew = transactions
+        .filter((transaction) => Number(transaction.timestamp) >= since
+            && (transaction.franchise === franchiseId || (transaction.type === "TRADE" && transaction.franchise2 === franchiseId)))
+        .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
+        .find((transaction) => gain(transaction) > 0);
+    return grew && grew.type === "TRADE" ? grew : null;
+}
+
+// Going over 30 voids the move, as going over the cap does, unless a trade did it: then the team has
+// until the bylaws' deadline to get back.
+export function overRosterMessage({text, moves, held, trade}) {
+    let message = `${text} Moves in the last ${RECENT_MOVE_DAYS} days: ${moves.length ? moves.join("; ") : "none"}.`;
+    if (trade) {
+        message += ` Over 30 after the ${dropDate(Number(trade.timestamp))} trade, which the bylaws allow: it must be back to 30`
+            + " by the next game, the next blind-bid deadline or 12 hours after the trade, whichever is first.";
+    }
+    if (held.length) {
+        message += ` Drop penalties held${trade ? " until it's back to 30" : " so the move can be reversed"}: ${held.join(", ")}.`;
+    }
+    return message;
+}
+
 const dollars = (amount) => `$${Number(amount.toFixed(2))}`;
 
 // held penalties are named: charging them would reset a contract the commissioner may restore

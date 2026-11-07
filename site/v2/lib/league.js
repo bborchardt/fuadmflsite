@@ -56,8 +56,9 @@ function setContract(player, salary, contractYear) {
 }
 
 // `freeAgents`, `transactions`, `weeklyResults`, `salaryAdjustments`, `injuries` and
-// `currentInjuries` may be left out when a caller doesn't need them.
-export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries}) {
+// `currentInjuries` may be left out when a caller doesn't need them. `lengthDue` prices a dropped
+// player whose length was still due (lengthDuePenalty).
+export function buildLeague({players, league, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, lengthDue = {}}) {
     const franchises = new Map();
     for (const franchise of asArray(league.franchises && league.franchises.franchise)) {
         franchises.set(franchise.id, newFranchise(franchise.id, franchise.name));
@@ -160,6 +161,9 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
             // A free agent still carrying a contract, last moved by a drop, is owed a cap penalty.
             const latest = player.transactions[0];
             if ((player.salary > 1 || player.years > 0) && latest && !latest.added && latest.franchise) {
+                if (player.years === 0) {
+                    player.capPenalty = lengthDuePenalty(player, {...lengthDue, at: latest.timestamp});
+                }
                 latest.franchise.pendingDroppedPlayers.push(player);
                 // Charged already if the team has an adjustment naming the player since the drop,
                 // including ones entered by hand like "Name (2yrs@10)", alone or with others.
@@ -215,20 +219,28 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
     return {players, franchises, rosteredPlayers, week, weeks: seasonWeeks(league), injuryReportKnown};
 }
 
-// v2's pages only (the daily job doesn't call it): rostered players with no contract years are the
-// commissioner's RFAs ($0.01 after the rollover, read as $0) or players whose length is still due
-// (draft day, or an add's hour). Cutting one whose length is due costs a 1-year penalty, the
-// shortest he can end up with, except a rookie from this season's draft (`rookies`, player ids), if
-// the league lets one go free (settings.rookieCutFreeUntilLengthSet).
-export function markContracts(league, rookies = new Set()) {
+// Cutting a player whose length is still due (0 years, $1 or more: draft day, or an add's hour) costs
+// the 1-year penalty, the shortest he can end up with, except a rookie from this season's draft
+// (`rookies`, player ids) cut before the final cut-down date (`freeUntil`, in seconds; null when it
+// isn't known, which leaves him free), if the league lets one go free. `at`: when he's cut. A $1 one
+// cut isn't told from a player the job has charged and reset to $1 / 0 years, so it isn't charged.
+export function lengthDuePenalty(player, {rookies = new Set(), freeUntil = null, at}) {
+    const free = settings.rookieCutFreeUntilLengthSet && rookies.has(player.playerId) && (freeUntil === null || at < freeUntil);
+    return free ? 0 : capPenalty(1, player.salary);
+}
+
+// v2's pages only: rostered players with no contract years are the commissioner's RFAs ($0.01 after
+// the rollover, read as $0) or players whose length is still due, whose cut lengthDuePenalty prices
+// as of `now` (seconds).
+export function markContracts(league, lengthDue = {}, now = Date.now() / 1000) {
     for (const player of league.rosteredPlayers) {
         if (player.years > 0) {
             continue;
         }
         player.rfa = player.salary === 0;
         player.lengthDue = player.salary >= 1;
-        if (player.lengthDue && !(settings.rookieCutFreeUntilLengthSet && rookies.has(player.playerId))) {
-            player.capPenalty = capPenalty(1, player.salary);
+        if (player.lengthDue) {
+            player.capPenalty = lengthDuePenalty(player, {...lengthDue, at: now});
             player.netCapSpace = player.salary - player.capPenalty;
         }
     }

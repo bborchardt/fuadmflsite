@@ -31,28 +31,27 @@ import {fileURLToPath, pathToFileURL} from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const version = process.env.RULES_VERSION || "v2";
-if (!/^v\d+$/.test(version)) {
-    throw new Error(`RULES_VERSION must name a version, as v2, not "${version}"`);
+// v1's lib lacks the settings, payouts and offseason lengths the job needs; v2's holds its rules
+if (!/^v\d+$/.test(version) || version === "v1") {
+    throw new Error(`RULES_VERSION must name a version from v2 on, as v2, not "${version}"`);
 }
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, asArray, displayName, exportUrl, fetchExport, weekKickoff} = await lib("mfl.js");
-// v1's lib has no payouts: the chore is skipped
-const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = version === "v1" ? {} : await lib("payouts.js");
-const {buildLeague, playersFromExport} = await lib("league.js");
+const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
+const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
 const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, resetSalaryXml, salaryAdjXml} =
     await import("./drop-penalties.mjs");
 const {contractDeadline, pendingAdds, windowClosed} = await lib("adds.js");
-// v1's has no cutDownAt: its roster limits start with week 1
-const {cutDownAt = null, ruleViolations, seasonPhase} = await lib("violations.js");
+const {cutDownAt, ruleViolations, seasonPhase} = await lib("violations.js");
 const {DEFAULT_YEARS, decideYears, postText, readProcessedWaivers, teamPlayers} = await lib("contract-years.js");
 const {MAX_CONTRACTS_PER_RUN, contractsXml} = await import("./contract-years.mjs");
-// v1's lib reads lengths only from in-season adds
-const {addedSince, formLengths, lengthTopics, lengthsDue} = version === "v1" ? {} : await lib("lengths.js");
-const {RECENT_MOVE_DAYS, overCapMessage, recentMoves} = await import("./over-cap.mjs");
+const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.js");
+const {mflImport: sendImport} = await import("./mfl-import.mjs");
+const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
-const {MAX_RFA_SHARE, RFA_SALARY, rfaSalaries} = await import("./rfa-salaries.mjs");
+const {MAX_RFA_SHARE, RFA_SALARY, atOneYear, rfaSalaries} = await import("./rfa-salaries.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -70,15 +69,12 @@ if (dryRun && !/^\d+$/.test(leagueId)) {
 if (dryRun && !/^https:\/\/([a-z0-9-]+\.)*myfantasyleague\.com\/?$/i.test(process.env.MFL_HOST)) {
     throw new Error(`A dry run's host must be on myfantasyleague.com, not ${process.env.MFL_HOST}`);
 }
-// v1's lib has no settings file. A league with no entry has only assumed rules, too little to go by.
-const {league: leagueSettings} = version === "v1" ? {} : await lib("settings.js");
-if (leagueSettings && !leagueSettings.listed && !dryRun) {
+// A league with no entry has only assumed rules, too little to go by.
+const {league: leagueSettings} = await lib("settings.js");
+if (!leagueSettings.listed && !dryRun) {
     throw new Error(`League ${leagueId} isn't listed in site/${version}/settings.json`);
 }
 if (dryRun && process.env.MFL_SETTINGS) {
-    if (!leagueSettings) {
-        throw new Error("v1 has no settings, so a dry run on it can't take any");
-    }
     if (leagueSettings.listed) {
         throw new Error(`League ${leagueId} is listed in site/${version}/settings.json, which ignores settings given for a run`);
     }
@@ -265,28 +261,9 @@ function writeSummary() {
     }
 }
 
-// MFL reports errors with HTTP 200, so anything but <status>OK</status> throws. `data` null: an
-// import that takes its fields as parameters
-async function mflImport(type, data, params = {}) {
-    if (dryRun) {
-        throw new Error(`A dry run reached MFL's ${type} import, which it must never send`);
-    }
-    let response, body;
-    try {
-        response = await mflFetch(`${host}/${season}/import`, {
-            method: "POST",
-            headers: {...mflHeaders, "Content-Type": "application/x-www-form-urlencoded"},
-            body: new URLSearchParams({TYPE: type, L: leagueId, ...(data === null ? {} : {DATA: data}), ...params})
-        });
-        body = await response.text();
-    } catch (error) {
-        throw new Error(`MFL's ${type} import failed: network error (${error.message})`);
-    }
-    const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
-    if (error || !response.ok || !/<status\b[^>]*>\s*OK\s*<\/status>/i.test(body)) {
-        throw new Error(`MFL's ${type} import failed: ${error || `HTTP ${response.status}, "${body.trim().slice(0, 200)}"`}`);
-    }
-}
+// every write to MFL goes through it: it refuses a dry run
+const mflImport = (type, data, params = {}) => sendImport({type, data, params},
+    {dryRun, url: `${host}/${season}/import`, leagueId, headers: mflHeaders, fetchImpl: mflFetch});
 
 // bid comments appear only on this page, not in the API
 async function processedWaivers(period) {
@@ -314,10 +291,10 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
     const pending = pendingAdds({rosters, transactions, players: playerNames});
     // an add before the cut-down date has until then, through the form (offseasonLengths)
     const from = formsEnd(built, cutDown);
-    if (formLengths && !from) {
+    if (!from) {
         log(`Neither the cut-down date nor week 1's kickoff is known; ${built.started ? "every" : "no"} add is taken as owing its length within the hour.`);
     }
-    const inSeason = (add) => !formLengths || (from ? add.added >= from : built.started === true);
+    const inSeason = (add) => from ? add.added >= from : built.started === true;
     const held = pending.filter((add) => inSeason(add) && over.has(add.franchiseId));
     for (const add of held) {
         choreLog(`Contract years: ${add.name} held, since the team is over the cap or the roster limit. Left for the commissioner.`);
@@ -389,10 +366,6 @@ const formsEnd = (built, cutDown) => cutDown || (built.week1Kickoff ? built.week
 // one added after the cut-down date, gets his from the team's form post. Before the cut-down date a missing one
 // waits; after it the commissioner is told, for the $5 a day; from week 1's kickoff it's 1 year.
 async function offseasonLengths(loggedIn, {built, rosters, playerNames, cutDown}, over, rfas) {
-    if (!formLengths) {
-        log(`The ${version} lib has no form for offseason lengths; none set.`);
-        return;
-    }
     if (typeof built.started !== "boolean") {
         log("The season's start isn't known; offseason contract lengths skipped.");
         return;
@@ -465,10 +438,6 @@ async function offseasonLengths(loggedIn, {built, rosters, playerNames, cutDown}
 // A week's scores are final once the next week has kicked off, when the NFL's stat corrections are
 // usually out. Payouts already in the accounting, by hand or by an earlier run, aren't added again.
 async function payouts(loggedIn, {built}) {
-    if (!missingPayouts) {
-        log(`The ${version} lib has no payouts; none recorded.`);
-        return;
-    }
     if (!loggedIn) {
         log("Reading MFL's accounting needs the commissioner login; no payouts recorded.");
         return;
@@ -533,11 +502,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
         log(built.started ? "Week 1 has kicked off; RFA salaries are set only before it." : "The season's start isn't known; RFA salaries skipped.");
         return [];
     }
-    // a season with no site answers 404 or an error document, as leagueSeason finds
-    const lastRosters = await fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
-        if (error.status === 404 || /Invalid league ID/i.test(error.message)) {
-            return null;
-        }
+    const lastRosters = await lastSeasonRosters().catch((error) => {
         throw new Error(`last season's rosters couldn't be read (${error.message}), so no RFA salaries were set`);
     });
     if (!lastRosters) {
@@ -549,7 +514,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     // unsettled one when last season's salary was $1 too
     const file = join(dataDir, "rfa-salaries.json");
     const record = dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
-    const done = new Set(record[season] || []);
+    const done = rfasSet();
     const rfas = rfaSalaries({lastRosters, rosters, asArray, added}).filter((rfa) => !done.has(rfa.playerId));
     if (!rfas.length) {
         log("No players have gone from 1 contract year to 0 without $0.01.");
@@ -579,6 +544,26 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     return rfas.map((rfa) => rfa.playerId);
 }
 
+// the players this job has set to $0.01 this season (rfa-salaries.json)
+function rfasSet() {
+    const file = join(dataDir, "rfa-salaries.json");
+    const record = dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+    return new Set(record[season] || []);
+}
+
+// last season's rosters, read once a run; null when the league had no site then, as a season with
+// none answers 404 or an error document (leagueSeason)
+let lastRostersRead = null;
+function lastSeasonRosters() {
+    lastRostersRead = lastRostersRead || fetchFrom(host, "rosters", {L: leagueId}, "rosters", season - 1).catch((error) => {
+        if (error.status === 404 || /Invalid league ID/i.test(error.message)) {
+            return null;
+        }
+        throw error;
+    });
+    return lastRostersRead;
+}
+
 async function leagueState({loggedIn}) {
     const [players, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, calendar] = await Promise.all([
         fetchFrom(API_BASE, "players"),
@@ -594,11 +579,12 @@ async function leagueState({loggedIn}) {
         }),
         // the final cut-down date, when the roster limits start before week 1; without it, from week 1
         // (MFL shows the calendar only to a member)
-        cutDownAt && loggedIn ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
+        loggedIn ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
             log(`Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
             return null;
         }) : null
     ]);
+    const cutDown = cutDownAt(calendar, season);
     // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
     const currentInjuries = await fetchFrom(API_BASE, "injuries").catch((error) => {
         log(`Couldn't load today's NFL injury report (${error.message}); the injured reserve check is skipped.`);
@@ -609,8 +595,25 @@ async function leagueState({loggedIn}) {
         log(`Couldn't load the week ${weeklyResults.week || "(unknown)"} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
         return null;
     });
-    const playerMap = playersFromExport(players);
-    const built = buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries});
+    // buildLeague fills in the players it's given, so each build takes its own
+    let playerMap;
+    const build = (rookies) => {
+        playerMap = playersFromExport(players);
+        return buildLeague({players: playerMap, league, salaryAdjustments, rosters, transactions, freeAgents, weeklyResults, injuries, currentInjuries,
+            lengthDue: {rookies, freeUntil: cutDown}});
+    };
+    let built = build();
+    // a drop whose length was due is free for this season's rookie before the cut-down date
+    // (lib/league.js lengthDuePenalty): the draft is read only when there's such a drop, and without
+    // it they're held for the commissioner
+    let lengthDueUnknown = null;
+    if ([...built.franchises.values()].some((franchise) => franchise.pendingDroppedPlayers.some((player) => player.years === 0))) {
+        try {
+            built = build(draftedIds(await fetchFrom(host, "draftResults", {L: leagueId})));
+        } catch (error) {
+            lengthDueUnknown = `this season's draft couldn't be read: ${error.message}`;
+        }
+    }
     // if the season's phase can't be told, skip the league rules rather than flag the offseason
     try {
         // v2's lib reads the playoff and championship weeks from the league export (v1's has them fixed)
@@ -626,8 +629,9 @@ async function leagueState({loggedIn}) {
         players: playerMap,
         built,
         league,
-        cutDown: cutDownAt ? cutDownAt(calendar, season) : null,
+        cutDown,
         penalties: pendingPenalties(built),
+        lengthDueUnknown,
         transactions: asArray(transactions.transaction),
         rosters,
         // players as MFL names them ("Last, First"), which the waivers page uses too
@@ -637,7 +641,7 @@ async function leagueState({loggedIn}) {
 
 const RULE_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster", "injured-starter"]);
 
-// going over 30 voids the move like the cap, so the flag lists recent moves. Returns the teams over
+// the flag lists recent moves, so a move that broke the limit can be reversed. Returns the teams over
 // 30, whose chores are held.
 function leagueRules({players, built, cutDown, penalties, transactions}) {
     const overRoster = new Set();
@@ -652,8 +656,7 @@ function leagueRules({players, built, cutDown, penalties, transactions}) {
             overRoster.add(violation.franchiseId);
             const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since});
             const held = penalties.filter((penalty) => penalty.franchiseId === violation.franchiseId).map((penalty) => penalty.explanation);
-            text += ` Moves in the last ${RECENT_MOVE_DAYS} days: ${moves.length ? moves.join("; ") : "none"}.`
-                + (held.length ? ` Drop penalties held so the move can be reversed: ${held.join(", ")}.` : "");
+            text = overRosterMessage({text, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since)});
         }
         needsAttention(`League rules: ${text}`);
     }
@@ -688,14 +691,46 @@ function overCap({players, built, penalties, transactions}) {
 
 // a penalty already charged (by a run that failed before the reset, or by hand), or a $0 one,
 // only gets the reset
-async function dropPenalties(loggedIn, {penalties}, over) {
+// Of `penalties` for drops whose length was due, the ones that may be renewal RFAs not yet at $0.01,
+// whose contract ran out and owe nothing: at 1 year last season on the same salary, with no add this
+// season and not set to $0.01 by this job. One won back at the auction looks the same, so they're
+// left for the commissioner, never guessed. Throws when last season's rosters can't be read.
+async function maybeRfas(penalties) {
+    const candidates = penalties.filter((penalty) => penalty.lengthDue && needsCharge(penalty) && !penalty.addedThisSeason);
+    if (!candidates.length) {
+        return [];
+    }
+    const atOne = atOneYear(await lastSeasonRosters(), asArray);
+    const done = rfasSet();
+    return candidates.filter((penalty) => atOne.get(penalty.playerId) === penalty.salary && !done.has(penalty.playerId));
+}
+
+async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     if (!penalties.length) {
         log("No dropped players owe a cap penalty.");
         return;
     }
     const describe = (penalty) => `$${penalty.amount} to ${penalty.teamName} for ${penalty.explanation}`;
     const noCharge = (penalty) => penalty.amount > 0 ? "penalty already charged" : "no penalty owed";
-    const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId));
+    const lengthDue = penalties.filter((penalty) => penalty.lengthDue && !over.has(penalty.franchiseId));
+    let unpriced = [];
+    let why = lengthDueUnknown;
+    // one charged already, by hand or by an earlier run, only needs the reset
+    if (lengthDueUnknown) {
+        unpriced = lengthDue.filter(needsCharge);
+    } else {
+        unpriced = await maybeRfas(lengthDue).catch((error) => {
+            why = `last season's rosters couldn't be read: ${error.message}`;
+            return lengthDue.filter((penalty) => needsCharge(penalty) && !penalty.addedThisSeason);
+        });
+        why = why || "each ended last season at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's";
+    }
+    if (unpriced.length) {
+        needsAttention(`Cap chores: left as they are, since it can't be told whether they owe a penalty (${why}): `
+            + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand with his full name, as here, and the next run `
+            + "resets him; set one who owes nothing to $1 / 0 years on MFL's Salaries page.");
+    }
+    const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
     // held penalties don't count: they can wait for weeks on a team over the cap
     if ((applyDropPenalties || dryRun) && toApply.length > MAX_PENALTIES_PER_RUN) {
         throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `

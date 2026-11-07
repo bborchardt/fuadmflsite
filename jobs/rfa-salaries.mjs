@@ -9,14 +9,20 @@ export const RFA_SALARY = "0.01";
 // season's 1-year players dropped and won again is at 0 years too, at his new salary or perhaps the
 // same, and a rookie wasn't rostered at all. A salary changed since (a re-signing) is left too.
 export function rfaSalaries({lastRosters, rosters, asArray, added = new Set()}) {
-    const entries = (export_) => asArray((export_ || {}).franchise)
-        .flatMap((team) => asArray(team.player).map((player) => ({...player, franchiseId: team.id})));
-    const atOne = new Map(entries(lastRosters).filter((player) => Number(player.contractYear) === 1)
-        .map((player) => [player.id, Number(player.salary)]));
-    return entries(rosters)
+    const atOne = atOneYear(lastRosters, asArray);
+    return entries(rosters, asArray)
         .filter((player) => Number(player.contractYear) === 0 && atOne.get(player.id) === Number(player.salary)
             && Number(player.salary) !== Number(RFA_SALARY) && !added.has(player.id))
         .map((player) => ({playerId: player.id, franchiseId: player.franchiseId}));
+}
+
+const entries = (export_, asArray) => asArray((export_ || {}).franchise)
+    .flatMap((team) => asArray(team.player).map((player) => ({...player, franchiseId: team.id})));
+
+// last season's players at 1 contract year when it ended: id → salary
+export function atOneYear(lastRosters, asArray) {
+    return new Map(entries(lastRosters, asArray).filter((player) => Number(player.contractYear) === 1)
+        .map((player) => [player.id, Number(player.salary)]));
 }
 
 // more than this share of rostered players looks like a misread, not a rollover

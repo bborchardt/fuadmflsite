@@ -11,19 +11,15 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const versions = readdirSync(join(root, "site")).filter((name) => /^v\d+$/.test(name)).sort();
 
 // what jobs/daily.mjs takes from `lib(...)`: {file: [names]}; one with a default (`name = null`) is
-// optional. A file loaded as `version === "v1" ? {} : await lib(...)` isn't read from that version.
+// optional
 function dailyNeeds() {
     const source = readFileSync(join(root, "jobs", "daily.mjs"), "utf8");
     const needs = {};
-    const skipped = {};
-    for (const [, names, without, file] of source.matchAll(/const\s*\{([^}]+)\}\s*=\s*(?:version\s*===\s*"(v\d+)"\s*\?\s*\{\}\s*:\s*)?await\s+lib\(\s*["']([^"']+)["']\s*\)/g)) {
+    for (const [, names, file] of source.matchAll(/const\s*\{([^}]+)\}\s*=\s*await\s+lib\(\s*["']([^"']+)["']\s*\)/g)) {
         needs[file] = names.split(",").map((name) => name.trim()).filter((name) => name && !name.includes("="))
             .map((name) => name.split(/\s*:\s*/)[0]);
-        if (without) {
-            skipped[file] = without;
-        }
     }
-    return {needs, skipped, calls: source.match(/\blib\(/g).length};
+    return {needs, calls: source.match(/\blib\(/g).length};
 }
 
 test("the daily job's needs are read from daily.mjs", () => {
@@ -31,13 +27,13 @@ test("the daily job's needs are read from daily.mjs", () => {
     // every lib(...) call was read, so none is skipped silently
     assert.equal(Object.keys(needs).length, calls, JSON.stringify(needs));
     assert.ok(needs["league.js"].includes("buildLeague"));
-    assert.deepEqual(dailyNeeds().skipped, {"lengths.js": "v1", "payouts.js": "v1", "settings.js": "v1"});
 });
 
-for (const version of versions) {
+// the job refuses v1
+for (const version of versions.filter((name) => name !== "v1")) {
     test(`${version}'s lib/ has every export the daily job reads, should RULES_VERSION name it`, async () => {
-        const {needs, skipped} = dailyNeeds();
-        for (const [file, names] of Object.entries(needs).filter(([file]) => skipped[file] !== version)) {
+        const {needs} = dailyNeeds();
+        for (const [file, names] of Object.entries(needs)) {
             const module = await import(pathToFileURL(join(root, "site", version, "lib", file)).href);
             const missing = names.filter((name) => module[name] === undefined);
             assert.deepEqual(missing, [], `${version}/lib/${file}`);

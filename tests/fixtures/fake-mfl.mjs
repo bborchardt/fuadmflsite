@@ -15,7 +15,9 @@
 //                 its +, / and = escaped
 //   myLeagues     the leagues the login is in, default ["48571"]
 //   leagueUrls    more of them, as entries with only a url
-//   importError   MFL's <error> for every import, or none
+//   nflSchedule   an HTTP status to answer the NFL schedule with, in place of the schedule
+//   importError   MFL's <error> for every import, or a list of them, one per import in turn (null:
+//                 OK; any past the list's end are OK)
 //   published     {file: text} on GitHub Pages, an icon's still as "icons/<file>": {base64}; others
 //                 answer 404
 //   waivers       the processed waivers page's HTML
@@ -26,6 +28,8 @@ import {appendFileSync, readFileSync} from "node:fs";
 
 const scenario = JSON.parse(readFileSync(process.env.FAKE_MFL, "utf8"));
 const WEEK = 7 * 86400;
+// imports answered so far, for a list of importError
+let importsSeen = 0;
 
 const record = (entry) => appendFileSync(process.env.FAKE_MFL_LOG, JSON.stringify(entry) + "\n");
 const json = (body, status = 200) => new Response(JSON.stringify(body), {status, headers: {"Content-Type": "application/json"}});
@@ -38,6 +42,9 @@ function exportAnswer(host, year, params, cookie) {
     // the NFL's data is there every year; the league's only for seasons it has a site
     if (host === LEAGUE_HOST && !(scenario.seasons || []).includes(year)) {
         return text("", 404);
+    }
+    if (type === "nflSchedule" && scenario.nflSchedule) {
+        return text("", scenario.nflSchedule);
     }
     if (type === "nflSchedule") {
         const week = Number(params.get("W"));
@@ -89,7 +96,8 @@ globalThis.fetch = async (input, init = {}) => {
         return scenario.login === "refused" ? text("<error>Invalid password</error>") : text('<status MFL_USER_ID="abc+def=">OK</status>');
     }
     if (page === "import") {
-        return scenario.importError ? text(`<error>${scenario.importError}</error>`) : text("<status>OK</status>");
+        const error = Array.isArray(scenario.importError) ? scenario.importError[importsSeen++] : scenario.importError;
+        return error ? text(`<error>${error}</error>`) : text("<status>OK</status>");
     }
     if (page === "processed_waivers") {
         return text(scenario.waivers || "<a>Logout</a>");
