@@ -159,7 +159,7 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     assert.equal(rfa.status, 1);
     assert.ok(rfa.entries.includes("Cap chores: left as they are, since it can't be told whether they owe a penalty (each ended last season "
         + "at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's): "
-        + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand, naming the player, and the next run resets him; "
+        + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand with his full name, as here, and the next run resets him; "
         + "set one who owes nothing to $1 / 0 years on MFL's Salaries page."), rfa.entries.join("\n"));
     assert.ok(!imports(rfa).some((data) => /id="6"/.test(data.DATA || "")));
     // charged by hand as the flag asks: the next run only resets him

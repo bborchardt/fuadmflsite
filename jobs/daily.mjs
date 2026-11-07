@@ -727,7 +727,7 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     }
     if (unpriced.length) {
         needsAttention(`Cap chores: left as they are, since it can't be told whether they owe a penalty (${why}): `
-            + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand, naming the player, and the next run `
+            + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand with his full name, as here, and the next run `
             + "resets him; set one who owes nothing to $1 / 0 years on MFL's Salaries page.");
     }
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
