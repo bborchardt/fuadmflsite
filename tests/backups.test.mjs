@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {fits, lineupAt, lineupRules, matchPlayer, pairsFit, postText, readLineupDetails, readRequests, readTopicPage, standingPairs, weekLineup}
+import {fits, lineupAt, lineupRules, matchPlayer, postText, readLineupDetails, readRequests, readTopicPage, standingPairs, weekLineup}
     from "../site/v2/lib/backups.js";
 
 const page = (name) => readFileSync(new URL(`./fixtures/backups/${name}`, import.meta.url), "utf8");
@@ -95,15 +95,10 @@ const POS = {q1: "QB", q2: "QB", r1: "RB", r2: "RB", w1: "WR", w2: "WR", w3: "WR
 const positionOf = (id) => POS[id];
 const starting = ["q1", "q2", "r1", "r2", "w1", "w2", "w3", "t1", "t2", "k1"];
 
-test("a lineup fits MFL's ranges, and a set of pairs fits whichever of them are swapped in", () => {
+test("a lineup fits MFL's ranges", () => {
     assert.equal(fits(starting.map(positionOf), rules), true);
     assert.equal(fits(["q1", "q2", "r1", "w1", "w2", "w3", "w4", "t1", "t2", "k1"].map(positionOf), rules), true);
     assert.equal(fits(["q1", "q2", "w1", "w2", "w3", "w4", "w5", "t1", "t2", "k1"].map(positionOf), rules), false);
-    // a WR may back up one of the two RBs, not both
-    assert.equal(pairsFit(starting, [{starter: "r1", backup: "w4"}], positionOf, rules), true);
-    assert.equal(pairsFit(starting, [{starter: "r1", backup: "w4"}, {starter: "r2", backup: "w5"}], positionOf, rules), false);
-    // the same position either way changes no count
-    assert.equal(pairsFit(starting, [{starter: "r1", backup: "r3"}, {starter: "r2", backup: "w4"}], positionOf, rules), true);
 });
 
 test("per starter, the latest request before its pair's deadline stands, and a pair locks at its deadline", () => {

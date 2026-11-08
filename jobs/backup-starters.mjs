@@ -6,7 +6,7 @@ export const NFLVERSE_ROSTERS = (season) => `https://github.com/nflverse/nflvers
 // DynastyProcess's player ids, MFL's beside the NFL's (gsis)
 export const PLAYER_IDS = "https://raw.githubusercontent.com/dynastyprocess/data/master/files/db_playerids.csv";
 
-// nflverse's team codes where MFL's differ
+// nflverse's team codes where MFL's differ (nflverse's LA too, unlike the NFL's own feeds)
 const MFL_TEAMS = {GB: "GBP", JAX: "JAC", KC: "KCC", LA: "LAR", LV: "LVR", NE: "NEP", NO: "NOS", SF: "SFO", TB: "TBB"};
 export const mflTeam = (team) => MFL_TEAMS[team] || team;
 
@@ -135,7 +135,7 @@ export function recalcFields(html, week) {
     return [...hidden.entries(), ["WEEK", String(week)], ["SENDMAIL", "No"], ["PREVWEEK", "No"], ["SUBMIT", "Recalculate Standings"]];
 }
 
-// the job's reply in the thread, which also marks the team's week done: "Week 9, Golden Ratio: …"
+// the job's reply in the thread: "Week 9, Golden Ratio: …"
 export function replyText(week, teamName, {swaps, restored}, nameOf) {
     const parts = [
         ...restored.map((pair) => `${nameOf(pair.starter)} and ${nameOf(pair.backup)} were locked in as they were at their deadline (16.5.5), so the later change was undone`),
@@ -143,5 +143,3 @@ export function replyText(week, teamName, {swaps, restored}, nameOf) {
     ];
     return `Week ${week}, ${teamName.trim()}: ${parts.join(". ")}. Standings recalculated.`;
 }
-
-export const REPLY = /^\s*Week (\d+), (.+?): /;

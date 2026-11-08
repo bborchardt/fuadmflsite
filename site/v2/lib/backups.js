@@ -230,20 +230,6 @@ export function fits(positions, rules) {
     });
 }
 
-// 16.5 with several pairs: whichever of them are swapped in, the lineup still fits. Per position, the
-// worst case is every pair leaving it swapped and none filling it, and the other way round.
-export function pairsFit(starters, pairs, positionOf, rules) {
-    if (!fits(starters.map(positionOf), rules)) {
-        return false;
-    }
-    return Object.entries(rules.limits).every(([pos, [low, high]]) => {
-        const count = starters.filter((id) => positionOf(id) === pos).length;
-        const leaving = pairs.filter((pair) => positionOf(pair.starter) === pos && positionOf(pair.backup) !== pos).length;
-        const filling = pairs.filter((pair) => positionOf(pair.backup) === pos && positionOf(pair.starter) !== pos).length;
-        return count - leaving >= low && count + filling <= high;
-    });
-}
-
 // The pair standing for each starter: per starter, the latest request before the deadline of the
 // pair it would set and of the one it replaces (16.5.5 locks a pair at its deadline). `requests`:
 // [{at, starter, backup}] or [{at, starter, remove: true}] or [{at, removeAll: true}], any order.

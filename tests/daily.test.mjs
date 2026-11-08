@@ -914,6 +914,27 @@ test("backup starters: a run that set the lineup but failed before recalculating
     assert.equal(imports(result).filter((each) => each.TYPE === "messageBoard").length, 1);
 });
 
+test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {
+    const scenario = backups();
+    scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"] = scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"].replace(/<input type="checkbox" name="QB0002"[^>]*>/, "");
+    const result = run({scenario, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.includes("Backup starters: Beta's week 6 lineup wasn't set, as MFL's form has no box for Josh Allen; it should be Josh Allen, B0 Player."), result.entries.join("\n"));
+    assert.deepEqual([posted(result, "lineup"), posted(result, "csetup"), imports(result).filter((each) => each.TYPE === "messageBoard")], [[], [], []]);
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a post naming no week, after a pair's deadline, is flagged", () => {
+    const scenario = backups();
+    const topic = "/2026/mb/topic_show.pl?bid=202648571&tid=8001";
+    // Thursday 15 Oct, after Warren's game: taken as week 6's, and late
+    scenario.pages[topic] = scenario.pages[topic].replace("Wed Oct 14 9:00:00 a.m.", "Thu Oct 15 11:00:00 p.m.");
+    const result = run({scenario, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => entry.startsWith("Backup starters: Beta, week 6: Josh Allen for Tyler Warren doesn't count, as it came after the pair's deadline; the post of")), result.entries.join("\n"));
+    assert.deepEqual(posted(result, "lineup"), []);
+});
+
 test("backup starters: a backup inactive too stays on the bench", () => {
     const scenario = backups();
     const rosters = Object.keys(scenario.files)[0];
@@ -932,6 +953,8 @@ test("backup starters: without BACKUP_STARTERS only logged; a dry run writes not
     ]);
     assert.deepEqual([posted(logged, "lineup"), posted(logged, "csetup")], [[], []]);
     assert.ok(!logged.requests.some((request) => /BECOME=0000/.test(request.url)));
+    // left to the commissioner, so it isn't logged (or flagged) again each day
+    assert.deepEqual(JSON.parse(readFileSync(join(logged.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
     const dry = run({scenario: backups(), env: {...LOGIN, BACKUP_STARTERS: "apply", DRY_RUN: "true"}});
     assert.ok(dry.stdout.includes("Backup starters: dry run, would set Beta's week 6 lineup to Josh Allen, B0 Player."), dry.stdout);
     assert.ok(!dry.requests.some((request) => request.method === "POST" && /\/(lineup|csetup|import)$/.test(new URL(request.url).pathname)));

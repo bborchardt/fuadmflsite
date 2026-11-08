@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {REPLY, lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, replyText, weekStatuses} from "../jobs/backup-starters.mjs";
+import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, replyText, weekStatuses} from "../jobs/backup-starters.mjs";
 import {mflForm} from "../jobs/mfl-form.mjs";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/backups/${name}`, import.meta.url), "utf8");
@@ -42,11 +42,10 @@ test("Recalculate Standings for one week, no email to the owners", () => {
     assert.throws(() => recalcFields(fixture("csetup-RECALC.html"), 12), /no form for week 12/);
 });
 
-test("the job's reply says what it did, and marks the team's week", () => {
+test("the job's reply says what it did", () => {
     const names = {a: "Jordan Addison", b: "Davante Adams", c: "Geno Smith", d: "Aaron Rodgers"};
     const text = replyText(9, "Golden Ratio ", {swaps: [{starter: "a", backup: "b"}], restored: [{starter: "c", backup: "d"}]}, (id) => names[id]);
     assert.equal(text, "Week 9, Golden Ratio: Geno Smith and Aaron Rodgers were locked in as they were at their deadline (16.5.5), so the later change was undone. Davante Adams started for Jordan Addison, who was inactive. Standings recalculated.");
-    assert.deepEqual([...REPLY.exec(text)].slice(1), ["9", "Golden Ratio"]);
 });
 
 test("a form refuses a dry run, and a page that says it failed throws", async () => {
