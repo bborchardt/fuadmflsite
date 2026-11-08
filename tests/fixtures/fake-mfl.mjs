@@ -23,7 +23,8 @@
 //   waivers       the processed waivers page's HTML
 //   pictures      {address: {base64, etag}} for the team icons, anywhere; an etag the request sends
 //                 back is answered 304, a number in place of one is an HTTP status
-//   pages         {"/2026/path?query": html}: MFL's pages, by the address the job asks for
+//   pages         {"/2026/path?query": html}: MFL's pages, by the address the job asks for; a Lineup
+//                 Details page not listed has no lineups
 //   forms         {"/2026/lineup": html}: what a form posted there answers (default: Submit
 //                 Lineup's "SUBMITTED", and Recalculate Standings' page as `pages` has it)
 //   files         {address: text}: anywhere else, as nflverse's files on GitHub
@@ -118,6 +119,9 @@ globalThis.fetch = async (input, init = {}) => {
     }
     if ((scenario.pages || {})[address] !== undefined) {
         return text(scenario.pages[address]);
+    }
+    if (page === "options" && url.searchParams.get("O") === "210") {
+        return text('<table class="report"><tr><th>Date/Time Lineup Submitted</th></tr></table>');
     }
     if (page === "login") {
         return scenario.login === "refused" ? text("<error>Invalid password</error>") : text('<status MFL_USER_ID="abc+def=">OK</status>');

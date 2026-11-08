@@ -135,11 +135,10 @@ export function recalcFields(html, week) {
     return [...hidden.entries(), ["WEEK", String(week)], ["SENDMAIL", "No"], ["PREVWEEK", "No"], ["SUBMIT", "Recalculate Standings"]];
 }
 
-// the job's reply in the thread: "Week 9, Golden Ratio: …"
-export function replyText(week, teamName, {swaps, restored}, nameOf) {
-    const parts = [
+// what the job changed in a team's lineup, for its log: "Josh Allen started for Tyler Warren, who was inactive"
+export function changeText({swaps, restored}, nameOf) {
+    return [
         ...restored.map((pair) => `${nameOf(pair.starter)} and ${nameOf(pair.backup)} were locked in as they were at their deadline (16.5.5), so the later change was undone`),
         ...swaps.map((pair) => `${nameOf(pair.backup)} started for ${nameOf(pair.starter)}, who was inactive`)
-    ];
-    return `Week ${week}, ${teamName.trim()}: ${parts.join(". ")}. Standings recalculated.`;
+    ].join("; ");
 }

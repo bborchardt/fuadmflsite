@@ -186,7 +186,8 @@ function lineupEntry(text) {
 }
 
 // MFL's Lineup Details (`options?O=210&FRANCHISE=…&W=…`): every submission of a team's lineup for
-// the week, oldest first, failed ones too. `at` is MFL's time words; `unread`, a starter it couldn't read.
+// the week, oldest first, failed ones too. `at` is MFL's time words; `unread`, a starter it couldn't
+// read; `message`, the lineup's Optional Message as text.
 export function readLineupDetails(html) {
     const table = /<table[^>]*class="report"[^>]*>([\s\S]*?)<\/table>/i.exec(html);
     if (!table || !/Lineup Submitted/i.test(table[1])) {
@@ -214,9 +215,11 @@ export function readLineupDetails(html) {
                 unread = true;
             }
         }
-        const at = (MFL_TIME.exec(cells.slice(3).join(" ")) || [])[0] || null;
+        // the time is in the cell after the message, which could hold words like one
+        const at = (MFL_TIME.exec(cells.slice(cells.length > 4 ? 4 : 3).join(" ")) || [])[0] || null;
+        const message = cells.length > 4 ? postText(raw[3]).trim() : "";
         // one without its time can't be placed before or after a deadline
-        submissions.push({week: Number(cells[0]), commish: /\(C\)/.test(cells[1]), failed, starters, unread: unread || !at, at});
+        submissions.push({week: Number(cells[0]), commish: /\(C\)/.test(cells[1]), failed, starters, unread: unread || !at, at, message});
     }
     return submissions;
 }

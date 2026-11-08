@@ -258,8 +258,13 @@ Each is an ordinary page form, posted from the logged-in browser.
     lineup at once; the saved result and standings wait for a recalculation.
 - **Lineup Details** (`options?O=210&FRANCHISE=<team>&W=<week>`) lists every lineup submitted, a row
   each: week, "(C)" when the commissioner submitted it, the starters ("Addison, Jordan MIN WR", …,
-  with notes such as "Reserved … after kickoff" after a `<br>`), comments and time. A refused one
-  reads "Lineup Submission Failed: … Error(s) …".
+  with notes such as "Reserved … after kickoff" after a `<br>`), comments (the lineup's Optional
+  Message) and time. A refused one reads "Lineup Submission Failed: … Error(s) …". It opens for guests.
+- **A lineup's Optional Message** (`MESSAGE<team>`, the lineup import's `COMMENTS`) is kept with that
+  lineup: Lineup Details shows each one's, and `weeklyResults` has the week's latest as the team's
+  `comments`, guests included; `liveScoring` doesn't. MFL's Submit Lineup page fills the box with the
+  last message, so a lineup changed there keeps it. A 625-character message was kept whole (the
+  clone, 8 Nov 2026).
 - **Recalculate Standings** (`csetup?L=<league>&C=RECALC`), a form posted to `csetup`: hidden
   `form_name=recalc`, `LEAGUE_ID`, `C`, `input_expires`; `WEEK`, `SENDMAIL` and `PREVWEEK` (Yes/No);
   `SUBMIT`. It answers with the same form. Weekly results, `weeklyResults`, standings and power rank

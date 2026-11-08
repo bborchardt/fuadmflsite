@@ -74,11 +74,12 @@ Actions tab. It:
   the pot's league-wide entries, before the championship (the places need them);
 - after your contract-year rollover, sets the new RFAs (1 year to 0) to $0.01, once a season, so a
   salary you set later stays. Left for you: nothing, unless it flags that too many look like RFAs;
-- puts in the backup starters members post in the "Conditional starters" thread (bylaw 16.5): once a
-  week's games are over, a starter who was on his team's inactive list gets his backup, the lineup
-  is put back where it changed after a pair's deadline, the week's standings are recalculated (no
-  email to the owners), and the job replies in the thread with what it did. Left for you: what it
-  flags (a name it can't place, an inactive starter who scored);
+- puts in the backup starters members give in their lineup's Optional Message, or post in the
+  "Conditional starters" thread (bylaw 16.5): once a week's games are over, a starter who was on his
+  team's inactive list gets his backup, the lineup is put back where it changed after a pair's
+  deadline, and the week's standings are recalculated (no email to the owners); nothing is posted,
+  and the chore log says what changed. Left for you: what it flags (a name it can't place, an
+  inactive starter who scored);
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
