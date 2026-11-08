@@ -137,23 +137,31 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   are, and its backup starters have gone in. The job reads the accounting first and matches by description, so an entry the commissioner
   made by hand, or a run that failed partway, is never doubled; a later correction is left to the
   commissioner.
-- **Backup starters** (bylaw 16.5; `lib/backups.js`, `jobs/backup-starters.mjs`) are read from the
-  "Conditional starters" thread once a week's games are over and nflverse's weekly rosters have every
-  team that played (a team still missing four days after flags). The job takes, for each starter, the
-  team's latest post before the pair's deadline, five minutes before the earlier kickoff of the two,
-  and the lineup MFL had then, from Lineup Details. A starter who was inactive (nflverse's `INA`) and
-  scored 0 gives way to his backup; a locked starter the team benched afterwards is put back (16.5.5).
-  It fills the commissioner's Submit Lineup form for the past week, as MFL's lineup import refuses one,
-  recalculates the week's standings, checks the saved result, and replies in the thread. A name it
-  can't match, a swap that wouldn't fit MFL's position ranges, or a backup claimed twice flags, never
-  guessed, as is a late request in a post naming no week (it may have meant the next). A post's week
-  is from when it was posted, its deadline from its last edit. A week is settled once, in
-  `league-data` (`backup-starters.json`): one the chore only logged is the commissioner's to settle
-  by hand, as are the weeks before its first run of a season. A week that fails is flagged and left
-  for the next run, the others going on. A team that submitted nothing all week keeps the lineup MFL
-  scored. Whether a week was recalculated is judged from MFL's saved results, so a run that fails
-  between the lineup and the recalculation is finished by the next; the reply goes only with a change
-  the job made.
+- **Backup starters** (bylaw 16.5; `lib/backups.js`, `jobs/backup-starters.mjs`) are read from each
+  team's lineup messages (the Optional Message MFL keeps with every lineup, on Lineup Details) and
+  from the "Conditional starters" thread, once a week's games are over and nflverse's weekly rosters
+  have every team that played (a team still missing four days after flags); a week without either
+  doesn't wait for nflverse. The job takes, for each starter, the team's latest request before the
+  pair's deadline, five minutes before the earlier kickoff of the two, and the lineup MFL had then,
+  from Lineup Details. A starter who was inactive (nflverse's `INA`) and scored 0 gives way to his
+  backup; a locked starter the team benched afterwards is put back (16.5.5). It fills the
+  commissioner's Submit Lineup form for the past week, as MFL's lineup import refuses one,
+  recalculates the week's standings, checks the saved result, and writes what it changed in the
+  chore log; it posts nothing. A name it can't match, a swap that wouldn't fit MFL's position ranges,
+  or a backup claimed twice flags, never guessed, as is a late request in a post naming no week (it
+  may have meant the next); a name of a player no longer on the team is logged, as a lineup message
+  carried forward can name one.
+  - A lineup message counts only when it reads as backups ("If … is out, start …", "No backups"), so
+    one an app leaves empty or writes for itself changes nothing. It's the lineup's week's, unless it
+    names another week, when it's one carried forward and changes nothing either; one the same as
+    the lineup's before it is that one carried forward, as MFL's own page refills the box.
+  - A post's week is from when it was posted, its deadline from its last edit.
+  - A week is settled once, in `league-data` (`backup-starters.json`): one the chore only logged is
+    the commissioner's to settle by hand, as are the weeks before its first run of a season. A week
+    that fails is flagged and left for the next run, the others going on. A team that submitted
+    nothing all week keeps the lineup MFL scored. Whether a week was recalculated is judged from
+    MFL's saved results, so a run that fails between the lineup and the recalculation is finished
+    by the next.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
   own reader while the hour is open, so owners see what will be set.
 
@@ -256,7 +264,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - **Backup starters** (16.5): a starter declared out is one on the NFL's game-day inactive list, for
   any reason; a backup must be on the bench, on his team's game-day roster, and keep the lineup
   within MFL's position ranges.
-  The commissioner's posts count for no team.
+  The commissioner's posts and lineups count for no team.
 - **Watch list** (v2's player popup, Moves › Add and Rosters › Players, `ui/watch.js`): MFL's own My
   Watch List, so it follows a member across devices and MFL's app, read with its export and changed with
   its import from the member's own page. A star in the popup changes it; a Watching chip filters Add's

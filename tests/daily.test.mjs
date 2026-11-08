@@ -882,7 +882,7 @@ const BACKUP_FILES = {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starter
 const posted = (result, page) => result.requests.filter((request) => request.method === "POST" && new URL(request.url).pathname === `/2026/${page}`)
     .map((request) => [...new URLSearchParams(request.body)]);
 
-test("backup starters: an inactive starter's backup goes in, the week is recalculated, the thread told, the week settled", () => {
+test("backup starters: an inactive starter's backup goes in, the week is recalculated and settled, nothing posted", () => {
     const result = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
     assert.equal(result.status, 0, result.stdout);
     const lineup = posted(result, "lineup");
@@ -893,18 +893,14 @@ test("backup starters: an inactive starter's backup goes in, the week is recalcu
     // the forms as the commissioner, the session's own cookie with MFL's
     assert.ok(result.requests.filter((request) => request.method === "POST" && /\/(lineup|csetup)$/.test(request.url))
         .every((request) => request.cookie === "MFL_USER_ID=abc+def=; MFL_IS_COMMISH=yes"));
-    assert.deepEqual(imports(result).filter((each) => each.TYPE === "messageBoard"),
-        [{TYPE: "messageBoard", L: "48571", THREAD: "8001", BODY: "Week 6, Beta: Josh Allen started for Tyler Warren, who was inactive. Standings recalculated."}]);
-    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week."));
-    // the reply as the commissioner, whose posts count for no team
-    assert.deepEqual(result.requests.filter((request) => /\/import\b/.test(request.url) && /messageBoard/.test(request.url + request.body))
-        .map((request) => request.cookie), ["MFL_USER_ID=abc+def=; MFL_IS_COMMISH=yes"]);
-    // weeks 1-5, over without a post, are settled with it
+    assert.deepEqual(imports(result).filter((each) => each.TYPE === "messageBoard"), []);
+    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
+    // weeks 1-5, over without backups, are settled with it
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
     assert.equal(result.output.changed, "true");
 
     // settled: not read again
-    const again = run({scenario: backups(), env: {...LOGIN, BACKUP_STARTERS: "apply"}, files: {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starters.json": "{\"2026\": [6]}\n"}});
+    const again = run({scenario: backups(), env: {...LOGIN, BACKUP_STARTERS: "apply"}, files: {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starters.json": "{\"2026\": [1, 2, 3, 4, 5, 6]}\n"}});
     assert.equal(again.status, 0, again.stdout);
     assert.ok(!again.requests.some((request) => /O=210|\/lineup|csetup/.test(request.url)));
 });
@@ -915,8 +911,7 @@ test("backup starters: a run that set the lineup but failed before recalculating
     assert.equal(result.status, 0, result.stdout);
     assert.deepEqual(posted(result, "lineup"), []);
     assert.equal(posted(result, "csetup").length, 1);
-    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week."), result.entries.join("\n"));
-    assert.equal(imports(result).filter((each) => each.TYPE === "messageBoard").length, 1);
+    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
 });
 
 test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {
@@ -1014,8 +1009,7 @@ test("backup starters: without BACKUP_STARTERS only logged; a dry run writes not
     const logged = run({scenario: backups(), files: BACKUP_FILES, env: LOGIN});
     assert.equal(logged.status, 0, logged.stdout);
     assert.deepEqual(logged.entries.filter((entry) => entry.startsWith("Backup starters")), [
-        "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player.",
-        "Backup starters: would reply in the thread: \"Week 6, Beta: Josh Allen started for Tyler Warren, who was inactive. Standings recalculated.\""
+        "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."
     ]);
     assert.deepEqual([posted(logged, "lineup"), posted(logged, "csetup")], [[], []]);
     assert.ok(!logged.requests.some((request) => /BECOME=0000/.test(request.url)));
@@ -1023,7 +1017,7 @@ test("backup starters: without BACKUP_STARTERS only logged; a dry run writes not
     assert.deepEqual(JSON.parse(readFileSync(join(logged.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
     // a dry run reads the league's data only when it says the data is that league's
     const dry = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply", DRY_RUN: "true", DATA_LEAGUE_ID: "48571"}});
-    assert.ok(dry.stdout.includes("Backup starters: dry run, would set Beta's week 6 lineup to Josh Allen, B0 Player."), dry.stdout);
+    assert.ok(dry.stdout.includes("Backup starters: dry run, would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."), dry.stdout);
     assert.ok(!dry.requests.some((request) => request.method === "POST" && /\/(lineup|csetup|import)$/.test(new URL(request.url).pathname)));
     assert.equal(readFileSync(join(dry.dataDir, "backup-starters.json"), "utf8"), BACKUP_FILES["backup-starters.json"]);
 });
@@ -1051,8 +1045,58 @@ test("backup starters: an inactive starter who scored, a name it can't place, a 
     // MFL's results don't show the lineup set: flagged
     const unsaved = run({scenario: backups({saved: "17102,200,"}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
     assert.equal(unsaved.status, 1);
-    // no reply, and the week left for the next run
-    assert.deepEqual(imports(unsaved).filter((each) => each.TYPE === "messageBoard"), []);
+    // the week left for the next run
     assert.deepEqual(JSON.parse(readFileSync(join(unsaved.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
     assert.ok(unsaved.entries.includes("Backup starters: Beta's week 6 lineup was set, but MFL's results still have Tyler Warren, B0 Player."), unsaved.entries.join("\n"));
+});
+
+// Beta's week 6 Lineup Details: a row per lineup, each [message, time, "(C)" for the commissioner's]
+function lineupMessages(scenario, rows) {
+    scenario.exports.messageBoard = {};
+    scenario.pages["/2026/options?L=48571&O=210&FRANCHISE=0002&W=6"] = `<table class="report"><tr><th>Date/Time Lineup Submitted</th></tr>${rows.map(([message, time, commish = ""]) =>
+        `<tr class="oddtablerow"><td class="week">6</td><td>${commish}</td><td>Warren, Tyler IND TE, Player, B0 BUF WR</td><td>${message}</td><td>${time}</td></tr>`).join("")}</table>`;
+    return scenario;
+}
+const WEDNESDAY = "Wed Oct 14 9:05:00 a.m. CT 2026";
+const LATE = "Thu Oct 15 11:00:00 p.m. CT 2026";
+const ALLEN = "Week 6: If Tyler Warren is out, start Josh Allen.";
+
+test("backup starters: a lineup's message is read as a post is, without a thread", () => {
+    const result = run({scenario: lineupMessages(backups(), [[ALLEN, WEDNESDAY]]), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(posted(result, "lineup")[0].filter(([name]) => /^(QB|WR|TE)0002$/.test(name)), [["QB0002", "13589"], ["WR0002", "200"]]);
+    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
+    // every team's lineups were read
+    assert.ok(result.requests.some((request) => /O=210&FRANCHISE=0001&W=6/.test(request.url)));
+});
+
+test("backup starters: a message carried to a later lineup, one that isn't backups, or the commissioner's, changes nothing", () => {
+    for (const later of [[ALLEN, LATE], ["Set from my phone", LATE], ["", LATE], ["Week 6: No backups.", WEDNESDAY.replace("9:05", "9:10"), "(C)"], ["Week 5: No backups.", WEDNESDAY.replace("9:05", "9:10")]]) {
+        const result = run({scenario: lineupMessages(backups(), [[ALLEN, WEDNESDAY], later]), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+        assert.equal(result.status, 0, `${later}: ${result.stdout}`);
+        assert.equal(posted(result, "lineup").length, 1, later.join(" "));
+        assert.ok(!result.entries.some((entry) => /doesn't count|couldn't/.test(entry)), result.entries.join("\n"));
+    }
+    // a message changed after the deadline is late, and as it's the lineup's week, not flagged
+    const late = run({scenario: lineupMessages(backups(), [["", WEDNESDAY], [ALLEN, LATE]]), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(late.status, 0, late.stdout);
+    assert.deepEqual(posted(late, "lineup"), []);
+    assert.ok(late.entries.includes("Backup starters: Beta, week 6: Josh Allen for Tyler Warren doesn't count, as it came after the pair's deadline."), late.entries.join("\n"));
+});
+
+test("backup starters: a message naming a player no longer on the team doesn't apply, and isn't flagged", () => {
+    const scenario = lineupMessages(backups(), [["Week 6: If Tyler Warren is out, start Joe Mixon.", WEDNESDAY]]);
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(posted(result, "lineup"), []);
+    assert.ok(result.entries.includes(`Backup starters: Beta, week 6: "Joe Mixon" in the lineup message of ${WEDNESDAY} isn't on the team, so that request doesn't apply.`), result.entries.join("\n"));
+});
+
+test("backup starters: a week without backups is settled without waiting for nflverse", () => {
+    const scenario = lineupMessages(backups(), [["", WEDNESDAY]]);
+    scenario.files = {};
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.ok(!result.requests.some((request) => /nflverse|dynastyprocess/.test(request.url)));
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
 });

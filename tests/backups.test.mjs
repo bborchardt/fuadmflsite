@@ -175,6 +175,14 @@ test("Lineup Details: a defense read, a starter it can't read marks the submissi
     assert.equal(readLineupDetails(page("Allen, Josh BUF QB, Bills, Buffalo"))[0].unread, true);
 });
 
+test("Lineup Details: each lineup's message, its time from the cell after it", () => {
+    const page = (message) => `<table class="report"><tr><th>Date/Time Lineup Submitted</th></tr><tr><td>6</td><td></td><td>Allen, Josh BUF QB</td><td>${message}</td><td>Wed Oct 14 9:05:00 a.m. CT 2026</td></tr></table>`;
+    const [read] = readLineupDetails(page("Week 6: If A.J. Brown is out, start Tim Patrick &amp; no backup<br>for Kelce. Set Tue Oct 13 1:00:00 p.m. CT 2026"));
+    assert.equal(read.message, "Week 6: If A.J. Brown is out, start Tim Patrick & no backup\nfor Kelce. Set Tue Oct 13 1:00:00 p.m. CT 2026");
+    assert.equal(read.at, "Wed Oct 14 9:05:00 a.m. CT 2026");
+    assert.equal(readLineupDetails(page(""))[0].message, "");
+});
+
 test("restoring a locked pair leaves an earlier run's swap in", () => {
     // w4 already in for the inactive w1; q1 benched for r3 after his pair's deadline
     const final = ["q2", "r1", "r2", "r3", "w4", "w2", "w3", "t1", "t2", "k1"];
