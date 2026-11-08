@@ -17,10 +17,10 @@ export function lineupForm(doc) {
         && form.querySelector("input[name=WEEK]") && form.querySelector("input[name=FRANCHISE]")) || null;
 }
 
-// "Beck, Carson ARI QB" → {name: "Carson Beck", nfl: "ARI", pos: "QB"}
+// "Beck, Carson ARI QB" → {name: "Carson Beck", mflName: "Beck, Carson", nfl: "ARI", pos: "QB"}
 export function readName(label) {
     const match = clean(label).match(/^(.+?)\s+([A-Z]{2,3}\*?)\s+([A-Z]{1,3})$/);
-    return match ? {name: displayName(match[1]), nfl: match[2], pos: match[3]} : {name: clean(label), nfl: "", pos: ""};
+    return match ? {name: displayName(match[1]), mflName: match[1], nfl: match[2], pos: match[3]} : {name: clean(label), mflName: clean(label), nfl: "", pos: ""};
 }
 
 // "Select 1-2 QB:" → ["QB", [1, 2]]
@@ -35,7 +35,7 @@ function weekLinks(doc) {
     return new Map(picker ? [...picker.querySelectorAll("a[href*='WEEK=']")].map((a) => [Number((a.getAttribute("href").match(/WEEK=(\d+)/) || [])[1]), a.getAttribute("href")]) : []);
 }
 
-// {team, week, total, limits, players, ir, prev, next} from MFL's page, or null if it isn't the form
+// {team, week, total, limits, players, ir, irNames (MFL's "Last, First"), prev, next} from MFL's page, or null if it isn't the form
 export function readLineupPage(doc) {
     const form = lineupForm(doc);
     if (!form) {
@@ -84,6 +84,7 @@ export function readLineupPage(doc) {
         players.push({
             id,
             name: named.name,
+            mflName: named.mflName,
             nfl: named.nfl,
             pos: named.pos || group,
             opp,
@@ -102,7 +103,7 @@ export function readLineupPage(doc) {
         });
     }
     const irTable = [...doc.querySelectorAll("table.report")].find((t) => /currently on your Injured Reserve/i.test(t.textContent));
-    const ir = irTable ? [...irTable.querySelectorAll("a[href*='launch_player_modal']")].map((a) => readName(a.textContent).name) : [];
+    const irLinks = irTable ? [...irTable.querySelectorAll("a[href*='launch_player_modal']")].map((a) => readName(a.textContent)) : [];
     const links = weekLinks(doc);
     return {
         team: form.querySelector("input[name=FRANCHISE]").value,
@@ -110,7 +111,8 @@ export function readLineupPage(doc) {
         total: totalMatch ? Number(totalMatch[1]) : Object.values(limits).reduce((sum, [, most]) => sum + most, 0),
         limits,
         players,
-        ir,
+        ir: irLinks.map((named) => named.name),
+        irNames: irLinks.map((named) => named.mflName),
         prev: links.get(week - 1) || null,
         next: links.get(week + 1) || null
     };

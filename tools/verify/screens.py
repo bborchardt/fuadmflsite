@@ -49,6 +49,8 @@ import sys
 import tempfile
 import time
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime, timedelta
+from html import escape
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -69,6 +71,7 @@ WORKERS = max(2, min(16, (os.cpu_count() or 4) - 1))
 # before the clone's trade deadline (Thu Oct 15), so proposing is open
 BEFORE_DEADLINE = "2026-10-13T18:00:00Z"
 
+BACKUPS_ON = 'window.fuadSettings = {extends: "48571", backupStarters: true};'
 # name: (url, saved exports to swap in, and "now" where it isn't NOW)
 SCREENS = {
     "home": (f"/2026/home/{LEAGUE}", {}),
@@ -97,6 +100,10 @@ SCREENS = {
     # Sunday 11:33 a.m. CT, after the London game's kickoff: a starter whose game has started is locked
     # in (his box disabled, kept by MFL's hidden input), as are Thursday's players
     "lineup-locked": (f"/2026/lineup?L={LEAGUE}", {"page:lineup": "lineup-locked.html", "now": "2026-10-18T16:33:38Z"}),
+    # backups on (the backupStarters setting), the team's lineup message giving Lamar Jackson a backup:
+    # Sunday 10 a.m. CT, then 12:10 p.m., the pair locked at 11:55
+    "lineup-backups": (f"/2026/lineup?L={LEAGUE}", {"settings": BACKUPS_ON, "now": "2026-10-18T15:00:00Z"}),
+    "lineup-backups-locked": (f"/2026/lineup?L={LEAGUE}", {"settings": BACKUPS_ON, "now": "2026-10-18T17:10:00Z"}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
     "power": (f"/2026/home/{LEAGUE}#league-power", {}),
@@ -126,6 +133,9 @@ SEEDS = {
     # lineup back to a full one
     "lineup": [[{"css": '[data-toggle="14085"]'}, {"css": '[data-toggle="17476"]'}, {"css": ".fuad-save"}]],
     "lineup-locked": [[{"css": '[data-toggle="14085"]'}, {"css": '[data-toggle="17476"]'}, {"css": ".fuad-save"}]],
+    # Xavier Worthy given a backup and saved; Lamar Jackson's backup started, dropping the pair, and saved
+    "lineup-backups": [[{"css": '[data-backup="16620"]'}, {"css": '[data-choose="17512"]'}, {"css": ".fuad-save"}],
+                       [{"css": '[data-toggle="17466"]'}, {"css": '[data-toggle="7836"]'}, {"css": ".fuad-save"}]],
     # a box ticked and unticked again, which no first-of-each-kind chain does
     "ir": [["toIR", "save"], ["activate", "save"], ["toIR", "activate", "save"], ["activate", "drop", "save"],
            [("toIR", "", 0), ("toIR", "", 0)], [("activate", "", 0), ("activate", "", 0)]],
@@ -313,6 +323,8 @@ class Mfl:
         self.site = site
         self.swaps = swaps
         self.posts = []
+        # each lineup saved with a message, as Lineup Details then lists it
+        self.lineups = []
         self.moves = swaps.get("moves")
         self.rosters = json.loads(sample("rosters.json")) if self.moves else None
         # the pending trades, as moves change them
@@ -502,6 +514,16 @@ class Mfl:
                             f'<td class="points">{bid}</td><td>{" | ".join(links)}</td><td>{group.get("comments", "")}</td></tr>')
         return f'<table id="waiver_request_list" class="report"><tr><th>Group</th><th>Add</th><th>Drop</th><th>Bid Amount</th><th>Action</th><th>Comments</th></tr>{"".join(rows)}</table>'
 
+    def details_page(self):
+        """Lineup Details for the week: the team's lineup message giving Lamar Jackson a backup on
+        Saturday, then a row for each lineup saved since, at the screen's time"""
+        rows = [("Week 6: If Lamar Jackson is out, start Carson Beck.", "Sat Oct 17 7:54:58 p.m. CT 2026")]
+        rows += [(message, mfl_time(self.swaps.get("now", NOW))) for message in self.lineups]
+        cells = "".join(f'<tr class="oddtablerow"><td class="week">6</td><td></td><td>Jackson, Lamar BAL QB</td><td>{escape(message)}</td><td>{at}</td></tr>'
+                        for message, at in rows)
+        return ('<html><body><table class="report"><tr><th>Week</th><th>Commish?</th><th>Starters</th><th>Comments</th>'
+                f'<th>Date/Time Lineup Submitted</th></tr>{cells}</table></body></html>')
+
     def edit_page(self, round_):
         """MFL's page to edit a group (a reduced copy of the clone's, O=255): a row per claim, with its
         bid and a choice of drop from the roster, and the group's one comment"""
@@ -641,6 +663,9 @@ class Mfl:
                 return self.make(route, url.path, parse_qs(body, keep_blank_values=True))
             if self.moves and url.path.endswith(("/trade_response", "/trade_offer")):
                 return self.trade(route, url.path, parse_qs(body, keep_blank_values=True))
+            if url.path.endswith("/lineup"):
+                message = next((values[0] for name, values in parse_qs(body, keep_blank_values=True).items() if name.startswith("MESSAGE")), "")
+                self.lineups.append(message)
             if url.path.endswith("/import"):
                 if self.moves == "board-fails" and query.get("TYPE") == ["messageBoard"]:
                     return route.fulfill(content_type="text/xml", body="<error>Posting is closed.</error>")
@@ -658,6 +683,8 @@ class Mfl:
             if name.endswith(".xml"):
                 return route.fulfill(content_type="text/xml", body="<messages></messages>")
             return route.fulfill(status=404, body="")
+        if url.path.endswith("/options") and query.get("O") == ["210"]:
+            return route.fulfill(content_type="text/html", body=self.details_page())
         if url.path.endswith("/options") and query.get("O") == ["255"]:
             return route.fulfill(content_type="text/html", body=self.edit_page(query.get("ROUND", [""])[0]))
         if self.moves and url.path.endswith("/options") and query.get("O") in (["257"], ["18"]):
@@ -671,6 +698,12 @@ class Mfl:
         if url.path.endswith((".js", ".css")):
             return route.fulfill(body="", content_type="text/javascript" if url.path.endswith(".js") else "text/css")
         return route.fulfill(status=404, body="")
+
+
+def mfl_time(iso):
+    """an ISO time as MFL's pages write it in Central time (CDT before November)"""
+    at = datetime.fromisoformat(iso.replace("Z", "+00:00")) - timedelta(hours=5)
+    return f"{at:%a %b} {at.day} {at.hour % 12 or 12}:{at:%M:%S} {'a.m.' if at.hour < 12 else 'p.m.'} CT {at.year}"
 
 
 def ev(page, script, arg=None):
@@ -738,7 +771,7 @@ def open_screen(browser, site, name, width):
     mfl = Mfl(site, swaps)
     context = browser.new_context(viewport={"width": WIDTHS[width], "height": 1000}, timezone_id="America/Los_Angeles")
     context.clock.set_fixed_time(swaps.get("now", NOW))
-    context.add_init_script(INIT)
+    context.add_init_script(INIT.replace('window.fuadSettings = {extends: "48571"};', swaps.get("settings", 'window.fuadSettings = {extends: "48571"};')))
     context.add_init_script(NO_READ_GAP)
     if "flash" in swaps:
         # once per chain: a reload a step causes leaves storage as the page left it

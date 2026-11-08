@@ -1070,8 +1070,9 @@ test("backup starters: a lineup's message is read as a post is, without a thread
     assert.ok(result.requests.some((request) => /O=210&FRANCHISE=0001&W=6/.test(request.url)));
 });
 
-test("backup starters: a message carried to a later lineup, one that isn't backups, or the commissioner's, changes nothing", () => {
-    for (const later of [[ALLEN, LATE], ["Set from my phone", LATE], ["", LATE], ["Week 6: No backups.", WEDNESDAY.replace("9:05", "9:10"), "(C)"], ["Week 5: No backups.", WEDNESDAY.replace("9:05", "9:10")]]) {
+test("backup starters: a message carried to a later lineup or restating a locked pair, one that isn't backups, or the commissioner's, changes nothing", () => {
+    // a later message restating the locked pair (as v2's restate every pair) is no late request either
+    for (const later of [[ALLEN, LATE], [ALLEN.replace(".", ""), LATE], ["Set from my phone", LATE], ["", LATE], ["Week 6: No backups.", WEDNESDAY.replace("9:05", "9:10"), "(C)"], ["Week 5: No backups.", WEDNESDAY.replace("9:05", "9:10")]]) {
         const result = run({scenario: lineupMessages(backups(), [[ALLEN, WEDNESDAY], later]), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
         assert.equal(result.status, 0, `${later}: ${result.stdout}`);
         assert.equal(posted(result, "lineup").length, 1, later.join(" "));

@@ -56,7 +56,7 @@ const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.j
 const {mflImport: sendImport} = await import("./mfl-import.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
-const {DEADLINE_BEFORE_KICKOFF, THREAD_TITLE, lineupAt, lineupRules, matchPlayer, normalize, postText: boardText, readLineupDetails, readRequests, readTopicPage,
+const {DEADLINE_BEFORE_KICKOFF, THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, normalize, postText: boardText, readLineupDetails, readRequests, readTopicPage,
     standingPairs, weekLineup} = await lib("backups.js");
 const {mflTime} = await lib("zone.js");
 const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcFields, changeText, weekStatuses} =
@@ -785,23 +785,11 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                 add(post.franchiseId, {...post, label: `the post of ${post.edited || post.posted}`, dated: Boolean(post.asks.week)});
             }
             for (const [team, submissions] of details) {
-                let before = "";
-                for (const submission of submissions.filter((each) => !each.failed)) {
-                    // MFL's own lineup page fills the box with the last message, so a repeat is that one still
-                    const repeat = submission.message === before;
-                    before = submission.message;
+                for (const {submission, asks} of backupMessages(submissions, week)) {
                     const at = mflTime(submission.at);
-                    // the commissioner's lineups count for no team, as the job's own carry the last message
-                    if (repeat || submission.commish || !at) {
-                        continue;
+                    if (at) {
+                        add(team, {asks, at, label: `the lineup message of ${submission.at}`, dated: true});
                     }
-                    const asks = readRequests(submission.message);
-                    // one that isn't backups changes nothing; nor does one naming another week, carried from it
-                    const backups = asks.requests.length || asks.removals.length || asks.removeAll || asks.unreadable.length;
-                    if (!backups || (asks.weeks.length && !asks.weeks.includes(week))) {
-                        continue;
-                    }
-                    add(team, {asks, at, label: `the lineup message of ${submission.at}`, dated: true});
                 }
             }
             // a week without backups doesn't wait for nflverse
@@ -890,7 +878,9 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                     return a && b ? Math.min(a, b) - DEADLINE_BEFORE_KICKOFF : null;
                 };
                 const {pairs, late} = standingPairs(requests, deadline);
-                for (const request of late.filter((each) => each.backup)) {
+                // a message restating every pair restates the locked ones too: those change nothing
+                const restated = (request) => pairs.some((pair) => pair.starter === request.starter && pair.backup === request.backup);
+                for (const request of late.filter((each) => each.backup && !restated(each))) {
                     const why = `${nameOf(request.backup)} for ${nameOf(request.starter)} doesn't count, ${request.noGame ? "as one of them had no game" : "as it came after the pair's deadline"}`;
                     // a post naming no week, made once the week's games began, may have meant the next
                     if (!request.noGame && !request.source.dated) {

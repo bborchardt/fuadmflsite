@@ -30,7 +30,7 @@ test("each player: name, team and position from MFL's label, the game, injury, a
     // linkedom has no .checked, so this reads MFL's checked attribute, as a browser does on load
     assert.equal(players.filter((player) => player.starter).length, 10);
     assert.deepEqual(withoutBox(players.find((player) => player.id === "13593")), {
-        id: "13593", name: "Lamar Jackson", nfl: "BAL", pos: "QB", opp: "@CLE Sun 12:00 p.m.", onBye: false, code: "O", injury: "Out",
+        id: "13593", name: "Lamar Jackson", mflName: "Jackson, Lamar", nfl: "BAL", pos: "QB", opp: "@CLE Sun 12:00 p.m.", onBye: false, code: "O", injury: "Out",
         bye: "13", oppRank: "", ytd: null, avg: null, proj: null, starter: true, locked: false
     });
     // MFL's box off: a bye, or a game under way

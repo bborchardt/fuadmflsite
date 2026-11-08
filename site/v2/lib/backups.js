@@ -24,7 +24,9 @@ function forms(name) {
     const [last, first = ""] = String(name).split(",").map((part) => part.trim());
     const surname = normalize(last).split(" ").filter((word) => !SUFFIXES.has(word)).join(" ");
     const given = normalize(first);
-    return {full: given ? `${given} ${surname}` : surname, initial: given ? `${given[0]} ${surname}` : surname, surname, given};
+    // "A.J." is also written "AJ"
+    const joined = given.replace(/ /g, "");
+    return {full: given ? `${given} ${surname}` : surname, joinedFull: joined ? `${joined} ${surname}` : surname, initial: given ? `${given[0]} ${surname}` : surname, surname, given, joined};
 }
 
 function distance(a, b) {
@@ -53,9 +55,9 @@ export function matchPlayer(phrase, players) {
     const text = normalize(phrase);
     const named = text.split(" ").filter((word) => word && !EXTRA.has(word) && !SUFFIXES.has(word) && !/^\d+$/.test(word));
     const alone = (f) => named.every((word) => f.surname.split(" ").includes(word) || f.given.split(" ").includes(word)
-        || word === f.given[0] || near(word, f));
+        || word === f.joined || word === f.given[0] || near(word, f));
     const levels = [
-        (f) => has(text, f.full),
+        (f) => has(text, f.full) || has(text, f.joinedFull),
         (f) => has(text, f.initial),
         (f) => has(text, f.surname) && alone(f),
         (f) => Boolean(f.given) && has(text, f.given) && alone(f),
@@ -249,6 +251,62 @@ export function fits(positions, rules) {
         const count = positions.filter((each) => each === pos).length;
         return count >= low && count <= high;
     });
+}
+
+// Where a lineup breaks MFL's ranges if `pairs`' starters are out, in the worst case at each
+// position (every pair leaving it swapped, or every pair filling it): null if it keeps within them,
+// else {pos, count, limit, over}, or {pos: null} when the lineup itself doesn't fit
+export function pairsBreak(starters, pairs, positionOf, rules) {
+    if (!fits(starters.map(positionOf), rules)) {
+        return {pos: null};
+    }
+    for (const [pos, [low, high]] of Object.entries(rules.limits)) {
+        const count = starters.filter((id) => positionOf(id) === pos).length;
+        const leaving = pairs.filter((pair) => positionOf(pair.starter) === pos && positionOf(pair.backup) !== pos).length;
+        const filling = pairs.filter((pair) => positionOf(pair.backup) === pos && positionOf(pair.starter) !== pos).length;
+        if (count + filling > high) {
+            return {pos, count: count + filling, limit: high, over: true};
+        }
+        if (count - leaving < low) {
+            return {pos, count: count - leaving, limit: low, over: false};
+        }
+    }
+    return null;
+}
+
+// What v2 writes in a lineup's message for the team's week, as readRequests reads it: `pairs`
+// [{starter, backup}] and `removed` [starter] by name. Semicolons part them, as a name's "Jr." may
+// end in a full stop.
+export function backupText(week, pairs, removed) {
+    const asks = [
+        ...pairs.map((pair) => `if ${pair.starter} is out, start ${pair.backup}`),
+        ...removed.map((name) => `no backup for ${name}`)
+    ];
+    const text = asks.length ? asks.join("; ") : "No backups";
+    return `Week ${week}: ${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
+}
+
+// The lineup messages that ask for backups in `week`, from readLineupDetails' submissions of the
+// week, oldest first: [{submission, asks}]. Whatever an app does with the box, one changes nothing
+// when it isn't backups (empty, a note), names another week (carried from it), repeats the lineup's
+// before it (MFL's own page refills the box), or is the commissioner's (the job's own lineups carry
+// the last message forward). A failed lineup's isn't kept.
+export function backupMessages(submissions, week) {
+    const found = [];
+    let before = "";
+    for (const submission of submissions.filter((each) => !each.failed)) {
+        const repeat = submission.message === before;
+        before = submission.message;
+        if (repeat || submission.commish || !submission.at) {
+            continue;
+        }
+        const asks = readRequests(submission.message);
+        const backups = asks.requests.length || asks.removals.length || asks.removeAll || asks.unreadable.length;
+        if (backups && (!asks.weeks.length || asks.weeks.includes(week))) {
+            found.push({submission, asks});
+        }
+    }
+    return found;
 }
 
 // The pair standing for each starter: per starter, the latest request before the deadline of the

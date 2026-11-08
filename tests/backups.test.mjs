@@ -25,6 +25,7 @@ test("a name matches the team's player by full name, initial, surname, first nam
     assert.equal(named("Josh Allen"), "5");
     assert.equal(named("Amon-Ra St. Brown"), "8");
     assert.equal(named("A.J. Brown"), "7");
+    assert.equal(named("AJ Brown"), "7");
     // two players by surname alone, or nobody on the team
     assert.deepEqual(named("Washington"), ["2", "3"]);
     assert.deepEqual(named("Allen"), ["5", "6"]);
