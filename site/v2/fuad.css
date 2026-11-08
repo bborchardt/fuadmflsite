@@ -2411,6 +2411,15 @@ body #fuad-home select {
 
 #fuad-league .fuad-ln-tag-started { background: var(--fuad-quiet); color: var(--fuad-soft); }
 
+/* a starter's backup once locked (ui/scores-backups.js), under his name */
+#fuad-league .fuad-ln-if { grid-column: 2; margin-top: 2px; color: var(--fuad-soft); font-size: 12px; font-weight: 600; line-height: 16px; }
+
+#fuad-league .fuad-ln-b .fuad-ln-if { order: 4; }
+
+#fuad-league .fuad-ln-if b { color: var(--fuad-text); font-weight: 700; white-space: nowrap; }
+
+#fuad-league .fuad-ln-if svg { margin-right: 3px; vertical-align: -1px; }
+
 /* narrow phones: Season, Best and the week picker in one row down to 320 px */
 @media (max-width: 26.24em) {
     #fuad-league .fuad-scores-toggles { gap: 4px; }

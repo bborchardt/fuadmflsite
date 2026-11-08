@@ -14,6 +14,8 @@ const shortName = (name) => {
 };
 const pts = (value) => (value === null || value === undefined ? "—" : value.toFixed(1));
 const kickoffText = (seconds) => oneLineTimes(`${dayText(seconds).split(" ")[0]} ${clock(seconds)}`);
+const LOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked" role="img"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
+const bothNames = (name) => `<span class="fuad-short">${esc(shortName(name))}</span><span class="fuad-full">${esc(name)}</span>`;
 
 // ---- Scores ----
 
@@ -51,13 +53,17 @@ function lineCells(line, side, {bench = false} = {}) {
     const live = line.game.state === "playing" ? " fuad-live" : "";
     // no projections in Best's lineups (`tag` set)
     const projected = !bench && line.tag === undefined && typeof line.projected === "number" && line.game.state !== "over" ? line.projected.toFixed(1) : "";
-    // Best's marks: "in" off the bench, "started" left out
-    const tag = line.tag ? ` <span class="fuad-ln-tag fuad-ln-tag-${esc(line.tag)}">${esc(line.tag)}</span>` : "";
+    // Best's marks: "in" off the bench, "started" left out; a backup's, in for his starter
+    const tag = line.tag ? ` <span class="fuad-ln-tag fuad-ln-tag-${esc(line.tag)}">${esc(line.tag)}</span>`
+        : line.inFor ? ` <span class="fuad-ln-tag fuad-ln-tag-in">in for ${esc(line.inFor)}</span>` : "";
+    // a starter's backup, under his grey line
+    const backup = line.backup ? `<span class="fuad-ln-if">${LOCK}If out → <b>${bothNames(line.backup)}</b></span>` : "";
     const player = `<button type="button" class="fuad-ln fuad-ln-${side}" data-player="${esc(line.id)}">
             <span class="fuad-ln-pos">${esc(line.position)}</span>
             <span class="fuad-ln-name"><span class="fuad-short">${esc(shortName(line.name))}</span><span class="fuad-full">${esc(line.name)}</span></span>
             <span class="fuad-ln-meta fuad-ln-desk${live}">${esc([state, line.line].filter(Boolean).join(" · "))}${tag}</span>
             <span class="fuad-ln-meta fuad-ln-phone${live}">${esc([line.position, state, line.line].filter(Boolean).join(" · "))}${tag}</span>
+            ${backup}
         </button>`;
     const points = `<span class="fuad-ln-pts fuad-ln-pts-${side}">${esc(pts(line.points))}<span class="fuad-ln-proj">${esc(projected)}</span></span>`;
     return side === "a" ? player + points : points + player;
