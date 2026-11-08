@@ -134,7 +134,7 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   - anything unclear is flagged, never defaulted
 - **Payouts** (`lib/payouts.js`, shared with League › Winners) are recorded once a week's scores
   are final, taken to be when the next week kicks off, after the NFL's stat corrections usually
-  are. The job reads the accounting first and matches by description, so an entry the commissioner
+  are, and its backup starters have gone in. The job reads the accounting first and matches by description, so an entry the commissioner
   made by hand, or a run that failed partway, is never doubled; a later correction is left to the
   commissioner.
 - **Backup starters** (bylaw 16.5; `lib/backups.js`, `jobs/backup-starters.mjs`) are read from the
@@ -150,7 +150,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   is from when it was posted, its deadline from its last edit. A week is settled once, in
   `league-data` (`backup-starters.json`): one the chore only logged is the commissioner's to settle
   by hand, as are the weeks before its first run of a season. A week that fails is flagged and left
-  for the next run, the others going on. Whether a week was recalculated is judged from MFL's saved results, so a run that fails
+  for the next run, the others going on. A team that submitted nothing all week keeps the lineup MFL
+  scored. Whether a week was recalculated is judged from MFL's saved results, so a run that fails
   between the lineup and the recalculation is finished by the next; the reply goes only with a change
   the job made.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's

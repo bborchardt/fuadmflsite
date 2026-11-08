@@ -945,6 +945,24 @@ test("backup starters: the season's first run starts with this week, earlier one
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
 });
 
+test("backup starters: the season's first run is written down without any post", () => {
+    const scenario = backups();
+    scenario.exports.messageBoard = {};
+    const result = run({scenario, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a team that submitted nothing all week has the lineup MFL scored", () => {
+    const scenario = backups();
+    const details = "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6";
+    scenario.pages[details] = scenario.pages[details].replace(/<tr class="oddtablerow">[\s\S]*?<\/tr>/, "");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(posted(result, "lineup")[0].filter(([name]) => /^(QB|WR|TE)0002$/.test(name)), [["QB0002", "13589"], ["WR0002", "200"]]);
+    assert.ok(!result.requests.some((request) => /TYPE=weeklyResults/.test(request.url) && /W=5\b/.test(request.url)));
+});
+
 test("backup starters: a week that fails is flagged, and left for the next run", () => {
     const scenario = backups();
     scenario.pages["/2026/options?L=48571&O=210&FRANCHISE=0002&W=6"] = "<p>Something else</p>";

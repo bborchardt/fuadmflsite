@@ -160,6 +160,9 @@ export function readTopicPage(html) {
         const plainHead = head[1].replace(/<[^>]+>/g, " ");
         const [posted, edited] = plainHead.split(/\bEdited\b/);
         const time = (part) => (MFL_TIME.exec(part || "") || [])[0] || null;
+        if (!time(posted) || (edited !== undefined && !time(edited))) {
+            throw new Error("MFL's topic page has a post whose time can't be read");
+        }
         posts.push({franchiseId: team[1] === "0000" ? null : team[1], posted: time(posted), edited: time(edited), html: body[1]});
     }
     const pager = /<span class=['"]pln['"]>([\s\S]*?)<\/span>/i.exec(html);
@@ -202,8 +205,9 @@ export function readLineupDetails(html) {
                 unread = true;
             }
         }
-        submissions.push({week: Number(cells[0]), commish: /\(C\)/.test(cells[1]), failed, starters,
-            unread, at: (MFL_TIME.exec(cells.slice(3).join(" ")) || [])[0] || null});
+        const at = (MFL_TIME.exec(cells.slice(3).join(" ")) || [])[0] || null;
+        // one without its time can't be placed before or after a deadline
+        submissions.push({week: Number(cells[0]), commish: /\(C\)/.test(cells[1]), failed, starters, unread: unread || !at, at});
     }
     return submissions;
 }
