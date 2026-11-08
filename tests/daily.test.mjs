@@ -896,6 +896,9 @@ test("backup starters: an inactive starter's backup goes in, the week is recalcu
     assert.deepEqual(imports(result).filter((each) => each.TYPE === "messageBoard"),
         [{TYPE: "messageBoard", L: "48571", THREAD: "8001", BODY: "Week 6, Beta: Josh Allen started for Tyler Warren, who was inactive. Standings recalculated."}]);
     assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week."));
+    // the reply as the commissioner, whose posts count for no team
+    assert.deepEqual(result.requests.filter((request) => /\/import\b/.test(request.url) && /messageBoard/.test(request.url + request.body))
+        .map((request) => request.cookie), ["MFL_USER_ID=abc+def=; MFL_IS_COMMISH=yes"]);
     // weeks 1-5, over without a post, are settled with it
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
     assert.equal(result.output.changed, "true");
@@ -921,7 +924,7 @@ test("backup starters: a player MFL's form has no box for is flagged, the rest o
     scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"] = scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"].replace(/<input type="checkbox" name="QB0002"[^>]*>/, "");
     const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
     assert.equal(result.status, 1);
-    assert.ok(result.entries.includes("Backup starters: Beta's week 6 lineup wasn't set, as MFL's form has no box for Josh Allen; it should be Josh Allen, B0 Player."), result.entries.join("\n"));
+    assert.ok(result.entries.includes("Backup starters: Beta's week 6 lineup wasn't set, as MFL's form has no box for Josh Allen (on a bye, or no longer on the team); it should be Josh Allen, B0 Player."), result.entries.join("\n"));
     assert.deepEqual([posted(result, "lineup"), posted(result, "csetup"), imports(result).filter((each) => each.TYPE === "messageBoard")], [[], [], []]);
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
 });
@@ -963,6 +966,23 @@ test("backup starters: a team that submitted nothing all week has the lineup MFL
     assert.ok(!result.requests.some((request) => /TYPE=weeklyResults/.test(request.url) && /W=5\b/.test(request.url)));
 });
 
+test("backup starters: weeks over without a post are settled, a thread or not", () => {
+    const scenario = backups();
+    scenario.exports.messageBoard = {};
+    const result = run({scenario, files: {...BACKUP_FILES, "backup-starters.json": "{\"2026\": [1, 2, 3]}\n"}, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a backup nflverse doesn't list is flagged, not started", () => {
+    const scenario = backups();
+    const ids = Object.keys(scenario.files)[1];
+    scenario.files[ids] = scenario.files[ids].split("\n").filter((row) => !row.startsWith("13589,")).join("\n");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.includes("Backup starters: Beta, week 6: Josh Allen, Tyler Warren's backup, isn't in nflverse's week 6 rosters, so he wasn't started."), result.entries.join("\n"));
+    assert.deepEqual(posted(result, "lineup"), []);
+});
+
 test("backup starters: a week that fails is flagged, and left for the next run", () => {
     const scenario = backups();
     scenario.pages["/2026/options?L=48571&O=210&FRANCHISE=0002&W=6"] = "<p>Something else</p>";
@@ -1001,7 +1021,8 @@ test("backup starters: without BACKUP_STARTERS only logged; a dry run writes not
     assert.ok(!logged.requests.some((request) => /BECOME=0000/.test(request.url)));
     // left to the commissioner, so it isn't logged (or flagged) again each day
     assert.deepEqual(JSON.parse(readFileSync(join(logged.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
-    const dry = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply", DRY_RUN: "true"}});
+    // a dry run reads the league's data only when it says the data is that league's
+    const dry = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply", DRY_RUN: "true", DATA_LEAGUE_ID: "48571"}});
     assert.ok(dry.stdout.includes("Backup starters: dry run, would set Beta's week 6 lineup to Josh Allen, B0 Player."), dry.stdout);
     assert.ok(!dry.requests.some((request) => request.method === "POST" && /\/(lineup|csetup|import)$/.test(new URL(request.url).pathname)));
     assert.equal(readFileSync(join(dry.dataDir, "backup-starters.json"), "utf8"), BACKUP_FILES["backup-starters.json"]);
