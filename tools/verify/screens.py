@@ -105,6 +105,11 @@ SCREENS = {
     "lineup-backups": (f"/2026/lineup?L={LEAGUE}", {"settings": BACKUPS_ON, "now": "2026-10-18T15:00:00Z"}),
     "lineup-backups-locked": (f"/2026/lineup?L={LEAGUE}", {"settings": BACKUPS_ON, "now": "2026-10-18T17:10:00Z"}),
     "scores": (f"/2026/home/{LEAGUE}#league-scores", {}),
+    # backups on, at 12:10 p.m. CT, from the team's lineup message: A.J. Brown's pair locked at 11:55,
+    # Aaron Rodgers in for Lamar Jackson, Xavier Worthy's pair not locked until 3:20
+    "scores-backups": (f"/2026/home/{LEAGUE}#league-scores", {"settings": BACKUPS_ON, "now": "2026-10-18T17:10:00Z", "details": (
+        "Week 6: If A.J. Brown is out, start Elic Ayomanor; if Lamar Jackson is out, start Aaron Rodgers; if Xavier Worthy is out, start Tre Harris.",
+        "Jackson, Lamar BAL QB, Brown, A.J. NEP WR, Worthy, Xavier KCC WR")}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
     "power": (f"/2026/home/{LEAGUE}#league-power", {}),
     "winners": (f"/2026/home/{LEAGUE}#league-winners", {}),
@@ -516,10 +521,12 @@ class Mfl:
 
     def details_page(self):
         """Lineup Details for the week: the team's lineup message giving Lamar Jackson a backup on
-        Saturday, then a row for each lineup saved since, at the screen's time"""
-        rows = [("Week 6: If Lamar Jackson is out, start Carson Beck.", "Sat Oct 17 7:54:58 p.m. CT 2026")]
+        Saturday (the screen's own `details`: its message and starters), then a row for each lineup
+        saved since, at the screen's time"""
+        message, starters = self.swaps.get("details", ("Week 6: If Lamar Jackson is out, start Carson Beck.", "Jackson, Lamar BAL QB"))
+        rows = [(message, "Sat Oct 17 7:54:58 p.m. CT 2026")]
         rows += [(message, mfl_time(self.swaps.get("now", NOW))) for message in self.lineups]
-        cells = "".join(f'<tr class="oddtablerow"><td class="week">6</td><td></td><td>Jackson, Lamar BAL QB</td><td>{escape(message)}</td><td>{at}</td></tr>'
+        cells = "".join(f'<tr class="oddtablerow"><td class="week">6</td><td></td><td>{starters}</td><td>{escape(message)}</td><td>{at}</td></tr>'
                         for message, at in rows)
         return ('<html><body><table class="report"><tr><th>Week</th><th>Commish?</th><th>Starters</th><th>Comments</th>'
                 f'<th>Date/Time Lineup Submitted</th></tr>{cells}</table></body></html>')

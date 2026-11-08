@@ -273,7 +273,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   thread. Save writes them in the lineup's Optional Message, in the same submission as the lineup, so
   nothing goes on the board; it changes the message only when the backups changed, so a member's own
   note stays otherwise. The message restates every pair, the locked ones too, so the week's latest
-  message has them all (Scores reads it), and takes back each unlocked pair the member dropped, which
+  message has them all, and takes back each unlocked pair the member dropped, which
   an older message or a post may have made. Benching a starter or starting his backup sets the pair
   aside: it isn't shown and still stands, and counts again if the lineup changes back, as the job takes
   the lineup at the deadline. From its deadline a pair that counts shows locked and both players'
@@ -281,6 +281,12 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   though the job restores the lineup if it was changed after the deadline. Save refuses backups that
   no longer hold (locked since they were picked, now out, or too many at once), and reads them back
   after, to check MFL kept them.
+- **Scores' backups** (v2, `ui/scores-backups.js`; with the `backupStarters` setting): an open card
+  reads both teams' Lineup Details and the thread, as Lineup does, from the week's first deadline,
+  and again once another deadline has passed; a closed card reads nothing. A pair shows from its
+  deadline, to everyone, if it counts (its starter starting and its backup sitting in the lineup at
+  the deadline): "If out → B" under a starter still starting, "in for A" on a backup starting in his
+  place. It stays shown once the week is over, used or not. Best's lineups show none.
 - **Watch list** (v2's player popup, Moves › Add and Rosters › Players, `ui/watch.js`): MFL's own My
   Watch List, so it follows a member across devices and MFL's app, read with its export and changed with
   its import from the member's own page. A star in the popup changes it; a Watching chip filters Add's

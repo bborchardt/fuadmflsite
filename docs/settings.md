@@ -88,7 +88,7 @@ roster checks run until the championship is over.
 |---|---|---|
 | `adds.ownDropBidAfterHours` | 48 | A team can't bid on a player it dropped for this long. MFL's own lock on dropped players ("Dropped Players are Locked Until") applies to every team, and v2 follows it separately. 0 turns this off. |
 | `antiTanking` | true | Starting an injured or suspended player in the regular season is flagged. False turns the flag off; a member's own lineup alerts stay. |
-| `backupStarters` | false | Lineup lets a member pick each starter's backup (bylaw 16.5), saved in the lineup's Optional Message. With false, Lineup has no backups, and members write them in that message on MFL's own lineup page or post them in the board's "Conditional starters" thread. Whether the daily job swaps backups in is its own `BACKUP_STARTERS` variable. |
+| `backupStarters` | false | Lineup lets a member pick each starter's backup (bylaw 16.5), saved in the lineup's Optional Message, and Scores shows each team's pairs once locked. With false, neither shows backups, and members write them in that message on MFL's own lineup page or post them in the board's "Conditional starters" thread. Whether the daily job swaps backups in is its own `BACKUP_STARTERS` variable. |
 
 How many bid groups a team can have is MFL's ("Maximum Number of Conditional Blind Bid Groups").
 

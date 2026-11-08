@@ -10,6 +10,8 @@ import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} f
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
 import {ordinal} from "./format.js";
 import {allAtOnce} from "./page-fetch.js";
+import {backupMarks, backupReader} from "./scores-backups.js";
+import settings from "../lib/settings.js";
 
 const MINUTE = 60 * 1000;
 // MFL's live scoring page reads its stats feed this often
@@ -41,6 +43,11 @@ export function drawScores(mount, data) {
     const canBest = (shown) => Boolean(shown && !shown.preview && shown.limits && shown.limits.count
         && shown.cards.some((card) => card.teams.some((team) => team.starters.concat(team.bench).some((line) => ["playing", "over"].includes(line.game.state)))));
     let lastShown = null;
+    // each open card's backup pairs (scores-backups.js): by `week|team`, the last read's, and when one
+    // failed, so it's asked again only after a while
+    const pairsOf = settings.backupStarters ? backupReader(context) : null;
+    const pairs = new Map();
+    const failed = new Map();
     const lastWeek = () => Math.max(currentWeek, data.lastScheduled || currentWeek);
 
     // who starts in a week: the page's own copy first (Home asks for the same), MFL again once it's
@@ -95,13 +102,38 @@ export function drawScores(mount, data) {
         return {cards, names, games, limits, state: weekState(cards, games, weekday)};
     };
 
+    // a team's lines with its backups' marks, once read; asked for when not, the cards drawn again
+    // once a read changes them
+    const withBackups = (team, week) => {
+        const key = `${week}|${team.id}`;
+        if (!(Date.now() - (failed.get(key) || 0) < LINEUP_POLL)) {
+            pairsOf(week, team.id, team.starters.concat(team.bench)).then((found) => {
+                failed.delete(key);
+                if (JSON.stringify(found) !== JSON.stringify(pairs.get(key))) {
+                    pairs.set(key, found);
+                    if (lastShown && state.week === week && !state.season) {
+                        draw(lastShown);
+                    }
+                }
+            }, (error) => {
+                failed.set(key, Date.now());
+                console.warn("[fuad] couldn't read the backups:", error);
+            });
+        }
+        const marks = backupMarks(team, pairs.get(key) || []);
+        const mark = (line) => (marks.has(line.id) ? {...line, ...marks.get(line.id)} : line);
+        return marks.size ? {...team, starters: team.starters.map(mark), bench: team.bench.map(mark)} : team;
+    };
+
     // what the cards' clicks act on: the week drawn and the cards open in it
     let drawn = null;
     const draw = (shown) => {
         lastShown = shown;
         const best = state.best && canBest(shown);
-        const cards = best ? shown.cards.map((card) => bestCard(card, shown.limits)) : shown.cards;
-        const open = state.open || new Set(shown.preview ? [] : cards.flatMap((card, i) => (card.mine ? [i] : [])));
+        const open = state.open || new Set(shown.preview ? [] : shown.cards.flatMap((card, i) => (card.mine ? [i] : [])));
+        const cards = best ? shown.cards.map((card) => bestCard(card, shown.limits))
+            : pairsOf && !shown.preview ? shown.cards.map((card, i) => (open.has(i) ? {...card, teams: card.teams.map((team) => withBackups(team, state.week))} : card))
+                : shown.cards;
         drawn = {shown, open};
         body.innerHTML = cardsMarkup(cards, {names: shown.names, viewer, open, bench: state.bench, preview: Boolean(shown.preview), best});
     };
