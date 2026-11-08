@@ -149,7 +149,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   guessed, as is a late request in a post naming no week (it may have meant the next). A post's week
   is from when it was posted, its deadline from its last edit. A week is settled once, in
   `league-data` (`backup-starters.json`): one the chore only logged is the commissioner's to settle
-  by hand. Whether a week was recalculated is judged from MFL's saved results, so a run that fails
+  by hand, as are the weeks before its first run of a season. A week that fails is flagged and left
+  for the next run, the others going on. Whether a week was recalculated is judged from MFL's saved results, so a run that fails
   between the lineup and the recalculation is finished by the next; the reply goes only with a change
   the job made.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
