@@ -840,3 +840,219 @@ test("offseason lengths: an add before week 1 waits for the form, not the hour",
     const result = run({scenario: {exports, waivers: waiversPage("")}, env: LOGIN, now: "2026-08-25T12:00:00Z"});
     assert.ok(!result.entries.some((entry) => /Olave|Waddle/.test(entry)), result.entries.join("\n"));
 });
+
+// Week 6 (from 15 Oct): Beta starts Tyler Warren (TE, IND, Thursday's game) and B0 Player, and posted
+// "If Tyler Warren is out, start Josh Allen" (QB, BUF, Sunday) the day before; nflverse has Warren
+// inactive. The league starts 2: QB 0-1, WR 0-2, TE 0-1.
+const WEEK6 = WEEK1 + 5 * 7 * 86400;
+// `saved`: MFL's result once the week is recalculated; `details`: Lineup Details' rows after Beta's own
+function backups({post = "If Tyler Warren is out, start Josh Allen", warrenScore = "0", saved = "13589,200,", details = "", teams = [["IND", "KCC"], ["BUF"]]} = {}) {
+    const base = league();
+    const roster = structuredClone(base.rosters);
+    roster.franchise[1].player.push({id: "17102", salary: "1", contractYear: "1", status: "ROSTER"}, {id: "13589", salary: "1", contractYear: "1", status: "ROSTER"});
+    const exports = {
+        ...base,
+        players: {player: [...base.players.player, {id: "17102", name: "Warren, Tyler", position: "TE", team: "IND"}, {id: "13589", name: "Allen, Josh", position: "QB", team: "BUF"}]},
+        league: {...base.league, starters: {count: "2", position: [{name: "QB", limit: "0-1"}, {name: "WR", limit: "0-2"}, {name: "TE", limit: "0-1"}]}},
+        messageBoard: {thread: [{id: "8001", subject: "Conditional starters", lastPostTime: String(WEEK6 - 86400)}]},
+        "rosters:6": roster,
+        "nflSchedule:6": {week: "6", matchup: teams.map((ids, i) => ({kickoff: String(WEEK6 + i * 3 * 86400), team: ids.map((id) => ({id}))}))},
+        "playerScores:6": {playerScore: [{id: "17102", score: warrenScore}]},
+        "weeklyResults:6": {matchup: [{franchise: [{id: "0002", starters: "17102,200,"}]}]}
+    };
+    const fixture = (name) => readFileSync(join(root, "tests", "fixtures", "backups", name), "utf8");
+    const box = (pos, id, checked) => `<input type="checkbox" name="${pos}0002" value="${id}"${checked ? ' checked="checked"' : ""}>`;
+    return {
+        exports,
+        recalculated: {"weeklyResults:6": {matchup: [{franchise: [{id: "0002", starters: saved}]}]}},
+        files: {
+            "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.csv": fixture("roster_weekly.csv"),
+            "https://raw.githubusercontent.com/dynastyprocess/data/master/files/db_playerids.csv": fixture("db_playerids.csv")
+        },
+        pages: {
+            "/2026/mb/topic_show.pl?bid=202648571&tid=8001": `<div class='frm pst' id='pid1'><table><tr class="oddtablerow"><td class="poster"><a href='/2026/options?L=48571&amp;F=0002&amp;O=01'>Beta</a></td><td class="message"><span class='htt'>Date</span> Wed Oct 14 9:00:00 a.m. CT 2026</td></tr><tr class="eventablerow"><td class="poster"></td><td class="message">${post}</td></tr></table></div>`,
+            "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6": `<table class="report"><tr><th>Date/Time Lineup Submitted</th></tr><tr class="oddtablerow"><td class="week">6</td><td></td><td>Warren, Tyler IND TE, Player, B0 BUF WR</td><td></td><td>Wed Oct 14 9:05:00 a.m. CT 2026</td></tr>${details}</table>`,
+            "/2026/lineup?L=48571&WEEK=6&F=0002": `<form action="https://www44.myfantasyleague.com/2026/lineup" method="post"><input type="hidden" name="FRANCHISE" value="0002"><input type="hidden" name="LEAGUE_ID" value="48571"><input type="hidden" name="WEEK" value="6"><input type="hidden" name="FORM" value="1"><input type="hidden" name="lineup_expires" value="1">${box("QB", "13589")}${box("WR", "200", true)}${box("TE", "17102", true)}<textarea name="MESSAGE0002"></textarea><input type="submit" name="SUBMIT" value="Submit Lineup"></form>`,
+            "/2026/csetup?L=48571&C=RECALC": `<form action="csetup" method="post"><input type="hidden" name="form_name" value="recalc"><input type="hidden" name="LEAGUE_ID" value="48571"><input type="hidden" name="C" value="RECALC"><input type="hidden" name="input_expires" value="1"><select name="WEEK"><option value="6">Week 6</option></select></form>`
+        }
+    };
+}
+// a season the chore has run in, from week 1
+const BACKUP_FILES = {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starters.json": "{\"2026\": []}\n"};
+const posted = (result, page) => result.requests.filter((request) => request.method === "POST" && new URL(request.url).pathname === `/2026/${page}`)
+    .map((request) => [...new URLSearchParams(request.body)]);
+
+test("backup starters: an inactive starter's backup goes in, the week is recalculated, the thread told, the week settled", () => {
+    const result = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    const lineup = posted(result, "lineup");
+    assert.equal(lineup.length, 1);
+    assert.deepEqual(lineup[0].filter(([name]) => /^(QB|WR|TE)0002$/.test(name)), [["QB0002", "13589"], ["WR0002", "200"]]);
+    assert.deepEqual(Object.fromEntries(posted(result, "csetup")[0]), {form_name: "recalc", LEAGUE_ID: "48571", C: "RECALC", input_expires: "1",
+        WEEK: "6", SENDMAIL: "No", PREVWEEK: "No", SUBMIT: "Recalculate Standings"});
+    // the forms as the commissioner, the session's own cookie with MFL's
+    assert.ok(result.requests.filter((request) => request.method === "POST" && /\/(lineup|csetup)$/.test(request.url))
+        .every((request) => request.cookie === "MFL_USER_ID=abc+def=; MFL_IS_COMMISH=yes"));
+    assert.deepEqual(imports(result).filter((each) => each.TYPE === "messageBoard"),
+        [{TYPE: "messageBoard", L: "48571", THREAD: "8001", BODY: "Week 6, Beta: Josh Allen started for Tyler Warren, who was inactive. Standings recalculated."}]);
+    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week."));
+    // the reply as the commissioner, whose posts count for no team
+    assert.deepEqual(result.requests.filter((request) => /\/import\b/.test(request.url) && /messageBoard/.test(request.url + request.body))
+        .map((request) => request.cookie), ["MFL_USER_ID=abc+def=; MFL_IS_COMMISH=yes"]);
+    // weeks 1-5, over without a post, are settled with it
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+    assert.equal(result.output.changed, "true");
+
+    // settled: not read again
+    const again = run({scenario: backups(), env: {...LOGIN, BACKUP_STARTERS: "apply"}, files: {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starters.json": "{\"2026\": [6]}\n"}});
+    assert.equal(again.status, 0, again.stdout);
+    assert.ok(!again.requests.some((request) => /O=210|\/lineup|csetup/.test(request.url)));
+});
+
+test("backup starters: a run that set the lineup but failed before recalculating is finished by the next", () => {
+    const details = `<tr class="eventablerow"><td class="week">6</td><td>(C)</td><td>Allen, Josh BUF QB, Player, B0 BUF WR</td><td></td><td>Tue Oct 20 2:40:00 a.m. CT 2026</td></tr>`;
+    const result = run({scenario: backups({details}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(posted(result, "lineup"), []);
+    assert.equal(posted(result, "csetup").length, 1);
+    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week."), result.entries.join("\n"));
+    assert.equal(imports(result).filter((each) => each.TYPE === "messageBoard").length, 1);
+});
+
+test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {
+    const scenario = backups();
+    scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"] = scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"].replace(/<input type="checkbox" name="QB0002"[^>]*>/, "");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.includes("Backup starters: Beta's week 6 lineup wasn't set, as MFL's form has no box for Josh Allen (on a bye, or no longer on the team); it should be Josh Allen, B0 Player."), result.entries.join("\n"));
+    assert.deepEqual([posted(result, "lineup"), posted(result, "csetup"), imports(result).filter((each) => each.TYPE === "messageBoard")], [[], [], []]);
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a post naming no week, after a pair's deadline, is flagged", () => {
+    const scenario = backups();
+    const topic = "/2026/mb/topic_show.pl?bid=202648571&tid=8001";
+    // Thursday 15 Oct, after Warren's game: taken as week 6's, and late
+    scenario.pages[topic] = scenario.pages[topic].replace("Wed Oct 14 9:00:00 a.m.", "Thu Oct 15 11:00:00 p.m.");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => entry.startsWith("Backup starters: Beta, week 6: Josh Allen for Tyler Warren doesn't count, as it came after the pair's deadline; the post of")), result.entries.join("\n"));
+    assert.deepEqual(posted(result, "lineup"), []);
+});
+
+test("backup starters: the season's first run starts with this week, earlier ones left as they are", () => {
+    const result = run({scenario: backups(), env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
+    assert.match(result.stdout, /first run this season, so weeks before week 7 are left as they are/);
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: the season's first run is written down without any post", () => {
+    const scenario = backups();
+    scenario.exports.messageBoard = {};
+    const result = run({scenario, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a team that submitted nothing all week has the lineup MFL scored", () => {
+    const scenario = backups();
+    const details = "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6";
+    scenario.pages[details] = scenario.pages[details].replace(/<tr class="oddtablerow">[\s\S]*?<\/tr>/, "");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(posted(result, "lineup")[0].filter(([name]) => /^(QB|WR|TE)0002$/.test(name)), [["QB0002", "13589"], ["WR0002", "200"]]);
+    assert.ok(!result.requests.some((request) => /TYPE=weeklyResults/.test(request.url) && /W=5\b/.test(request.url)));
+});
+
+test("backup starters: weeks over without a post are settled, a thread or not", () => {
+    const scenario = backups();
+    scenario.exports.messageBoard = {};
+    const result = run({scenario, files: {...BACKUP_FILES, "backup-starters.json": "{\"2026\": [1, 2, 3]}\n"}, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a backup nflverse doesn't list is flagged, not started", () => {
+    const scenario = backups();
+    const ids = Object.keys(scenario.files)[1];
+    scenario.files[ids] = scenario.files[ids].split("\n").filter((row) => !row.startsWith("13589,")).join("\n");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.includes("Backup starters: Beta, week 6: Josh Allen, Tyler Warren's backup, isn't in nflverse's week 6 rosters, so he wasn't started."), result.entries.join("\n"));
+    assert.deepEqual(posted(result, "lineup"), []);
+});
+
+test("backup starters: a week that fails is flagged, and left for the next run", () => {
+    const scenario = backups();
+    scenario.pages["/2026/options?L=48571&O=210&FRANCHISE=0002&W=6"] = "<p>Something else</p>";
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.includes("Backup starters: week 6 stopped: MFL's Lineup Details page has no lineup table where expected"), result.entries.join("\n"));
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+});
+
+test("backup starters: a backup on no game-day roster stays on the bench", () => {
+    const scenario = backups();
+    const rosters = Object.keys(scenario.files)[0];
+    scenario.files[rosters] = scenario.files[rosters].split("\n")
+        .map((row) => row.includes("00-0034857") && row.includes(",6,REG,") ? row.replace(",ACT,", ",RES,") : row).join("\n");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
+});
+
+test("backup starters: a backup inactive too stays on the bench", () => {
+    const scenario = backups();
+    const rosters = Object.keys(scenario.files)[0];
+    scenario.files[rosters] = scenario.files[rosters].split("\n")
+        .map((row) => row.includes("00-0034857") && row.includes(",6,REG,") ? row.replace(",ACT,", ",INA,") : row).join("\n");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
+});
+
+test("backup starters: without BACKUP_STARTERS only logged; a dry run writes nothing, league-data included", () => {
+    const logged = run({scenario: backups(), files: BACKUP_FILES, env: LOGIN});
+    assert.equal(logged.status, 0, logged.stdout);
+    assert.deepEqual(logged.entries.filter((entry) => entry.startsWith("Backup starters")), [
+        "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player.",
+        "Backup starters: would reply in the thread: \"Week 6, Beta: Josh Allen started for Tyler Warren, who was inactive. Standings recalculated.\""
+    ]);
+    assert.deepEqual([posted(logged, "lineup"), posted(logged, "csetup")], [[], []]);
+    assert.ok(!logged.requests.some((request) => /BECOME=0000/.test(request.url)));
+    // left to the commissioner, so it isn't logged (or flagged) again each day
+    assert.deepEqual(JSON.parse(readFileSync(join(logged.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+    // a dry run reads the league's data only when it says the data is that league's
+    const dry = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply", DRY_RUN: "true", DATA_LEAGUE_ID: "48571"}});
+    assert.ok(dry.stdout.includes("Backup starters: dry run, would set Beta's week 6 lineup to Josh Allen, B0 Player."), dry.stdout);
+    assert.ok(!dry.requests.some((request) => request.method === "POST" && /\/(lineup|csetup|import)$/.test(new URL(request.url).pathname)));
+    assert.equal(readFileSync(join(dry.dataDir, "backup-starters.json"), "utf8"), BACKUP_FILES["backup-starters.json"]);
+});
+
+test("backup starters: an inactive starter who scored, a name it can't place, a team nflverse lacks", () => {
+    const scored = run({scenario: backups({warrenScore: "4.5"}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(scored.status, 1);
+    assert.ok(scored.entries.includes("Backup starters: Beta, week 6: nflverse lists Tyler Warren as inactive, but he scored 4.5, so he's taken as active."), scored.entries.join("\n"));
+    assert.deepEqual([posted(scored, "lineup"), posted(scored, "csetup")], [[], []]);
+
+    const unknown = run({scenario: backups({post: "If Tyler Warren is out, start Lamar Jackson"}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(unknown.status, 1);
+    assert.ok(unknown.entries.includes("Backup starters: Beta, week 6: couldn't tell who \"Lamar Jackson\" is in the post of Wed Oct 14 9:00:00 a.m. CT 2026."), unknown.entries.join("\n"));
+
+    // SF played, and nflverse has nobody of theirs inactive yet: the week waits, unsettled
+    const waiting = run({scenario: backups({teams: [["IND", "KCC"], ["BUF", "SFO"]]}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}, now: "2026-10-20T12:00:00Z"});
+    assert.equal(waiting.status, 0, waiting.stdout);
+    assert.match(waiting.stdout, /nflverse doesn't have week 6's inactive players for SFO yet; the week waits/);
+    assert.deepEqual(JSON.parse(readFileSync(join(waiting.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+    // still missing 4 days after the week's games: flagged
+    const stale = run({scenario: backups({teams: [["IND", "KCC"], ["BUF", "SFO"]]}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(stale.status, 1);
+    assert.ok(stale.entries.includes("Backup starters: nflverse doesn't have week 6's inactive players for SFO yet, 5 days after the week's games; its backups wait."), stale.entries.join("\n"));
+
+    // MFL's results don't show the lineup set: flagged
+    const unsaved = run({scenario: backups({saved: "17102,200,"}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(unsaved.status, 1);
+    // no reply, and the week left for the next run
+    assert.deepEqual(imports(unsaved).filter((each) => each.TYPE === "messageBoard"), []);
+    assert.deepEqual(JSON.parse(readFileSync(join(unsaved.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+    assert.ok(unsaved.entries.includes("Backup starters: Beta's week 6 lineup was set, but MFL's results still have Tyler Warren, B0 Player."), unsaved.entries.join("\n"));
+});

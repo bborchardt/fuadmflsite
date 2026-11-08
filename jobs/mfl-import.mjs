@@ -1,4 +1,4 @@
-// MFL's import, the one way the daily job writes to MFL.
+// MFL's import, the daily job's way of writing to MFL (mfl-form.mjs for a commissioner's form it can't replace).
 
 // MFL reports errors with HTTP 200, so anything but <status>OK</status> throws. `data` null: an
 // import that takes its fields as parameters. A dry run throws before anything is sent.
