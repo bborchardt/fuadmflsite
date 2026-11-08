@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
-import {LAUNCH, launchedApp, leagueName, linkWebApp, webAppManifest} from "../site/v2/ui/web-app.js";
+import {LAUNCH, launchedApp, linkWebApp, webAppManifest} from "../site/v2/ui/web-app.js";
 
 const ORIGIN = "https://www44.myfantasyleague.com";
 const ICONS = "https://bborchardt.github.io/fuadmflsite/v2/app/";
@@ -65,12 +65,6 @@ test("the manifest opens the season's home page on the page's own host, and stay
     ]);
 });
 
-test("the league's name is MFL's page title without its prefix", () => {
-    assert.equal(leagueName("Fantasy Football: Fuad Reveiz Fan Club Dynasty League", "FUAD"), "Fuad Reveiz Fan Club Dynasty League");
-    assert.equal(leagueName("", "FUAD"), "FUAD");
-    assert.equal(leagueName("Fantasy Football: ", "FUAD"), "FUAD");
-});
-
 test("the page links the manifest, and the icon and name an iPhone takes, in place of MFL's", () => {
     const doc = page(`<link rel="apple-touch-icon" href="${ORIGIN}/apple-touch-icon.png" />`);
     const browser = browserAt(`${ORIGIN}/2026/options?L=48571&O=07`);
@@ -80,7 +74,8 @@ test("the page links the manifest, and the icon and name an iPhone takes, in pla
     const manifest = JSON.parse(browser.blobs[0].text);
     // from any page, the icon opens the home page
     assert.equal(manifest.start_url, `${ORIGIN}/2026/home/48571?${LAUNCH}=1`);
-    assert.equal(manifest.name, "Fuad Reveiz Fan Club Dynasty League");
+    // the same from every page, whatever MFL's title names
+    assert.equal(manifest.name, "FUAD");
     assert.equal(browser.blobs[0].type, "application/manifest+json");
     const touch = doc.querySelectorAll('link[rel="apple-touch-icon"]');
     assert.equal(touch.length, 1);
@@ -112,47 +107,77 @@ function mfl(seasons) {
     return {asked, fetchImpl};
 }
 
-test("a launch onto a past season's site goes on to the newest season's", () => withStorage(async () => {
+// what launchedApp asks behind the page has answered
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+const launchAt = (season, query = "") => browserAt(`${ORIGIN}/${season}/home/48571?${LAUNCH}=1${query}`);
+const launch = (season, browser, fetchImpl) => launchedApp({context: {season, leagueId: "48571"}, browser, fetchImpl});
+
+test("a launch onto a past season's site goes on to the newest season's: behind the page, then at once that day", () => withStorage(async () => {
     const year = new Date().getFullYear();
     const old = year - 2;
-    const browser = browserAt(`${ORIGIN}/${old}/home/48571?${LAUNCH}=1`);
     const {asked, fetchImpl} = mfl({[old + 1]: 200, [old + 2]: 200});
-    assert.equal(await launchedApp({context: {season: old, leagueId: "48571"}, browser, fetchImpl}), true);
-    assert.equal(browser.replacedWith, `${ORIGIN}/${year}/home/48571`);
+    const first = launchAt(old);
+    // not known yet: the page draws while MFL is asked
+    assert.equal(launch(old, first, fetchImpl), false);
+    await settle();
+    assert.equal(first.replacedWith, `${ORIGIN}/${year}/home/48571`);
     assert.deepEqual(asked.map(([, method]) => method), ["HEAD", "HEAD"]);
     // the marker is taken off
-    assert.equal(browser.location.search, "");
+    assert.equal(first.location.search, "");
+    const next = launchAt(old);
+    assert.equal(launch(old, next, fetchImpl), true);
+    assert.equal(next.replacedWith, `${ORIGIN}/${year}/home/48571`);
+    assert.equal(asked.length, 2);
 }));
 
 test("a launch before the new season's site exists stays, and asks MFL once a day", () => withStorage(async () => {
     const year = new Date().getFullYear();
     const {asked, fetchImpl} = mfl({});
-    for (let launch = 0; launch < 2; launch++) {
-        const browser = browserAt(`${ORIGIN}/${year - 1}/home/48571?${LAUNCH}=1`);
-        assert.equal(await launchedApp({context: {season: year - 1, leagueId: "48571"}, browser, fetchImpl}), false);
+    for (let count = 0; count < 2; count++) {
+        const browser = launchAt(year - 1);
+        assert.equal(launch(year - 1, browser, fetchImpl), false);
+        await settle();
         assert.equal(browser.replacedWith, undefined);
     }
     assert.equal(asked.length, 1);
 }));
 
-test("a refusal isn't taken for no new season", () => withStorage(async () => {
+test("a refusal or a failed request counts as no new season for the day", () => withStorage(async () => {
     const year = new Date().getFullYear();
-    const browser = browserAt(`${ORIGIN}/${year - 1}/home/48571?${LAUNCH}=1`);
-    await assert.rejects(launchedApp({context: {season: year - 1, leagueId: "48571"}, browser, fetchImpl: mfl({[year]: 429}).fetchImpl}));
-    const again = mfl({[year]: 200});
-    await launchedApp({context: {season: year - 1, leagueId: "48571"}, browser: browserAt(`${ORIGIN}/${year - 1}/home/48571?${LAUNCH}=1`), fetchImpl: again.fetchImpl});
-    assert.equal(again.asked.length, 1);
+    const refused = mfl({[year]: 429});
+    const browser = launchAt(year - 1);
+    assert.equal(launch(year - 1, browser, refused.fetchImpl), false);
+    await settle();
+    assert.equal(browser.replacedWith, undefined);
+    const renewed = mfl({[year]: 200});
+    assert.equal(launch(year - 1, launchAt(year - 1), renewed.fetchImpl), false);
+    await settle();
+    assert.equal(renewed.asked.length, 0);
+}));
+
+test("a request that fails outright is kept as no new season too", () => withStorage(async () => {
+    const year = new Date().getFullYear();
+    const browser = launchAt(year - 1);
+    launch(year - 1, browser, async () => {
+        throw new TypeError("Failed to fetch");
+    });
+    await settle();
+    assert.equal(browser.replacedWith, undefined);
+    let asked = 0;
+    launch(year - 1, launchAt(year - 1), async () => ({ok: true, status: 200, asked: ++asked}));
+    await settle();
+    assert.equal(asked, 0);
 }));
 
 test("this season's site, or a visit rather than a launch, asks MFL nothing", () => withStorage(async () => {
     const year = new Date().getFullYear();
     const {asked, fetchImpl} = mfl({[year + 1]: 200});
-    const launch = browserAt(`${ORIGIN}/${year}/home/48571?${LAUNCH}=1&X=1`);
-    // nothing to wait for: the page draws at once
-    assert.equal(launchedApp({context: {season: year, leagueId: "48571"}, browser: launch, fetchImpl}), null);
-    assert.equal(launch.location.search, "?X=1");
+    const current = launchAt(year, "&X=1");
+    assert.equal(launch(year, current, fetchImpl), false);
+    assert.equal(current.location.search, "?X=1");
     const visit = browserAt(`${ORIGIN}/${year - 1}/home/48571`);
-    assert.equal(launchedApp({context: {season: year - 1, leagueId: "48571"}, browser: visit, fetchImpl}), null);
+    assert.equal(launch(year - 1, visit, fetchImpl), false);
+    await settle();
     assert.equal(asked.length, 0);
     assert.equal(visit.replacedWith, undefined);
 }));

@@ -3,7 +3,7 @@
 // the icon opens must be the page's own host, and names the season, which a file on Pages can't know.
 // A browser reads it only to add the icon; a page in the browser looks the same.
 
-import {cached} from "./store.js";
+import {cached, saved} from "./store.js";
 import {mflFetch} from "./page-fetch.js";
 
 // on the address the icon opens, so a launch can be told from a visit
@@ -27,9 +27,6 @@ export function webAppManifest({origin, season, leagueId, name, shortName, iconB
     };
 }
 
-// MFL's page title is "Fantasy Football: <league>"
-export const leagueName = (title, fallback) => (title || "").replace(/^Fantasy Football:\s*/, "").trim() || fallback;
-
 function meta(doc, name, content) {
     const tag = doc.querySelector(`meta[name="${name}"]`) || doc.head.appendChild(doc.createElement("meta"));
     tag.setAttribute("name", name);
@@ -39,7 +36,8 @@ function meta(doc, name, content) {
 export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalThis}) {
     const manifest = webAppManifest({
         origin: browser.location.origin, season: context.season, leagueId: context.leagueId,
-        name: leagueName(doc.title, wordmark), shortName: wordmark, iconBase
+        // not MFL's page title, which names the page too, so each page would offer another name
+        name: wordmark, shortName: wordmark, iconBase
     });
     const link = doc.createElement("link");
     link.setAttribute("rel", "manifest");
@@ -61,44 +59,50 @@ export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalTh
 }
 
 // the newest season's site, from `season` on: MFL keeps each season's site, and a new one appears at
-// renewal, after the new year. Kept a day, so each launch asks MFL at most once.
+// renewal, after the new year. Any answer is kept a day, a failed one as none, so each launch asks MFL
+// at most once a day: a renewal is seen a day late at worst.
+const seasonKey = (season) => `fuad.appSeason.${season}`;
+
 export function newestSeason({origin, season, leagueId, year, fetchImpl}) {
-    return cached(`fuad.appSeason.${season}`, DAY, async () => {
+    return cached(seasonKey(season), DAY, async () => {
         let newest = season;
-        while (newest < year) {
-            const response = await fetchImpl(`${origin}/${newest + 1}/home/${leagueId}`, {method: "HEAD", cache: "no-store"});
-            // only a missing site says there's none: a refusal isn't kept as an answer
-            if (response.status === 404) {
-                break;
+        try {
+            while (newest < year && (await fetchImpl(`${origin}/${newest + 1}/home/${leagueId}`, {method: "HEAD", cache: "no-store"})).ok) {
+                newest += 1;
             }
-            if (!response.ok) {
-                throw new Error(`MFL answered ${response.status} for season ${newest + 1}`);
-            }
-            newest += 1;
+        } catch (error) {
+            console.warn("[fuad] couldn't look for a newer season:", error);
         }
         return newest;
     });
 }
 
 // An icon keeps the address it was added with (an iPhone never reads the manifest again), so a launch
-// onto a past season's site goes on to the newest one: null when the page stays, otherwise whether it
-// moved. The marker is taken off, so a reload or a shared link isn't a launch.
+// onto a past season's site goes on to the newest one. True when it's going there at once, as already
+// known, so the page reads nothing more; otherwise MFL is asked behind the page, which moves on if
+// there's a newer season. The marker is taken off, so a reload or a shared link isn't a launch.
 export function launchedApp({context, browser = globalThis, fetchImpl = mflFetch}) {
     const url = new URL(browser.location.href);
     if (!url.searchParams.has(LAUNCH)) {
-        return null;
+        return false;
     }
     url.searchParams.delete(LAUNCH);
     browser.history.replaceState(browser.history.state, "", url.pathname + url.search + url.hash);
     const year = new Date().getFullYear();
     if (context.season >= year) {
-        return null;
+        return false;
     }
-    return newestSeason({origin: url.origin, season: context.season, leagueId: context.leagueId, year, fetchImpl}).then((newest) => {
+    const goTo = (newest) => {
         if (newest <= context.season) {
             return false;
         }
         browser.location.replace(`${url.origin}/${newest}/home/${context.leagueId}`);
         return true;
-    });
+    };
+    const known = saved(seasonKey(context.season));
+    if (known && Date.now() - known.storedAt < DAY) {
+        return goTo(known.value);
+    }
+    newestSeason({origin: url.origin, season: context.season, leagueId: context.leagueId, year, fetchImpl}).then(goTo);
+    return false;
 }

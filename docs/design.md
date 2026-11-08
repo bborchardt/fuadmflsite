@@ -86,7 +86,8 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   light look doesn't flash dark on a slow connection; the header keeps each look's two colours,
   which a test holds to the looks'.
 - **A home screen app** (`ui/web-app.js`): v2 links a manifest, so a phone adds the league as an
-  app that opens full screen, v2 and all, with the wordmark for its name and icon (`site/v2/app/`,
+  app that opens full screen, v2 and all, with the wordmark for its name (MFL's titles name the page
+  too) and icon (`site/v2/app/`,
   drawn by `tools/app-icons.py`). MFL serves the pages, so there's no service worker: nothing works
   offline and there's no push. The icon opens the season's home page on the league's host, with the
   whole host in the app, so the manifest is made in the page, as a blob: a file on Pages can't know
@@ -321,7 +322,9 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 ## Accepted limits
 
 - An iPhone keeps the address its icon was added with, so after renewal a launch opens last season's
-  site, which goes on to the newest season's: one more page load, and a request to MFL a day.
+  site, which goes on to the newest season's: one more page load. From the new year, the first launch
+  a day asks MFL whether the next season's site is there, behind the page, which moves on if it is;
+  the answer is kept a day, a failed request as none, so a renewal is seen a day late at worst.
 - Chores run once a day (about 07:40 UTC): snapshots, penalties and contract years land up to a day late.
 - The commissioner's own moves aren't in the history the job reads, and a hand-entered penalty must
   spell the player's name as MFL does to be recognized.

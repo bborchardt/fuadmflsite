@@ -107,20 +107,15 @@ function boot(beta) {
         } catch (error) {
             console.warn("[fuad] couldn't link the home screen app:", error);
         }
+        try {
+            // a launch going on to a newer season's site reads nothing of this one
+            if (launchedApp({context})) {
+                return;
+            }
+        } catch (error) {
+            console.warn("[fuad] couldn't check the app's season:", error);
+        }
     }
-    // a launch onto a past season's site reads nothing of that season before it knows it stays
-    const moving = context && launchedApp({context});
-    if (moving) {
-        moving.catch((error) => {
-            console.warn("[fuad] couldn't look for a newer season:", error);
-            return false;
-        }).then((moved) => moved || draw(context, beta));
-    } else {
-        draw(context, beta);
-    }
-}
-
-function draw(context, beta) {
     const loader = window.fuadLoader;
     // `started` only when the header's version handed this page over: after a beta fails to load,
     // the header's own version runs with the mode still "beta"
