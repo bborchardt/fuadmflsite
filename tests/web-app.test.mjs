@@ -117,7 +117,8 @@ function age(items, key, by) {
     const entry = JSON.parse(items.get(name));
     items.set(name, JSON.stringify({...entry, storedAt: entry.storedAt - by}));
 }
-const DAY = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
 
 // what launchedApp asks behind the page has answered
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -165,10 +166,10 @@ test("a launch before the new season's site exists stays, and asks MFL once a da
     assert.equal(browser.replacedWith, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`);
 }));
 
-test("MFL's error document, a refusal or a failed request count as no new season for the day", async () => {
+test("MFL's error document, a refusal or a failed request leave it unknown for an hour, not a day", async () => {
     const year = new Date().getFullYear();
     for (const answer of ["error", 429, "throws"]) {
-        await withStorage(async () => {
+        await withStorage(async (items) => {
             const browser = launchAt(year - 1);
             const fetchImpl = answer === "throws" ? async () => {
                 throw new TypeError("Failed to fetch");
@@ -180,9 +181,28 @@ test("MFL's error document, a refusal or a failed request count as no new season
             launch(year - 1, launchAt(year - 1), renewed.fetchImpl);
             await settle();
             assert.equal(renewed.asked.length, 0, String(answer));
+            age(items, `fuad.appSeason.${year - 1}`, HOUR);
+            const later = launchAt(year - 1);
+            launch(year - 1, later, renewed.fetchImpl);
+            await settle();
+            assert.equal(later.replacedWith, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`, String(answer));
         });
     }
 });
+
+test("a member who has tapped or typed before MFL answers stays, and the next launch moves at once", () => withStorage(async () => {
+    const year = new Date().getFullYear();
+    const {asked, fetchImpl} = mfl({[year]: "site"});
+    const browser = launchAt(year - 1);
+    assert.equal(launch(year - 1, browser, fetchImpl), false);
+    browser.listeners.pointerdown();
+    await settle();
+    assert.equal(browser.replacedWith, undefined);
+    const next = launchAt(year - 1);
+    assert.equal(launch(year - 1, next, fetchImpl), true);
+    assert.equal(next.replacedWith, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`);
+    assert.equal(asked.length, 1);
+}));
 
 test("this season's site, or a visit rather than a launch, asks MFL nothing", () => withStorage(async () => {
     const year = new Date().getFullYear();

@@ -323,10 +323,12 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 
 - An iPhone keeps the address its icon was added with, so after renewal a launch opens last season's
   site, which goes on to the newest season's: one more page load. From the new year, a launch asks
-  MFL for the next season's league export, at most once a day, behind the page, which moves on if
-  there's a site. A season found is kept a year, so last season's page is drawn first only on the
-  first launch after renewal, which can move a member on mid-use; a request that fails counts as no
-  site for the day. A league moved to another host is left on the old one: its icons are added again.
+  MFL for the next season's league export, behind the page, which moves on if there's a site and the
+  member hasn't yet tapped or typed. A season found is kept a year, so last season's page is drawn
+  first only on the first launch after renewal; none is kept a day, and no answer (a refusal) an
+  hour. This needs the phone to have read the manifest: an icon added from a page with a phone that
+  didn't opens that page, with no launch to tell, and stays on its season. A league moved to another
+  host is left on the old one: its icons are added again.
 - Chores run once a day (about 07:40 UTC): snapshots, penalties and contract years land up to a day late.
 - The commissioner's own moves aren't in the history the job reads, and a hand-entered penalty must
   spell the player's name as MFL does to be recognized.

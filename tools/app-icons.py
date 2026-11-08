@@ -37,6 +37,9 @@ def main():
             page = browser.new_page(viewport={"width": size, "height": size})
             page.set_content(PAGE % html.escape(wordmark))
             page.evaluate("document.fonts.ready.then(() => true)")
+            # check() passes when no face is listed at all, as when the stylesheet didn't load
+            if not page.evaluate("[...document.fonts].some((face) => face.family.includes('Barlow') && face.status === 'loaded')"):
+                sys.exit("Barlow Condensed didn't load (offline?): no icons written")
             page.screenshot(path=str(OUT / name))
             page.close()
         browser.close()

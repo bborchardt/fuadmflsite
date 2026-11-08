@@ -3,14 +3,18 @@
 // the icon opens must be the page's own host, and names the season, which a file on Pages can't know.
 // A browser reads it only to add the icon; a page in the browser looks the same.
 
-import {exportUrl} from "../lib/mfl.js";
+import {MflError, exportUrl, fetchExport} from "../lib/mfl.js";
 import {save, saved} from "./store.js";
 import {mflFetch} from "./page-fetch.js";
 
 // on the address the icon opens, so a launch can be told from a visit
 export const LAUNCH = "fuadApp";
-const DAY = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
 const YEAR = 365 * DAY;
+
+// where the icon opens: a season's home page, as a launch
+const launchUrl = (origin, season, leagueId) => `${origin}/${season}/home/${leagueId}?${LAUNCH}=1`;
 
 // `id` names no season, so Android takes next season's manifest as this app's, with its new address
 export function webAppManifest({origin, season, leagueId, name, shortName, iconBase}) {
@@ -19,7 +23,7 @@ export function webAppManifest({origin, season, leagueId, name, shortName, iconB
         id: `${origin}/fuad-app/${leagueId}`,
         name,
         short_name: shortName,
-        start_url: `${origin}/${season}/home/${leagueId}?${LAUNCH}=1`,
+        start_url: launchUrl(origin, season, leagueId),
         scope: `${origin}/`,
         display: "standalone",
         background_color: "#0D1117",
@@ -60,49 +64,47 @@ export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalTh
     browser.addEventListener("beforeinstallprompt", (event) => event.preventDefault());
 }
 
-// MFL answers a season with no site with a 404 or an error document, as the daily job reads it
-async function hasSite({origin, season, leagueId, fetchImpl}) {
-    const response = await fetchImpl(exportUrl(origin, season, "league", {L: leagueId}), {cache: "no-store"});
-    if (!response.ok) {
-        return false;
-    }
-    const body = await response.json();
-    return Boolean(body && body.league);
-}
-
-// MFL keeps each season's site, so a newer one found is kept a year; none, a day, as the new one
-// appears at renewal, after the new year. A failed request counts as none, so a launch asks MFL at
-// most once a day, and a renewal is seen a day late at worst.
+// MFL answers a season with no site with a 404 (or an error document, as the daily job reads it).
+// A newer season found is kept a year, as MFL keeps each season's site; none, a day, as the new one
+// appears at renewal, after the new year; and no answer (a refusal, perhaps to the page's own reads
+// at launch) an hour. So a launch asks MFL at most once an hour, and a renewal is seen a day late at
+// worst.
 const seasonKey = (season) => `fuad.appSeason.${season}`;
 
 function knownNewest(season) {
     const entry = saved(seasonKey(season));
-    const age = entry ? Date.now() - entry.storedAt : Infinity;
-    return entry && age < (entry.value > season ? YEAR : DAY) ? entry.value : null;
+    if (!entry) {
+        return null;
+    }
+    const {newest, answered} = entry.value;
+    const keep = newest > season ? YEAR : (answered ? DAY : HOUR);
+    return Date.now() - entry.storedAt < keep ? newest : null;
 }
 
-export async function newestSeason({origin, season, leagueId, year, fetchImpl}) {
-    const known = knownNewest(season);
-    if (known !== null) {
-        return known;
-    }
+async function newestSeason({origin, season, leagueId, year, fetchImpl}) {
     let newest = season;
+    let answered = true;
     try {
-        while (newest < year && await hasSite({origin, season: newest + 1, leagueId, fetchImpl})) {
+        while (newest < year) {
+            await fetchExport(exportUrl(origin, newest + 1, "league", {L: leagueId}), "league", {fetchImpl, init: {cache: "no-store"}});
             newest += 1;
         }
     } catch (error) {
-        console.warn("[fuad] couldn't look for a newer season:", error);
+        answered = error instanceof MflError && error.status === 404;
+        if (!answered) {
+            console.warn("[fuad] couldn't look for a newer season:", error);
+        }
     }
-    save(seasonKey(season), newest);
+    save(seasonKey(season), {newest, answered});
     return newest;
 }
 
 // An icon keeps the address it was added with (an iPhone never reads the manifest again), so a launch
 // onto a past season's site goes on to the newest one, as a launch, so a later year's goes on again.
 // True when it's going there at once, as already known, so the page reads nothing more; otherwise MFL
-// is asked behind the page, which moves on if there's a newer season. The marker is taken off, so a
-// reload or a shared link isn't a launch.
+// is asked behind the page, which moves on if there's a newer season, unless the member has already
+// tapped or typed: a move can't cut off what they're doing, and the next launch goes there at once.
+// The marker is taken off, so a reload or a shared link isn't a launch.
 export function launchedApp({context, browser = globalThis, fetchImpl = mflFetch}) {
     const url = new URL(browser.location.href);
     if (!url.searchParams.has(LAUNCH)) {
@@ -118,13 +120,19 @@ export function launchedApp({context, browser = globalThis, fetchImpl = mflFetch
         if (newest <= context.season) {
             return false;
         }
-        browser.location.replace(`${url.origin}/${newest}/home/${context.leagueId}?${LAUNCH}=1`);
+        browser.location.replace(launchUrl(url.origin, newest, context.leagueId));
         return true;
     };
     const known = knownNewest(context.season);
     if (known !== null) {
         return goTo(known);
     }
-    newestSeason({origin: url.origin, season: context.season, leagueId: context.leagueId, year, fetchImpl}).then(goTo);
+    let used = false;
+    const use = () => {
+        used = true;
+    };
+    ["pointerdown", "keydown"].forEach((type) => browser.addEventListener(type, use, {capture: true, once: true}));
+    newestSeason({origin: url.origin, season: context.season, leagueId: context.leagueId, year, fetchImpl})
+        .then((newest) => used || goTo(newest));
     return false;
 }
