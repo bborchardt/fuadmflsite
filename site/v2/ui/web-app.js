@@ -62,8 +62,27 @@ export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalTh
     // full screen on iPhones before iOS 26, which may not read the manifest
     meta(doc, "apple-mobile-web-app-capable", "yes");
     meta(doc, "mobile-web-app-capable", "yes");
+    // an opaque bar, so the page starts below it; an iPhone reads it only when the icon is added
+    meta(doc, "apple-mobile-web-app-status-bar-style", "black");
     // Chrome's own install bar on Android; its menu still installs
     browser.addEventListener("beforeinstallprompt", (event) => event.preventDefault());
+    fitApp(doc, browser);
+}
+
+// An iPhone's app draws down to the screen's edge, under the home bar, but gives the page the home
+// bar's height (env(safe-area-inset-bottom), which the tabs leave room for) only with
+// viewport-fit=cover. Only in the app (navigator.standalone is the iPhone's own): Safari's page stays
+// as MFL lays it out.
+function fitApp(doc, browser) {
+    if (!browser.navigator || browser.navigator.standalone !== true) {
+        return;
+    }
+    const viewport = doc.querySelector('meta[name="viewport"]');
+    const content = viewport && viewport.getAttribute("content");
+    if (content && !/viewport-fit/.test(content)) {
+        viewport.setAttribute("content", `${content}, viewport-fit=cover`);
+    }
+    doc.documentElement.classList.add("fuad-app");
 }
 
 // MFL answers a season with no site with a 404 (docs/mfl.md); anything else is no answer.
