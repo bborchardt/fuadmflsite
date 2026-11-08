@@ -6,6 +6,8 @@ import {pageOf} from "./ui/nav.js";
 import {storage} from "./ui/store.js";
 import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, reportUse, withParam} from "./loader.js";
 import {applyLook, commishLook, keepResponsive, keepTeamSkin, lookOf, markCommish} from "./ui/looks.js";
+import {launchedApp, linkWebApp} from "./ui/web-app.js";
+import settings from "./lib/settings.js";
 
 const PREVIEW_KEY = "fuad.preview";
 const BETA_KEY = "fuad.beta";
@@ -99,6 +101,21 @@ function boot(beta) {
         console.warn("[fuad] couldn't apply the look:", error);
     }
     const context = pageContext();
+    if (context) {
+        try {
+            linkWebApp(document, {context, wordmark: settings.wordmark, iconBase: `${here}app/`});
+        } catch (error) {
+            console.warn("[fuad] couldn't link the home screen app:", error);
+        }
+        try {
+            // a launch going on to a newer season's site reads nothing of this one
+            if (launchedApp({context})) {
+                return;
+            }
+        } catch (error) {
+            console.warn("[fuad] couldn't check the app's season:", error);
+        }
+    }
     const loader = window.fuadLoader;
     // `started` only when the header's version handed this page over: after a beta fails to load,
     // the header's own version runs with the mode still "beta"

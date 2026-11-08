@@ -11,6 +11,7 @@ runs inside MFL's own pages, loaded by a home page message.
   Rosters), with a team sheet, a player popup and a choice of looks. Home has the alerts (cap, roster
   limit, IR, injured starters, contract lengths due), the commissioner's results screen, and the form
   members send their contract lengths with; Moves keeps add, drop, IR and trades within the rules.
+  A phone can add it to its home screen as an app.
 - **v1**, the main version: the Contracts tab (salaries, contract years, a cut calculator, rookie and
   franchise salaries), League Alerts on the Main tab, and the Commish and Links tabs.
 
@@ -42,6 +43,7 @@ A second league can try the site with no code change, and any setting can be tri
 - `npm test` runs the unit tests (Node 24+); after `npm ci`, `npm run lint` runs ESLint's standard
   rules and checks that what runs in members' browsers stays within ES2020 (Safari since iOS 14).
 - `npm run build` makes `dist/` as GitHub Pages publishes it, v2 bundled into one minified file.
+- `uv run --no-project --with playwright python tools/app-icons.py` redraws v2's home screen icons.
 - `python3 tools/dev-server.py`, then `?fuadPreview=local` on a league page, runs your working copy
   on the real site, unbundled.
 - `uv run --no-project --with playwright python tools/verify/verify.py compare --local v1` renders the
