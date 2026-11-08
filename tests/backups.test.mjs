@@ -182,3 +182,9 @@ test("restoring a locked pair leaves an earlier run's swap in", () => {
     const result = weekLineup({pairs, final, out: new Set(["w1"]), positionOf, rules, kickoff: () => 0});
     assert.deepEqual([[...result.lineup].sort(), result.flags], [["k1", "q1", "q2", "r1", "r2", "t1", "t2", "w2", "w3", "w4"], []]);
 });
+
+test("the backup first: \"start Parker if Puka is out\"", () => {
+    const pairs = (text) => readRequests(text).requests.map(({starter, backup}) => [starter, backup]);
+    assert.deepEqual(pairs("Week 9: start Parker Washington if Puka is out"), [["Puka", "Parker Washington"]]);
+    assert.deepEqual(readRequests("start Parker if Puka gets a haircut").unreadable, ["if Puka gets a haircut"]);
+});

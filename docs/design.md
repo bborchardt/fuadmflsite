@@ -254,7 +254,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   team at its highest; a win with no won-bid transaction for that team and player shows "Voided",
   since the commissioner voids a bid by removing the player and deleting its transaction.
 - **Backup starters** (16.5): a starter declared out is one on the NFL's game-day inactive list, for
-  any reason; a backup must be on the bench and keep the lineup within MFL's position ranges.
+  any reason; a backup must be on the bench, on his team's game-day roster, and keep the lineup
+  within MFL's position ranges.
   The commissioner's posts count for no team.
 - **Watch list** (v2's player popup, Moves › Add and Rosters › Players, `ui/watch.js`): MFL's own My
   Watch List, so it follows a member across devices and MFL's app, read with its export and changed with

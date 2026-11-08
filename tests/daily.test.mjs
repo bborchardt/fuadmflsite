@@ -972,6 +972,15 @@ test("backup starters: a week that fails is flagged, and left for the next run",
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
 });
 
+test("backup starters: a backup on no game-day roster stays on the bench", () => {
+    const scenario = backups();
+    const rosters = Object.keys(scenario.files)[0];
+    scenario.files[rosters] = scenario.files[rosters].split("\n")
+        .map((row) => row.includes("00-0034857") && row.includes(",6,REG,") ? row.replace(",ACT,", ",RES,") : row).join("\n");
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
+});
+
 test("backup starters: a backup inactive too stays on the bench", () => {
     const scenario = backups();
     const rosters = Object.keys(scenario.files)[0];

@@ -460,9 +460,9 @@ async function payouts(loggedIn, {built}) {
     const scored = next && now >= next ? latest : latest - 1;
     const finalWeek = Math.min(scored, backupsOpenFrom - 1);
     if (finalWeek < scored) {
-        log(`Payouts: week ${backupsOpenFrom} waits for its backup starters.`);
+        log(backupsOpenFrom ? `Payouts: week ${backupsOpenFrom} waits for its backup starters.` : "Payouts: wait, as the backup starters chore didn't finish.");
     }
-    if (!finalWeek) {
+    if (finalWeek < 1) {
         log("No week's scores are final yet; no payouts to record.");
         return;
     }
@@ -710,11 +710,12 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
         open++;
     }
     const settledUntil = open > 1 ? Math.max(...await kickoffs(open - 1)) : -Infinity;
+    const teamNames = new Map(asArray(league.franchises && league.franchises.franchise).map((team) => [team.id, String(team.name || team.id).trim()]));
     const byWeek = new Map();
-    if (posts.some((post) => !post.at || !post.postedAt)) {
-        throw new Error(`a post's time in the "${THREAD_TITLE}" thread couldn't be read`);
+    for (const post of posts.filter((each) => each.franchiseId && (!each.at || !each.postedAt))) {
+        needsAttention(`Backup starters: the time of ${teamNames.get(post.franchiseId) || post.franchiseId}'s post of ${post.posted} couldn't be read, so it wasn't.`);
     }
-    for (const post of posts.filter((each) => each.franchiseId)) {
+    for (const post of posts.filter((each) => each.franchiseId && each.at && each.postedAt)) {
         const asks = readRequests(boardText(post.html));
         if (!asks.week && post.at <= settledUntil) {
             continue;
@@ -732,7 +733,6 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
             byWeek.set(week, [...(byWeek.get(week) || []), {...post, asks, badWeek: Boolean(asks.week && !named), editedLate}]);
         }
     }
-    const teamNames = new Map(asArray(league.franchises && league.franchises.franchise).map((team) => [team.id, String(team.name || team.id).trim()]));
     const rules = lineupRules(league);
     const nameOf = (id) => displayName((playerNames.get(id) || {name: id}).name);
     const positionOf = (id) => (playerNames.get(id) || {}).position;
@@ -869,10 +869,16 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                     lastWeek = await weekResults(week - 1);
                 }
                 const carried = submissions.length ? startersIn(lastWeek || [], team) : saved;
-                const final = lineupAt(submissions, Infinity, carried);
+                // MFL's own record of what the team's lineup was, unless the job's change is still to be scored
+                const latest = submissions.filter((submission) => !submission.failed).at(-1);
+                const final = latest && latest.commish || !saved.length ? lineupAt(submissions, Infinity, carried) : saved;
                 const usable = [];
                 for (const pair of pairs) {
                     const starting = lineupAt(submissions, pair.deadline, carried);
+                    if (!starting.length) {
+                        flag(`the lineup at the deadline of ${nameOf(pair.backup)} for ${nameOf(pair.starter)} isn't known (no lineup submitted before it, nor last week's)`);
+                        continue;
+                    }
                     // a pair whose starter wasn't starting, or backup wasn't benched, does nothing
                     if (!starting.includes(pair.starter) || starting.includes(pair.backup)) {
                         continue;
@@ -884,8 +890,9 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                     }
                     usable.push({...pair, starting});
                 }
-                // a backup inactive too stays on the bench
-                const out = new Set(usable.flatMap((pair) => [pair.starter, pair.backup]).filter((id) => (statuses.get(id) || {}).status === "INA"));
+                // a backup inactive too, or on no game-day roster (IR, suspended, cut), stays on the bench
+                const out = new Set([...usable.map((pair) => pair.starter).filter((id) => statuses.get(id).status === "INA"),
+                    ...usable.map((pair) => pair.backup).filter((id) => (statuses.get(id) || {}).status !== "ACT")]);
                 if (out.size) {
                     const scores = asArray((await fetchFrom(host, "playerScores", {L: leagueId, W: week, PLAYERS: [...out].join(",")})).playerScore);
                     for (const id of [...out]) {
@@ -978,7 +985,8 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
             settled.push(week);
         }
     }
-    backupsOpenFrom = Math.min(...[...byWeek.keys()].filter((week) => !settled.includes(week) && week < current));
+    // the chore only logging, payouts don't wait
+    backupsOpenFrom = applyBackups ? Math.min(...[...byWeek.keys()].filter((week) => !settled.includes(week) && week < current)) : Infinity;
     return finish();
 }
 
@@ -1397,6 +1405,8 @@ try {
         try {
             backupsChanged = await backupStarters(loggedIn, state);
         } catch (error) {
+            // which weeks are still open isn't known
+            backupsOpenFrom = applyBackups ? 0 : Infinity;
             needsAttention(`Backup starters: ${error.message}`);
         }
         try {

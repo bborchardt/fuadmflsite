@@ -125,12 +125,20 @@ export function readRequests(text) {
     const weekMatch = WEEK.exec(plain);
     const weeks = new Set([...plain.matchAll(new RegExp(WEEK.source, "gi"))].map((match) => Number(match[1])));
     const result = {week: weekMatch ? Number(weekMatch[1]) : null, weeks: [...weeks], requests: [], removals: [], removeAll: false, unreadable: []};
+    // "Start Parker if Puka is out": the backup comes first, the "if" a clause of its own
+    let backupFirst = null;
     for (const clause of clauses(plain)) {
         const body = clause.replace(WEEK, " ").replace(/^[\s:,-]+/, "");
         const condition = IF_OUT.exec(body);
         const start = condition && START.exec(condition[2]);
+        const before = backupFirst;
+        backupFirst = !/\bif\b/i.test(body) && START.exec(body) ? {backup: START.exec(body)[1], clause} : null;
         if (condition && start) {
             result.requests.push({starter: condition[1], backup: start[1], text: clause});
+            continue;
+        }
+        if (condition && before && !/\w/.test(condition[2].replace(/\b(?:out|inactive|active|playing|play|in|the|game)\b/gi, ""))) {
+            result.requests.push({starter: condition[1], backup: before.backup, text: `${before.clause} ${clause}`});
             continue;
         }
         const none = NO_BACKUP.exec(body);
