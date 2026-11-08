@@ -322,9 +322,11 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 ## Accepted limits
 
 - An iPhone keeps the address its icon was added with, so after renewal a launch opens last season's
-  site, which goes on to the newest season's: one more page load. From the new year, the first launch
-  a day asks MFL whether the next season's site is there, behind the page, which moves on if it is;
-  the answer is kept a day, a failed request as none, so a renewal is seen a day late at worst.
+  site, which goes on to the newest season's: one more page load. From the new year, a launch asks
+  MFL for the next season's league export, at most once a day, behind the page, which moves on if
+  there's a site. A season found is kept a year, so last season's page is drawn first only on the
+  first launch after renewal, which can move a member on mid-use; a request that fails counts as no
+  site for the day. A league moved to another host is left on the old one: its icons are added again.
 - Chores run once a day (about 07:40 UTC): snapshots, penalties and contract years land up to a day late.
 - The commissioner's own moves aren't in the history the job reads, and a hand-entered penalty must
   spell the player's name as MFL does to be recognized.

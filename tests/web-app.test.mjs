@@ -96,41 +96,57 @@ test("a page without MFL's icon gets ours", () => {
     assert.equal(doc.querySelector('link[rel="apple-touch-icon"]').getAttribute("href"), `${ICONS}apple-touch-icon.png`);
 });
 
-// MFL answers each season's home page as `seasons` say: 200 for a site, 404 for none
+// MFL's league export for each season as `seasons` say: "site", "error" (a 200 with an error
+// document), or an HTTP status; any other season is a 404
 function mfl(seasons) {
     const asked = [];
-    const fetchImpl = async (url, init) => {
-        asked.push([url, init.method]);
+    const fetchImpl = async (url) => {
+        asked.push(url);
         const season = Number(new URL(url).pathname.split("/")[1]);
-        return {status: seasons[season] || 404, ok: (seasons[season] || 404) === 200};
+        const answer = seasons[season] || 404;
+        const status = typeof answer === "number" ? answer : 200;
+        const body = answer === "site" ? {league: {id: "48571"}} : {error: {$t: "Invalid league ID"}};
+        return {status, ok: status === 200, json: async () => body};
     };
     return {asked, fetchImpl};
 }
+
+// what's kept under `key` made `by` older
+function age(items, key, by) {
+    const name = [...items.keys()].find((stored) => stored.startsWith(`${key}@`));
+    const entry = JSON.parse(items.get(name));
+    items.set(name, JSON.stringify({...entry, storedAt: entry.storedAt - by}));
+}
+const DAY = 24 * 60 * 60 * 1000;
 
 // what launchedApp asks behind the page has answered
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 const launchAt = (season, query = "") => browserAt(`${ORIGIN}/${season}/home/48571?${LAUNCH}=1${query}`);
 const launch = (season, browser, fetchImpl) => launchedApp({context: {season, leagueId: "48571"}, browser, fetchImpl});
 
-test("a launch onto a past season's site goes on to the newest season's: behind the page, then at once that day", () => withStorage(async () => {
+test("a launch onto a past season's site goes on to the newest season's: behind the page, then at once for a year", () => withStorage(async (items) => {
     const year = new Date().getFullYear();
     const old = year - 2;
-    const {asked, fetchImpl} = mfl({[old + 1]: 200, [old + 2]: 200});
+    const {asked, fetchImpl} = mfl({[old + 1]: "site", [old + 2]: "site"});
     const first = launchAt(old);
     // not known yet: the page draws while MFL is asked
     assert.equal(launch(old, first, fetchImpl), false);
     await settle();
-    assert.equal(first.replacedWith, `${ORIGIN}/${year}/home/48571`);
-    assert.deepEqual(asked.map(([, method]) => method), ["HEAD", "HEAD"]);
+    // as a launch, so that season's site looks for a newer one in a later year
+    assert.equal(first.replacedWith, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`);
+    // the league export, not the page
+    assert.deepEqual(asked.map((url) => new URL(url).pathname), [`/${old + 1}/export`, `/${old + 2}/export`]);
     // the marker is taken off
     assert.equal(first.location.search, "");
-    const next = launchAt(old);
-    assert.equal(launch(old, next, fetchImpl), true);
-    assert.equal(next.replacedWith, `${ORIGIN}/${year}/home/48571`);
+    // MFL keeps a season's site, so a newer one found holds long after a day
+    age(items, `fuad.appSeason.${old}`, 300 * DAY);
+    const later = launchAt(old);
+    assert.equal(launch(old, later, fetchImpl), true);
+    assert.equal(later.replacedWith, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`);
     assert.equal(asked.length, 2);
 }));
 
-test("a launch before the new season's site exists stays, and asks MFL once a day", () => withStorage(async () => {
+test("a launch before the new season's site exists stays, and asks MFL once a day", () => withStorage(async (items) => {
     const year = new Date().getFullYear();
     const {asked, fetchImpl} = mfl({});
     for (let count = 0; count < 2; count++) {
@@ -140,38 +156,37 @@ test("a launch before the new season's site exists stays, and asks MFL once a da
         assert.equal(browser.replacedWith, undefined);
     }
     assert.equal(asked.length, 1);
+    // the next day it asks again, and finds the renewal
+    age(items, `fuad.appSeason.${year - 1}`, DAY);
+    const renewed = mfl({[year]: "site"});
+    const browser = launchAt(year - 1);
+    launch(year - 1, browser, renewed.fetchImpl);
+    await settle();
+    assert.equal(browser.replacedWith, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`);
 }));
 
-test("a refusal or a failed request counts as no new season for the day", () => withStorage(async () => {
+test("MFL's error document, a refusal or a failed request count as no new season for the day", async () => {
     const year = new Date().getFullYear();
-    const refused = mfl({[year]: 429});
-    const browser = launchAt(year - 1);
-    assert.equal(launch(year - 1, browser, refused.fetchImpl), false);
-    await settle();
-    assert.equal(browser.replacedWith, undefined);
-    const renewed = mfl({[year]: 200});
-    assert.equal(launch(year - 1, launchAt(year - 1), renewed.fetchImpl), false);
-    await settle();
-    assert.equal(renewed.asked.length, 0);
-}));
-
-test("a request that fails outright is kept as no new season too", () => withStorage(async () => {
-    const year = new Date().getFullYear();
-    const browser = launchAt(year - 1);
-    launch(year - 1, browser, async () => {
-        throw new TypeError("Failed to fetch");
-    });
-    await settle();
-    assert.equal(browser.replacedWith, undefined);
-    let asked = 0;
-    launch(year - 1, launchAt(year - 1), async () => ({ok: true, status: 200, asked: ++asked}));
-    await settle();
-    assert.equal(asked, 0);
-}));
+    for (const answer of ["error", 429, "throws"]) {
+        await withStorage(async () => {
+            const browser = launchAt(year - 1);
+            const fetchImpl = answer === "throws" ? async () => {
+                throw new TypeError("Failed to fetch");
+            } : mfl({[year]: answer}).fetchImpl;
+            assert.equal(launch(year - 1, browser, fetchImpl), false);
+            await settle();
+            assert.equal(browser.replacedWith, undefined, String(answer));
+            const renewed = mfl({[year]: "site"});
+            launch(year - 1, launchAt(year - 1), renewed.fetchImpl);
+            await settle();
+            assert.equal(renewed.asked.length, 0, String(answer));
+        });
+    }
+});
 
 test("this season's site, or a visit rather than a launch, asks MFL nothing", () => withStorage(async () => {
     const year = new Date().getFullYear();
-    const {asked, fetchImpl} = mfl({[year + 1]: 200});
+    const {asked, fetchImpl} = mfl({[year + 1]: "site"});
     const current = launchAt(year, "&X=1");
     assert.equal(launch(year, current, fetchImpl), false);
     assert.equal(current.location.search, "?X=1");
@@ -181,3 +196,12 @@ test("this season's site, or a visit rather than a launch, asks MFL nothing", ()
     assert.equal(asked.length, 0);
     assert.equal(visit.replacedWith, undefined);
 }));
+
+test("a manifest link already on the page is made ours, not followed by a second", () => {
+    const doc = page('<link rel="manifest" href="/theirs.json">');
+    const browser = browserAt(`${ORIGIN}/2026/home/48571`);
+    linkWebApp(doc, {context, wordmark: "FUAD", iconBase: ICONS, browser});
+    const links = doc.querySelectorAll('link[rel="manifest"]');
+    assert.equal(links.length, 1);
+    assert.equal(links[0].getAttribute("href"), `blob:${ORIGIN}/1`);
+});

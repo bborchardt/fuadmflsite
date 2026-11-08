@@ -6,6 +6,7 @@
 The wordmark stays inside the middle 80% circle, so Android can crop the same picture to any shape
 (a maskable icon); an iPhone rounds the corners itself. The font comes from Google Fonts, as v2's does.
 """
+import html
 import sys
 from pathlib import Path
 
@@ -34,8 +35,8 @@ def main():
         browser = playwright.chromium.launch()
         for name, size in SIZES.items():
             page = browser.new_page(viewport={"width": size, "height": size})
-            page.set_content(PAGE % wordmark)
-            page.evaluate("document.fonts.ready")
+            page.set_content(PAGE % html.escape(wordmark))
+            page.evaluate("document.fonts.ready.then(() => true)")
             page.screenshot(path=str(OUT / name))
             page.close()
         browser.close()
