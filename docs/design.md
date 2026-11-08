@@ -146,7 +146,10 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   It fills the commissioner's Submit Lineup form for the past week, as MFL's lineup import refuses one,
   recalculates the week's standings, checks the saved result, and replies in the thread. A name it
   can't match, a swap that wouldn't fit MFL's position ranges, or a backup claimed twice flags, never
-  guessed. Weeks done are kept in `league-data` (`backup-starters.json`), so a week is settled once.
+  guessed. A week is settled once applied (or over with no posts), in `league-data`
+  (`backup-starters.json`); until `BACKUP_STARTERS` is `apply`, each run logs every open week again.
+  Whether the week was recalculated is judged from MFL's saved results, so a run that fails between
+  the lineup and the recalculation is finished by the next.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
   own reader while the hour is open, so owners see what will be set.
 

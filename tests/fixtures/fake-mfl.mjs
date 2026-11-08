@@ -27,6 +27,7 @@
 //   forms         {"/2026/lineup": html}: what a form posted there answers (default: Submit
 //                 Lineup's "SUBMITTED", and Recalculate Standings' page as `pages` has it)
 //   files         {address: text}: anywhere else, as nflverse's files on GitHub
+//   recalculated  {"TYPE:W": body} in place of `exports`' once Recalculate Standings has been posted
 //   "nflSchedule:W" in `exports` answers that week's schedule, with its teams, ahead of week1's
 
 import {appendFileSync, readFileSync} from "node:fs";
@@ -35,6 +36,7 @@ const scenario = JSON.parse(readFileSync(process.env.FAKE_MFL, "utf8"));
 const WEEK = 7 * 86400;
 // imports answered so far, for a list of importError
 let importsSeen = 0;
+let recalculated = false;
 
 const record = (entry) => appendFileSync(process.env.FAKE_MFL_LOG, JSON.stringify(entry) + "\n");
 const json = (body, status = 200) => new Response(JSON.stringify(body), {status, headers: {"Content-Type": "application/json"}});
@@ -63,7 +65,7 @@ function exportAnswer(host, year, params, cookie) {
         const accepted = scenario.login === "escaped" ? cookie === "MFL_USER_ID=abc%2Bdef%3D" : Boolean(cookie);
         return json({leagues: {league: accepted ? [...(scenario.myLeagues || ["48571"]).map((league_id) => ({league_id})), ...(scenario.leagueUrls || []).map((url) => ({url}))] : []}});
     }
-    const exports = scenario.exports || {};
+    const exports = {...scenario.exports, ...(recalculated ? scenario.recalculated : {})};
     const keyed = params.get("W") || params.get("BRACKET_ID");
     const body = `${type}@${year}` in exports ? exports[`${type}@${year}`]
         : keyed && `${type}:${keyed}` in exports ? exports[`${type}:${keyed}`] : exports[type];
@@ -110,6 +112,7 @@ globalThis.fetch = async (input, init = {}) => {
         return new Response(null, {status: 302, headers: {Location: `/${year}/home/48571`, "Set-Cookie": "MFL_IS_COMMISH=yes; domain=.myfantasyleague.com; path=/"}});
     }
     if ((init.method || "GET") === "POST" && ["lineup", "csetup"].includes(page)) {
+        recalculated = recalculated || page === "csetup";
         const answer = (scenario.forms || {})[url.pathname];
         return text(answer !== undefined ? answer : page === "lineup" ? "Week lineup SUBMITTED" : (scenario.pages || {})[`/${year}/csetup?L=48571&C=RECALC`] || "");
     }

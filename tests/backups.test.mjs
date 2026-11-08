@@ -159,3 +159,18 @@ test("the week's lineup: backups in for inactive starters, a locked pair changed
     const rbs = weekLineup({...base, kickoff: (id) => (id === "r2" ? 1 : 2), pairs: [pair("r1", "w4"), pair("r2", "w5")], final: starting, out: new Set(["r1", "r2"])});
     assert.deepEqual([rbs.swaps.map((each) => each.starter), rbs.flags.map((flag) => [flag.pair.starter, flag.why])], [["r2"], [["r1", "wont-fit"]]]);
 });
+
+test("a request per \"if\", and a name's \"St.\" or \"Jr.\" doesn't end one", () => {
+    const pairs = (text) => readRequests(text).requests.map(({starter, backup}) => [starter, backup.replace(/[.,]$/, "")]);
+    assert.deepEqual(pairs("If Puka is out start Parker Washington, and if Kelce is out start Isaiah Likely"),
+        [["Puka", "Parker Washington"], ["Kelce", "Isaiah Likely"]]);
+    assert.deepEqual(pairs("If Amon-Ra St. Brown is out, start Jameson Williams. If Marvin Harrison Jr. is out start Adams."),
+        [["Amon-Ra St. Brown", "Jameson Williams"], ["Marvin Harrison Jr.", "Adams"]]);
+});
+
+test("Lineup Details: a defense read, a starter it can't read marks the submission", () => {
+    const page = (starters) => `<table class="report"><tr><th>Date/Time Lineup Submitted</th></tr><tr><td>6</td><td></td><td>${starters}</td><td></td><td>Wed Oct 14 9:05:00 a.m. CT 2026</td></tr></table>`;
+    const [read] = readLineupDetails(page("Allen, Josh BUF QB, Bills, Buffalo BUF Def"));
+    assert.deepEqual([read.starters.map((each) => each.pos), read.unread], [["QB", "Def"], false]);
+    assert.equal(readLineupDetails(page("Allen, Josh BUF QB, Bills, Buffalo"))[0].unread, true);
+});

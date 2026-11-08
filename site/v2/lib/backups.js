@@ -1,7 +1,8 @@
 // Backup starters (bylaw 16.5): reading members' posts in the board's "Conditional starters" thread,
-// and the lineup a team's week should end with. Shared by the daily job, which swaps the backups in,
-// and v2's Lineup tab; the rules are in docs/design.md. No lookbehind: v2 loads this on old iPhones.
+// and the lineup a team's week should end with, for the daily job, which swaps the backups in; the
+// rules are in docs/design.md. In site/, so no lookbehind (old iPhones).
 
+import {postText as decode} from "./contract-years.js";
 import {asArray} from "./mfl.js";
 
 export const THREAD_TITLE = "Conditional starters";
@@ -68,8 +69,9 @@ export function matchPlayer(phrase, players) {
     return {none: true};
 }
 
-// A post's text split where a member ends one request: a line, ";", or a sentence's "." (not an
-// initial's, as in "P. Washington")
+// A post's text split where a member ends one request: a line, ";", a sentence's "." (not an
+// initial's or a name's, as in "P. Washington", "St. Brown", "Harrison Jr."), or a second "if"
+const ABBREVIATION = /(?:^|[^A-Za-z])(?:st|jr|sr|mr)$/i;
 function clauses(text) {
     const out = [];
     let current = "";
@@ -83,14 +85,15 @@ function clauses(text) {
         const ch = text[i];
         if (ch === "\n" || ch === ";") {
             flush();
-        } else if (ch === "." && /\s/.test(text[i + 1] || " ") && /[A-Za-z]{2,}$/.test(current)) {
+        } else if (ch === "." && /\s/.test(text[i + 1] || " ") && /[A-Za-z]{2,}$/.test(current) && !ABBREVIATION.test(current)) {
             flush();
         } else {
             current += ch;
         }
     }
     flush();
-    return out;
+    // "If Puka is out start Parker, and if Kelce is out start Likely": a request each
+    return out.flatMap((clause) => clause.split(/[\s,]*(?:\band\s+)?(?=\bif\b)/i)).map((each) => each.trim()).filter(Boolean);
 }
 
 // "Week4:", "Week 8", "wk 9"
@@ -101,13 +104,13 @@ const START = /^.*\b(?:start|insert|play|use|sub(?:stitute)?|put in|swap in|plug
 const NO_BACKUP = /\bno\s+(?:backups?|conditionals?|conditional starters?)(?:\s+(?:for|on)\s+(.+))?/i;
 const REMOVED = /\b(?:backups?|conditional starters?)\s+(?:were\s+|are\s+)?(?:removed|cancel+ed|withdrawn)\b/i;
 
-// MFL's post HTML as text, its line breaks kept
+// MFL's post HTML as text, its line breaks kept, a tag a space ("<b>If</b>Puka")
 export function postText(html) {
-    return String(html).replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"")
-        .replace(/&#0?39;|&apos;/g, "'").replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-        .replace(/[ \t\u00a0]+/g, " ");
+    return decode(String(html).replace(/<(?!br\b)[^>]+>/gi, " ")).replace(/[ \t\u00a0]+/g, " ");
 }
+
+// a time as MFL's pages write it, "Sun Oct 25 7:27:31 p.m. CT 2026"
+const MFL_TIME = /[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{1,2}:\d{2}:\d{2} [ap]\.m\. [A-Z]{2} \d{4}/;
 
 // What a post asks, before names are matched: {week, weeks, requests: [{starter, backup}], removals:
 // [phrase], removeAll, unreadable: [clause]}. Text without an "if" (a reminder, "done") asks nothing;
@@ -151,7 +154,7 @@ export function readTopicPage(html) {
         }
         const plainHead = head[1].replace(/<[^>]+>/g, " ");
         const [posted, edited] = plainHead.split(/\bEdited\b/);
-        const time = (part) => (/[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{1,2}:\d{2}:\d{2} [ap]\.m\. [A-Z]{2} \d{4}/.exec(part || "") || [])[0] || null;
+        const time = (part) => (MFL_TIME.exec(part || "") || [])[0] || null;
         posts.push({franchiseId: team[1] === "0000" ? null : team[1], posted: time(posted), edited: time(edited), html: body[1]});
     }
     const pager = /<span class=['"]pln['"]>([\s\S]*?)<\/span>/i.exec(html);
@@ -159,14 +162,14 @@ export function readTopicPage(html) {
     return {posts, pages};
 }
 
-// "Smith, Geno NYJ QB" → {name, nfl, pos}
+// "Smith, Geno NYJ QB", "Bills, Buffalo BUF Def" → {name, nfl, pos}
 function lineupEntry(text) {
-    const match = /^(.+?)\s+([A-Z]{2,3}\*?)\s+([A-Z]{1,3})$/.exec(text.trim());
+    const match = /^(.+?)\s+([A-Z]{2,3}\*?)\s+([A-Z][A-Za-z]{0,3})$/.exec(text.trim());
     return match ? {name: match[1].trim(), nfl: match[2].replace("*", ""), pos: match[3]} : null;
 }
 
 // MFL's Lineup Details (`options?O=210&FRANCHISE=…&W=…`): every submission of a team's lineup for
-// the week, oldest first, failed ones too. `at` is MFL's time words.
+// the week, oldest first, failed ones too. `at` is MFL's time words; `unread`, a starter it couldn't read.
 export function readLineupDetails(html) {
     const table = /<table[^>]*class="report"[^>]*>([\s\S]*?)<\/table>/i.exec(html);
     if (!table || !/Lineup Submitted/i.test(table[1])) {
@@ -184,15 +187,18 @@ export function readLineupDetails(html) {
         // MFL's notes ("Reserved … after kickoff") follow a <br>, and a failure's reasons follow
         // "Error(s)"; then "Smith, Geno NYJ QB, Stafford, …": a name's own comma, then the list's
         const list = postText(raw[2].split(/<br\s*\/?>/i)[0]).replace(/\s+/g, " ").replace(/\s*Error\(s\)[\s\S]*$/i, "");
-        const parts = list.replace(/^\s*Lineup Submission Failed:\s*/i, "").split(",").map((part) => part.trim());
+        const parts = list.replace(/^\s*Lineup Submission Failed:\s*/i, "").split(",").map((part) => part.trim()).filter(Boolean);
+        let unread = parts.length % 2 === 1;
         for (let i = 0; i + 1 < parts.length; i += 2) {
             const entry = lineupEntry(`${parts[i]}, ${parts[i + 1]}`);
             if (entry) {
                 starters.push(entry);
+            } else {
+                unread = true;
             }
         }
         submissions.push({week: Number(cells[0]), commish: /\(C\)/.test(cells[1]), failed, starters,
-            at: (/[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{1,2}:\d{2}:\d{2} [ap]\.m\. [A-Z]{2} \d{4}/.exec(cells.slice(3).join(" ")) || [])[0] || null});
+            unread, at: (MFL_TIME.exec(cells.slice(3).join(" ")) || [])[0] || null});
     }
     return submissions;
 }
