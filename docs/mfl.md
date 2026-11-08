@@ -149,6 +149,8 @@ MFL documents little of this.
   a few minutes of posting: edits half a minute and a minute after got no mark, one at four minutes
   did (the clone, 7 Nov 2026). The edit form (`post_edit.pl`) also deletes; deleting a topic's only
   post removes the topic.
+- **The topic page** (`mb/topic_show.pl?bid=<season><league>&tid=<thread>`) has a `div.frm.pst` per
+  post, `frm pst new` for one the logged-in member hasn't read (the clone, 7 Nov 2026).
 - **The `messageBoard` import** (`SUBJECT` and `BODY` for a new topic, `THREAD` and `BODY` for a
   reply) works as the commissioner too; the post shows "Commissioner" (franchise 0000).
 

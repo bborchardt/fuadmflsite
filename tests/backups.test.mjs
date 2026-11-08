@@ -188,3 +188,8 @@ test("the backup first: \"start Parker if Puka is out\"", () => {
     assert.deepEqual(pairs("Week 9: start Parker Washington if Puka is out"), [["Puka", "Parker Washington"]]);
     assert.deepEqual(readRequests("start Parker if Puka gets a haircut").unreadable, ["if Puka gets a haircut"]);
 });
+
+test("a post the login hasn't read yet is read too", () => {
+    const unread = page("topic-conditional-starters.html").replace(/class=(['"])frm pst\1/, "class='frm pst new'");
+    assert.equal(readTopicPage(unread).posts.length, 5);
+});

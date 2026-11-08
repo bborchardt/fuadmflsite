@@ -157,7 +157,8 @@ export function readRequests(text) {
 // times in MFL's words, and its HTML. `pages`: the other pages' links, for a long topic.
 export function readTopicPage(html) {
     const posts = [];
-    const blocks = String(html).split(/<div class=['"]frm pst['"]/i).slice(1);
+    // a post the login hasn't read yet is "frm pst new"
+    const blocks = String(html).split(/<div class=['"]frm pst\b[^'"]*['"]/i).slice(1);
     for (const block of blocks) {
         const team = /F=(\d{4})&amp;O=01/.exec(block) || /F=(\d{4})&O=01/.exec(block);
         const head = /<td class="message">([\s\S]*?)<\/td>/i.exec(block);
