@@ -34,7 +34,9 @@ MFL documents little of this.
   The trade deadline's `start_time` is its week, `12`, not a time; its `end_time` is when trades
   reopen.
 - **Renewal:** MFL keeps past seasons' sites and copies home page messages forward. The league renews
-  in mid-March or later, never on a fixed date.
+  in mid-March or later, never on a fixed date; until then the next season's home page and exports
+  answer 404 (`/2027/home/48571`, `/2027/export?TYPE=league`, 8 Nov 2026). There's no league address
+  without the season (`/home/48571` is 404).
 
 ## Scores and standings
 

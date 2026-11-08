@@ -225,3 +225,12 @@ test("a manifest link already on the page is made ours, not followed by a second
     assert.equal(links.length, 1);
     assert.equal(links[0].getAttribute("href"), `blob:${ORIGIN}/1`);
 });
+
+test("a past season's page, once a newer season is known, offers the newer one", () => withStorage(async () => {
+    const year = new Date().getFullYear();
+    launch(year - 1, launchAt(year - 1), mfl({[year]: "site"}).fetchImpl);
+    await settle();
+    const browser = browserAt(`${ORIGIN}/${year - 1}/standings?L=48571`);
+    linkWebApp(page(), {context: {season: year - 1, leagueId: "48571"}, wordmark: "FUAD", iconBase: ICONS, browser});
+    assert.equal(JSON.parse(browser.blobs[0].text).start_url, `${ORIGIN}/${year}/home/48571?${LAUNCH}=1`);
+}));

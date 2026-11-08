@@ -40,8 +40,10 @@ function meta(doc, name, content) {
 }
 
 export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalThis}) {
+    // a past season's page, once a newer season is known, offers the newer one, so it can't take an
+    // installed app back a season
     const manifest = webAppManifest({
-        origin: browser.location.origin, season: context.season, leagueId: context.leagueId,
+        origin: browser.location.origin, season: Math.max(context.season, knownNewest(context.season) || 0), leagueId: context.leagueId,
         // not MFL's page title, which names the page too, so each page would offer another name
         name: wordmark, shortName: wordmark, iconBase
     });
@@ -64,7 +66,7 @@ export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalTh
     browser.addEventListener("beforeinstallprompt", (event) => event.preventDefault());
 }
 
-// MFL answers a season with no site with a 404 (or an error document, as the daily job reads it).
+// MFL answers a season with no site with a 404 (docs/mfl.md); anything else is no answer.
 // A newer season found is kept a year, as MFL keeps each season's site; none, a day, as the new one
 // appears at renewal, after the new year; and no answer (a refusal, perhaps to the page's own reads
 // at launch) an hour. So a launch asks MFL at most once an hour, and a renewal is seen a day late at
@@ -133,6 +135,7 @@ export function launchedApp({context, browser = globalThis, fetchImpl = mflFetch
     };
     ["pointerdown", "keydown"].forEach((type) => browser.addEventListener(type, use, {capture: true, once: true}));
     newestSeason({origin: url.origin, season: context.season, leagueId: context.leagueId, year, fetchImpl})
-        .then((newest) => used || goTo(newest));
+        .then((newest) => used || goTo(newest))
+        .catch((error) => console.warn("[fuad] couldn't go on to the newest season:", error));
     return false;
 }
