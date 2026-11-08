@@ -93,8 +93,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   whole host in the app, so the manifest is made in the page, as a blob: a file on Pages can't know
   the host or season. Its `id` names neither, so Android takes the next season's as the same app.
   Chrome's own install bar is held back, so a page in the browser looks as it did; its menu installs.
-  An iPhone's app keeps its own login and storage once added (copied from Safari when added), a beta
-  choice included.
+  An iPhone's app takes Safari's login when added but starts with empty storage, then keeps its own:
+  with v1 in the header, it opens v1 until the member joins the beta in the app, which then holds.
+  So the app is for members once v2 is the header's version.
 
 ## The daily job
 
