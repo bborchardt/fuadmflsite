@@ -3776,6 +3776,90 @@ body #fuad-home select {
     #fuad-lineup .fuad-lineup-ir { padding: 4px; }
 }
 
+/* ---- Lineup's backup starters (ui/lineup-backups.js), with the backupStarters setting ---- */
+
+/* phones: a starter's backup on a line of its own under his name */
+#fuad-lineup .fuad-lineup-row-backup { grid-template-rows: auto auto; }
+#fuad-lineup .fuad-lineup-row-backup .fuad-lineup-toggle { grid-row: 1 / span 2; }
+#fuad-lineup .fuad-lineup-row-backup > .fuad-backup { grid-column: 2 / span 2; grid-row: 2; justify-self: start; margin: 0 0 8px 2px; }
+
+#fuad-lineup .fuad-backup {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px dashed var(--fuad-grabber);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fuad-muted);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#fuad-lineup .fuad-backup b { margin-left: 0.3em; color: var(--fuad-text); }
+#fuad-lineup .fuad-backup-set { border-style: solid; border-color: var(--fuad-accent); color: var(--fuad-accent); }
+#fuad-lineup .fuad-backup-locked { border-style: solid; border-color: var(--fuad-locked); background: var(--fuad-quiet); color: var(--fuad-soft); cursor: default; }
+#fuad-lineup .fuad-backup svg { flex: none; margin-right: 6px; }
+#fuad-lineup .fuad-tag-backup { display: inline-flex; align-items: center; }
+#fuad-lineup .fuad-tag-backup svg { width: 12px; height: 12px; margin-right: 4px; }
+
+@media (hover: hover) {
+    #fuad-lineup button.fuad-backup:hover { border-color: var(--fuad-accent); color: var(--fuad-accent); }
+}
+
+@media (min-width: 48.01em) {
+    /* a Backup column after Player */
+    #fuad-lineup .fuad-lineup-grid-backups .fuad-lineup-line {
+        grid-template-columns: 40px minmax(200px, 300px) minmax(150px, 220px) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+    #fuad-lineup .fuad-lineup-grid-backups { min-width: 1060px; }
+    #fuad-lineup .fuad-lineup-backup .fuad-backup { min-height: 32px; padding: 0 10px; font-size: 13px; }
+}
+
+/* the picker: a bottom sheet on phones, a dialog on desktop; a tap picks and closes it */
+.fuad-backup-sheet { max-width: 480px; }
+.fuad-backup-sheet .fuad-tag { padding: 0 6px; border-radius: 5px; background: var(--fuad-quiet); color: var(--fuad-muted); font-size: 12px; font-weight: 700; }
+.fuad-backup-sheet .fuad-tag-bad { background: var(--fuad-bad-tint); color: var(--fuad-bad); }
+.fuad-backup-sheet .fuad-tag-caution { background: var(--fuad-caution-tint); color: var(--fuad-caution); }
+.fuad-backup-choices { display: flex; flex-direction: column; }
+
+.fuad-backup-choice {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    padding: 6px 8px 6px 4px;
+    border: 0;
+    border-top: 1px solid var(--fuad-rule);
+    border-radius: 0;
+    background: transparent;
+    color: var(--fuad-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fuad-backup-choice:disabled { cursor: default; }
+.fuad-backup-chosen { border-radius: 12px; background: var(--fuad-quiet); }
+.fuad-backup-chosen + .fuad-backup-choice { border-top-color: transparent; }
+.fuad-backup-mark { display: flex; justify-content: center; color: var(--fuad-accent); }
+.fuad-backup-mark svg { width: 20px; height: 20px; }
+.fuad-backup-who { display: flex; flex-direction: column; min-width: 0; }
+.fuad-backup-name { font-weight: 600; overflow-wrap: anywhere; }
+.fuad-backup-chosen .fuad-backup-name { color: var(--fuad-accent); }
+.fuad-backup-choice:disabled .fuad-backup-name { color: var(--fuad-muted); }
+.fuad-backup-why { font-size: 13px; color: var(--fuad-caution); }
+.fuad-backup-proj { font: 700 18px var(--fuad-display); font-variant-numeric: tabular-nums; color: var(--fuad-soft); }
+.fuad-layer .fuad-backup-group { margin: 14px 0 4px !important; font: 700 13px var(--fuad-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fuad-faint); }
+
+@media (hover: hover) {
+    .fuad-backup-choice:not(:disabled):hover .fuad-backup-name { color: var(--fuad-accent); }
+}
+
 /* ---- A message board topic (ui/topic.js): MFL's posts as cards ---- */
 
 /* MFL's topic bars and icon navigation; the script draws its own heading */

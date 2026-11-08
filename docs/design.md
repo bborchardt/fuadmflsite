@@ -265,6 +265,22 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   any reason; a backup must be on the bench, on his team's game-day roster, and keep the lineup
   within MFL's position ranges.
   The commissioner's posts and lineups count for no team.
+- **Lineup's backups** (v2, `ui/lineup-backups.js`, `ui/lineup-board.js`; on with the
+  `backupStarters` setting): each starter whose game is more than five minutes off, and whom someone
+  on the bench can back up, gets a "+ Backup" button, which opens the bench players who keep the
+  lineup within MFL's ranges with every pair out at once; Out, IR and Suspended players are listed but
+  can't be picked. The pairs are read as the job reads them, from the team's Lineup Details and the
+  thread. Save writes them in the lineup's Optional Message, in the same submission as the lineup, so
+  nothing goes on the board; it changes the message only when the backups changed, so a member's own
+  note stays otherwise. The message restates every pair, the locked ones too, so the week's latest
+  message has them all (Scores reads it), and takes back each unlocked pair the member dropped, which
+  an older message or a post may have made. Benching a starter or starting his backup sets the pair
+  aside: it isn't shown and still stands, and counts again if the lineup changes back, as the job takes
+  the lineup at the deadline. From its deadline a pair that counts shows locked and both players'
+  boxes are disabled (16.5.5); one past its deadline that the lineup MFL has sets aside isn't shown,
+  though the job restores the lineup if it was changed after the deadline. Save refuses backups that
+  no longer hold (locked since they were picked, now out, or too many at once), and reads them back
+  after, to check MFL kept them.
 - **Watch list** (v2's player popup, Moves › Add and Rosters › Players, `ui/watch.js`): MFL's own My
   Watch List, so it follows a member across devices and MFL's app, read with its export and changed with
   its import from the member's own page. A star in the popup changes it; a Watching chip filters Add's

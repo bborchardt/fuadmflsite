@@ -77,6 +77,6 @@ test("the week's injury report names what MFL's one-letter column can't", () => 
 });
 
 test("MFL's lineup names read as first name first", () => {
-    assert.deepEqual(readName("St. Brown, Amon-Ra DET WR"), {name: "Amon-Ra St. Brown", nfl: "DET", pos: "WR"});
-    assert.deepEqual(readName("Fairbairn, Ka'imi HOU PK"), {name: "Ka'imi Fairbairn", nfl: "HOU", pos: "PK"});
+    assert.deepEqual(readName("St. Brown, Amon-Ra DET WR"), {name: "Amon-Ra St. Brown", mflName: "St. Brown, Amon-Ra", nfl: "DET", pos: "WR"});
+    assert.deepEqual(readName("Fairbairn, Ka'imi HOU PK"), {name: "Ka'imi Fairbairn", mflName: "Fairbairn, Ka'imi", nfl: "HOU", pos: "PK"});
 });
