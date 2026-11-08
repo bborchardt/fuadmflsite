@@ -29,6 +29,11 @@ test("a name matches the team's player by full name, initial, surname, first nam
     assert.deepEqual(named("Washington"), ["2", "3"]);
     assert.deepEqual(named("Allen"), ["5", "6"]);
     assert.equal(named("Lamar Jackson"), null);
+    // a part name with another name beside it isn't a guess
+    assert.equal(named("Malik Nabers"), null);
+    assert.equal(named("Malik Washington"), "3");
+    assert.equal(named("Parker Washington"), "2");
+    assert.equal(named("Josh Jacobs"), null);
 });
 
 test("the live thread's posts: requests with the week when stated, and reminders and replies ask nothing", () => {
@@ -168,4 +173,12 @@ test("Lineup Details: a defense read, a starter it can't read marks the submissi
     const [read] = readLineupDetails(page("Allen, Josh BUF QB, Bills, Buffalo BUF Def"));
     assert.deepEqual([read.starters.map((each) => each.pos), read.unread], [["QB", "Def"], false]);
     assert.equal(readLineupDetails(page("Allen, Josh BUF QB, Bills, Buffalo"))[0].unread, true);
+});
+
+test("restoring a locked pair leaves an earlier run's swap in", () => {
+    // w4 already in for the inactive w1; q1 benched for r3 after his pair's deadline
+    const final = ["q2", "r1", "r2", "r3", "w4", "w2", "w3", "t1", "t2", "k1"];
+    const pairs = [{starter: "w1", backup: "w4", starting}, {starter: "q1", backup: "q3", starting}];
+    const result = weekLineup({pairs, final, out: new Set(["w1"]), positionOf, rules, kickoff: () => 0});
+    assert.deepEqual([[...result.lineup].sort(), result.flags], [["k1", "q1", "q2", "r1", "r2", "t1", "t2", "w2", "w3", "w4"], []]);
 });

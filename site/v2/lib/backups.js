@@ -12,7 +12,7 @@ export const DEADLINE_BEFORE_KICKOFF = 5 * 60;
 const SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 // words a member puts beside a name: "Parker Washington WR", "Adams (LAR)"
 const EXTRA = new Set(["qb", "rb", "wr", "te", "pk", "k", "please", "pls", "instead", "thanks", "thx", "then", "in", "his", "her", "their",
-    "place", "spot", "for", "him", "the", "lineup", "starting", "start", "at", "flex"]);
+    "place", "spot", "for", "him", "the", "lineup", "starting", "start", "at", "flex", "and", "or", "ok", "is", "out", "if", "bench", "team"]);
 
 export function normalize(text) {
     return String(text).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
@@ -44,17 +44,22 @@ function distance(a, b) {
 const words = (text) => ` ${text} `;
 const has = (text, phrase) => Boolean(phrase) && words(text).includes(words(phrase));
 
+const near = (word, f) => word.length >= 4 && f.surname.split(" ").some((part) => part.length >= 4 && distance(word, part) <= (part.length >= 8 ? 2 : 1));
+
 // The team's player a phrase names: by full name, then "P. Washington", surname, first name ("Puka"),
-// then a surname a letter or two off ("Chabonnet"). `{player}`, `{ambiguous: [...]}` or `{none: true}`.
+// then a surname a letter or two off ("Chabonnet"); a part name only when the phrase has no other
+// name in it ("Malik Nabers" isn't Malik Washington). `{player}`, `{ambiguous: [...]}` or `{none: true}`.
 export function matchPlayer(phrase, players) {
     const text = normalize(phrase);
+    const named = text.split(" ").filter((word) => word && !EXTRA.has(word) && !SUFFIXES.has(word) && !/^\d+$/.test(word));
+    const alone = (f) => named.every((word) => f.surname.split(" ").includes(word) || f.given.split(" ").includes(word)
+        || word === f.given[0] || near(word, f));
     const levels = [
         (f) => has(text, f.full),
         (f) => has(text, f.initial),
-        (f) => has(text, f.surname),
-        (f) => Boolean(f.given) && has(text, f.given),
-        (f) => text.split(" ").filter((word) => !EXTRA.has(word) && word.length >= 4)
-            .some((word) => f.surname.split(" ").some((part) => part.length >= 4 && distance(word, part) <= (part.length >= 8 ? 2 : 1)))
+        (f) => has(text, f.surname) && alone(f),
+        (f) => Boolean(f.given) && has(text, f.given) && alone(f),
+        (f) => named.some((word) => near(word, f)) && alone(f)
     ];
     for (const level of levels) {
         const found = players.filter((player) => level(forms(player.name)));
@@ -110,7 +115,7 @@ export function postText(html) {
 }
 
 // a time as MFL's pages write it, "Sun Oct 25 7:27:31 p.m. CT 2026"
-const MFL_TIME = /[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{1,2}:\d{2}:\d{2} [ap]\.m\. [A-Z]{2} \d{4}/;
+const MFL_TIME = /[A-Z][a-z]{2} [A-Z][a-z]{2} \d{1,2} \d{1,2}:\d{2}:\d{2} [ap]\.m\. [A-Z]+ \d{4}/;
 
 // What a post asks, before names are matched: {week, weeks, requests: [{starter, backup}], removals:
 // [phrase], removeAll, unreadable: [clause]}. Text without an "if" (a reminder, "done") asks nothing;
@@ -292,6 +297,9 @@ export function weekLineup({pairs, final, out, positionOf, rules, kickoff}) {
         flags.push({pair, why: "same-backup"});
     }
     const usable = active.filter((pair) => !shared.has(pair.backup));
+    // swaps already in the lineup (an earlier run's), which a restore leaves alone
+    const swapped = usable.filter((pair) => !lineup.includes(pair.starter) && lineup.includes(pair.backup) && out.has(pair.starter) && !out.has(pair.backup));
+    const kept = new Set(swapped.flatMap((pair) => [pair.starter, pair.backup]));
     for (const pair of usable) {
         // a locked pair changed afterwards: back as it was, the change's other player undone
         const starterGone = !lineup.includes(pair.starter);
@@ -306,7 +314,7 @@ export function weekLineup({pairs, final, out, positionOf, rules, kickoff}) {
         }
         if (next.length > lineup.length) {
             // the starter's place went to someone added after the deadline
-            const added = next.filter((id) => !pair.starting.includes(id) && id !== pair.starter);
+            const added = next.filter((id) => !pair.starting.includes(id) && id !== pair.starter && !kept.has(id));
             const fitting = added.filter((id) => fits(next.filter((each) => each !== id).map(positionOf), rules));
             if (fitting.length !== 1) {
                 flags.push({pair, why: "cant-restore"});
@@ -314,7 +322,7 @@ export function weekLineup({pairs, final, out, positionOf, rules, kickoff}) {
             }
             next = next.filter((id) => id !== fitting[0]);
         } else if (next.length < lineup.length) {
-            const removed = pair.starting.filter((id) => !next.includes(id) && id !== pair.backup);
+            const removed = pair.starting.filter((id) => !next.includes(id) && id !== pair.backup && !kept.has(id));
             const fitting = removed.filter((id) => fits([...next, id].map(positionOf), rules));
             if (fitting.length !== 1) {
                 flags.push({pair, why: "cant-restore"});
