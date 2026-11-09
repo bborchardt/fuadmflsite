@@ -3456,11 +3456,23 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-player-table .fuad-col-years { width: 72px; }
 
-#fuad-rosters .fuad-player-table .fuad-col-owner { width: 30%; }
+/* the owner shares what's left with the name, so neither is squeezed */
+#fuad-rosters .fuad-player-table .fuad-col-owner { width: auto; }
 
 #fuad-rosters .fuad-player-table td { overflow-wrap: break-word; }
 
 @media (max-width: 48em) {
+    #fuad-rosters .fuad-player-table .fuad-col-projected,
+    #fuad-rosters .fuad-player-table .fuad-col-points,
+    #fuad-rosters .fuad-player-table .fuad-col-salary { width: 60px; }
+}
+
+/* past a phone's width, every column leaves a name under 140px until 912px (an iPhone's app turned
+   sideways, an iPad upright): until then the table is a phone's, the position, team, contract and
+   owner under each name */
+@media (min-width: 48.01em) and (max-width: 57em) {
+    #fuad-rosters .fuad-player-table .fuad-wide { display: none; }
+    #fuad-rosters .fuad-player-table .fuad-phone-only { display: block !important; }
     #fuad-rosters .fuad-player-table .fuad-col-projected,
     #fuad-rosters .fuad-player-table .fuad-col-points,
     #fuad-rosters .fuad-player-table .fuad-col-salary { width: 60px; }

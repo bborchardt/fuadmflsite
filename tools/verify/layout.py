@@ -5,7 +5,8 @@
 
 Each screen loads as screens.py loads it (its saved pages, the clock fixed) in WebKit, which is what
 iPhones draw with, at each of WIDTHS: a phone, just past where v2's desktop layout starts, an iPhone
-turned sideways in the home screen app (its notch padding added, as iOS gives it), and a desktop.
+turned sideways in the home screen app (its notch padding added, as iOS gives it), an iPad
+turned sideways or a small laptop, and a desktop.
 Then it measures:
 
 squeezed  text wrapped to under four characters a line ("Final" a letter a line)
@@ -36,6 +37,7 @@ WIDTHS = {
     "780": (780, 1000, (1000, 780), False),
     "860": (860, 1000, (1000, 860), False),
     "app-sideways": (874, 402, (402, 874), True),
+    "1024": (1024, 768, (768, 1024), False),
     "desktop": (1280, 900, (900, 1280), False),
 }
 # the app's padding turned sideways (fuad.css .fuad-app): iOS's insets, which a desktop browser gives as 0;
