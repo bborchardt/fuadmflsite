@@ -3015,8 +3015,9 @@ body #fuad-home select {
 #fuad-league .fuad-position-values,
 #fuad-rosters .fuad-position-values { display: none; }
 
-/* phones: the values listed under each bar, since the segments are too narrow to label */
-@media (max-width: 48em) {
+/* up to 912px (phones, an iPhone's app turned sideways): the values listed under each bar, since the
+   segments are too narrow to label; past a phone's width they cut numbers off ("3" of "32") */
+@media (max-width: 57em) {
     #fuad-league .fuad-position-rows,
     #fuad-rosters .fuad-position-rows { grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; }
     #fuad-league .fuad-position-name,
@@ -3501,8 +3502,8 @@ body #fuad-home select {
 
 #fuad-league .fuad-power-row { padding-left: 0; padding-right: 0; }
 
-/* the chart's rows: the name and total on one line (phones), or name | bar | total (desktop) */
-@media (min-width: 48.01em) {
+/* the chart's rows: the name and total on one line (up to 912px), or name | bar | total (wider) */
+@media (min-width: 57.01em) {
     #fuad-league .fuad-position-rows { grid-auto-flow: row dense; }
     #fuad-league .fuad-position-name { grid-column: 1; }
     #fuad-league .fuad-stack { grid-column: 2; }
