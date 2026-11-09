@@ -38,10 +38,11 @@ WIDTHS = {
     "app-sideways": (874, 402, (402, 874), True),
     "desktop": (1280, 900, (900, 1280), False),
 }
-# the app's padding turned sideways (fuad.css .fuad-app): iOS's insets, which a desktop browser gives as 0
+# the app's padding turned sideways (fuad.css .fuad-app): iOS's insets, which a desktop browser gives as 0;
+# upright there are none
 APP = """(() => { document.documentElement.classList.add('fuad-app');
     const style = document.createElement('style');
-    style.textContent = '.fuad-app body { padding-left: 62px !important; padding-right: 62px !important; }';
+    style.textContent = '@media (orientation: landscape) { .fuad-app body { padding-left: 62px !important; padding-right: 62px !important; } }';
     document.head.append(style); })()"""
 # a state a screen opens into, by the control that opens it
 STATES = {
@@ -50,8 +51,10 @@ STATES = {
     "rosters": [("player popup", "#fuad-rosters [data-player]")],
 }
 
-MEASURE = r"""(wide) => {
-    const roots = [...document.querySelectorAll('#fuad-frame, [id^="fuad-"]')].filter((el) => !el.parentElement.closest('[id^="fuad-"]'));
+ROOTS = """[...document.querySelectorAll('#fuad-frame, [id^="fuad-"]')].filter((el) => !el.parentElement.closest('[id^="fuad-"]'))"""
+
+MEASURE = r"""() => {
+    const roots = """ + ROOTS + r""";
     const shown = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el);
         return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.closest('[hidden], .fuad-hidden'); };
     const name = (el) => {
@@ -104,7 +107,7 @@ MEASURE = r"""(wide) => {
 
 # every shown element of v2's, by its place in the page: its height, its name, and where what's inside it ends
 HEIGHTS = r"""() => { const out = {}; let i = 0;
-    for (const root of document.querySelectorAll('#fuad-frame, [id^="fuad-"]')) for (const el of [root, ...root.querySelectorAll('*')]) {
+    for (const root of """ + ROOTS + r""") for (const el of [root, ...root.querySelectorAll('*')]) {
         const r = el.getBoundingClientRect();
         if (r.height > 0) out[i] = [Math.round(r.height), el.tagName.toLowerCase() + [...el.classList].slice(0, 2).map((c) => '.' + c).join(''), i + el.querySelectorAll('*').length];
         i++; }
@@ -125,7 +128,14 @@ def load(browser, site, name, size, app):
 
 
 def measure(job):
-    ref, name, width, shots = job
+    """one screen at one width, as findings; a screen that doesn't load is one"""
+    try:
+        return measure_screen(*job)
+    except Exception as error:
+        return [(job[1], job[2], None, "failed", str(error).splitlines()[0])]
+
+
+def measure_screen(ref, name, width, shots):
     w, h, first, app = WIDTHS[width]
     site = screens.Site(ref)
     out = []
@@ -134,15 +144,15 @@ def measure(job):
         for state, css in [(None, None)] + STATES.get(name, []):
             context, page = load(browser, site, name, (w, h), app)
             if css:
-                target = page.locator(css).first
-                if not target.count():
-                    out.append((name, width, state, "missing", f"nothing to open it with ({css})"))
+                try:
+                    page.locator(css).first.click(timeout=2000)
+                except Exception as error:
+                    out.append((name, width, state, "missing", f"couldn't open it with {css}: {str(error).splitlines()[0]}"))
                     context.close()
                     continue
-                target.click(timeout=2000)
                 screens.settle(page)
                 page.wait_for_timeout(300)
-            found = page.evaluate(MEASURE, w >= 1000)
+            found = page.evaluate(MEASURE)
             out += [(name, width, state, kind, what) for kind, what in dict.fromkeys(map(tuple, found))]
             if shots and found:
                 page.screenshot(path=str(Path(shots) / f"{name}-{width}{'-' + state.replace(' ', '-') if state else ''}.png"), full_page=True)
@@ -150,7 +160,9 @@ def measure(job):
         # turned: laid out the other way round first, then at this size, against the same page laid out afresh
         context, page = load(browser, site, name, first, app)
         page.set_viewport_size({"width": w, "height": h})
-        page.wait_for_timeout(500)
+        # a view that redraws for the new width (Scores' lineups) has done so, so only layout differs
+        screens.settle(page)
+        page.wait_for_timeout(300)
         turned = page.evaluate(HEIGHTS)
         page.evaluate(RELAYOUT)
         fresh = page.evaluate(HEIGHTS)
