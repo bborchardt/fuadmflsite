@@ -935,6 +935,27 @@ test("backup starters: a post naming no week, after a pair's deadline, is flagge
     assert.deepEqual(posted(result, "lineup"), []);
 });
 
+test("backup starters: what keeps a post from counting, or part of it, is flagged", () => {
+    const flags = (post) => {
+        const result = run({scenario: backups({post}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+        assert.equal(result.status, 1, result.stdout);
+        return {flags: result.entries.filter((entry) => entry.startsWith("Backup starters: Beta, week 6: ")), lineup: posted(result, "lineup")};
+    };
+    const label = "the post of Wed Oct 14 9:00:00 a.m. CT 2026";
+    // an "if" it can't read: flagged, the rest still counts
+    const unreadable = flags("If Tyler Warren is out, start Josh Allen<br>If B0 Player maybe");
+    assert.deepEqual(unreadable.flags, [`Backup starters: Beta, week 6: couldn't read "If B0 Player maybe" in ${label}.`]);
+    assert.equal(unreadable.lineup.length, 1);
+    // two weeks: none of it counts
+    const two = flags("Week 6 and week 7: If Tyler Warren is out, start Josh Allen");
+    assert.deepEqual(two.flags, [`Backup starters: Beta, week 6: ${label} names weeks 6 and 7.`]);
+    assert.deepEqual(two.lineup, []);
+    // a week the season doesn't have: taken as the week it was posted
+    const bad = flags("Week 25: If Tyler Warren is out, start Josh Allen");
+    assert.deepEqual(bad.flags, [`Backup starters: Beta, week 6: ${label} names week 25, which the season doesn't have; it was taken as week 6's.`]);
+    assert.equal(bad.lineup.length, 1);
+});
+
 test("backup starters: the season's first run starts with this week, earlier ones left as they are", () => {
     const result = run({scenario: backups(), env: {...LOGIN, BACKUP_STARTERS: "apply"}});
     assert.equal(result.status, 0, result.stdout);

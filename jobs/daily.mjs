@@ -56,8 +56,8 @@ const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.j
 const {mflImport: sendImport} = await import("./mfl-import.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
-const {DEADLINE_BEFORE_KICKOFF, THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, normalize, postText: boardText, readLineupDetails, readRequests, readTopicPage,
-    standingPairs, weekLineup} = await lib("backups.js");
+const {THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, namedWeek, normalize, pairDeadline, postAsks, postWeek, readLineupDetails, readTopicPage,
+    sourceRequests, standingPairs, weekLineup} = await lib("backups.js");
 const {mflTime} = await lib("zone.js");
 const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcFields, changeText, weekStatuses} =
     await import("./backup-starters.mjs");
@@ -726,21 +726,16 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
         needsAttention(`Backup starters: the time of ${teamNames.get(post.franchiseId) || post.franchiseId}'s post of ${post.posted} couldn't be read, so it wasn't.`);
     }
     for (const post of posts.filter((each) => each.franchiseId && each.at && each.postedAt)) {
-        const asks = readRequests(boardText(post.html));
+        const asks = postAsks(post);
         if (!asks.week && post.at <= settledUntil) {
             continue;
         }
-        const named = asks.week >= 1 && asks.week <= championship ? asks.week : null;
-        let week = named || await weekOf(post.postedAt);
-        // an old post edited for a later week: the commissioner's to read
-        let editedLate = false;
-        if (!named && post.at !== post.postedAt) {
-            const editWeek = await weekOf(post.at);
-            editedLate = editWeek !== week;
-            week = editWeek;
-        }
+        const named = namedWeek(asks, championship);
+        const postedWeek = named ? null : await weekOf(post.postedAt);
+        const editedWeek = named || post.at === post.postedAt ? postedWeek : await weekOf(post.at);
+        const {week, badWeek, editedLate} = postWeek(asks, {postedWeek, editedWeek}, championship);
         if (week && !done.has(week)) {
-            byWeek.set(week, [...(byWeek.get(week) || []), {...post, asks, badWeek: Boolean(asks.week && !named), editedLate}]);
+            byWeek.set(week, [...(byWeek.get(week) || []), {...post, asks, badWeek, editedLate}]);
         }
     }
     const rules = lineupRules(league);
@@ -826,7 +821,6 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                 const flag = (why) => problems.push(`${name}, week ${week}: ${why}`);
                 const roster = asArray((rostersThen.find((each) => each.id === team) || {}).player)
                     .map((entry) => ({id: entry.id, name: (playerNames.get(entry.id) || {name: ""}).name}));
-                const requests = [];
                 const who = (phrase, source) => {
                     const found = matchPlayer(phrase, roster);
                     if (found.player) {
@@ -840,44 +834,13 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                     flag(`couldn't tell who "${phrase.trim()}" is in ${source.label}${found.ambiguous ? ` (${found.ambiguous.map((player) => displayName(player.name)).join(" or ")})` : ""}`);
                     return null;
                 };
-                for (const source of teamSources) {
-                    const {asks} = source;
-                    if (source.editedLate) {
-                        flag(`the post of ${source.posted} was edited ${source.edited}, after its week; it wasn't read for week ${week}, as a new week's backups go in a new post`);
-                        continue;
-                    }
-                    if (source.badWeek) {
-                        flag(`${source.label} names week ${asks.week}, which the season doesn't have; it was taken as week ${week}'s`);
-                    }
-                    if (asks.weeks.length > 1) {
-                        flag(`${source.label} names weeks ${asks.weeks.join(" and ")}`);
-                        continue;
-                    }
-                    for (const clause of asks.unreadable) {
-                        flag(`couldn't read "${clause}" in ${source.label}`);
-                    }
-                    for (const ask of asks.requests) {
-                        const starter = who(ask.starter, source);
-                        const backup = who(ask.backup, source);
-                        if (starter && backup) {
-                            requests.push({at: source.at, starter, backup, source});
-                        }
-                    }
-                    for (const phrase of asks.removals) {
-                        const starter = who(phrase, source);
-                        if (starter) {
-                            requests.push({at: source.at, starter, remove: true});
-                        }
-                    }
-                    if (asks.removeAll) {
-                        requests.push({at: source.at, removeAll: true});
-                    }
-                }
-                const deadline = (starter, backup) => {
-                    const [a, b] = [kickoffOf(starter), kickoffOf(backup)];
-                    return a && b ? Math.min(a, b) - DEADLINE_BEFORE_KICKOFF : null;
-                };
-                const {pairs, late} = standingPairs(requests, deadline);
+                const requests = sourceRequests(teamSources, who, (why, source, clause) => flag({
+                    "edited-late": () => `the post of ${source.posted} was edited ${source.edited}, after its week; it wasn't read for week ${week}, as a new week's backups go in a new post`,
+                    "bad-week": () => `${source.label} names week ${source.asks.week}, which the season doesn't have; it was taken as week ${week}'s`,
+                    "weeks": () => `${source.label} names weeks ${source.asks.weeks.join(" and ")}`,
+                    "unreadable": () => `couldn't read "${clause}" in ${source.label}`
+                }[why]()));
+                const {pairs, late} = standingPairs(requests, pairDeadline(kickoffOf));
                 // a message restating every pair restates the locked ones too: those change nothing
                 const restated = (request) => pairs.some((pair) => pair.starter === request.starter && pair.backup === request.backup);
                 for (const request of late.filter((each) => each.backup && !restated(each))) {

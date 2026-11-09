@@ -1,7 +1,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {fits, lineupAt, lineupRules, matchPlayer, postText, readLineupDetails, readRequests, readTopicPage, standingPairs, weekLineup}
+import {DEADLINE_BEFORE_KICKOFF, fits, lineupAt, lineupRules, matchPlayer, namedWeek, pairDeadline, postAsks, postText, postWeek, readLineupDetails, readRequests, readTopicPage,
+    sourceRequests, standingPairs, weekLineup}
     from "../site/v2/lib/backups.js";
 
 const page = (name) => readFileSync(new URL(`./fixtures/backups/${name}`, import.meta.url), "utf8");
@@ -201,4 +202,41 @@ test("the backup first: \"start Parker if Puka is out\"", () => {
 test("a post the login hasn't read yet is read too", () => {
     const unread = page("topic-conditional-starters.html").replace(/class=(['"])frm pst\1/, "class='frm pst new'");
     assert.equal(readTopicPage(unread).posts.length, 5);
+});
+
+test("a pair's deadline: five minutes before the earlier kickoff, none without both games", () => {
+    const kickoffs = {a: 1000, b: 4000};
+    const deadline = pairDeadline((id) => kickoffs[id] || null);
+    assert.equal(deadline("a", "b"), 1000 - DEADLINE_BEFORE_KICKOFF);
+    assert.equal(deadline("b", "a"), 1000 - DEADLINE_BEFORE_KICKOFF);
+    assert.equal(deadline("a", "c"), null);
+});
+
+test("a post's week: the one it names, else when it was posted, an edit into another week counting for none", () => {
+    const asks = (text) => readRequests(text);
+    assert.equal(namedWeek(asks("Week 6: if Puka is out start Parker"), 17), 6);
+    assert.equal(namedWeek(asks("Week 25: if Puka is out start Parker"), 17), null);
+    assert.deepEqual(postWeek(asks("Week 6: if Puka is out start Parker"), {}, 17), {week: 6, badWeek: false, editedLate: false});
+    assert.deepEqual(postWeek(asks("if Puka is out start Parker"), {postedWeek: 7, editedWeek: 7}, 17), {week: 7, badWeek: false, editedLate: false});
+    assert.deepEqual(postWeek(asks("Week 25: if Puka is out start Parker"), {postedWeek: 7, editedWeek: 7}, 17), {week: 7, badWeek: true, editedLate: false});
+    assert.deepEqual(postWeek(asks("if Puka is out start Parker"), {postedWeek: 7, editedWeek: 8}, 17), {week: 8, badWeek: false, editedLate: true});
+});
+
+test("a team's requests from its sources, and what keeps one from counting, in order", () => {
+    const who = (phrase) => (matchPlayer(phrase, roster).player || {}).id || null;
+    const heard = [];
+    const flag = (why, source, clause) => heard.push(clause ? [why, source.at, clause] : [why, source.at]);
+    const source = (at, text, extra = {}) => ({at, asks: postAsks({html: text}), ...extra});
+    const requests = sourceRequests([
+        source(1, "If Puka is out start Parker Washington<br>If Zach maybe"),
+        source(2, "Week 6 and week 7: if Puka is out start Malik Washington"),
+        source(3, "if Puka is out start Malik Washington", {editedLate: true}),
+        source(4, "No backup for Puka. Backups removed", {badWeek: true})
+    ], who, flag);
+    assert.deepEqual(requests.map(({at, starter, backup, remove, removeAll}) => ({at, starter, backup, remove, removeAll})), [
+        {at: 1, starter: "1", backup: "2", remove: undefined, removeAll: undefined},
+        {at: 4, starter: "1", backup: undefined, remove: true, removeAll: undefined},
+        {at: 4, starter: undefined, backup: undefined, remove: undefined, removeAll: true}
+    ]);
+    assert.deepEqual(heard, [["unreadable", 1, "If Zach maybe"], ["weeks", 2], ["edited-late", 3], ["bad-week", 4]]);
 });

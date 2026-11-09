@@ -309,6 +309,74 @@ export function backupMessages(submissions, week) {
     return found;
 }
 
+// What a post on the thread asks, read the same for Lineup, Scores and the job
+export const postAsks = (post) => readRequests(postText(post.html));
+
+// a pair's deadline (16.5.4): five minutes before the earlier of its players' kickoffs, or null when
+// either has no game; `kickoffOf(id)`, in seconds
+export const pairDeadline = (kickoffOf) => (starter, backup) => {
+    const [a, b] = [kickoffOf(starter), kickoffOf(backup)];
+    return a && b ? Math.min(a, b) - DEADLINE_BEFORE_KICKOFF : null;
+};
+
+// the week a post names, if the season has it
+export const namedWeek = (asks, championship) => (asks.week >= 1 && asks.week <= championship ? asks.week : null);
+
+// The week a post's requests are for: the one it names, else the one it was posted in. One naming a
+// week the season doesn't have is `badWeek`, taken as the week it was posted; one an edit moved into
+// another week is `editedLate`, and counts for none, as a new week's backups go in a new post.
+// `postedWeek`, `editedWeek`: the weeks whose games were still to come when it was posted and last
+// edited (not needed for a post naming its week).
+export function postWeek(asks, {postedWeek, editedWeek}, championship) {
+    const named = namedWeek(asks, championship);
+    if (named) {
+        return {week: named, badWeek: false, editedLate: false};
+    }
+    return {week: editedWeek, badWeek: Boolean(asks.week), editedLate: editedWeek !== postedWeek};
+}
+
+// The requests a team's sources make, for standingPairs. A source: {at, asks}, a post's also with
+// `editedLate`. `who(phrase, source)`: the player's id, or null. `flag(why, source, clause)` hears
+// what keeps a source, or part of it, from counting: "edited-late", "bad-week" (counted, as its
+// posted week's), "weeks" (it names more than one) and "unreadable" (each clause).
+export function sourceRequests(sources, who, flag = () => {}) {
+    const requests = [];
+    for (const source of sources) {
+        const {asks} = source;
+        if (source.editedLate) {
+            flag("edited-late", source);
+            continue;
+        }
+        if (source.badWeek) {
+            flag("bad-week", source);
+        }
+        if (asks.weeks.length > 1) {
+            flag("weeks", source);
+            continue;
+        }
+        for (const clause of asks.unreadable) {
+            flag("unreadable", source, clause);
+        }
+        for (const ask of asks.requests) {
+            const starter = who(ask.starter, source);
+            const backup = who(ask.backup, source);
+            if (starter && backup) {
+                requests.push({at: source.at, starter, backup, source});
+            }
+        }
+        for (const phrase of asks.removals) {
+            const starter = who(phrase, source);
+            if (starter) {
+                requests.push({at: source.at, starter, remove: true, source});
+            }
+        }
+        if (asks.removeAll) {
+            requests.push({at: source.at, removeAll: true, source});
+        }
+    }
+    return requests;
+}
+
 // The pair standing for each starter: per starter, the latest request before the deadline of the
 // pair it would set and of the one it replaces (16.5.5 locks a pair at its deadline). `requests`:
 // [{at, starter, backup}] or [{at, starter, remove: true}] or [{at, removeAll: true}], any order.

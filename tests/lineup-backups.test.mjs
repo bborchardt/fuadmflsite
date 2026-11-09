@@ -80,6 +80,15 @@ test("the team's pairs for the week: its own posts naming the week, or made duri
     assert.deepEqual(again.pairs.map((pair) => pair.backup), ["w4"]);
 });
 
+test("a post over several lines reads line by line, as the job reads it", () => {
+    const posts = [post("0001", "If A.J. Brown is out, start Tim Patrick<br>Chris Olave is fine", SAT)];
+    const team = teamBackups(posts, [], {team: "0001", week: 9, page, facts});
+    assert.deepEqual(team.pairs.map((pair) => [pair.starter, pair.backup]), [["w1", "w3"]]);
+    // naming two weeks, it counts for neither
+    const two = teamBackups([post("0001", "Week 9 and week 10: if A.J. Brown is out, start Tim Patrick", SAT)], [], {team: "0001", week: 9, page, facts});
+    assert.deepEqual(two.pairs, []);
+});
+
 test("the team's pairs from its lineups' messages and its posts, the latest request standing", () => {
     const lineups = [
         lineup("Week 9: If A.J. Brown is out, start Tim Patrick.", 0),

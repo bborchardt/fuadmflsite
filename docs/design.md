@@ -295,7 +295,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   `backupStarters` setting): each starter whose game is more than five minutes off, and whom someone
   on the bench can back up, gets a "+ Backup" button, which opens the bench players who keep the
   lineup within MFL's ranges with every pair out at once; Out, IR and Suspended players are listed but
-  can't be picked. The pairs are read as the job reads them, from the team's Lineup Details and the
+  can't be picked. The pairs are read as the job reads them, by the same code in `lib/backups.js`, from the team's Lineup Details and the
   thread. Save writes them in the lineup's Optional Message, in the same submission as the lineup, so
   nothing goes on the board; it changes the message only when the backups changed, so a member's own
   note stays otherwise. The message restates every pair, the locked ones too, so the week's latest
