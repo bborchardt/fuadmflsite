@@ -56,9 +56,10 @@ const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.j
 const {mflImport: sendImport} = await import("./mfl-import.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
-const {THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, namedWeek, normalize, pairDeadline, postAsks, postWeek, readLineupDetails, readTopicPage,
+const {THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, namedWeek, pairDeadline, postAsks, postWeek, readLineupDetails, readTopicPage,
     sourceRequests, standingPairs, weekLineup} = await lib("backups.js");
 const {mflTime} = await lib("zone.js");
+const {normalize} = await lib("names.js");
 const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcFields, sameLineup, startersIn, teamChange, weekFinder, weekStatuses} =
     await import("./backup-starters.mjs");
 const {mflForm} = await import("./mfl-form.mjs");
