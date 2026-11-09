@@ -828,7 +828,7 @@ body .fuad-layer h2, body .fuad-layer h3 { text-align: left; }
 #fuad-preview {
     position: fixed;
     left: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(12px + var(--fuad-home-bar));
     z-index: 10000;
     padding: 8px 12px;
     border-radius: 10px;
@@ -1081,7 +1081,7 @@ body [tabindex]:focus-visible {
         z-index: 9000;
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+        padding: 6px 4px calc(6px + var(--fuad-home-bar));
         background: var(--fuad-page);
         border-top: 1px solid var(--fuad-hairline);
     }
@@ -1102,10 +1102,13 @@ body [tabindex]:focus-visible {
        fill that marks the current section and view elsewhere */
     .fuad-sections-bottom a[aria-current="page"] { margin: 0 3px; border-radius: 16px; background: var(--fuad-pill); color: var(--fuad-accent) !important; }
 
-    .fuad-framed body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+    .fuad-framed body { padding-bottom: calc(72px + var(--fuad-home-bar)); }
 
-    .fuad-framed #fuad-preview { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+    .fuad-framed #fuad-preview { bottom: calc(76px + var(--fuad-home-bar)); }
 }
+
+/* the room kept clear of a phone's home bar, under the bottom tabs and whatever sits on them */
+:root { --fuad-home-bar: env(safe-area-inset-bottom, 0px); }
 
 /* an iPhone's home screen app, drawn to the screen's edges (ui/web-app.js): below the status bar, and
    24px more, past the blur iOS 26 fades in below it (min() makes that 0 where there's no inset, as
@@ -1118,7 +1121,10 @@ body [tabindex]:focus-visible {
 
 .fuad-app .fuad-drawer { padding-top: env(safe-area-inset-top, 0px); }
 
-.fuad-app .fuad-drawer-body { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+/* the home bar's own room does what the tabs' bottom padding does in Safari, so less of it */
+html.fuad-app { --fuad-home-bar: max(0px, env(safe-area-inset-bottom, 0px) - 6px); }
+
+.fuad-app .fuad-drawer-body { padding-bottom: calc(24px + var(--fuad-home-bar)); }
 
 .fuad-commish #fuad-frame { border-top: 4px solid var(--fuad-accent); }
 
@@ -1846,7 +1852,7 @@ body .fuad-load textarea {
     .fuad-popup {
         min-height: 100%;
         gap: 18px;
-        padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+        padding: 10px 16px calc(24px + var(--fuad-home-bar));
         border-radius: 22px 22px 0 0;
     }
     .fuad-popup h2 { font-size: 30px; }
@@ -3666,7 +3672,7 @@ body #fuad-home select {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(66px + var(--fuad-home-bar));
     z-index: 8999;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -3703,10 +3709,10 @@ body #fuad-home select {
     #fuad-lineup .fuad-save:not(:disabled):hover { background: var(--fuad-accent-hover); }
 }
 
-.fuad-lineup-on.fuad-framed body { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+.fuad-lineup-on.fuad-framed body { padding-bottom: calc(140px + var(--fuad-home-bar)); }
 
 /* a row reached by Tab scrolls clear of the save bar */
-.fuad-lineup-on { scroll-padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+.fuad-lineup-on { scroll-padding-bottom: calc(140px + var(--fuad-home-bar)); }
 
 #fuad-lineup .fuad-lineup-table { display: none; }
 
@@ -5580,7 +5586,7 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 /* the result: phones keep it above the tabs while the lists scroll */
 #fuad-ir .fuad-ir-bar {
     position: sticky;
-    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(74px + var(--fuad-home-bar));
     z-index: 2;
     display: flex;
     flex-wrap: wrap;
@@ -5990,7 +5996,7 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(66px + var(--fuad-home-bar));
     z-index: 8999;
     display: flex;
     flex-direction: column;
@@ -6016,7 +6022,7 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 
 #fuad-trades .fuad-trades-bar-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; }
 
-.fuad-trades-barred.fuad-framed body { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+.fuad-trades-barred.fuad-framed body { padding-bottom: calc(170px + var(--fuad-home-bar)); }
 
 #fuad-trades .fuad-trades-review { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 
