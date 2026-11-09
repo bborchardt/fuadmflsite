@@ -4,13 +4,11 @@
 
 import {asArray} from "../lib/mfl.js";
 import {POSITIONS, SALARY_CAP, positionOrder, rookieSalary} from "../lib/rules.js";
-import {cents, money, yearsText} from "./format.js";
+import {CAP_TIGHT, cents, money, yearsText} from "./format.js";
 import settings from "../lib/settings.js";
 import {dayText} from "./home-model.js";
 
 export const SEASONS_SHOWN = 5;
-// cap used within this much of the cap reads as tight
-export const TIGHT = 10;
 
 // a rostered player's years as every view writes them: "2 yrs", the commissioner's "RFA" (no salary
 // shown), or "length due" (draft day or an add's hour; lib/league.js markContracts)
@@ -65,7 +63,7 @@ export function usedBySeason(team, rosteredPlayers, season) {
     return Array.from({length: SEASONS_SHOWN}, (_, k) => {
         const used = k === 0 ? team.capTotal : players.filter((player) => player.years > k).reduce((sum, player) => sum + player.salary, 0);
         const rounded = cents(used);
-        return {season: season + k, used: rounded, tight: SALARY_CAP - rounded < TIGHT};
+        return {season: season + k, used: rounded, tight: SALARY_CAP - rounded < CAP_TIGHT};
     });
 }
 
@@ -146,7 +144,7 @@ export function teamSheets(league, {salaryAdjustments, futureDraftPicks, byes, p
             capUsed: team.capTotal,
             salaries: cents(team.capTotal - penaltyTotal),
             penaltyTotal,
-            tight: SALARY_CAP - team.capTotal < TIGHT,
+            tight: SALARY_CAP - team.capTotal < CAP_TIGHT,
             active: team.numPlayers,
             ir: team.irPlayers.length,
             seasons: usedBySeason(team, league.rosteredPlayers, season),

@@ -6,6 +6,7 @@ import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/
 import {pendingGroups} from "../lib/bids.js";
 import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
 import {esc} from "./html.js";
+import {CAP_TIGHT} from "./format.js";
 import {cached} from "./store.js";
 import {allAtOnce, forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
@@ -187,8 +188,8 @@ export function movesPhase(facts, now = Date.now()) {
 
 export const WIDE = "(min-width: 48.01em)";
 export const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>';
-// cap used over the cap, or within $10 of it
-export const capTone = (amount) => (amount > SALARY_CAP ? "fuad-bad" : amount > SALARY_CAP - 10 ? "fuad-caution" : "");
+// cap used over the cap, or within CAP_TIGHT of it
+export const capTone = (amount) => (amount > SALARY_CAP ? "fuad-bad" : amount > SALARY_CAP - CAP_TIGHT ? "fuad-caution" : "");
 
 // What a move leaves for after MFL's page reloads (`key` is the screen's): read once, {} when none
 export function takeFlash(key) {

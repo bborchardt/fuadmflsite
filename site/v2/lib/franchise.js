@@ -10,12 +10,6 @@ export function franchisePhase(now, seasonStartKickoff, deadlineKickoff) {
     return "live";
 }
 
-// so the offseason keeps pointing at the season that just finished, not one MFL hasn't scheduled
-export function latestSeason(now) {
-    const year = now.getUTCFullYear();
-    return now.getUTCMonth() >= 8 ? year : year - 1;
-}
-
 export function snapshotFileName(season) {
     return `franchise-${season}.json`;
 }

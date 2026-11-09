@@ -5,7 +5,7 @@
 import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup} from "./panel.js";
 import {cached} from "./store.js";
-import {lineupPositions} from "../lib/rules.js";
+import {DEFAULT_END_WEEK, lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {beforeWeek1} from "./context.js";
 import {playerList} from "./player-list.js";
@@ -226,7 +226,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                         exp("leagueStandings", {}, {year}), exp("playoffBrackets", {}, {year, optional: true})
                     ]);
                     const lastRegular = Number(settings.lastRegularSeasonWeek) || 14;
-                    const lastWeek = Number(settings.endWeek) || 17;
+                    const lastWeek = Number(settings.endWeek) || DEFAULT_END_WEEK;
                     const names = namesOf(settings);
                     const rows = standings(standing, settings, names, allPlayRecords(ytd, lastRegular)).flatMap((division) => division.rows);
                     // the places count once the last week has results

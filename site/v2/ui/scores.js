@@ -9,6 +9,7 @@ import {gameStates, readStats} from "./live-scoring.js";
 import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
 import {ordinal} from "./format.js";
+import {DEFAULT_END_WEEK} from "../lib/rules.js";
 import {allAtOnce} from "./page-fetch.js";
 import {backupMarks, backupReader} from "./scores-backups.js";
 import {keepHere, keptHere, onSectionTap} from "./kept.js";
@@ -313,7 +314,7 @@ export function drawScores(mount, data) {
             },
             render: (value, inner) => {
                 panelMount.classList.remove("fuad-panel");
-                inner.innerHTML = seasonMarkup({lastRegular: data.lastRegular, endWeek: Number(window.endWeek) || 17, rows: value.rows, names: new Map(value.names), current: currentWeek, live: value.live, title: `${context.season} season`, line: value.line, teamHref: data.teamHref});
+                inner.innerHTML = seasonMarkup({lastRegular: data.lastRegular, endWeek: Number(window.endWeek) || DEFAULT_END_WEEK, rows: value.rows, names: new Map(value.names), current: currentWeek, live: value.live, title: `${context.season} season`, line: value.line, teamHref: data.teamHref});
             }
         });
     };
