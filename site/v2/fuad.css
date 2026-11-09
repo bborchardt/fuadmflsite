@@ -3420,18 +3420,23 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-chevron { width: 16px; color: var(--fuad-muted); font-size: 20px; line-height: 1; text-align: right; }
 
-/* the draft on desktop: the rounds side by side, picks down, every round open */
-@media (min-width: 48.01em) {
+/* the draft, wide: the rounds side by side, picks down, every round open. Five across need 912px: narrower
+   (an iPhone's app turned sideways), a name had 60px and broke mid-word, so it's a phone's, a round at a time */
+@media (min-width: 57.01em) {
     #fuad-rosters .fuad-rounds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 16px; }
     #fuad-rosters .fuad-round-toggle { pointer-events: none; }
     #fuad-rosters .fuad-round-toggle [aria-hidden="true"] { display: none; }
     #fuad-rosters .fuad-board-picks[hidden] { display: block !important; }
     #fuad-rosters .fuad-board-picks > li { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 6px; font-size: 14px; }
+}
+
+/* the draft order: as many 170px columns as fit */
+@media (min-width: 48.01em) {
     #fuad-rosters .fuad-order { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0 16px; }
 }
 
 /* each pick shares its row's height across the rounds, so a name that wraps doesn't push the rest of its round out of line */
-@media (min-width: 48.01em) {
+@media (min-width: 57.01em) {
     @supports (grid-template-rows: subgrid) {
         #fuad-rosters .fuad-rounds { grid-template-rows: auto repeat(var(--fuad-picks), auto); }
         #fuad-rosters .fuad-round { display: grid; grid-row: 1 / -1; grid-template-rows: subgrid; }

@@ -356,8 +356,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 },
                 render: ({board, before, tags, order: ordered}, body) => {
                     mount.classList.remove("fuad-panel");
-                    // in season the rounds start closed on phones; desktop shows them all
-                    const phone = window.matchMedia && window.matchMedia("(max-width: 48em)").matches;
+                    // in season the rounds start closed where they're a round at a time (fuad.css: below 57em);
+                    // wider shows them all
+                    const phone = window.matchMedia && window.matchMedia("(max-width: 57em)").matches;
                     body.innerHTML = draftMarkup({board, before, tags, order: ordered, viewer, season, phone});
                 }
             });
