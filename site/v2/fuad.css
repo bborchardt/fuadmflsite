@@ -1234,6 +1234,11 @@ html.fuad-app { --fuad-home-bar: max(0px, env(safe-area-inset-bottom, 0px) - 6px
 @media (min-width: 48.01em) {
     #fuad-frame .fuad-back,
     .fuad-detour { display: none !important; }
+    /* the iPhone's app turned sideways has no Back of its own either (ui/web-app.js offersBack); beside
+       it Menu is its icon alone, as on phones, so the sections keep to one row */
+    .fuad-app #fuad-frame .fuad-back:not([hidden]) { display: flex !important; }
+    .fuad-app #fuad-frame .fuad-back:not([hidden]) + .fuad-menu-button { width: 44px; padding: 0; justify-content: center; }
+    .fuad-app #fuad-frame .fuad-back:not([hidden]) + .fuad-menu-button .fuad-menu-word { display: none; }
 }
 
 @media (max-width: 48em) {
@@ -2429,6 +2434,17 @@ body #fuad-home select {
 
 #fuad-league .fuad-toggle:disabled { color: var(--fuad-faint); cursor: default; }
 
+/* Refresh: only in the iPhone's app, which has no pull to refresh (ui/web-app.js) */
+#fuad-league .fuad-refresh { display: none; }
+
+.fuad-app #fuad-league .fuad-refresh:not([hidden]) { display: flex; align-items: center; justify-content: center; width: 44px; padding: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+    #fuad-league .fuad-refresh[aria-busy="true"] svg { animation: fuad-spin 0.8s linear infinite; }
+}
+
+@keyframes fuad-spin { to { transform: rotate(360deg); } }
+
 /* Best's marks on a player's grey line: off the bench, or a starter left out */
 #fuad-league .fuad-ln-tag { display: inline-block; margin: 0 2px; padding: 0 5px; border-radius: 5px; font-size: 12px; font-weight: 700; line-height: 16px; }
 
@@ -2451,6 +2467,9 @@ body #fuad-home select {
     /* the week takes only its width; a long state ("Sun kickoff") wraps under it */
     #fuad-league .fuad-scores-toggles .fuad-week-label { min-width: 0; max-width: 72px; text-align: center; }
     #fuad-league .fuad-bar-toggles .fuad-toggle { padding: 0 8px; }
+    /* with Refresh too (the iPhone's app) they don't fit in one row: the week picker goes under them */
+    .fuad-app #fuad-league .fuad-scores-toggles { flex-wrap: wrap; row-gap: 8px; }
+    .fuad-app #fuad-league .fuad-scores-toggles .fuad-weekpicker { margin-left: auto; }
 }
 
 #fuad-league .fuad-weekpicker,

@@ -100,6 +100,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   page the status bar's and home bar's heights, which it clears, with room for the blur iOS 26 fades
   in below the status bar (upright, a fixed gap: iOS reports no top inset there). A link to another host (MFL's Dashboard and older seasons are on
   other servers, and the outside sites) opens with a browser bar, as the app's scope is the host.
+  The iPhone's app has no Back and no pull to refresh, so in it v2 puts Back beside Menu on a page a
+  link on the host led to (its referrer, and not a launch, which has no page before it), and a
+  Refresh button on Scores. Android's app keeps its own Back, so neither shows there.
 
 ## The daily job
 
