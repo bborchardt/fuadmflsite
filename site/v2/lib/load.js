@@ -8,6 +8,7 @@
 import {rookieSalary, POSITIONS} from "./rules.js";
 import {asArray, salariesImportXml} from "./mfl.js";
 import settings from "./settings.js";
+import {SUFFIXES, withoutAccents} from "./names.js";
 
 const cells = (text) => String(text).replace(/\r/g, "").split("\n").map((line) => line.split("\t").map((cell) => cell.trim()));
 
@@ -73,12 +74,13 @@ export function readRookies(text) {
     return picks;
 }
 
-// "Brown, A.J." and "AJ Brown" alike: first name first, without periods, apostrophes, hyphens or a
+// "Brown, A.J." and "AJ Brown" alike: first name first, without accents, periods, apostrophes, hyphens or a
 // suffix (Jr., III)
+const SUFFIX_WORDS = new RegExp(`\\b(${[...SUFFIXES].join("|")})\\b`, "g");
 export function plainName(name) {
     const text = String(name).includes(",") ? String(name).split(",").reverse().join(" ") : String(name);
-    return text.toLowerCase().replace(/[.'’`]/g, "").replace(/-/g, " ")
-        .replace(/\b(jr|sr|ii|iii|iv|v)\b/g, " ").replace(/\s+/g, " ").trim();
+    return withoutAccents(text).toLowerCase().replace(/[.'’`]/g, "").replace(/-/g, " ")
+        .replace(SUFFIX_WORDS, " ").replace(/\s+/g, " ").trim();
 }
 
 const lastName = (name) => plainName(name).split(" ").pop();

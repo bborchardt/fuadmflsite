@@ -8,6 +8,7 @@ import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
 import {cents, money} from "./format.js";
 import settings from "../lib/settings.js";
+import {SUFFIXES, normalize} from "../lib/names.js";
 import {TIME_ZONE} from "../lib/zone.js";
 
 // the league's contract lengths (lib/contract-years.js has them too, but its regular expressions
@@ -18,7 +19,8 @@ export const LENGTH_PATTERN = `(?:${LENGTHS.slice().reverse().join("|")})`;
 // a player the team dropped can't be bid on by it for this long
 export const READD_HOURS = settings.adds.ownDropBidAfterHours;
 
-const SUFFIXES = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
+// "Harrison Jr." → "Harrison"
+const SUFFIX = new RegExp(`\\s+(${[...SUFFIXES].join("|")})\\.?$`, "i");
 
 // one `new Player2 (...)` call's arguments: quoted strings (names hold commas) and bare numbers
 export function args(text) {
@@ -50,7 +52,7 @@ export const firstLast = (mflName) => {
 };
 
 // "Harrison Jr., Marvin" → "Harrison": the name a comment line goes by, as the job's reader takes it
-export const surname = (mflName) => String(mflName).split(",")[0].trim().replace(SUFFIXES, "");
+export const surname = (mflName) => String(mflName).split(",")[0].trim().replace(SUFFIX, "");
 
 // MFL's player lists on the Add/Drop page (`playerDatabaseObj["add"]` and `["drop"]`), from the
 // page's script text: {add: [...], drop: [...]}, each player with his index in MFL's list
@@ -184,13 +186,12 @@ export function lengthLine(mflName, years, otherNames = []) {
     return `${shared ? firstLast(mflName) : short}: ${yearsText(years)}`;
 }
 
-const normalized = (text) => String(text).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
 // the comment line about a player, if any: one with his full name first, then his surname alone
 // unless another of `otherNames` (the group's other claims) goes by it too
 export function lineFor(lines, mflName, otherNames = []) {
-    const has = (line, words) => ` ${normalized(line)} `.includes(` ${normalized(words)} `);
-    const full = lines.find((line) => has(line, firstLast(mflName).replace(SUFFIXES, "")));
+    const has = (line, words) => ` ${normalize(line)} `.includes(` ${normalize(words)} `);
+    const full = lines.find((line) => has(line, firstLast(mflName).replace(SUFFIX, "")));
     if (full) {
         return full;
     }
@@ -209,7 +210,7 @@ export function fullNameLines(lines, joining, otherNames) {
     }
     return lines.map((line) => {
         const found = line.match(/^([^:]+):\s*(.*)$/);
-        return found && normalized(found[1]) === normalized(surname(sharing[0])) ? `${firstLast(sharing[0])}: ${found[2]}` : line;
+        return found && normalize(found[1]) === normalize(surname(sharing[0])) ? `${firstLast(sharing[0])}: ${found[2]}` : line;
     });
 }
 
@@ -409,9 +410,9 @@ export const usedTone = (from, to) => (to > SALARY_CAP ? "bad" : to < from ? "go
 
 // Free agents for the list, MFL's projection first. `blocked` is droppedByTeam's map.
 export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos = "ALL", sort = "proj", bids = true, watched = null}) {
-    const query = normalized(text);
+    const query = normalize(text);
     const rows = freeAgents
-        .filter((player) => (pos === "ALL" || player.pos === pos) && (!query || normalized(player.name).includes(query)) && (!watched || watched.has(player.id)))
+        .filter((player) => (pos === "ALL" || player.pos === pos) && (!query || normalize(player.name).includes(query)) && (!watched || watched.has(player.id)))
         .map((player) => {
             const until = blocked.get(player.id);
             // with no bid run left, a bid-only player can't be had

@@ -2,6 +2,7 @@
 // and the lineup a team's week should end with, for the daily job, which swaps the backups in; the
 // rules are in docs/design.md. In site/, so no lookbehind (old iPhones).
 
+import {SUFFIXES, normalize} from "./names.js";
 import {postText as decode} from "./contract-years.js";
 import {asArray} from "./mfl.js";
 
@@ -9,15 +10,10 @@ export const THREAD_TITLE = "Conditional starters";
 // 16.5.4: due 5 minutes before the earlier kickoff of the two
 export const DEADLINE_BEFORE_KICKOFF = 5 * 60;
 
-const SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 // words a member puts beside a name: "Parker Washington WR", "Adams (LAR)"
 const EXTRA = new Set(["qb", "rb", "wr", "te", "pk", "k", "please", "pls", "instead", "thanks", "thx", "then", "in", "his", "her", "their",
     "place", "spot", "for", "him", "the", "lineup", "starting", "start", "at", "flex", "and", "or", "ok", "is", "out", "if", "bench", "team"]);
 
-export function normalize(text) {
-    return String(text).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-        .replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-}
 
 // "Last, First" → its forms, as members write them
 function forms(name) {

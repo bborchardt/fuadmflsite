@@ -3,19 +3,14 @@
 
 import {contractDeadline as deadline} from "./adds.js";
 import settings from "./settings.js";
+import {SUFFIXES, normalize} from "./names.js";
 import {asArray} from "./mfl.js";
 
 export const MIN_YEARS = 1;
 export const MAX_YEARS = settings.contracts.maxYears;
 export const DEFAULT_YEARS = settings.contracts.defaultYears;
 
-const SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 
-// "D.Booker" reads as "d booker"
-function normalize(text) {
-    return String(text).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-        .replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-}
 
 // "Last, First" gives "first last", "f last" and "last"
 function nameForms(name) {
