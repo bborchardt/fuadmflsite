@@ -18,6 +18,9 @@ export function seasonWeeks(league) {
     return lastRegular > 0 && championship > lastRegular ? {playoffsStart: lastRegular + 1, championship} : null;
 }
 
+// the championship week to assume when MFL's page or export doesn't give one
+export const DEFAULT_END_WEEK = 17;
+
 export const FRANCHISE_PLAYER_COUNT = settings.franchiseTag.averageOfTop;
 
 // the trade deadline, when franchise salaries are snapshotted, is this week's first kickoff

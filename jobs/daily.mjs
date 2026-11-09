@@ -41,7 +41,7 @@ const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", na
 const {API_BASE, GAME_HOURS, asArray, displayName, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
 const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
-const {OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
+const {DEFAULT_END_WEEK, OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, salaryAdjXml} =
     await import("./drop-penalties.mjs");
@@ -648,7 +648,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
         return schedules.get(week);
     };
     const kickoffs = async (week) => (await schedule(week)).map((game) => Number(game.kickoff)).filter((seconds) => seconds > 0);
-    const championship = (built.weeks && built.weeks.championship) || 17;
+    const championship = (built.weeks && built.weeks.championship) || DEFAULT_END_WEEK;
     const weekOf = weekFinder(kickoffs, championship);
     const settled = [];
     const record = backupWeeksDone();

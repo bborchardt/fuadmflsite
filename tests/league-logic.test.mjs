@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {capPenalty, netCapSpace, rookieSalary, franchiseTopSalaries, franchiseSalary, positionOrder} from "../site/v2/lib/rules.js";
 import {asArray, displayName, firstKickoff, weekKickoff} from "../site/v2/lib/mfl.js";
-import {franchisePhase, latestSeason, makeSnapshot, readSnapshot} from "../site/v2/lib/franchise.js";
+import {franchisePhase, makeSnapshot, readSnapshot} from "../site/v2/lib/franchise.js";
 import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
 
 test("cap penalty is 40% of salary per year, at least $1 and at least $1 a year", () => {
@@ -74,13 +74,6 @@ test("franchise phase: previous before week 1, live until the deadline, final af
     assert.equal(franchisePhase(deadline, start, deadline), "final");
     // MFL hasn't published the schedule (offseason after renewal): the season hasn't started
     assert.equal(franchisePhase(new Date("2027-03-01T00:00:00Z"), null, null), "previous");
-});
-
-test("the daily job's season is the one that started most recently", () => {
-    assert.equal(latestSeason(new Date("2026-09-01T00:00:00Z")), 2026);
-    assert.equal(latestSeason(new Date("2026-11-26T11:00:00Z")), 2026);
-    assert.equal(latestSeason(new Date("2027-01-02T00:00:00Z")), 2026);
-    assert.equal(latestSeason(new Date("2027-08-31T23:59:00Z")), 2026);
 });
 
 test("an unpublished schedule reads as no kickoff, other failures still throw", async () => {

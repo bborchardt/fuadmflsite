@@ -9,6 +9,9 @@ export function money(amount) {
     return `$${Number.isInteger(value) ? value : value.toFixed(2)}`;
 }
 
+// cap used within this many dollars of the cap reads as tight (Rosters, Moves)
+export const CAP_TIGHT = 10;
+
 export const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
 export const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
