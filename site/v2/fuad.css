@@ -2706,9 +2706,10 @@ body #fuad-home select {
 #fuad-league .fuad-bench,
 #fuad-rosters .fuad-bench { max-height: 400px; overflow-y: auto; }
 
-/* desktop: an opened card's header is a score bug, names and chips toward the middle, the scores
-   beside a center column with the win bar */
-@media (min-width: 48.01em) {
+/* wide: an opened card's header is a score bug, names and chips toward the middle, the scores
+   beside a center column with the win bar. It and the lineups' columns need the width the cards go two
+   across at; narrower, as on a phone turned sideways, they're laid out as on a phone */
+@media (min-width: 57.01em) {
     #fuad-league .fuad-card-open .fuad-card-head,
     #fuad-rosters .fuad-card-open .fuad-card-head {
         display: grid;
@@ -2747,9 +2748,9 @@ body #fuad-home select {
     #fuad-rosters .fuad-ln-b .fuad-ln-desk { text-align: right; }
 }
 
-/* phones: the same tug of war, smaller; the lineups as four columns, a player's grey line under
+/* narrower: the same tug of war, smaller; the lineups as four columns, a player's grey line under
    his name, his projection under his points */
-@media (max-width: 48em) {
+@media (max-width: 57em) {
     #fuad-league .fuad-cards,
     #fuad-rosters .fuad-cards { gap: 12px; }
     #fuad-league .fuad-face-name,
