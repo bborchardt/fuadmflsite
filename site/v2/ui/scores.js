@@ -65,11 +65,11 @@ export function drawScores(mount, data) {
     const lastWeek = () => Math.max(currentWeek, data.lastScheduled || currentWeek);
 
     // who starts in a week: the page's own copy first (Home asks for the same), MFL again once it's
-    // old. DETAILS lists the bench too; without it only the starters
-    const lineupOf = async (week) => {
+    // old or `fresh` (Refresh). DETAILS lists the bench too; without it only the starters
+    const lineupOf = async (week, fresh = false) => {
         let lineup = lineups.get(week);
-        if (!lineup || Date.now() - lineup.at > LINEUP_POLL) {
-            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week, DETAILS: 1}, {fresh: Boolean(lineup)})};
+        if (fresh || !lineup || Date.now() - lineup.at > LINEUP_POLL) {
+            lineup = {at: Date.now(), scoring: await exp("liveScoring", {W: week, DETAILS: 1}, {fresh: fresh || Boolean(lineup)})};
             lineups.set(week, lineup);
         }
         return lineup;
@@ -85,12 +85,12 @@ export function drawScores(mount, data) {
     // what a week shows: its cards, from the lineups and the stats feed. Everything is asked at once,
     // as one after another kept Scores on placeholders; the projections too, though a week whose
     // games are over doesn't use them
-    const loadWeek = async (week) => {
+    const loadWeek = async (week, {fresh = false} = {}) => {
         const preview = before || week > currentWeek;
         const [names, players, rules, limits, nflSchedule, lineup, stats, rosters, schedule, projected] = await allAtOnce([
             namesFor(), data.players(), data.rules(), data.league().then(starterLimits, () => null),
             exp("nflSchedule", {W: week}, {base: API_BASE, optional: true}),
-            preview ? null : lineupOf(week),
+            preview ? null : lineupOf(week, fresh),
             preview ? null : statsOf(week),
             !preview && week === currentWeek ? exp("rosters", {}, {optional: true}) : null,
             preview ? data.schedule() : null,
@@ -327,6 +327,37 @@ export function drawScores(mount, data) {
             }
         });
     }
+    // Refresh, in the iPhone's app (no pull to refresh there): the week again from MFL, its cards staying
+    // up meanwhile; with none drawn (still loading, or Retry), the week afresh
+    const refreshButton = mount.querySelector("[data-refresh]");
+    if (refreshButton) {
+        refreshButton.addEventListener("click", () => {
+            if (state.season || refreshButton.getAttribute("aria-busy") === "true") {
+                return;
+            }
+            if (body.getAttribute("aria-busy") === "true" || !body.querySelector(".fuad-cards, .fuad-empty")) {
+                showWeek();
+                return;
+            }
+            const week = state.week;
+            clearTimeout(timer);
+            timer = null;
+            refreshButton.setAttribute("aria-busy", "true");
+            loadWeek(week, {fresh: true}).then((shown) => {
+                if (week === state.week && !state.season) {
+                    label(shown);
+                    draw(shown);
+                    schedule(shown);
+                }
+            }, (error) => {
+                console.warn("[fuad] couldn't refresh scores:", error);
+                if (week === state.week && !state.season) {
+                    schedule(lastShown);
+                }
+            }).finally(() => refreshButton.removeAttribute("aria-busy"));
+        });
+    }
+
     const seasonButton = mount.querySelector("[data-season]");
     if (seasonButton) {
         seasonButton.addEventListener("click", () => {
@@ -334,6 +365,9 @@ export function drawScores(mount, data) {
             seasonButton.setAttribute("aria-pressed", String(state.season));
             picker.hidden = state.season;
             // the rest of the bar goes with the week picker; Season leaves Best off
+            if (refreshButton) {
+                refreshButton.hidden = state.season;
+            }
             if (bestButton) {
                 bestButton.hidden = state.season;
                 state.best = false;

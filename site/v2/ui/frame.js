@@ -141,7 +141,8 @@ function loginPage(view, loginHref) {
     document.documentElement.classList.toggle("fuad-login-page-on", Boolean(view));
 }
 
-export function drawFrame({context}) {
+// `back`: Back beside Menu, in the iPhone's app (ui/web-app.js offersBack)
+export function drawFrame({context, back: offerBack = false}) {
     const {season, leagueId} = context;
     const base = `${window.location.origin}/${season}`;
     const franchiseId = window.franchise_id || null;
@@ -279,14 +280,16 @@ export function drawFrame({context}) {
     });
 
     // A detour's screen (Moves › Add's drop step and review, a trade's steps): on phones its name takes the context
-    // line's place and Back the menu's: the browser's Back, since each screen is a history entry.
+    // line's place and Back the menu's: the browser's Back, since each screen is a history entry. In
+    // the iPhone's app Back is there beside Menu otherwise too, as the app has no Back of its own.
     // `onTitle` makes the name a button (the player popup).
     const back = root.querySelector(".fuad-back");
     const detour = root.querySelector(".fuad-detour");
     back.addEventListener("click", () => window.history.back());
+    back.hidden = !offerBack;
     window.fuadDetour = (screen) => {
         document.documentElement.classList.toggle("fuad-detouring", Boolean(screen));
-        back.hidden = !screen;
+        back.hidden = !screen && !offerBack;
         detour.hidden = !screen;
         const title = detour.querySelector(".fuad-detour-title");
         if (!screen) {

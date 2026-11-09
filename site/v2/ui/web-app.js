@@ -83,6 +83,20 @@ function fitApp(doc, browser) {
     doc.documentElement.classList.add("fuad-app");
 }
 
+// The iPhone's app has no browser Back, so v2 offers one once a link on the league's site has led to
+// this page: not on the page the app opened on, which has no page before it (a launch, or a launch
+// moved on to a newer season, which replaced the page it came from)
+export function offersBack({launched, browser = globalThis}) {
+    if (launched || !browser.navigator || browser.navigator.standalone !== true) {
+        return false;
+    }
+    try {
+        return new URL(browser.document.referrer).origin === browser.location.origin;
+    } catch {
+        return false;
+    }
+}
+
 // MFL answers a season with no site with a 404 (docs/mfl.md); anything else is no answer.
 // A newer season found is kept a year, as MFL keeps each season's site; none, a day, as the new one
 // appears at renewal, after the new year; and no answer (a refusal, perhaps to the page's own reads

@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
-import {LAUNCH, launchedApp, linkWebApp, webAppManifest} from "../site/v2/ui/web-app.js";
+import {LAUNCH, launchedApp, linkWebApp, offersBack, webAppManifest} from "../site/v2/ui/web-app.js";
 
 const ORIGIN = "https://www44.myfantasyleague.com";
 const ICONS = "https://bborchardt.github.io/fuadmflsite/v2/app/";
@@ -102,6 +102,18 @@ test("the iPhone's app keeps clear of the screen's edges; Safari's page keeps MF
     linkWebApp(inApp, {context, wordmark: "FUAD", iconBase: ICONS, browser: app});
     assert.equal(inApp.querySelector('meta[name="viewport"]').getAttribute("content"), "initial-scale=1.0, width=device-width, viewport-fit=cover");
     assert.ok(inApp.documentElement.classList.contains("fuad-app"));
+});
+
+test("the iPhone's app offers Back once a link on the league's site has led to the page", () => {
+    const at = (referrer, standalone = true) => Object.assign(browserAt(`${ORIGIN}/2026/options?L=48571&O=07`), {navigator: {standalone}, document: {referrer}});
+    assert.equal(offersBack({launched: false, browser: at(`${ORIGIN}/2026/home/48571`)}), true);
+    // the page the app opened on, or moved on to a newer season from (which replaced the page before)
+    assert.equal(offersBack({launched: false, browser: at("")}), false);
+    assert.equal(offersBack({launched: true, browser: at(`${ORIGIN}/2025/home/48571`)}), false);
+    // from somewhere else, or in Safari, which has its own Back
+    assert.equal(offersBack({launched: false, browser: at("https://www.google.com/")}), false);
+    assert.equal(offersBack({launched: false, browser: at(`${ORIGIN}/2026/home/48571`, false)}), false);
+    assert.equal(offersBack({launched: false, browser: at(`${ORIGIN}/2026/home/48571`, null)}), false);
 });
 
 test("a page without MFL's icon gets ours", () => {

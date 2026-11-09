@@ -14,6 +14,7 @@ const shortName = (name) => {
 };
 const pts = (value) => (value === null || value === undefined ? "—" : value.toFixed(1));
 const kickoffText = (seconds) => oneLineTimes(`${dayText(seconds).split(" ")[0]} ${clock(seconds)}`);
+const REFRESH_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg>';
 const LOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked" role="img"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
 const bothNames = (name) => `<span class="fuad-short">${esc(shortName(name))}</span><span class="fuad-full">${esc(name)}</span>`;
 
@@ -118,6 +119,7 @@ export function scoresFrame({before, viewer}) {
     ${before ? "" : `<div class="fuad-bar-toggles">
         ${viewer ? '<button type="button" class="fuad-toggle" aria-pressed="false" data-season>Season</button>' : ""}
         <button type="button" class="fuad-toggle" aria-pressed="false" data-best disabled>Best</button>
+        <button type="button" class="fuad-toggle fuad-refresh" aria-label="Refresh" data-refresh>${REFRESH_ICON}</button>
     </div>`}
     <div class="fuad-weekpicker">
         <button type="button" class="fuad-step" data-step="-1" aria-label="Previous week">‹</button>
