@@ -11,6 +11,7 @@ import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
 import {ordinal} from "./format.js";
 import {allAtOnce} from "./page-fetch.js";
 import {backupMarks, backupReader} from "./scores-backups.js";
+import {keepHere, keptHere, onSectionTap} from "./kept.js";
 import settings from "../lib/settings.js";
 
 const MINUTE = 60 * 1000;
@@ -323,6 +324,7 @@ export function drawScores(mount, data) {
             return;
         }
         state.week = Math.min(lastWeek(), Math.max(1, state.week + Number(step.dataset.step)));
+        keep();
         state.open = null;
         state.bench = new Set();
         showWeek();
@@ -331,6 +333,7 @@ export function drawScores(mount, data) {
         bestButton.addEventListener("click", () => {
             state.best = !state.best;
             bestButton.setAttribute("aria-pressed", String(state.best));
+            keep();
             if (lastShown) {
                 draw(lastShown);
             }
@@ -371,15 +374,10 @@ export function drawScores(mount, data) {
     if (seasonButton) {
         seasonButton.addEventListener("click", () => {
             state.season = !state.season;
-            seasonButton.setAttribute("aria-pressed", String(state.season));
-            picker.hidden = state.season;
-            // the rest of the bar goes with the week picker; Season leaves Best off
-            showRefresh();
-            if (bestButton) {
-                bestButton.hidden = state.season;
-                state.best = false;
-                bestButton.setAttribute("aria-pressed", "false");
-            }
+            // Season leaves Best off
+            state.best = false;
+            showBar();
+            keep();
             if (state.season) {
                 showSeason();
             } else {
@@ -387,11 +385,81 @@ export function drawScores(mount, data) {
             }
         });
     }
-    showWeek();
+    // the bar as the state has it: the rest of it goes with the week picker in Season
+    const showBar = () => {
+        if (seasonButton) {
+            seasonButton.setAttribute("aria-pressed", String(state.season));
+        }
+        picker.hidden = state.season;
+        showRefresh();
+        if (bestButton) {
+            bestButton.hidden = state.season;
+            bestButton.setAttribute("aria-pressed", String(state.best));
+        }
+    };
+
+    // the week, Season and Best, as each way here expects (ui/kept.js): League's link starts afresh, the
+    // tab finds them as they were, and Back as they were left
+    const KEPT = "scores";
+    const keep = () => keepHere(KEPT, {week: state.week, season: state.season, best: state.best});
+    const fromKept = (kept) => (kept && Number.isInteger(kept.week) && kept.week >= 1 && kept.week <= lastWeek()
+        ? {week: kept.week, season: Boolean(kept.season && seasonButton), best: Boolean(kept.best && !kept.season)}
+        : null);
+    const same = (view) => view.week === state.week && view.season === state.season && view.best === state.best;
+    const setView = (view) => {
+        if (view.week !== state.week) {
+            state.open = null;
+            state.bench = new Set();
+        }
+        Object.assign(state, view);
+        showBar();
+        if (state.season) {
+            showSeason();
+        } else {
+            showWeek();
+        }
+    };
+    // drawn as it shows next (resume), unless it's on screen
+    let stale = false;
+    onSectionTap("League", () => {
+        const fresh = {week: currentWeek, season: false, best: false};
+        if (!data.showing()) {
+            stale = stale || !same(fresh);
+            if (fresh.week !== state.week) {
+                state.open = null;
+                state.bench = new Set();
+            }
+            Object.assign(state, fresh);
+            return;
+        }
+        // tapped on Scores itself, which stays in this entry
+        if (!same(fresh)) {
+            setView(fresh);
+        }
+        keep();
+    });
+
+    const start = fromKept(keptHere(KEPT));
+    if (start) {
+        setView(start);
+    } else {
+        showWeek();
+    }
     return {
-        // back on Scores: refresh at once if it's been waiting
+        // back on Scores from another view: as its entry has it (Back), or as it was (a tab, or League's
+        // link, which started it afresh); refreshed at once if it's been waiting
         resume: () => {
-            if (!state.season && state.week === currentWeek && !timer) {
+            const kept = fromKept(keptHere(KEPT));
+            if (kept && (stale || !same(kept))) {
+                stale = false;
+                setView(kept);
+                return;
+            }
+            keep();
+            if (stale) {
+                stale = false;
+                setView(state);
+            } else if (!state.season && state.week === currentWeek && !timer) {
                 showWeek();
             }
         }

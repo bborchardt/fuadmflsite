@@ -19,6 +19,12 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   reach, named for it (the board's ‹ Messages). Steps of a move (Add, Trades on phones) and v2's
   dialogs are history entries, so Back steps back through them or closes them, Android's Back and
   an iPhone's edge swipe included.
+- **What a view shows is kept as each way to it expects** (`ui/kept.js`: Scores' week, Season and
+  Best; Players' filters, search and sort; Draft's open rounds; All moves' filters): a section's link
+  starts it afresh, as Lineup's and Moves' pages always are; its tab, or the menu, finds it as it was
+  left; and Back returns to it as it was left, from its own history entry, even after another page.
+  Paging (Scores' weeks, All bids' runs) isn't an entry of its own, so Back leaves the view rather
+  than stepping back a page. Moves' tabs are pages of their own and start afresh.
 - Within **MFL's rules**.
 - **As few chores as possible** for the commissioner, stable year to year.
 

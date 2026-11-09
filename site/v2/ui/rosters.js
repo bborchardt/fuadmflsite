@@ -2,6 +2,7 @@
 // Draft, each under its own # (`#rosters-teams/0004` for one team) and loaded the first time it shows.
 // Names open the player popup with its Rosters actions (popup.js).
 
+import {keepHere, keptHere, onSectionTap} from "./kept.js";
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -33,6 +34,16 @@ function routeOf(hash) {
 // ---- The section ----
 
 // `league()` is the page's one league load (app.js), shared with Home
+// a toggle (a round, a tag's tile, the rookie scale) and what it opens, its word saying which
+function setOpen(toggle, open) {
+    toggle.setAttribute("aria-expanded", String(open));
+    document.getElementById(toggle.getAttribute("aria-controls")).hidden = !open;
+    const word = toggle.querySelector('[aria-hidden="true"]');
+    if (word) {
+        word.textContent = open ? "Hide" : "Show";
+    }
+}
+
 export function drawRosters({context, franchiseId, dataBase, league: pageLeague}) {
     const viewer = franchiseId && franchiseId !== "0000" ? franchiseId : null;
     const host = window.location.origin;
@@ -150,14 +161,16 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     document.getElementById(other.getAttribute("aria-controls")).hidden = true;
                 });
             }
-            toggle.setAttribute("aria-expanded", String(open));
-            document.getElementById(toggle.getAttribute("aria-controls")).hidden = !open;
-            const word = toggle.querySelector('[aria-hidden="true"]');
-            if (word) {
-                word.textContent = open ? "Hide" : "Show";
+            setOpen(toggle, open);
+            if (toggle.classList.contains("fuad-round-toggle")) {
+                toggle.dispatchEvent(new CustomEvent("fuad-round", {bubbles: true}));
             }
         }
     });
+
+    // what each view does when it's back on screen, and when Rosters' own link starts it afresh
+    const shown = new Map();
+    onSectionTap("Rosters", () => shown.forEach((view) => view.reset()));
 
     const showOwners = (body) => {
         if (franchiseId) {
@@ -231,7 +244,41 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             });
         },
         players: (mount) => {
-            const state = {positions: [], years: [], owners: [], watching: false, text: "", sort: null, direction: null};
+            const fresh = () => ({positions: [], years: [], owners: [], watching: false, text: "", sort: null, direction: null});
+            const state = fresh();
+            // the filters, search and sort, as each way here expects (ui/kept.js)
+            const keep = () => keepHere("players", state);
+            let showState = () => {};
+            const take = (kept) => {
+                const next = fresh();
+                if (kept) {
+                    ["positions", "years", "owners"].forEach((key) => {
+                        if (Array.isArray(kept[key])) {
+                            next[key] = kept[key].map(String);
+                        }
+                    });
+                    next.watching = kept.watching === true;
+                    next.text = typeof kept.text === "string" ? kept.text : "";
+                    if (Object.prototype.hasOwnProperty.call(FIRST_DIRECTION, kept.sort)) {
+                        next.sort = kept.sort;
+                        next.direction = kept.direction === 1 || kept.direction === -1 ? kept.direction : null;
+                    }
+                }
+                Object.assign(state, next);
+                showState();
+            };
+            take(keptHere("players"));
+            shown.set("players", {
+                resume: () => {
+                    const kept = keptHere("players");
+                    if (kept) {
+                        take(kept);
+                    } else {
+                        keep();
+                    }
+                },
+                reset: () => take(null)
+            });
             // the member's watch list (watch.js) for the Watching chip; a star in the player popup changes it
             let watched = null;
             let redrawn = () => {};
@@ -259,8 +306,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 },
                 render: ({pool, before, positions}, body) => {
                     mount.classList.remove("fuad-panel");
-                    state.sort = state.sort || (before ? "points" : "projected");
-                    state.direction = state.direction || FIRST_DIRECTION[state.sort];
+                    const sorted = () => {
+                        state.sort = state.sort || (before ? "points" : "projected");
+                        state.direction = state.direction || FIRST_DIRECTION[state.sort];
+                    };
+                    sorted();
                     const layout = playerLayout({before, season});
                     body.innerHTML = playersFrame(layout, state.text);
                     const tbody = body.querySelector("tbody");
@@ -278,15 +328,30 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             button.querySelector(".fuad-sort-mark").textContent = on ? (state.direction > 0 ? " ▲" : " ▼") : "";
                         });
                     };
+                    // kept once typing stops: Safari refuses a page's history changes past ~100 a short while
+                    let typing = null;
                     body.querySelector("input").addEventListener("input", (event) => {
                         state.text = event.target.value;
                         redraw();
+                        clearTimeout(typing);
+                        typing = setTimeout(keep, 500);
                     });
+                    // leaving the box (a tap on a link) keeps it at once, in this entry
+                    body.querySelector("input").addEventListener("change", () => {
+                        clearTimeout(typing);
+                        keep();
+                    });
+                    showState = () => {
+                        sorted();
+                        body.querySelector("input").value = state.text;
+                        redraw();
+                    };
                     body.addEventListener("click", (event) => {
                         const chip = event.target.closest("[data-chip]");
                         if (chip && chip.dataset.chip === "watching") {
                             state.watching = !state.watching;
                             redraw();
+                            keep();
                             body.querySelector('[data-chip="watching"]').focus();
                             return;
                         }
@@ -301,6 +366,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                                 list.push(value);
                             }
                             redraw();
+                            keep();
                             body.querySelector(`[data-chip="${chip.dataset.chip}"][data-value="${CSS.escape(value)}"]`).focus();
                             return;
                         }
@@ -310,6 +376,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             state.direction = key === state.sort ? -state.direction : FIRST_DIRECTION[key];
                             state.sort = key;
                             redraw();
+                            keep();
                             body.querySelector(`[data-sort="${key}"]`).focus();
                             return;
                         }
@@ -319,6 +386,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             state.owners.length = 0;
                             state.watching = false;
                             redraw();
+                            keep();
                         }
                     });
                     // a redraw from outside (the list arriving, a star changed) keeps focus on the chip or
@@ -340,6 +408,37 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             });
         },
         draft: (mount) => {
+            // the rounds open, as each way here expects (ui/kept.js): as drawn, unless kept
+            const toggles = () => [...mount.querySelectorAll(".fuad-round-toggle")];
+            const openRounds = () => toggles().filter((toggle) => toggle.getAttribute("aria-expanded") === "true").map((toggle) => toggle.getAttribute("aria-controls"));
+            let first = null;
+            let want = keptHere("draft");
+            const showRounds = () => {
+                const open = want || first;
+                if (!open || !Array.isArray(open)) {
+                    return;
+                }
+                toggles().forEach((toggle) => setOpen(toggle, open.includes(toggle.getAttribute("aria-controls"))));
+            };
+            mount.addEventListener("fuad-round", () => {
+                want = openRounds();
+                keepHere("draft", want);
+            });
+            shown.set("draft", {
+                resume: () => {
+                    const kept = keptHere("draft");
+                    if (kept) {
+                        want = kept;
+                        showRounds();
+                    } else if (first) {
+                        keepHere("draft", openRounds());
+                    }
+                },
+                reset: () => {
+                    want = null;
+                    showRounds();
+                }
+            });
             drawPanel(mount, {
                 what: "the draft", rows: 10,
                 load: async () => {
@@ -360,6 +459,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     // wider shows them all
                     const phone = window.matchMedia && window.matchMedia("(max-width: 57em)").matches;
                     body.innerHTML = draftMarkup({board, before, tags, order: ordered, viewer, season, phone});
+                    first = openRounds();
+                    showRounds();
                 }
             });
         }
@@ -403,6 +504,8 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 console.error(`[fuad] couldn't draw Rosters' ${route.view}:`, error);
                 drawn.delete(route.view);
             }
+        } else if (shown.has(route.view)) {
+            shown.get(route.view).resume();
         }
         if (route.team) {
             window.scrollTo(0, 0);

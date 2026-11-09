@@ -3,6 +3,7 @@
 // All moves draws the season's transactions in Recent moves' rows; All bids reads the run from the
 // page itself, so anything v2 can't read leaves MFL's page as it is.
 
+import {keepHere, keptHere} from "./kept.js";
 import {displayName, exportUrl, fetchExport} from "../lib/mfl.js";
 import {playersFromExport} from "../lib/league.js";
 import {mflTime} from "../lib/zone.js";
@@ -72,6 +73,17 @@ export function drawAllMoves({context, franchiseId, teamHref}) {
             <div class="fuad-chip-row-group" role="group" aria-label="Kind">${KINDS.map(([label, kind]) => `<button type="button" class="fuad-filter" aria-pressed="${kind === null}" data-kind="${kind || ""}">${esc(label)}</button>`).join("")}</div>
         </div>
         <section class="fuad-panel fuad-moves-days" aria-label="Moves"></section>`;
+    // the team and kind, as Back left them (ui/kept.js); the page's own link starts afresh
+    const kept = keptHere("allMoves");
+    if (kept && teams.has(kept.team)) {
+        state.team = kept.team;
+        mount.querySelector("[data-team]").value = kept.team;
+    }
+    if (kept && KINDS.some(([, kind]) => kind && kind === kept.kind)) {
+        state.kind = kept.kind;
+        mount.querySelectorAll("[data-kind]").forEach((button) => button.setAttribute("aria-pressed", String((button.dataset.kind || null) === state.kind)));
+    }
+    const keep = () => keepHere("allMoves", {team: state.team, kind: state.kind});
     const list = mount.querySelector(".fuad-moves-days");
     rows.listen(list);
     const meta = mount.querySelector("[data-meta]");
@@ -96,6 +108,7 @@ export function drawAllMoves({context, franchiseId, teamHref}) {
 
     mount.querySelector("[data-team]").addEventListener("change", (event) => {
         state.team = event.target.value;
+        keep();
         show();
     });
     mount.querySelector("[role=group]").addEventListener("click", (event) => {
@@ -104,6 +117,7 @@ export function drawAllMoves({context, franchiseId, teamHref}) {
             return;
         }
         state.kind = chip.dataset.kind || null;
+        keep();
         mount.querySelectorAll("[data-kind]").forEach((button) => button.setAttribute("aria-pressed", String(button === chip)));
         show();
     });

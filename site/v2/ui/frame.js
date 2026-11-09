@@ -6,6 +6,7 @@
 import settings, {league} from "../lib/settings.js";
 import {clean, esc, initials} from "./html.js";
 import {testLeagueNote} from "./test-league.js";
+import {sectionTapped} from "./kept.js";
 import {REBUILT, leavesPage, locate, ownHref, pageOf, sections, teamLinks} from "./nav.js";
 import {loadContext} from "./context.js";
 import {openDialog} from "./dialog.js";
@@ -210,6 +211,13 @@ export function drawFrame({context, watchBack = () => {}}) {
     // while MFL sends the page; one on this page (a home page view) is drawn by the hashchange
     root.addEventListener("click", (event) => {
         const link = event.target.closest(".fuad-sections a, .fuad-views a");
+        // a section's own link starts its screens afresh (ui/kept.js)
+        if (link && link.parentElement.classList.contains("fuad-sections") && !event.defaultPrevented) {
+            const section = all[[...link.parentElement.children].indexOf(link)];
+            if (section) {
+                sectionTapped(section.name);
+            }
+        }
         if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !leavesPage(link.href)) {
             return;
         }
