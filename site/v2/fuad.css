@@ -1118,11 +1118,11 @@ body [tabindex]:focus-visible {
     padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* upright, iOS 26 fades a blur in for about 40pt below the status bar, over the wordmark; it keeps the
-   bar's room itself and gives the page a top inset of 0 (WebKit bug 301994), so the gap can't hang on
-   the inset */
+/* upright, iOS 26 fades a blur in below the status bar, over the header's top (on the maintainer's
+   iPhone, 10px clears it); it keeps the bar's room itself and gives the page a top inset of 0 (WebKit
+   bug 301994), so the gap can't hang on the inset */
 @media (orientation: portrait) {
-    .fuad-app body { padding-top: calc(env(safe-area-inset-top, 0px) + 24px); }
+    .fuad-app body { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
 }
 
 .fuad-app .fuad-drawer { padding-top: env(safe-area-inset-top, 0px); }
