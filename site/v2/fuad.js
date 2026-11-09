@@ -6,7 +6,7 @@ import {pageOf} from "./ui/nav.js";
 import {storage} from "./ui/store.js";
 import {LEAVE_BETA, PAGES_BASE, betaOffer, decide, leaveBetaHref, offeredVersion, reportUse, withParam} from "./loader.js";
 import {applyLook, commishLook, keepResponsive, keepTeamSkin, lookOf, markCommish} from "./ui/looks.js";
-import {LAUNCH, launchedApp, linkWebApp, offersBack} from "./ui/web-app.js";
+import {LAUNCH, launchedApp, linkWebApp, watchBack} from "./ui/web-app.js";
 import settings from "./lib/settings.js";
 
 const PREVIEW_KEY = "fuad.preview";
@@ -132,7 +132,7 @@ function boot(beta) {
         drawn = resolve;
     });
     // loaded on its own, so a failure here leaves MFL's menus and the rest of the page working
-    (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context, back: offersBack({launched})})) : Promise.resolve())
+    (context ? import("./ui/frame.js").then(({drawFrame}) => drawFrame({context, watchBack: (onChange) => watchBack({launched, onChange})})) : Promise.resolve())
         .catch((error) => {
             console.error("[fuad] couldn't draw the frame:", error);
             onTrouble();

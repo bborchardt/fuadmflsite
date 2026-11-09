@@ -141,8 +141,8 @@ function loginPage(view, loginHref) {
     document.documentElement.classList.toggle("fuad-login-page-on", Boolean(view));
 }
 
-// `back`: Back beside Menu, in the iPhone's app (ui/web-app.js offersBack)
-export function drawFrame({context, back: offerBack = false}) {
+// `watchBack`: when to show Back beside Menu, in the iPhone's app (ui/web-app.js)
+export function drawFrame({context, watchBack = () => {}}) {
     const {season, leagueId} = context;
     const base = `${window.location.origin}/${season}`;
     const franchiseId = window.franchise_id || null;
@@ -286,10 +286,19 @@ export function drawFrame({context, back: offerBack = false}) {
     const back = root.querySelector(".fuad-back");
     const detour = root.querySelector(".fuad-detour");
     back.addEventListener("click", () => window.history.back());
-    back.hidden = !offerBack;
+    let detouring = false;
+    let canGoBack = false;
+    const showBack = () => {
+        back.hidden = !detouring && !canGoBack;
+    };
+    watchBack((can) => {
+        canGoBack = can;
+        showBack();
+    });
     window.fuadDetour = (screen) => {
         document.documentElement.classList.toggle("fuad-detouring", Boolean(screen));
-        back.hidden = !screen && !offerBack;
+        detouring = Boolean(screen);
+        showBack();
         detour.hidden = !screen;
         const title = detour.querySelector(".fuad-detour-title");
         if (!screen) {

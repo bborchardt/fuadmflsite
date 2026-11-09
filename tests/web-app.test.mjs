@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
-import {LAUNCH, launchedApp, linkWebApp, offersBack, webAppManifest} from "../site/v2/ui/web-app.js";
+import {LAUNCH, launchedApp, linkWebApp, watchBack, webAppManifest} from "../site/v2/ui/web-app.js";
 
 const ORIGIN = "https://www44.myfantasyleague.com";
 const ICONS = "https://bborchardt.github.io/fuadmflsite/v2/app/";
@@ -104,16 +104,40 @@ test("the iPhone's app keeps clear of the screen's edges; Safari's page keeps MF
     assert.ok(inApp.documentElement.classList.contains("fuad-app"));
 });
 
-test("the iPhone's app offers Back once a link on the league's site has led to the page", () => {
-    const at = (referrer, standalone = true) => Object.assign(browserAt(`${ORIGIN}/2026/options?L=48571&O=07`), {navigator: {standalone}, document: {referrer}});
-    assert.equal(offersBack({launched: false, browser: at(`${ORIGIN}/2026/home/48571`)}), true);
+test("the iPhone's app offers Back whenever Safari has an entry before this one, but a dialog's", () => {
+    const navigation = Object.assign(new EventTarget(), {canGoBack: false});
+    const browser = Object.assign(browserAt(`${ORIGIN}/2026/home/48571`), {navigator: {standalone: true}, navigation, document: {referrer: ""}});
+    const heard = [];
+    watchBack({launched: true, onChange: (can) => heard.push(can), browser});
+    // a view of the same page (#league-scores) is an entry, as is a link to another page
+    navigation.canGoBack = true;
+    navigation.dispatchEvent(new Event("currententrychange"));
+    // a dialog's entry over it: the header stays as it was
+    browser.history.state = {fuadDialog: true};
+    navigation.dispatchEvent(new Event("currententrychange"));
+    browser.history.state = null;
+    navigation.canGoBack = false;
+    navigation.dispatchEvent(new Event("currententrychange"));
+    assert.deepEqual(heard, [false, true, false]);
+});
+
+test("before iOS 26.2 the iPhone's app offers Back once a link on the league's site has led to the page", () => {
+    const back = (referrer, {launched = false, standalone = true} = {}) => {
+        let heard = null;
+        const browser = Object.assign(browserAt(`${ORIGIN}/2026/options?L=48571&O=07`), {navigator: {standalone}, document: {referrer}});
+        watchBack({launched, onChange: (can) => {
+            heard = can;
+        }, browser});
+        return heard;
+    };
+    assert.equal(back(`${ORIGIN}/2026/home/48571`), true);
     // the page the app opened on, or moved on to a newer season from (which replaced the page before)
-    assert.equal(offersBack({launched: false, browser: at("")}), false);
-    assert.equal(offersBack({launched: true, browser: at(`${ORIGIN}/2025/home/48571`)}), false);
-    // from somewhere else, or in Safari, which has its own Back
-    assert.equal(offersBack({launched: false, browser: at("https://www.google.com/")}), false);
-    assert.equal(offersBack({launched: false, browser: at(`${ORIGIN}/2026/home/48571`, false)}), false);
-    assert.equal(offersBack({launched: false, browser: at(`${ORIGIN}/2026/home/48571`, null)}), false);
+    assert.equal(back(""), false);
+    assert.equal(back(`${ORIGIN}/2025/home/48571`, {launched: true}), false);
+    assert.equal(back("https://www.google.com/"), false);
+    // Safari, which has its own Back, hears nothing
+    assert.equal(back(`${ORIGIN}/2026/home/48571`, {standalone: false}), null);
+    assert.equal(back(`${ORIGIN}/2026/home/48571`, {standalone: null}), null);
 });
 
 test("a page without MFL's icon gets ours", () => {

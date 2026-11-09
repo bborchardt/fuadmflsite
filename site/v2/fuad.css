@@ -1234,7 +1234,7 @@ html.fuad-app { --fuad-home-bar: max(0px, env(safe-area-inset-bottom, 0px) - 6px
 @media (min-width: 48.01em) {
     #fuad-frame .fuad-back,
     .fuad-detour { display: none !important; }
-    /* the iPhone's app turned sideways has no Back of its own either (ui/web-app.js offersBack); beside
+    /* the iPhone's app turned sideways has no Back of its own either (ui/web-app.js watchBack); beside
        it Menu is its icon alone, as on phones, so the sections keep to one row */
     .fuad-app #fuad-frame .fuad-back:not([hidden]) { display: flex !important; }
     .fuad-app #fuad-frame .fuad-back:not([hidden]) + .fuad-menu-button { width: 44px; padding: 0; justify-content: center; }
