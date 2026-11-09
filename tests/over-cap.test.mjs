@@ -9,7 +9,7 @@ const players = new Map([
     ["1", {fullName: "Ollie Gordon"}], ["2", {fullName: "Joe Mixon"}], ["3", {fullName: "Tez Johnson"}]
 ]);
 const franchises = new Map([["0001", {teamName: "Alpha"}], ["0002", {teamName: "Beta "}]]);
-const moves = (transactions, franchiseId) => recentMoves(transactions, franchiseId, {players, franchises, since: DAY - 86400});
+const moves = (transactions, franchiseId) => recentMoves(transactions, franchiseId, {players, franchises, since: DAY - 86400, timeZone: "America/Chicago"});
 
 test("moves are described newest first, in words", () => {
     const transactions = [
@@ -69,10 +69,10 @@ test("over 30: a trade that did it is named with the bylaws' deadline, any other
     // a drop since doesn't change which
     assert.equal(tradeOverRoster([trade, {...add, franchise: "0001", transaction: "|3,"}], "0001", since), trade);
     const text = "Alpha is over the roster limit with 31 players!";
-    assert.equal(overRosterMessage({text, max: 30, graceHours: 12, moves: ["10/03 trade with Beta: got Joe Mixon, Tez Johnson; gave Ollie Gordon"], held: ["Ollie Gordon (2yrs@10, 10/03)"], trade}),
+    assert.equal(overRosterMessage({text, max: 30, graceHours: 12, timeZone: "America/Chicago", moves: ["10/03 trade with Beta: got Joe Mixon, Tez Johnson; gave Ollie Gordon"], held: ["Ollie Gordon (2yrs@10, 10/03)"], trade}),
         `${text} Moves in the last 7 days: 10/03 trade with Beta: got Joe Mixon, Tez Johnson; gave Ollie Gordon. `
         + "Over 30 after the 10/03 trade, which the bylaws allow: it must be back to 30 by the next game, the next blind-bid deadline or 12 hours after the trade, whichever is first. "
         + "Drop penalties held until it's back to 30: Ollie Gordon (2yrs@10, 10/03).");
-    assert.equal(overRosterMessage({text, max: 30, graceHours: 12, moves: [], held: ["Ollie Gordon (2yrs@10, 10/03)"], trade: null}),
+    assert.equal(overRosterMessage({text, max: 30, graceHours: 12, timeZone: "America/Chicago", moves: [], held: ["Ollie Gordon (2yrs@10, 10/03)"], trade: null}),
         `${text} Moves in the last 7 days: none. Drop penalties held so the move can be reversed: Ollie Gordon (2yrs@10, 10/03).`);
 });

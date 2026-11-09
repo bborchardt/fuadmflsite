@@ -3,13 +3,16 @@
 // more drops than this in one run looks like a bug rather than a busy day, so nothing is applied
 export const MAX_PENALTIES_PER_RUN = 6;
 
-// as members see dates, in US Eastern time: "10/03"
-export function dropDate(timestamp) {
-    return new Intl.DateTimeFormat("en-US", {timeZone: "America/New_York", month: "2-digit", day: "2-digit"})
+// "10/03", in the league's time zone (`timeZone`, the version's zone.js TIME_ZONE), as v2 shows dates
+export function dropDate(timestamp, timeZone) {
+    if (!timeZone) {
+        throw new Error("dropDate needs the league's time zone");
+    }
+    return new Intl.DateTimeFormat("en-US", {timeZone, month: "2-digit", day: "2-digit"})
         .format(new Date(timestamp * 1000));
 }
 
-export function pendingPenalties(league) {
+export function pendingPenalties(league, timeZone) {
     return [...league.franchises.values()].flatMap((franchise) => franchise.pendingDroppedPlayers.map((player) => {
         const dropped = player.transactions[0].timestamp;
         return {
@@ -24,7 +27,7 @@ export function pendingPenalties(league) {
             // added this season by a free agent, waiver or blind bid move
             addedThisSeason: player.transactions.some((transaction) => transaction.added),
             dropped,
-            explanation: `${player.fullName} (${player.years}yrs@${player.salary}${player.years === 0 ? ", length due" : ""}, ${dropDate(dropped)})`
+            explanation: `${player.fullName} (${player.years}yrs@${player.salary}${player.years === 0 ? ", length due" : ""}, ${dropDate(dropped, timeZone)})`
         };
     }));
 }

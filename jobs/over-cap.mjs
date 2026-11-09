@@ -10,7 +10,7 @@ const MAX_NAMES = 5;
 const ids = (list) => String(list || "").split(",").filter((id) => id && id !== "0000");
 
 // IR moves and league-wide events don't change a salary, so they're left out.
-export function recentMoves(transactions, franchiseId, {players, franchises, since}) {
+export function recentMoves(transactions, franchiseId, {players, franchises, since, timeZone}) {
     const name = (id) => id.startsWith("FP_") || id.startsWith("DP_")
         ? "a draft pick"
         : (players.get(id) || {fullName: `player ${id}`}).fullName;
@@ -22,7 +22,7 @@ export function recentMoves(transactions, franchiseId, {players, franchises, sin
         names(dropped) && `dropped ${names(dropped)}`
     ].filter(Boolean).join(", ");
     const describe = (transaction) => {
-        const date = dropDate(Number(transaction.timestamp));
+        const date = dropDate(Number(transaction.timestamp), timeZone);
         switch (transaction.type) {
         case "FREE_AGENT": {
             const [added, dropped] = String(transaction.transaction).split("|");
@@ -98,10 +98,10 @@ export function tradeOverRoster(transactions, franchiseId, since) {
 
 // Going over the roster max voids the move, as going over the cap does, unless a trade did it: then the team has
 // until the bylaws' deadline to get back.
-export function overRosterMessage({text, max, graceHours, moves, held, trade}) {
+export function overRosterMessage({text, max, graceHours, moves, held, trade, timeZone}) {
     let message = `${text} Moves in the last ${RECENT_MOVE_DAYS} days: ${moves.length ? moves.join("; ") : "none"}.`;
     if (trade) {
-        message += ` Over ${max} after the ${dropDate(Number(trade.timestamp))} trade, which the bylaws allow: it must be back to ${max}`
+        message += ` Over ${max} after the ${dropDate(Number(trade.timestamp), timeZone)} trade, which the bylaws allow: it must be back to ${max}`
             + ` by the next game, the next blind-bid deadline or ${graceHours} hours after the trade, whichever is first.`;
     }
     if (held.length) {
