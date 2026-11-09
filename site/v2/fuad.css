@@ -1107,6 +1107,19 @@ body [tabindex]:focus-visible {
     .fuad-framed #fuad-preview { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
 
+/* an iPhone's home screen app, drawn to the screen's edges (ui/web-app.js): below the status bar if
+   iOS draws the page under it anyway (with the opaque bar it asks for, the inset is 0), and turned
+   sideways, clear of the notch */
+.fuad-app body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+}
+
+.fuad-app .fuad-drawer { padding-top: env(safe-area-inset-top, 0px); }
+
+.fuad-app .fuad-drawer-body { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+
 .fuad-commish #fuad-frame { border-top: 4px solid var(--fuad-accent); }
 
 /* a tap on a section or view on another page (ui/frame.js), until the page arrives */

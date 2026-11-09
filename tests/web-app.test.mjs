@@ -90,6 +90,22 @@ test("the page links the manifest, and the icon and name an iPhone takes, in pla
     assert.ok(prevented);
 });
 
+test("the iPhone's app keeps clear of the screen's edges; Safari's page keeps MFL's layout", () => {
+    const viewport = '<meta name="viewport" content="initial-scale=1.0, width=device-width" />';
+    const inSafari = page(viewport);
+    linkWebApp(inSafari, {context, wordmark: "FUAD", iconBase: ICONS, browser: Object.assign(browserAt(`${ORIGIN}/2026/home/48571`), {navigator: {standalone: false}})});
+    // read when the icon is added, which is in Safari
+    assert.equal(inSafari.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute("content"), "black");
+    assert.equal(inSafari.querySelector('meta[name="viewport"]').getAttribute("content"), "initial-scale=1.0, width=device-width");
+    assert.ok(!inSafari.documentElement.classList.contains("fuad-app"));
+    const inApp = page(viewport);
+    const app = Object.assign(browserAt(`${ORIGIN}/2026/home/48571`), {navigator: {standalone: true}});
+    linkWebApp(inApp, {context, wordmark: "FUAD", iconBase: ICONS, browser: app});
+    linkWebApp(inApp, {context, wordmark: "FUAD", iconBase: ICONS, browser: app});
+    assert.equal(inApp.querySelector('meta[name="viewport"]').getAttribute("content"), "initial-scale=1.0, width=device-width, viewport-fit=cover");
+    assert.ok(inApp.documentElement.classList.contains("fuad-app"));
+});
+
 test("a page without MFL's icon gets ours", () => {
     const doc = page();
     linkWebApp(doc, {context, wordmark: "FUAD", iconBase: ICONS, browser: browserAt(`${ORIGIN}/2026/home/48571`)});
