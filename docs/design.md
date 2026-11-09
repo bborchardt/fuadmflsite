@@ -98,7 +98,7 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   So the app is for members once v2 is the header's version. An iPhone's app draws to the screen's
   edges, under a status bar coloured like the page: in the app only, `viewport-fit=cover` gives the
   page the status bar's and home bar's heights, which it clears, with room for the blur iOS 26 fades
-  in below the status bar. A link to another host (MFL's Dashboard and older seasons are on
+  in below the status bar (upright, a fixed gap: iOS reports no top inset there). A link to another host (MFL's Dashboard and older seasons are on
   other servers, and the outside sites) opens with a browser bar, as the app's scope is the host.
 
 ## The daily job

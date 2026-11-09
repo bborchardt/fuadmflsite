@@ -1111,12 +1111,18 @@ body [tabindex]:focus-visible {
 :root { --fuad-home-bar: env(safe-area-inset-bottom, 0px); }
 
 /* an iPhone's home screen app, drawn to the screen's edges (ui/web-app.js): below the status bar, and
-   24px more, past the blur iOS 26 fades in below it (min() makes that 0 where there's no inset, as
-   turned sideways); turned sideways, clear of the notch */
+   turned sideways, clear of the notch */
 .fuad-app body {
-    padding-top: calc(env(safe-area-inset-top, 0px) + min(env(safe-area-inset-top, 0px) * 100, 24px));
+    padding-top: env(safe-area-inset-top, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* upright, iOS 26 fades a blur in for about 40pt below the status bar, over the wordmark; it keeps the
+   bar's room itself and gives the page a top inset of 0 (WebKit bug 301994), so the gap can't hang on
+   the inset */
+@media (orientation: portrait) {
+    .fuad-app body { padding-top: calc(env(safe-area-inset-top, 0px) + 24px); }
 }
 
 .fuad-app .fuad-drawer { padding-top: env(safe-area-inset-top, 0px); }
