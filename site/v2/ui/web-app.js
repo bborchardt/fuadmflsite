@@ -83,18 +83,36 @@ function fitApp(doc, browser) {
     doc.documentElement.classList.add("fuad-app");
 }
 
-// The iPhone's app has no browser Back, so v2 offers one once a link on the league's site has led to
-// this page: not on the page the app opened on, which has no page before it (a launch, or a launch
-// moved on to a newer season, which replaced the page it came from)
-export function offersBack({launched, browser = globalThis}) {
-    if (launched || !browser.navigator || browser.navigator.standalone !== true) {
-        return false;
+// The iPhone's app has no browser Back, so v2 offers its own whenever there's somewhere in the app to go
+// back to: `onChange` hears whether there is, now and after each move. Home, League and Rosters are
+// views of one page (#league-scores), so that's asked of Safari's Navigation API (iOS 26.2), which
+// knows a view's entry too; a dialog's own entry is left out, so the header stays as it was under it.
+// Before 26.2, Back is there only on a page a link on the league's host led to, never on the page the
+// app opened on (`launched`: a launch, or a launch moved on to a newer season, in its place).
+export function watchBack({launched, onChange, browser = globalThis}) {
+    if (!browser.navigator || browser.navigator.standalone !== true) {
+        return;
     }
+    const navigation = browser.navigation;
+    if (navigation && typeof navigation.canGoBack === "boolean") {
+        const tell = () => {
+            if (!(browser.history.state && browser.history.state.fuadDialog)) {
+                onChange(navigation.canGoBack);
+            }
+        };
+        tell();
+        navigation.addEventListener("currententrychange", tell);
+        // back to a page Safari kept whole
+        browser.addEventListener("pageshow", tell);
+        return;
+    }
+    let linked = false;
     try {
-        return new URL(browser.document.referrer).origin === browser.location.origin;
+        linked = new URL(browser.document.referrer).origin === browser.location.origin;
     } catch {
-        return false;
+        // no referrer
     }
+    onChange(!launched && linked);
 }
 
 // MFL answers a season with no site with a 404 (docs/mfl.md); anything else is no answer.
