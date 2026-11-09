@@ -94,8 +94,6 @@ test("the iPhone's app keeps clear of the screen's edges; Safari's page keeps MF
     const viewport = '<meta name="viewport" content="initial-scale=1.0, width=device-width" />';
     const inSafari = page(viewport);
     linkWebApp(inSafari, {context, wordmark: "FUAD", iconBase: ICONS, browser: Object.assign(browserAt(`${ORIGIN}/2026/home/48571`), {navigator: {standalone: false}})});
-    // read when the icon is added, which is in Safari
-    assert.equal(inSafari.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute("content"), "black");
     assert.equal(inSafari.querySelector('meta[name="viewport"]').getAttribute("content"), "initial-scale=1.0, width=device-width");
     assert.ok(!inSafari.documentElement.classList.contains("fuad-app"));
     const inApp = page(viewport);

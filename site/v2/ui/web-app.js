@@ -62,8 +62,6 @@ export function linkWebApp(doc, {context, wordmark, iconBase, browser = globalTh
     // full screen on iPhones before iOS 26, which may not read the manifest
     meta(doc, "apple-mobile-web-app-capable", "yes");
     meta(doc, "mobile-web-app-capable", "yes");
-    // an opaque bar, so the page starts below it; an iPhone reads it only when the icon is added
-    meta(doc, "apple-mobile-web-app-status-bar-style", "black");
     // Chrome's own install bar on Android; its menu still installs
     browser.addEventListener("beforeinstallprompt", (event) => event.preventDefault());
     fitApp(doc, browser);
