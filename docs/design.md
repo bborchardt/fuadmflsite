@@ -96,9 +96,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   An iPhone's app takes Safari's login when added but starts with empty storage, then keeps its own:
   with v1 in the header, it opens v1 until the member joins the beta in the app, which then holds.
   So the app is for members once v2 is the header's version. An iPhone's app draws to the screen's
-  edges: the page asks for an opaque status bar (read only when the icon is added, so an icon added
-  before needs adding again) and, in the app only, `viewport-fit=cover`, which gives the page the home
-  bar's height for the tabs to clear. A link to another host (MFL's Dashboard and older seasons are on
+  edges, under a status bar coloured like the page: in the app only, `viewport-fit=cover` gives the
+  page the status bar's and home bar's heights, which it clears, with room for the blur iOS 26 fades
+  in below the status bar. A link to another host (MFL's Dashboard and older seasons are on
   other servers, and the outside sites) opens with a browser bar, as the app's scope is the host.
 
 ## The daily job
