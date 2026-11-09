@@ -1116,6 +1116,8 @@ body [tabindex]:focus-visible {
     padding-right: env(safe-area-inset-right, 0px);
 }
 
+.fuad-app .fuad-drawer { padding-top: env(safe-area-inset-top, 0px); }
+
 .fuad-app .fuad-drawer-body { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
 
 .fuad-commish #fuad-frame { border-top: 4px solid var(--fuad-accent); }
