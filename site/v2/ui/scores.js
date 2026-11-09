@@ -38,6 +38,20 @@ export function drawScores(mount, data) {
     mount.innerHTML = scoresFrame({before, viewer});
     const body = mount.querySelector(".fuad-scores-body");
     const picker = mount.querySelector(".fuad-weekpicker");
+    // Safari keeps a lineup's rows at their old heights when the width changes (a phone turned and
+    // back), so they're laid out afresh
+    let width = window.innerWidth;
+    window.addEventListener("resize", () => {
+        if (window.innerWidth === width) {
+            return;
+        }
+        width = window.innerWidth;
+        mount.querySelectorAll(".fuad-lineup").forEach((grid) => {
+            grid.style.display = "none";
+            grid.getBoundingClientRect();
+            grid.style.display = "";
+        });
+    });
     const bestButton = mount.querySelector("[data-best]");
     // Best once the week's first game has kicked off, whoever plays in it
     const canBest = (shown) => Boolean(shown && !shown.preview && shown.limits && shown.limits.count

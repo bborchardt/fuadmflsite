@@ -2775,6 +2775,9 @@ body #fuad-home select {
     #fuad-rosters .fuad-ln-b { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 0; font-size: 14px; }
     #fuad-league .fuad-ln-b,
     #fuad-rosters .fuad-ln-b { align-items: flex-end; }
+    /* the name first on both sides, above the grey line, where the wide layout's mirrored order would put it under */
+    #fuad-league .fuad-ln-b .fuad-ln-name,
+    #fuad-rosters .fuad-ln-b .fuad-ln-name { order: 0; }
     #fuad-league .fuad-ln-pos,
     #fuad-league .fuad-ln-desk,
     #fuad-league .fuad-full,
