@@ -34,6 +34,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - Python tools run through uv (`uv run --no-project --with playwright …`), never global installs.
 
 ## Conventions
+- A view that holds state a member sets (a week, a filter, a search) keeps it through `ui/kept.js`:
+  its section's link starts it afresh, its tab finds it as left, Back restores it (docs/design.md).
 - Before merging, a reviewer pass focused on functional breakage, repeated until no blockers.
 - Comments only where the code is non-obvious, saying why. Docs describe the current state, with no
   history.

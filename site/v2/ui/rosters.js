@@ -33,7 +33,6 @@ function routeOf(hash) {
 
 // ---- The section ----
 
-// `league()` is the page's one league load (app.js), shared with Home
 // a toggle (a round, a tag's tile, the rookie scale) and what it opens, its word saying which
 function setOpen(toggle, open) {
     toggle.setAttribute("aria-expanded", String(open));
@@ -44,6 +43,7 @@ function setOpen(toggle, open) {
     }
 }
 
+// `league()` is the page's one league load (app.js), shared with Home
 export function drawRosters({context, franchiseId, dataBase, league: pageLeague}) {
     const viewer = franchiseId && franchiseId !== "0000" ? franchiseId : null;
     const host = window.location.origin;
@@ -244,7 +244,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             });
         },
         players: (mount) => {
-            const fresh = () => ({positions: [], years: [], owners: [], watching: false, text: "", sort: null, direction: null});
+            // the sort the list starts on, once it's known whether the season has begun
+            let firstSort = null;
+            const fresh = () => ({positions: [], years: [], owners: [], watching: false, text: "", sort: firstSort, direction: firstSort && FIRST_DIRECTION[firstSort]});
             const state = fresh();
             // the filters, search and sort, as each way here expects (ui/kept.js)
             const keep = () => keepHere("players", state);
@@ -264,8 +266,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         next.direction = kept.direction === 1 || kept.direction === -1 ? kept.direction : null;
                     }
                 }
-                Object.assign(state, next);
-                showState();
+                // the list is long: redrawn only for a change
+                if (JSON.stringify(next) !== JSON.stringify(state)) {
+                    Object.assign(state, next);
+                    showState();
+                }
             };
             take(keptHere("players"));
             shown.set("players", {
@@ -306,8 +311,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 },
                 render: ({pool, before, positions}, body) => {
                     mount.classList.remove("fuad-panel");
+                    firstSort = before ? "points" : "projected";
                     const sorted = () => {
-                        state.sort = state.sort || (before ? "points" : "projected");
+                        state.sort = state.sort || firstSort;
                         state.direction = state.direction || FIRST_DIRECTION[state.sort];
                     };
                     sorted();
