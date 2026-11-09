@@ -10,8 +10,6 @@ export const MIN_YEARS = 1;
 export const MAX_YEARS = settings.contracts.maxYears;
 export const DEFAULT_YEARS = settings.contracts.defaultYears;
 
-
-
 // "Last, First" gives "first last", "f last" and "last"
 function nameForms(name) {
     const [last, first = ""] = String(name).split(",").map((part) => part.trim());

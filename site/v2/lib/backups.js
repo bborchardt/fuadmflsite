@@ -14,7 +14,6 @@ export const DEADLINE_BEFORE_KICKOFF = 5 * 60;
 const EXTRA = new Set(["qb", "rb", "wr", "te", "pk", "k", "please", "pls", "instead", "thanks", "thx", "then", "in", "his", "her", "their",
     "place", "spot", "for", "him", "the", "lineup", "starting", "start", "at", "flex", "and", "or", "ok", "is", "out", "if", "bench", "team"]);
 
-
 // "Last, First" → its forms, as members write them
 function forms(name) {
     const [last, first = ""] = String(name).split(",").map((part) => part.trim());

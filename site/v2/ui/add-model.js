@@ -186,7 +186,6 @@ export function lengthLine(mflName, years, otherNames = []) {
     return `${shared ? firstLast(mflName) : short}: ${yearsText(years)}`;
 }
 
-
 // the comment line about a player, if any: one with his full name first, then his surname alone
 // unless another of `otherNames` (the group's other claims) goes by it too
 export function lineFor(lines, mflName, otherNames = []) {
