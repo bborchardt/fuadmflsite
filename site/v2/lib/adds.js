@@ -5,6 +5,8 @@ import {asArray} from "./mfl.js";
 
 // league rule: a free agent or waiver add's length must be posted within this long of the add
 export const CONTRACT_WINDOW_HOURS = settings.contracts.postWithinHours;
+// "the hour", or "2 hours": how long an add's length has, for "due within …"
+export const CONTRACT_WINDOW_TEXT = CONTRACT_WINDOW_HOURS === 1 ? "the hour" : `${CONTRACT_WINDOW_HOURS} hours`;
 
 export function contractDeadline(add) {
     return add.added + CONTRACT_WINDOW_HOURS * 3600;

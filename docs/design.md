@@ -319,7 +319,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   free agents and Rosters › Players to it.
 - **League history** (v2's League and Rosters, `ui/history-model.js`, display only): a title belongs
   to today's team holding the champion's franchise number, if MFL links that team to that year;
-  franchise numbers MFL moved are listed in `RENUMBERED`.
+  franchise numbers MFL moved are the `renumberedFranchises` setting.
 - **Playoff seeds and payouts** (v2's League, `ui/league-model.js` and `lib/payouts.js`): the division
   winners are seeds 1–2, the other four the best all-play records, ties by standings order (1.1–1.3);
   $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),

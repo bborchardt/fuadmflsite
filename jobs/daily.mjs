@@ -1103,7 +1103,7 @@ async function leagueState({loggedIn}) {
         }
         Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}, built.weeks));
     } catch (error) {
-        needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
+        needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over ${ROSTER_MAX} are held.`);
         built.seasonOver = null;
     }
     return {
@@ -1137,7 +1137,7 @@ function leagueRules({players, built, cutDown, penalties, transactions}) {
             overRoster.add(violation.franchiseId);
             const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since});
             const held = penalties.filter((penalty) => penalty.franchiseId === violation.franchiseId).map((penalty) => penalty.explanation);
-            text = overRosterMessage({text, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since)});
+            text = overRosterMessage({text, max: ROSTER_MAX, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since)});
         }
         needsAttention(`League rules: ${text}`);
     }

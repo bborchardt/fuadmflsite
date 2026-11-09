@@ -13,6 +13,7 @@ import {
     sendMove, takeFlash
 } from "./moves.js";
 import {postToContractTopic} from "./lengths-form.js";
+import {CONTRACT_WINDOW_TEXT} from "../lib/adds.js";
 import {watchList, whenPopupClosed} from "./watch.js";
 import {
     addBlock, addsClosed, banner, bidsLeft, claimKey, commentLines, findClaim, firstLast, freeAgencyOver, fullNameLines, groupViews, isLengthLine,
@@ -521,7 +522,7 @@ export async function drawAdd({context, franchiseId}) {
                 done = {text: `${made} Posted “${line}”.`};
             } catch (error) {
                 console.warn("[fuad] couldn't post the length:", error);
-                done = {text: `${made} Couldn’t post the length “${line}”; it’s due within the hour.`, failed: true, line};
+                done = {text: `${made} Couldn’t post the length “${line}”; it’s due within ${CONTRACT_WINDOW_TEXT}.`, failed: true, line};
             }
             reloadWith({done});
         });
@@ -596,7 +597,7 @@ export async function drawAdd({context, franchiseId}) {
             state.done = {text: `Posted “${line}”.`};
         } catch (error) {
             console.warn("[fuad] couldn't post the length:", error);
-            state.done = {...state.done, text: `Couldn’t post the length “${line}”; it’s due within the hour.`};
+            state.done = {...state.done, text: `Couldn’t post the length “${line}”; it’s due within ${CONTRACT_WINDOW_TEXT}.`};
         }
         state.busy = false;
         render();
