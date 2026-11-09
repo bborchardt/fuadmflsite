@@ -58,7 +58,7 @@ const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOv
 const {iconSources, updateIcons} = await import("./team-icons.mjs");
 const {THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, namedWeek, pairDeadline, postAsks, postWeek, readLineupDetails, readTopicPage,
     sourceRequests, standingPairs, weekLineup} = await lib("backups.js");
-const {mflTime} = await lib("zone.js");
+const {TIME_ZONE, mflTime} = await lib("zone.js");
 const {normalize} = await lib("names.js");
 const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcFields, sameLineup, startersIn, teamChange, weekFinder, weekStatuses} =
     await import("./backup-starters.mjs");
@@ -1004,7 +1004,7 @@ async function leagueState({loggedIn}) {
         built,
         league,
         cutDown,
-        penalties: pendingPenalties(built),
+        penalties: pendingPenalties(built, TIME_ZONE),
         lengthDueUnknown,
         transactions: asArray(transactions.transaction),
         rosters,
@@ -1028,9 +1028,9 @@ function leagueRules({players, built, cutDown, penalties, transactions}) {
         let text = violation.text;
         if (violation.kind === "roster-over") {
             overRoster.add(violation.franchiseId);
-            const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since});
+            const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since, timeZone: TIME_ZONE});
             const held = penalties.filter((penalty) => penalty.franchiseId === violation.franchiseId).map((penalty) => penalty.explanation);
-            text = overRosterMessage({text, max: ROSTER_MAX, graceHours: OVER_AFTER_TRADE_HOURS, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since)});
+            text = overRosterMessage({text, max: ROSTER_MAX, graceHours: OVER_AFTER_TRADE_HOURS, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since), timeZone: TIME_ZONE});
         }
         needsAttention(`League rules: ${text}`);
     }
@@ -1053,7 +1053,7 @@ function overCap({players, built, penalties, transactions}) {
             teamName: built.franchises.get(franchiseId).teamName,
             total,
             cap: SALARY_CAP,
-            moves: recentMoves(transactions, franchiseId, {players, franchises: built.franchises, since}),
+            moves: recentMoves(transactions, franchiseId, {players, franchises: built.franchises, since, timeZone: TIME_ZONE}),
             held: penalties.filter((penalty) => penalty.franchiseId === franchiseId).map((penalty) => penalty.explanation)
         })}`);
     }

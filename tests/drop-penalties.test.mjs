@@ -4,6 +4,7 @@ import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
 import {dropDate, needsCharge, pendingPenalties, salaryAdjXml} from "../jobs/drop-penalties.mjs";
 
 // 2026-10-03 16:00 UTC, noon in New York
+const CT = "America/Chicago";
 const DROPPED = Date.UTC(2026, 9, 3, 16) / 1000;
 
 function league({salaryAdjustments, rosters = {franchise: []}} = {}) {
@@ -32,14 +33,16 @@ function league({salaryAdjustments, rosters = {franchise: []}} = {}) {
     });
 }
 
-test("drop dates are US Eastern", () => {
-    assert.equal(dropDate(DROPPED), "10/03");
-    // 02:00 UTC on the 4th is still the 3rd in New York
-    assert.equal(dropDate(Date.UTC(2026, 9, 4, 2) / 1000), "10/03");
+test("drop dates are in the league's time zone", () => {
+    assert.equal(dropDate(DROPPED, CT), "10/03");
+    // 04:30 UTC on the 4th: past midnight in New York, still the 3rd in Chicago
+    assert.equal(dropDate(Date.UTC(2026, 9, 4, 4, 30) / 1000, CT), "10/03");
+    assert.equal(dropDate(Date.UTC(2026, 9, 4, 4, 30) / 1000, "America/New_York"), "10/04");
+    assert.throws(() => dropDate(DROPPED), /time zone/);
 });
 
 test("one penalty per dropped player, described with the contract and drop date", () => {
-    const penalties = pendingPenalties(league());
+    const penalties = pendingPenalties(league(), CT);
     assert.deepEqual(penalties.map(({franchiseId, playerId, amount, explanation}) => ({franchiseId, playerId, amount, explanation})), [
         {franchiseId: "0001", playerId: "5", amount: 1, explanation: "Joe Mixon (1yrs@1, 10/02)"},
         {franchiseId: "0002", playerId: "4", amount: 8, explanation: "Ollie Gordon (2yrs@10, 10/03)"}
@@ -49,7 +52,7 @@ test("one penalty per dropped player, described with the contract and drop date"
 
 test("a penalty counts as charged only for the same franchise, naming the player, at or after the drop", () => {
     const adjustment = (franchise_id, description, timestamp) => ({franchise_id, description, timestamp: String(timestamp), amount: "1"});
-    const charged = (...adjustments) => pendingPenalties(league({salaryAdjustments: {salaryAdjustment: adjustments}}))
+    const charged = (...adjustments) => pendingPenalties(league({salaryAdjustments: {salaryAdjustment: adjustments}}), CT)
         .map((penalty) => penalty.charged);
     // [Mixon (Alpha), Gordon (Beta)]
     assert.deepEqual(charged(), [false, false]);
