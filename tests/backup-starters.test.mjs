@@ -1,7 +1,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, changeText, weekStatuses} from "../jobs/backup-starters.mjs";
+import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, changeText, teamChange, weekFinder, weekStatuses} from "../jobs/backup-starters.mjs";
+import {lineupAt, lineupRules, weekLineup} from "../site/v2/lib/backups.js";
 import {mflForm} from "../jobs/mfl-form.mjs";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/backups/${name}`, import.meta.url), "utf8");
@@ -56,4 +57,53 @@ test("a form refuses a dry run, and a page that says it failed throws", async ()
     assert.match(await mflForm(form, {...options, fetchImpl: page("Week 8 lineup SUBMITTED")}), /SUBMITTED/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("<b>Error(s) submitting lineup: You must select 1 PK.</b>")}), /Error\(s\) submitting lineup: You must select 1 PK/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("", 500)}), /HTTP 500/);
+});
+
+// Team 0002 starts QB q1 and TE t1, with QB q2 on the bench; it asked for q2 if t1 is out, and
+// submitted once before the pair's deadline (1000). The league starts 2: QB 0-2, TE 0-1.
+const changeOf = async ({statuses, scores = [], saved = "q1,t1,", submissions = [{at: 500, starters: ["q1", "t1"]}]} = {}) => {
+    const reads = [];
+    const positions = {q1: "QB", q2: "QB", t1: "TE"};
+    const result = await teamChange({
+        team: "0002", week: 6, submissions, statuses: new Map(Object.entries(statuses)),
+        pairs: [{starter: "t1", backup: "q2", at: 400, deadline: 1000}],
+        positionOf: (id) => positions[id], rules: lineupRules({starters: {count: "2", position: [{name: "QB", limit: "0-2"}, {name: "TE", limit: "0-1"}]}}),
+        kickoffOf: () => 1300, nameOf: (id) => id.toUpperCase()
+    }, {lineupAt, weekLineup}, {
+        saved: async () => (reads.push("saved"), [{id: "0002", starters: saved}]),
+        lastWeek: async () => (reads.push("lastWeek"), []),
+        scores: async (ids) => (reads.push(`scores ${ids}`), scores)
+    });
+    return {...result, reads};
+};
+
+test("a team's week: an inactive starter's backup goes in", async () => {
+    const {flags, change, reads} = await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "ACT"}}});
+    assert.deepEqual(flags, []);
+    assert.deepEqual(change, {lineup: ["q1", "q2"], submit: true, what: "Q2 started for T1, who was inactive"});
+    assert.deepEqual(reads, ["saved", "lastWeek", "scores t1"]);
+    // already in MFL's saved results: nothing to do
+    assert.equal((await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "ACT"}}, saved: "q1,q2,", submissions: [{at: 500, starters: ["q1", "t1"]}, {at: 2000, starters: ["q1", "q2"], commish: true}]})).change, null);
+});
+
+test("a team's week: an active starter, or one nflverse can't vouch for, keeps his place", async () => {
+    assert.deepEqual(await changeOf({statuses: {t1: {status: "ACT"}, q2: {status: "ACT"}}}).then(({flags, change}) => [flags, change]), [[], null]);
+    const missing = await changeOf({statuses: {q2: {status: "ACT"}}});
+    assert.deepEqual([missing.flags, missing.change], [["T1's week 6 status on nflverse is missing, so his backup Q2 wasn't started"], null]);
+    const unlisted = await changeOf({statuses: {t1: {status: "INA"}}});
+    assert.deepEqual([unlisted.flags, unlisted.change], [["Q2, T1's backup, isn't in nflverse's week 6 rosters, so he wasn't started"], null]);
+    // inactive on nflverse but scored: taken as active
+    const scored = await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "ACT"}}, scores: [{id: "t1", score: "4.5"}]});
+    assert.deepEqual([scored.flags, scored.change], [["nflverse lists T1 as inactive, but he scored 4.5, so he's taken as active"], null]);
+});
+
+test("a team's week: a Lineup Details row it can't read stops the team, asking MFL nothing", async () => {
+    const {flags, change, reads} = await changeOf({statuses: {}, submissions: [{at: null, starters: ["q1", "t1"]}]});
+    assert.deepEqual([flags, change, reads], [["a lineup on MFL's Lineup Details couldn't be read"], null, []]);
+});
+
+test("the week a moment is in: the one whose games are still to come", async () => {
+    const weeks = {1: [100, 300], 2: [700, 900], 3: [1300, 1500]};
+    const weekOf = weekFinder(async (week) => weeks[week] || [], 3);
+    assert.deepEqual(await Promise.all([50, 299, 300, 800, 1499, 1500].map(weekOf)), [1, 1, 2, 2, 3, null]);
 });
