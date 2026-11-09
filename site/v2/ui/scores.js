@@ -197,6 +197,14 @@ export function drawScores(mount, data) {
         }
     });
 
+    // Refresh only on the current week: a past week is final, and a later one is a preview with no lineups
+    const showRefresh = () => {
+        const refresh = mount.querySelector("[data-refresh]");
+        if (refresh) {
+            refresh.hidden = state.season || state.week !== currentWeek;
+        }
+    };
+
     const label = (shown) => {
         mount.querySelector(".fuad-weekpicker .fuad-week-name").textContent = `Week ${state.week}`;
         const stateLine = mount.querySelector(".fuad-weekpicker .fuad-week-state");
@@ -208,6 +216,7 @@ export function drawScores(mount, data) {
             bestButton.setAttribute("aria-pressed", String(state.best && canBest(shown)));
         }
         picker.querySelector('[data-step="1"]').disabled = state.week >= lastWeek();
+        showRefresh();
     };
 
     const showing = () => data.showing() && !state.season;
@@ -332,7 +341,7 @@ export function drawScores(mount, data) {
     const refreshButton = mount.querySelector("[data-refresh]");
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
-            if (state.season || refreshButton.getAttribute("aria-busy") === "true") {
+            if (refreshButton.hidden || refreshButton.getAttribute("aria-busy") === "true") {
                 return;
             }
             if (body.getAttribute("aria-busy") === "true" || !body.querySelector(".fuad-cards, .fuad-empty")) {
@@ -365,9 +374,7 @@ export function drawScores(mount, data) {
             seasonButton.setAttribute("aria-pressed", String(state.season));
             picker.hidden = state.season;
             // the rest of the bar goes with the week picker; Season leaves Best off
-            if (refreshButton) {
-                refreshButton.hidden = state.season;
-            }
+            showRefresh();
             if (bestButton) {
                 bestButton.hidden = state.season;
                 state.best = false;

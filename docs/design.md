@@ -101,7 +101,7 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   in below the status bar (upright, a fixed gap: iOS reports no top inset there). A link to another host (MFL's Dashboard and older seasons are on
   other servers, and the outside sites) opens with a browser bar, as the app's scope is the host.
   The iPhone's app has no Back and no pull to refresh, so in it v2 puts Back beside Menu whenever
-  there's somewhere to go back to, and a Refresh button on Scores. Home, League and Rosters are views
+  there's somewhere to go back to, and a Refresh button on Scores' current week. Home, League and Rosters are views
   of one page, so that's Safari's `navigation.canGoBack` (iOS 26.2), which counts a view's entry too,
   but not a dialog's; before 26.2, only a page a link on the host led to (its referrer, and not a
   launch). Android's app keeps its own Back, so neither shows there.
