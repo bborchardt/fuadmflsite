@@ -52,6 +52,7 @@ still test on someone else's copy: paste their `BASE` and a settings line into a
 |---|---|---|
 | `salaryCap` | 300 | The salary cap in dollars, counting adjustments and drop penalties not yet charged. |
 | `roster.min`, `roster.max` | 23, 30 | Active players allowed (injured reserve doesn't count), from the final cut-down date until the championship week is over. |
+| `roster.overAfterTradeHours` | 12 | A team a trade takes over the max must be back within it by the next game, the next blind-bid deadline or this many hours after the trade, whichever is first (10.5). The daily job's flag says so; v2 doesn't. |
 
 ## Weeks
 

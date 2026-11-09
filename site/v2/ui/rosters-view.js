@@ -1,7 +1,7 @@
 // What Rosters draws, as HTML: My team and each team's page, Teams, Players and Draft, from what
 // rosters.js loads (rosters-model.js's sheets, pool and board).
 
-import {POSITIONS, SALARY_CAP, franchiseSalary, rookieSalary} from "../lib/rules.js";
+import {POSITIONS, ROSTER_MAX, SALARY_CAP, franchiseSalary, rookieSalary} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {STAR} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
@@ -23,7 +23,7 @@ export function capPanel(sheet) {
             </div>
             <div class="fuad-cap-figure">
                 <span class="fuad-label">Active</span>
-                <span class="fuad-cap-big">${sheet.active} / 30</span>
+                <span class="fuad-cap-big">${sheet.active} / ${ROSTER_MAX}</span>
                 <span class="fuad-meta">${sheet.ir ? `+ ${sheet.ir} on IR` : "None on IR"}</span>
             </div>
         </div>
@@ -243,7 +243,7 @@ export function teamsMarkup(list, {viewer, season}) {
         <a class="fuad-team-row" href="#rosters-teams/${esc(team.id)}">
             <span class="fuad-team-line"><span class="fuad-row-title">${withIcon(team.id, `${esc(team.name)}<span class="fuad-meta fuad-owner" data-owner="${esc(team.id)}" data-name-only></span>`)}</span><span class="fuad-figure ${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span>
             ${capBar(team, viewer)}
-            <span class="fuad-meta">${team.picksYear} picks ${esc(team.picksLine)} · ${team.active} / 30${team.ir ? ` + ${team.ir} IR` : ""}</span>
+            <span class="fuad-meta">${team.picksYear} picks ${esc(team.picksLine)} · ${team.active} / ${ROSTER_MAX}${team.ir ? ` + ${team.ir} IR` : ""}</span>
         </a></li>`).join("")}</ul>
     <div class="fuad-table-scroll fuad-desktop-only"><table class="fuad-table fuad-teams">
         <thead><tr><th scope="col">Team</th><th scope="col">Cap used</th><th scope="col" class="fuad-num">${list.length ? list[0].picksYear : season + 1} picks</th>
@@ -253,7 +253,7 @@ export function teamsMarkup(list, {viewer, season}) {
             <td><span class="fuad-power-cell">${capBar(team, viewer)}<span class="${team.tight ? "fuad-caution" : ""}">${esc(money(team.capUsed))}</span></span></td>
             <td class="fuad-num">${esc(team.picksLine)}</td>
             ${team.seasons.slice(1).map((entry) => `<td class="fuad-num ${entry.tight ? "fuad-caution" : "fuad-muted"}">${esc(money(entry.used))}</td>`).join("")}
-            <td class="fuad-num">${team.active} / 30${team.ir ? ` + ${team.ir}` : ""}</td>
+            <td class="fuad-num">${team.active} / ${ROSTER_MAX}${team.ir ? ` + ${team.ir}` : ""}</td>
             <td class="fuad-chevron" aria-hidden="true">›</td>
         </tr>`).join("")}</tbody>
     </table></div>

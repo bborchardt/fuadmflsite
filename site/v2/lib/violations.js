@@ -45,7 +45,7 @@ function contractNotice(teamName, add, reading) {
     if (reading && reading.state === "problem") {
         return `${added}: couldn't read his contract length from the message board. Edit your latest post or post again by ${by}, like ${example}.`;
     }
-    return `${added}: post his contract length on the message board by ${by}, like ${example}, or it will be 1 year.`;
+    return `${added}: post his contract length on the message board by ${by}, like ${example}, or it will be ${settings.contracts.defaultYears} year${settings.contracts.defaultYears === 1 ? "" : "s"}.`;
 }
 
 // a commissioner's calendar event's kind from its title, the first that matches

@@ -41,7 +41,7 @@ const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", na
 const {API_BASE, GAME_HOURS, asArray, displayName, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
 const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
-const {ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
+const {OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, salaryAdjXml} =
     await import("./drop-penalties.mjs");
@@ -1103,7 +1103,7 @@ async function leagueState({loggedIn}) {
         }
         Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}, built.weeks));
     } catch (error) {
-        needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over 30 are held.`);
+        needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over ${ROSTER_MAX} are held.`);
         built.seasonOver = null;
     }
     return {
@@ -1137,7 +1137,7 @@ function leagueRules({players, built, cutDown, penalties, transactions}) {
             overRoster.add(violation.franchiseId);
             const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since});
             const held = penalties.filter((penalty) => penalty.franchiseId === violation.franchiseId).map((penalty) => penalty.explanation);
-            text = overRosterMessage({text, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since)});
+            text = overRosterMessage({text, max: ROSTER_MAX, graceHours: OVER_AFTER_TRADE_HOURS, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since)});
         }
         needsAttention(`League rules: ${text}`);
     }

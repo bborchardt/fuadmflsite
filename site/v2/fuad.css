@@ -2450,7 +2450,6 @@ body #fuad-home select {
 
 #fuad-league .fuad-ln-tag-in { background: var(--fuad-good-tint); color: var(--fuad-good); }
 
-#fuad-league .fuad-ln-tag-started { background: var(--fuad-quiet); color: var(--fuad-soft); }
 
 /* a starter's backup once locked (ui/scores-backups.js), under his name */
 #fuad-league .fuad-ln-if { grid-column: 2; margin-top: 2px; color: var(--fuad-soft); font-size: 12px; font-weight: 600; line-height: 16px; }
@@ -4603,7 +4602,6 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     font-weight: 600;
 }
 
-#fuad-add .fuad-add-banner-window { background: var(--fuad-accent-tint); color: var(--fuad-accent); }
 
 #fuad-add .fuad-dot { flex: none; width: 8px; height: 8px; border-radius: 4px; background: currentColor; }
 
@@ -5837,8 +5835,6 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     line-height: 1.4;
 }
 
-#fuad-trades .fuad-trades-bad { background: var(--fuad-bad-tint); }
-#fuad-trades .fuad-trades-bad strong { color: var(--fuad-bad); }
 #fuad-trades .fuad-trades-caution { background: var(--fuad-caution-tint); }
 #fuad-trades .fuad-trades-caution strong { color: var(--fuad-caution); }
 #fuad-trades .fuad-trades-plain { background: var(--fuad-quiet); }

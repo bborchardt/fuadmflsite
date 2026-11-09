@@ -355,7 +355,7 @@ export function blockedText(why, bids) {
         return bids ? "Blocked: with your other groups' max bids, this bid could exceed the salary cap." : "Blocked: with your pending bids, this add could exceed the salary cap. Lower a bid or remove a claim first.";
     }
     if (why === "over roster limit") {
-        return bids ? "Blocked: with your other groups, this bid could make more than 30 active players. Pick a drop." : "Blocked: with your pending bids, this add could make more than 30 active players. Pick a drop, or remove a claim first.";
+        return bids ? `Blocked: with your other groups, this bid could make more than ${ROSTER_MAX} active players. Pick a drop.` : `Blocked: with your pending bids, this add could make more than ${ROSTER_MAX} active players. Pick a drop, or remove a claim first.`;
     }
     if (why === "under roster minimum") {
         return `Blocked: under ${ROSTER_MIN} active, an add can't drop an active player.`;

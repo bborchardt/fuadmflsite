@@ -9,7 +9,7 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 import settings, {league, leagueIdIn, resolveSettings} from "../site/v2/lib/settings.js";
 import {testLeagueNote} from "../site/v2/ui/test-league.js";
-import {CONTRACT_WINDOW_HOURS} from "../site/v2/lib/adds.js";
+import {CONTRACT_WINDOW_HOURS, CONTRACT_WINDOW_TEXT as CONTRACT_WINDOW_TEXT_FUAD} from "../site/v2/lib/adds.js";
 import {MAX_YEARS, yearMentions} from "../site/v2/lib/contract-years.js";
 import {LENGTHS, isLengthLine, yearsIn} from "../site/v2/ui/add-model.js";
 import {lineupPositions, seasonWeeks, withOthers} from "../site/v2/lib/rules.js";
@@ -21,7 +21,7 @@ const FUAD = {
     wordmark: "FUAD",
     timeZone: "CT",
     salaryCap: 300,
-    roster: {min: 23, max: 30},
+    roster: {min: 23, max: 30, overAfterTradeHours: 12},
     weeks: {tradeDeadline: 12},
     franchiseTag: {averageOfTop: 5},
     rookieScale: {firstPick: {QB: 6, RB: 10, WR: 10, TE: 4, PK: 1}, dropPerPick: 0.20},
@@ -102,7 +102,7 @@ test("an unlisted league gets the defaults: a generic wordmark, no one's history
 
 test("a test league's header line goes over a listed league's values, nested values merging", () => {
     const {settings: values, league: status} = resolveSettings(file, "50965", {extends: "48571", wordmark: "FUAD CLONE", salaryCap: 250, roster: {max: 28}});
-    assert.deepEqual(values, {...FUAD, wordmark: "FUAD CLONE", salaryCap: 250, roster: {min: 23, max: 28}});
+    assert.deepEqual(values, {...FUAD, wordmark: "FUAD CLONE", salaryCap: 250, roster: {min: 23, max: 28, overAfterTradeHours: 12}});
     assert.deepEqual([status.test, status.base, status.baseName, status.snapshots, status.problems], [true, "48571", "FUAD", true, []]);
     assert.deepEqual(status.changes.map((change) => change.path), ["wordmark", "salaryCap", "roster.max"]);
 });
@@ -197,4 +197,22 @@ test("what's kept is kept per league, but for what every league shares, and old 
     } finally {
         delete globalThis.window;
     }
+});
+
+test("what members read follows a test league's roster max and length window", () => {
+    const script = `
+        const {capPanel} = await import(${JSON.stringify(new URL("../site/v2/ui/rosters-view.js", import.meta.url).href)});
+        const {blockedText} = await import(${JSON.stringify(new URL("../site/v2/ui/add-model.js", import.meta.url).href)});
+        const {CONTRACT_WINDOW_TEXT} = await import(${JSON.stringify(new URL("../site/v2/lib/adds.js", import.meta.url).href)});
+        const sheet = {active: 27, ir: 0, capUsed: 250, salaries: 240, penaltyTotal: 10, tight: false, seasons: []};
+        console.log(JSON.stringify({active: capPanel(sheet).match(/\\d+ \\/ \\d+/)[0], blocked: blockedText("over roster limit", false), window: CONTRACT_WINDOW_TEXT}));`;
+    const out = execFileSync(process.execPath, ["--input-type=module", "-e", script], {
+        env: {...process.env, DRY_RUN: "true", MFL_LEAGUE_ID: "99999", MFL_SETTINGS: '{"roster": {"max": 28}, "contracts": {"postWithinHours": 2}}'},
+        encoding: "utf8"
+    });
+    const seen = JSON.parse(out);
+    assert.equal(seen.active, "27 / 28");
+    assert.match(seen.blocked, /more than 28 active players/);
+    assert.equal(seen.window, "2 hours");
+    assert.equal(CONTRACT_WINDOW_TEXT_FUAD, "the hour");
 });

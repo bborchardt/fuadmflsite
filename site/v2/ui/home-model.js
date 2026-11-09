@@ -4,6 +4,7 @@ import {asArray, nflCode} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations, titleKind} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
+import {DEFAULT_YEARS} from "../lib/contract-years.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {money, plural} from "./format.js";
 import {TIME_ZONE, zoneLabel, zoneOffset} from "../lib/zone.js";
@@ -313,7 +314,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
         } else if (reading && reading.state === "problem") {
             push(tones.red, "Y", `Couldn’t read ${lastName(player)}’s contract length`, `Post it again by ${due}, like “${lastName(player)}: 2 years”`, links.contracts, "Message board");
         } else {
-            push(tones.orange, "Y", `Post a contract length for ${lastName(player)}`, `Free agent add, due ${due}, or it’s 1 year`, links.contracts, "Message board");
+            push(tones.orange, "Y", `Post a contract length for ${lastName(player)}`, `Free agent add, due ${due}, or it’s ${plural(DEFAULT_YEARS, "year")}`, links.contracts, "Message board");
         }
     }
 
