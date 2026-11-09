@@ -3,7 +3,7 @@
     "wordmark": "MFL",
     "timeZone": "CT",
     "salaryCap": 300,
-    "roster": { "min": 23, "max": 30 },
+    "roster": { "min": 23, "max": 30, "overAfterTradeHours": 12 },
     "weeks": { "tradeDeadline": 12 },
     "franchiseTag": { "averageOfTop": 5 },
     "rookieScale": {

@@ -7,6 +7,7 @@ import {asArray} from "./mfl.js";
 export const SALARY_CAP = settings.salaryCap;
 export const ROSTER_MIN = settings.roster.min;
 export const ROSTER_MAX = settings.roster.max;
+export const OVER_AFTER_TRADE_HOURS = settings.roster.overAfterTradeHours;
 
 // The season's weeks, from MFL's `league` export, which schedules the season by them: the playoffs
 // start after its last regular season week, and its last week is the championship. Null if MFL

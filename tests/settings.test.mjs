@@ -21,7 +21,7 @@ const FUAD = {
     wordmark: "FUAD",
     timeZone: "CT",
     salaryCap: 300,
-    roster: {min: 23, max: 30},
+    roster: {min: 23, max: 30, overAfterTradeHours: 12},
     weeks: {tradeDeadline: 12},
     franchiseTag: {averageOfTop: 5},
     rookieScale: {firstPick: {QB: 6, RB: 10, WR: 10, TE: 4, PK: 1}, dropPerPick: 0.20},
@@ -102,7 +102,7 @@ test("an unlisted league gets the defaults: a generic wordmark, no one's history
 
 test("a test league's header line goes over a listed league's values, nested values merging", () => {
     const {settings: values, league: status} = resolveSettings(file, "50965", {extends: "48571", wordmark: "FUAD CLONE", salaryCap: 250, roster: {max: 28}});
-    assert.deepEqual(values, {...FUAD, wordmark: "FUAD CLONE", salaryCap: 250, roster: {min: 23, max: 28}});
+    assert.deepEqual(values, {...FUAD, wordmark: "FUAD CLONE", salaryCap: 250, roster: {min: 23, max: 28, overAfterTradeHours: 12}});
     assert.deepEqual([status.test, status.base, status.baseName, status.snapshots, status.problems], [true, "48571", "FUAD", true, []]);
     assert.deepEqual(status.changes.map((change) => change.path), ["wordmark", "salaryCap", "roster.max"]);
 });

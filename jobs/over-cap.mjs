@@ -98,11 +98,11 @@ export function tradeOverRoster(transactions, franchiseId, since) {
 
 // Going over the roster max voids the move, as going over the cap does, unless a trade did it: then the team has
 // until the bylaws' deadline to get back.
-export function overRosterMessage({text, max, moves, held, trade}) {
+export function overRosterMessage({text, max, graceHours, moves, held, trade}) {
     let message = `${text} Moves in the last ${RECENT_MOVE_DAYS} days: ${moves.length ? moves.join("; ") : "none"}.`;
     if (trade) {
         message += ` Over ${max} after the ${dropDate(Number(trade.timestamp))} trade, which the bylaws allow: it must be back to ${max}`
-            + " by the next game, the next blind-bid deadline or 12 hours after the trade, whichever is first.";
+            + ` by the next game, the next blind-bid deadline or ${graceHours} hours after the trade, whichever is first.`;
     }
     if (held.length) {
         message += ` Drop penalties held${trade ? ` until it's back to ${max}` : " so the move can be reversed"}: ${held.join(", ")}.`;
