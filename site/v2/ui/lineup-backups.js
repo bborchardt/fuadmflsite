@@ -3,7 +3,7 @@
 // "Conditional starters" thread, who may back up whom, and the message Save writes. The rules are in
 // docs/design.md.
 
-import {DEADLINE_BEFORE_KICKOFF, backupMessages, backupText, matchPlayer, pairsBreak, postText, readRequests, standingPairs} from "../lib/backups.js";
+import {DEADLINE_BEFORE_KICKOFF, backupMessages, backupText, matchPlayer, pairDeadline, pairsBreak, postAsks, postWeek, sourceRequests, standingPairs} from "../lib/backups.js";
 import {asArray} from "../lib/mfl.js";
 import {mflTime} from "../lib/zone.js";
 
@@ -27,10 +27,7 @@ export function weekFacts(page, kickoffs, before = new Map()) {
         const player = byId.get(id);
         return (player && !player.onBye && kickoffs.get(player.nfl.replace("*", ""))) || null;
     };
-    const deadline = (starter, backup) => {
-        const [a, b] = [kickoff(starter), kickoff(backup)];
-        return a && b ? Math.min(a, b) - DEADLINE_BEFORE_KICKOFF : null;
-    };
+    const deadline = pairDeadline(kickoff);
     const last = (map) => Math.max(-Infinity, ...[...map.values()].filter(Boolean));
     const [from, until] = [last(before), last(kickoffs)];
     return {byId, kickoff, deadline, positionOf: (id) => (byId.get(id) || {}).pos, inWeek: (at) => at >= from && at < until};
@@ -38,29 +35,34 @@ export function weekFacts(page, kickoffs, before = new Map()) {
 
 export const samePairs = (a, b) => a.size === b.size && [...a].every(([starter, backup]) => b.get(starter) === backup);
 
-// The team's requests for the week and the pairs standing from them, as the job reads them: from its
-// lineups' messages (backupMessages) and its posts, a post naming its week or being the week's by when
-// it was posted, and an edit into another week leaving it out. Names match the whole roster, IR too,
-// as the job's do; one on IR asks nothing here. `posts`: readTopicPage's, with `at` (its last edit) and
-// `postedAt`, in seconds; `lineups`: readLineupDetails' for the week.
+// The team's requests for the week and the pairs standing from them, read as the job reads them
+// (lib/backups.js): from its lineups' messages (backupMessages) and its posts, a post naming its week
+// or being the week's by when it was posted, and an edit into another week leaving it out. Names match
+// the whole roster, IR too, as the job's do; one on IR asks nothing here. `posts`: readTopicPage's, with
+// `at` (its last edit) and `postedAt`, in seconds; `lineups`: readLineupDetails' for the week. A post
+// naming a week the season doesn't have counts for none here: the job takes it as its posted week's
+// and flags it, and Lineup doesn't read the season's weeks for that alone.
 export function teamBackups(posts, lineups, {team, week, page, facts}) {
     const roster = [
         ...page.players.map((player) => ({id: player.id, name: player.mflName})),
         ...(page.irNames || []).map((name, i) => ({id: `ir${i}`, name}))
     ];
+    // this week, or another: all the job's reading needs to tell
+    const weekAt = (at) => (facts.inWeek(at) ? week : -1);
     const sources = [];
     for (const post of posts) {
         if (post.franchiseId !== team || !post.at || !post.postedAt) {
             continue;
         }
-        const asks = readRequests(postText(post.html).replace(/\s+/g, " ").trim());
-        if (asks.week ? asks.week === week && asks.weeks.length === 1 : facts.inWeek(post.postedAt) && facts.inWeek(post.at)) {
-            sources.push({at: post.at, asks});
+        const asks = postAsks(post);
+        const found = postWeek(asks, {postedWeek: weekAt(post.postedAt), editedWeek: weekAt(post.at)}, Infinity);
+        if (found.week === week) {
+            sources.push({at: post.at, asks, badWeek: found.badWeek, editedLate: found.editedLate});
         }
     }
     for (const {submission, asks} of backupMessages(lineups, week)) {
         const at = mflTime(submission.at);
-        if (at && asks.weeks.length <= 1) {
+        if (at) {
             sources.push({at, asks});
         }
     }
@@ -68,24 +70,7 @@ export function teamBackups(posts, lineups, {team, week, page, facts}) {
         const id = (matchPlayer(phrase, roster).player || {}).id;
         return id && facts.byId.has(id) ? id : null;
     };
-    const requests = [];
-    for (const {at, asks} of sources) {
-        for (const ask of asks.requests) {
-            const [starter, backup] = [who(ask.starter), who(ask.backup)];
-            if (starter && backup) {
-                requests.push({at, starter, backup});
-            }
-        }
-        for (const phrase of asks.removals) {
-            const starter = who(phrase);
-            if (starter) {
-                requests.push({at, starter, remove: true});
-            }
-        }
-        if (asks.removeAll) {
-            requests.push({at, removeAll: true});
-        }
-    }
+    const requests = sourceRequests(sources, who);
     return {requests, pairs: standingPairs(requests, facts.deadline).pairs};
 }
 
