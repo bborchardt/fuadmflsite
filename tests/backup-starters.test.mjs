@@ -99,11 +99,11 @@ test("a team's week: an active starter, or one nflverse can't vouch for, keeps h
 
 test("a team's week: a pair that changes nothing says why, for the log", async () => {
     const active = await changeOf({statuses: {t1: {status: "ACT"}, q2: {status: "ACT"}}});
-    assert.deepEqual([active.change, active.notes], [null, ["T1 was active, so Q2 stayed on the bench"]]);
+    assert.deepEqual([active.change, active.notes], [null, ["T1 was active, so Q2 wasn't started for him"]]);
     const both = await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "INA"}}});
-    assert.deepEqual([both.flags, both.change, both.notes], [[], null, ["T1 was inactive, but so was Q2, who stayed on the bench"]]);
+    assert.deepEqual([both.flags, both.change, both.notes], [[], null, ["T1 was inactive, but so was Q2, so he wasn't started for him"]]);
     // a backup on injured reserve isn't on the game-day roster either
-    assert.deepEqual((await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "RES"}}})).notes, ["T1 was inactive, but so was Q2, who stayed on the bench"]);
+    assert.deepEqual((await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "RES"}}})).notes, ["T1 was inactive, but so was Q2, so he wasn't started for him"]);
     // a swap, or a starter taken as active from his score, is told elsewhere
     assert.deepEqual((await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "ACT"}}})).notes, []);
     assert.deepEqual((await changeOf({statuses: {t1: {status: "INA"}, q2: {status: "ACT"}}, scores: [{id: "t1", score: "4.5"}]})).notes, []);

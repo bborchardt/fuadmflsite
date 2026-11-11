@@ -211,10 +211,10 @@ export async function teamChange({team, week, pairs, submissions, statuses, posi
     // a pair left as it was, for the log, so a request read is seen to have been
     const notes = usable.flatMap((pair) => {
         if (statuses.get(pair.starter).status === "ACT") {
-            return [`${nameOf(pair.starter)} was active, so ${nameOf(pair.backup)} stayed on the bench`];
+            return [`${nameOf(pair.starter)} was active, so ${nameOf(pair.backup)} wasn't started for him`];
         }
         return out.has(pair.starter) && out.has(pair.backup)
-            ? [`${nameOf(pair.starter)} was inactive, but so was ${nameOf(pair.backup)}, who stayed on the bench`] : [];
+            ? [`${nameOf(pair.starter)} was inactive, but so was ${nameOf(pair.backup)}, so he wasn't started for him`] : [];
     });
     const result = weekLineup({pairs: usable, final, out, positionOf, rules, kickoff: kickoffOf});
     for (const {pair, why} of result.flags) {
