@@ -149,20 +149,21 @@ export const startersIn = (results, team) => String((results.find((each) => each
 
 // What a team's week comes to (bylaw 16.5), once its pairs stand: `change`, the lineup to put in
 // ({lineup, submit, what}; `submit` false when only the week's recalculation is still to come), or
-// null, and `flags`, for the commissioner. `submissions`: the week's Lineup Details, with times in
-// seconds and starters as ids; `statuses`: nflverse's (weekStatuses); `rules`, `lineupAt` and
-// `weekLineup` are the version's lib's. `results` reads MFL as needed: `saved()` the week's results,
-// `lastWeek()` the week before's, `scores(ids)` the players' scores ([{id, score}]).
+// null; `flags`, for the commissioner; and `notes`, for the log, the pairs that changed nothing and
+// why. `submissions`: the week's Lineup Details, with times in seconds and starters as ids;
+// `statuses`: nflverse's (weekStatuses); `rules`, `lineupAt` and `weekLineup` are the version's lib's.
+// `results` reads MFL as needed: `saved()` the week's results, `lastWeek()` the week before's,
+// `scores(ids)` the players' scores ([{id, score}]).
 export async function teamChange({team, week, pairs, submissions, statuses, positionOf, rules, kickoffOf, nameOf}, {lineupAt, weekLineup}, results) {
     const flags = [];
     const flag = (why) => flags.push(why);
     if (submissions.some((submission) => submission.unread || submission.at === null)) {
         flag("a lineup on MFL's Lineup Details couldn't be read");
-        return {flags, change: null};
+        return {flags, change: null, notes: []};
     }
     if (submissions.some((submission) => submission.starters.includes(undefined))) {
         flag("a lineup on MFL's Lineup Details names a player not on the team's roster that week");
-        return {flags, change: null};
+        return {flags, change: null, notes: []};
     }
     const saved = startersIn(await results.saved(), team);
     // without a lineup of the week's, MFL keeps last week's: what it scored, when nothing
@@ -207,6 +208,14 @@ export async function teamChange({team, week, pairs, submissions, statuses, posi
             }
         }
     }
+    // a pair left as it was, for the log, so a request read is seen to have been
+    const notes = usable.flatMap((pair) => {
+        if (statuses.get(pair.starter).status === "ACT") {
+            return [`${nameOf(pair.starter)} was active, so ${nameOf(pair.backup)} stayed on the bench`];
+        }
+        return out.has(pair.starter) && out.has(pair.backup)
+            ? [`${nameOf(pair.starter)} was inactive, but so was ${nameOf(pair.backup)}, who stayed on the bench`] : [];
+    });
     const result = weekLineup({pairs: usable, final, out, positionOf, rules, kickoff: kickoffOf});
     for (const {pair, why} of result.flags) {
         flag(`${nameOf(pair.backup)} for ${nameOf(pair.starter)}: ${{"same-backup": "the same backup for two starters (16.5.2)",
@@ -222,7 +231,7 @@ export async function teamChange({team, week, pairs, submissions, statuses, posi
     const change = !sameLineup(result.lineup, final) || !sameLineup(result.lineup, saved)
         ? {lineup: result.lineup, submit: !sameLineup(result.lineup, final), what: changeText({swaps, restored: result.restored}, nameOf)}
         : null;
-    return {flags, change};
+    return {flags, change, notes};
 }
 
 // The week whose games are still to come at a moment (seconds), or null after the championship: a post
