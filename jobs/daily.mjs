@@ -276,7 +276,7 @@ function writeSummary() {
 
 // every write to MFL goes through it, or mflForm for a commissioner's form: both refuse a dry run
 const mflImport = (type, data, params = {}, headers = mflHeaders) => sendImport({type, data, params},
-    {dryRun, url: `${host}/${season}/import`, leagueId, headers, fetchImpl: mflFetch});
+    {dryRun, url: `${host}/${season}/import`, leagueId, headers, fetchImpl: (url, init) => mflAsk(url, init, {waits: []})});
 
 // bid comments appear only on this page, not in the API
 async function processedWaivers(period) {
@@ -551,13 +551,72 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     return rfas.map((rfa) => rfa.playerId);
 }
 
+// MFL turns about one in ten of the job's requests for the league's pages and forms away with a
+// redirect to its public home page, scattered, whatever the pace; a browser's it answers (docs/mfl.md).
+// A page or form is asked again after a wait, as a form posted twice comes to the same (a lineup, a
+// recalculation); turned away once more, it fails. An import isn't asked again (`waits` none): one
+// posted twice could charge a penalty twice, were the first taken after all.
+const REFUSAL_WAITS_MS = [15000, 15000];
+const MAX_REDIRECTS = 5;
+const isRedirect = (response) => response.status >= 300 && response.status < 400 && response.headers.has("location");
+const turnedAway = (response, url) => isRedirect(response) && new URL(response.headers.get("location"), url).hostname.toLowerCase() === "home.myfantasyleague.com";
+// a refused answer's connection back for the next request
+const discard = (response) => (response.body ? response.body.cancel().catch(() => {}) : null);
+// mflAsk's own errors, told from a failed fetch's by mflPage, mflForm and mflImport
+const mflError = (message) => Object.assign(new Error(message), {fromMfl: true});
+
+// A request to the league's host, through mflFetch: one MFL turns away is waited out and asked again
+// after each of `waits`; another redirect is followed hop by hop, on myfantasyleague.com only and
+// over https, as the session goes with it, or with `follow` false is the answer. An answer `answered` says
+// is the one asked for is never taken for a refusal (the commissioner switch, by its cookie).
+async function mflAsk(url, init = {}, {follow = true, waits = REFUSAL_WAITS_MS, answered = () => false} = {}) {
+    let target = url;
+    let options = {...init, redirect: "manual"};
+    const refused = (response) => !answered(response) && turnedAway(response, target);
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+        let response = await mflFetch(target, options);
+        for (const wait of waits) {
+            if (!refused(response)) {
+                break;
+            }
+            await discard(response);
+            const {pathname, search} = new URL(target);
+            log(`MFL turned ${pathname}${search} away with its home page; asking again in ${wait / 1000} seconds.`);
+            await new Promise((resolve) => setTimeout(resolve, wait));
+            response = await mflFetch(target, options);
+        }
+        if (refused(response)) {
+            await discard(response);
+            throw mflError(`MFL turned it away with its home page${waits.length ? ` ${waits.length + 1} times` : ""}`);
+        }
+        if (!follow || !isRedirect(response)) {
+            return response;
+        }
+        const next = new URL(response.headers.get("location"), target);
+        await discard(response);
+        if (!/(^|\.)myfantasyleague\.com$/i.test(next.hostname)) {
+            throw mflError(`MFL sent it on to ${next.host}, which isn't MFL's`);
+        }
+        // MFL's servers all answer https, and the login mustn't go out unencrypted
+        next.protocol = "https:";
+        // a 303, or a 301 or 302 to a post, is followed as a GET, as browsers do
+        if (response.status === 303 || ([301, 302].includes(response.status) && (options.method || "GET") === "POST")) {
+            const headers = {...options.headers};
+            delete headers["Content-Type"];
+            options = {...options, method: "GET", body: undefined, headers};
+        }
+        target = next.href;
+    }
+    throw mflError(`MFL redirected it more than ${MAX_REDIRECTS} times`);
+}
+
 // a page of MFL's (not an export), as the logged-in commissioner
 async function mflPage(path, what, headers = mflHeaders) {
     let response;
     try {
-        response = await mflFetch(`${host}${path}`, {headers});
+        response = await mflAsk(`${host}${path}`, {headers});
     } catch (error) {
-        throw new Error(`Couldn't load MFL's ${what}: network error (${error.message})`);
+        throw new Error(`Couldn't load MFL's ${what}: ${error.fromMfl ? error.message : `network error (${error.message})`}`);
     }
     if (!response.ok) {
         throw new Error(`Couldn't load MFL's ${what}: HTTP ${response.status}`);
@@ -573,15 +632,22 @@ async function mflPage(path, what, headers = mflHeaders) {
 // MFL serves the commissioner's own forms (a past week's lineup, Recalculate Standings) once the login
 // has become the commissioner, which sets a cookie of its own
 let commishHeaders = null;
+const commishCookie = (response) => (response.headers.getSetCookie ? response.headers.getSetCookie() : []).map((each) => each.split(";")[0])
+    .find((each) => each.startsWith("MFL_IS_COMMISH="));
 // the first week whose backups are still to go in, which payouts wait for
 let backupsOpenFrom = Infinity;
 async function asCommissioner() {
     if (commishHeaders) {
         return commishHeaders;
     }
-    const response = await mflFetch(`${host}/${season}/logout?L=${leagueId}&BECOME=0000`, {headers: mflHeaders, redirect: "manual"});
-    const cookie = (response.headers.getSetCookie ? response.headers.getSetCookie() : []).map((each) => each.split(";")[0])
-        .find((each) => each.startsWith("MFL_IS_COMMISH="));
+    let response;
+    try {
+        response = await mflAsk(`${host}/${season}/logout?L=${leagueId}&BECOME=0000`, {headers: mflHeaders}, {follow: false, answered: (answer) => Boolean(commishCookie(answer))});
+    } catch (error) {
+        throw new Error(`MFL didn't make the login the commissioner: ${error.message}`);
+    }
+    const cookie = commishCookie(response);
+    await discard(response);
     if (!cookie) {
         throw new Error(`MFL didn't make the login the commissioner (HTTP ${response.status}, no MFL_IS_COMMISH cookie)`);
     }
@@ -892,14 +958,14 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                         continue;
                     }
                     await mflForm({what: "Submit Lineup", path: `/${season}/lineup`, fields: lineupFields(form, each.lineup), ok: lineupSaved},
-                        {dryRun, host, headers, fetchImpl: mflFetch});
+                        {dryRun, host, headers, fetchImpl: mflAsk});
                 }
                 const applied = changed.filter((each) => !skipped.has(each.team));
                 if (applied.length) {
                     const fields = recalcFields(await mflPage(`/${season}/csetup?L=${leagueId}&C=RECALC`, "Recalculate Standings", headers), week);
                     await mflForm({what: "Recalculate Standings", path: `/${season}/csetup`, fields,
                         // MFL's saved results, read next, say whether it worked: nothing in its answer is relied on
-                        ok: () => true}, {dryRun, host, headers, fetchImpl: mflFetch});
+                        ok: () => true}, {dryRun, host, headers, fetchImpl: mflAsk});
                     const results = await weekResults(week);
                     for (const {team, name, lineup, submit, what} of applied) {
                         const saved = startersIn(results, team);

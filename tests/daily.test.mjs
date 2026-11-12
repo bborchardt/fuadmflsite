@@ -208,6 +208,14 @@ test("an import MFL refuses fails the cap chores, and the rest still run", () =>
     assert.match(result.stdout, /The 2025 franchise snapshot already exists\./);
 });
 
+test("an import MFL turns away fails at once, as one sent twice could charge a penalty twice", () => {
+    const result = run({scenario: {turnedAway: {"/2026/import": 1}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(result.status, 1);
+    assert.deepEqual(result.entries, ["Cap chores: MFL's salaryAdj import failed: MFL turned it away with its home page"]);
+    assert.equal(imports(result).length, 1);
+    assert.doesNotMatch(result.stdout, /asking again/);
+});
+
 test("when the league's exports can't be read, the run fails but the snapshots are still seen to", () => {
     const result = run({scenario: {exports: {...league(), rosters: 500}}});
     assert.equal(result.status, 1);
@@ -927,6 +935,62 @@ test("backup starters: MFL's saved results, not its answer, say the week was rec
     assert.equal(result.status, 0, result.stdout);
     assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("backup starters: a request MFL turns away is asked again after a wait, and fails only when turned away each time", () => {
+    const details = "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6";
+    const apply = {...LOGIN, BACKUP_STARTERS: "apply"};
+    const done = "Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive.";
+    const asked = (result, address) => result.requests.filter((request) => request.url && new URL(request.url).pathname + new URL(request.url).search === address).length;
+    // each wait is logged, as the fake doesn't wait it out
+    const waits = (result, address) => result.stdout.split("\n").filter((line) => line === `MFL turned ${address} away with its home page; asking again in 15 seconds.`).length;
+
+    // a page, a form's post, the commissioner switch: each turned away once, then answered
+    for (const address of [details, "/2026/lineup", "/2026/csetup", "/2026/logout?L=48571&BECOME=0000"]) {
+        const once = run({scenario: {...backups(), turnedAway: {[address]: 1}}, files: BACKUP_FILES, env: apply});
+        assert.equal(once.status, 0, `${address}: ${once.stdout}`);
+        assert.deepEqual([asked(once, address), waits(once, address)], [2, 1], address);
+        assert.ok(once.entries.includes(done), `${address}: ${once.entries.join("\n")}`);
+    }
+
+    // turned away every time: two waits, then the week waits for the next run
+    const always = run({scenario: {...backups(), turnedAway: {[details]: 3}}, files: BACKUP_FILES, env: apply});
+    assert.equal(always.status, 1);
+    assert.deepEqual([asked(always, details), waits(always, details)], [3, 2]);
+    assert.ok(always.entries.includes("Backup starters: week 6 stopped: Couldn't load MFL's Beta's week 6 Lineup Details: MFL turned it away with its home page 3 times"), always.entries.join("\n"));
+    assert.deepEqual(posted(always, "lineup"), []);
+    assert.deepEqual(JSON.parse(readFileSync(join(always.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+
+    // the lineup's post turned away every time: the form fails, and nothing more is posted
+    const form = run({scenario: {...backups(), turnedAway: {"/2026/lineup": 3}}, files: BACKUP_FILES, env: apply});
+    assert.equal(form.status, 1);
+    assert.ok(form.entries.includes("Backup starters: week 6 stopped: MFL's Submit Lineup form failed: MFL turned it away with its home page 3 times"), form.entries.join("\n"));
+    assert.deepEqual(posted(form, "csetup"), []);
+
+    // the commissioner switch's own answer pointing at MFL's home page, with its cookie: taken, not waited out
+    const home = run({scenario: {...backups(), commishLocation: "http://home.myfantasyleague.com"}, files: BACKUP_FILES, env: apply});
+    assert.equal(home.status, 0, home.stdout);
+    assert.doesNotMatch(home.stdout, /asking again/);
+    assert.ok(home.entries.includes(done), home.entries.join("\n"));
+
+    // a redirect to http is followed over https, as the login goes with it
+    const plain = backups();
+    plain.redirects = {[details]: `http://www44.myfantasyleague.com${details}&moved=1`};
+    plain.pages[`${details}&moved=1`] = plain.pages[details];
+    const insecure = run({scenario: plain, files: BACKUP_FILES, env: apply});
+    assert.equal(insecure.status, 0, insecure.stdout);
+    assert.ok(insecure.requests.some((request) => request.url === `https://www44.myfantasyleague.com${details}&moved=1`));
+    assert.ok(!insecure.requests.some((request) => request.url && request.url.startsWith("http://")));
+    assert.ok(insecure.entries.includes(done), insecure.entries.join("\n"));
+
+    // another redirect is followed, here to the same page by another address
+    const scenario = backups();
+    scenario.redirects = {[details]: `${details}&moved=1`};
+    scenario.pages[`${details}&moved=1`] = scenario.pages[details];
+    const moved = run({scenario, files: BACKUP_FILES, env: apply});
+    assert.equal(moved.status, 0, moved.stdout);
+    assert.equal(asked(moved, `${details}&moved=1`), 1);
+    assert.ok(moved.entries.includes(done), moved.entries.join("\n"));
 });
 
 test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {

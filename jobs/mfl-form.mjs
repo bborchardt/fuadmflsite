@@ -2,12 +2,13 @@
 // lineup import refuses one, the deadline passed) and Recalculate Standings. With mflImport, the
 // only ways the daily job writes to MFL.
 
-// MFL sometimes answers a league's page or form with its own public home page, seemingly when it's
-// throttling: the error says so, as what the page is read for won't be there. Known by its title, as a
-// league moved to another server may be sent on there and still be the page asked for. Null otherwise.
+// MFL now and then answers the job's request for a league's page or form with its own public home
+// page (docs/mfl.md): the error says so, as what the page is read for won't be there. Known by its
+// title, as a league moved to another server may be sent on there and still be the page asked for.
+// Null otherwise.
 export function mflHomePage(body) {
     return /<title>\s*MyFantasyLeague Home Page\s*<\/title>/i.test(body)
-        ? "MFL sent its own home page instead, as it may when it's throttling"
+        ? "MFL sent its own home page instead"
         : null;
 }
 
@@ -26,7 +27,8 @@ export async function mflForm({what, path, fields, ok}, {dryRun, host, headers, 
         });
         body = await response.text();
     } catch (error) {
-        throw new Error(`MFL's ${what} form failed: network error (${error.message})`);
+        // the job's fetch says when MFL turned the post away or sent it somewhere odd (`fromMfl`)
+        throw new Error(`MFL's ${what} form failed: ${error.fromMfl ? error.message : `network error (${error.message})`}`);
     }
     const homePage = response.ok && mflHomePage(body);
     if (homePage) {
