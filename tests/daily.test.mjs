@@ -911,7 +911,12 @@ test("backup starters: a run that set the lineup but failed before recalculating
     assert.equal(result.status, 0, result.stdout);
     assert.deepEqual(posted(result, "lineup"), []);
     assert.equal(posted(result, "csetup").length, 1);
-    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
+    assert.ok(result.entries.includes("Backup starters: recalculated week 6, as MFL's results didn't have Beta's lineup yet: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
+    // the recalculation that doesn't show in MFL's results: no lineup was set this time
+    const unrun = run({scenario: backups({details, saved: "17102,200,"}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(unrun.status, 1);
+    assert.ok(unrun.entries.includes("Backup starters: Beta, week 6: after Recalculate Standings MFL's results still have Tyler Warren, B0 Player, so it may not have run; the next run tries again."), unrun.entries.join("\n"));
+    assert.deepEqual(JSON.parse(readFileSync(join(unrun.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
 });
 
 test("backup starters: MFL's saved results, not its answer, say the week was recalculated", () => {
@@ -1079,6 +1084,10 @@ test("backup starters: an inactive starter who scored, a name it can't place, a 
     // the week left for the next run
     assert.deepEqual(JSON.parse(readFileSync(join(unsaved.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
     assert.ok(unsaved.entries.includes("Backup starters: Beta, week 6: the lineup was set, but after Recalculate Standings MFL's results still have Tyler Warren, B0 Player, so it may not have run; the next run tries again."), unsaved.entries.join("\n"));
+    // results with no starters for the team at all
+    const empty = run({scenario: backups({saved: ""}), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(empty.status, 1);
+    assert.ok(empty.entries.includes("Backup starters: Beta, week 6: the lineup was set, but after Recalculate Standings MFL's results still have no starters, so it may not have run; the next run tries again."), empty.entries.join("\n"));
 });
 
 // Beta's week 6 Lineup Details: a row per lineup, each [message, time, "(C)" for the commissioner's]

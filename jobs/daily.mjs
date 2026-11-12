@@ -908,7 +908,8 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                             needsAttention(`Backup starters: ${name}, week ${week}: ${submit ? "the lineup was set, but " : ""}after Recalculate Standings MFL's results `
                                 + `still have ${saved.map(nameOf).join(", ") || "no starters"}, so it may not have run; the next run tries again.`);
                         } else {
-                            choreLog(`Backup starters: set ${name}'s week ${week} lineup and recalculated the week${what ? `: ${what}` : ""}.`);
+                            choreLog(`Backup starters: ${submit ? `set ${name}'s week ${week} lineup and recalculated the week`
+                                : `recalculated week ${week}, as MFL's results didn't have ${name}'s lineup yet`}${what ? `: ${what}` : ""}.`);
                         }
                     }
                 }
