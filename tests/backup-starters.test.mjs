@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, changeText, teamChange, weekFinder, weekStatuses} from "../jobs/backup-starters.mjs";
 import {lineupAt, lineupRules, weekLineup} from "../site/v2/lib/backups.js";
-import {mflForm} from "../jobs/mfl-form.mjs";
+import {mflForm, mflHomePage} from "../jobs/mfl-form.mjs";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/backups/${name}`, import.meta.url), "utf8");
 
@@ -57,6 +57,12 @@ test("a form refuses a dry run, and a page that says it failed throws", async ()
     assert.match(await mflForm(form, {...options, fetchImpl: page("Week 8 lineup SUBMITTED")}), /SUBMITTED/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("<b>Error(s) submitting lineup: You must select 1 PK.</b>")}), /Error\(s\) submitting lineup: You must select 1 PK/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("", 500)}), /HTTP 500/);
+    await assert.rejects(mflForm(form, {...options, fetchImpl: page("<title>MyFantasyLeague Home Page</title>")}), /Submit Lineup form failed: MFL sent its own home page instead/);
+});
+
+test("MFL's own home page in place of a league's is told apart", () => {
+    assert.equal(mflHomePage("<title>Fantasy Football: FUAD Starting Lineup Details</title>"), null);
+    assert.match(mflHomePage("<html><head>\n<title>MyFantasyLeague Home Page</title>"), /home page instead/);
 });
 
 // Team 0002 starts QB q1 and TE t1, with QB q2 on the bench; it asked for q2 if t1 is out, and
