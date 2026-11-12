@@ -914,6 +914,16 @@ test("backup starters: a run that set the lineup but failed before recalculating
     assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
 });
 
+test("backup starters: MFL's saved results, not its answer, say the week was recalculated", () => {
+    // an answer with a warning in it, as MFL's result pages can have, when the results show the lineup
+    const scenario = backups();
+    scenario.forms = {"/2026/csetup": '<h2>Calculating Week 6 Results</h2><span class="warning">Error(s) submitting lineup: the deadline has passed</span>'};
+    const result = run({scenario, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.ok(result.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), result.entries.join("\n"));
+    assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
 test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {
     const scenario = backups();
     scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"] = scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"].replace(/<input type="checkbox" name="QB0002"[^>]*>/, "");
@@ -1068,7 +1078,7 @@ test("backup starters: an inactive starter who scored, a name it can't place, a 
     assert.equal(unsaved.status, 1);
     // the week left for the next run
     assert.deepEqual(JSON.parse(readFileSync(join(unsaved.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
-    assert.ok(unsaved.entries.includes("Backup starters: Beta's week 6 lineup was set, but MFL's results still have Tyler Warren, B0 Player."), unsaved.entries.join("\n"));
+    assert.ok(unsaved.entries.includes("Backup starters: Beta, week 6: the lineup was set, but after Recalculate Standings MFL's results still have Tyler Warren, B0 Player, so it may not have run; the next run tries again."), unsaved.entries.join("\n"));
 });
 
 // Beta's week 6 Lineup Details: a row per lineup, each [message, time, "(C)" for the commissioner's]

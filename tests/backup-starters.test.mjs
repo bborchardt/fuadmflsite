@@ -58,7 +58,7 @@ test("a form refuses a dry run, and a page that says it failed throws", async ()
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("<b>Error(s) submitting lineup: You must select 1 PK.</b>")}), /Error\(s\) submitting lineup: You must select 1 PK/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("", 500)}), /HTTP 500/);
     // a page that neither says it worked nor gives an error: named by its title
-    await assert.rejects(mflForm(form, {...options, fetchImpl: page("<title>Fantasy Football: FUAD Submit Lineup</title>")}), /form failed: HTTP 200, answered with "Fantasy Football: FUAD Submit Lineup"$/);
+    await assert.rejects(mflForm(form, {...options, fetchImpl: page("<title>Fantasy Football: A &amp; B Submit Lineup</title>")}), /form failed: MFL's answer, "Fantasy Football: A & B Submit Lineup", didn't confirm it$/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("<title>MyFantasyLeague Home Page</title>")}), /Submit Lineup form failed: MFL sent its own home page instead/);
 });
 

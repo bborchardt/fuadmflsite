@@ -35,8 +35,9 @@ export async function mflForm({what, path, fields, ok}, {dryRun, host, headers, 
     if (!response.ok || !ok(body)) {
         const said = body.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
         const error = (/Error\(s\)[^.]*\.?[^.]*/i.exec(said) || [])[0];
-        const title = ((/<title>([^<]*)<\/title>/i.exec(body) || [])[1] || "").trim();
-        throw new Error(`MFL's ${what} form failed: ${error || `HTTP ${response.status}${title ? `, answered with "${title}"` : ""}`}`);
+        const title = ((/<title>([^<]*)<\/title>/i.exec(body) || [])[1] || "").replace(/&amp;/g, "&").trim();
+        const page = `MFL's answer${title ? `, "${title}",` : ""} didn't confirm it`;
+        throw new Error(`MFL's ${what} form failed: ${error || (response.ok ? page : `HTTP ${response.status}`)}`);
     }
     return body;
 }
