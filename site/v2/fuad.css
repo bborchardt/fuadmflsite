@@ -1506,7 +1506,9 @@ html.fuad-app { --fuad-home-bar: max(0px, env(safe-area-inset-bottom, 0px) - 6px
 
 .fuad-looks-options { display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 12px; background: var(--fuad-page); }
 
-.fuad-looks-options button {
+/* on Franchise setup the picker is in MFL's page, whose buttons (body .pagebody button) are the accent */
+.fuad-looks-options button,
+body .pagebody .fuad-looks-options button {
     min-height: 40px;
     display: flex;
     align-items: center;
@@ -1523,7 +1525,8 @@ html.fuad-app { --fuad-home-bar: max(0px, env(safe-area-inset-bottom, 0px) - 6px
 
 .fuad-looks-options button[aria-pressed="true"],
 #fuad-frame .fuad-looks-options button[aria-pressed="true"],
-.fuad-layer .fuad-looks-options button[aria-pressed="true"] { background: var(--fuad-quiet); color: var(--fuad-text); box-shadow: inset 3px 0 0 var(--fuad-accent); }
+.fuad-layer .fuad-looks-options button[aria-pressed="true"],
+body .pagebody .fuad-looks-options button[aria-pressed="true"] { background: var(--fuad-quiet); color: var(--fuad-text); box-shadow: inset 3px 0 0 var(--fuad-accent); }
 
 .fuad-looks-options button:disabled { cursor: default; }
 
