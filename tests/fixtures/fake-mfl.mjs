@@ -31,6 +31,7 @@
 //   turnedAway    {"/2026/path?query": n}: the first n requests there (a page, a form's post, the
 //                 commissioner switch) answered with MFL's redirect to its home page
 //   redirects     {"/2026/path?query": location}: that address answered with a redirect there
+//   commishLocation  where the commissioner switch's redirect points (default: the league's home page)
 //   recalculated  {"TYPE:W": body} in place of `exports`' once Recalculate Standings has been posted
 //   "nflSchedule:W" in `exports` answers that week's schedule, with its teams, ahead of week1's
 
@@ -121,7 +122,7 @@ globalThis.fetch = async (input, init = {}) => {
         return new Response(null, {status: 302, headers: {Location: scenario.redirects[address]}});
     }
     if (page === "logout" && url.searchParams.get("BECOME") === "0000") {
-        return new Response(null, {status: 302, headers: {Location: `/${year}/home/48571`, "Set-Cookie": "MFL_IS_COMMISH=yes; domain=.myfantasyleague.com; path=/"}});
+        return new Response(null, {status: 302, headers: {Location: scenario.commishLocation || `/${year}/home/48571`, "Set-Cookie": "MFL_IS_COMMISH=yes; domain=.myfantasyleague.com; path=/"}});
     }
     if ((init.method || "GET") === "POST" && ["lineup", "csetup"].includes(page)) {
         recalculated = recalculated || page === "csetup";

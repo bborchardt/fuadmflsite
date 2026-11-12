@@ -208,6 +208,14 @@ test("an import MFL refuses fails the cap chores, and the rest still run", () =>
     assert.match(result.stdout, /The 2025 franchise snapshot already exists\./);
 });
 
+test("an import MFL turns away fails at once, as one sent twice could charge a penalty twice", () => {
+    const result = run({scenario: {turnedAway: {"/2026/import": 1}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(result.status, 1);
+    assert.deepEqual(result.entries, ["Cap chores: MFL's salaryAdj import failed: MFL turned it away with its home page"]);
+    assert.equal(imports(result).length, 1);
+    assert.doesNotMatch(result.stdout, /asking again/);
+});
+
 test("when the league's exports can't be read, the run fails but the snapshots are still seen to", () => {
     const result = run({scenario: {exports: {...league(), rosters: 500}}});
     assert.equal(result.status, 1);
@@ -958,6 +966,20 @@ test("backup starters: a request MFL turns away is asked again after a wait, and
     assert.equal(form.status, 1);
     assert.ok(form.entries.includes("Backup starters: week 6 stopped: MFL's Submit Lineup form failed: MFL turned it away with its home page 3 times"), form.entries.join("\n"));
     assert.deepEqual(posted(form, "csetup"), []);
+
+    // the commissioner switch's own answer pointing at MFL's home page, with its cookie: taken, not waited out
+    const home = run({scenario: {...backups(), commishLocation: "http://home.myfantasyleague.com"}, files: BACKUP_FILES, env: apply});
+    assert.equal(home.status, 0, home.stdout);
+    assert.doesNotMatch(home.stdout, /asking again/);
+    assert.ok(home.entries.includes(done), home.entries.join("\n"));
+
+    // a redirect to http isn't followed, as the login would go with it unencrypted
+    const plain = backups();
+    plain.redirects = {[details]: `http://www44.myfantasyleague.com${details}`};
+    const insecure = run({scenario: plain, files: BACKUP_FILES, env: apply});
+    assert.equal(insecure.status, 1);
+    assert.ok(insecure.entries.includes("Backup starters: week 6 stopped: Couldn't load MFL's Beta's week 6 Lineup Details: MFL sent it on to http://www44.myfantasyleague.com, which would take the login unencrypted"), insecure.entries.join("\n"));
+    assert.equal(asked(insecure, details), 1);
 
     // another redirect is followed, here to the same page by another address
     const scenario = backups();

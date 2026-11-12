@@ -15,7 +15,8 @@ export async function mflImport({type, data, params = {}}, {dryRun, url, leagueI
         });
         body = await response.text();
     } catch (error) {
-        throw new Error(`MFL's ${type} import failed: network error (${error.message})`);
+        // the job's fetch says when MFL turned the import away (`fromMfl`)
+        throw new Error(`MFL's ${type} import failed: ${error.fromMfl ? error.message : `network error (${error.message})`}`);
     }
     const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
     if (error || !response.ok || !/<status\b[^>]*>\s*OK\s*<\/status>/i.test(body)) {
