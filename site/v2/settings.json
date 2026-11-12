@@ -24,6 +24,7 @@
   "leagues": {
     "48571": {
       "wordmark": "FUAD",
+      "backupStarters": true,
       "renumberedFranchises": [{ "was": "0009", "now": "0005", "through": 2020 }]
     }
   }
