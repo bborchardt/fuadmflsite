@@ -94,7 +94,7 @@ PROBE = """
 """
 
 
-# a bundle's lookbehind regexes are `new RegExp` (tools/build.mjs); before Safari 16.4 they throw
+# a `new RegExp` with a lookbehind throws, as before Safari 16.4 (v2 has none: tests/guards.test.mjs)
 NO_LOOKBEHIND = """
 (() => {
   const Native = RegExp;

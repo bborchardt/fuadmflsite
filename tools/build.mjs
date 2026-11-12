@@ -35,10 +35,8 @@ for (const version of BUNDLED) {
         format: "esm",
         minify: true,
         sourcemap: true,
-        // syntax past ES2020 fails the build, as `npm run lint` holds the source to it. Safari before
-        // 16.4 can't parse a lookbehind regex, which would stop the whole file: as Safari 16.3 it
-        // becomes `new RegExp`, failing only where it runs (lib/contract-years.js, loaded on demand)
-        target: ["es2020", "safari16.3"],
+        // syntax past ES2020 fails the build, as `npm run lint` holds the source to it
+        target: ["es2020"],
         legalComments: "none",
         logLevel: "warning"
     });

@@ -4,6 +4,7 @@ import {API_BASE, asArray, exportUrl, fetchExport, weekKickoff} from "../lib/mfl
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingAdds, windowClosed} from "../lib/adds.js";
 import {cutDownAt, seasonPhase} from "../lib/violations.js";
+import {postReadings, teamPlayers} from "../lib/contract-years.js";
 import {seasonWeeks} from "../lib/rules.js";
 import {leagueIdIn} from "../lib/settings.js";
 import {dropUnusedKeys} from "./store.js";
@@ -69,15 +70,13 @@ async function loadLeague({season, leagueId}) {
 }
 
 // Only threads with a post since the earliest open add are read, one at a time; the board needs a
-// logged-in member. The reader is loaded only here: its regular expressions need Safari 16.4+, and
-// a failed load just leaves the notice as it is.
+// logged-in member.
 async function contractReadings({season, leagueId}, league) {
     const open = league.pendingAdds.filter((add) => add.type !== "BBID_WAIVER" && !windowClosed(add, Date.now() / 1000));
     if (!open.length) {
         return null;
     }
     const board = (type, params) => fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
-    const {postReadings, teamPlayers} = await import("../lib/contract-years.js");
     const earliest = Math.min(...open.map((add) => add.added));
     const threads = asArray((await board("messageBoard", {COUNT: 100})).thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
     const posts = [];

@@ -1,9 +1,9 @@
 // Checks for two traps in AGENTS.md: the daily job reading exports a version's lib/ no longer has,
-// and syntax older iPhones can't parse in a module fuad.js imports statically.
+// and a regex older iPhones can't build in what members' browsers run.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {existsSync, readFileSync, readdirSync} from "node:fs";
+import {readFileSync, readdirSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 
@@ -41,48 +41,23 @@ for (const version of versions.filter((name) => name !== "v1")) {
     });
 }
 
-// the modules a file imports statically; dynamic import() is left out on purpose
-function staticImports(source) {
-    const specifiers = [
-        ...source.matchAll(/(?:^|;)\s*(?:import|export)\b[^;(]+?\bfrom\s*["']([^"']+)["']/gm),
-        ...source.matchAll(/(?:^|;)\s*import\s*["']([^"']+)["']/gm)
-    ];
-    return specifiers.map((match) => match[1]);
-}
-
-function staticGraph(entry) {
-    const seen = new Set();
-    const visit = (file) => {
-        if (seen.has(file)) {
-            return;
-        }
-        assert.ok(existsSync(file), `missing module ${file}`);
-        seen.add(file);
-        for (const specifier of staticImports(readFileSync(file, "utf8"))) {
-            assert.match(specifier, /^\.\.?\//, `${file} imports ${specifier}, which this walk can't follow`);
-            visit(join(dirname(file), specifier));
-        }
-    };
-    visit(entry);
-    return [...seen];
-}
-
-// regex lookbehind needs Safari 16.4
+// A regex lookbehind throws on Safari before 16.4, on older iPhones members have: in a regex
+// literal it stops the whole bundle from parsing, in `new RegExp` the module that builds it. None is
+// allowed in what members' browsers run but the frozen v1, which loads its own on demand.
 const LOOKBEHIND = /\(\?<[=!]/;
 
-test("static imports are found across lines, dynamic ones aren't", () => {
-    const source = 'import {a,\n    b as c, // the c-thing\n} from "./one.js";\nimport "./two.js";\nexport {d}from "../three.js"; import {e} from "./six.js";\nconst x = await import("./four.js");\nexport const s = "./five.js";\nexport function f() {\n    return Object.fromEntries([]);\n}';
-    assert.deepEqual(staticImports(source), ["./one.js", "../three.js", "./six.js", "./two.js"]);
-    assert.ok(LOOKBEHIND.test(String(/(?<![\d.])x/)) && LOOKBEHIND.test(String(/(?<=a)b/)));
+test("a lookbehind is recognized in a regex's source, a named group isn't", () => {
+    assert.ok(LOOKBEHIND.test(String(/(?<![\d.])x/)) && LOOKBEHIND.test("new RegExp(`(?<=a)b`)"));
     assert.ok(!LOOKBEHIND.test(String(/(?<name>x)/)));
 });
 
-for (const version of versions) {
-    test(`${version}: nothing fuad.js imports statically uses regex lookbehind (older iPhones)`, () => {
-        const graph = staticGraph(join(root, "site", version, "fuad.js"));
-        assert.ok(graph.length > 5, `only ${graph.length} modules found`);
-        const offending = graph.filter((file) => LOOKBEHIND.test(readFileSync(file, "utf8")))
-            .map((file) => file.slice(root.length + 1));
-        assert.deepEqual(offending, []);
-    });
-}
+test("nothing under site/ but the frozen v1 uses a regex lookbehind (older iPhones)", () => {
+    const files = [];
+    const walk = (dir) => readdirSync(dir, {withFileTypes: true}).forEach((entry) => entry.isDirectory()
+        ? walk(join(dir, entry.name)) : /\.m?js$/.test(entry.name) && files.push(join(dir, entry.name)));
+    readdirSync(join(root, "site"), {withFileTypes: true}).filter((entry) => entry.isDirectory() && !["v1", "data"].includes(entry.name))
+        .forEach((entry) => walk(join(root, "site", entry.name)));
+    assert.ok(files.length > 50, `only ${files.length} files found`);
+    const offending = files.filter((file) => LOOKBEHIND.test(readFileSync(file, "utf8"))).map((file) => file.slice(root.length + 1));
+    assert.deepEqual(offending, []);
+});

@@ -70,7 +70,7 @@ A second league can try the site with no code change, and any setting can be tri
   same saved pages over a simulated slow phone connection, pictures, fonts and third-party scripts
   at typical sizes: when the page shows, how long MFL's own page shows first, when v2's screen is
   drawn and when its data is in; `--cache nextday` times a visit a day after the last, `--built`
-  times the bundle, `--no-lookbehind` makes lookbehind regexes throw, as on iPhones before iOS 16.4.
+  times the bundle, `--no-lookbehind` makes a `new RegExp` with a lookbehind throw, as on iPhones before iOS 16.4.
 - `uv run --no-project --with playwright python tools/verify/header.py --built` loads saved pages with
   `mfl/message-header.html` as their header, in Chromium and WebKit, through each beta, fallback and
   failure case, before the commissioner pastes it; `speed.py --header` times it.

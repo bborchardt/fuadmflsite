@@ -3,8 +3,7 @@
 //
 // What runs in members' browsers also stays within ES2020, which Safari has had since iOS 14 (any
 // iPhone from the 6s on, updated). Only the language is checked: newer browser APIs and CSS aren't.
-// The regex lookbehind (ES2018, but Safari 16.4) passes here; tests/guards.test.mjs keeps it out of
-// what fuad.js imports statically.
+// The regex lookbehind (ES2018, but Safari 16.4) passes here; tests/guards.test.mjs keeps it out.
 
 import js from "@eslint/js";
 import esx from "eslint-plugin-es-x";

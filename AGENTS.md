@@ -12,12 +12,11 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   version's `settings.json`, so `MFL_LEAGUE_ID` must be listed; a dry run, the manual run's default, may
   name any league and writes nothing. A new chore that writes must go through `mflImport`, or `mflForm`
   for a commissioner's form the import can't replace; both refuse a dry run.
-- Members include older iPhones: a syntax error (e.g. regex lookbehind, Safari 16.4+) in a file
-  breaks every tab. v1 loads such code with a dynamic `import()`; v2 is published as one file
-  (`tools/build.mjs`), where `import()` doesn't keep it out, so the build fails on syntax past
-  ES2020 and turns a lookbehind into `new RegExp`, which throws where it runs: keep it in code loaded
-  on demand. `npm run lint` keeps `site/` within ES2020 (iOS 14); newer browser APIs and CSS it can't
-  see, so keep those to touches that can fail quietly.
+- Members include older iPhones: v2 is published as one file (`tools/build.mjs`), so a syntax error
+  anywhere in it breaks every tab. The build fails on syntax past ES2020 and `npm run lint` keeps
+  `site/` within it (iOS 14). A regex lookbehind is ES2018 but needs Safari 16.4, and isn't allowed
+  outside the frozen v1 (`tests/guards.test.mjs`). Newer browser APIs and CSS lint can't see, so keep
+  those to touches that can fail quietly.
 - Members' browsers keep what v2 loaded across deploys (`site/v2/ui/store.js`). A panel's saved copy
   that its render throws on is loaded afresh, but a `cached()` value is used as found until it
   expires (a year for a bid run): a change to the shape one holds changes its key too, which
