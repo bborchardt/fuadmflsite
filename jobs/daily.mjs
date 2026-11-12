@@ -844,7 +844,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                     || roster.find((player) => player.name === entry.name) || {}).id || anyPlayer().get(`${entry.name}|${entry.pos}`);
                 const submissions = (details.get(team) || [])
                     .map((submission) => ({...submission, at: mflTime(submission.at), starters: submission.starters.map(byName)}));
-                const {flags, change} = await teamChange({team, week, pairs, submissions, statuses, positionOf, rules, kickoffOf, nameOf}, {lineupAt, weekLineup}, {
+                const {flags, change, notes} = await teamChange({team, week, pairs, submissions, statuses, positionOf, rules, kickoffOf, nameOf}, {lineupAt, weekLineup}, {
                     saved: async () => {
                         if (savedResults === null) {
                             savedResults = await weekResults(week);
@@ -860,6 +860,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                     scores: async (ids) => asArray((await fetchFrom(host, "playerScores", {L: leagueId, W: week, PLAYERS: ids.join(",")})).playerScore)
                 });
                 flags.forEach(flag);
+                notes.forEach((note) => choreLog(`Backup starters: ${name}, week ${week}: ${note}.`));
                 if (change) {
                     changed.push({team, name, ...change});
                 }
