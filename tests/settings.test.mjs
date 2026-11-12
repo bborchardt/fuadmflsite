@@ -30,7 +30,7 @@ const FUAD = {
     contracts: {maxYears: 5, defaultYears: 1, postWithinHours: 1},
     adds: {ownDropBidAfterHours: 48},
     antiTanking: true,
-    backupStarters: false,
+    backupStarters: true,
     playoffs: {teams: 6, divisionWinnersSeededFirst: true, byes: 2, wildcardsBy: "allPlay", thirdPlaceGame: true},
     draftOrder: "playoffFinish",
     payouts: {weeklyHighScore: 15, allPlayPerGameOver500: 0.75, places: [0.55, 0.30, 0.15]},
