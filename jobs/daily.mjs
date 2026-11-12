@@ -566,8 +566,8 @@ const discard = (response) => (response.body ? response.body.cancel().catch(() =
 const mflError = (message) => Object.assign(new Error(message), {fromMfl: true});
 
 // A request to the league's host, through mflFetch: one MFL turns away is waited out and asked again
-// after each of `waits`; another redirect is followed hop by hop, to https on myfantasyleague.com
-// only, as the session goes with it, or with `follow` false is the answer. An answer `answered` says
+// after each of `waits`; another redirect is followed hop by hop, on myfantasyleague.com only and
+// over https, as the session goes with it, or with `follow` false is the answer. An answer `answered` says
 // is the one asked for is never taken for a refusal (the commissioner switch, by its cookie).
 async function mflAsk(url, init = {}, {follow = true, waits = REFUSAL_WAITS_MS, answered = () => false} = {}) {
     let target = url;
@@ -597,9 +597,8 @@ async function mflAsk(url, init = {}, {follow = true, waits = REFUSAL_WAITS_MS, 
         if (!/(^|\.)myfantasyleague\.com$/i.test(next.hostname)) {
             throw mflError(`MFL sent it on to ${next.host}, which isn't MFL's`);
         }
-        if (next.protocol !== "https:") {
-            throw mflError(`MFL sent it on to ${next.origin}, which would take the login unencrypted`);
-        }
+        // MFL's servers all answer https, and the login mustn't go out unencrypted
+        next.protocol = "https:";
         // a 303, or a 301 or 302 to a post, is followed as a GET, as browsers do
         if (response.status === 303 || ([301, 302].includes(response.status) && (options.method || "GET") === "POST")) {
             const headers = {...options.headers};

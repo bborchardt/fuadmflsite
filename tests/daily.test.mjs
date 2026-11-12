@@ -973,13 +973,15 @@ test("backup starters: a request MFL turns away is asked again after a wait, and
     assert.doesNotMatch(home.stdout, /asking again/);
     assert.ok(home.entries.includes(done), home.entries.join("\n"));
 
-    // a redirect to http isn't followed, as the login would go with it unencrypted
+    // a redirect to http is followed over https, as the login goes with it
     const plain = backups();
-    plain.redirects = {[details]: `http://www44.myfantasyleague.com${details}`};
+    plain.redirects = {[details]: `http://www44.myfantasyleague.com${details}&moved=1`};
+    plain.pages[`${details}&moved=1`] = plain.pages[details];
     const insecure = run({scenario: plain, files: BACKUP_FILES, env: apply});
-    assert.equal(insecure.status, 1);
-    assert.ok(insecure.entries.includes("Backup starters: week 6 stopped: Couldn't load MFL's Beta's week 6 Lineup Details: MFL sent it on to http://www44.myfantasyleague.com, which would take the login unencrypted"), insecure.entries.join("\n"));
-    assert.equal(asked(insecure, details), 1);
+    assert.equal(insecure.status, 0, insecure.stdout);
+    assert.ok(insecure.requests.some((request) => request.url === `https://www44.myfantasyleague.com${details}&moved=1`));
+    assert.ok(!insecure.requests.some((request) => request.url && request.url.startsWith("http://")));
+    assert.ok(insecure.entries.includes(done), insecure.entries.join("\n"));
 
     // another redirect is followed, here to the same page by another address
     const scenario = backups();
