@@ -62,7 +62,7 @@ const {TIME_ZONE, mflTime} = await lib("zone.js");
 const {normalize} = await lib("names.js");
 const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcFields, sameLineup, startersIn, teamChange, weekFinder, weekStatuses} =
     await import("./backup-starters.mjs");
-const {mflForm} = await import("./mfl-form.mjs");
+const {mflForm, mflHomePage} = await import("./mfl-form.mjs");
 const {MAX_RFA_SHARE, RFA_SALARY, atOneYear, rfaSalaries} = await import("./rfa-salaries.mjs");
 
 if (!process.env.DATA_DIR) {
@@ -562,7 +562,12 @@ async function mflPage(path, what, headers = mflHeaders) {
     if (!response.ok) {
         throw new Error(`Couldn't load MFL's ${what}: HTTP ${response.status}`);
     }
-    return response.text();
+    const body = await response.text();
+    const homePage = mflHomePage(body);
+    if (homePage) {
+        throw new Error(`Couldn't load MFL's ${what}: ${homePage}`);
+    }
+    return body;
 }
 
 // MFL serves the commissioner's own forms (a past week's lineup, Recalculate Standings) once the login

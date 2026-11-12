@@ -84,7 +84,9 @@ MFL documents little of this.
   429; MFL asks for about a second between requests and no retries. Heavy testing from one machine
   is throttled within hours, so test against saved exports. A member's browser sending 11–14
   exports at once per page load (v1's home page) isn't refused; about 25 within a few seconds can be.
-  Requests from the league's own pages count too.
+  Requests from the league's own pages count too. Throttled, MFL has also answered a league's page
+  with its own public home page (HTTP 200, titled "MyFantasyLeague Home Page"), which the job's
+  errors name (`jobs/mfl-form.mjs`); seen from a dev machine after several runs in an hour.
 - **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
   comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`), posted to
   `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers
