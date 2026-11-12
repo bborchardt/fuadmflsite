@@ -51,12 +51,14 @@ test("a lookbehind is recognized in a regex's source, a named group isn't", () =
     assert.ok(!LOOKBEHIND.test(String(/(?<name>x)/)));
 });
 
-test("nothing under site/ but the frozen v1 uses a regex lookbehind (older iPhones)", () => {
+// the header and tab messages pasted into MFL (mfl/) run on every member's page, v1's too
+test("nothing members' browsers run, but the frozen v1, uses a regex lookbehind (older iPhones)", () => {
     const files = [];
     const walk = (dir) => readdirSync(dir, {withFileTypes: true}).forEach((entry) => entry.isDirectory()
-        ? walk(join(dir, entry.name)) : /\.m?js$/.test(entry.name) && files.push(join(dir, entry.name)));
+        ? walk(join(dir, entry.name)) : /\.(m?js|html)$/.test(entry.name) && files.push(join(dir, entry.name)));
     readdirSync(join(root, "site"), {withFileTypes: true}).filter((entry) => entry.isDirectory() && !["v1", "data"].includes(entry.name))
         .forEach((entry) => walk(join(root, "site", entry.name)));
+    walk(join(root, "mfl"));
     assert.ok(files.length > 50, `only ${files.length} files found`);
     const offending = files.filter((file) => LOOKBEHIND.test(readFileSync(file, "utf8"))).map((file) => file.slice(root.length + 1));
     assert.deepEqual(offending, []);

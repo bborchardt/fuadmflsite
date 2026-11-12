@@ -54,7 +54,7 @@ const YEARS = new RegExp(`(\\$\\s*)?\\b(\\d+|${Object.keys(NUMBER_WORDS).join("|
 const PART_OF_SOMETHING = /[\d.,-]/;
 // A text's sentences: split at a newline, ";", "!", "?", or a "." and the space after it, but not
 // after an initial or a short abbreviation ("D. Jones", "St. Brown", "Jr."): a "." ends one after a
-// word of 3 letters or more, or a digit
+// word of 3 letters or more, or a digit (the sentence so far is enough: what's before it ended one)
 const WORD_ENDS_SENTENCE = /(?:^|[^A-Za-z0-9_])[A-Za-z]{3,}$|\d$/;
 function splitSentences(text) {
     const parts = [];
@@ -63,7 +63,7 @@ function splitSentences(text) {
         if ("\n;!?".includes(text[i])) {
             parts.push(text.slice(start, i));
             start = i + 1;
-        } else if (text[i] === "." && /\s/.test(text[i + 1] || "") && WORD_ENDS_SENTENCE.test(text.slice(0, i))) {
+        } else if (text[i] === "." && /\s/.test(text[i + 1] || "") && WORD_ENDS_SENTENCE.test(text.slice(start, i))) {
             parts.push(text.slice(start, i));
             start = i + 2;
             i++;
@@ -86,9 +86,10 @@ const CORRECTED_AFTER = new RegExp(`^[\\s,.;!-]*(?:no|nope|wait|actually|correct
 
 export function yearMentions(text) {
     const mentions = [];
-    for (const match of String(text).matchAll(YEARS)) {
+    text = String(text);
+    for (const match of text.matchAll(YEARS)) {
         // "$5 yr" is a salary, not a length
-        if (match[1] || PART_OF_SOMETHING.test(String(text)[match.index - 1] || "")) {
+        if (match[1] || PART_OF_SOMETHING.test(text[match.index - 1] || "")) {
             continue;
         }
         const word = match[2].toLowerCase();

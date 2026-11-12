@@ -15,8 +15,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - Members include older iPhones: v2 is published as one file (`tools/build.mjs`), so a syntax error
   anywhere in it breaks every tab. The build fails on syntax past ES2020 and `npm run lint` keeps
   `site/` within it (iOS 14). A regex lookbehind is ES2018 but needs Safari 16.4, and isn't allowed
-  outside the frozen v1 (`tests/guards.test.mjs`). Newer browser APIs and CSS lint can't see, so keep
-  those to touches that can fail quietly.
+  outside the frozen v1, `mfl/` included (`tests/guards.test.mjs`). Newer browser APIs and CSS lint
+  can't see, so keep those to touches that can fail quietly.
 - Members' browsers keep what v2 loaded across deploys (`site/v2/ui/store.js`). A panel's saved copy
   that its render throws on is loaded afresh, but a `cached()` value is used as found until it
   expires (a year for a bid run): a change to the shape one holds changes its key too, which
