@@ -551,37 +551,66 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     return rfas.map((rfa) => rfa.playerId);
 }
 
-// MFL turns about one in ten of the job's page requests away with a redirect to its public home page,
-// scattered, whatever the pace; a browser's it answers (docs/mfl.md). The same page is asked for
-// again after each wait here; turned away once more, it fails.
+// MFL turns about one in ten of the job's requests for the league's pages and forms away with a
+// redirect to its public home page, scattered, whatever the pace; a browser's it answers (docs/mfl.md).
+// Each is asked again after a wait, as a form posted twice comes to the same (a lineup, a
+// recalculation); turned away once more, it fails.
 const REFUSAL_WAITS_MS = [15000, 15000];
-const turnedAway = (response) => response.status >= 300 && response.status < 400
-    && /^https?:\/\/home\.myfantasyleague\.com\/?$/i.test(response.headers.get("location") || "");
+const MAX_REDIRECTS = 5;
+const isRedirect = (response) => response.status >= 300 && response.status < 400 && response.headers.has("location");
+const turnedAway = (response, url) => isRedirect(response) && new URL(response.headers.get("location"), url).hostname.toLowerCase() === "home.myfantasyleague.com";
+// a refused answer's connection back for the next request
+const discard = (response) => (response.body ? response.body.cancel().catch(() => {}) : null);
+
+// A request for the league's pages or forms, through mflFetch: one MFL turns away is waited out and
+// asked again; another redirect is followed hop by hop, within myfantasyleague.com, as the session goes
+// with it, or with `follow` false is the answer (the commissioner switch reads its cookie).
+async function mflAsk(url, init = {}, {follow = true} = {}) {
+    let target = url;
+    let options = {...init, redirect: "manual"};
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+        let response = await mflFetch(target, options);
+        for (const wait of REFUSAL_WAITS_MS) {
+            if (!turnedAway(response, target)) {
+                break;
+            }
+            await discard(response);
+            const {pathname, search} = new URL(target);
+            log(`MFL turned ${pathname}${search} away with its home page; asking again in ${wait / 1000} seconds.`);
+            await new Promise((resolve) => setTimeout(resolve, wait));
+            response = await mflFetch(target, options);
+        }
+        if (turnedAway(response, target)) {
+            await discard(response);
+            throw new Error(`MFL turned it away with its home page ${REFUSAL_WAITS_MS.length + 1} times`);
+        }
+        if (!follow || !isRedirect(response)) {
+            return response;
+        }
+        const next = new URL(response.headers.get("location"), target);
+        await discard(response);
+        if (!/(^|\.)myfantasyleague\.com$/i.test(next.hostname)) {
+            throw new Error(`MFL sent it on to ${next.host}, which isn't MFL's`);
+        }
+        // a 303, or a 301 or 302 to a post, is followed as a GET, as browsers do
+        if (response.status === 303 || ([301, 302].includes(response.status) && (options.method || "GET") === "POST")) {
+            const headers = {...options.headers};
+            delete headers["Content-Type"];
+            options = {...options, method: "GET", body: undefined, headers};
+        }
+        target = next.href;
+    }
+    throw new Error(`MFL redirected it more than ${MAX_REDIRECTS} times`);
+}
 
 // a page of MFL's (not an export), as the logged-in commissioner
 async function mflPage(path, what, headers = mflHeaders) {
-    const load = async (init) => {
-        try {
-            return await mflFetch(`${host}${path}`, {headers, ...init});
-        } catch (error) {
-            throw new Error(`Couldn't load MFL's ${what}: network error (${error.message})`);
-        }
-    };
-    let response = await load({redirect: "manual"});
-    for (const wait of REFUSAL_WAITS_MS) {
-        if (!turnedAway(response)) {
-            break;
-        }
-        log(`MFL turned the ${what} away with its home page; asking again in ${wait / 1000} seconds.`);
-        await new Promise((resolve) => setTimeout(resolve, wait));
-        response = await load({redirect: "manual"});
-    }
-    if (turnedAway(response)) {
-        throw new Error(`Couldn't load MFL's ${what}: MFL sent its own home page instead, ${REFUSAL_WAITS_MS.length + 1} times`);
-    }
-    // any other redirect is followed, as a league moved to another server is sent on
-    if (response.status >= 300 && response.status < 400) {
-        response = await load({});
+    let response;
+    try {
+        response = await mflAsk(`${host}${path}`, {headers});
+    } catch (error) {
+        // mflAsk's own errors start with "MFL", a failed fetch's don't
+        throw new Error(`Couldn't load MFL's ${what}: ${/^MFL /.test(error.message) ? error.message : `network error (${error.message})`}`);
     }
     if (!response.ok) {
         throw new Error(`Couldn't load MFL's ${what}: HTTP ${response.status}`);
@@ -603,7 +632,12 @@ async function asCommissioner() {
     if (commishHeaders) {
         return commishHeaders;
     }
-    const response = await mflFetch(`${host}/${season}/logout?L=${leagueId}&BECOME=0000`, {headers: mflHeaders, redirect: "manual"});
+    let response;
+    try {
+        response = await mflAsk(`${host}/${season}/logout?L=${leagueId}&BECOME=0000`, {headers: mflHeaders}, {follow: false});
+    } catch (error) {
+        throw new Error(`MFL didn't make the login the commissioner: ${error.message}`);
+    }
     const cookie = (response.headers.getSetCookie ? response.headers.getSetCookie() : []).map((each) => each.split(";")[0])
         .find((each) => each.startsWith("MFL_IS_COMMISH="));
     if (!cookie) {
@@ -916,14 +950,14 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                         continue;
                     }
                     await mflForm({what: "Submit Lineup", path: `/${season}/lineup`, fields: lineupFields(form, each.lineup), ok: lineupSaved},
-                        {dryRun, host, headers, fetchImpl: mflFetch});
+                        {dryRun, host, headers, fetchImpl: mflAsk});
                 }
                 const applied = changed.filter((each) => !skipped.has(each.team));
                 if (applied.length) {
                     const fields = recalcFields(await mflPage(`/${season}/csetup?L=${leagueId}&C=RECALC`, "Recalculate Standings", headers), week);
                     await mflForm({what: "Recalculate Standings", path: `/${season}/csetup`, fields,
                         // MFL's saved results, read next, say whether it worked: nothing in its answer is relied on
-                        ok: () => true}, {dryRun, host, headers, fetchImpl: mflFetch});
+                        ok: () => true}, {dryRun, host, headers, fetchImpl: mflAsk});
                     const results = await weekResults(week);
                     for (const {team, name, lineup, submit, what} of applied) {
                         const saved = startersIn(results, team);

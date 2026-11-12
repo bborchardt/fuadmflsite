@@ -90,9 +90,9 @@ MFL documents little of this.
   User-Agent, one a second or slower, keeping MFL's cookies or not) is answered with a 302 to
   `http://home.myfantasyleague.com`, which sets `MFL_USER_ID` and `MFL_USER_SETTINGS`; the next
   request, a second later, is answered. Requests from a logged-in browser's own page were all
-  answered (24 of 24). The job asks for a page turned away again after a wait (`mflPage`), and its
-  errors name MFL's home page should one reach it (`jobs/mfl-form.mjs`) (the clone and the league,
-  Nov 2026).
+  answered (24 of 24). The job asks again after a wait for anything turned away on the league's
+  host, a page, a form's post or the commissioner switch (`mflAsk`), and its errors name MFL's home
+  page should one reach it (`jobs/mfl-form.mjs`) (the clone and the league, Nov 2026).
 - **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
   comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`), posted to
   `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers

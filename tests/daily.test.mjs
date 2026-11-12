@@ -929,22 +929,44 @@ test("backup starters: MFL's saved results, not its answer, say the week was rec
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
 });
 
-test("backup starters: a page MFL turns away is asked for again after a wait, and fails only when turned away each time", () => {
-    const page = "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6";
-    const asked = (result) => result.requests.filter((request) => request.url && request.url.endsWith(page)).length;
+test("backup starters: a request MFL turns away is asked again after a wait, and fails only when turned away each time", () => {
+    const details = "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6";
+    const apply = {...LOGIN, BACKUP_STARTERS: "apply"};
+    const done = "Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive.";
+    const asked = (result, address) => result.requests.filter((request) => request.url && new URL(request.url).pathname + new URL(request.url).search === address).length;
     // each wait is logged, as the fake doesn't wait it out
-    const waits = (result) => (result.stdout.match(/MFL turned the Beta's week 6 Lineup Details away with its home page; asking again in 15 seconds\./g) || []).length;
-    const once = run({scenario: {...backups(), turnedAway: {[page]: 1}}, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
-    assert.equal(once.status, 0, once.stdout);
-    assert.deepEqual([asked(once), waits(once)], [2, 1]);
-    assert.ok(once.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), once.entries.join("\n"));
+    const waits = (result, address) => result.stdout.split("\n").filter((line) => line === `MFL turned ${address} away with its home page; asking again in 15 seconds.`).length;
 
-    const always = run({scenario: {...backups(), turnedAway: {[page]: 3}}, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    // a page, a form's post, the commissioner switch: each turned away once, then answered
+    for (const address of [details, "/2026/lineup", "/2026/csetup", "/2026/logout?L=48571&BECOME=0000"]) {
+        const once = run({scenario: {...backups(), turnedAway: {[address]: 1}}, files: BACKUP_FILES, env: apply});
+        assert.equal(once.status, 0, `${address}: ${once.stdout}`);
+        assert.deepEqual([asked(once, address), waits(once, address)], [2, 1], address);
+        assert.ok(once.entries.includes(done), `${address}: ${once.entries.join("\n")}`);
+    }
+
+    // turned away every time: two waits, then the week waits for the next run
+    const always = run({scenario: {...backups(), turnedAway: {[details]: 3}}, files: BACKUP_FILES, env: apply});
     assert.equal(always.status, 1);
-    assert.deepEqual([asked(always), waits(always)], [3, 2]);
-    assert.ok(always.entries.includes("Backup starters: week 6 stopped: Couldn't load MFL's Beta's week 6 Lineup Details: MFL sent its own home page instead, 3 times"), always.entries.join("\n"));
+    assert.deepEqual([asked(always, details), waits(always, details)], [3, 2]);
+    assert.ok(always.entries.includes("Backup starters: week 6 stopped: Couldn't load MFL's Beta's week 6 Lineup Details: MFL turned it away with its home page 3 times"), always.entries.join("\n"));
     assert.deepEqual(posted(always, "lineup"), []);
     assert.deepEqual(JSON.parse(readFileSync(join(always.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+
+    // the lineup's post turned away every time: the form fails, and nothing more is posted
+    const form = run({scenario: {...backups(), turnedAway: {"/2026/lineup": 3}}, files: BACKUP_FILES, env: apply});
+    assert.equal(form.status, 1);
+    assert.ok(form.entries.includes("Backup starters: week 6 stopped: MFL's Submit Lineup form failed: MFL turned it away with its home page 3 times"), form.entries.join("\n"));
+    assert.deepEqual(posted(form, "csetup"), []);
+
+    // another redirect is followed, here to the same page by another address
+    const scenario = backups();
+    scenario.redirects = {[details]: `${details}&moved=1`};
+    scenario.pages[`${details}&moved=1`] = scenario.pages[details];
+    const moved = run({scenario, files: BACKUP_FILES, env: apply});
+    assert.equal(moved.status, 0, moved.stdout);
+    assert.equal(asked(moved, `${details}&moved=1`), 1);
+    assert.ok(moved.entries.includes(done), moved.entries.join("\n"));
 });
 
 test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {

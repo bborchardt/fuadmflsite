@@ -27,7 +27,8 @@ export async function mflForm({what, path, fields, ok}, {dryRun, host, headers, 
         });
         body = await response.text();
     } catch (error) {
-        throw new Error(`MFL's ${what} form failed: network error (${error.message})`);
+        // the job's fetch says when MFL turned the post away or sent it somewhere odd
+        throw new Error(`MFL's ${what} form failed: ${/^MFL /.test(error.message) ? error.message : `network error (${error.message})`}`);
     }
     const homePage = response.ok && mflHomePage(body);
     if (homePage) {
