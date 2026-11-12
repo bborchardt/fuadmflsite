@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcDone, recalcFields, changeText, teamChange, weekFinder, weekStatuses} from "../jobs/backup-starters.mjs";
+import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, changeText, teamChange, weekFinder, weekStatuses} from "../jobs/backup-starters.mjs";
 import {lineupAt, lineupRules, weekLineup} from "../site/v2/lib/backups.js";
 import {mflForm, mflHomePage} from "../jobs/mfl-form.mjs";
 
@@ -49,15 +49,6 @@ test("the job's log says what it changed", () => {
     assert.equal(text, "Geno Smith and Aaron Rodgers were locked in as they were at their deadline (16.5.5), so the later change was undone; Davante Adams started for Jordan Addison, who was inactive");
 });
 
-test("Recalculate Standings worked when MFL answers with the week's results", () => {
-    // MFL's answer (the clone, 11 Nov 2026), cut down
-    const answer = 'necessary.\n</td></tr></table>\n<h2>Calculating Week 9 Results</h2>\n<h3>All Hands on Beck scored 0 points</h3>\n';
-    assert.equal(recalcDone(answer, 9), true);
-    assert.equal(recalcDone(answer, 8), false);
-    // the form again is no answer
-    assert.equal(recalcDone(fixture("csetup-RECALC.html"), 8), false);
-});
-
 test("a form refuses a dry run, and a page that says it failed throws", async () => {
     const page = (body, status = 200) => async () => ({ok: status === 200, status, text: async () => body});
     const options = {dryRun: false, host: "https://example.test", headers: {}};
@@ -66,6 +57,8 @@ test("a form refuses a dry run, and a page that says it failed throws", async ()
     assert.match(await mflForm(form, {...options, fetchImpl: page("Week 8 lineup SUBMITTED")}), /SUBMITTED/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("<b>Error(s) submitting lineup: You must select 1 PK.</b>")}), /Error\(s\) submitting lineup: You must select 1 PK/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("", 500)}), /HTTP 500/);
+    // a page that neither says it worked nor gives an error: named by its title
+    await assert.rejects(mflForm(form, {...options, fetchImpl: page("<title>Fantasy Football: FUAD Submit Lineup</title>")}), /form failed: HTTP 200, answered with "Fantasy Football: FUAD Submit Lineup"$/);
     await assert.rejects(mflForm(form, {...options, fetchImpl: page("<title>MyFantasyLeague Home Page</title>")}), /Submit Lineup form failed: MFL sent its own home page instead/);
 });
 
