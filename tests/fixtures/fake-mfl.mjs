@@ -26,7 +26,7 @@
 //   pages         {"/2026/path?query": html}: MFL's pages, by the address the job asks for; a Lineup
 //                 Details page not listed has no lineups
 //   forms         {"/2026/lineup": html}: what a form posted there answers (default: Submit
-//                 Lineup's "SUBMITTED", and Recalculate Standings' page as `pages` has it)
+//                 Lineup's "SUBMITTED", and Recalculate Standings' "Calculating Week N Results")
 //   files         {address: text}: anywhere else, as nflverse's files on GitHub
 //   recalculated  {"TYPE:W": body} in place of `exports`' once Recalculate Standings has been posted
 //   "nflSchedule:W" in `exports` answers that week's schedule, with its teams, ahead of week1's
@@ -115,7 +115,8 @@ globalThis.fetch = async (input, init = {}) => {
     if ((init.method || "GET") === "POST" && ["lineup", "csetup"].includes(page)) {
         recalculated = recalculated || page === "csetup";
         const answer = (scenario.forms || {})[url.pathname];
-        return text(answer !== undefined ? answer : page === "lineup" ? "Week lineup SUBMITTED" : (scenario.pages || {})[`/${year}/csetup?L=48571&C=RECALC`] || "");
+        const body = new URLSearchParams(init.body || "");
+        return text(answer !== undefined ? answer : page === "lineup" ? "Week lineup SUBMITTED" : `<h3>Calculating Week ${body.get("WEEK")} Results</h3>`);
     }
     if ((scenario.pages || {})[address] !== undefined) {
         return text(scenario.pages[address]);

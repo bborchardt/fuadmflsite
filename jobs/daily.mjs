@@ -898,15 +898,18 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                 if (applied.length) {
                     const fields = recalcFields(await mflPage(`/${season}/csetup?L=${leagueId}&C=RECALC`, "Recalculate Standings", headers), week);
                     await mflForm({what: "Recalculate Standings", path: `/${season}/csetup`, fields,
-                        ok: (body) => /name=["']?form_name["']?\s+value=["']?recalc\b/i.test(body)}, {dryRun, host, headers, fetchImpl: mflFetch});
+                        // MFL's saved results, read next, say whether it worked: nothing in its answer is relied on
+                        ok: () => true}, {dryRun, host, headers, fetchImpl: mflFetch});
                     const results = await weekResults(week);
-                    for (const {team, name, lineup, what} of applied) {
+                    for (const {team, name, lineup, submit, what} of applied) {
                         const saved = startersIn(results, team);
                         if (!sameLineup(saved, lineup)) {
                             unsaved.add(team);
-                            needsAttention(`Backup starters: ${name}'s week ${week} lineup was set, but MFL's results still have ${saved.map(nameOf).join(", ")}.`);
+                            needsAttention(`Backup starters: ${name}, week ${week}: ${submit ? "the lineup was set, but " : ""}after Recalculate Standings MFL's results `
+                                + `still have ${saved.map(nameOf).join(", ") || "no starters"}, so it may not have run; the next run tries again.`);
                         } else {
-                            choreLog(`Backup starters: set ${name}'s week ${week} lineup and recalculated the week${what ? `: ${what}` : ""}.`);
+                            choreLog(`Backup starters: ${submit ? `set ${name}'s week ${week} lineup and recalculated the week`
+                                : `recalculated week ${week}, as MFL's results didn't have ${name}'s lineup yet`}${what ? `: ${what}` : ""}.`);
                         }
                     }
                 }
