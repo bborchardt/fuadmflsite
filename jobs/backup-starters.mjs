@@ -121,6 +121,8 @@ export function lineupFields(form, starters, message = "") {
     return [...form.fields, ...starters.map((id) => [form.boxes.get(id), id]), [`MESSAGE${team}`, message], ["SUBMIT", "Submit Lineup"]];
 }
 
+// Recalculate Standings answers with the week's results as it works them out, not with its form again
+export const recalcDone = (body, week) => new RegExp(`Calculating\\s+Week\\s+${week}\\s+Results`, "i").test(body);
 export const lineupSaved = (body) => /lineup\s+SUBMITTED/i.test(body) && !/Error\(s\) submitting lineup/i.test(body);
 
 // Recalculate Standings for one week, with no email to the owners

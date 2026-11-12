@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcFields, changeText, teamChange, weekFinder, weekStatuses} from "../jobs/backup-starters.mjs";
+import {lineupFields, lineupSaved, mflTeam, readCsv, readLineupForm, recalcDone, recalcFields, changeText, teamChange, weekFinder, weekStatuses} from "../jobs/backup-starters.mjs";
 import {lineupAt, lineupRules, weekLineup} from "../site/v2/lib/backups.js";
 import {mflForm, mflHomePage} from "../jobs/mfl-form.mjs";
 
@@ -47,6 +47,15 @@ test("the job's log says what it changed", () => {
     const names = {a: "Jordan Addison", b: "Davante Adams", c: "Geno Smith", d: "Aaron Rodgers"};
     const text = changeText({swaps: [{starter: "a", backup: "b"}], restored: [{starter: "c", backup: "d"}]}, (id) => names[id]);
     assert.equal(text, "Geno Smith and Aaron Rodgers were locked in as they were at their deadline (16.5.5), so the later change was undone; Davante Adams started for Jordan Addison, who was inactive");
+});
+
+test("Recalculate Standings worked when MFL answers with the week's results", () => {
+    // MFL's answer (the clone, 11 Nov 2026), cut down
+    const answer = 'necessary.\n</td></tr></table>\n<h2>Calculating Week 9 Results</h2>\n<h3>All Hands on Beck scored 0 points</h3>\n';
+    assert.equal(recalcDone(answer, 9), true);
+    assert.equal(recalcDone(answer, 8), false);
+    // the form again is no answer
+    assert.equal(recalcDone(fixture("csetup-RECALC.html"), 8), false);
 });
 
 test("a form refuses a dry run, and a page that says it failed throws", async () => {

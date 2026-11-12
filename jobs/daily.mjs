@@ -60,7 +60,7 @@ const {THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, namedWe
     sourceRequests, standingPairs, weekLineup} = await lib("backups.js");
 const {TIME_ZONE, mflTime} = await lib("zone.js");
 const {normalize} = await lib("names.js");
-const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcFields, sameLineup, startersIn, teamChange, weekFinder, weekStatuses} =
+const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLineupForm, recalcDone, recalcFields, sameLineup, startersIn, teamChange, weekFinder, weekStatuses} =
     await import("./backup-starters.mjs");
 const {mflForm, mflHomePage} = await import("./mfl-form.mjs");
 const {MAX_RFA_SHARE, RFA_SALARY, atOneYear, rfaSalaries} = await import("./rfa-salaries.mjs");
@@ -898,7 +898,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                 if (applied.length) {
                     const fields = recalcFields(await mflPage(`/${season}/csetup?L=${leagueId}&C=RECALC`, "Recalculate Standings", headers), week);
                     await mflForm({what: "Recalculate Standings", path: `/${season}/csetup`, fields,
-                        ok: (body) => /name=["']?form_name["']?\s+value=["']?recalc\b/i.test(body)}, {dryRun, host, headers, fetchImpl: mflFetch});
+                        ok: (body) => recalcDone(body, week)}, {dryRun, host, headers, fetchImpl: mflFetch});
                     const results = await weekResults(week);
                     for (const {team, name, lineup, what} of applied) {
                         const saved = startersIn(results, team);

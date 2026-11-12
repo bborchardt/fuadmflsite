@@ -271,7 +271,8 @@ Each is an ordinary page form, posted from the logged-in browser.
   clone, 8 Nov 2026).
 - **Recalculate Standings** (`csetup?L=<league>&C=RECALC`), a form posted to `csetup`: hidden
   `form_name=recalc`, `LEAGUE_ID`, `C`, `input_expires`; `WEEK`, `SENDMAIL` and `PREVWEEK` (Yes/No);
-  `SUBMIT`. It answers with the same form. Weekly results, `weeklyResults`, standings and power rank
+  `SUBMIT`. It answers with the week's results as it works them out ("Calculating Week 9 Results", each
+  team's score) and a link to the report. Weekly results, `weeklyResults`, standings and power rank
   change only once it runs, score adjustments included; the Weekly Results page recalculates on the
   fly, so the two can disagree until then (the clone, Nov 2026).
 
