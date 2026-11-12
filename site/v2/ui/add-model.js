@@ -9,11 +9,11 @@ import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-mode
 import {cents, money} from "./format.js";
 import settings from "../lib/settings.js";
 import {SUFFIXES, normalize} from "../lib/names.js";
+import {MAX_YEARS, MIN_YEARS} from "../lib/contract-years.js";
 import {TIME_ZONE} from "../lib/zone.js";
 
-// the league's contract lengths (lib/contract-years.js has them too, but its regular expressions
-// need Safari 16.4+, so it isn't imported here)
-export const LENGTHS = Array.from({length: settings.contracts.maxYears}, (_, i) => i + 1);
+// the league's contract lengths
+export const LENGTHS = Array.from({length: MAX_YEARS - MIN_YEARS + 1}, (_, i) => MIN_YEARS + i);
 // one of them in a regular expression, the longest first so "10" isn't read as "1"
 export const LENGTH_PATTERN = `(?:${LENGTHS.slice().reverse().join("|")})`;
 // a player the team dropped can't be bid on by it for this long

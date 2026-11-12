@@ -48,14 +48,34 @@ function named(text, candidates, others = []) {
 const NUMBER_WORDS = {one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10};
 // a count a member might offer, in figures or words, whatever the league's longest contract
 const COUNT = `(?:10|[1-9]|${Object.keys(NUMBER_WORDS).join("|")})`;
-// a count right after a digit, "." or "-" is part of something else: "1.5 years", "2-3 years"
-const YEARS = new RegExp(`(\\$\\s*)?(?<![\\d.,-])\\b(\\d+|${Object.keys(NUMBER_WORDS).join("|")})\\s*-?\\s*(?:years?|yrs?)\\b`, "gi");
-// not after an initial or a short abbreviation: "D. Jones", "St. Brown", "Jr."
-const SENTENCE_END = /(?<=\b[A-Za-z]{3,}|\d)\.\s|[\n;!?]/;
+// a count right after a digit, "." or "-" is part of something else ("1.5 years", "2-3 years"):
+// yearMentions skips those. No lookbehind here or below: Safari before 16.4 throws on one.
+const YEARS = new RegExp(`(\\$\\s*)?\\b(\\d+|${Object.keys(NUMBER_WORDS).join("|")})\\s*-?\\s*(?:years?|yrs?)\\b`, "gi");
+const PART_OF_SOMETHING = /[\d.,-]/;
+// A text's sentences: split at a newline, ";", "!", "?", or a "." and the space after it, but not
+// after an initial or a short abbreviation ("D. Jones", "St. Brown", "Jr."): a "." ends one after a
+// word of 3 letters or more, or a digit (the sentence so far is enough: what's before it ended one)
+const WORD_ENDS_SENTENCE = /(?:^|[^A-Za-z0-9_])[A-Za-z]{3,}$|\d$/;
+function splitSentences(text) {
+    const parts = [];
+    let start = 0;
+    for (let i = 0; i < text.length; i++) {
+        if ("\n;!?".includes(text[i])) {
+            parts.push(text.slice(start, i));
+            start = i + 1;
+        } else if (text[i] === "." && /\s/.test(text[i + 1] || "") && WORD_ENDS_SENTENCE.test(text.slice(start, i))) {
+            parts.push(text.slice(start, i));
+            start = i + 2;
+            i++;
+        }
+    }
+    parts.push(text.slice(start));
+    return parts;
+}
 // words that can sit beside a bare count: "1 year contract please"
 const FILLER = new Set(["a", "for", "each", "both", "the", "contract", "length", "deal", "please", "pls", "thanks", "thx", "on", "of", "him"]);
 // a second count offered beside one: "3 or 4 years", "2 years, maybe 5"; "$1/1 year" is a salary
-const HEDGE_BEFORE = new RegExp(`(?<![$\\d.])\\b${COUNT}\\s*(?:or|to|\\/)\\s*$`, "i");
+const HEDGE_BEFORE = new RegExp(`(?:^|[^$\\d.])\\b${COUNT}\\s*(?:or|to|\\/)\\s*$`, "i");
 const HEDGE_AFTER = new RegExp(`^[\\s,]*(?:or|maybe|to|\\/|possibly|perhaps)\\s*${COUNT}\\b(?![\\d.,])`, "i");
 // "2 years or 3 years": both counts are offered
 const HEDGE_BETWEEN = /^[\s,]*(?:or|maybe|possibly|perhaps|to|\/)\s*$/i;
@@ -66,9 +86,10 @@ const CORRECTED_AFTER = new RegExp(`^[\\s,.;!-]*(?:no|nope|wait|actually|correct
 
 export function yearMentions(text) {
     const mentions = [];
-    for (const match of String(text).matchAll(YEARS)) {
-        if (match[1]) {
-            // "$5 yr" is a salary, not a length
+    text = String(text);
+    for (const match of text.matchAll(YEARS)) {
+        // "$5 yr" is a salary, not a length
+        if (match[1] || PART_OF_SOMETHING.test(text[match.index - 1] || "")) {
             continue;
         }
         const word = match[2].toLowerCase();
@@ -122,7 +143,7 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
     mentions.forEach((mention, i) => {
         // a name pairs with a count in the same sentence: "Got Hill. Been here 5 years" isn't Hill's.
         // When the count's sentence is only the count, the name is the sentence before: "Hill. 1 year."
-        const sentences = text.slice(i ? mentions[i - 1].end : 0, mention.start).split(SENTENCE_END);
+        const sentences = splitSentences(text.slice(i ? mentions[i - 1].end : 0, mention.start));
         const onlyCount = normalize(sentences[sentences.length - 1]).split(" ").filter(Boolean).every((word) => FILLER.has(word));
         const before = sentences.slice(onlyCount ? -2 : -1).join(" ");
         const after = text.slice(mention.end, i + 1 < mentions.length ? mentions[i + 1].start : text.length);
@@ -133,7 +154,7 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
         if (who && !who.length) {
             // "3 years for Wilson": a name in the same sentence, or a list the count introduces
             // ("2 years each:" or "2 years:" followed by names)
-            const sentence = after.split(SENTENCE_END)[0];
+            const sentence = splitSentences(after)[0];
             who = named(/\b(each|both)\b|:\s*$/i.test(sentence) ? after : sentence, candidates, others);
         }
         if (who === null) {
@@ -147,7 +168,7 @@ export function readYears(text, candidates, {allowBare = true, bareForAll = fals
             problems.push(`"${text.trim()}" gives ${mention.years} years without saying which of ${candidates.map((candidate) => candidate.name).join(" and ")}`);
         } else if (!who.length && !isBare) {
             unplaced.push(mention.years);
-            const sentences = between.split(SENTENCE_END);
+            const sentences = splitSentences(between);
             if (i && CORRECTION.test(sentences[sentences.length - 1])) {
                 corrections.push(mention.years);
             }
