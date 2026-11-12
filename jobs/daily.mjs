@@ -551,13 +551,37 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     return rfas.map((rfa) => rfa.playerId);
 }
 
+// MFL turns about one in ten of the job's page requests away with a redirect to its public home page,
+// scattered, whatever the pace; a browser's it answers (docs/mfl.md). The same page is asked for
+// again after each wait here; turned away once more, it fails.
+const REFUSAL_WAITS_MS = [15000, 15000];
+const turnedAway = (response) => response.status >= 300 && response.status < 400
+    && /^https?:\/\/home\.myfantasyleague\.com\/?$/i.test(response.headers.get("location") || "");
+
 // a page of MFL's (not an export), as the logged-in commissioner
 async function mflPage(path, what, headers = mflHeaders) {
-    let response;
-    try {
-        response = await mflFetch(`${host}${path}`, {headers});
-    } catch (error) {
-        throw new Error(`Couldn't load MFL's ${what}: network error (${error.message})`);
+    const load = async (init) => {
+        try {
+            return await mflFetch(`${host}${path}`, {headers, ...init});
+        } catch (error) {
+            throw new Error(`Couldn't load MFL's ${what}: network error (${error.message})`);
+        }
+    };
+    let response = await load({redirect: "manual"});
+    for (const wait of REFUSAL_WAITS_MS) {
+        if (!turnedAway(response)) {
+            break;
+        }
+        log(`MFL turned the ${what} away with its home page; asking again in ${wait / 1000} seconds.`);
+        await new Promise((resolve) => setTimeout(resolve, wait));
+        response = await load({redirect: "manual"});
+    }
+    if (turnedAway(response)) {
+        throw new Error(`Couldn't load MFL's ${what}: MFL sent its own home page instead, ${REFUSAL_WAITS_MS.length + 1} times`);
+    }
+    // any other redirect is followed, as a league moved to another server is sent on
+    if (response.status >= 300 && response.status < 400) {
+        response = await load({});
     }
     if (!response.ok) {
         throw new Error(`Couldn't load MFL's ${what}: HTTP ${response.status}`);

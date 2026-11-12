@@ -84,9 +84,15 @@ MFL documents little of this.
   429; MFL asks for about a second between requests and no retries. Heavy testing from one machine
   is throttled within hours, so test against saved exports. A member's browser sending 11–14
   exports at once per page load (v1's home page) isn't refused; about 25 within a few seconds can be.
-  Requests from the league's own pages count too. Throttled, MFL has also answered a league's page
-  with its own public home page (HTTP 200, titled "MyFantasyLeague Home Page"), which the job's
-  errors name (`jobs/mfl-form.mjs`); seen from a dev machine after several runs in an hour.
+  Requests from the league's own pages count too.
+- **A page turned away:** about one in ten requests a script makes for a league's page (Lineup
+  Details, from GitHub's machines and a dev machine alike, with or without a registered
+  User-Agent, one a second or slower, keeping MFL's cookies or not) is answered with a 302 to
+  `http://home.myfantasyleague.com`, which sets `MFL_USER_ID` and `MFL_USER_SETTINGS`; the next
+  request, a second later, is answered. Requests from a logged-in browser's own page were all
+  answered (24 of 24). The job asks for a page turned away again after a wait (`mflPage`), and its
+  errors name MFL's home page should one reach it (`jobs/mfl-form.mjs`) (the clone and the league,
+  Nov 2026).
 - **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
   comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`), posted to
   `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers

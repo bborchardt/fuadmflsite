@@ -28,6 +28,8 @@
 //   forms         {"/2026/lineup": html}: what a form posted there answers (default: Submit
 //                 Lineup's "SUBMITTED", and Recalculate Standings' "Calculating Week N Results")
 //   files         {address: text}: anywhere else, as nflverse's files on GitHub
+//   turnedAway    {"/2026/path?query": n}: the first n requests for that page answered with MFL's
+//                 redirect to its home page
 //   recalculated  {"TYPE:W": body} in place of `exports`' once Recalculate Standings has been posted
 //   "nflSchedule:W" in `exports` answers that week's schedule, with its teams, ahead of week1's
 
@@ -44,6 +46,8 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {status,
 const text = (body, status = 200) => new Response(body, {status});
 
 const LEAGUE_HOST = "www44.myfantasyleague.com";
+const turnedAway = {...scenario.turnedAway};
+
 
 function exportAnswer(host, year, params, cookie) {
     const type = params.get("TYPE");
@@ -118,6 +122,10 @@ globalThis.fetch = async (input, init = {}) => {
         const body = new URLSearchParams(init.body || "");
         return text(answer !== undefined ? answer : page === "lineup" ? "Week lineup SUBMITTED" : `<h3>Calculating Week ${body.get("WEEK")} Results</h3>`);
     }
+    if (turnedAway[address] > 0) {
+        turnedAway[address]--;
+        return new Response(null, {status: 302, headers: {Location: "http://home.myfantasyleague.com"}});
+    }
     if ((scenario.pages || {})[address] !== undefined) {
         return text(scenario.pages[address]);
     }
@@ -140,6 +148,7 @@ globalThis.fetch = async (input, init = {}) => {
     return text("", 404);
 };
 
-// the job spaces its requests a second apart, as MFL asks; here they needn't wait
+// the job spaces its requests a second apart, as MFL asks, and waits for a page MFL turned away to
+// be answered; here they needn't wait
 const realSetTimeout = globalThis.setTimeout;
 globalThis.setTimeout = (callback, ms, ...args) => realSetTimeout(callback, 0, ...args);

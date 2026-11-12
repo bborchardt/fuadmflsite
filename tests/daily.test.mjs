@@ -929,6 +929,24 @@ test("backup starters: MFL's saved results, not its answer, say the week was rec
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
 });
 
+test("backup starters: a page MFL turns away is asked for again after a wait, and fails only when turned away each time", () => {
+    const page = "/2026/options?L=48571&O=210&FRANCHISE=0002&W=6";
+    const asked = (result) => result.requests.filter((request) => request.url && request.url.endsWith(page)).length;
+    // each wait is logged, as the fake doesn't wait it out
+    const waits = (result) => (result.stdout.match(/MFL turned the Beta's week 6 Lineup Details away with its home page; asking again in 15 seconds\./g) || []).length;
+    const once = run({scenario: {...backups(), turnedAway: {[page]: 1}}, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(once.status, 0, once.stdout);
+    assert.deepEqual([asked(once), waits(once)], [2, 1]);
+    assert.ok(once.entries.includes("Backup starters: set Beta's week 6 lineup and recalculated the week: Josh Allen started for Tyler Warren, who was inactive."), once.entries.join("\n"));
+
+    const always = run({scenario: {...backups(), turnedAway: {[page]: 3}}, files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
+    assert.equal(always.status, 1);
+    assert.deepEqual([asked(always), waits(always)], [3, 2]);
+    assert.ok(always.entries.includes("Backup starters: week 6 stopped: Couldn't load MFL's Beta's week 6 Lineup Details: MFL sent its own home page instead, 3 times"), always.entries.join("\n"));
+    assert.deepEqual(posted(always, "lineup"), []);
+    assert.deepEqual(JSON.parse(readFileSync(join(always.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+});
+
 test("backup starters: a player MFL's form has no box for is flagged, the rest of the week goes on", () => {
     const scenario = backups();
     scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"] = scenario.pages["/2026/lineup?L=48571&WEEK=6&F=0002"].replace(/<input type="checkbox" name="QB0002"[^>]*>/, "");
