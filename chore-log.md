@@ -94,3 +94,5 @@ Milton: 1 year").
 - 2026-11-12 16:09 UTC: Set Spencer Shrader to 1 year (post "Shrader: 1 year").
 - 2026-11-12 16:09 UTC: Set Corey Kiner to 1 year (blind bid comment "Kiner: 1 year").
 - 2026-11-12 16:09 UTC: Set Mack Hollins to 1 year (blind bid comment "1 year.").
+- 2026-11-13 15:38 UTC: Set Darren Waller to 1 year (post "Waller: 1 year").
+- 2026-11-13 15:38 UTC: Recorded "Most Points Week 9" $15.00 to Not 100% A Dick.
