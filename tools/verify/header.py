@@ -6,7 +6,7 @@
 Each case loads a saved page (tools/verify/screens/, as screens.py does) with its header swapped for
 mfl/message-header.html and the clone's beta offer, in Chromium and in WebKit (Safari's engine), and
 checks which version ran, the beta choice left stored, the cover, the bars and notes shown, and the
-rows sent to the version and devices forms as the page is left. A version's files can be made to
+rows sent to the devices form as the page is left. A version's files can be made to
 fail (404) or not start (a syntax error), and the browser to be older than the minimum (no WeakRef).
 """
 import argparse
@@ -71,18 +71,6 @@ CASES = {
     # a later beta (v3, not published: 404) over v2 as MAIN: v2 runs as itself, not as the beta, with the bar out
     "v3 beta 404": (LINEUP, {"main": "v2", "offer": "v3", "beta": "v3"},
                     {"ran": "v2", "requested": ["v3", "v2"], "beta": "v3", "cloaked": False, "bar": "The beta couldn’t load", "inBeta": False}),
-    # the version reported in the league that reports (loader.js: reportUse); a form's rows, team and version
-    "reports v1": (LINEUP, {"listed": True}, {"ran": "v1", "requested": ["v1"], "reported": [["0001", "v1"]]}),
-    "reports beta": (LINEUP, {"listed": True, "beta": "v2"}, {"ran": "v2", "requested": ["v2"], "reported": [["0001", "v2"]]}),
-    "reports opt in": (LINEUP + "&fuadBeta=on", {"listed": True}, {"ran": "v2", "requested": ["v1", "v2"], "reported": [["0001", "v2"]]}),
-    "reports 404": (LINEUP, {"listed": True, "beta": "v2", "fail": ("v2", "404")},
-                    {"ran": "v1", "requested": ["v2", "v1"], "reported": [["0001", "v1-fallback"]]}),
-    "reports broken": (LINEUP, {"listed": True, "beta": "v2", "fail": ("v2", "syntax")},
-                       {"ran": "v1", "requested": ["v2", "v1"], "reported": [["0001", "v1-fallback"]]}),
-    "reports no offer": (LINEUP, {"listed": True, "offer": False}, {"ran": "v1", "requested": ["v1"], "reported": []}),
-    "reports no guest": (LINEUP, {"listed": True, "team": "guest", "teams": ["guest"]}, {"ran": "v1", "requested": ["v1"], "reported": []}),
-    "reports no commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "requested": ["v1"], "reported": []}),
-    "reports no v2 main": (LINEUP, {"listed": True, "main": "v2", "offer": False}, {"ran": "v2", "requested": ["v2"], "reported": []}),
     # older than the minimum (no WeakRef): OLDER, never the beta; with OLDER null, MFL's pages and the note
     "old browser": (LINEUP, {"old": True, "beta": "v2"}, {"ran": "v1", "requested": ["v1"], "inBeta": False}),
     "old browser v2 main": (LINEUP, {"old": True, "main": "v2", "offer": False}, {"ran": "v1", "requested": ["v1"]}),
@@ -99,7 +87,7 @@ CASES = {
     # what v1's and v2's code logs: the day's second row only for a page with errors
     "device row logged": (LINEUP, {"listed": True, "log": True},
                           {"ran": "v1", "devices": [{"ran": "v1", "errors": ""}, {"errors": "[fuad] couldn't draw Test: boom x2"}]}),
-    "device row commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "devices": []}),
+    "device row commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "devices": [{"team": "0000"}]}),
     "device row unlisted": (LINEUP, {}, {"ran": "v1", "devices": []}),
 }
 
@@ -127,7 +115,6 @@ def run(browser, site, name):
     url, given, expected = CASES[name]
     mfl = Mfl(site, {})
     requested = []
-    reported = []
     devices = []
     context = browser.new_context(viewport={"width": 390, "height": 844}, timezone_id="America/Los_Angeles")
     context.clock.set_fixed_time(NOW)
@@ -169,7 +156,7 @@ def run(browser, site, name):
             devices.append({FIELDS[key]: values[0] for key, values in parse_qs(request.post_data or "", keep_blank_values=True).items() if key in FIELDS})
             return route.abort()
         if request.url.startswith("https://docs.google.com/forms/"):
-            reported.append([values[0] for values in parse_qs(request.post_data or "").values()])
+            devices.append({"unexpected form": request.url})
             return route.abort()
         match = re.search(r"/fuadmflsite/(v\d+)/fuad\.js$", request.url)
         if match:
@@ -232,7 +219,6 @@ def run(browser, site, name):
         }""")
     page.wait_for_timeout(300)
     got["requested"] = list(requested)
-    got["reported"] = list(reported)
     got["devices"] = list(devices)
     # the way out of a failed beta: followed, the page comes back afresh without the choice; not by
     # ?fuadBeta=off, which Safari's desktop mode would load again later (site/v2/loader.js: LEAVE_BETA)
@@ -247,8 +233,8 @@ def run(browser, site, name):
     context.close()
     problems = []
     # the clone's pages report nothing
-    if not given.get("listed") and (reported or devices):
-        problems.append(f"reported {reported + devices!r} from an unlisted league")
+    if not given.get("listed") and devices:
+        problems.append(f"reported {devices!r} from an unlisted league")
     for row in devices:
         if set(row) != set(FIELDS.values()) or not row["browser"] or ", window " not in row["screen"]:
             problems.append(f"device row {row!r}: a field missing or empty")

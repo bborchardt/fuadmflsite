@@ -133,8 +133,8 @@
         // each page with errors, at most 6 a day: what ran, the browser, the screen and the errors the
         // versions' code logged or threw, so the minimum follows what members use and an error is seen
         // without anyone reporting it. Sent from here, so it comes whichever version ran, or none.
-        // Only this league's; never from a browser that has been the commissioner's (their Become counts
-        // as that team), nor with storage blocked, which couldn't tell the day's rows were sent.
+        // Only this league's, and not with storage blocked, which couldn't tell the day's rows were sent.
+        // The team is as MFL gives it: the commissioner's 0000, or the team their Become views as.
         var DEVICES = "https://docs.google.com/forms/d/e/1FAIpQLSfwQQTKkvZSWjmZN9b3iW4sm5Nqofd6_5HADLUGcTiwPfAcuw/formResponse";
         var FIELDS = {team: "entry.1422535318", ran: "entry.888647309", browser: "entry.1496348607", screen: "entry.522083357", errors: "entry.1958694095", page: "entry.1906909294"};
         var errors = {};
@@ -171,8 +171,6 @@
         var report = function () {
             try {
                 if (String(window.league_id) !== "48571") { return; }
-                if (viewer === "0000") { localStorage.setItem("fuad.noUseReports", "1"); }
-                if (localStorage.getItem("fuad.noUseReports")) { return; }
                 var labels = Object.keys(errors);
                 var today = new Date().toDateString();
                 var day = (localStorage.getItem("fuad.deviceRows") || "").split("|");

@@ -127,9 +127,11 @@ hit (docs/design.md: Devices). Its responses sheet is the record; nothing reads 
   Browser, Screen, Errors and Page, with no sign-in and no emails collected. From its ⋮ menu, Get
   pre-filled link: type each question's own name as its answer, Get link, and put the form id and
   each `entry.` number into the header's `DEVICES` and `FIELDS` through a pull request.
-- **Reading it, once a season and before a version becomes `MAIN`:** the oldest iOS in Browser (an
-  iPhone's reads `iPhone OS 15_8`) says how far back the hand checks need to go; any row with Errors
-  is a bug to look into; `-old` in Ran is a member below the minimum, getting `OLDER`.
+- **Reading it, once a season and before a version becomes `MAIN`:** Ran says which version each team
+  runs, so whether the league has moved to the beta; the oldest iOS in Browser (an iPhone's reads
+  `iPhone OS 15_8`) says how far back the hand checks need to go; any row with Errors is a bug to look
+  into; `-old` in Ran is a member below the minimum, getting `OLDER`. Your own browsers send rows
+  too, as 0000 or the team you Become, so loading a league page shows the wiring works.
 
 ## Each season
 
