@@ -11,10 +11,17 @@
     // through MAIN, which decides (site/vN/loader.js). docs/design.md: previews and the beta.
     var fuadLoad = (function () {
         var MAIN = "v1";
+        // what a browser older than the minimum gets (docs/design.md: Devices), with no beta offered;
+        // null once v1 is retired: MFL's own pages, with the note
+        var OLDER = "v1";
         var BASE = "https://bborchardt.github.io/fuadmflsite/";
         var root = document.documentElement;
         var stored = function (key) { try { return localStorage.getItem(key); } catch (e) { return null; } };
         var params = new URLSearchParams(location.search);
+        // the minimum, Safari 14.1 (iOS 14.5): WeakRef came with it, Chrome 84 and Firefox 79, each
+        // with all of ES2020 and flex gap
+        var capable = typeof WeakRef === "function";
+        if (!capable) { window.fuadBeta = null; }
         var offer = window.fuadBeta;
         var team = function (id) { return String(id).padStart(4, "0"); };
         // logged out, MFL sets no franchise_id: "guest" in teams
@@ -23,7 +30,7 @@
             && (!Array.isArray(offer.teams) || offer.teams.map(team).indexOf(viewer) >= 0);
         var direct = offered && !params.has("fuadBeta") && !params.has("fuadPreview") && !stored("fuad.preview")
             && stored("fuad.beta") === offer.version;
-        var version = direct ? offer.version : MAIN;
+        var version = !capable ? OLDER : direct ? offer.version : MAIN;
 
         // the cover in the member's look (site/v2/ui/looks.js: its page and muted colours), from the skin
         // MFL draws the page in, or for the commissioner the skin their team was last seen in here; any
@@ -47,7 +54,7 @@
         // hidden until the version has drawn (it shows the page again), so MFL's page doesn't show first;
         // after 30 seconds, whatever is there shows. v1 draws only its own tabs, so it's hidden only while
         // a choice may hand the page on
-        if (version !== "v1" || stored("fuad.beta") || stored("fuad.preview") || params.has("fuadBeta") || params.has("fuadPreview")) {
+        if (version && version !== "v1" || stored("fuad.beta") || stored("fuad.preview") || params.has("fuadBeta") || params.has("fuadPreview")) {
             root.classList.add("fuad-cloak");
             setTimeout(function () { root.classList.remove("fuad-cloak"); }, 30000);
         }
@@ -56,7 +63,9 @@
             if (document.body && document.readyState !== "loading") { then(); } else { document.addEventListener("DOMContentLoaded", then); }
         };
         // MAIN didn't load or start: MFL's own pages, with a note where the custom tabs would be
+        var gaveUp = false;
         var unavailable = function () {
+            gaveUp = true;
             root.classList.remove("fuad-cloak");
             whenBody(function () {
                 ["fuad-contracts", "commishdiv", "fuadlinksdiv"].forEach(function (id) {
@@ -120,8 +129,80 @@
         // starts, a version handed the page sets .started
         var started = function () { return Boolean(window.fuadLoader && (!direct || window.fuadLoader.started)); };
         var loaded = function () { if (!started()) { failed(); } };
+        // A row to the commissioner's devices form from each browser, a day's first and then one for
+        // each page with errors, at most 6 a day: what ran, the browser, the screen and the errors the
+        // versions' code logged or threw, so the minimum follows what members use and an error is seen
+        // without anyone reporting it. Sent from here, so it comes whichever version ran, or none.
+        // Only this league's; never from a browser that has been the commissioner's (their Become counts
+        // as that team), nor with storage blocked, which couldn't tell the day's rows were sent.
+        var DEVICES = "https://docs.google.com/forms/d/e/DEVICES_FORM_ID/formResponse";
+        var FIELDS = {team: "entry.TEAM", ran: "entry.RAN", browser: "entry.BROWSER", screen: "entry.SCREEN", errors: "entry.ERRORS", page: "entry.PAGE"};
+        var errors = {};
+        var noted = 0;
+        var noteError = function (what) {
+            what = String(what).slice(0, 160);
+            if (errors[what] || noted < 10) {
+                noted += errors[what] ? 0 : 1;
+                errors[what] = (errors[what] || 0) + 1;
+            }
+        };
+        var ours = function (text) { return String(text || "").indexOf(BASE) >= 0; };
+        // v1's and v2's errors are logged as "[fuad] couldn't draw Home:", the error after it
+        var logError = window.console && console.error;
+        if (typeof logError === "function") {
+            console.error = function (first, error) {
+                try {
+                    if (typeof first === "string" && first.indexOf("[fuad]") === 0) {
+                        noteError(first.replace(/:\s*$/, "") + (error && error.message ? ": " + error.message : ""));
+                    }
+                } catch (e) {}
+                return logError.apply(console, arguments);
+            };
+        }
+        window.addEventListener("unhandledrejection", function (event) {
+            if (event.reason && ours(event.reason.stack)) { noteError("unhandled: " + event.reason.message); }
+        });
+        var ran = function () {
+            var loader = window.fuadLoader || {};
+            var name = window.fuadVersion ? window.fuadVersion : gaveUp ? "none" : "loading";
+            var fell = loader.mode === "fallback" || (loader.mode === "beta" && !loader.started && window.fuadVersion === MAIN);
+            return name + (fell ? "-fallback" : "") + (capable ? "" : "-old");
+        };
+        var report = function () {
+            try {
+                if (String(window.league_id) !== "48571") { return; }
+                if (viewer === "0000") { localStorage.setItem("fuad.noUseReports", "1"); }
+                if (localStorage.getItem("fuad.noUseReports")) { return; }
+                var labels = Object.keys(errors);
+                var today = new Date().toDateString();
+                var day = (localStorage.getItem("fuad.deviceRows") || "").split("|");
+                var rows = day[0] === today ? Number(day[1]) || 0 : 0;
+                if ((rows && !labels.length) || rows >= 6) { return; }
+                var stamp = today + "|" + (rows + 1);
+                localStorage.setItem("fuad.deviceRows", stamp);
+                if (localStorage.getItem("fuad.deviceRows") !== stamp) { return; }
+                var app = navigator.standalone === true || Boolean(window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+                var body = new URLSearchParams();
+                body.set(FIELDS.team, viewer);
+                body.set(FIELDS.ran, ran());
+                body.set(FIELDS.browser, navigator.userAgent);
+                body.set(FIELDS.screen, screen.width + "x" + screen.height + " @" + (window.devicePixelRatio || 1) + ", window " + window.innerWidth + (app ? ", app" : ""));
+                body.set(FIELDS.errors, labels.map(function (label) { return label + " x" + errors[label]; }).join("; "));
+                body.set(FIELDS.page, location.pathname + (params.get("O") ? "?O=" + params.get("O") : ""));
+                errors = {};
+                noted = 0;
+                // keepalive: a member moving on to another page mustn't cancel it
+                fetch(DEVICES, {method: "POST", mode: "no-cors", keepalive: true, body: body})["catch"](function () {});
+            } catch (e) {}
+        };
+        // once the page has settled, and as it's left, for errors after that
+        setTimeout(report, 15000);
+        window.addEventListener("pagehide", report);
+        document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") { report(); } });
+
         // Safari reports a syntax error in a module only to the page, with no load or error event
         window.addEventListener("error", function (event) {
+            if (ours(event.filename)) { noteError("uncaught: " + event.message + " (" + String(event.filename).slice(BASE.length) + ":" + event.lineno + ")"); }
             if (event.filename === BASE + version + "/fuad.js" && !started()) {
                 failed();
             } else if (fallen && event.filename === BASE + MAIN + "/fuad.js" && !window.fuadLoader.started) {
@@ -130,7 +211,9 @@
         });
         // written into the page while it's being read, so the stylesheet holds the first paint as a link
         // in the page would; added by script if this runs later, where writing would replace the page
-        if (document.readyState === "loading") {
+        if (!version) {
+            unavailable();
+        } else if (document.readyState === "loading") {
             document.write('<link id="fuad-css" rel="stylesheet" href="' + BASE + version + '/fuad.css">'
                 + '<script type="module" src="' + BASE + version + '/fuad.js" onerror="fuadLoad.failed()" onload="fuadLoad.loaded()"><\/script>');
         } else {

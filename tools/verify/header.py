@@ -5,8 +5,9 @@
 
 Each case loads a saved page (tools/verify/screens/, as screens.py does) with its header swapped for
 mfl/message-header.html and the clone's beta offer, in Chromium and in WebKit (Safari's engine), and
-checks which version ran, the beta choice left stored, the cover, and the bars and notes shown.
-A version's files can be made to fail (404) or not start (a syntax error).
+checks which version ran, the beta choice left stored, the cover, the bars and notes shown, and the
+rows sent to the version and devices forms as the page is left. A version's files can be made to
+fail (404) or not start (a syntax error), and the browser to be older than the minimum (no WeakRef).
 """
 import argparse
 import json
@@ -82,13 +83,39 @@ CASES = {
     "reports no guest": (LINEUP, {"listed": True, "team": "guest", "teams": ["guest"]}, {"ran": "v1", "requested": ["v1"], "reported": []}),
     "reports no commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "requested": ["v1"], "reported": []}),
     "reports no v2 main": (LINEUP, {"listed": True, "main": "v2", "offer": False}, {"ran": "v2", "requested": ["v2"], "reported": []}),
+    # older than the minimum (no WeakRef): OLDER, never the beta; with OLDER null, MFL's pages and the note
+    "old browser": (LINEUP, {"old": True, "beta": "v2"}, {"ran": "v1", "requested": ["v1"], "inBeta": False}),
+    "old browser v2 main": (LINEUP, {"old": True, "main": "v2", "offer": False}, {"ran": "v1", "requested": ["v1"]}),
+    "old browser no older": (HOME, {"old": True, "main": "v2", "offer": False, "older": None},
+                             {"ran": None, "requested": [], "cloaked": False, "note": True}),
+    # the devices form's rows (the header's report): a day's first, then one more for a page with errors
+    "device row": (LINEUP, {"listed": True}, {"ran": "v1", "devices": [{"team": "0001", "ran": "v1", "errors": "", "page": "/2026/lineup"}]}),
+    "device row beta": (LINEUP, {"listed": True, "beta": "v2"}, {"ran": "v2", "devices": [{"team": "0001", "ran": "v2", "errors": ""}]}),
+    "device row guest": (LINEUP, {"listed": True, "team": "guest", "teams": ["guest"]}, {"ran": "v1", "devices": [{"team": "guest", "ran": "v1"}]}),
+    "device row old": (LINEUP, {"listed": True, "old": True}, {"ran": "v1", "devices": [{"ran": "v1-old"}]}),
+    "device row none": (HOME, {"listed": True, "fail": ("v1", "404")}, {"ran": None, "note": True, "devices": [{"ran": "none"}]}),
+    "device row broken beta": (LINEUP, {"listed": True, "beta": "v2", "fail": ("v2", "syntax")},
+                               {"ran": "v1", "devices": [{"ran": "v1-fallback", "errors": "~uncaught: "}]}),
+    # what v1's and v2's code logs: the day's second row only for a page with errors
+    "device row logged": (LINEUP, {"listed": True, "log": True},
+                          {"ran": "v1", "devices": [{"ran": "v1", "errors": ""}, {"errors": "[fuad] couldn't draw Test: boom x2"}]}),
+    "device row commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "devices": []}),
+    "device row unlisted": (LINEUP, {}, {"ran": "v1", "devices": []}),
 }
 
+# the devices form and its fields, as the header names them
+DEVICES = re.search(r'var DEVICES = "([^"]+)"', HEADER).group(1)
+FIELDS = {entry: name for name, entry in re.findall(r'(\w+): "(entry\.[^"]+)"', re.search(r"var FIELDS = \{(.*?)\};", HEADER).group(1))}
 
-def header(main="v1", offer=True, teams=None):
-    """the header with MAIN and the beta offer (True: v2; a version; False: none), to `teams` if given"""
+
+def header(main="v1", offer=True, teams=None, older="v1"):
+    """the header with MAIN, OLDER (None: null) and the beta offer (True: v2; a version; False: none), to
+    `teams` if given"""
     text = HEADER.replace('var MAIN = "v1";', f'var MAIN = "{main}";')
     assert text != HEADER or main == "v1", "MAIN not found in the header"
+    swapped = text.replace('var OLDER = "v1";', f'var OLDER = {json.dumps(older)};')
+    assert swapped != text or older == "v1", "OLDER not found in the header"
+    text = swapped
     first = text.index("<script>")
     line = OFFER.replace("VERSION", "v2" if offer is True else str(offer)) if offer else ""
     if teams is not None:
@@ -101,6 +128,7 @@ def run(browser, site, name):
     mfl = Mfl(site, {})
     requested = []
     reported = []
+    devices = []
     context = browser.new_context(viewport={"width": 390, "height": 844}, timezone_id="America/Los_Angeles")
     context.clock.set_fixed_time(NOW)
     context.add_init_script(INIT)
@@ -117,9 +145,11 @@ def run(browser, site, name):
         }; })();""")
     if given.get("beta"):
         context.add_init_script(f"if (!sessionStorage.getItem('h.set')) {{ sessionStorage.setItem('h.set', '1'); localStorage.setItem('fuad.beta', '{given['beta']}'); }}")
+    if given.get("old"):
+        context.add_init_script("delete window.WeakRef;")
     if given.get("team_skin"):
         context.add_init_script(f"localStorage.setItem('fuad.teamSkin.{LEAGUE}', '{given['team_skin']}');")
-    swapped = header(given.get("main", "v1"), given.get("offer", True), given.get("teams"))
+    swapped = header(given.get("main", "v1"), given.get("offer", True), given.get("teams"), given.get("older", "v1"))
     team = given.get("team")
 
     class Captured:
@@ -135,6 +165,9 @@ def run(browser, site, name):
 
     def handle(route):
         request = route.request
+        if request.url == DEVICES:
+            devices.append({FIELDS[key]: values[0] for key, values in parse_qs(request.post_data or "", keep_blank_values=True).items() if key in FIELDS})
+            return route.abort()
         if request.url.startswith("https://docs.google.com/forms/"):
             reported.append([values[0] for values in parse_qs(request.post_data or "").values()])
             return route.abort()
@@ -186,8 +219,21 @@ def run(browser, site, name):
             inBeta: document.documentElement.classList.contains('fuad-beta'),
         };
     }""")
+    # the page left (the header's report, then any errors after it), with errors logged as v1's and v2's
+    # code logs them for a case that asks
+    page.evaluate("window.dispatchEvent(new Event('pagehide'))")
+    if given.get("log"):
+        page.evaluate("""() => {
+            console.error("[fuad] couldn't draw Test:", new Error("boom"));
+            console.error("[fuad] couldn't draw Test:", new Error("boom"));
+            console.error("not ours");
+            window.dispatchEvent(new Event('pagehide'));
+            window.dispatchEvent(new Event('pagehide'));
+        }""")
+    page.wait_for_timeout(300)
     got["requested"] = list(requested)
     got["reported"] = list(reported)
+    got["devices"] = list(devices)
     # the way out of a failed beta: followed, the page comes back afresh without the choice; not by
     # ?fuadBeta=off, which Safari's desktop mode would load again later (site/v2/loader.js: LEAVE_BETA)
     left = None
@@ -201,20 +247,31 @@ def run(browser, site, name):
     context.close()
     problems = []
     # the clone's pages report nothing
-    if not given.get("listed") and reported:
-        problems.append(f"reported {reported!r} from an unlisted league")
+    if not given.get("listed") and (reported or devices):
+        problems.append(f"reported {reported + devices!r} from an unlisted league")
+    for row in devices:
+        if set(row) != set(FIELDS.values()) or not row["browser"] or ", window " not in row["screen"]:
+            problems.append(f"device row {row!r}: a field missing or empty")
     for key, want in expected.items():
         have = got.get(key)
         if key == "bar" and want != "hidden":
             if not have or want not in have:
                 problems.append(f"bar {have!r}, wanted {want!r}")
+        elif key == "devices":
+            # each row's named fields; a value starting "~" is a prefix
+            fits = len(have) == len(want) and all(
+                all(row.get(k, "").startswith(v[1:]) if v.startswith("~") else row.get(k) == v for k, v in wanted.items())
+                for row, wanted in zip(have, want))
+            if not fits:
+                problems.append(f"devices {have!r}, wanted {want!r}")
         elif have != want:
             problems.append(f"{key} {have!r}, wanted {want!r}")
     if "bar" in expected and expected["bar"] != "hidden" and (
             "fuadBeta" in (got["leave"] or "") or not left or left["beta"] is not None or left["requested"] != [given.get("main", "v1")]):
         problems.append(f"leave link {got['leave']!r}: then {left!r}")
     # covered whenever a version other than v1 may run: one loaded first, or a beta choice to settle
-    should = expected["requested"][0] != "v1" or bool(given.get("beta")) or "fuadBeta=" in url
+    first = expected.get("requested", got["requested"])[:1]
+    should = bool(first) and (first[0] != "v1" or bool(given.get("beta")) or "fuadBeta=" in url)
     if got["covered"] != should:
         problems.append(f"covered {got['covered']}, wanted {should}")
     # the deliberate syntax error

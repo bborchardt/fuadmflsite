@@ -55,6 +55,9 @@ home page (League Alerts in v1, Home in v2), and can switch back.
   address. It lasts in your browser only, until `?fuadPreview=off`.
 - **Make a version the default:** change `MAIN` in `mfl/message-header.html` through a pull request,
   then paste the header. Past seasons keep the version they ended on.
+- **Retire v1:** set the header's `OLDER` to `null` through a pull request, then paste the header. A
+  browser older than the minimum (docs/design.md: Devices) then gets MFL's own pages with the
+  unavailable note, instead of v1.
 - MFL's app doesn't run home page messages, so members using it see MFL's own pages, whichever version.
 
 ## The daily job
@@ -112,6 +115,19 @@ gets it recorded twice.
   franchise snapshot** button that shows the snapshot as text. Save that text as
   `franchise-<season>.json` (e.g. `franchise-2026.json`), commit it to the `league-data` branch's
   `data/` folder, and the next run publishes it.
+
+## The devices form
+
+The header sends a Google Form of yours rows saying which browsers members use and what errors they
+hit (docs/design.md: Devices). Its responses sheet is the record; nothing reads it but you.
+
+- **Setting it up (once):** a new Google Form with six Short answer questions, named Team, Ran,
+  Browser, Screen, Errors and Page, with no sign-in and no emails collected. From its ⋮ menu, Get
+  pre-filled link: type each question's own name as its answer, Get link, and put the form id and
+  each `entry.` number into the header's `DEVICES` and `FIELDS` through a pull request.
+- **Reading it, once a season and before a version becomes `MAIN`:** the oldest iOS in Browser (an
+  iPhone's reads `iPhone OS 15_8`) says how far back the hand checks need to go; any row with Errors
+  is a bug to look into; `-old` in Ran is a member below the minimum, getting `OLDER`.
 
 ## Each season
 
