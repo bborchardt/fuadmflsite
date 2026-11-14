@@ -9,6 +9,8 @@
     // Loads MAIN, or the beta a member chose straight away (not through MAIN, a second download on a
     // slow phone). A choice being made or changed (?fuadBeta=, ?fuadPreview=, a stored preview) goes
     // through MAIN, which decides (site/vN/loader.js). docs/design.md: previews and the beta.
+    // the script tag this writes calls it
+    /* exported fuadLoad */
     var fuadLoad = (function () {
         var MAIN = "v1";
         // what a browser older than the minimum gets (docs/design.md: Devices), with no beta offered;
@@ -18,9 +20,11 @@
         var root = document.documentElement;
         var stored = function (key) { try { return localStorage.getItem(key); } catch (e) { return null; } };
         var params = new URLSearchParams(location.search);
-        // the minimum, Safari 14.1 (iOS 14.5): WeakRef came with it, Chrome 84 and Firefox 79, each
-        // with all of ES2020 and flex gap
-        var capable = typeof WeakRef === "function";
+        // the minimum (Safari 14.1 on iOS 14.5, Chrome 88, Firefox 79): WeakRef, which came with
+        // all of ES2020 and flex gap, and :where(), whose rules an older Chrome drops
+        var capable = typeof WeakRef === "function" && (function () {
+            try { document.querySelector(":where(html)"); return true; } catch (e) { return false; }
+        })();
         if (!capable) { window.fuadBeta = null; }
         var offer = window.fuadBeta;
         var team = function (id) { return String(id).padStart(4, "0"); };
@@ -43,7 +47,7 @@
             leatherhelmet: ["#F2EDE3", "#5C5447"]
         };
         var skin = document.getElementById("skin");
-        var folder = skin && /\/skins\d*\/([^\/]+)\//.exec(skin.getAttribute("href") || "");
+        var folder = skin && /\/skins\d*\/([^/]+)\//.exec(skin.getAttribute("href") || "");
         var teamSkin = viewer === "0000" && version !== "v1" ? stored("fuad.teamSkin." + window.league_id) : null;
         var cover = (teamSkin !== null ? teamSkin : folder ? folder[1] : "").toLowerCase();
         if (Object.prototype.hasOwnProperty.call(COVERS, cover)) {
@@ -213,6 +217,7 @@
             unavailable();
         } else if (document.readyState === "loading") {
             document.write('<link id="fuad-css" rel="stylesheet" href="' + BASE + version + '/fuad.css">'
+                // eslint-disable-next-line no-useless-escape -- unescaped, the closing tag would end this script
                 + '<script type="module" src="' + BASE + version + '/fuad.js" onerror="fuadLoad.failed()" onload="fuadLoad.loaded()"><\/script>');
         } else {
             add(version, failed, loaded);

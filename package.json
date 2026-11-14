@@ -9,18 +9,33 @@
   "scripts": {
     "test": "TZ=America/Los_Angeles MFL_LEAGUE_ID=48571 node --test tests/*.test.mjs",
     "daily": "node jobs/daily.mjs",
-    "lint": "eslint .",
+    "lint": "eslint . && stylelint \"site/**/*.{css,html}\" \"mfl/*.html\"",
     "build": "node tools/build.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",
     "esbuild": "0.28.2",
     "eslint": "9.39.1",
+    "eslint-plugin-compat": "7.0.2",
     "eslint-plugin-es-x": "8.4.1",
+    "eslint-plugin-html": "8.2.1",
     "globals": "15.15.0",
-    "linkedom": "0.18.12"
+    "linkedom": "0.18.12",
+    "postcss-html": "2.0.0",
+    "stylelint": "17.16.0",
+    "stylelint-no-unsupported-browser-features": "8.1.2"
   },
   "dependencies": {
     "sharp": "0.34.3"
-  }
+  },
+  "browserslist": [
+    "Safari >= 14.1",
+    "iOS >= 14.5",
+    "Chrome >= 88",
+    "Edge >= 88",
+    "Firefox >= 79",
+    "Samsung >= 15",
+    "ChromeAndroid >= 88",
+    "FirefoxAndroid >= 79"
+  ]
 }
