@@ -3188,7 +3188,8 @@ body #fuad-home select {
 
 #fuad-rosters .fuad-roster .fuad-tag { vertical-align: 1px; }
 
-#fuad-rosters .fuad-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+/* a column at most the panel's width, so the first iPhone SE's 320 isn't pushed past */
+#fuad-rosters .fuad-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
 
 #fuad-rosters .fuad-pick-rows > li { display: grid; grid-template-columns: 76px 56px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 40px; }
 

@@ -158,7 +158,7 @@ Items marked *(to do)* are the plan, not yet built.
   | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
   | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`, or no `:where()`) getting `OLDER`; the device rows | Old engines: below the minimum is simulated |
   | `pages.py`, `requests.py` | Which screen takes each MFL page; v2 asking MFL for more | How it looks |
-  | `layout.py` (WebKit, 390 to 1280) | Squeezed, offscreen, clipped or overlapping parts | Old engines, whether it looks good *(to do: in CI, with 320, 360, 375 and 412, larger text, Chromium and Firefox)* |
+  | `layout.py`: WebKit at 320, 360, 375, 390 and 412 upright, 780 to 1280, and the app sideways; Chromium and Firefox at 360 and 1280 | Squeezed, offscreen, clipped or overlapping parts; a row's text off its middle (`offcentre`); heights left wrong after the phone turns | Old engines; whether it looks good; Android's text scaling (iOS's page zoom is a narrower width, which 320 stands for) |
   | `layout.py` on the minimum's CSS *(to do)* | Layout that leans on CSS the minimum lacks, drawn with those rules taken out | What an old engine draws differently, not just lacks |
 
   Playwright's engines are current ones, so no automated check draws as an old Safari does: the

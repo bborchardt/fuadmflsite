@@ -26,6 +26,10 @@ jobs:
           - {name: pages, run: "tools/verify/pages.py", browsers: webkit}
           - {name: header, run: "tools/verify/header.py --built", browsers: "chromium webkit"}
           - {name: requests, run: "tools/verify/requests.py --built --base \"origin/$BASE_REF\"", browsers: webkit}
+          # WebKit, which iPhones draw with, at every width; Chromium and Firefox at a phone's and a desktop's
+          - {name: layout webkit, run: "tools/verify/layout.py --built", browsers: webkit}
+          - {name: layout chromium, run: "tools/verify/layout.py --built --engine chromium --widths 360,desktop", browsers: chromium}
+          - {name: layout firefox, run: "tools/verify/layout.py --built --engine firefox --widths 360,desktop", browsers: firefox}
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v7

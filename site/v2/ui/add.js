@@ -7,6 +7,7 @@
 
 import {waitLeft} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
+import {relayoutWhenTurned} from "./turned.js";
 import {openDialog, replaceEntry} from "./dialog.js";
 import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
@@ -162,6 +163,7 @@ export async function drawAdd({context, franchiseId}) {
     }
     const mount = document.createElement("div");
     mount.id = "fuad-add";
+    relayoutWhenTurned(mount, ".fuad-add-claim");
     const show = () => {
         body.prepend(mount);
         document.documentElement.classList.add("fuad-add-on");
