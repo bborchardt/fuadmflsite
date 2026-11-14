@@ -3827,6 +3827,10 @@ body #fuad-home select {
         font-size: 14px;
     }
 
+    /* room under tags that wrap to a second line, the row's spare height; the name's button already has
+       room above its text */
+    #fuad-lineup .fuad-lineup-line .fuad-lineup-name { padding-bottom: 6px; }
+
     #fuad-lineup .fuad-lineup-line.fuad-lineup-starting { background: var(--fuad-raised); }
 
     #fuad-lineup .fuad-lineup-columns {
