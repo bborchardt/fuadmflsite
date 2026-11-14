@@ -12,11 +12,14 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   version's `settings.json`, so `MFL_LEAGUE_ID` must be listed; a dry run, the manual run's default, may
   name any league and writes nothing. A new chore that writes must go through `mflImport`, or `mflForm`
   for a commissioner's form the import can't replace; both refuse a dry run.
-- Members include older iPhones: v2 is published as one file (`tools/build.mjs`), so a syntax error
-  anywhere in it breaks every tab. The build fails on syntax past ES2020 and `npm run lint` keeps
-  `site/` within it (iOS 14). A regex lookbehind is ES2018 but needs Safari 16.4, and isn't allowed
-  outside the frozen v1, `mfl/` included (`tests/guards.test.mjs`). Newer browser APIs and CSS lint
-  can't see, so keep those to touches that can fail quietly.
+- Members' devices go back to Safari on iOS 14.5, 320 wide (docs/design.md: Devices). v2 is one
+  file (`tools/build.mjs`), so a syntax error anywhere in it breaks every tab: the build fails on
+  syntax past ES2020, `npm run lint` keeps `site/` within it, and a regex lookbehind (Safari 16.4)
+  isn't allowed outside the frozen v1, `mfl/` included (`tests/guards.test.mjs`). CSS or a browser API
+  newer than the minimum may only add to a page that works without it (`@supports`, a feature check).
+- Every change is checked as Devices says for its kind, the hand checks included: CI's checks don't
+  draw as an old Safari does, nor see whether a page looks good. Say in the pull request which hand
+  checks were done, or why none applied.
 - Members' browsers keep what v2 loaded across deploys (`site/v2/ui/store.js`). A panel's saved copy
   that its render throws on is loaded afresh, but a `cached()` value is used as found until it
   expires (a year for a bid run): a change to the shape one holds changes its key too, which
