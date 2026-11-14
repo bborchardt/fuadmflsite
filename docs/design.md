@@ -125,14 +125,20 @@ Items marked *(to do)* are the plan, not yet built.
   Chrome, Edge, Samsung Internet, Firefox and Safari, and Chromium from the last two years. Widths
   from 320 (the first iPhone SE) to desktop, either way up, in the home screen app too, and with
   larger text.
-- **The minimum moves on what members' browsers report, never on a guess.** Each browser's daily row
-  to the commissioner's form (Previews and the beta) says its browser and OS version, its width and
-  whether it's the home screen app, and counts v2's errors by view, from v1 and v2 alike *(to do)*.
-  It's checked once a season. A minimum nobody is near doesn't earn the slow checks (below).
-- **Below the minimum, the page still works:** the header checks a few features the minimum
-  guarantees before loading a version, and a browser without them gets v1, with no beta offered
-  *(to do)*. Once v1 is retired, it gets MFL's own pages instead, which the header's check needs
-  only a different answer for.
+- **The minimum moves on what members' browsers report, never on a guess.** The header sends the
+  commissioner's devices form a row from each browser: the day's first, then one for each page with
+  errors, at most 6 a day. A row is the team (`guest` logged out), what ran (`v1`, `v2`, `-fallback`
+  when a beta couldn't start, `-old` below the minimum, `none` when no version could, `loading` when
+  the page was left first), the user agent, the screen and window widths and whether it's the home
+  screen app, the page, and the errors v1's and v2's code logged (`[fuad] couldn't draw Home: …`) or
+  threw, each counted. It comes from the header so that a browser no version runs on is counted too.
+  It's this league's only, and not a browser that has been the commissioner's, as with the version
+  rows. The rows are read once a season: a minimum nobody is near doesn't earn the slow checks
+  (below), and an error in them is a bug no member had to report.
+- **Below the minimum, the page still works:** a browser without `WeakRef` (Safari 14.1, Chrome 84 and
+  Firefox 79 brought it, each with all of ES2020 and flex `gap`) gets the header's `OLDER`, v1, with
+  no beta offered. Once v1 is retired, `OLDER` is null and it gets MFL's own pages with the
+  unavailable note.
 - **Newer than the minimum only as an extra:** a feature the minimum lacks may make a page better but
   must never be needed to use it. Layout holds without newer CSS, or the rule sits behind `@supports`
   (Rosters' draft board's `subgrid`), and a newer browser API sits behind a check whose absence
@@ -144,7 +150,7 @@ Items marked *(to do)* are the plan, not yet built.
   |---|---|---|
   | `npm run lint` (ES2020, `.at()`) | JS syntax and built-ins past the minimum | Browser APIs, CSS, the header's script *(to do: CSS against caniuse at the minimum, browser APIs, and the header's `<script>` and `<style>`)* |
   | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
-  | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should | Old engines |
+  | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`) getting `OLDER`; the device rows | Old engines: below the minimum is simulated |
   | `pages.py`, `requests.py` | Which screen takes each MFL page; v2 asking MFL for more | How it looks |
   | `layout.py` (WebKit, 390 to 1280) | Squeezed, offscreen, clipped or overlapping parts | Old engines, whether it looks good *(to do: in CI, with 320, 360, 375 and 412, larger text, Chromium and Firefox)* |
   | `layout.py` on the minimum's CSS *(to do)* | Layout that leans on CSS the minimum lacks, drawn with those rules taken out | What an old engine draws differently, not just lacks |
