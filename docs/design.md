@@ -132,9 +132,10 @@ Items marked *(to do)* are the plan, not yet built.
   the page was left first), the user agent, the screen and window widths and whether it's the home
   screen app, the page, and the errors v1's and v2's code logged (`[fuad] couldn't draw Home: …`) or
   threw, each counted. It comes from the header so that a browser no version runs on is counted too.
-  It's this league's only, and not a browser that has been the commissioner's, as with the version
-  rows. The rows are read once a season: a minimum nobody is near doesn't earn the slow checks
-  (below), and an error in them is a bug no member had to report.
+  It's this league's only. The team is as MFL gives it, so the commissioner's rows say 0000, or the
+  team their Become views as: the device and errors are theirs either way. The rows are read once a
+  season: a minimum nobody is near doesn't earn the slow checks (below), and an error in them is a
+  bug no member had to report.
 - **Below the minimum, the page still works:** a browser without `WeakRef` (Safari 14.1, Chrome 84 and
   Firefox 79 brought it, each with all of ES2020 and flex `gap`) gets the header's `OLDER`, v1, with
   no beta offered. Once v1 is retired, `OLDER` is null and it gets MFL's own pages with the
@@ -267,13 +268,9 @@ Items marked *(to do)* are the plan, not yet built.
   only its own tabs), for at most 30 seconds, so MFL's page doesn't show before the version draws;
   whichever version runs shows it again, v2 once its frame and any view it draws over MFL's page have
   first drawn.
-- While a beta is on offer, each member's browser sends the commissioner's Google Form a row a day
-  saying which version it runs: `v1`, the beta's version, or `v1-fallback` when the beta couldn't load
-  or start (`reportUse`, loader.js). It sends the team id and version, nothing else, so the
-  commissioner can see the league has moved before promoting a beta. It is only this league's logged-in
-  teams, and not a browser that has been the commissioner, whose Become would count as that team. MFL's
-  app runs none of this, so a team with no rows may just be using the app. Only the v1 file and a
-  beta report: once promoted, v2 sends nothing.
+- Whether the league has moved to a beta before it's promoted is in the devices form's Ran (Devices):
+  `v1`, the beta's version, or `-fallback` when the beta couldn't load or start. MFL's app runs none
+  of this, so a team with no rows may just be using the app.
 - A beta changes how things look, not the rules: the job follows `RULES_VERSION`, v2 by default
   and never v1 (v2's `lib/` holds v1's rules).
 
