@@ -6,6 +6,9 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 ## Goals
 
 - Works well in a **phone browser**; members can't be assumed to use an app.
+- **Stable on every device members use** (Devices, below): a bug or an older browser costs a member a
+  feature at most, never the page, and what members' browsers run is known from what they report,
+  not from members telling us.
 - **One navigation layer:** v2's five sections (Home, Lineup, League, Moves, Rosters) replace the
   custom tabs rather than adding to them; whatever they leave out stays reachable from MFL's own
   menu, inside v2's site menu (☰). A link there or in MFL's pages to a page one of v2's views draws
@@ -111,6 +114,52 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   of one page, so that's Safari's `navigation.canGoBack` (iOS 26.2), which counts a view's entry too,
   but not a dialog's; before 26.2, only a page a link on the host led to (its referrer, and not a
   launch). Android's app keeps its own Back, so neither shows there.
+
+## Devices
+
+Items marked *(to do)* are the plan, not yet built.
+
+- **Supported: back to Safari on iOS 14.5,** one minimum for both code and looks, set low on purpose.
+  Every iPhone still in use updates to iOS 15 or later (the 6s, 7 and first SE stop at 15.8), and
+  v2's CSS already needs 14.5 (flex `gap`). Android and desktop browsers update themselves: current
+  Chrome, Edge, Samsung Internet, Firefox and Safari, and Chromium from the last two years. Widths
+  from 320 (the first iPhone SE) to desktop, either way up, in the home screen app too, and with
+  larger text.
+- **The minimum moves on what members' browsers report, never on a guess.** Each browser's daily row
+  to the commissioner's form (Previews and the beta) says its browser and OS version, its width and
+  whether it's the home screen app, and counts v2's errors by view, from v1 and v2 alike *(to do)*.
+  It's checked once a season. A minimum nobody is near doesn't earn the slow checks (below).
+- **Below the minimum, the page still works:** the header checks a few features the minimum
+  guarantees before loading a version, and a browser without them gets v1, with no beta offered
+  *(to do)*. Once v1 is retired, it gets MFL's own pages instead, which the header's check needs
+  only a different answer for.
+- **Newer than the minimum only as an extra:** a feature the minimum lacks may make a page better but
+  must never be needed to use it. Layout holds without newer CSS, or the rule sits behind `@supports`
+  (Rosters' draft board's `subgrid`), and a newer browser API sits behind a check whose absence
+  leaves a feature out, not the page. Syntax can't fail quietly: v2 is one file, so one error stops
+  every tab, and syntax is held to the minimum exactly.
+- **Checked automatically, on every pull request:**
+
+  | Check | Catches | Blind to |
+  |---|---|---|
+  | `npm run lint` (ES2020, `.at()`) | JS syntax and built-ins past the minimum | Browser APIs, CSS, the header's script *(to do: CSS against caniuse at the minimum, browser APIs, and the header's `<script>` and `<style>`)* |
+  | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
+  | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should | Old engines |
+  | `pages.py`, `requests.py` | Which screen takes each MFL page; v2 asking MFL for more | How it looks |
+  | `layout.py` (WebKit, 390 to 1280) | Squeezed, offscreen, clipped or overlapping parts | Old engines, whether it looks good *(to do: in CI, with 320, 360, 375 and 412, larger text, Chromium and Firefox)* |
+  | `layout.py` on the minimum's CSS *(to do)* | Layout that leans on CSS the minimum lacks, drawn with those rules taken out | What an old engine draws differently, not just lacks |
+
+  Playwright's engines are current ones, so no automated check draws as an old Safari does: the
+  minimum is held by the lint and the quiet-failure rules above, and the slow checks below. These
+  checks are kept within 10 minutes; past that, the slowest move to the manual checks, for the
+  changes that risk what they cover.
+- **Checked by hand,** where a person has to look or no free tool reaches:
+  - before a version becomes the header's, and after any header change: the screens in the oldest
+    Safari members' reports show, in Xcode's simulator (served by the screen harness *(to do)*), or on
+    an iPhone that old
+  - a visible change: `screens.py compare` and `layout.py --shots`, read by a person, since a check
+    sees broken, not ugly
+  - `skins.py`, for a change to v2's colours or to what MFL's skins could reach
 
 ## The daily job
 
