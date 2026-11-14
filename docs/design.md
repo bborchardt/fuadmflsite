@@ -119,10 +119,11 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 
 Items marked *(to do)* are the plan, not yet built.
 
-- **Supported: back to Safari on iOS 14.5,** one minimum for both code and looks, set low on purpose.
-  Every iPhone still in use updates to iOS 15 or later (the 6s, 7 and first SE stop at 15.8), and
-  v2's CSS already needs 14.5 (flex `gap`). Android and desktop browsers update themselves: current
-  Chrome, Edge, Samsung Internet, Firefox and Safari, and Chromium from the last two years. Widths
+- **Supported: back to Safari on iOS 14.5, Chrome and Edge 88, Samsung Internet 15 and Firefox 79,**
+  one minimum for both code and looks, set low on purpose and listed in `package.json`'s
+  `browserslist`, which the lint reads. Every iPhone still in use updates to iOS 15 or later (the 6s,
+  7 and first SE stop at 15.8), and v2's CSS needs 14.5 (flex `gap`) and Chrome 88 (`:where()` and
+  `:is()`, whose rules an older one drops whole). Android and desktop browsers update themselves. Widths
   from 320 (the first iPhone SE) to desktop, either way up, in the home screen app too, and with
   larger text.
 - **The minimum moves on what members' browsers report, never on a guess.** The header sends the
@@ -137,21 +138,25 @@ Items marked *(to do)* are the plan, not yet built.
   season: a minimum nobody is near doesn't earn the slow checks (below), and an error in them is a
   bug no member had to report.
 - **Below the minimum, the page still works:** a browser without `WeakRef` (Safari 14.1, Chrome 84 and
-  Firefox 79 brought it, each with all of ES2020 and flex `gap`) gets the header's `OLDER`, v1, with
-  no beta offered. Once v1 is retired, `OLDER` is null and it gets MFL's own pages with the
+  Firefox 79 brought it, each with all of ES2020 and flex `gap`) or without `:where()` (Chrome 88) gets
+  the header's `OLDER`, v1, with no beta offered. The header's script is ES5, so it runs in any
+  browser to decide. Once v1 is retired, `OLDER` is null and it gets MFL's own pages with the
   unavailable note.
 - **Newer than the minimum only as an extra:** a feature the minimum lacks may make a page better but
   must never be needed to use it. Layout holds without newer CSS, or the rule sits behind `@supports`
   (Rosters' draft board's `subgrid`), and a newer browser API sits behind a check whose absence
-  leaves a feature out, not the page. Syntax can't fail quietly: v2 is one file, so one error stops
-  every tab, and syntax is held to the minimum exactly.
+  leaves a feature out, not the page. Each such use carries a lint disable comment saying why it
+  fails quietly, which the lint requires. A newer selector gets a rule of its own, as a browser that
+  can't read one selector in a list drops the whole rule. Syntax can't fail quietly: v2 is one file,
+  so one error stops every tab, and syntax is held to the minimum exactly.
 - **Checked automatically, on every pull request:**
 
   | Check | Catches | Blind to |
   |---|---|---|
-  | `npm run lint` (ES2020, `.at()`) | JS syntax and built-ins past the minimum | Browser APIs, CSS, the header's script *(to do: CSS against caniuse at the minimum, browser APIs, and the header's `<script>` and `<style>`)* |
+  | `npm run lint`: ESLint (ES2020, `.at()`, `eslint-plugin-compat`) | JS syntax and built-ins past the minimum; browser globals past it (`structuredClone`, `BroadcastChannel`); the header's and capture page's scripts held to ES5 | Many browser methods (`AbortSignal.timeout`, `dialog.showModal()`): the plugin sees globals better than methods |
+  | `npm run lint`: stylelint (caniuse at the minimum, and a hand list) | CSS past the minimum in `site/` and the header's `<style>`: selectors (`:has()`), at-rules (`@container`, `@layer`), units (`dvh`), and the properties and functions the hand list names (`aspect-ratio`, `accent-color`, `color-mix()`) | Newer CSS neither caniuse's data nor the hand list knows; what's only partly supported at the minimum |
   | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
-  | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`) getting `OLDER`; the device rows | Old engines: below the minimum is simulated |
+  | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`, or no `:where()`) getting `OLDER`; the device rows | Old engines: below the minimum is simulated |
   | `pages.py`, `requests.py` | Which screen takes each MFL page; v2 asking MFL for more | How it looks |
   | `layout.py` (WebKit, 390 to 1280) | Squeezed, offscreen, clipped or overlapping parts | Old engines, whether it looks good *(to do: in CI, with 320, 360, 375 and 412, larger text, Chromium and Firefox)* |
   | `layout.py` on the minimum's CSS *(to do)* | Layout that leans on CSS the minimum lacks, drawn with those rules taken out | What an old engine draws differently, not just lacks |

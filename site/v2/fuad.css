@@ -644,6 +644,7 @@ body .pagebody textarea {
 }
 
 /* a table of fields under column headings, and fields in a line of text, stay compact */
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- inside :where(), which skips what it can't read: at worst MFL's padding */
 body .pagebody :where(table:has(th) td) > input:where([type="text"], [type="number"], [type="password"]),
 body .pagebody :where(table:has(th) td) > select,
 body .pagebody :where(td:has(> input[type="text"] ~ input[type="text"])) > input:where([type="text"]) { padding: 4px 6px !important; }
@@ -685,6 +686,7 @@ body .pagebody input:where([type="button"], [type="submit"]) { padding: 0 18px !
 }
 
 body input[type="checkbox"],
+/* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
 body input[type="radio"] { accent-color: var(--fuad-accent); }
 
 /* ---- Chat, live scoring, calendar, brackets ---- */
@@ -804,6 +806,7 @@ body #tooltip.top:after { border-top-color: var(--fuad-raised) !important; }
 /* Keep MFL's nav bar (Home, Rosters, Submit Lineup...) on phones. The skin hides it
    below 54.25em; show it instead as one row that swipes sideways, with full-size tap targets. */
 @media (max-width: 54.25em) {
+    /* stylelint-disable-next-line plugin/no-unsupported-browser-features -- the strip scrolls either way; iOS's scrollbars are overlays already */
     body #hsubmenu { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     body #hsubmenu ul { display: flex; float: none; left: 0; width: max-content; }
     body #hsubmenu ul li { display: block; flex: none; float: none; right: 0; width: auto; white-space: nowrap; }
@@ -846,6 +849,7 @@ body .fuad-layer h2, body .fuad-layer h3 { text-align: left; }
 /* ---- Focus and tap areas, on every page ---- */
 
 /* an accent ring on every control reached by keyboard */
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: without it the browser's own focus ring shows */
 body a:focus-visible,
 body button:focus-visible,
 body input:focus-visible,
@@ -1022,6 +1026,7 @@ body [tabindex]:focus-visible {
     background: var(--fuad-panel);
     border-radius: 12px;
     overflow-x: auto;
+    /* stylelint-disable-next-line plugin/no-unsupported-browser-features -- the strip scrolls either way; iOS's scrollbars are overlays already */
     scrollbar-width: none;
 }
 
@@ -1440,6 +1445,7 @@ html.fuad-app { --fuad-home-bar: max(0px, env(safe-area-inset-bottom, 0px) - 6px
     border-radius: 18px;
     box-shadow: 0 16px 40px var(--fuad-shadow);
     overflow-y: auto;
+    /* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: without it, scrolling past the sheet's end scrolls the page */
     overscroll-behavior: contain;
 }
 
@@ -1695,6 +1701,7 @@ body .fuad-load textarea {
     /* 16 px, so iPhones don't zoom in on focus */
     font: 16px var(--fuad-body);
     padding: 10px 12px;
+    /* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: phones don't resize a box by hand */
     resize: vertical;
 }
 .fuad-load textarea:focus { border-color: var(--fuad-accent); outline: 0; }
@@ -2259,6 +2266,7 @@ body .fuad-load textarea {
 
 /* skins pad their own fields and can load after this sheet, so the padding is set outright: the text
    off the edges, and room for the dropdown's arrow */
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- a simple :not(), which every browser at the minimum has */
 body #fuad-home input:not([type="checkbox"]) { padding: 0 12px !important; }
 
 body #fuad-home textarea { padding: 10px 12px !important; }
@@ -2280,6 +2288,7 @@ body #fuad-home select {
 #fuad-home .fuad-chat-form input,
 #fuad-home #fuad-chat-to { margin: 2px; }
 
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: phones don't resize a box by hand */
 #fuad-home textarea { line-height: 1.4; resize: vertical; }
 
 #fuad-home input:focus,
@@ -3314,6 +3323,7 @@ body #fuad-home select {
 #fuad-all-bids .fuad-filter[aria-pressed="true"] { background: var(--fuad-text); border-color: var(--fuad-text); color: var(--fuad-page); }
 
 @media (hover: hover) {
+    /* stylelint-disable-next-line plugin/no-unsupported-browser-features -- a simple :not(), which every browser at the minimum has */
     #fuad-rosters .fuad-filter:not([aria-pressed="true"]):hover,
 #fuad-all-moves .fuad-filter:not([aria-pressed="true"]):hover,
 #fuad-all-bids .fuad-filter:not([aria-pressed="true"]):hover { background: var(--fuad-raised); }
@@ -3459,12 +3469,14 @@ body #fuad-home select {
 
 /* each pick shares its row's height across the rounds, so a name that wraps doesn't push the rest of its round out of line */
 @media (min-width: 57.01em) {
+    /* stylelint-disable plugin/no-unsupported-browser-features -- behind @supports: without subgrid the rounds keep their own heights */
     @supports (grid-template-rows: subgrid) {
         #fuad-rosters .fuad-rounds { grid-template-rows: auto repeat(var(--fuad-picks), auto); }
         #fuad-rosters .fuad-round { display: grid; grid-row: 1 / -1; grid-template-rows: subgrid; }
         #fuad-rosters .fuad-board-picks,
         #fuad-rosters .fuad-board-picks[hidden] { display: grid !important; grid-row: 2 / -1; grid-template-rows: subgrid; }
     }
+    /* stylelint-enable plugin/no-unsupported-browser-features */
 }
 
 /* Players: fixed column widths, so filtering doesn't make the columns jump */
@@ -4179,6 +4191,7 @@ body .fuad-reply-formats button[data-format="B"] { font-weight: 800; }
 
 body .fuad-reply-formats button[data-format="I"] { font-style: italic; }
 
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- a fallback list: monospace where ui-monospace isn't */
 body .fuad-reply-formats button[data-format="tt"] { font-family: ui-monospace, monospace; font-size: 13px; }
 
 .fuad-reply-text { display: flex; flex-direction: column; gap: 4px; }
@@ -4194,6 +4207,7 @@ body .fuad-reply-text textarea {
     background: var(--fuad-page);
     color: var(--fuad-text);
     font: 400 var(--fuad-read-size) / var(--fuad-read-leading) var(--fuad-body);
+    /* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: phones don't resize a box by hand */
     resize: vertical;
 }
 
@@ -4217,6 +4231,7 @@ body .fuad-reply-subject input:focus { border-color: var(--fuad-accent); }
 
 .fuad-reply-notify { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; color: var(--fuad-soft); }
 
+/* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
 .fuad-reply-notify input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); }
 
 body .fuad-reply-buttons input[type="submit"] {
@@ -4254,8 +4269,11 @@ body .fuad-reply-buttons input.fuad-reply-post { order: 2; background: var(--fua
 .fuad-side body #withmenus > br,
 .fuad-side body #withmenus table.report > caption,
 .fuad-side body form.msa .hcl,
-.fuad-side body form.msa button.tbt:has(img),
 .fuad-side body form.msa br { display: none !important; }
+
+/* its own rule: a browser without :has() drops only this, not the others hidden above */
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: without it the button's image shows */
+.fuad-side body form.msa button.tbt:has(img) { display: none !important; }
 
 .fuad-side body #withmenus { display: flex; flex-direction: column; gap: 14px; max-width: 860px; padding: 16px 0 24px; text-align: left; }
 
@@ -4364,6 +4382,7 @@ body .fuad-setup-yn label {
 
 body .fuad-setup-yn input:checked + label { background: var(--fuad-accent); color: var(--fuad-on-accent); }
 
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: without it the browser's own focus ring shows */
 body .fuad-setup-yn input:focus-visible + label { outline: 2px solid var(--fuad-accent); outline-offset: 1px; }
 
 .fuad-setup-checks { display: flex; flex-direction: column; }
@@ -4409,6 +4428,7 @@ body :is(.fuad-setup-check, .fuad-width-switch) input[type="checkbox"]:checked {
 
 body :is(.fuad-setup-check, .fuad-width-switch) input[type="checkbox"]:checked::before { transform: translateX(18px); }
 
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: without it the browser's own focus ring shows */
 body :is(.fuad-setup-check, .fuad-width-switch) input[type="checkbox"]:focus-visible { outline: 2px solid var(--fuad-accent); outline-offset: 2px; }
 
 body .fuad-setup-save button { width: 100%; min-height: 48px; border-radius: 12px; }
@@ -5606,6 +5626,7 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 #fuad-ir .fuad-ir-on-row .fuad-ir-act { color: var(--fuad-accent); }
 
 #fuad-ir input[type=checkbox],
+/* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
 #fuad-ir input[type=radio] { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); cursor: pointer; }
 
 /* what MFL's skins set on every field (16 px type on a phone), kept here so a skin can't change it */
@@ -5950,6 +5971,7 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     font: 16px var(--fuad-body);
 }
 
+/* stylelint-disable-next-line plugin/no-unsupported-browser-features -- an extra: phones don't resize a box by hand */
 #fuad-trades textarea { padding: 8px 12px !important; line-height: 1.4; resize: vertical; }
 #fuad-trades input[type="date"] { padding: 0 10px !important; }
 #fuad-trades select { padding: 0 8px !important; }
@@ -6038,6 +6060,7 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     cursor: pointer;
 }
 
+/* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
 #fuad-trades .fuad-trades-pick-row input { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); }
 
 #fuad-trades .fuad-trades-who { display: flex; flex-direction: column; min-width: 0; }

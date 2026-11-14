@@ -12,11 +12,13 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   version's `settings.json`, so `MFL_LEAGUE_ID` must be listed; a dry run, the manual run's default, may
   name any league and writes nothing. A new chore that writes must go through `mflImport`, or `mflForm`
   for a commissioner's form the import can't replace; both refuse a dry run.
-- Members' devices go back to Safari on iOS 14.5, 320 wide (docs/design.md: Devices). v2 is one
+- Members' devices go back to Safari on iOS 14.5 and Chrome 88, 320 wide (docs/design.md: Devices;
+  the list is `package.json`'s `browserslist`). v2 is one
   file (`tools/build.mjs`), so a syntax error anywhere in it breaks every tab: the build fails on
   syntax past ES2020, `npm run lint` keeps `site/` within it, and a regex lookbehind (Safari 16.4)
   isn't allowed outside the frozen v1, `mfl/` included (`tests/guards.test.mjs`). CSS or a browser API
-  newer than the minimum may only add to a page that works without it (`@supports`, a feature check).
+  newer than the minimum may only add to a page that works without it (`@supports`, a feature check),
+  with a lint disable comment saying why; the lint (ESLint's compat, stylelint) finds most, not all.
 - Every change is checked as Devices says for its kind, the hand checks included: CI's checks don't
   draw as an old Safari does, nor see whether a page looks good. Say in the pull request which hand
   checks were done, or why none applied.

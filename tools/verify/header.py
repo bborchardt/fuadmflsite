@@ -7,7 +7,8 @@ Each case loads a saved page (tools/verify/screens/, as screens.py does) with it
 mfl/message-header.html and the clone's beta offer, in Chromium and in WebKit (Safari's engine), and
 checks which version ran, the beta choice left stored, the cover, the bars and notes shown, and the
 rows sent to the devices form as the page is left. A version's files can be made to
-fail (404) or not start (a syntax error), and the browser to be older than the minimum (no WeakRef).
+fail (404) or not start (a syntax error), and the browser to be older than the minimum (no WeakRef,
+or no :where()).
 """
 import argparse
 import json
@@ -74,6 +75,8 @@ CASES = {
     # older than the minimum (no WeakRef): OLDER, never the beta; with OLDER null, MFL's pages and the note
     "old browser": (LINEUP, {"old": True, "beta": "v2"}, {"ran": "v1", "requested": ["v1"], "inBeta": False}),
     "old browser v2 main": (LINEUP, {"old": True, "main": "v2", "offer": False}, {"ran": "v1", "requested": ["v1"]}),
+    # Chrome 84-87: WeakRef, but no :where(), whose rules it would drop
+    "old chrome": (LINEUP, {"old": "where", "beta": "v2"}, {"ran": "v1", "requested": ["v1"], "inBeta": False}),
     "old browser no older": (HOME, {"old": True, "main": "v2", "offer": False, "older": None},
                              {"ran": None, "requested": [], "cloaked": False, "note": True}),
     # the devices form's rows (the header's report): a day's first, then one more for a page with errors
@@ -132,7 +135,13 @@ def run(browser, site, name):
         }; })();""")
     if given.get("beta"):
         context.add_init_script(f"if (!sessionStorage.getItem('h.set')) {{ sessionStorage.setItem('h.set', '1'); localStorage.setItem('fuad.beta', '{given['beta']}'); }}")
-    if given.get("old"):
+    if given.get("old") == "where":
+        context.add_init_script("""(() => { const select = Document.prototype.querySelector;
+            Document.prototype.querySelector = function (selector) {
+                if (/:where\\(/.test(selector)) { throw new DOMException("not a valid selector", "SyntaxError"); }
+                return select.call(this, selector);
+            }; })();""")
+    elif given.get("old"):
         context.add_init_script("delete window.WeakRef;")
     if given.get("team_skin"):
         context.add_init_script(f"localStorage.setItem('fuad.teamSkin.{LEAGUE}', '{given['team_skin']}');")
