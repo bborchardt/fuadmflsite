@@ -32,6 +32,8 @@ To paste one:
 4. When more than one file changed, paste the tab messages first and the header last. The header
    loads code that looks for the tabs' messages, so the tabs need to be in place before it.
 5. Reload the league's home page and check that the site loads and the changed tab looks right.
+   For the header, open it again in Messages Setup and check that it still ends with
+   `<div id="fuadlinksdiv"></div>`: MFL doesn't say how long a message may be.
    A change to the site's code shows a few minutes after its pull request merges; browsers keep the
    old copy up to 10 minutes more.
 
