@@ -30,7 +30,7 @@ export const two = (week) => String(week).padStart(2, "0");
 // `data`: what league.js loads for the section (exports, feeds, names, the season's facts); `showing()`
 // whether Scores is the view on screen
 export function drawScores(mount, data) {
-    const {context, viewer, exp, feed, before, names: namesFor} = data;
+    const {context, viewer, exp, feed, before, names: namesFor, basic = null} = data;
     const currentWeek = before ? 1 : Number(window.liveScoringWeek) || 1;
     // `best`: each side's best lineup in place of its own (kept across weeks; off in Season)
     const state = {week: currentWeek, season: false, best: false, open: null, bench: new Set()};
@@ -267,12 +267,12 @@ export function drawScores(mount, data) {
             draw(shown);
             schedule(shown);
         }, (error) => {
-            console.warn("[fuad] couldn't load scores:", error);
+            console.error("[fuad] couldn't load scores:", error);
             if (week !== state.week || state.season) {
                 return;
             }
             body.removeAttribute("aria-busy");
-            body.innerHTML = `<div class="fuad-panel">${failedMarkup("scores", error)}</div>`;
+            body.innerHTML = `<div class="fuad-panel">${failedMarkup("scores", error, basic)}</div>`;
             armRetry(body.querySelector("button"), error, showWeek);
         });
     };
@@ -286,6 +286,7 @@ export function drawScores(mount, data) {
         drawPanel(panelMount, {
             what: "your season",
             rows: 8,
+            basic,
             load: async () => {
                 const [schedule, names, standing] = await Promise.all([data.schedule(), namesFor(), exp("leagueStandings", {}, {optional: true})]);
                 let liveResult = "";

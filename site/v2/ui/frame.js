@@ -336,7 +336,8 @@ export function drawFrame({context, watchBack = () => {}}) {
 function toOwnPages(all, options) {
     ["click", "auxclick", "contextmenu"].forEach((type) => document.addEventListener(type, (event) => {
         const link = event.target.closest && event.target.closest("a[href]");
-        const href = link && ownHref(all, link.href, options);
+        // Basic view, offered when a view couldn't load, is MFL's page on purpose (panel.js failedMarkup)
+        const href = link && !link.hasAttribute("data-fuad-basic") && ownHref(all, link.href, options);
         if (href) {
             link.href = href;
         }

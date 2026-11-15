@@ -205,6 +205,11 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   the devices form counts: a fallback that happens is a design issue to fix, not a member's to work
   around. A move made there that breaks the league's rules is the daily job's to flag, its
   penalties and contract years held.
+- **Views v2 rebuilds offer MFL's page when they fail:** Scores, Standings, Power, Teams, a team and
+  Draft replace MFL's page (MFL's links to it open v2's, `ui/frame.js`), so one that can't load
+  would leave no way to it. Its "Couldn't load standings." has Basic view beside Retry, a link to
+  the MFL page it replaces (`basicHref` in `ui/nav.js`) that the link rewriting leaves be, and is
+  logged as an error. A panel showing a copy kept from before only warns.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **Exports the job, and v2's checks and forms, read** are checked as they come (`fetchExport`: a section missing fails), and

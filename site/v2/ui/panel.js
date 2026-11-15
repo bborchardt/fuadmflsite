@@ -10,10 +10,13 @@ import {TIME_ZONE, zoneLabel} from "../lib/zone.js";
 // MFL refusing a burst (HTTP 429), as against any other failure
 export const refused = (error) => Boolean(error && error.status === 429);
 
-// "Couldn't load standings." and Retry; when MFL asked to wait, Retry is off until the wait is over
-export function failedMarkup(what, error) {
+// "Couldn't load standings." and Retry; when MFL asked to wait, Retry is off until the wait is over.
+// `basic`: the MFL page the view replaces (nav.js basicHref), as Basic view, so a member always has
+// a way on; the site's link rewriting leaves it be (frame.js).
+export function failedMarkup(what, error, basic = null) {
     const text = refused(error) ? "Server is busy. Try again in a few seconds." : `Couldn’t load ${esc(what)}.`;
-    return `<div class="fuad-failed" role="alert"><span>${text}</span><button type="button" class="fuad-quiet">Retry</button></div>`;
+    const fallback = basic ? `<a class="fuad-quiet" href="${esc(basic)}" data-fuad-basic>Basic view</a>` : "";
+    return `<div class="fuad-failed" role="alert"><span>${text}</span><span class="fuad-failed-actions"><button type="button" class="fuad-quiet">Retry</button>${fallback}</span></div>`;
 }
 
 export function armRetry(button, error, retry) {
@@ -40,8 +43,8 @@ export function placeholders(rows = 3) {
 
 // `mount` gets the panel's markup. `what` names it in "Couldn't load standings.". `key` and
 // `maxAge` cache what `load` resolves to; `render(value, body)` draws it into the body. `actions`
-// is markup for the heading's row (a count, a link, a button).
-export function drawPanel(mount, {heading = "", actions = "", what, key = null, maxAge = 0, load, render, rows = 3}) {
+// is markup for the heading's row (a count, a link, a button). `basic`: failedMarkup's.
+export function drawPanel(mount, {heading = "", actions = "", what, key = null, maxAge = 0, load, render, rows = 3, basic = null}) {
     const title = heading ? `<h2 class="fuad-panel-heading">${esc(heading)}</h2>` : "";
     let body;
     let asOf;
@@ -72,14 +75,16 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
             show(value);
             return value;
         }, (error) => {
-            console.warn(`[fuad] couldn't load ${what}:`, error);
             if (entry) {
+                console.warn(`[fuad] couldn't refresh ${what}:`, error);
                 asOf.textContent = `As of ${clockText(new Date(entry.storedAt))}`;
                 asOf.hidden = false;
                 return entry.value;
             }
+            // what the member sees fail is logged as an error, which the header's devices form counts
+            console.error(`[fuad] couldn't load ${what}:`, error);
             mount.removeAttribute("aria-busy");
-            body.innerHTML = failedMarkup(what, error);
+            body.innerHTML = failedMarkup(what, error, basic);
             armRetry(body.querySelector("button"), error, run);
             return null;
         });

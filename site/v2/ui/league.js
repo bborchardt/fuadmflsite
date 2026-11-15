@@ -4,6 +4,7 @@
 
 import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup, pageChanged} from "./panel.js";
+import {basicHref} from "./nav.js";
 import {cached} from "./store.js";
 import {DEFAULT_END_WEEK, lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
@@ -123,6 +124,8 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const namesFor = (year = season) => leagueOf(year).catch(() => null).then(namesOf);
     // the season shown in Standings, Power and Winners: this one, or last one's final before week 1
     const shownSeason = () => beforeSeason().then((before) => (before ? season - 1 : season));
+    // MFL's page a view replaces, for its "Couldn't load" (nav.js basicHref)
+    const basic = (view, year = season) => basicHref(`League/${view}`, {base: `${host}/${year}`, leagueId: context.leagueId});
 
     const root = document.createElement("main");
     root.id = "fuad-league";
@@ -138,7 +141,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             const [before, lastScheduled] = await Promise.all([beforeSeason(), schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0)]);
             return drawScores(mount, {
-                context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14,
+                context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14, basic: basic("Scores"),
                 names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),
                 showing: () => document.documentElement.classList.contains("fuad-league-on") && viewOf(window.location.hash) === "scores"
             });
@@ -156,14 +159,14 @@ export function drawLeague({context, franchiseId, teamHref}) {
             };
             const shared = once(load);
             drawPanel(mount.firstElementChild, {
-                what: "standings", key: `fuad.league.standings.${year}`, maxAge: 2 * MINUTE, rows: 10, load: shared,
+                what: "standings", key: `fuad.league.standings.${year}`, maxAge: 2 * MINUTE, rows: 10, load: shared, basic: basic("Standings", year),
                 render: (value, body) => {
                     mount.firstElementChild.classList.remove("fuad-panel");
                     body.innerHTML = standingsMarkup(value.divisions, {viewer, final, teamHref});
                 }
             });
             drawPanel(mount.lastElementChild, {
-                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, load: shared,
+                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, load: shared, basic: basic("Standings", year),
                 render: (value, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");
                     const title = final ? `${final} playoff seeds` : value.inPlayoffs ? "Playoff seeds" : "Playoff picture";
@@ -176,7 +179,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             const final = year !== season ? String(year) : "";
             mount.innerHTML = '<div class="fuad-power-panel"></div><div class="fuad-positions-panel"></div>';
             drawPanel(mount.firstElementChild, {
-                what: "power rankings", key: `fuad.league.power.${year}`, maxAge: 10 * MINUTE, rows: 10,
+                what: "power rankings", key: `fuad.league.power.${year}`, maxAge: 10 * MINUTE, rows: 10, basic: basic("Power", year),
                 load: async () => {
                     const response = await pageFetch(`${host}/${year}/options?L=${context.leagueId}&O=101`, {credentials: "include"});
                     if (!response.ok) {
@@ -195,7 +198,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 }
             });
             drawPanel(mount.lastElementChild, {
-                what: "starter points by position", key: `fuad.league.positions.${year}`, maxAge: 10 * MINUTE, rows: 10,
+                what: "starter points by position", key: `fuad.league.positions.${year}`, maxAge: 10 * MINUTE, rows: 10, basic: basic("Power", year),
                 load: async () => {
                     const [ytd, settings, known] = await Promise.all([exp("weeklyResults", {W: "YTD"}, {year}), leagueOf(year), players()]);
                     const positions = new Map([...known].map(([id, player]) => [id, player.position]));
@@ -275,7 +278,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             drawn.set(view, Promise.resolve().then(() => views[view](mount)).catch((error) => {
                 console.error(`[fuad] couldn't draw League's ${view}:`, error);
                 drawn.delete(view);
-                mount.innerHTML = `<div class="fuad-panel">${failedMarkup("this page", error)}</div>`;
+                mount.innerHTML = `<div class="fuad-panel">${failedMarkup("this page", error, basic(view[0].toUpperCase() + view.slice(1)))}</div>`;
                 armRetry(mount.querySelector("button"), error, () => {
                     visible = null;
                     show();

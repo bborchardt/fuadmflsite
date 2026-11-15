@@ -70,3 +70,29 @@ test("a panel that couldn't load says so, and when MFL refused, that the server 
     assert.match(failedMarkup("standings", new Error("HTTP 500")), /<span>Couldn’t load standings\.<\/span>.*>Retry</);
     assert.match(failedMarkup("standings", Object.assign(new Error("HTTP 429"), {status: 429})), /<span>Server is busy\. Try again in a few seconds\.<\/span>/);
 });
+
+test("a view that couldn't load offers Basic view, MFL's page, beside Retry", () => {
+    const box = document.createElement("div");
+    box.innerHTML = failedMarkup("standings", new Error("HTTP 500"), "https://www44.myfantasyleague.com/2026/standings?L=48571");
+    assert.equal(box.querySelector("span").textContent, "Couldn’t load standings.");
+    assert.deepEqual([...box.querySelectorAll(".fuad-failed-actions > *")].map((node) => node.textContent), ["Retry", "Basic view"]);
+    const link = box.querySelector("a[data-fuad-basic]");
+    assert.equal(link.getAttribute("href"), "https://www44.myfantasyleague.com/2026/standings?L=48571");
+    assert.doesNotMatch(failedMarkup("the champions", new Error("HTTP 500")), /Basic view/);
+});
+
+test("a panel the member sees fail is logged as an error, with Basic view when it has one", async () => {
+    const logged = [];
+    const error = console.error;
+    console.error = (first) => logged.push(first);
+    try {
+        const mount = document.getElementById("mount");
+        await drawPanel(mount, {what: "standings", load: async () => {
+            throw new Error("HTTP 500");
+        }, render: () => {}, basic: "https://www44.myfantasyleague.com/2026/standings?L=48571"});
+        assert.ok(mount.querySelector("a[data-fuad-basic]"));
+    } finally {
+        console.error = error;
+    }
+    assert.deepEqual(logged, ["[fuad] couldn't load standings:"]);
+});
