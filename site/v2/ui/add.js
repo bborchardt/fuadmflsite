@@ -785,7 +785,11 @@ export async function drawAdd({context, franchiseId}) {
                 throw new Error("your team isn't in the rosters");
             }
         } catch (error) {
-            loadFailed("Add", error, body, standAside);
+            // the desktop dialog's layer, empty until a move is composed, goes too
+            loadFailed("Add", error, body, () => {
+                standAside();
+                layer.remove();
+            });
             return;
         }
         render();
