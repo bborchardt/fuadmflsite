@@ -12,6 +12,14 @@ const number = (value) => {
 // MFL's Inj column, when the week's injury report can't be read
 const INJURY_CODES = {O: "Out", I: "IR", Q: "Questionable", D: "Doubtful", S: "Suspended"};
 
+// MFL's refusal in place of the form, with its reason ("You may not set your lineup at this time
+// because The league does not play during week 23."), or null
+export function lineupRefusal(doc) {
+    const warning = doc.querySelector("#withmenus > h3.warning");
+    const text = warning ? warning.textContent.replace(/\s+/g, " ").trim() : "";
+    return /^You may not set your lineup\b/i.test(text) ? text : null;
+}
+
 export function lineupForm(doc) {
     return [...doc.querySelectorAll("form")].find((form) => /\/lineup$/.test(form.getAttribute("action") || "")
         && form.querySelector("input[name=WEEK]") && form.querySelector("input[name=FRANCHISE]")) || null;

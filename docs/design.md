@@ -190,9 +190,10 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   another page, the login page and an empty one, and fails on an exported reader it doesn't list.
 - **Not recognised, v2 steps back and says so:** a screen leaves MFL's page as MFL draws it, or a
   panel shows it couldn't load, and logs `[fuad] MFL's … has changed` as an error, which the header's
-  devices form counts (Devices), so an MFL change is seen without a member reporting it. Add, Drop,
-  Trades, Scores' feeds, Power and chat log it; Lineup and IR also stand aside for ordinary reasons
-  (a week without a form, another team's page), so they don't.
+  devices form counts (Devices), so an MFL change is seen without a member reporting it. A page MFL
+  draws in place of the one asked for, for an ordinary reason, is recognised and not logged: Lineup's
+  refusal ("You may not set your lineup at this time because …": the season over, a roster to fix),
+  another team's IR page, MFL's answer to an add made on its own form.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **Exports** are checked whole (`fetchExport`: a section missing fails), but MFL leaves an empty list

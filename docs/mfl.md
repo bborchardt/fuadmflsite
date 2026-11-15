@@ -267,6 +267,9 @@ Each is an ordinary page form, posted from the logged-in browser.
     a box for every player whose game has started too (one on a bye still has none). It saves despite the deadline, answering "Week N lineup SUBMITTED" with a
     warning per player whose deadline passed. Live scoring and the Weekly Results page show the new
     lineup at once; the saved result and standings wait for a recalculation.
+  - When the team can't submit one, the page has no form, only MFL's reason in `#withmenus >
+    h3.warning`: "You may not set your lineup at this time because The league does not play during
+    week 23." (2025's site after the season, Nov 2026).
 - **Lineup Details** (`options?O=210&FRANCHISE=<team>&W=<week>`) lists every lineup submitted, a row
   each: week, "(C)" when the commissioner submitted it, the starters ("Addison, Jordan MIN WR", …,
   with notes such as "Reserved … after kickoff" after a `<br>`), comments (the lineup's Optional

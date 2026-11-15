@@ -5,7 +5,7 @@
 
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
-import {placeholders} from "./panel.js";
+import {pageChanged, placeholders} from "./panel.js";
 import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
@@ -38,6 +38,10 @@ export async function drawIR({context, franchiseId, dropHref}) {
     const page = readIRPage(document, franchiseId);
     // not the page v2 knows (MFL changed it), or another team's: MFL's own page, restyled
     if (!page) {
+        const form = [...document.querySelectorAll("form")].find((node) => /\/ir$/.test(node.getAttribute("action") || "") && node.elements.FRANCHISE_ID);
+        if (!form || form.elements.FRANCHISE_ID.value === franchiseId) {
+            pageChanged("Injured Reserve page");
+        }
         standAside();
         return;
     }
