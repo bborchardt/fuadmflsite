@@ -2,7 +2,7 @@
 """Look for broken layout in v2's screens at the widths members' screens have, without asking MFL anything.
 
     uv run --no-project --with playwright python tools/verify/layout.py [--only scores,home] [--built | --ref REF]
-        [--engine webkit|chromium|firefox] [--widths 320,phone,desktop] [--shots DIR]
+        [--engine webkit|chromium|firefox] [--widths 320,phone,desktop] [--minimum] [--shots DIR]
 
 Each screen loads as screens.py loads it (its saved pages, the clock fixed) in WebKit, which is what
 iPhones draw with, or another --engine, at each of WIDTHS: phones from 320 (the first iPhone SE, and
@@ -20,12 +20,16 @@ offcentre in a row that centres its children on one line, a child's one line of 
 stale     a height that's wrong after the window turns: the screen laid out at the other way round
           first, then turned, differs from the same page laid out afresh (Safari keeping rows' old heights)
 
+--minimum draws with the stylesheet as a browser at the minimum (docs/design.md: Devices) reads it, the
+newer CSS it marks taken out (tools/minimum-css.mjs), so a page that needs one of those extras shows up.
+
 Only v2's parts are measured (the frame and its views): MFL's own pages are left as MFL draws them.
 It sees what's drawn, not whether it looks good: a finding is worth a look, and the screenshot
 (--shots) shows it. A screen whose moves are answered differently (screens.py's "moves") looks the
 same as its plain screen until a move is made, so only the plain one is measured.
 """
 import argparse
+import subprocess
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -233,6 +237,8 @@ def main():
     which = parser.add_mutually_exclusive_group()
     which.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
     which.add_argument("--ref", help="a git ref's site/ in place of the working copy")
+    which.add_argument("--minimum", action="store_true",
+                       help="the working copy built, its stylesheet as a browser at the minimum reads it (tools/minimum-css.mjs)")
     parser.add_argument("--shots", help="a folder for a full-page screenshot of each screen with a finding")
     parser.add_argument("--engine", choices=["webkit", "chromium", "firefox"], default="webkit")
     parser.add_argument("--widths", help=f"some of {', '.join(WIDTHS)} (default: all)")
@@ -246,7 +252,11 @@ def main():
         parser.error(f"no such screen: {', '.join(sorted(only - set(plain)))} (screens: {', '.join(plain)})")
     if args.shots:
         Path(args.shots).mkdir(parents=True, exist_ok=True)
-    ref = screens.build_working_copy() if args.built else args.ref
+    ref = screens.build_working_copy() if args.built or args.minimum else args.ref
+    if args.minimum:
+        sheet = Path(ref[len(screens.BUILT):]) / "v2" / "fuad.css"
+        with open(screens.REPO / "site" / "v2" / "fuad.css") as source, open(sheet, "w") as out:
+            subprocess.run(["node", "tools/minimum-css.mjs"], cwd=screens.REPO, stdin=source, stdout=out, stderr=subprocess.DEVNULL, check=True)
     jobs = [(ref, name, width, args.shots, args.engine) for name in plain if not only or name in only for width in widths]
     findings = []
     with ProcessPoolExecutor(screens.WORKERS) as pool:

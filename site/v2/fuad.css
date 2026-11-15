@@ -686,8 +686,10 @@ body .pagebody input:where([type="button"], [type="submit"]) { padding: 0 18px !
 }
 
 body input[type="checkbox"],
-/* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
-body input[type="radio"] { accent-color: var(--fuad-accent); }
+body input[type="radio"] {
+    /* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
+    accent-color: var(--fuad-accent);
+}
 
 /* ---- Chat, live scoring, calendar, brackets ---- */
 
@@ -5627,8 +5629,14 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 #fuad-ir .fuad-ir-on-row .fuad-ir-act { color: var(--fuad-accent); }
 
 #fuad-ir input[type=checkbox],
-/* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
-#fuad-ir input[type=radio] { width: 20px; height: 20px; margin: 0; accent-color: var(--fuad-accent); cursor: pointer; }
+#fuad-ir input[type=radio] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    /* stylelint-disable-next-line property-disallowed-list -- an extra: without it, the browser's own colour */
+    accent-color: var(--fuad-accent);
+    cursor: pointer;
+}
 
 /* what MFL's skins set on every field (16 px type on a phone), kept here so a skin can't change it */
 #fuad-ir input[type=checkbox],

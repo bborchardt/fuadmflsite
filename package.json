@@ -21,6 +21,7 @@
     "eslint-plugin-html": "8.2.1",
     "globals": "15.15.0",
     "linkedom": "0.18.12",
+    "postcss": "8.5.31",
     "postcss-html": "2.0.0",
     "stylelint": "17.16.0",
     "stylelint-no-unsupported-browser-features": "8.1.2"

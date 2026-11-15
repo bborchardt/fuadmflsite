@@ -32,6 +32,8 @@ jobs:
           - {name: layout webkit wider, run: "tools/verify/layout.py --built --widths 860,app-sideways,1024,desktop", browsers: webkit}
           - {name: layout chromium, run: "tools/verify/layout.py --built --engine chromium --widths 360,desktop", browsers: chromium}
           - {name: layout firefox, run: "tools/verify/layout.py --built --engine firefox --widths 360,desktop", browsers: firefox}
+          # WebKit with the stylesheet as a browser at the minimum reads it: no page may need an extra
+          - {name: layout minimum, run: "tools/verify/layout.py --minimum --widths 320,phone,desktop", browsers: webkit}
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v7
