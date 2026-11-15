@@ -423,9 +423,10 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
         try {
             fresh = await save(context, form, state, message);
         } catch (error) {
-            console.warn("[fuad] couldn't save the lineup:", error);
+            // the detail goes to the commissioner's devices form, not the member
+            console.error("[fuad] couldn't save the lineup:", error);
             state.stale = error.sent;
-            state.error = error.sent ? `Sent, but couldn't check what MFL kept (${error.message}). Reload to see it.` : `Not saved: ${error.message}.`;
+            state.error = error.sent ? "Lineup sent, but couldn’t be confirmed. Reload the page to check it." : "Lineup not saved. Try again.";
             return false;
         }
         try {
@@ -553,8 +554,8 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
                     await checkBackups(lineupChanged, kept === "kept");
                 }
             })().catch((error) => {
-                console.warn("[fuad] couldn't save:", error);
-                state.error = `Not saved: ${error.message}.`;
+                console.error("[fuad] couldn't save the lineup:", error);
+                state.error = "Lineup not saved. Try again.";
             }).then(() => {
                 state.saving = false;
                 render();
@@ -573,8 +574,8 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
 
     if (settings.backupStarters) {
         loadBackups().then(render, (error) => {
-            console.warn("[fuad] couldn't read the backups:", error);
-            state.backupError = `Backups couldn’t be read: ${error.message}.`;
+            console.error("[fuad] couldn't read the backups:", error);
+            state.backupError = "Backups couldn’t be read. Reload the page to try again.";
             render();
         });
     }

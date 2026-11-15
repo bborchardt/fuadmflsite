@@ -167,7 +167,7 @@ export function wireWidth(group, context) {
             show(!on);
             status.classList.add("fuad-looks-failed");
             status.textContent = error.status === 429 ? "Server is busy. Try again in a few seconds."
-                : error.noForm ? "Couldn’t open MFL’s Customize page. Reload and try again." : "Couldn’t save Full width. Try again.";
+                : error.noForm ? "Couldn’t open the display settings. Reload and try again." : "Couldn’t save Full width. Try again.";
         } finally {
             input.disabled = false;
         }
