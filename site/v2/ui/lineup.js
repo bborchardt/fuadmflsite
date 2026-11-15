@@ -11,6 +11,7 @@ import {clock} from "./home-model.js";
 import {openDialog} from "./dialog.js";
 import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {placeholders} from "./panel.js";
+import {relayoutWhenTurned} from "./turned.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
     applyInjuries, lineupForm, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf
@@ -286,6 +287,7 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
     }
     const mount = document.createElement("div");
     mount.id = "fuad-lineup";
+    relayoutWhenTurned(mount, ".fuad-lineup-row, .fuad-lineup-line");
     const show = () => {
         body.prepend(mount);
         document.documentElement.classList.add("fuad-lineup-on");

@@ -58,6 +58,7 @@ from playwright.sync_api import sync_playwright
 
 REPO = Path(__file__).resolve().parents[2]
 SAMPLES = Path(__file__).resolve().parent / "screens"
+FONTS = Path(__file__).resolve().parent / "fonts"
 HOST = "https://www44.myfantasyleague.com"
 LEAGUE = "50965"
 # Sunday of week 6, 1:30 p.m. CT: games on, the free agent window and bids still ahead
@@ -653,6 +654,12 @@ class Mfl:
             if body is None:
                 return route.fulfill(status=404, body="")
             return route.fulfill(body=body, content_type="text/css" if path.endswith(".css") else "text/javascript")
+        # Barlow, as Google Fonts serves it (fonts/README.md)
+        if url.netloc == "fonts.googleapis.com":
+            return route.fulfill(body=(FONTS / "barlow.css").read_text(), content_type="text/css")
+        if url.netloc == "fonts.gstatic.com":
+            font = FONTS / url.path.rsplit("/", 1)[-1]
+            return route.fulfill(body=font.read_bytes(), content_type="font/woff2") if font.exists() else route.fulfill(status=404, body="")
         if not url.netloc.endswith("myfantasyleague.com"):
             return route.abort()
         # a move: a POST, or a GET naming an ACTION (withdrawing an offer by its revoke link) or a claim

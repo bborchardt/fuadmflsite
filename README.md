@@ -54,10 +54,12 @@ A second league can try the site with no code change, and any setting can be tri
   match how MFL answered it (lands, fails, refuses, lags, can't be reached); `--built` uses the
   working copy as Pages publishes it, and `check` checks the messages alone.
 - `uv run --no-project --with playwright python tools/verify/layout.py` draws the same screens in
-  WebKit at a phone's width, just past where the desktop layout starts, an iPhone's app turned
-  sideways, 1024px and a desktop's, and lists text squeezed to a few letters a line, anything past the
-  window's edge or cut off, controls drawn over each other, and heights left wrong after the window
-  turns; `--shots DIR` saves a screenshot of each screen with a finding. About a minute.
+  WebKit at phones' widths from 320 to 412, just past where the desktop layout starts, an iPhone's app
+  turned sideways, 1024px and a desktop's, and lists text squeezed to a few letters a line, anything
+  past the window's edge or cut off, controls drawn over each other, a row's text off its middle, and
+  heights left wrong after the window turns; `--engine chromium` or `firefox` and `--widths` draw in
+  another engine, `--shots DIR` saves a screenshot of each screen with a finding. About a minute and a
+  half; the pull request's Browser checks run it in all three engines.
 - `uv run --no-project --with playwright python tools/verify/phases.py` draws every view on nine dates
   through the league's year (offseason, draft, cut-down, preseason, season, trade deadline, playoffs,
   season over), from the same saved pages reshaped for each date, with and without the trade
