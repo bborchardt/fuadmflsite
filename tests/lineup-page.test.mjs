@@ -5,7 +5,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {parseHTML} from "linkedom";
-import {applyInjuries, lineupForm, lineupStatus, readLineupPage} from "../site/v2/ui/lineup-model.js";
+import {applyInjuries, lineupForm, lineupRefusal, lineupStatus, readLineupPage} from "../site/v2/ui/lineup-model.js";
 
 const saved = readFileSync(new URL("../tools/verify/screens/lineup.html", import.meta.url), "utf8");
 const pageOf = (html = saved) => parseHTML(html).document;
@@ -74,4 +74,11 @@ test("week 8 with the only kicker on a bye: no lineup MFL takes, so the bar says
     const status = lineupStatus(page, new Set(page.players.filter((player) => !player.locked).map((player) => player.id)));
     assert.equal(status.ok, false);
     assert.deepEqual(status.stuck, [{pos: "PK", why: `${kicker.name} is on a bye`}]);
+});
+
+test("MFL's refusal in place of the form is read, with its reason, so Lineup stands aside without reporting a change", () => {
+    const refused = pageOf(readFileSync(new URL("./fixtures/lineup-refused-2025.html", import.meta.url), "utf8"));
+    assert.equal(lineupForm(refused), null);
+    assert.equal(lineupRefusal(refused), "You may not set your lineup at this time because The league does not play during week 23.");
+    assert.equal(lineupRefusal(pageOf()), null);
 });

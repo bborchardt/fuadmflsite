@@ -6,7 +6,7 @@
 // made the add. MFL's form stays in the page underneath; anything v2 can't read leaves MFL's page.
 
 import {waitLeft} from "./page-fetch.js";
-import {placeholders} from "./panel.js";
+import {pageChanged, placeholders} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {openDialog, replaceEntry} from "./dialog.js";
 import {
@@ -178,10 +178,16 @@ export async function drawAdd({context, franchiseId}) {
         standAside();
         return;
     }
+    // MFL's answer to an add made on its own form (docs/mfl.md: Forms) has no form or lists
+    if (/Transaction Completed/i.test(document.body.textContent)) {
+        standAside();
+        return;
+    }
     const form = addForm();
     const lists = readPlayerLists(scriptText());
     // not the page v2 knows (MFL changed it): MFL's own page, restyled
-    if (!form || !lists.add.length || typeof window.picker_select !== "function" || !form.elements.ROUND || !form.elements.COMMENTS) {
+    if (!form || !lists || !lists.add.length || typeof window.picker_select !== "function" || !form.elements.ROUND || !form.elements.COMMENTS) {
+        pageChanged("Add/Drop page");
         standAside();
         return;
     }

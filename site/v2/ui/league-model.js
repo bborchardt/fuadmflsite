@@ -2,7 +2,7 @@
 // and starter points by position, the weekly and all-play winnings and the playoff prizes, and the
 // score cards. No drawing here, so each can be checked against saved exports.
 
-import {asArray} from "../lib/mfl.js";
+import {asArray, mflProgram} from "../lib/mfl.js";
 import {text} from "./player-page.js";
 import {scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {
@@ -87,8 +87,12 @@ export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divi
     return {seeds, hunt};
 }
 
-// MFL's Power Rank page (`options?O=101`), whose report has no export: null if its table isn't there
+// MFL's Power Rank page (`options?O=101`), whose report has no export: null on any other page (the
+// home page's Power Rankings module has the same table) or if its table isn't there
 export function readPowerPage(html) {
+    if (mflProgram(html) !== "options_101") {
+        return null;
+    }
     const rows = String(html).match(/<tr[^>]*>\s*<td class="franchisename">[\s\S]*?<\/tr>/g);
     if (!rows || !/class="power_rank"/.test(html)) {
         return null;

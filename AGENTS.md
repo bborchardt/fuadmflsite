@@ -35,6 +35,9 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - Changes in MFL's header or tab messages are made by the commissioner by hand: give the exact lines
   to paste, tab messages first and the header last.
 - `verify.py` can report "no differences" for an area it doesn't see: prove it notices a change first.
+- A reader of an MFL page or feed returns null (the job: throws) on a page it doesn't recognise, never
+  an empty result that reads as "none" (docs/design.md: Outside change); add it to
+  `tests/readers.test.mjs`, which fails until it's listed.
 - Python tools run through uv (`uv run --no-project --with playwright …`), never global installs.
 
 ## Conventions

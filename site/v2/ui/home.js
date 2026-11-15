@@ -6,7 +6,7 @@ import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pendingGroups} from "../lib/bids.js";
 import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
-import {drawPanel} from "./panel.js";
+import {drawPanel, pageChanged} from "./panel.js";
 import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
@@ -121,7 +121,12 @@ function drawChat(mount, {context, franchiseId, teams}) {
         if (!response.ok) {
             throw Object.assign(new Error(`the chat feed returned HTTP ${response.status}`), {status: response.status});
         }
-        return readChat(await response.text(), {viewer: franchiseId});
+        const messages = readChat(await response.text(), {viewer: franchiseId});
+        if (!messages) {
+            pageChanged("chat feed");
+            throw new Error("MFL's chat feed has changed");
+        }
+        return messages;
     };
     const showMessages = (messages, list) => {
         const ids = messages.map((message) => message.id).join(",");

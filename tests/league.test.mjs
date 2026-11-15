@@ -159,10 +159,12 @@ test("all-play ties go to the standings order, and a tie with seed 6 says so", (
 });
 
 test("MFL's Power Rank page: every team, by id, with the figures the tap shows", () => {
-    const teams = readPowerPage(raw("power-page.html"));
+    const teams = readPowerPage(raw("pages/guest/options-O101.html"));
     assert.equal(teams.length, 10);
-    assert.deepEqual({id: teams[0].id, name: teams[0].name, power: teams[0].power, allPlay: teams[0].allPlay}, {id: "0004", name: "Smooth City Styles!", power: 35.31, allPlay: "41-4"});
+    assert.deepEqual({id: teams[0].id, name: teams[0].name, power: teams[0].power, allPlay: teams[0].allPlay}, {id: "0004", name: "Smooth City Styles!", power: 35.87, allPlay: "58-5"});
     assert.equal(powerFacts(teams[0]).length, 10);
+    // the home page's Power Rankings module has the same table, but isn't the page
+    assert.equal(readPowerPage(raw("pages/guest/home.html")), null);
     assert.equal(readPowerPage("<html><body>Login</body></html>"), null);
 });
 

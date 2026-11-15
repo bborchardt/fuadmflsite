@@ -10,11 +10,11 @@ import {oneLineTimes, plural} from "./format.js";
 import {clock} from "./home-model.js";
 import {openDialog} from "./dialog.js";
 import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
-import {placeholders} from "./panel.js";
+import {pageChanged, placeholders} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
-    applyInjuries, lineupForm, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf
+    applyInjuries, lineupForm, lineupRefusal, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf
 } from "./lineup-model.js";
 import {backupMessage, backupOffered, choices, heldPairs, keptPairs, kickoffsOf, lockedStarters, pairProblems, pendingPairs, samePairs, teamBackups, weekFacts} from "./lineup-backups.js";
 import {readLineups, readThreads, weekKickoffs} from "./lineup-board.js";
@@ -307,8 +307,12 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
     }
     let form = lineupForm(document);
     const page = readLineupPage(document);
-    // not the form v2 knows (MFL changed it, or a page without one): MFL's own page, restyled
+    // not the form v2 knows (MFL changed it), or MFL's refusal in its place (the season over, a roster
+    // to fix first): MFL's own page, restyled
     if (!form || !page || !page.players.length) {
+        if (!lineupRefusal(document)) {
+            pageChanged("Submit Lineup page");
+        }
         mount.remove();
         document.documentElement.classList.remove("fuad-lineup-on");
         return;

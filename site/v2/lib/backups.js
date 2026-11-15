@@ -4,7 +4,7 @@
 
 import {SUFFIXES, normalize} from "./names.js";
 import {postText as decode} from "./contract-years.js";
-import {asArray} from "./mfl.js";
+import {asArray, mflProgram} from "./mfl.js";
 
 export const THREAD_TITLE = "Conditional starters";
 // 16.5.4: due 5 minutes before the earlier kickoff of the two
@@ -151,8 +151,12 @@ export function readRequests(text) {
 }
 
 // MFL's topic page, read without a DOM (the job's): each post's team (null for the commissioner),
-// times in MFL's words, and its HTML. `pages`: the other pages' links, for a long topic.
+// times in MFL's words, and its HTML. `pages`: the other pages' links, for a long topic. A topic always
+// has a post (deleting its only one deletes it), so a page with none isn't one MFL drew as v2 knows it.
 export function readTopicPage(html) {
+    if (mflProgram(html) !== "board_show") {
+        throw new Error(`MFL's topic page wasn't the board's page (it was ${mflProgram(html) || "unnamed"})`);
+    }
     const posts = [];
     // a post the login hasn't read yet is "frm pst new"
     const blocks = String(html).split(/<div class=['"]frm pst\b[^'"]*['"]/i).slice(1);
@@ -170,6 +174,9 @@ export function readTopicPage(html) {
             throw new Error("MFL's topic page has a post whose time can't be read");
         }
         posts.push({franchiseId: team[1] === "0000" ? null : team[1], posted: time(posted), edited: time(edited), html: body[1]});
+    }
+    if (!posts.length) {
+        throw new Error("MFL's topic page has no posts where expected");
     }
     const pager = /<span class=['"]pln['"]>([\s\S]*?)<\/span>/i.exec(html);
     const pages = pager ? [...new Set([...pager[1].matchAll(/href=['"]([^'"]*topic_show[^'"]*)['"]/gi)].map((match) => match[1].replace(/&amp;/g, "&")))] : [];

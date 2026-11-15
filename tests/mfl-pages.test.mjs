@@ -34,8 +34,8 @@ test("a guest asking for what needs a login gets MFL's login page, which v2 does
         assert.equal(served("guest", name), "/2026/login", name);
     }
     assert.equal(readLineupPage(doc("guest", "lineup")), null);
-    assert.deepEqual(readPlayerLists(html("guest", "add_drop")).add, []);
-    assert.deepEqual(readRoster(html("guest", "options-O257")), []);
+    assert.equal(readPlayerLists(html("guest", "add_drop")), null);
+    assert.equal(readRoster(html("guest", "options-O257")), null);
     assert.equal(readBidRun(html("guest", "processed_waivers")), null);
     assert.equal(readSkinForm(doc("guest", "csetup-SKIN")), null);
 });
@@ -45,7 +45,7 @@ test("the commissioner gets MFL's team picker for Lineup, Drop, IR and Trades, w
         assert.equal(served("commish", name), "/2026/select_franchise", name);
     }
     assert.equal(readLineupPage(doc("commish", "lineup")), null);
-    assert.deepEqual(readRoster(html("commish", "options-O257")), []);
+    assert.equal(readRoster(html("commish", "options-O257")), null);
 });
 
 test("a member's Moves pages and Lineup read as v2 knows them", () => {

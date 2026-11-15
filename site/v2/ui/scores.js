@@ -3,9 +3,9 @@
 // and Season the member's own results in place of the week.
 
 import {API_BASE, asArray} from "../lib/mfl.js";
-import {armRetry, drawPanel, failedMarkup, placeholders} from "./panel.js";
+import {armRetry, drawPanel, failedMarkup, pageChanged, placeholders} from "./panel.js";
 import {dayText} from "./home-model.js";
-import {gameStates, readStats} from "./live-scoring.js";
+import {NO_STATS, gameStates, readStats} from "./live-scoring.js";
 import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
 import {ordinal} from "./format.js";
@@ -64,10 +64,18 @@ export function drawScores(mount, data) {
         }
         return lineup;
     };
-    // a week MFL hasn't started a feed for yet reads as no stats, as MFL's page treats it
-    const statsOf = (week) => feed(`live_stats_${two(week)}.txt`).then(readStats, (error) => {
+    // a week MFL hasn't started a feed for yet (missing or empty) reads as no stats, as MFL's page
+    // treats it; a feed v2 doesn't recognise fails the week, as no stats would show every game unplayed
+    const statsOf = (week) => feed(`live_stats_${two(week)}.txt`).then((text) => {
+        const stats = String(text).trim() ? readStats(text) : NO_STATS;
+        if (!stats) {
+            pageChanged("live stats feed");
+            throw new Error("MFL's live stats feed has changed");
+        }
+        return stats;
+    }, (error) => {
         if (error.status === 404) {
-            return readStats("");
+            return NO_STATS;
         }
         throw error;
     });
@@ -87,7 +95,7 @@ export function drawScores(mount, data) {
             !preview && week === currentWeek ? data.projections(week).catch(() => null) : null
         ]);
         if (preview) {
-            const games = gameStates(nflSchedule, {players: new Map(), teams: new Map(), updated: 0});
+            const games = gameStates(nflSchedule, NO_STATS);
             const matchups = asArray((asArray(schedule && schedule.weeklySchedule).find((entry) => Number(entry.week) === week) || {}).matchup);
             const cards = matchups.map((matchup) => ({
                 mine: asArray(matchup.franchise).some((team) => team.id === viewer),

@@ -3,7 +3,7 @@
 // puts either team over the cap is void (10.3), so it's blocked; the roster limits may be broken by
 // a trade and fixed after (10.5), so they're notices.
 
-import {GAME_HOURS, asArray} from "../lib/mfl.js";
+import {GAME_HOURS, asArray, mflProgram} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib/rules.js";
 import {firstLast, isIR, projection, surname} from "./add-model.js";
@@ -22,8 +22,12 @@ const actionOf = (form) => String(form.getAttribute("action") || "");
 
 // The Trades page (`options?O=05`): each offer's answer form by trade id, each of the member's
 // offers' revoke link, and the teams to trade with. The answer forms open inside table rows, so
-// their fields belong to them without being inside them (`form.elements`, not querySelector).
+// their fields belong to them without being inside them (`form.elements`, not querySelector). Null
+// for any page but the Trades pages, the proposal's included (it has no teams to trade with).
 export function readTradesPage(doc) {
+    if (mflProgram(doc) !== "options_05") {
+        return null;
+    }
     const answers = new Map();
     for (const form of doc.querySelectorAll("form")) {
         if (/trade_response$/.test(actionOf(form)) && form.elements.TRADE_ID) {

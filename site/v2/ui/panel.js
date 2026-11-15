@@ -101,3 +101,10 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
     }
     return run();
 }
+
+// MFL drew a page v2 doesn't recognise, so v2 leaves it as MFL draws it. Logged as an error, so the
+// header's devices form counts it: an MFL change is seen without a member reporting it
+// (docs/design.md: Outside change).
+export function pageChanged(what) {
+    console.error(`[fuad] MFL's ${what} has changed, so it's left as MFL draws it`);
+}

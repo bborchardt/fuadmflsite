@@ -5,7 +5,7 @@
 import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {waitLeft} from "./page-fetch.js";
-import {placeholders} from "./panel.js";
+import {pageChanged, placeholders} from "./panel.js";
 import {
     WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, rosterIds,
     sendMove, takeFlash
@@ -64,7 +64,12 @@ export async function drawDrop({context, franchiseId}) {
     const form = dropForm();
     const roster = readRoster(scriptText());
     // not the page v2 knows (MFL changed it), or another team's: MFL's own page, restyled
-    if (!form || !roster.length || !form.elements.FRANCHISE || form.elements.FRANCHISE.value !== franchiseId) {
+    if (!form || !roster || !form.elements.FRANCHISE) {
+        pageChanged("Drop Players page");
+        standAside();
+        return;
+    }
+    if (!roster.length || form.elements.FRANCHISE.value !== franchiseId) {
         standAside();
         return;
     }

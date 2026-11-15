@@ -4,6 +4,7 @@ import {bidDrops, checkDrop, dropRows, readRoster} from "../site/v2/ui/drop-mode
 
 // MFL's Drop Players page script, as saved from the clone on 17 Oct 2026
 const page = `
+   var pdb_picker = new Array;
    pdb_picker[0] = new Player2 ("17072","Harris, Tre","LAC","WR",7,"$1","O","NS","","","1");
    pdb_picker[19] = new Player2 ("16619","Franklin, Troy!","DEN","WR",10,"$1","","NS","","","1");
    pdb_picker[21] = new Player2 ("16167","Achane, De'Von","MIA","RB",6,"$1","I","IR","","","1");`;

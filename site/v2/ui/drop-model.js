@@ -8,8 +8,12 @@ import {args, dropGroups, firstLast, isIR, projection, readMarks} from "./add-mo
 import {cents} from "./format.js";
 
 // MFL's roster list on the Drop Players page (`playerDatabaseObj["picker"]`), from the page's
-// script text: each player's id and MFL's mark (`!` once his game has started)
+// script text: each player's id and MFL's mark (`!` once his game has started); null without the list
+// declared, as on any other page
 export function readRoster(html) {
+    if (!/\bvar pdb_picker\s*=/.test(html)) {
+        return null;
+    }
     const players = [];
     const call = /pdb_picker\[(\d+)\]\s*=\s*new Player2\s*\(([^\n]*)\);/g;
     let found;

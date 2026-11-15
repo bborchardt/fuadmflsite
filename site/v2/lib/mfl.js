@@ -8,6 +8,18 @@ export function asArray(value) {
     return Array.isArray(value) ? value : [value];
 }
 
+// The page MFL drew, by the name it gives every page's body ("options_101" from
+// `<body id="body_options_101">`), from its HTML or a document; null for anything else, its login page
+// being "login". A reader checks it before trusting what it finds (docs/design.md: Outside change).
+export function mflProgram(page) {
+    if (page && typeof page === "object") {
+        const id = page.body ? page.body.id || "" : "";
+        return id.startsWith("body_") ? id.slice(5) : null;
+    }
+    const found = /<body\b[^>]*\bid=["']body_([\w-]+)["']/i.exec(String(page || ""));
+    return found ? found[1] : null;
+}
+
 // "Jackson, Lamar" → "Lamar Jackson"
 export function displayName(mflName) {
     const [last, first] = String(mflName).split(",").map((part) => part.trim());
