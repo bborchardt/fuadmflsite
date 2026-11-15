@@ -9,7 +9,7 @@ import {cached} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
 import {lineupPositions} from "../lib/rules.js";
 import {beforeWeek1} from "./context.js";
-import {REBUILT, sections} from "./nav.js";
+import {REBUILT, basicHref, sections} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
 import {watchList, whenPopupClosed} from "./watch.js";
@@ -184,6 +184,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     const teamPage = (mount, teamId, {fromTeams}) => {
         drawPanel(mount, {
             what: teamId === viewer ? "your team" : "this team", key: `fuad.rosters.team.${season}.${teamId}`, maxAge: 2 * MINUTE, rows: 10,
+            basic: basicHref("Rosters/Team", {base: `${host}/${season}`, leagueId: context.leagueId, team: teamId}),
             load: async () => {
                 const [all, {futureDraftPicks}, {names}, before, board] = await Promise.all([sheets(), extras(), league(), beforeSeason(), coming()]);
                 const sheet = all.find((entry) => entry.id === teamId);
@@ -235,6 +236,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             }
             drawPanel(mount, {
                 what: "teams", key: `fuad.rosters.teams.${season}`, maxAge: 2 * MINUTE, rows: 10,
+                basic: basicHref("Rosters/Teams", {base: `${host}/${season}`, leagueId: context.leagueId}),
                 load: async () => (await sheets()).map((sheet) => ({id: sheet.id, name: sheet.name, capUsed: sheet.capUsed, tight: sheet.tight, picksLine: sheet.picksLine, picksYear: sheet.picksYear, active: sheet.active, ir: sheet.ir, seasons: sheet.seasons})),
                 render: (list, body) => {
                     mount.classList.remove("fuad-panel");
@@ -447,6 +449,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             });
             drawPanel(mount, {
                 what: "the draft", rows: 10,
+                basic: basicHref("Rosters/Draft", {base: `${host}/${season}`, leagueId: context.leagueId}),
                 load: async () => {
                     const [{built, names}, before, results, ordered] = await Promise.all([league(), beforeSeason(), exp("draftResults", {}, {optional: true}), order().catch(() => null)]);
                     const salaries = new Map(built.rosteredPlayers.map((player) => [player.playerId, player.salary]));

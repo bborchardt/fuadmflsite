@@ -82,28 +82,31 @@ EXPECTED = {
 
 
 class Captured(harness.Mfl):
-    """the captured page for the address it was served from; everything else as screens.py answers it"""
+    """the viewer's captured pages, each for the address it was served from (a page v2 reads, as Home
+    reads a guest's board page, gets its capture too); everything else as screens.py answers it"""
 
-    def __init__(self, site, url, html):
+    def __init__(self, site, pages):
         super().__init__(site, {})
-        self.url = url
         # v2 as the main version, as it will be for everyone
-        self.html = html.replace('var MAIN = "v1"', 'var MAIN = "v2"')
+        self.pages = {url: html.replace('var MAIN = "v1"', 'var MAIN = "v2"') for url, html in pages.items()}
 
     def handle(self, route):
         request = route.request
-        if request.method == "GET" and request.url.split("#")[0] == self.url:
-            return route.fulfill(content_type="text/html", body=self.html)
+        html = self.pages.get(request.url.split("#")[0]) if request.method == "GET" else None
+        if html is not None:
+            return route.fulfill(content_type="text/html", body=html)
         return super().handle(route)
 
 
 def check(job):
     built, viewer, name = job
     manifest = json.loads((PAGES / viewer / "manifest.json").read_text())
-    entry = next(page for page in manifest["pages"] if page["name"] == name)
-    url = (entry.get("served") or entry["url"]).split("#")[0]
+    served = lambda page: (page.get("served") or page["url"]).split("#")[0]
+    url = served(next(page for page in manifest["pages"] if page["name"] == name))
     site = harness.Site(built)
-    mfl = Captured(site, url, (PAGES / viewer / f"{name}.html").read_text())
+    pages = {served(page): (PAGES / viewer / f"{page['name']}.html").read_text()
+             for page in manifest["pages"] if (PAGES / viewer / f"{page['name']}.html").exists()}
+    mfl = Captured(site, pages)
     with sync_playwright() as playwright:
         browser = playwright.webkit.launch()
         context = browser.new_context(viewport={"width": 390, "height": 1000}, timezone_id="America/Chicago")

@@ -10,6 +10,25 @@ const TABS = {Main: 0, Standings: 1, Transactions: 2, Contracts: 3, Calendar: 4,
 // the views v2 draws itself, on the home page
 export const REBUILT = ["Home", "League/Scores", "League/Standings", "League/Power", "League/Winners", "Rosters/My team", "Rosters/Teams", "Rosters/Players", "Rosters/Draft"];
 
+// The MFL page each rebuilt view replaces, which its "Couldn't load" offers as Basic view; none for
+// Winners and Players, which MFL has no page for. `base` is the season's (`https://…/2026`), `team`
+// a team's id for a team's page.
+const BASIC = {"League/Scores": "ajax_ls", "League/Standings": "standings", "League/Power": "options?O=101",
+    "Rosters/Teams": "options?O=07", "Rosters/Team": "options?O=07&F=", "Rosters/Draft": "options?O=17"};
+export function basicHref(name, {base, leagueId, team = ""}) {
+    const path = BASIC[name];
+    if (!path) {
+        return null;
+    }
+    const [page, query = ""] = path.split("?");
+    const params = new URLSearchParams(query);
+    params.set("L", leagueId);
+    if (params.has("F")) {
+        params.set("F", team);
+    }
+    return `${base}/${page}?${params}`;
+}
+
 // MFL sends anyone logged out from these to its login screen; v2 draws its own page for each instead,
 // saying what logging in is for
 export const NEEDS_LOGIN = {

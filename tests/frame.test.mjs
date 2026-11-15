@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {REBUILT, leavesPage, locate, ownHref, pageOf, sections, teamLinks, viewHash} from "../site/v2/ui/nav.js";
+import {REBUILT, basicHref, leavesPage, locate, ownHref, pageOf, sections, teamLinks, viewHash} from "../site/v2/ui/nav.js";
 import {readFileSync} from "node:fs";
 import {contextLine, draftDays, draftPicked} from "../site/v2/ui/context.js";
 
@@ -165,4 +165,30 @@ test("a link to MFL's page that a v2 view draws instead leads to the view", () =
     }
     // logged out, Lineup's page is v2's login page: MFL's own login screen stays MFL's
     assert.equal(own(`${base}/lineup?L=48571`, null), null);
+});
+
+test("a view that couldn't load offers MFL's page it replaces as Basic view, which the site's links would otherwise lead back from", () => {
+    const options = {base, leagueId: "48571"};
+    const expected = {
+        "League/Scores": `${base}/ajax_ls?L=48571`,
+        "League/Standings": `${base}/standings?L=48571`,
+        "League/Power": `${base}/options?O=101&L=48571`,
+        "Rosters/Teams": `${base}/options?O=07&L=48571`,
+        "Rosters/Draft": `${base}/options?O=17&L=48571`
+    };
+    for (const [name, href] of Object.entries(expected)) {
+        assert.equal(basicHref(name, options), href, name);
+    }
+    assert.equal(basicHref("Rosters/Team", {...options, team: "0003"}), `${base}/options?O=07&F=0003&L=48571`);
+    // MFL has no page for these
+    assert.equal(basicHref("League/Winners", options), null);
+    assert.equal(basicHref("Rosters/Players", options), null);
+    // each is one of v2's views by its address, so frame.js's rewriting must leave Basic view be
+    const own = (href) => ownHref(sections({base, leagueId: "48571", franchiseId: "0001", rebuilt: REBUILT}), href,
+        {origin: "https://www44.myfantasyleague.com", season: 2026, leagueId: "48571", franchiseId: "0001", teamHref: (id) => `#team-${id}`});
+    for (const name of ["League/Standings", "League/Power", "Rosters/Teams", "Rosters/Draft"]) {
+        assert.ok(own(basicHref(name, options)), `${name} leads to v2's view`);
+    }
+    const source = readFileSync(new URL("../site/v2/ui/frame.js", import.meta.url), "utf8");
+    assert.match(source, /!link\.hasAttribute\("data-fuad-basic"\) && ownHref\(/);
 });
