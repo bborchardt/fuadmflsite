@@ -48,7 +48,7 @@ test("before week 1: its kickoff, the season's end, whether the draft is in, and
         nflSchedule17: schedule(at("2027-01-03T18:00:00Z"), at("2027-01-03T21:25:00Z")),
         league: {league: {lastRegularSeasonWeek: "14", endWeek: "17"}},
         draftResults: {draftResults: {draftUnit: {draftPick: [{round: "01", pick: "01", player: "16001"}, {round: "01", pick: "02", player: ""}]}}},
-        calendar: {calendar: {event: [{title: "Rookie Draft", start_time: String(at("2026-05-02T23:00:00Z"))}, {title: "Trade deadline", start_time: "12"}]}}
+        calendar: {calendar: {event: [{type: "CUSTOM", title: "Rookie Draft", start_time: String(at("2026-05-02T23:00:00Z"))}, {type: "TRADE_DEADLINE", title: "Trade deadline", start_time: "12"}]}}
     };
     const facts = await seasonFacts({season: 2101, leagueId: "48571"});
     assert.deepEqual(facts, {

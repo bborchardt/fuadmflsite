@@ -6,6 +6,7 @@
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {cached, cachedOrStale} from "./store.js";
 import {mflFetch} from "./page-fetch.js";
+import {strict} from "./checked.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const SHOWN_FOR = 2 * DAY;
@@ -17,7 +18,7 @@ export const playerRows = (players) => asArray(players && players.player).map((p
 const loads = new Map();
 function load(season) {
     if (!loads.has(season)) {
-        loads.set(season, fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch}).then(playerRows).catch((error) => {
+        loads.set(season, fetchExport(exportUrl(API_BASE, season, "players"), "players", {fetchImpl: mflFetch, check: strict}).then(playerRows).catch((error) => {
             loads.delete(season);
             throw error;
         }));

@@ -11,6 +11,7 @@ import {dropUnusedKeys} from "./store.js";
 import {useTeamPictures} from "./team-pictures.js";
 import {playerList} from "./player-list.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
+import {strict, unlessChanged} from "./checked.js";
 import {REBUILT, pageOf, routeFor, sections, teamLinks} from "./nav.js";
 
 export function pageContext(location = window.location) {
@@ -29,29 +30,30 @@ export function pageContext(location = window.location) {
 
 async function loadLeague({season, leagueId}) {
     const host = window.location.origin;
-    const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
+    const options = {fetchImpl: pageFetch, check: strict};
+    const league = (type, params) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {...options, init: {cache: "no-store"}});
     // fresh: Home's alerts, and the Load and Lengths forms, which write to MFL, match names in it
     const playersPromise = playerList(season, {fresh: true});
     // only the injured-starter check needs the results, so without them (a new site has none) that
     // check flags nothing and the rest still loads
-    const weeklyResultsPromise = league("weeklyResults").catch(() => null);
+    const weeklyResultsPromise = league("weeklyResults").catch(unlessChanged(null));
     // the results week's report, for the injured-starter check; without it that check flags nothing
     const injuriesPromise = weeklyResultsPromise.then((weeklyResults) => (weeklyResults
-        ? fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries", {fetchImpl: pageFetch})
-        : null)).catch(() => null);
+        ? fetchExport(exportUrl(API_BASE, season, "injuries", {W: weeklyResults.week || ""}), "injuries", options)
+        : null)).catch(unlessChanged(null));
     // today's report, for injured reserve eligibility; without it that check is skipped
-    const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries", {fetchImpl: pageFetch}).catch(() => null);
+    const currentInjuriesPromise = fetchExport(exportUrl(API_BASE, season, "injuries"), "injuries", options).catch(unlessChanged(null));
     // if the season's phase can't be told, in-season checks are hidden rather than risk false alerts
     const leaguePromise = league("league");
     // week 1's schedule needs no weeks, so it's asked for while the league export loads
-    weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
-    const phasePromise = leaguePromise.then((info) => seasonPhase(season, new Date(), {fetchImpl: pageFetch}, seasonWeeks(info)))
+    weekKickoff(season, 1, options).catch(() => null);
+    const phasePromise = leaguePromise.then((info) => seasonPhase(season, new Date(), options, seasonWeeks(info)))
         .catch(() => ({started: false, tankingOver: true, seasonOver: true}));
     // this season's rookies, whose cut costs nothing while their length is due, until the cut-down
     // date (lib/league.js lengthDuePenalty); only before week 1
     const lengthDuePromise = phasePromise.then((phase) => (phase.started ? {} : Promise.all([
-        league("draftResults"), league("calendar").catch(() => null)
-    ]).then(([draftResults, calendar]) => ({rookies: draftedIds(draftResults), freeUntil: cutDownAt(calendar, season)})))).catch(() => ({}));
+        league("draftResults"), league("calendar").catch(unlessChanged(null))
+    ]).then(([draftResults, calendar]) => ({rookies: draftedIds(draftResults), freeUntil: cutDownAt(calendar, season)})))).catch(unlessChanged({}));
     const [players, leagueInfo, salaryAdjustments, rosters, transactions, weeklyResults, freeAgents, injuries, currentInjuries, phase, lengthDue] = await Promise.all([
         playersPromise, leaguePromise, league("salaryAdjustments"), league("rosters"),
         league("transactions"), weeklyResultsPromise, league("freeAgents"), injuriesPromise, currentInjuriesPromise, phasePromise, lengthDuePromise
@@ -76,7 +78,7 @@ async function contractReadings({season, leagueId}, league) {
     if (!open.length) {
         return null;
     }
-    const board = (type, params) => fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    const board = (type, params) => fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}, check: strict});
     const earliest = Math.min(...open.map((add) => add.added));
     const threads = asArray((await board("messageBoard", {COUNT: 100})).thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
     const posts = [];

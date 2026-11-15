@@ -5,6 +5,7 @@
 // sent again from where it stopped.
 
 import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {strict} from "./checked.js";
 import {contractProblem, draftResultsXml, matchOwner, matchPlayer, movedFrom, notOnTeam, planSend, readAuction, readRookies, rosterSteps, salariesXml} from "../lib/load.js";
 import {openDialog} from "./dialog.js";
 import {money} from "./format.js";
@@ -173,7 +174,7 @@ export function openLoadForm({context, built, opener}) {
     const players = built.boardContext.playerNames;
     const teams = new Map([...built.franchises].map(([id, franchise]) => [id, franchise.teamName]));
     const franchises = asArray(built.raw.league.franchises && built.raw.league.franchises.franchise);
-    const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {init: {cache: "no-store"}});
+    const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {init: {cache: "no-store"}, check: strict});
     const teamCount = teams.size;
     // players unloaded whose salaries aren't cleared yet, kept across reads
     const clearing = new Set();

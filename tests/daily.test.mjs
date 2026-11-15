@@ -62,7 +62,7 @@ function withAdds(exports, {post = "Olave: 3 years"} = {}) {
             {type: "FREE_AGENT", franchise: "0002", transaction: "300,|", timestamp: String(ADDED)},
             {type: "BBID_WAIVER", franchise: "0001", transaction: "301,|4.00|", timestamp: String(ADDED)}
         ]},
-        messageBoard: {thread: [{id: "7001", lastPostTime: String(ADDED + 600)}]},
+        messageBoard: {thread: [{id: "7001", subject: "Contract lengths", lastPostTime: String(ADDED + 600)}]},
         messageBoardThread: {post: post ? [{franchise: "0002", postTime: String(ADDED + 600), body: post}] : []}
     };
 }

@@ -5,6 +5,7 @@
 
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
+import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
 import {teamState} from "./add-model.js";
@@ -219,7 +220,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
             const [data, injuries] = await Promise.all([
                 loadData(context, franchiseId),
                 // today's report: who the NFL lists on IR, and when he's expected back
-                fetchExport(exportUrl(API_BASE, context.season, "injuries"), "injuries", {fetchImpl: pageFetch}).catch(() => null)
+                fetchExport(exportUrl(API_BASE, context.season, "injuries"), "injuries", {fetchImpl: pageFetch, check: strict}).catch(unlessChanged(null))
             ]);
             if (!data.league.franchises.get(franchiseId)) {
                 throw new Error("your team isn't in the rosters");

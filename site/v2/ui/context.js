@@ -5,12 +5,13 @@ import {asArray, exportUrl, fetchExport, weekEnd, weekKickoff} from "../lib/mfl.
 import {seasonWeeks} from "../lib/rules.js";
 import {cached} from "./store.js";
 import {leagueDate, pageFetch} from "./page-fetch.js";
+import {strict} from "./checked.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
 // a week's first kickoff, in seconds, kept a day; null until MFL schedules the week
 export const kickoffAt = (season, week) => cached(`fuad.kickoff.${season}.${week}`, DAY, async () => {
-    const date = await weekKickoff(season, week, {fetchImpl: pageFetch});
+    const date = await weekKickoff(season, week, {fetchImpl: pageFetch, check: strict});
     return date ? date.getTime() / 1000 : null;
 });
 
@@ -61,14 +62,15 @@ export function draftDays(calendar) {
 // cached for a day; a part that can't be read is left out rather than hold up the line
 export function seasonFacts({season, leagueId}) {
     const host = window.location.origin;
-    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, {fetchImpl: pageFetch}).catch(() => null);
+    const options = {fetchImpl: pageFetch, check: strict};
+    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, options).catch(() => null);
     return cached(`fuad.context.${season}`, DAY, async () => {
-        const week1Promise = weekKickoff(season, 1, {fetchImpl: pageFetch}).catch(() => null);
+        const week1Promise = weekKickoff(season, 1, options).catch(() => null);
         const [week1, seasonEnd, draftResults, calendar] = await Promise.all([
             week1Promise,
             league("league").then((info) => {
                 const weeks = seasonWeeks(info);
-                return weeks ? weekEnd(season, weeks.championship, {fetchImpl: pageFetch}) : null;
+                return weeks ? weekEnd(season, weeks.championship, options) : null;
             }).catch(() => null),
             // only before week 1 does the draft matter
             week1Promise.then((date) => (date && Date.now() >= date.getTime() ? null : league("draftResults"))),

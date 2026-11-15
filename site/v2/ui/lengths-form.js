@@ -3,6 +3,7 @@
 // player kept needs a length (bylaw 12.4), so it can't be sent with more than the roster limit.
 
 import {exportUrl, fetchExport} from "../lib/mfl.js";
+import {strict} from "./checked.js";
 import {formPost} from "../lib/lengths.js";
 import {ROSTER_MAX} from "../lib/rules.js";
 import settings from "../lib/settings.js";
@@ -20,7 +21,7 @@ const CLOSE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" 
 // Posts `body` to the board (messageBoard import): a reply in the newest contract topic, or a new one
 export async function postToContractTopic(context, body) {
     const {season, leagueId} = context;
-    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {init: {cache: "no-store"}});
+    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {init: {cache: "no-store"}, check: strict});
     const topic = contractTopic(board);
     const fields = new URLSearchParams(topic ? {THREAD: topic.id, BODY: body} : {SUBJECT: NEW_TOPIC, BODY: body});
     const answer = await send(`${window.location.origin}/${season}/import?TYPE=messageBoard&L=${encodeURIComponent(leagueId)}`, {method: "POST", body: fields});

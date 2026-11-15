@@ -1,6 +1,6 @@
 import {MflError, asArray} from "./mfl.js";
 
-// What the job relies on in each export it reads, by the section MFL answers with: a list's items
+// What the job, and v2's checks and forms, rely on in each export they read, by the section MFL answers with: a list's items
 // are found by `path`, and each must have every field in `need` (not empty), every field in `have`
 // (which may be empty) and a number in every field of `numbers` it has. `only` limits a rule to the
 // items it's true for. MFL leaves out an empty list, which is fine: an item that's there without a field, or with a number that won't read, is
@@ -38,8 +38,13 @@ export const SHAPES = {
         withTypes(["WAIVER", "IR"], ["franchise"]),
         withTypes(["TRADE"], ["franchise", "franchise2"])
     ],
-    messageBoard: [{path: ["thread"], need: ["id", "lastPostTime"], numbers: ["lastPostTime"]}],
+    // the contract and backup topics are found by subject
+    messageBoard: [{path: ["thread"], need: ["id", "lastPostTime"], have: ["subject"], numbers: ["lastPostTime"]}],
     messageBoardThread: [{path: ["post"], need: ["franchise", "postTime"], have: ["body"], numbers: ["postTime"]}],
+    // a member's own claims and trades, as v2's checks read them (docs/mfl.md)
+    pendingWaivers: [{path: ["blindBidWaiverRequest"], need: ["round", "addsDrops"], numbers: ["round"]}],
+    pendingTrades: [{path: ["pendingTrade"], need: ["trade_id", "offeringteam", "offeredto"], have: ["will_give_up", "will_receive"],
+        numbers: ["expires", "timestamp"]}],
     weeklyResults: scores,
     allWeeklyResults: [
         {path: ["weeklyResults"], need: ["week"], numbers: ["week"]},
