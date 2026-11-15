@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DOMParser} from "linkedom";
-import {FALLBACK_TEXT, READ_GAP, READS, Refused, loadFailed, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
+import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, loadFailed, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads
 function reads(...answers) {
@@ -149,4 +149,11 @@ test("a screen that can't load gives MFL's own page, says its rules aren't check
         assert.equal(lines[0].querySelector("button").textContent, "Reload Page");
         assert.deepEqual(logged.error, Array(2).fill("[fuad] Drop couldn't load, so MFL's page was shown:"), error.message);
     }
+});
+
+test("a move that didn't happen says why if MFL said, else to try again, and asks for a review when something changed anyway", () => {
+    assert.equal(failedLine("drop Jackson", new Refused("Roster moves are locked for this team.")), "Couldn’t drop Jackson: Roster moves are locked for this team.");
+    assert.equal(failedLine("drop Jackson", new Error("HTTP 500")), "Couldn’t drop Jackson. Reload the page and try again.");
+    assert.equal(failedLine("save your IR moves", new Refused("Invalid roster"), {changed: true}),
+        "Couldn’t save your IR moves: Invalid roster. Some changes may have gone through; review below.");
 });

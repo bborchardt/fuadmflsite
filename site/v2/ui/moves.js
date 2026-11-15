@@ -128,10 +128,10 @@ export function moveOutcome(sent, found, shows) {
 
 // The line for a move that didn't happen: "Couldn't drop Jackson: <MFL's reason>." or, with no
 // reason, "Couldn't drop Jackson. Reload the page and try again." `changed`: MFL changed something
-// anyway, and the page reloads to show it.
+// anyway, and the page reloads to show it, which the member is asked to review.
 export function failedLine(what, error, {changed = false} = {}) {
     const reason = error && error.reason ? String(error.reason).replace(/\.$/, "") : null;
-    const tail = changed ? " This is how MFL has it now." : reason ? "" : " Reload the page and try again.";
+    const tail = changed ? " Some changes may have gone through; review below." : reason ? "" : " Reload the page and try again.";
     return `Couldn’t ${what}${reason ? `: ${reason}` : ""}.${tail}`;
 }
 
