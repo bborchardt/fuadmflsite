@@ -9,9 +9,10 @@
     // Loads MAIN, or the beta a member chose straight away (not through MAIN, a second download on a
     // slow phone). A choice being made or changed (?fuadBeta=, ?fuadPreview=, a stored preview) goes
     // through MAIN, which decides (site/vN/loader.js). docs/design.md: previews and the beta.
-    // the script tag this writes calls it
+    // the script tag this writes calls it. A member can add this message to a home page tab of their
+    // own, so it can run twice on a page: the second does nothing (docs/mfl.md: Layout)
     /* exported fuadLoad */
-    var fuadLoad = (function () {
+    var fuadLoad = window.fuadLoad || (function () {
         var MAIN = "v1";
         // what a browser older than the minimum gets (docs/design.md: Devices), with no beta offered;
         // null once v1 is retired: MFL's own pages, with the note
@@ -222,6 +223,8 @@
         } else {
             add(version, failed, loaded);
         }
-        return {failed: failed, loaded: loaded};
+        return {failed: failed, loaded: loaded, capable: capable};
     })();
+    // a second copy's offer line has run again, and a browser below the minimum is offered no beta
+    if (!fuadLoad.capable) { window.fuadBeta = null; }
 </script>
