@@ -65,12 +65,12 @@ export function drawScores(mount, data) {
         return lineup;
     };
     // a week MFL hasn't started a feed for yet (missing or empty) reads as no stats, as MFL's page
-    // treats it; a feed v2 doesn't recognise fails the week, as no stats would show every game unplayed
+    // treats it; a feed v2 doesn't recognise is null, and the cards go by liveScoring alone, as no stats
+    // would show every game unplayed
     const statsOf = (week) => feed(`live_stats_${two(week)}.txt`).then((text) => {
         const stats = String(text).trim() ? readStats(text) : NO_STATS;
         if (!stats) {
             pageChanged("live stats feed");
-            throw new Error("MFL's live stats feed has changed");
         }
         return stats;
     }, (error) => {
@@ -106,12 +106,12 @@ export function drawScores(mount, data) {
             const first = asArray(nflSchedule && nflSchedule.matchup).map((game) => Number(game.kickoff)).filter(Boolean);
             return {cards, names, state: {text: first.length ? dayText(Math.min(...first)) : "", live: false}, games, preview: true};
         }
-        const games = gameStates(nflSchedule, stats);
-        const anyLeft = !stats.updated || asArray(nflSchedule && nflSchedule.matchup).some((game) => games.of(asArray(game.team)[0] && asArray(game.team)[0].id).state !== "over");
+        const games = gameStates(nflSchedule, stats || NO_STATS);
+        const anyLeft = !stats || !stats.updated || asArray(nflSchedule && nflSchedule.matchup).some((game) => games.of(asArray(game.team)[0] && asArray(game.team)[0].id).state !== "over");
         const projections = anyLeft ? projected : null;
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
         const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || [], order: limits && Object.keys(limits.limits).length ? Object.keys(limits.limits) : undefined});
-        return {cards, names, games, limits, state: weekState(cards, games, weekday)};
+        return {cards, names, games, limits, state: weekState(cards, games, weekday), noFeed: !stats};
     };
 
     // a team's lines with its backups' marks, once read; asked for when not, the cards drawn again
@@ -147,7 +147,8 @@ export function drawScores(mount, data) {
             : pairsOf && !shown.preview ? shown.cards.map((card, i) => (open.has(i) ? {...card, teams: card.teams.map((team) => withBackups(team, state.week))} : card))
                 : shown.cards;
         drawn = {shown, open};
-        body.innerHTML = cardsMarkup(cards, {names: shown.names, viewer, open, bench: state.bench, preview: Boolean(shown.preview), best});
+        body.innerHTML = (shown.noFeed ? '<p class="fuad-muted fuad-empty">MFL’s live stats couldn’t be read, so points are MFL’s, with no game clocks, stats or win chances.</p>' : "")
+            + cardsMarkup(cards, {names: shown.names, viewer, open, bench: state.bench, preview: Boolean(shown.preview), best});
     };
 
     // a card's head opens it, its button its bench; a player opens MFL's player page

@@ -188,8 +188,10 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   feed's `DATE` line); the message board's pages share one name, so a topic also needs a post.
   `tests/readers.test.mjs` holds every reader of MFL's pages and feeds to it, on its own page,
   another page, the login page and an empty one, and fails on an exported reader it doesn't list.
-- **Not recognised, v2 steps back and says so:** a screen leaves MFL's page as MFL draws it, or a
-  panel shows it couldn't load, and logs `[fuad] MFL's … has changed` as an error, which the header's
+- **Not recognised, v2 steps back and says so:** a screen leaves MFL's page as MFL draws it, a panel
+  shows it couldn't load, or Scores, without a stats feed it can read, draws the week from liveScoring
+  alone (MFL's points and seconds left, no game clocks, stats or win chances, and a note saying so),
+  and logs `[fuad] MFL's … has changed` as an error, which the header's
   devices form counts (Devices), so an MFL change is seen without a member reporting it. A page MFL
   draws in place of the one asked for, for an ordinary reason, is recognised and not logged: Lineup's
   refusal ("You may not set your lineup at this time because …": the season over, a roster to fix),

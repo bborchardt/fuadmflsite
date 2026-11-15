@@ -6,7 +6,7 @@
 import {asArray} from "../lib/mfl.js";
 
 export const SIMULATIONS = 400;
-const GAME_SECONDS = 3600;
+export const GAME_SECONDS = 3600;
 
 // "0211|#R 2|CY 36|…" per player, "HOU|QUARTER 2|REMAINING 15:00|…" per NFL team, then DATE. MFL
 // leaves carriage returns inside lines ("DIF 7\r|EA 1\r"), so every value is trimmed. Null without
