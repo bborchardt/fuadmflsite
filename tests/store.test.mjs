@@ -109,3 +109,12 @@ test("the player list: asked for once a page, kept as rows, read back as the exp
         globalThis.fetch = realFetch;
     }
 }));
+
+test("a number a panel doesn't know (NaN) is kept as one, not as null, which reads as none", () => withStorage(() => {
+    save("fuad.test.unknown", {total: NaN, pot: null, rows: [{amount: NaN}, {amount: 2}]});
+    const {value} = saved("fuad.test.unknown");
+    assert.ok(Number.isNaN(value.total));
+    assert.equal(value.pot, null);
+    assert.ok(Number.isNaN(value.rows[0].amount));
+    assert.equal(value.rows[1].amount, 2);
+}));

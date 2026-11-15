@@ -2,15 +2,15 @@
 // job, which records them in MFL's accounting.
 
 import settings from "./settings.js";
-import {asArray} from "./mfl.js";
+import {asArray, numberOf} from "./mfl.js";
 
 export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
 export const ALL_PLAY_RATE = settings.payouts.allPlayPerGameOver500;
 export const PRIZE_SHARES = settings.payouts.places;
 
 const cents = (amount) => Math.round(amount * 100) / 100;
-// "24-11-1", "32-4": a tie shows only when there is one
-export const recordText = ({w, l, t}) => `${w}-${l}${t ? `-${t}` : ""}`;
+// "24-11-1", "32-4": a tie shows only when there is one; "—" for one not known (a score MFL left out)
+export const recordText = ({w, l, t}) => ([w, l, t].every(Number.isFinite) ? `${w}-${l}${t ? `-${t}` : ""}` : "—");
 // "1st", "2nd", "3rd", "4th"…
 export const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
 
@@ -18,7 +18,9 @@ export const weeksOf = (weeklyResults) => asArray(weeklyResults && (weeklyResult
 
 const scoresOf = (week) => asArray(week.matchup).flatMap((matchup) => asArray(matchup.franchise))
     .filter((team) => team.score !== undefined && team.score !== "")
-    .map((team) => ({id: team.id, score: Number(team.score)}));
+    .map((team) => ({id: team.id, score: team.score === null ? NaN : Number(team.score)}));
+// a score not known (NaN) leaves the week's results unknown for every team in it
+const unknownIn = (scores) => scores.some((team) => Number.isNaN(team.score));
 
 // The newest week with any score, or 0
 export const latestScoredWeek = (weeklyResults) => Math.max(0, ...weeksOf(weeklyResults).filter((week) => scoresOf(week).length).map((week) => Number(week.week)));
@@ -29,8 +31,12 @@ export function allPlayRecords(weeklyResults, lastRegularWeek) {
     const records = new Map();
     for (const week of weeksOf(weeklyResults).filter((entry) => Number(entry.week) <= lastRegularWeek)) {
         const scores = scoresOf(week);
+        const unknown = unknownIn(scores);
         for (const team of scores) {
             const sum = records.get(team.id) || {w: 0, l: 0, t: 0};
+            if (unknown) {
+                Object.assign(sum, {w: NaN, l: NaN, t: NaN});
+            }
             for (const other of scores) {
                 if (other !== team) {
                     sum[team.score > other.score ? "w" : team.score < other.score ? "l" : "t"]++;
@@ -42,16 +48,20 @@ export function allPlayRecords(weeklyResults, lastRegularWeek) {
     return records;
 }
 
-// Each regular season week's high scorers: {week, teams}. Only weeks MFL has results for.
+// Each regular season week's high scorers: {week, teams}. Only weeks MFL has results for; `teams`
+// null for a week with a score not known.
 export function weeklyWinners(weeklyResults, lastRegularWeek) {
     return weeksOf(weeklyResults)
         .filter((week) => Number(week.week) <= lastRegularWeek)
         .map((week) => {
             const scores = scoresOf(week);
+            if (unknownIn(scores)) {
+                return {week: Number(week.week), teams: null};
+            }
             const top = Math.max(...scores.map((team) => team.score));
             return {week: Number(week.week), teams: scores.length && top > 0 ? scores.filter((team) => team.score === top).map((team) => team.id) : []};
         })
-        .filter((week) => week.teams.length);
+        .filter((week) => !week.teams || week.teams.length);
 }
 
 export const allPlayPayout = (record) => Math.max(0, record.w - record.l) * ALL_PLAY_RATE;
@@ -59,7 +69,7 @@ export const allPlayPayout = (record) => Math.max(0, record.w - record.l) * ALL_
 // The pot: the accounting's league-wide (0000) entries, null until the commissioner records them
 export function potOf(accounting) {
     const entries = asArray(accounting && accounting.entry).filter((entry) => entry.franchise_id === "0000")
-        .map((entry) => ({description: entry.description, amount: Number(entry.amount) || 0}));
+        .map((entry) => ({description: entry.description, amount: numberOf(entry.amount)}));
     return {entries, pot: entries.length ? entries.reduce((sum, entry) => sum + entry.amount, 0) : null};
 }
 
@@ -86,7 +96,8 @@ export function playoffPlaces(brackets, {thirdPlaceGame = settings.playoffs.thir
         return rounds.length ? asArray(rounds[rounds.length - 1].playoffGame)[0] : null;
     };
     const decided = (game) => {
-        if (!game || !game.home || !game.away || game.home.points === undefined || game.away.points === undefined) {
+        const unplayed = (side) => side.points === undefined || side.points === null;
+        if (!game || !game.home || !game.away || unplayed(game.home) || unplayed(game.away)) {
             return null;
         }
         const homeWins = Number(game.home.points) >= Number(game.away.points);

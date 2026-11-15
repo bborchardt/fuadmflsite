@@ -1,6 +1,6 @@
 import {MflError, asArray} from "./mfl.js";
 
-// What the job, and v2's checks and forms, rely on in each export they read, by the section MFL answers with: a list's items
+// What the job, v2's checks and forms, and its display panels rely on in each export they read, by the section MFL answers with: a list's items
 // are found by `path`, and each must have every field in `need` (not empty), every field in `have`
 // (which may be empty) and a number in every field of `numbers` it has. `only` limits a rule to the
 // items it's true for. MFL leaves out an empty list, which is fine: an item that's there without a field, or with a number that won't read, is
@@ -31,6 +31,7 @@ export const SHAPES = {
     // the commissioner may leave a description blank
     salaryAdjustments: [{path: ["salaryAdjustment"], need: ["franchise_id", "amount", "timestamp"], have: ["description"], numbers: ["amount", "timestamp"]}],
     accounting: [{path: ["entry"], need: ["franchise_id", "amount"], have: ["description"], numbers: ["amount"]}],
+    leagueStandings: [{path: ["franchise"], need: ["id", "h2hwlt", "all_play_wlt", "pf", "pa", "avgpf", "avgpa"], numbers: ["pf", "pa", "avgpf", "avgpa"]}],
     transactions: [
         {path: ["transaction"], need: ["type", "timestamp"], numbers: ["timestamp"]},
         // the commissioner's lock and unlock, and MFL's own waiver runs, name no team
@@ -101,6 +102,49 @@ export function shapeProblem(section, body, rules = SHAPES[section] || []) {
         }
     }
     return null;
+}
+
+// the fields that say which item an item is (a team, a player, a trade): an item without one can't be
+// shown in its place, so a display panel goes without the whole export
+const KEYS = new Set(["id", "franchise_id", "franchise", "franchise2", "offeringteam", "offeredto", "trade_id"]);
+
+// For a display panel (ui/checked.js lenient): each field an item breaks its rules on is set to null,
+// which the panel shows as "—", as it does anything worked out from it (a total, a record). `problem`
+// is the first, as text; `every` is true when no item of a rule's list is whole, or one has no key.
+export function markMissing(section, body, rules = SHAPES[section] || []) {
+    let problem = null;
+    let every = false;
+    for (const rule of rules) {
+        const items = itemsAt(body, rule.path);
+        let whole = 0;
+        for (const {item, name} of items) {
+            if (!item || typeof item !== "object") {
+                problem = problem || `${name} isn't an item`;
+                continue;
+            }
+            if (rule.only && !rule.only(item)) {
+                whole++;
+                continue;
+            }
+            const broken = [
+                ...(rule.need || []).filter((field) => empty(item[field])).map((field) => [field, `${name} has no ${field}`]),
+                ...(rule.have || []).filter((field) => !(field in item)).map((field) => [field, `${name} has no ${field}`]),
+                ...(rule.numbers || []).filter((field) => !empty(item[field]) && !NUMBER.test(String(item[field])))
+                    .map((field) => [field, `${name}'s ${field} isn't a number ("${item[field]}")`])
+            ];
+            if (!broken.length) {
+                whole++;
+                continue;
+            }
+            problem = problem || broken[0][1];
+            every = every || broken.some(([field]) => KEYS.has(field));
+            broken.forEach(([field]) => {
+                item[field] = null;
+            });
+        }
+        every = every || (items.length > 0 && whole === 0);
+    }
+    return {problem, every};
 }
 
 // Throws an MflError marked `changed` when `body` breaks its export's rules; otherwise gives it back

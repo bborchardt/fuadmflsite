@@ -2,7 +2,8 @@
 // and starter points by position, the weekly and all-play winnings and the playoff prizes, and the
 // score cards. No drawing here, so each can be checked against saved exports.
 
-import {asArray, mflProgram} from "../lib/mfl.js";
+import {asArray, mflProgram, numberOf} from "../lib/mfl.js";
+import {figure} from "./format.js";
 import {text} from "./player-page.js";
 import {GAME_SECONDS, scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {
@@ -17,7 +18,11 @@ export {
 
 export const PLAYOFF_TEAMS = settings.playoffs.teams;
 
+// a record MFL left out (null: ui/checked.js lenient) isn't known
 const record = (wlt) => {
+    if (wlt === null) {
+        return {w: NaN, l: NaN, t: NaN};
+    }
     const [w, l, t] = String(wlt || "0-0-0").split("-").map(Number);
     return {w: w || 0, l: l || 0, t: t || 0};
 };
@@ -46,17 +51,17 @@ export function standings(leagueStandings, league, names, allPlay = null) {
         division: of.get(team.id),
         divisionRecord: team.divwlt || "",
         pct: team.h2hpct || "",
-        pf: Number(team.pf) || 0,
-        pa: Number(team.pa) || 0,
-        avgPf: Number(team.avgpf) || 0,
-        avgPa: Number(team.avgpa) || 0,
+        pf: numberOf(team.pf),
+        pa: numberOf(team.pa),
+        avgPf: numberOf(team.avgpf),
+        avgPa: numberOf(team.avgpa),
         streak: team.strk || ""
     }));
     return divisions.map((division) => {
         const rows = teams.filter((team) => team.division === division.id);
         return {
             ...division,
-            rows: rows.map((team, i) => ({...team, rank: i + 1, gamesBack: i ? gamesBack(rows[0].h2h, team.h2h).toFixed(1) : "—"}))
+            rows: rows.map((team, i) => ({...team, rank: i + 1, gamesBack: i ? figure(gamesBack(rows[0].h2h, team.h2h), 1) : "—"}))
         };
     }).filter((division) => division.rows.length);
 }
@@ -64,7 +69,7 @@ export function standings(leagueStandings, league, names, allPlay = null) {
 // The playoff seeds (settings.playoffs): the division winners first, if the league seeds them so, in
 // standings order; then the best all-play records, or the next teams in the standings, ties going
 // by the standings order. The top seeds have byes. "In the hunt" is the rest, games back of the last
-// seed by the same record.
+// seed by the same record. Null when a record it goes by isn't known (a score MFL left out).
 export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divisionWinnersSeededFirst, wildcardsBy = settings.playoffs.wildcardsBy} = {}) {
     const all = divisions.flatMap((division) => division.rows.map((team) => ({...team, divisionName: division.name})));
     const byStandings = (a, b) => a.order - b.order;
@@ -72,6 +77,9 @@ export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divi
         .map((team) => all.find((row) => row.id === team.id)).sort(byStandings);
     const allPlay = wildcardsBy === "allPlay";
     const recordOf = (team) => (allPlay ? team.allPlay : team.h2h);
+    if (!all.every((team) => [team.h2h, recordOf(team)].every((each) => [each.w, each.l, each.t].every(Number.isFinite)))) {
+        return null;
+    }
     const rest = all.filter((team) => !winners.includes(team))
         .sort((a, b) => (allPlay ? pct(b.allPlay) - pct(a.allPlay) : 0) || byStandings(a, b));
     const wildcards = rest.slice(0, PLAYOFF_TEAMS - winners.length);
@@ -133,8 +141,9 @@ export const powerFacts = (team) => [
 
 
 // Starter points by position, the season so far: each week's starters (`weeklyResults` for YTD)
-// summed by the player's position, in team order of the total; `order` the league's positions
-// (lib/rules.js lineupPositions)
+// summed by the player's position, in team order of the total, a team with one not known (NaN: a
+// score, or whether he started, MFL left out) last; `order` the league's positions (lib/rules.js
+// lineupPositions)
 export function positionPoints(weeklyResults, positions, names, order) {
     const totals = new Map();
     for (const week of weeksOf(weeklyResults)) {
@@ -143,8 +152,8 @@ export function positionPoints(weeklyResults, positions, names, order) {
                 const sums = totals.get(team.id) || Object.fromEntries(order.map((position) => [position, 0]));
                 for (const player of asArray(team.player)) {
                     const position = positions.get(player.id);
-                    if (player.status === "starter" && position in sums) {
-                        sums[position] += Number(player.score) || 0;
+                    if ((player.status === "starter" || player.status === null) && position in sums) {
+                        sums[position] += player.status === null ? NaN : numberOf(player.score);
                     }
                 }
                 totals.set(team.id, sums);
@@ -156,20 +165,28 @@ export function positionPoints(weeklyResults, positions, names, order) {
         name: names.get(id) || id,
         parts: order.map((position) => ({position, points: Math.round(sums[position])})),
         total: Math.round(order.reduce((sum, position) => sum + sums[position], 0))
-    })).sort((a, b) => b.total - a.total);
+    })).sort((a, b) => Number(Number.isFinite(b.total)) - Number(Number.isFinite(a.total)) || b.total - a.total);
 }
 
-// Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00")
-export const ledger = (value) => `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+// Winners' ledger: always to the cent, thousands separated ("$1,234.50", "−$15.00"); "—" not known
+export const ledger = (value) => (typeof value !== "number" || !Number.isFinite(value) ? "—"
+    : `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`);
 
 // The payouts (settings.payouts). The pot is the league-wide (0000) entries in MFL's accounting; the
 // weekly prizes (every regular season week, known up front) and the all-play payouts so far come out
 // of it, and what's left is split by the places' shares. Until the commissioner records the pot it's
 // null, and so are the playoffs' amounts. `places` names the prize winners once the playoffs are over.
+// A week whose high score isn't known leaves every team's weekly winnings unknown (NaN), as a record
+// not known does its all-play payout, and so the totals and what the places split.
 export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, names}) {
     const {entries, pot} = potOf(accounting);
     const weekly = new Map();
+    let weeklyKnown = true;
     for (const {week, teams} of weeklyWinners(weeklyResults, lastRegularWeek)) {
+        if (!teams) {
+            weeklyKnown = false;
+            continue;
+        }
         for (const id of teams) {
             const won = weekly.get(id) || {weeks: [], amount: 0};
             won.weeks.push(week);
@@ -180,7 +197,7 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
     const teams = standingRows.map((team) => {
         const won = weekly.get(team.id) || {weeks: [], amount: 0};
         const allPlay = allPlayPayout(team.allPlay);
-        return {id: team.id, name: names.get(team.id) || team.name, record: recordText(team.allPlay), net: team.allPlay.w - team.allPlay.l, weeks: won.weeks, weekly: won.amount, allPlay};
+        return {id: team.id, name: names.get(team.id) || team.name, record: recordText(team.allPlay), net: team.allPlay.w - team.allPlay.l, weeks: won.weeks, weekly: weeklyKnown ? won.amount : NaN, allPlay};
     });
     const weeklyTotal = lastRegularWeek * WEEKLY_PRIZE;
     const allPlayPaid = teams.reduce((sum, team) => sum + team.allPlay, 0);
@@ -195,7 +212,7 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
     const rows = teams.map((team) => {
         const prize = prizeOf(team.id);
         return {...team, prize, total: team.weekly + team.allPlay + (prize && prize.amount ? prize.amount : 0)};
-    }).sort((a, b) => b.total - a.total || b.net - a.net);
+    }).sort((a, b) => Number(Number.isFinite(b.total)) - Number(Number.isFinite(a.total)) || b.total - a.total || b.net - a.net);
     return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs: pool, prizes, rows};
 }
 
@@ -204,8 +221,11 @@ export function winningsLine(row) {
     const parts = [];
     if (row.weeks.length) {
         parts.push(`Week${row.weeks.length > 1 ? "s" : ""} ${row.weeks.join(", ")} ${ledger(row.weekly)}`);
+    } else if (Number.isNaN(row.weekly)) {
+        parts.push("Weekly —");
     }
-    parts.push(`${row.record} all-play${row.allPlay ? ` ${ledger(row.allPlay)}` : ""}`);
+    // a record not known (a score MFL left out) leaves its payout unknown too
+    parts.push(row.record === "—" ? "All-play —" : `${row.record} all-play${row.allPlay ? ` ${ledger(row.allPlay)}` : ""}`);
     if (row.prize) {
         parts.push(row.prize.amount === null ? row.prize.place : `${row.prize.place} ${ledger(row.prize.amount)}`);
     }
