@@ -29,7 +29,6 @@ const record = (wlt) => {
 const pct = ({w, l, t}) => (w + l + t ? (w + t / 2) / (w + l + t) : 0);
 // "2.0", "0.5": games back of a record
 const gamesBack = (leader, team) => ((leader.w - team.w) + (team.l - leader.l)) / 2;
-const points = (value) => (Number(value) || 0).toFixed(1);
 
 // the `league` export's divisions and each team's: {divisions: [{id, name}], of: Map(team → division id)}
 export function divisionsOf(league) {
@@ -232,7 +231,8 @@ export function winningsLine(row) {
     return parts.join(" · ");
 }
 
-// A team's season from the `schedule` export: [{week, opponent, result}], results as "W 159.1–146.2"
+// A team's season from the `schedule` export: [{week, opponent, result}], results as "W 159.1–146.2",
+// or "W" alone when a score isn't known (MFL's left out)
 export function teamSeason(schedule, teamId) {
     return asArray(schedule && schedule.weeklySchedule).flatMap((week) => {
         for (const matchup of asArray(week.matchup)) {
@@ -241,7 +241,9 @@ export function teamSeason(schedule, teamId) {
             if (mine) {
                 const other = sides.find((side) => side !== mine) || {};
                 const played = mine.score !== undefined && other.score !== undefined && /^[WLT]$/.test(mine.result || "");
-                return [{week: Number(week.week), opponent: other.id, result: played ? `${mine.result} ${points(mine.score)}–${points(other.score)}` : ""}];
+                const scores = [numberOf(mine.score), numberOf(other.score)];
+                const result = !played ? "" : scores.every(Number.isFinite) ? `${mine.result} ${figure(scores[0], 1)}–${figure(scores[1], 1)}` : mine.result;
+                return [{week: Number(week.week), opponent: other.id, result}];
             }
         }
         return [];
@@ -257,12 +259,14 @@ const byPosition = (order) => {
 };
 
 const minutes = (seconds) => Math.round(seconds / 60);
+// lines' points: none yet (null) counts 0, one not known (NaN) leaves the sum not known
+const sumPoints = (lines) => lines.reduce((sum, line) => sum + (line.points === null || line.points === undefined ? 0 : line.points), 0);
 
 // Without the stats feed (null: one v2 couldn't read), a game stands as liveScoring's seconds left say
-// (3600 not started, 0 over), with no quarter
+// (3600 not started, 0 over), with no quarter; without them (MFL's left out: null), as scheduled
 function gameFromSeconds(scheduled, entry) {
     const left = Number(entry.gameSecondsRemaining);
-    if (scheduled.state === "bye" || entry.gameSecondsRemaining === undefined || !Number.isFinite(left)) {
+    if (scheduled.state === "bye" || entry.gameSecondsRemaining === undefined || entry.gameSecondsRemaining === null || !Number.isFinite(left)) {
         return scheduled;
     }
     if (left <= 0) {
@@ -285,7 +289,7 @@ function playerLine(entry, {players, stats, games, rules, ir = false}) {
         sortName: player.sortName || "",
         position,
         team: player.team,
-        points: !scored ? null : stats ? scoreStats(own, position, rules) : Number(entry.score) || 0,
+        points: !scored ? null : stats ? scoreStats(own, position, rules) : numberOf(entry.score),
         game,
         stats: own,
         line: statLine(own, position),
@@ -293,8 +297,12 @@ function playerLine(entry, {players, stats, games, rules, ir = false}) {
     };
 }
 
-// "Final", "Playing · Q3", "Sun 3:25 p.m.", "Bye": the game state on a player's grey line
+// "Final", "Playing · Q3", "Sun 3:25 p.m.", "Bye": the game state on a player's grey line; "—" for a
+// kickoff not known
 export function gameText(game, kickoffText) {
+    if (game.state === "scheduled" && Number.isNaN(game.kickoff)) {
+        return "—";
+    }
     if (game.state === "over") {
         return "Final";
     }
@@ -312,13 +320,16 @@ export function gameText(game, kickoffText) {
 // left, and no win chance. Scores come from the feed with the league's rules, the way MFL's live page
 // keeps them current; `projections` (the projected stats feed) adds each side's projection and win
 // chance while anything is left to play. `rosters` adds the viewer's week's IR players to benches.
+// A side with a player's points not known (NaN), or a player MFL didn't say starts or sits, has its
+// score not known, and the card no win chance.
 export function scoreCards({live, players, stats, games, rules, projections = null, week, viewer = null, irOf = () => [], order = lineupPositions(null)}) {
     const sorted = byPosition(order);
     const cards = asArray(live && live.matchup).map((matchup) => {
         const sides = asArray(matchup.franchise).slice().sort((a, b) => Number(a.isHome) - Number(b.isHome));
         const built = sides.map((side) => {
             // a bench player the rosters have on IR is one, should MFL list him there (Best leaves him out)
-            const lineup = asArray(side.players && side.players.player).map((entry) => ({
+            const entries = asArray(side.players && side.players.player);
+            const lineup = entries.map((entry) => ({
                 ...playerLine(entry, {players, stats, games, rules, ir: entry.status !== "starter" && irOf(side.id).includes(entry.id)}),
                 starter: entry.status === "starter"
             }));
@@ -331,7 +342,7 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
             return {
                 id: side.id,
                 home: side.isHome === "1",
-                score: starters.reduce((sum, line) => sum + (line.points || 0), 0),
+                score: entries.some((entry) => entry.status === null) ? NaN : sumPoints(starters),
                 playing: starters.filter((line) => line.game.state === "playing").length,
                 toPlay: starters.filter((line) => line.game.state === "scheduled").length,
                 minutes: minutes(secondsLeft),
@@ -342,7 +353,7 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
             };
         });
         let chances = null;
-        if (stats && projections && built.length === 2 && built.some((side) => !side.done)) {
+        if (stats && projections && built.length === 2 && built.some((side) => !side.done) && built.every((side) => Number.isFinite(side.score))) {
             const perPlayer = new Map();
             const side = (team) => ({
                 done: team.done,
@@ -426,7 +437,7 @@ export function bestCard(card, limits) {
         const bench = team.starters.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: "started"}))
             .concat(team.bench.filter((line) => !ids.has(line.id)).map((line) => ({...line, tag: ""})));
         return {
-            ...team, actual: team.score, score: starters.reduce((sum, line) => sum + (line.points || 0), 0), starters, bench,
+            ...team, actual: team.score, score: Number.isNaN(team.score) ? NaN : sumPoints(starters), starters, bench,
             // a bench player's game can be the only one played (Thursday night)
             started: starters.some((line) => line.game.state === "playing" || line.game.state === "over")
         };

@@ -12,7 +12,7 @@ const shortName = (name) => {
     const parts = String(name).split(" ");
     return parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(" ")}` : name;
 };
-const pts = (value) => (value === null || value === undefined ? "—" : value.toFixed(1));
+const pts = (value) => figure(value, 1);
 const kickoffText = (seconds) => oneLineTimes(`${dayText(seconds).split(" ")[0]} ${clock(seconds)}`);
 const REFRESH_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg>';
 const LOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Locked" role="img"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
@@ -22,11 +22,11 @@ const bothNames = (name) => `<span class="fuad-short">${esc(shortName(name))}</s
 
 function teamHead(team, {names, viewer, leader, side, started, preview}) {
     const tone = leader === null || leader === side ? "" : " fuad-trailing";
-    const projection = team.actual !== undefined ? `actual ${team.actual.toFixed(1)}`
+    const projection = team.actual !== undefined ? `actual ${figure(team.actual, 1)}`
         : team.projected !== null ? `proj ${team.projected.toFixed(1)}` : team.done && team.started ? "Final" : "";
     return `<span class="fuad-face fuad-face-${side ? "right" : "left"}${tone}">
         <span class="fuad-face-name${team.id === viewer ? " fuad-face-mine" : ""}">${withIcon(team.id, esc(names.get(team.id) || team.id), {after: Boolean(side)})}</span>
-        <span class="fuad-face-score">${started ? esc(team.score.toFixed(1)) : preview ? "" : "—"}</span>
+        <span class="fuad-face-score">${started ? esc(figure(team.score, 1)) : preview ? "" : "—"}</span>
         <span class="fuad-meta">${esc(projection)}</span>
     </span>`;
 }
@@ -78,7 +78,8 @@ function cardMarkup(card, i, {names, viewer, open, benchOpen, preview, best = fa
     const [a, b] = card.teams;
     // once either side has a game going, both show points
     const started = card.teams.some((team) => team.started);
-    const leader = started && b && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
+    // no leader while either score isn't known
+    const leader = started && b && Number.isFinite(a.score) && Number.isFinite(b.score) && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
     const live = !best && card.teams.some((team) => team.playing);
     const showBar = !best && a.chance !== null && b;
     const head = b

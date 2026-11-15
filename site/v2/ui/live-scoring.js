@@ -129,20 +129,21 @@ export function scoreStats(stats, position, rules) {
 }
 
 // Each NFL team's game: "bye", "scheduled" (with its kickoff), "playing" (quarter, seconds left,
-// possession) or "over". `schedule` is the week's `nflSchedule` export.
+// possession) or "over". `schedule` is the week's `nflSchedule` export. A kickoff MFL left out (null:
+// ui/checked.js lenient) is NaN: the game goes by the stats feed, or is scheduled at a time not known.
 export function gameStates(schedule, stats) {
     const games = new Map();
     for (const matchup of asArray(schedule && schedule.matchup)) {
         const teams = asArray(matchup.team);
         for (const team of teams) {
             const opponent = teams.find((other) => other !== team);
-            games.set(team.id, {kickoff: Number(matchup.kickoff) || 0, opponent: opponent ? opponent.id : null, home: team.isHome === "1"});
+            games.set(team.id, {kickoff: matchup.kickoff === null ? NaN : Number(matchup.kickoff) || 0, opponent: opponent ? opponent.id : null, home: team.isHome === "1"});
         }
     }
     const states = new Map();
     for (const [team, game] of games) {
         const line = stats.teams.get(team);
-        if (!game.kickoff || game.kickoff > stats.updated || !line) {
+        if ((!game.kickoff && !Number.isNaN(game.kickoff)) || game.kickoff > stats.updated || !line) {
             states.set(team, {state: "scheduled", kickoff: game.kickoff});
         } else if (line.QUARTER === "" || line.QUARTER === "F" || line.QUARTER === undefined) {
             states.set(team, {state: "over", secondsLeft: 0});

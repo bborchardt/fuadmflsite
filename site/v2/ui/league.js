@@ -68,8 +68,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const season = context.season;
 
     // one request per export per page (page-fetch.js); `fresh` asks MFL again. Each is held to
-    // lib/shapes.js as a display panel's (checked.js lenient), but Scores' (`check` null), which
-    // doesn't read a field MFL left out as not known yet.
+    // lib/shapes.js as a display panel's (checked.js lenient).
     const exp = (type, params = {}, {base = host, optional = false, fresh = false, year = season, check = lenient} = {}) => {
         const leagueParams = base === host ? {L: context.leagueId, ...params} : params;
         // the year to date comes back as `allWeeklyResults`
@@ -150,7 +149,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             const [before, lastScheduled] = await Promise.all([beforeSeason(), schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0)]);
             return drawScores(mount, {
-                context, viewer, exp: (type, params, options = {}) => exp(type, params, {...options, check: null}), feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14, basic: basic("Scores"),
+                context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14, basic: basic("Scores"),
                 names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),
                 showing: () => document.documentElement.classList.contains("fuad-league-on") && viewOf(window.location.hash) === "scores"
             });
