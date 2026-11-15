@@ -134,7 +134,7 @@ test("a player cut while his length is due costs the 1-year penalty; this season
             {type: "FREE_AGENT", franchise: "0002", transaction: "|6,", timestamp: String(DROPPED)},
             {type: "FREE_AGENT", franchise: "0001", transaction: "|7,", timestamp: String(DROPPED)}]},
         freeAgents: {leagueUnit: {player: [...base.freeAgents.leagueUnit.player, {id: "6", salary: "20", contractYear: "0"}, {id: "7", salary: "6", contractYear: "0"}]}},
-        draftResults: {draftUnit: {draftPick: [{player: "7"}]}}
+        draftResults: {draftUnit: {draftPick: [{round: "01", pick: "01", player: "7"}]}}
     };
     const cutDown = (iso) => ({event: [{type: "CUSTOM", title: "Final cut-down", start_time: String(at(iso))}]});
     const lengthDue = (result) => result.entries.filter((entry) => /Kamara|Rookie/.test(entry));
@@ -153,7 +153,7 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     ]);
     // Kamara ended last season at 1 year on $20: the rollover left him an RFA not yet at $0.01, whose
     // contract ran out
-    const lastSeason = {franchise: [{id: "0002", player: [{id: "6", salary: "20", contractYear: "1"}]}]};
+    const lastSeason = {franchise: [{id: "0002", player: [{id: "6", status: "ROSTER", salary: "20", contractYear: "1"}]}]};
     // contract ran out, or won back at the auction on the same salary: left for the commissioner
     const rfa = run({scenario: {exports: {...exports, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(rfa.status, 1);
@@ -251,6 +251,32 @@ test("a penalty charged whose reset then failed is only reset the next day, not 
     assert.deepEqual(imports(next).map((data) => data.TYPE), ["salaries"]);
     assert.match(imports(next)[0].DATA, /<player id="4" salary="1" contractYear="0"\/>/);
     assert.ok(next.entries.includes("Reset Ollie Gordon to $1 / 0 years (penalty already charged)."), next.entries.join("\n"));
+});
+
+test("an export missing a field the job relies on is flagged, and nothing is written from it", () => {
+    const renamed = league({alphaSalary: 290});
+    const player = renamed.rosters.franchise[1].player[0];
+    player.contractYears = player.contractYear;
+    delete player.contractYear;
+    const result = run({scenario: {exports: renamed}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => entry.includes("Couldn't load rosters: MFL's export has changed: franchise 0002 player 200 has no contractYear")), result.entries.join("\n"));
+    assert.deepEqual(imports(result), []);
+
+    // a charge without its description can't be matched to a penalty, which would be charged again
+    const charged = {salaryAdjustment: [{franchise_id: "0002", amount: "8", timestamp: String(DROPPED + 3600)}]};
+    const unmatched = run({scenario: {exports: {...league({alphaSalary: 290}), salaryAdjustments: charged}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(unmatched.status, 1);
+    assert.ok(unmatched.entries.some((entry) => entry.includes("salaryAdjustment 1 has no description")), unmatched.entries.join("\n"));
+    assert.deepEqual(imports(unmatched), []);
+});
+
+test("a changed injury report is flagged, and the chores that don't need it carry on", () => {
+    const exports = {...league({alphaSalary: 290}), injuries: {injury: [{id: "4"}]}};
+    const result = run({scenario: {exports}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(result.status, 1);
+    assert.ok(result.entries.some((entry) => /^Couldn't load today's NFL injury report \(.*injury 4 has no status\); the injured reserve check is skipped\.$/.test(entry)), result.entries.join("\n"));
+    assert.deepEqual(imports(result).map((data) => data.TYPE), ["salaryAdj", "salaries"]);
 });
 
 test("a refused login is flagged, and no penalty is charged without it", () => {

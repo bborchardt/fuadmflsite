@@ -53,7 +53,8 @@ export class MflError extends Error {
     }
 }
 
-export async function fetchExport(url, section, {fetchImpl = fetch, init} = {}) {
+// `check(section, body)`, when given, gives back the section or throws (the job's lib/shapes.js checkShape)
+export async function fetchExport(url, section, {fetchImpl = fetch, init, check} = {}) {
     let response;
     try {
         response = await fetchImpl(url, init);
@@ -76,7 +77,7 @@ export async function fetchExport(url, section, {fetchImpl = fetch, init} = {}) 
     if (!(section in body)) {
         throw new MflError(section, `the response had no "${section}" section`);
     }
-    return body[section];
+    return check ? check(section, body[section]) : body[section];
 }
 
 // null until MFL publishes the season's schedule: it answers 404 for an unknown season and lists
