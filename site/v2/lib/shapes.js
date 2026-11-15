@@ -2,8 +2,8 @@ import {MflError, asArray} from "./mfl.js";
 
 // What the job relies on in each export it reads, by the section MFL answers with: a list's items
 // are found by `path`, and each must have every field in `need` (not empty), every field in `have`
-// (which may be empty) and a number in every field of `numbers` it has. `only` limits a rule to the items it's true for. MFL leaves out an empty
-// list, which is fine: an item that's there without a field, or with a number that won't read, is
+// (which may be empty) and a number in every field of `numbers` it has. `only` limits a rule to the
+// items it's true for. MFL leaves out an empty list, which is fine: an item that's there without a field, or with a number that won't read, is
 // MFL having changed, and the job writes nothing from that export (docs/design.md: Outside change).
 // Each field is one the saved exports in tests/fixtures always have where it's needed.
 const scores = [
@@ -13,6 +13,12 @@ const scores = [
 const side = (name) => ({path: ["playoffRound", "playoffGame", name], numbers: ["points"],
     only: (item) => item.points !== undefined, need: ["franchise_id"]});
 const withTypes = (types, need) => ({path: ["transaction"], need, only: (item) => types.includes(item.type)});
+
+// a past week's rosters, of which the backup starters read only who was on each team
+export const WEEK_ROSTERS = [
+    {path: ["franchise"], need: ["id"]},
+    {path: ["franchise", "player"], need: ["id"]}
+];
 
 export const SHAPES = {
     players: [{path: ["player"], need: ["id", "name", "position"]}],
@@ -66,8 +72,8 @@ function itemsAt(body, path) {
 }
 
 // The first way `body` (export section `section`) breaks its rules, as text; null when it doesn't
-export function shapeProblem(section, body) {
-    for (const rule of SHAPES[section] || []) {
+export function shapeProblem(section, body, rules = SHAPES[section] || []) {
+    for (const rule of rules) {
         for (const {item, name} of itemsAt(body, rule.path)) {
             if (!item || typeof item !== "object") {
                 return `${name} isn't an item`;
@@ -93,8 +99,8 @@ export function shapeProblem(section, body) {
 }
 
 // Throws an MflError marked `changed` when `body` breaks its export's rules; otherwise gives it back
-export function checkShape(section, body) {
-    const problem = shapeProblem(section, body);
+export function checkShape(section, body, rules) {
+    const problem = shapeProblem(section, body, rules);
     if (problem) {
         const error = new MflError(section, `MFL's export has changed: ${problem}`);
         error.changed = true;

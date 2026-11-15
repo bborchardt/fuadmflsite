@@ -7,7 +7,7 @@ import {readFileSync, readdirSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {asArray} from "../site/v2/lib/mfl.js";
-import {SHAPES, checkShape, shapeProblem} from "../site/v2/lib/shapes.js";
+import {SHAPES, WEEK_ROSTERS, checkShape, shapeProblem} from "../site/v2/lib/shapes.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtures = join(root, "tests", "fixtures");
@@ -120,4 +120,11 @@ test("every export the job reads has rules here", () => {
 test("a description the commissioner left blank passes; one MFL stopped giving doesn't", () => {
     assert.equal(shapeProblem("salaryAdjustments", {salaryAdjustment: {franchise_id: "0002", amount: "8", description: "", timestamp: "1793000000"}}), null);
     assert.equal(shapeProblem("salaryAdjustments", {salaryAdjustment: {franchise_id: "0002", amount: "8", timestamp: "1793000000"}}), "salaryAdjustment 1 has no description");
+});
+
+test("a past week's rosters need only who was on each team", () => {
+    const rosters = {franchise: {id: "0001", player: [{id: "13604", status: "ROSTER"}]}};
+    assert.equal(shapeProblem("rosters", rosters, WEEK_ROSTERS), null);
+    assert.equal(shapeProblem("rosters", rosters), "franchise 0001 player 13604 has no salary");
+    assert.equal(shapeProblem("rosters", {franchise: {id: "0001", player: [{playerId: "13604"}]}}, WEEK_ROSTERS), "franchise 0001 player 1 has no id");
 });

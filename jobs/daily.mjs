@@ -41,7 +41,7 @@ const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", na
 const {API_BASE, GAME_HOURS, asArray, displayName, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
 const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
-const {checkShape} = await lib("shapes.js");
+const {WEEK_ROSTERS, checkShape} = await lib("shapes.js");
 const {DEFAULT_END_WEEK, OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, salaryAdjXml} =
@@ -262,8 +262,8 @@ const loginIsInLeague = () => loginLeagues.some((entry) => entry.league_id === l
 
 // an export whose items lack a field the job relies on throws, so nothing is written from it (lib/shapes.js)
 const exportOptions = {fetchImpl: mflFetch, init: {headers: mflHeaders}, check: checkShape};
-const fetchFrom = (base, type, params, section = type, year = season) =>
-    fetchExport(exportUrl(base, year, type, params), section, exportOptions);
+const fetchFrom = (base, type, params, section = type, year = season, rules) =>
+    fetchExport(exportUrl(base, year, type, params), section, rules ? {...exportOptions, check: (name, body) => checkShape(name, body, rules)} : exportOptions);
 
 function writeSummary() {
     if (!process.env.GITHUB_STEP_SUMMARY) {
@@ -872,7 +872,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                 const game = games.find((each) => asArray(each.team).some((team) => team.id === teamOf(id)));
                 return game ? Number(game.kickoff) : null;
             };
-            const rostersThen = asArray((await fetchFrom(host, "rosters", {L: leagueId, W: week})).franchise);
+            const rostersThen = asArray((await fetchFrom(host, "rosters", {L: leagueId, W: week}, "rosters", season, WEEK_ROSTERS)).franchise);
             let lastWeek = null;
             let savedResults = null;
             const changed = [];
