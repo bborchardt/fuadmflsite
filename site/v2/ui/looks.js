@@ -198,7 +198,7 @@ export function wireLooks(group, context, current) {
             shown = before;
             show(before);
             status.classList.add("fuad-looks-failed");
-            status.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a few seconds."
+            status.textContent = error.status === 429 ? "Server is busy. Try again in a few seconds."
                 : error.noForm ? "Couldn’t open MFL’s skin page. Reload and try again." : "Couldn’t save your look. Try again.";
         } finally {
             buttons.forEach((each) => {

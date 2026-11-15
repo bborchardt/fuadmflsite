@@ -10,7 +10,7 @@ const items = new Map();
 window.localStorage = {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))};
 globalThis.window = window;
 globalThis.document = document;
-const {drawPanel} = await import("../site/v2/ui/panel.js");
+const {drawPanel, failedMarkup} = await import("../site/v2/ui/panel.js");
 
 const OLD = [{team: "Old"}];
 const NEW = [{team: "New", teamIds: ["0001"]}];
@@ -64,4 +64,9 @@ test("if the fresh load fails too, the panel says so in a clean frame, not the d
     assert.equal(mount.querySelector(".fuad-as-of").hidden, true);
     assert.match(bodyOf(mount).textContent, /Couldn’t load recent moves\./);
     assert.ok(bodyOf(mount).querySelector("button"));
+});
+
+test("a panel that couldn't load says so, and when MFL refused, that the server is busy", () => {
+    assert.match(failedMarkup("standings", new Error("HTTP 500")), /<span>Couldn’t load standings\.<\/span>.*>Retry</);
+    assert.match(failedMarkup("standings", Object.assign(new Error("HTTP 429"), {status: 429})), /<span>Server is busy\. Try again in a few seconds\.<\/span>/);
 });

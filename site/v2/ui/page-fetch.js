@@ -164,7 +164,7 @@ export async function mflSend(url, init) {
 }
 
 // Promise.all for reads asked at once: when several fail, a refusal (HTTP 429) is the error
-// thrown, whichever failed first, so the page says MFL asked us to wait
+// thrown, whichever failed first, so the page says the server is busy
 export async function allAtOnce(reads) {
     const settled = await Promise.allSettled(reads);
     const failed = settled.filter((result) => result.status === "rejected").map((result) => result.reason);

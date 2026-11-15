@@ -256,7 +256,7 @@ export function installPopup({context, franchiseId, teamHref}) {
                             show(list.has(playerId));
                             star.disabled = false;
                             if (error) {
-                                note.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a minute." : "Couldn't update your watch list.";
+                                note.textContent = error.status === 429 ? "Server is busy. Try again in a few seconds." : "Couldn't update your watch list.";
                             }
                         }
                     });
@@ -270,7 +270,7 @@ export function installPopup({context, franchiseId, teamHref}) {
                 setWatched(context, playerId, on).catch((error) => {
                     console.warn("[fuad] couldn't update the watch list:", error);
                     show(!on);
-                    note.textContent = error.status === 429 ? "MFL asked us to wait. Try again in a minute." : "Couldn't update your watch list.";
+                    note.textContent = error.status === 429 ? "Server is busy. Try again in a few seconds." : "Couldn't update your watch list.";
                 }).finally(() => {
                     star.disabled = false;
                 });
