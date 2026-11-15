@@ -4,7 +4,7 @@
 
 import {asArray, mflProgram} from "../lib/mfl.js";
 import {text} from "./player-page.js";
-import {scoreStats, statLine, winProbability} from "./live-scoring.js";
+import {GAME_SECONDS, scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {
     PRIZE_SHARES, WEEKLY_PRIZE, allPlayPayout, forPlayoffs, ordinal, potOf, prizeAmount, recordText, weeklyWinners, weeksOf
 } from "../lib/payouts.js";
@@ -238,12 +238,26 @@ const byPosition = (order) => {
 
 const minutes = (seconds) => Math.round(seconds / 60);
 
-// one player's line on a card: where his game stands and what he's done
+// Without the stats feed (null: one v2 couldn't read), a game stands as liveScoring's seconds left say
+// (3600 not started, 0 over), with no quarter
+function gameFromSeconds(scheduled, entry) {
+    const left = Number(entry.gameSecondsRemaining);
+    if (scheduled.state === "bye" || entry.gameSecondsRemaining === undefined || !Number.isFinite(left)) {
+        return scheduled;
+    }
+    if (left <= 0) {
+        return {state: "over", secondsLeft: 0};
+    }
+    return left >= GAME_SECONDS ? scheduled : {state: "playing", quarter: null, secondsLeft: left, possession: false};
+}
+
+// one player's line on a card: where his game stands and what he's done; without the stats feed, his
+// points as liveScoring has them
 function playerLine(entry, {players, stats, games, rules, ir = false}) {
     const player = players.get(entry.id) || {};
     const position = player.position || "";
-    const game = games.of(player.team);
-    const own = stats.players.get(entry.id);
+    const game = stats ? games.of(player.team) : gameFromSeconds(games.of(player.team), entry);
+    const own = stats ? stats.players.get(entry.id) : undefined;
     const scored = game.state === "playing" || game.state === "over";
     return {
         id: entry.id,
@@ -251,7 +265,7 @@ function playerLine(entry, {players, stats, games, rules, ir = false}) {
         sortName: player.sortName || "",
         position,
         team: player.team,
-        points: scored ? scoreStats(own, position, rules) : null,
+        points: !scored ? null : stats ? scoreStats(own, position, rules) : Number(entry.score) || 0,
         game,
         stats: own,
         line: statLine(own, position),
@@ -265,7 +279,7 @@ export function gameText(game, kickoffText) {
         return "Final";
     }
     if (game.state === "playing") {
-        return `Playing · ${game.quarter}`;
+        return game.quarter ? `Playing · ${game.quarter}` : "Playing";
     }
     if (game.state === "scheduled" && game.kickoff) {
         return kickoffText(game.kickoff);
@@ -274,7 +288,8 @@ export function gameText(game, kickoffText) {
 }
 
 // Each matchup of a week from `liveScoring` (who starts) and the stats feed (points, game states),
-// the viewer's first. Scores come from the feed with the league's rules, the way MFL's live page
+// the viewer's first; `stats` null when the feed couldn't be read: liveScoring's points and seconds
+// left, and no win chance. Scores come from the feed with the league's rules, the way MFL's live page
 // keeps them current; `projections` (the projected stats feed) adds each side's projection and win
 // chance while anything is left to play. `rosters` adds the viewer's week's IR players to benches.
 export function scoreCards({live, players, stats, games, rules, projections = null, week, viewer = null, irOf = () => [], order = lineupPositions(null)}) {
@@ -307,7 +322,7 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
             };
         });
         let chances = null;
-        if (projections && built.length === 2 && built.some((side) => !side.done)) {
+        if (stats && projections && built.length === 2 && built.some((side) => !side.done)) {
             const perPlayer = new Map();
             const side = (team) => ({
                 done: team.done,
@@ -406,7 +421,7 @@ export function pairLines(a, b) {
 // the week's state under the picker: "Live", "Final" or the next kickoff's day
 export function weekState(cards, games, kickoffDay) {
     const lines = cards.flatMap((card) => card.teams.flatMap((team) => team.starters));
-    if (games.any) {
+    if (games.any || lines.some((line) => line.game.state === "playing")) {
         return {text: "Live", live: true};
     }
     if (lines.length && lines.every((line) => line.game.state !== "scheduled")) {

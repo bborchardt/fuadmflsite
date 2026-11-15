@@ -1,9 +1,9 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {gameStates, readProjections, readRules, readStats, scoreStats, statLine} from "../site/v2/ui/live-scoring.js";
+import {NO_STATS, gameStates, readProjections, readRules, readStats, scoreStats, statLine} from "../site/v2/ui/live-scoring.js";
 import {
-    bestCard, bestLineup, starterLimits,
+    bestCard, bestLineup, gameText, starterLimits,
     allPlayRecords, pairLines, recordText, playoffPicture, playoffPlaces, positionPoints, powerFacts, readPowerPage, scoreCards, standings, teamSeason,
     weekState, weeklyWinners, winnings, winningsLine
 } from "../site/v2/ui/league-model.js";
@@ -65,6 +65,34 @@ const week6 = () => {
         week: 6
     };
 };
+
+test("score cards without a stats feed v2 could read: liveScoring's points and seconds left, no clocks, stats or win chances", () => {
+    const week = week6();
+    const live = week.live;
+    const cards = scoreCards({...week, stats: null, games: gameStates(fixture("nfl-schedule-w6.json").nflSchedule, NO_STATS), viewer: "0001"});
+    assert.equal(cards.length, 5);
+    for (const card of cards) {
+        for (const team of card.teams) {
+            const side = live.matchup.flatMap((matchup) => matchup.franchise).find((franchise) => franchise.id === team.id);
+            // the team's score is MFL's own
+            assert.equal(team.score.toFixed(2), Number(side.score).toFixed(2), team.id);
+            assert.equal(team.chance, null);
+            for (const line of team.starters) {
+                const entry = side.players.player.find((player) => player.id === line.id);
+                const left = Number(entry.gameSecondsRemaining);
+                if (line.game.state !== "bye") {
+                    assert.equal(line.game.state, left === 0 ? "over" : left >= 3600 ? "scheduled" : "playing", line.id);
+                }
+                assert.equal(line.line, "");
+                if (line.game.state === "playing") {
+                    assert.equal(gameText(line.game, () => ""), "Playing");
+                }
+            }
+        }
+    }
+    assert.ok(cards.some((card) => card.teams.some((team) => team.starters.some((line) => line.game.state === "playing"))));
+    assert.equal(weekState(cards, gameStates(fixture("nfl-schedule-w6.json").nflSchedule, NO_STATS), () => "").text, "Live");
+});
 
 test("score cards: the viewer's game first, scores from the feed, starters in position order, projections and win chances", () => {
     const cards = scoreCards({...week6(), viewer: "0001", irOf: (id) => (id === "0001" ? ["16167"] : [])});
