@@ -227,7 +227,7 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   and is logged once a page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
   without when MFL has changed it. The log names the first item and field, as a display panel's does. `tests/checked.test.mjs` fails on a read in v2's screens without
   the check, the display panels' aside.
-- **A display panel shows what it can of a changed export:** League's reads, Scores' included, pass `check: lenient`
+- **A display panel shows what it can of a changed export:** League's and Rosters' reads, Scores' included, pass `check: lenient`
   (`ui/checked.js`). An item missing a field has it set to null (`markMissing` in `lib/shapes.js`),
   which reads as not known (`numberOf`: NaN) and shows as "—"; so does anything worked out from it,
   never a total of the rest: a week's score that won't read leaves every team's all-play and weekly
@@ -235,12 +235,20 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   (the playoff picture's "Couldn't load", with Basic view). In Scores, a side with a player MFL
   didn't say starts or sits, or whose points won't read, has its score as "—" and the card no leader
   or win chance; a game with no kickoff goes by the stats feed, or shows "—" for its time; a past
-  result whose score won't read shows "W" alone. An export with no item whole, or an item
-  without the field that says which it is (an id, a team), fails as "Couldn't load", even where the
+  result whose score won't read shows "W" alone. Rosters' and the player popup's reads are lenient
+  too, but not the contracts and cap: those come from the page's league load (`lib/league.js`, as
+  the job and Moves' checks build them), held to `lib/shapes.js`, so a change fails the panel with
+  Basic view rather than show a cap figure that leaves one out (the popup's "Cut now" goes without
+  its cap used). A player's points or projection that won't read is "—", sorted last; without the
+  points export every player's are "—", not 0; without the future draft picks, or with one
+  that doesn't say its year, round or first owner, every team's picks are "—" and the draft order
+  says its traded picks aren't known; a playoff game without points isn't a result. An export with no item whole, or an item
+  without the field that says which it is (an id, a team, or a rule's own `keys`: a draft pick's
+  round, number and player), fails as "Couldn't load", even where the
   panel goes without the export when MFL can't give it (Winners' accounting, whose absence reads as
   no pot yet). Either is logged
   once a page, naming the first item and field. A panel's saved copy keeps NaN as not known
-  (`ui/store.js`), where JSON would make it null, which reads as none. *(to do: Rosters, the player popup, All moves, and Home's board and coming panels, from strict.)*
+  (`ui/store.js`), where JSON would make it null, which reads as none. *(to do: All moves, and Home's board and coming panels, from strict.)*
 - **A member's own home page** is a viewer of its own in `pages.py` (`member-custom`: every module MFL
   offers, the header in a tab too).
 
