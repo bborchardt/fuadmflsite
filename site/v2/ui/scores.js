@@ -267,10 +267,11 @@ export function drawScores(mount, data) {
             draw(shown);
             schedule(shown);
         }, (error) => {
-            console.error("[fuad] couldn't load scores:", error);
             if (week !== state.week || state.season) {
+                console.warn("[fuad] couldn't load scores for a week left:", error);
                 return;
             }
+            console.error("[fuad] couldn't load scores:", error);
             body.removeAttribute("aria-busy");
             body.innerHTML = `<div class="fuad-panel">${failedMarkup("scores", error, basic)}</div>`;
             armRetry(body.querySelector("button"), error, showWeek);
