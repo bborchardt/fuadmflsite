@@ -905,8 +905,8 @@ def compare(base, head):
 # one whose result can't be read says so, with no reason guessed.
 FAILED = r"Couldn’t [^:]+\. Reload the page and try again\."
 LOCKED = r"Couldn’t .+: Roster moves are locked for this team\."
-UNCHECKED = r"Couldn’t check whether MFL made it\. Reload the page to see your (?:roster|bids|trades)\."
-MADE = r"(?!.*Couldn’t).*"
+UNCHECKED = r"Move sent, but couldn’t be confirmed\. (?:Reload the page to check your (?:roster|bids|trades)\.|Review current trades below\.)"
+MADE = r"(?!.*[Cc]ouldn’t).*"
 OUTCOMES = {
     "lands": MADE, "fails-made": MADE, "lags": MADE, "lags-twice": MADE,
     "fails": FAILED, "refuses": LOCKED, "unread": UNCHECKED, "lands-unread": UNCHECKED,

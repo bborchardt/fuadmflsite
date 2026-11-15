@@ -211,7 +211,7 @@ export async function drawDrop({context, franchiseId}) {
         if (outcome !== "unread" && JSON.stringify(ids) !== JSON.stringify(mine())) {
             reloadWith({error: failedLine(`drop ${name}`, outcome, {changed: true})});
         } else {
-            state.error = outcome === "unread" ? "Couldn’t check whether MFL made it. Reload the page to see your roster." : failedLine(`drop ${name}`, outcome);
+            state.error = outcome === "unread" ? "Move sent, but couldn’t be confirmed. Reload the page to check your roster." : failedLine(`drop ${name}`, outcome);
             state.busy = false;
             render();
             // the button was off while sending, so focus fell away from it

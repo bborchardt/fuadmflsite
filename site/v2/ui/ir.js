@@ -153,7 +153,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
                 return;
             }
         }
-        state.error = !roster && sent ? "Couldn’t check whether MFL made it. Reload the page to see your roster." : failedLine("save your IR moves", refused);
+        state.error = !roster && sent ? "Move sent, but couldn’t be confirmed. Reload the page to check your roster." : failedLine("save your IR moves", refused);
         state.busy = false;
         render();
         const again = mount.querySelector("[data-act=save]");

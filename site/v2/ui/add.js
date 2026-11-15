@@ -111,7 +111,7 @@ const hasClaim = (groups, round, claim) => groups.some((group) => group.round ==
 // A move whose result couldn't be read back (moveOutcome's "unread")
 class Unchecked extends Error {
     constructor(what) {
-        super(`Couldn’t check whether MFL made it. Reload the page to see your ${what}.`);
+        super(`Move sent, but couldn’t be confirmed. Reload the page to check your ${what}.`);
     }
 }
 

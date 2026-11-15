@@ -166,7 +166,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         }
         // with the trades unread there's no telling whether MFL made it: its answer to a move it made
         // can be its Trades page, whose header warnings aren't a refusal
-        const message = after ? failedLine(what, error) : "Couldn’t check whether MFL made it. Reload the page to see your trades.";
+        const message = after ? failedLine(what, error) : "Move sent, but couldn’t be confirmed. Reload the page to check your trades.";
         state.busy = null;
         if (offerId) {
             state.failure[offerId] = message;
@@ -205,7 +205,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         const players = offer.get.filter((id) => state.data.league.players.has(id));
         const roster = await readBack(() => rosterIds(context, franchiseId), (found) => players.every((id) => found.includes(id)));
         if (!roster) {
-            reloadList({note: "Couldn't confirm the move: this is how MFL has your trades now."});
+            reloadList({note: "Move sent, but couldn’t be confirmed. Review current trades below."});
         } else if (!players.every((id) => roster.includes(id))) {
             reloadList({error: failedLine(`accept the offer from ${partnerName}`, new Refused("it’s no longer open"))});
         } else {
@@ -235,7 +235,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         const get = offer.get.filter((id) => players.has(id));
         const roster = give.length || get.length ? await rosterIds(context, franchiseId).catch(() => null) : [];
         if (!roster) {
-            reloadList({note: "Couldn't confirm the move: this is how MFL has your trades now."});
+            reloadList({note: "Move sent, but couldn’t be confirmed. Review current trades below."});
         } else if ((give.length || get.length) && give.every((id) => !roster.includes(id)) && get.every((id) => roster.includes(id))) {
             reloadList({error: failedLine(`withdraw your offer to ${nameOf(offer.partner)}`, new Refused("they accepted it first"))});
         } else {
