@@ -8,7 +8,7 @@ import {dayText} from "./home-model.js";
 import {NO_STATS, gameStates, readStats} from "./live-scoring.js";
 import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
-import {ordinal} from "./format.js";
+import {figure, ordinal} from "./format.js";
 import {DEFAULT_END_WEEK} from "../lib/rules.js";
 import {allAtOnce} from "./page-fetch.js";
 import {backupMarks, backupReader} from "./scores-backups.js";
@@ -296,7 +296,7 @@ export function drawScores(mount, data) {
                     const card = shown.cards.find((entry) => entry.mine);
                     if (card && card.teams.every((team) => team.started) && shown.games.any) {
                         const [mine, other] = card.teams[0].id === viewer ? card.teams : [card.teams[1], card.teams[0]];
-                        liveResult = `Live ${mine.score.toFixed(1)}–${other.score.toFixed(1)}`;
+                        liveResult = `Live ${figure(mine.score, 1)}–${figure(other.score, 1)}`;
                     }
                 } catch (error) {
                     // the season's results don't need this week's
@@ -308,7 +308,7 @@ export function drawScores(mount, data) {
                     rows: teamSeason(schedule, viewer).filter((row) => row.week <= data.lastRegular),
                     names: [...names],
                     live: liveResult,
-                    line: me ? `${me.h2h.w}-${me.h2h.l}-${me.h2h.t} · ${me.divisionName} ${ordinal(me.rank)}` : ""
+                    line: me ? `${[me.h2h.w, me.h2h.l, me.h2h.t].every(Number.isFinite) ? `${me.h2h.w}-${me.h2h.l}-${me.h2h.t}` : "—"} · ${me.divisionName} ${ordinal(me.rank)}` : ""
                 };
             },
             render: (value, inner) => {

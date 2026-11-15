@@ -9,10 +9,12 @@ import {fetchExport} from "../site/v2/lib/mfl.js";
 import {lenient} from "../site/v2/ui/checked.js";
 import {markMissing} from "../site/v2/lib/shapes.js";
 import {figure} from "../site/v2/ui/format.js";
-import {allPlayRecords, ledger, playoffPicture, playoffPlaces, positionPoints, recordText, standings, weeklyWinners, winnings, winningsLine} from "../site/v2/ui/league-model.js";
-import {positionsMarkup, standingsMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
+import {NO_STATS, gameStates, readProjections, readRules, readStats} from "../site/v2/ui/live-scoring.js";
+import {allPlayRecords, gameText, ledger, scoreCards, teamSeason, playoffPicture, playoffPlaces, positionPoints, recordText, standings, weeklyWinners, winnings, winningsLine} from "../site/v2/ui/league-model.js";
+import {cardsMarkup, positionsMarkup, standingsMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
 
-const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
+const raw = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
+const fixture = (name) => JSON.parse(raw(name));
 const settings = fixture("league-settings.json").league;
 const names = new Map(settings.franchises.franchise.map((team) => [team.id, team.name]));
 const positions = new Map(fixture("players-league.json").players.player.map((player) => [player.id, player.position]));
@@ -125,4 +127,73 @@ test("a playoff game whose points MFL left out isn't decided", () => {
     const game = [].concat([].concat(rounds)[[].concat(rounds).length - 1].playoffGame)[0];
     game.home.points = null;
     assert.equal(playoffPlaces(brackets), null);
+});
+
+// ---- Scores ----
+
+const players = new Map(fixture("players-league.json").players.player.map((player) => [player.id, {name: player.name, sortName: player.name, position: player.position, team: player.team}]));
+const rules = readRules(fixture("rules.json").rules);
+
+// week 6's cards from `live` (liveScoring, as a display panel reads it), with the stats feed or without
+function cards(live, {stats = readStats(raw("live-stats-w6.txt")), schedule = fixture("nfl-schedule-w6.json").nflSchedule} = {}) {
+    const games = gameStates(schedule, stats || NO_STATS);
+    return scoreCards({live, players, stats, games, rules, projections: stats ? readProjections(raw("live-proj-w6.txt")) : null, week: 6, viewer: "0001"});
+}
+const sideOf = (built, id) => built.flatMap((card) => card.teams).find((team) => team.id === id);
+const draws = (built) => cardsMarkup(built, {names, viewer: "0001", open: new Set(built.map((card, i) => i)), bench: new Set(), preview: false, best: false});
+
+test("Scores: a player MFL didn't say starts or sits leaves his side's score not known, and the card no leader or win chance", async () => {
+    const live = fixture("live-scoring-w6.json").liveScoring;
+    const side = live.matchup[0].franchise[0];
+    side.players.player[0].status = "";
+    const {value} = await read("liveScoring", live);
+    const built = cards(value);
+    const team = sideOf(built, side.id);
+    assert.ok(Number.isNaN(team.score));
+    const card = built.find((each) => each.teams.includes(team));
+    assert.ok(card.teams.every((each) => each.chance === null));
+    assert.ok(built.filter((each) => each !== card).every((each) => each.teams.every((other) => Number.isFinite(other.score))));
+    assert.doesNotMatch(draws(built), /NaN|undefined/);
+    // neither side marked as trailing
+    assert.doesNotMatch(draws([card]), /fuad-trailing/);
+});
+
+test("Scores without the stats feed: a player's points that won't read are —, and so is his side's score; seconds left that won't read aren't Final", async () => {
+    const live = fixture("live-scoring-w6.json").liveScoring;
+    const side = live.matchup[1].franchise[1];
+    const starter = side.players.player.find((player) => player.status === "starter" && Number(player.gameSecondsRemaining) < 3600);
+    starter.score = "1.2.3";
+    const other = side.players.player.find((player) => player !== starter && player.status === "starter" && Number(player.gameSecondsRemaining) >= 3600 && players.has(player.id));
+    other.gameSecondsRemaining = "soon";
+    const {value} = await read("liveScoring", live);
+    const built = cards(value, {stats: null});
+    const team = sideOf(built, side.id);
+    assert.ok(Number.isNaN(team.score));
+    assert.ok(Number.isNaN(team.starters.find((line) => line.id === starter.id).points));
+    assert.notEqual(team.starters.find((line) => line.id === other.id).game.state, "over");
+    assert.doesNotMatch(draws(built), /NaN|undefined/);
+});
+
+test("Scores: a kickoff MFL left out is —, or the game as the stats feed has it", async () => {
+    const schedule = fixture("nfl-schedule-w6.json").nflSchedule;
+    schedule.matchup.forEach((game) => delete game.kickoff);
+    schedule.matchup[0].kickoff = "1791900000";
+    const {value} = await read("nflSchedule", schedule);
+    const stats = readStats(raw("live-stats-w6.txt"));
+    const games = gameStates(value, stats);
+    const teams = value.matchup.flatMap((game) => game.team.map((team) => team.id));
+    const played = teams.filter((id) => stats.teams.has(id));
+    const unplayed = teams.filter((id) => !stats.teams.has(id) && value.matchup.some((game) => game.kickoff === null && game.team.some((team) => team.id === id)));
+    assert.ok(played.every((id) => games.of(id).state !== "scheduled" || Number.isFinite(games.of(id).kickoff)));
+    assert.ok(unplayed.length);
+    assert.ok(unplayed.every((id) => gameText(games.of(id), () => "Sun") === "—"));
+});
+
+test("Your season: a result whose score won't read shows only W, L or T", async () => {
+    const schedule = fixture("schedule.json").schedule;
+    schedule.weeklySchedule[0].matchup[0].franchise[0].score = "W";
+    const {value} = await read("schedule", schedule);
+    const season = teamSeason(value, schedule.weeklySchedule[0].matchup[0].franchise[0].id);
+    assert.match(season[0].result, /^[WLT]$/);
+    assert.match(season[1].result, /^[WLT] \d+\.\d–\d+\.\d$/);
 });

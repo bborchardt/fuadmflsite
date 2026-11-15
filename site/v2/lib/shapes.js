@@ -58,6 +58,16 @@ export const SHAPES = {
     draftResults: [{path: ["draftUnit", "draftPick"], need: ["round", "pick"], have: ["player"]}],
     injuries: [{path: ["injury"], need: ["id", "status"]}],
     calendar: [{path: ["event"], need: ["type", "start_time"], numbers: ["start_time"]}],
+    // who starts, and a player's points and seconds left where the stats feed can't be read
+    liveScoring: [
+        {path: ["matchup", "franchise"], need: ["id"], numbers: ["score"]},
+        {path: ["matchup", "franchise", "players", "player"], need: ["id", "status"], numbers: ["score", "gameSecondsRemaining"]}
+    ],
+    // a week's matchups, and each side's result once played
+    schedule: [
+        {path: ["weeklySchedule"], need: ["week"], numbers: ["week"]},
+        {path: ["weeklySchedule", "matchup", "franchise"], need: ["id"], numbers: ["score"]}
+    ],
     nflSchedule: [
         {path: ["matchup"], need: ["kickoff"], numbers: ["kickoff"]},
         {path: ["matchup", "team"], need: ["id"]}

@@ -33,7 +33,7 @@ test("an export MFL has changed fails as one that couldn't load, and is logged o
                 (error) => error.changed === true && /franchise 0001 player 13604 has no contractYear/.test(error.message));
         }
     });
-    assert.deepEqual(logged, ["[fuad] MFL's rosters export has changed"]);
+    assert.deepEqual(logged, ["[fuad] MFL's rosters export has changed: franchise 0001 player 13604 has no contractYear"]);
 });
 
 test("an export as MFL gives it passes, and an outage isn't logged as a change", async () => {

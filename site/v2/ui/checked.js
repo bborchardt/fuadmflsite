@@ -15,7 +15,8 @@ export function strict(section, body) {
     } catch (error) {
         if (error.changed && !logged.has(section)) {
             logged.add(section);
-            pageChanged(`${section} export`);
+            // the item and field, as lenient's are
+            pageChanged(`${section} export`, error.message.split("export has changed: ")[1] || "");
         }
         throw error;
     }

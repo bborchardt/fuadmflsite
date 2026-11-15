@@ -225,20 +225,22 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   export (Moves' checks, Home's alerts and forms, Lineup's backups, IR's eligibility, Trades'
   locks) pass `check: strict` (`ui/checked.js`): a changed export fails as one that couldn't load,
   and is logged once a page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
-  without when MFL has changed it. `tests/checked.test.mjs` fails on a read in v2's screens without
+  without when MFL has changed it. The log names the first item and field, as a display panel's does. `tests/checked.test.mjs` fails on a read in v2's screens without
   the check, the display panels' aside.
-- **A display panel shows what it can of a changed export:** League's reads pass `check: lenient`
+- **A display panel shows what it can of a changed export:** League's reads, Scores' included, pass `check: lenient`
   (`ui/checked.js`). An item missing a field has it set to null (`markMissing` in `lib/shapes.js`),
   which reads as not known (`numberOf`: NaN) and shows as "—"; so does anything worked out from it,
   never a total of the rest: a week's score that won't read leaves every team's all-play and weekly
   winnings unknown, and the prizes with them, and seeds that go by a record not known aren't drawn
-  (the playoff picture's "Couldn't load", with Basic view). An export with no item whole, or an item
+  (the playoff picture's "Couldn't load", with Basic view). In Scores, a side with a player MFL
+  didn't say starts or sits, or whose points won't read, has its score as "—" and the card no leader
+  or win chance; a game with no kickoff goes by the stats feed, or shows "—" for its time; a past
+  result whose score won't read shows "W" alone. An export with no item whole, or an item
   without the field that says which it is (an id, a team), fails as "Couldn't load", even where the
   panel goes without the export when MFL can't give it (Winners' accounting, whose absence reads as
   no pot yet). Either is logged
   once a page, naming the first item and field. A panel's saved copy keeps NaN as not known
-  (`ui/store.js`), where JSON would make it null, which reads as none. *(to do: Scores, Rosters, the
-  player popup, All moves, and Home's board and coming panels, from strict.)*
+  (`ui/store.js`), where JSON would make it null, which reads as none. *(to do: Rosters, the player popup, All moves, and Home's board and coming panels, from strict.)*
 - **A member's own home page** is a viewer of its own in `pages.py` (`member-custom`: every module MFL
   offers, the header in a tab too).
 
