@@ -1,16 +1,16 @@
 export const API_BASE = "https://api.myfantasyleague.com";
 
 /** MFL's JSON turns a one-item list into a bare object and leaves out an empty one. */
-// A number from an export, 0 when it's blank; NaN, unknown, when a display panel's check found MFL
-// had left it out (null: ui/checked.js lenient), so anything worked out from it is unknown too
-export const numberOf = (value) => (value === null ? NaN : Number(value) || 0);
-
 export function asArray(value) {
     if (value === undefined || value === null) {
         return [];
     }
     return Array.isArray(value) ? value : [value];
 }
+
+// A number from an export, 0 when it's blank; NaN, unknown, when a display panel's check found MFL
+// had left it out (null: ui/checked.js lenient), so anything worked out from it is unknown too
+export const numberOf = (value) => (value === null ? NaN : Number(value) || 0);
 
 // The page MFL drew, by the name it gives every page's body ("options_101" from
 // `<body id="body_options_101">`), from its HTML or a document; null for anything else, its login page

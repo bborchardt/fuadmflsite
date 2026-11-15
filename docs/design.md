@@ -233,7 +233,9 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   never a total of the rest: a week's score that won't read leaves every team's all-play and weekly
   winnings unknown, and the prizes with them, and seeds that go by a record not known aren't drawn
   (the playoff picture's "Couldn't load", with Basic view). An export with no item whole, or an item
-  without the field that says which it is (an id, a team), fails as "Couldn't load". Either is logged
+  without the field that says which it is (an id, a team), fails as "Couldn't load", even where the
+  panel goes without the export when MFL can't give it (Winners' accounting, whose absence reads as
+  no pot yet). Either is logged
   once a page, naming the first item and field. A panel's saved copy keeps NaN as not known
   (`ui/store.js`), where JSON would make it null, which reads as none. *(to do: Scores, Rosters, the
   player popup, All moves, and Home's board and coming panels, from strict.)*

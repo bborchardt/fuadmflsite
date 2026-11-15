@@ -75,7 +75,12 @@ export function drawLeague({context, franchiseId, teamHref}) {
         // the year to date comes back as `allWeeklyResults`
         const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
         const request = fetchExport(exportUrl(base, year, type, leagueParams), section, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: check || undefined});
+        // one MFL has changed isn't gone without, which would read as none (Winners' pot "not in
+        // MFL's accounting yet"): its panel fails
         return optional ? request.catch((error) => {
+            if (error && error.changed) {
+                throw error;
+            }
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
         }) : request;
