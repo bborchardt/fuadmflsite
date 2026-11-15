@@ -37,7 +37,9 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - `verify.py` can report "no differences" for an area it doesn't see: prove it notices a change first.
 - A reader of an MFL page or feed returns null (the job: throws) on a page it doesn't recognise, never
   an empty result that reads as "none" (docs/design.md: Outside change); add it to
-  `tests/readers.test.mjs`, which fails until it's listed.
+  `tests/readers.test.mjs`, which fails until it's listed. An export a chore, check or form relies on
+  gets its fields in `lib/shapes.js`, and v2's read of it `check: strict`: `tests/export-shapes.test.mjs`
+  fails on the job's read of an export with no rules, `tests/checked.test.mjs` on v2's without the check.
 - Python tools run through uv (`uv run --no-project --with playwright …`), never global installs.
 
 ## Conventions

@@ -18,6 +18,7 @@ import {
 import {draftPicked, kickoffAt} from "./context.js";
 import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";
 import {moveRows} from "./move-rows.js";
+import {strict} from "./checked.js";
 
 const CHAT_POLL = 15 * 1000;
 // MFL's own chat stops polling after about two hours without posting
@@ -36,13 +37,17 @@ function mflPage(pattern) {
 }
 
 // Each export is fetched once per page, however many panels use it (page-fetch.js); `fresh` reads
-// it again, after a post. An optional one resolves to null when it can't be had.
+// it again, after a post. An optional one resolves to null when it can't be had, but not when MFL
+// has changed it: Home's alerts are checks (checked.js).
 function fetcher({season, leagueId}, {fresh = false} = {}) {
     const host = window.location.origin;
     return (type, params = {}, {base = host, optional = false} = {}) => {
         const leagueParams = base === host ? {L: leagueId, ...params} : params;
-        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}});
+        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: strict});
         return optional ? request.catch((error) => {
+            if (error && error.changed) {
+                throw error;
+            }
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
         }) : request;

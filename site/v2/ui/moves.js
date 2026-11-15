@@ -13,6 +13,7 @@ import {seasonFacts} from "./context.js";
 import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
 import {cutDownAt} from "../lib/violations.js";
+import {strict, unlessChanged} from "./checked.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -21,7 +22,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const {season, leagueId} = context;
     const host = window.location.origin;
     // the checks always use fresh rosters, penalties and pending bids
-    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    const fresh = (type, params = {}) => fetchExport(exportUrl(host, season, type, {L: leagueId, ...params}), type, {fetchImpl: mflFetch, init: {cache: "no-store"}, check: strict});
     // asked at once, not in turn, whose round trips kept Moves on placeholders (a second on a phone):
     // MFL refuses about 25 in a few seconds, not a page's 11–14 at once (docs/mfl.md). The rest is
     // mostly cached for a day.
@@ -33,8 +34,8 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const [players, leagueInfo, calendar, facts, found] = await Promise.all([
         playerList(season, {fresh: true}),
         // only the teams' names and the league's settings, which don't change in a day
-        cached(`fuad.leagueSettings.${season}.${leagueId}`, DAY, async () => withoutOwners(await fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch}))),
-        fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch}).catch(() => null),
+        cached(`fuad.leagueSettings.${season}.${leagueId}`, DAY, async () => withoutOwners(await fetchExport(exportUrl(host, season, "league", {L: leagueId}), "league", {fetchImpl: pageFetch, check: strict}))),
+        fetchExport(exportUrl(host, season, "calendar", {L: leagueId}), "calendar", {fetchImpl: pageFetch, check: strict}).catch(unlessChanged(null)),
         seasonFacts(context).catch(() => ({})),
         freshAtOnce()
     ]);
@@ -42,7 +43,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     // this season's rookies, whose cut costs nothing while their length is due, until the cut-down
     // date (lib/league.js lengthDuePenalty); only before week 1
     const draftResults = facts.week1 && Date.now() >= facts.week1 ? null
-        : await fetchExport(exportUrl(host, season, "draftResults", {L: leagueId}), "draftResults", {fetchImpl: pageFetch}).catch(() => null);
+        : await fetchExport(exportUrl(host, season, "draftResults", {L: leagueId}), "draftResults", {fetchImpl: pageFetch, check: strict}).catch(unlessChanged(null));
     const lengthDue = {rookies: draftedIds(draftResults), freeUntil: cutDownAt(calendar, season)};
     const league = markContracts(buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents, lengthDue}), lengthDue);
     const mflNames = new Map(asArray(players.player).map((player) => [player.id, player.name]));
@@ -149,7 +150,7 @@ export function refusal(html) {
 // the team's players and their status (`ROSTER`, `INJURED_RESERVE`), fresh, to confirm a move; null
 // when the team isn't in the answer
 export async function rosterStatuses(context, franchiseId) {
-    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}});
+    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}, check: strict});
     const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
     return team ? new Map(asArray(team.player).map((player) => [player.id, player.status])) : null;
 }
@@ -159,13 +160,13 @@ export const rosterIds = async (context, franchiseId) => [...((await rosterStatu
 
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 export async function freshPending(context) {
-    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}});
+    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}, check: strict});
     const groups = pendingGroups(pending);
     return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
 }
 
 // the member's pending trades, fresh, to confirm a move
-export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}});
+export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}, check: strict});
 
 // The roster limits hold from the final cut-down date (2.5); without one on the calendar, from week 1
 export function limitsApply({facts, calendar, season}, now = Date.now()) {

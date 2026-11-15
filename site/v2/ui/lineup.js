@@ -10,6 +10,7 @@ import {oneLineTimes, plural} from "./format.js";
 import {clock} from "./home-model.js";
 import {openDialog} from "./dialog.js";
 import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
+import {strict} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {draftPicked, seasonFacts} from "./context.js";
@@ -245,7 +246,7 @@ async function stillBeforeDraft(context) {
     if (!facts || facts.draftKnown === false || facts.drafted || (facts.week1 && Date.now() >= facts.week1)) {
         return false;
     }
-    const results = await fetchExport(exportUrl(window.location.origin, context.season, "draftResults", {L: context.leagueId}), "draftResults", {fetchImpl: mflFetch, init: {cache: "no-store"}}).catch(() => null);
+    const results = await fetchExport(exportUrl(window.location.origin, context.season, "draftResults", {L: context.leagueId}), "draftResults", {fetchImpl: mflFetch, init: {cache: "no-store"}, check: strict}).catch(() => null);
     return Boolean(results) && !draftPicked(results);
 }
 
@@ -562,7 +563,7 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
     });
 
     // the week's injury report, for IR and suspensions MFL's one-letter column doesn't tell apart
-    fetchExport(exportUrl(API_BASE, context.season, "injuries", {W: page.week}), "injuries", {fetchImpl: pageFetch})
+    fetchExport(exportUrl(API_BASE, context.season, "injuries", {W: page.week}), "injuries", {fetchImpl: pageFetch, check: strict})
         .then((report) => {
             state.report = asArray(report.injury);
             applyInjuries(state.page.players, state.report);

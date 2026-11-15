@@ -6,6 +6,7 @@ import {THREAD_TITLE, readLineupDetails, readTopicPage} from "../lib/backups.js"
 import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {mflTime} from "../lib/zone.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
+import {strict} from "./checked.js";
 
 const topicPath = (season, leagueId, thread) => `/${season}/mb/topic_show.pl?bid=${season}${leagueId}&tid=${thread}`;
 
@@ -20,7 +21,7 @@ async function page(url) {
 // the thread's posts, each readTopicPage's with `at` (its last edit) and `postedAt` in seconds
 export async function readThreads({season, leagueId}) {
     const origin = window.location.origin;
-    const board = await fetchExport(exportUrl(origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    const board = await fetchExport(exportUrl(origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {fetchImpl: mflFetch, init: {cache: "no-store"}, check: strict});
     const threads = asArray(board.thread).filter((thread) => String(thread.subject || "").trim().toLowerCase() === THREAD_TITLE.toLowerCase());
     const posts = [];
     for (const thread of threads) {
@@ -49,5 +50,5 @@ export async function readLineups({season, leagueId}, team, week) {
 // A week's NFL schedule: read fresh, as a kickoff MFL moves moves a deadline; `keep`, a past week's
 // as v2 keeps it
 export async function weekKickoffs(season, week, {keep = false} = {}) {
-    return fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule", keep ? {fetchImpl: pageFetch} : {fetchImpl: mflFetch, init: {cache: "no-store"}});
+    return fetchExport(exportUrl(API_BASE, season, "nflSchedule", {W: week}), "nflSchedule", keep ? {fetchImpl: pageFetch, check: strict} : {fetchImpl: mflFetch, init: {cache: "no-store"}, check: strict});
 }

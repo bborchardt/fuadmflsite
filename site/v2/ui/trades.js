@@ -8,6 +8,7 @@ import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {kickoffAt} from "./context.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
+import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {
     Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
@@ -30,7 +31,7 @@ const stop = (text) => (/[.!?]$/.test(text) ? text : `${text}.`);
 // and next, each NFL team's this week, and the deadline's kickoff
 async function loadGames(context, calendar) {
     const week = Number(window.liveScoringWeek) || 0;
-    const schedule = (w) => fetchExport(exportUrl(API_BASE, context.season, "nflSchedule", {W: w}), "nflSchedule", {fetchImpl: pageFetch}).catch(() => null);
+    const schedule = (w) => fetchExport(exportUrl(API_BASE, context.season, "nflSchedule", {W: w}), "nflSchedule", {fetchImpl: pageFetch, check: strict}).catch(unlessChanged(null));
     const [thisWeek, nextWeek, deadline] = await Promise.all([
         week ? schedule(week) : null,
         week ? schedule(week + 1) : null,

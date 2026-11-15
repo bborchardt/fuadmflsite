@@ -198,17 +198,22 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   another team's IR page, MFL's answer to an add made on its own form.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
-- **Exports the job reads** are checked as they come (`fetchExport`: a section missing fails), and
+- **Exports the job, and v2's checks and forms, read** are checked as they come (`fetchExport`: a section missing fails), and
   then item by item (`lib/shapes.js`): an item without a field a chore relies on, or with a number
   that won't read, fails the export, and the chore that read it flags, naming the item ("franchise
   0002 player 14800 has no contractYear"); a check that only skips without its export (the injury
   reports, the calendar) flags too. An empty list passes, as MFL leaves one out; a field only some
   items have is needed only of those (the team of a lock or a waiver run), and one that may be blank
-  (a charge's description) only has to be there. Its rules are fields every saved export in
-  `tests/fixtures` has where it's needed; `tests/export-shapes.test.mjs` takes each out in turn, and
-  fails on an export the job reads that has no rules. v2 in a member's browser doesn't check yet. *(to do: its Moves checks, Home's forms and Lineup's backups show "Couldn't
-  check" and log; a display panel shows "–" for one item missing a field and "Couldn't load" when
-  every item is.)*
+  (a charge's description) only has to be there. Its rules are fields every saved export
+  (`tests/fixtures`, and the clone's in `tools/verify/screens`) has where it's needed; `tests/export-shapes.test.mjs` takes each out in turn, and
+  fails on an export the job reads that has no rules. In v2, the checks and forms that rely on an
+  export (Moves' checks, Home's alerts and forms, Lineup's backups, IR's eligibility, Trades'
+  locks) pass `check: strict` (`ui/checked.js`): a changed export fails as one that couldn't load
+  ("Couldn't check your cap.", "Couldn't load my alerts.", each with Retry), and is logged once a
+  page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
+  without when MFL has changed it. `tests/checked.test.mjs` fails on a read in v2's screens without
+  the check, the display panels' aside. *(to do: a display panel shows "–" for one item missing a
+  field and "Couldn't load" when every item is.)*
 - **A member's own home page** is a viewer of its own in `pages.py` (`member-custom`: every module MFL
   offers, the header in a tab too).
 

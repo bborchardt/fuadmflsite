@@ -12,21 +12,27 @@ import {SHAPES, WEEK_ROSTERS, checkShape, shapeProblem} from "../site/v2/lib/sha
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtures = join(root, "tests", "fixtures");
 
-// each saved export, by its section; and stand-ins, as tests/daily.test.mjs has them, for those
-// no export is saved of
+// each saved export, by its section (the real league's, and the clone's that screens.py draws v2
+// from); and stand-ins, as tests/daily.test.mjs has them, for those no export is saved of
 const samples = new Map();
-for (const file of readdirSync(fixtures).filter((name) => name.endsWith(".json"))) {
-    const body = JSON.parse(readFileSync(join(fixtures, file), "utf8"));
-    for (const [section, value] of Object.entries(body)) {
-        if (section in SHAPES) {
-            samples.set(section, [...(samples.get(section) || []), {from: file, body: value}]);
+for (const dir of [fixtures, join(root, "tools", "verify", "screens")]) {
+    for (const file of readdirSync(dir).filter((name) => name.endsWith(".json"))) {
+        const body = JSON.parse(readFileSync(join(dir, file), "utf8"));
+        for (const [section, value] of Object.entries(body)) {
+            if (section in SHAPES) {
+                samples.set(section, [...(samples.get(section) || []), {from: file, body: value}]);
+            }
         }
     }
 }
 const STAND_INS = {
     messageBoardThread: {post: [{id: "1", franchise: "0002", postTime: "1793000000", body: "Olave: 3 years"}]},
     injuries: {injury: [{id: "13604", status: "Questionable", details: "Hamstring"}]},
-    playoffBrackets: {playoffBracket: [{id: "1", name: "Championship"}]}
+    playoffBrackets: {playoffBracket: [{id: "1", name: "Championship"}]},
+    // as docs/mfl.md has them
+    pendingWaivers: {blindBidWaiverRequest: {round: "1", addsDrops: "13753_1_16619,13308_1_16152", comments: "1 yearbr/2 years", timestamp: "1793000000"}},
+    pendingTrades: {pendingTrade: [{trade_id: "9", offeringteam: "0003", offeredto: "0001", will_give_up: "13604,", will_receive: "14800,FP_0001_2027_1,",
+        expires: "1793600000", comments: "Deal?", timestamp: "1793000000"}]}
 };
 for (const [section, body] of Object.entries(STAND_INS)) {
     samples.set(section, [...(samples.get(section) || []), {from: "a stand-in", body}]);
