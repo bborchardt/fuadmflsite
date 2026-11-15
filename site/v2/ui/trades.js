@@ -7,11 +7,11 @@
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {kickoffAt} from "./context.js";
-import {pageFetch, waitLeft} from "./page-fetch.js";
+import {pageFetch} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {
-    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, loadFailed, mflFallback, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
+    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, loadFailed, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
 } from "./moves.js";
 import {
     answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
@@ -86,7 +86,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
     const listUrl = `${window.location.origin}/${context.season}/options?L=${encodeURIComponent(context.leagueId)}&O=05`;
     const proposeUrl = (partner) => `${listUrl}&FRANCHISE=${franchiseId},${partner}`;
     const state = {
-        data: null, games: null, failed: false, busy: null,
+        data: null, games: null, busy: null,
         done: flash.done || "", error: flash.error || "", note: flash.note || "", stillOpen: flash.stillOpen || null,
         // the list: each offer's answer, comment and failure; which offer asks "Withdraw?"
         answer: {}, comment: {}, failure: {}, asking: null,
@@ -311,8 +311,6 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
 
     // what each control does (its data-act), given the control and the offer it names
     const onClick = {
-        retry: () => load(),
-        mfl: () => mflFallback(body, standAside),
         player: (target) => {
             if (window.fuadOpenPlayer) {
                 window.fuadOpenPlayer(target.dataset.id, {opener: target});
@@ -452,7 +450,6 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
     }
 
     async function load() {
-        state.failed = false;
         render();
         try {
             const data = await loadData(context, franchiseId, {more: ["pendingTrades"]});
@@ -464,16 +461,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
             state.games = await loadGames(context, data.calendar);
             state.data = data;
         } catch (error) {
-            state.data = null;
-            state.failed = loadFailed("Trades", error, body, standAside);
-            if (!state.failed) {
-                return;
-            }
-            // Retry comes back on when MFL's wait is over
-            if (waitLeft()) {
-                setTimeout(render, waitLeft());
-            }
-            render();
+            loadFailed("Trades", error, body, standAside);
             return;
         }
         if (proposal && !state.expires) {

@@ -8,7 +8,7 @@ import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {CAP_TIGHT} from "./format.js";
 import {cached} from "./store.js";
-import {allAtOnce, forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
+import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
 import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
@@ -224,30 +224,16 @@ export function mflFallback(body, standAside) {
     }
     const line = document.createElement("div");
     line.id = "fuad-fallback";
-    line.className = "fuad-move-failed";
     line.setAttribute("role", "alert");
-    line.innerHTML = `<span>${FALLBACK_TEXT}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry">Reload Page</button></span>`;
+    line.innerHTML = `<span>${FALLBACK_TEXT}</span><button type="button">Reload Page</button>`;
     line.querySelector("button").addEventListener("click", () => window.location.reload());
     body.prepend(line);
 }
 
-// A screen's load failed: MFL's wait keeps the Retry box ("busy"), as MFL's own page would be
-// refused too; anything else falls back to MFL's page, logged as an error so the header's devices
-// form counts it (docs/design.md: Outside change). Returns the screen's `failed`, or null once
-// fallen back.
+// A screen's load failed, MFL's wait (HTTP 429) included: a move is never held up by v2, so it falls
+// back to MFL's page, logged as an error so the header's devices form counts it, and a failure that
+// happens is a design issue to fix (docs/design.md: Outside change)
 export function loadFailed(screen, error, body, standAside) {
-    if (error && error.status === 429) {
-        console.warn(`[fuad] MFL asked ${screen} to wait:`, error);
-        return "busy";
-    }
     console.error(`[fuad] ${screen} couldn't load, so MFL's page was shown:`, error);
     mflFallback(body, standAside);
-    return null;
-}
-
-// The data a screen's checks need couldn't load (`failed` is "busy" while MFL asks us to wait):
-// Retry, off until the wait is over, or MFL's own page
-export function failedBox(what, failed) {
-    const busy = failed === "busy";
-    return `<div class="fuad-move-failed" role="alert"><span>Couldn’t check ${what}.${busy ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry" data-act="retry"${busy && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-move-retry" data-act="mfl">MFL’s page</button></span></div>`;
 }

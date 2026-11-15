@@ -5,13 +5,12 @@
 // so its comment line goes with it. An immediate add's length is posted to the board once MFL has
 // made the add. MFL's form stays in the page underneath; anything v2 can't read leaves MFL's page.
 
-import {waitLeft} from "./page-fetch.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {openDialog, replaceEntry} from "./dialog.js";
 import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
-    loadFailed, mflFallback, sendMove, takeFlash
+    loadFailed, sendMove, takeFlash
 } from "./moves.js";
 import {postToContractTopic} from "./lengths-form.js";
 import {CONTRACT_WINDOW_TEXT} from "../lib/adds.js";
@@ -198,7 +197,7 @@ export async function drawAdd({context, franchiseId}) {
     const flash = takeFlash(FLASH_KEY);
 
     const state = {
-        data: null, failed: false, screen: "home", compose: null, q: "", pos: "ALL", watching: false, sort: "proj",
+        data: null, screen: "home", compose: null, q: "", pos: "ALL", watching: false, sort: "proj",
         open: null, flash: flash.highlight, done: flash.done, error: flash.error || "", busy: false
     };
     const layer = document.createElement("div");
@@ -613,11 +612,6 @@ export async function drawAdd({context, franchiseId}) {
 
     // what each control does (its data-act), given the control and the move being composed
     const always = {
-        retry: () => load(),
-        mfl: () => {
-            mflFallback(body, standAside);
-            layer.remove();
-        },
         popup: (target) => {
             if (window.fuadOpenPlayer && !(wide.matches && state.compose)) {
                 window.fuadOpenPlayer(target.dataset.id, {opener: target});
@@ -784,7 +778,6 @@ export async function drawAdd({context, franchiseId}) {
     });
 
     async function load() {
-        state.failed = false;
         render();
         try {
             state.data = await loadData(context, franchiseId);
@@ -792,15 +785,8 @@ export async function drawAdd({context, franchiseId}) {
                 throw new Error("your team isn't in the rosters");
             }
         } catch (error) {
-            state.data = null;
-            state.failed = loadFailed("Add", error, body, standAside);
-            if (!state.failed) {
-                return;
-            }
-            // Retry comes back on when MFL's wait is over
-            if (waitLeft()) {
-                setTimeout(render, waitLeft());
-            }
+            loadFailed("Add", error, body, standAside);
+            return;
         }
         render();
         // Rosters' Add opens with its player chosen (`#player-<id>`)

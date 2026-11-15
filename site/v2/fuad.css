@@ -4695,29 +4695,10 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 #fuad-ir .fuad-move-alert strong,
 #fuad-trades .fuad-move-alert strong { color: var(--fuad-bad); }
 
-#fuad-add .fuad-move-failed,
-#fuad-drop .fuad-move-failed,
-#fuad-ir .fuad-move-failed,
-#fuad-trades .fuad-move-failed,
-#fuad-fallback.fuad-move-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--fuad-panel); color: var(--fuad-text); font-size: 15px; }
-#fuad-fallback { margin-bottom: 12px; }
+/* above MFL's own page when Moves can't check (moves.js mflFallback) */
+#fuad-fallback { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; background: var(--fuad-panel); color: var(--fuad-text); font-size: 15px; }
 
-#fuad-add .fuad-move-failed-buttons,
-#fuad-drop .fuad-move-failed-buttons,
-#fuad-ir .fuad-move-failed-buttons,
-#fuad-trades .fuad-move-failed-buttons,
-#fuad-fallback .fuad-move-failed-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-
-#fuad-add .fuad-move-retry,
-#fuad-drop .fuad-move-retry,
-#fuad-ir .fuad-move-retry,
-#fuad-trades .fuad-move-retry,
-#fuad-fallback .fuad-move-retry { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-field); border-radius: 12px; background: transparent; color: var(--fuad-text); font: 600 15px var(--fuad-body); }
-
-#fuad-add .fuad-move-retry:disabled,
-#fuad-drop .fuad-move-retry:disabled,
-#fuad-ir .fuad-move-retry:disabled,
-#fuad-trades .fuad-move-retry:disabled { color: var(--fuad-faint); }
+#fuad-fallback button { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-field); border-radius: 12px; background: transparent; color: var(--fuad-text); font: 600 15px var(--fuad-body); }
 
 #fuad-add .fuad-cta,
 #fuad-add .fuad-add-start,

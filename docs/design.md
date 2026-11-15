@@ -197,14 +197,14 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   refusal ("You may not set your lineup at this time because …": the season over, a roster to fix),
   another team's IR page, MFL's answer to an add made on its own form.
 - **Moves that can't check fall back to MFL's page:** when Add, Drop, IR or Trades can't load what
-  its checks need, MFL unreachable or an export changed, the member gets MFL's own page, so a move
-  is never stopped by v2, with a line above it: "Error loading cap and roster data. Rule checks are
-  disabled; please ensure this transaction follows league rules." and Reload Page, which tries v2's
-  again (`mflFallback` in `ui/moves.js`). It's logged as an error (`[fuad] Drop couldn't load, so
-  MFL's page was shown: …`), which the devices form counts. MFL asking us to wait (HTTP 429) keeps
-  the screen's "Couldn't check your cap." with Retry instead, as MFL's own page would be refused
-  too; its MFL's page button gives the same page and line. A move made there that breaks the
-  league's rules is the daily job's to flag, its penalties and contract years held.
+  its checks need, for any reason (MFL unreachable, MFL asking us to wait, an export changed), the
+  member gets MFL's own page, so a move is never held up by v2, with a line above it: "Error loading
+  cap and roster data. Rule checks are disabled; please ensure this transaction follows league
+  rules." and Reload Page, which tries v2's again (`mflFallback` in `ui/moves.js`). It's logged as
+  an error with its cause (`[fuad] Drop couldn't load, so MFL's page was shown: … HTTP 429`), which
+  the devices form counts: a fallback that happens is a design issue to fix, not a member's to work
+  around. A move made there that breaks the league's rules is the daily job's to flag, its
+  penalties and contract years held.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **Exports the job, and v2's checks and forms, read** are checked as they come (`fetchExport`: a section missing fails), and
@@ -493,7 +493,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   MFL, wait for a fresh one. On the home page, MFL's hidden chat module stops reading the chat every
   few seconds, as Home reads its own.
 - After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel
-  with nothing to show says MFL asked us to wait, with Retry off until then. Moves aren't held.
+  with nothing to show says MFL asked us to wait, with Retry off until then, and Moves' screens fall
+  back to MFL's page (Outside change). Moves themselves aren't held.
 - League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from
   MFL's page by a point or so: MFL's simulation carries a random value across every lineup it has
   shown since the page loaded.

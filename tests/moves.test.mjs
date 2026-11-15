@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DOMParser} from "linkedom";
-import {FALLBACK_TEXT, READ_GAP, READS, Refused, loadFailed, mflFallback, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
+import {FALLBACK_TEXT, READ_GAP, READS, Refused, loadFailed, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads
 function reads(...answers) {
@@ -110,55 +110,43 @@ test("Moves keeps the league export without its owners' names and emails", () =>
     assert.deepEqual(withoutOwners({}), {});
 });
 
-// MFL's page with v2's screen on it, as `document`, while `run` runs; what console.error and
-// console.warn were given
+// MFL's page with v2's screen on it, as `document`, while `run` runs; what console.error was given
 async function onPage(run) {
     const doc = new DOMParser().parseFromString('<html><body><div class="pagebody"><div id="fuad-drop"></div><form id="mfl"></form></div></body></html>', "text/html");
-    const logged = {error: [], warn: []};
-    const saved = {document: globalThis.document, error: console.error, warn: console.warn};
+    const logged = {error: []};
+    const saved = {document: globalThis.document, error: console.error};
     globalThis.document = doc;
     console.error = (first) => logged.error.push(first);
-    console.warn = (first) => logged.warn.push(first);
     try {
         await run(doc);
     } finally {
         Object.assign(globalThis, {document: saved.document});
         console.error = saved.error;
-        console.warn = saved.warn;
     }
     return logged;
 }
 
 test("a screen that can't load gives MFL's own page, says its rules aren't checked, and logs it", async () => {
-    let doc;
-    const logged = await onPage(async (page) => {
-        doc = page;
-        const body = page.querySelector(".pagebody");
-        const mount = page.getElementById("fuad-drop");
-        const standAside = () => mount.remove();
-        assert.equal(loadFailed("Drop", new Error("HTTP 500"), body, standAside), null);
-        // the busy box's MFL's page, after it: one line
-        mflFallback(body, standAside);
-    });
-    assert.equal(doc.getElementById("fuad-drop"), null);
-    assert.ok(doc.getElementById("mfl"));
-    const lines = doc.querySelectorAll("#fuad-fallback");
-    assert.equal(lines.length, 1);
-    assert.equal(doc.querySelector(".pagebody").firstElementChild.id, "fuad-fallback");
-    assert.equal(lines[0].querySelector("span").textContent, FALLBACK_TEXT);
-    assert.equal(FALLBACK_TEXT, "Error loading cap and roster data. Rule checks are disabled; please ensure this transaction follows league rules.");
-    assert.equal(lines[0].querySelector("button").textContent, "Reload Page");
-    assert.deepEqual(logged.error, ["[fuad] Drop couldn't load, so MFL's page was shown:"]);
-});
-
-test("MFL asking us to wait keeps the screen and its Retry, as MFL's own page would be refused too", async () => {
-    let doc;
-    const logged = await onPage(async (page) => {
-        doc = page;
-        const failed = loadFailed("Add", Object.assign(new Error("HTTP 429"), {status: 429}), page.querySelector(".pagebody"), () => page.getElementById("fuad-drop").remove());
-        assert.equal(failed, "busy");
-    });
-    assert.ok(doc.getElementById("fuad-drop"));
-    assert.equal(doc.getElementById("fuad-fallback"), null);
-    assert.deepEqual(logged.error, []);
+    for (const error of [new Error("HTTP 500"), Object.assign(new Error("HTTP 429"), {status: 429})]) {
+        let doc;
+        const logged = await onPage(async (page) => {
+            doc = page;
+            const body = page.querySelector(".pagebody");
+            const mount = page.getElementById("fuad-drop");
+            const standAside = () => mount.remove();
+            loadFailed("Drop", error, body, standAside);
+            // a second failure, as a Retry would: still one line
+            loadFailed("Drop", error, body, standAside);
+        });
+        assert.equal(doc.getElementById("fuad-drop"), null, error.message);
+        assert.ok(doc.getElementById("mfl"));
+        const lines = doc.querySelectorAll("#fuad-fallback");
+        assert.equal(lines.length, 1);
+        assert.equal(doc.querySelector(".pagebody").firstElementChild.id, "fuad-fallback");
+        assert.equal(lines[0].getAttribute("role"), "alert");
+        assert.equal(lines[0].querySelector("span").textContent, FALLBACK_TEXT);
+        assert.equal(FALLBACK_TEXT, "Error loading cap and roster data. Rule checks are disabled; please ensure this transaction follows league rules.");
+        assert.equal(lines[0].querySelector("button").textContent, "Reload Page");
+        assert.deepEqual(logged.error, Array(2).fill("[fuad] Drop couldn't load, so MFL's page was shown:"), error.message);
+    }
 });

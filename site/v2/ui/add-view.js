@@ -11,7 +11,7 @@
 import {ROSTER_MAX} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
-import {CHECK, alertLine, failedBox} from "./moves.js";
+import {CHECK, alertLine} from "./moves.js";
 import {STAR} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
 import {
@@ -78,13 +78,8 @@ export function statusMarkup(state) {
     return parts.join("");
 }
 
-// before the data loads, or when it couldn't
-export function loadingMarkup(state) {
-    return state.failed
-        ? `${statusMarkup(state)}${failedBox("your cap", state.failed)}
-    <button type="button" class="fuad-add-start" disabled>${PLUS}Add a player</button>`
-        : `<section class="fuad-panel">${placeholders(8)}</section>`;
-}
+// before the data loads
+export const loadingMarkup = () => `<section class="fuad-panel">${placeholders(8)}</section>`;
 
 function rosterLine(team, p, cls) {
     return `<div class="${cls}"><span class="fuad-add-cap-label"><span>Projected roster</span></span><span class="fuad-add-cap-value"><span>${team.franchise.numPlayers}</span>${ARROW}<span class="${p.overRoster ? "fuad-bad" : ""}">${p.roster}</span></span></div>`;

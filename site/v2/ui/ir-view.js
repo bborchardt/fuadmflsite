@@ -10,7 +10,7 @@
 import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
-import {alertLine, capTone, doneLine, failedBox} from "./moves.js";
+import {alertLine, capTone, doneLine} from "./moves.js";
 import {changeTone, signed} from "./add-model.js";
 import {contractYears} from "./rosters-model.js";
 import {dropChoices, irBlockText} from "./ir-model.js";
@@ -32,10 +32,8 @@ export function statusMarkup(state) {
     return parts.join("");
 }
 
-// before the data loads, or when it couldn't
-export function loadingMarkup(state) {
-    return state.failed ? `${statusMarkup(state)}${failedBox("your roster and cap", state.failed)}` : `<section class="fuad-panel">${placeholders(8)}</section>`;
-}
+// before the data loads
+export const loadingMarkup = () => `<section class="fuad-panel">${placeholders(8)}</section>`;
 
 function mustMarkup(musts, dropHref) {
     return musts.map((row) => `<p class="fuad-move-alert fuad-ir-must" role="alert"><strong>${esc(row.player.fullName)} must come off IR:</strong> the NFL no longer lists him.${row.off && row.entry.locked ? " His game has started, so he can be activated once it clears." : ""}${dropHref ? ` <a href="${esc(`${dropHref}#player-${row.player.playerId}`)}">Drop him instead</a>` : ""}</p>`).join("");
