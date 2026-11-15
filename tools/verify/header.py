@@ -7,8 +7,8 @@ Each case loads a saved page (tools/verify/screens/, as screens.py does) with it
 mfl/message-header.html and the clone's beta offer, in Chromium and in WebKit (Safari's engine), and
 checks which version ran, the beta choice left stored, the cover, the bars and notes shown, and the
 rows sent to the devices form as the page is left. A version's files can be made to
-fail (404) or not start (a syntax error), and the browser to be older than the minimum (no WeakRef,
-or no :where()).
+fail (404) or not start (a syntax error), the browser to be older than the minimum (no WeakRef,
+or no :where()), and the header to run twice, as when a member puts it in a home page tab of their own.
 """
 import argparse
 import json
@@ -92,6 +92,22 @@ CASES = {
                           {"ran": "v1", "devices": [{"ran": "v1", "errors": ""}, {"errors": "[fuad] couldn't draw Test: boom x2"}]}),
     "device row commissioner": (LINEUP, {"listed": True, "team": "0000", "teams": ["0000"]}, {"ran": "v1", "devices": [{"team": "0000"}]}),
     "device row unlisted": (LINEUP, {}, {"ran": "v1", "devices": []}),
+    # a member's home page with the header in a tab of their own too: the second copy does nothing, so one
+    # download, one bar and one row, whichever way the page goes
+    "twice": (HOME, {"twice": True}, {"ran": "v1", "requested": ["v1"], "beta": None, "cloaked": False, "bars": 0}),
+    "twice beta": (HOME, {"twice": True, "beta": "v2"}, {"ran": "v2", "requested": ["v2"], "beta": "v2", "cloaked": False, "bar": "hidden"}),
+    "twice beta 404": (HOME, {"twice": True, "beta": "v2", "fail": ("v2", "404")},
+                       {"ran": "v1", "requested": ["v2", "v1"], "bar": "The beta couldn’t load", "bars": 1}),
+    "twice beta broken": (HOME, {"twice": True, "beta": "v2", "fail": ("v2", "syntax")},
+                          {"ran": "v1", "requested": ["v2", "v1"], "bar": "The beta couldn’t load", "bars": 1}),
+    "twice v2 main": (HOME, {"twice": True, "main": "v2", "offer": False}, {"ran": "v2", "requested": ["v2"], "bars": 0}),
+    "twice v2 main 404": (HOME, {"twice": True, "main": "v2", "offer": False, "fail": ("v2", "404")},
+                          {"ran": None, "requested": ["v2"], "note": True}),
+    "twice old browser": (HOME, {"twice": True, "old": True, "beta": "v2"}, {"ran": "v1", "requested": ["v1"], "inBeta": False}),
+    "twice device row none": (HOME, {"twice": True, "listed": True, "fail": ("v1", "404")},
+                              {"ran": None, "note": True, "devices": [{"ran": "none"}]}),
+    "twice device row broken beta": (HOME, {"twice": True, "listed": True, "beta": "v2", "fail": ("v2", "syntax")},
+                                     {"ran": "v1", "devices": [{"ran": "v1-fallback", "errors": "~uncaught: "}]}),
 }
 
 # the devices form and its fields, as the header names them
@@ -183,6 +199,12 @@ def run(browser, site, name):
         if request.resource_type == "document":
             body = args["body"]
             body = SAVED.sub(lambda _: swapped, body, count=1)
+            if given.get("twice"):
+                # a member's own home page layout with the header message in a tab too
+                tab = body.find('id="tabcontent1"')
+                assert tab > 0, "the saved home page no longer has a second tab"
+                tab = body.rfind("<", 0, tab)
+                body = body[:tab] + swapped + body[tab:]
             if given.get("listed"):
                 body = body.replace(f"league_id = '{LEAGUE}'", "league_id = '48571'")
             if given.get("skin"):
@@ -213,6 +235,7 @@ def run(browser, site, name):
             covered: Boolean(window.__covered),
             cover: window.__cover || null,
             inBeta: document.documentElement.classList.contains('fuad-beta'),
+            bars: document.querySelectorAll('#fuad-preview').length,
         };
     }""")
     # the page left (the header's report, then any errors after it), with errors logged as v1's and v2's

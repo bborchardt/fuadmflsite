@@ -318,6 +318,11 @@ Each is an ordinary page form, posted from the logged-in browser.
   only Main's `#homepagecolumns`, so v2 knows the home page by its address. The setup screen
   (commissioner's Home Page Modules) shows a tab for a home page message still placed in it, though
   the home page doesn't.
+- **A member's own home page:** the commissioner's tabs are the default, and a member can replace
+  them with tabs and modules of their own (any of MFL's, and the commissioner's home page messages),
+  which they then get in place of the league's, the commissioner's tab messages gone unless they
+  placed them. A message set to appear on all league pages (the header) can't be left out, but can
+  be placed in a tab too, so it runs twice on the home page (the commissioner, the clone, 14 Nov 2026).
 - **Phones:** the BlueMesh skin hides the nav bar below 54.25em; `fuad.css` brings it back. Wide
   modules already scroll sideways.
 - **Leagues on one host** share a browser's storage (the clone and the league are both on `www44`), so

@@ -25,7 +25,9 @@ from playwright.sync_api import sync_playwright
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 PAGES = REPO / "tests" / "fixtures" / "pages"
-VIEWERS = ["guest", "member", "commish"]
+# member-custom: a member's own home page layout, every module MFL offers spread over seven tabs, the
+# header in one of them too
+VIEWERS = ["guest", "member", "commish", "member-custom"]
 
 _spec = importlib.util.spec_from_file_location("screens_harness", HERE / "screens.py")
 harness = importlib.util.module_from_spec(_spec)
@@ -48,7 +50,7 @@ EXPECTED = {
     "csetup-FRANCHISE": {"member": "fuad-setup", "commish": None},
     "csetup-HMPGMOD": {"member": None, "commish": None},
     "csetup-SKIN": {"guest": None, "member": "fuad-setup", "commish": None},
-    "home": {"guest": "fuad-home-on", "member": "fuad-home-on", "commish": "fuad-home-on"},
+    "home": {"guest": "fuad-home-on", "member": "fuad-home-on", "commish": "fuad-home-on", "member-custom": "fuad-home-on"},
     "lineup": {"guest": None, "member": "fuad-lineup-on", "commish": None},
     "mb-board_show": {"guest": "fuad-board", "member": "fuad-board", "commish": "fuad-board"},
     "mb-forum_search": {"guest": "fuad-side", "member": "fuad-side", "commish": "fuad-side"},
@@ -136,8 +138,8 @@ def main():
     differ_errors = []
     for viewer, name, taken, errors, failed in results:
         found.setdefault(name, {})[viewer] = taken
-        # the home page's chart script is MFL's, not saved with it
-        errors = [error for error in errors if "FusionCharts" not in error]
+        # the home page's chart and video modules' scripts are MFL's, not saved with it
+        errors = [error for error in errors if "FusionCharts" not in error and "CameraTag" not in error]
         if errors:
             differ_errors.append(f"{viewer}/{name}: page errors {errors}")
         # a guest's login page fails to draw as the screen v2 tries first; only a page v2 should take matters
