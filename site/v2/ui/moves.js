@@ -8,7 +8,7 @@ import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {CAP_TIGHT} from "./format.js";
 import {cached} from "./store.js";
-import {allAtOnce, forget, mflFetch, pageFetch, waitLeft} from "./page-fetch.js";
+import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {seasonFacts} from "./context.js";
 import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
@@ -128,10 +128,10 @@ export function moveOutcome(sent, found, shows) {
 
 // The line for a move that didn't happen: "Couldn't drop Jackson: <MFL's reason>." or, with no
 // reason, "Couldn't drop Jackson. Reload the page and try again." `changed`: MFL changed something
-// anyway, and the page reloads to show it.
+// anyway, and the page reloads to show it, which the member is asked to review.
 export function failedLine(what, error, {changed = false} = {}) {
     const reason = error && error.reason ? String(error.reason).replace(/\.$/, "") : null;
-    const tail = changed ? " This is how MFL has it now." : reason ? "" : " Reload the page and try again.";
+    const tail = changed ? " Some changes may have gone through; review below." : reason ? "" : " Reload the page and try again.";
     return `Couldn’t ${what}${reason ? `: ${reason}` : ""}.${tail}`;
 }
 
@@ -214,9 +214,26 @@ export function leaveFlash(key, flash) {
 export const doneLine = (text) => `<p class="fuad-move-status" role="status">${CHECK}<span>${esc(text)}</span></p>`;
 export const alertLine = (text) => `<p class="fuad-move-alert" role="alert">${esc(text)}</p>`;
 
-// The data a screen's checks need couldn't load (`failed` is "busy" while MFL asks us to wait):
-// Retry, off until the wait is over, or MFL's own page
-export function failedBox(what, failed) {
-    const busy = failed === "busy";
-    return `<div class="fuad-move-failed" role="alert"><span>Couldn’t check ${what}.${busy ? " MFL asked us to wait. Retry in a few seconds." : ""}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry" data-act="retry"${busy && waitLeft() ? " disabled" : ""}>Retry</button><button type="button" class="fuad-move-retry" data-act="mfl">MFL’s page</button></span></div>`;
+// When a screen's checks can't load, the member is given MFL's own page, which doesn't check the
+// league's rules, with a line saying so above it and a reload, which tries v2's again
+export const FALLBACK_TEXT = "Error loading cap and roster data. Rule checks are disabled; please ensure this transaction follows league rules.";
+export function mflFallback(body, standAside) {
+    standAside();
+    if (!body || document.getElementById("fuad-fallback")) {
+        return;
+    }
+    const line = document.createElement("div");
+    line.id = "fuad-fallback";
+    line.setAttribute("role", "alert");
+    line.innerHTML = `<span>${FALLBACK_TEXT}</span><button type="button">Reload Page</button>`;
+    line.querySelector("button").addEventListener("click", () => window.location.reload());
+    body.prepend(line);
+}
+
+// A screen's load failed, MFL's wait (HTTP 429) included: a move is never held up by v2, so it falls
+// back to MFL's page, logged as an error so the header's devices form counts it, and a failure that
+// happens is a design issue to fix (docs/design.md: Outside change)
+export function loadFailed(screen, error, body, standAside) {
+    console.error(`[fuad] ${screen} couldn't load, so MFL's page was shown:`, error);
+    mflFallback(body, standAside);
 }

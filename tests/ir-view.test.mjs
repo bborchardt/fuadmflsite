@@ -93,7 +93,7 @@ test("while saving every box is off, and the button says so", () => {
     assert.match(saveButton(html), /disabled>Saving…</);
     assert.match(irMarkup(viewOf({active: 28, state: {done: "Saved: Hurts to IR.", error: "Couldn’t activate Achane."}})),
         /role="status">.*Saved: Hurts to IR\..*role="alert">Couldn’t activate Achane\./s);
-    assert.match(loadingMarkup({failed: true}), /Couldn’t check your roster and cap\./);
+    assert.match(loadingMarkup(), /class="fuad-placeholder"/);
     assert.equal(controlSelector({act: "toIR", id: "hurts"}), '[data-act="toIR"][data-id="hurts"]');
     assert.equal(controlSelector({act: "save"}), '[data-act="save"][data-id=""]');
 });

@@ -4,11 +4,10 @@
 
 import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
-import {waitLeft} from "./page-fetch.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {
-    WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, rosterIds,
-    sendMove, takeFlash
+    WIDE, alertLine, capTone, doneLine, failedLine, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, rosterIds,
+    loadFailed, sendMove, takeFlash
 } from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
@@ -78,7 +77,7 @@ export async function drawDrop({context, franchiseId}) {
 
     const wide = window.matchMedia(WIDE);
     const flash = takeFlash(FLASH_KEY);
-    const state = {data: null, failed: false, open: null, done: flash.done, error: flash.error || "", busy: false};
+    const state = {data: null, open: null, done: flash.done, error: flash.error || "", busy: false};
 
     const team = () => teamState(state.data.league, franchiseId, state.data.groups);
     // in season once the roster limits hold, from the cut-down date (2.5)
@@ -158,9 +157,7 @@ export async function drawDrop({context, franchiseId}) {
         const acted = active && mount.contains(active) && active.dataset && active.dataset.act
             ? `[data-act="${active.dataset.act}"][data-id="${active.dataset.id}"]` : null;
         if (!state.data) {
-            mount.innerHTML = state.failed
-                ? `${statusMarkup()}${failedBox("your cap", state.failed)}`
-                : `<section class="fuad-panel">${placeholders(8)}</section>`;
+            mount.innerHTML = `<section class="fuad-panel">${placeholders(8)}</section>`;
             return;
         }
         const groups = rows();
@@ -214,7 +211,7 @@ export async function drawDrop({context, franchiseId}) {
         if (outcome !== "unread" && JSON.stringify(ids) !== JSON.stringify(mine())) {
             reloadWith({error: failedLine(`drop ${name}`, outcome, {changed: true})});
         } else {
-            state.error = outcome === "unread" ? "Couldn’t check whether MFL made it. Reload the page to see your roster." : failedLine(`drop ${name}`, outcome);
+            state.error = outcome === "unread" ? "Move sent, but couldn’t be confirmed. Reload the page to check your roster." : failedLine(`drop ${name}`, outcome);
             state.busy = false;
             render();
             // the button was off while sending, so focus fell away from it
@@ -233,11 +230,7 @@ export async function drawDrop({context, franchiseId}) {
             return;
         }
         const act = target.dataset.act;
-        if (act === "retry") {
-            load();
-        } else if (act === "mfl") {
-            standAside();
-        } else if (act === "toggle" && !state.busy) {
+        if (act === "toggle" && !state.busy) {
             state.open = state.open === target.dataset.id ? null : target.dataset.id;
             state.error = "";
             state.done = null;
@@ -249,7 +242,6 @@ export async function drawDrop({context, franchiseId}) {
     wide.addEventListener("change", () => state.data && render());
 
     async function load() {
-        state.failed = false;
         render();
         try {
             state.data = await loadData(context, franchiseId);
@@ -257,13 +249,8 @@ export async function drawDrop({context, franchiseId}) {
                 throw new Error("your team isn't in the rosters");
             }
         } catch (error) {
-            console.warn("[fuad] couldn't load Drop:", error);
-            state.data = null;
-            state.failed = error && error.status === 429 ? "busy" : true;
-            // Retry comes back on when MFL's wait is over
-            if (state.failed === "busy" && waitLeft()) {
-                setTimeout(render, waitLeft());
-            }
+            loadFailed("Drop", error, body, standAside);
+            return;
         }
         // Rosters' popup Drop opens with his row open (`#player-<id>`)
         const asked = (window.location.hash.match(/^#player-(\d+)$/) || [])[1];

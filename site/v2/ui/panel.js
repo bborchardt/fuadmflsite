@@ -12,7 +12,7 @@ export const refused = (error) => Boolean(error && error.status === 429);
 
 // "Couldn't load standings." and Retry; when MFL asked to wait, Retry is off until the wait is over
 export function failedMarkup(what, error) {
-    const text = refused(error) ? "MFL asked us to wait. Retry in a few seconds." : `Couldn’t load ${esc(what)}.`;
+    const text = refused(error) ? "Server is busy. Try again in a few seconds." : `Couldn’t load ${esc(what)}.`;
     return `<div class="fuad-failed" role="alert"><span>${text}</span><button type="button" class="fuad-quiet">Retry</button></div>`;
 }
 

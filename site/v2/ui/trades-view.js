@@ -13,7 +13,7 @@ import {ROSTER_MAX} from "../lib/rules.js";
 import {ZONE} from "../lib/zone.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
-import {alertLine, capTone, doneLine, failedBox} from "./moves.js";
+import {alertLine, capTone, doneLine} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {dayText, whenText} from "./home-model.js";
 import {contractYears} from "./rosters-model.js";
@@ -54,10 +54,8 @@ export function statusMarkup(state) {
     ].join("");
 }
 
-// before the data loads, or when it couldn't
-export function loadingMarkup(state) {
-    return state.failed ? `${statusMarkup(state)}${failedBox("your cap", state.failed)}` : `<section class="fuad-panel">${placeholders(8)}</section>`;
-}
+// before the data loads
+export const loadingMarkup = () => `<section class="fuad-panel">${placeholders(8)}</section>`;
 
 const notice = (head, text, tone = "caution") => `<p class="fuad-trades-notice fuad-trades-${tone}"><strong>${esc(head)}</strong> ${text}</p>`;
 

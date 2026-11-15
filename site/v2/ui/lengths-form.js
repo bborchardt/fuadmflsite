@@ -96,7 +96,9 @@ export function openLengthsForm({context, layer, players, active, due, unread, d
             // the reload drops the dialog's history entry (dialog.js); closing first would race it
             onSent();
         } catch (failure) {
-            error.textContent = `Couldn’t post them: ${failure.message}. Try again.`;
+            // the detail goes to the commissioner's devices form, not the member
+            console.error("[fuad] couldn't post contract lengths:", failure);
+            error.textContent = "Couldn’t post your contract lengths. Try again.";
             error.hidden = false;
             button.disabled = false;
         }

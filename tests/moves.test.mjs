@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DOMParser} from "linkedom";
-import {READ_GAP, READS, Refused, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
+import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, loadFailed, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads
 function reads(...answers) {
@@ -108,4 +108,52 @@ test("Moves keeps the league export without its owners' names and emails", () =>
     assert.deepEqual(withoutOwners({franchises: {franchise: {id: "0001", owner_name: "Owner 0001"}}}), {franchises: {franchise: {id: "0001"}}});
     assert.equal(league.franchises.franchise[0].owner_name, "Owner 0001");
     assert.deepEqual(withoutOwners({}), {});
+});
+
+// MFL's page with v2's screen on it, as `document`, while `run` runs; what console.error was given
+async function onPage(run) {
+    const doc = new DOMParser().parseFromString('<html><body><div class="pagebody"><div id="fuad-drop"></div><form id="mfl"></form></div></body></html>', "text/html");
+    const logged = {error: []};
+    const saved = {document: globalThis.document, error: console.error};
+    globalThis.document = doc;
+    console.error = (first) => logged.error.push(first);
+    try {
+        await run(doc);
+    } finally {
+        Object.assign(globalThis, {document: saved.document});
+        console.error = saved.error;
+    }
+    return logged;
+}
+
+test("a screen that can't load gives MFL's own page, says its rules aren't checked, and logs it", async () => {
+    for (const error of [new Error("HTTP 500"), Object.assign(new Error("HTTP 429"), {status: 429})]) {
+        let doc;
+        const logged = await onPage(async (page) => {
+            doc = page;
+            const body = page.querySelector(".pagebody");
+            const mount = page.getElementById("fuad-drop");
+            const standAside = () => mount.remove();
+            loadFailed("Drop", error, body, standAside);
+            // a second failure, as a Retry would: still one line
+            loadFailed("Drop", error, body, standAside);
+        });
+        assert.equal(doc.getElementById("fuad-drop"), null, error.message);
+        assert.ok(doc.getElementById("mfl"));
+        const lines = doc.querySelectorAll("#fuad-fallback");
+        assert.equal(lines.length, 1);
+        assert.equal(doc.querySelector(".pagebody").firstElementChild.id, "fuad-fallback");
+        assert.equal(lines[0].getAttribute("role"), "alert");
+        assert.equal(lines[0].querySelector("span").textContent, FALLBACK_TEXT);
+        assert.equal(FALLBACK_TEXT, "Error loading cap and roster data. Rule checks are disabled; please ensure this transaction follows league rules.");
+        assert.equal(lines[0].querySelector("button").textContent, "Reload Page");
+        assert.deepEqual(logged.error, Array(2).fill("[fuad] Drop couldn't load, so MFL's page was shown:"), error.message);
+    }
+});
+
+test("a move that didn't happen says why if MFL said, else to try again, and asks for a review when something changed anyway", () => {
+    assert.equal(failedLine("drop Jackson", new Refused("Roster moves are locked for this team.")), "Couldn’t drop Jackson: Roster moves are locked for this team.");
+    assert.equal(failedLine("drop Jackson", new Error("HTTP 500")), "Couldn’t drop Jackson. Reload the page and try again.");
+    assert.equal(failedLine("save your IR moves", new Refused("Invalid roster"), {changed: true}),
+        "Couldn’t save your IR moves: Invalid roster. Some changes may have gone through; review below.");
 });

@@ -4,10 +4,10 @@
 // page underneath; anything v2 can't read leaves MFL's page.
 
 import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
-import {pageFetch, waitLeft} from "./page-fetch.js";
+import {pageFetch} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
-import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
+import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, loadFailed, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 import {controlSelector, irMarkup, loadingMarkup, moveCount} from "./ir-view.js";
@@ -52,7 +52,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
     const wide = window.matchMedia(WIDE);
     const flash = takeFlash(FLASH_KEY);
     const state = {
-        data: null, report: null, failed: false, busy: false,
+        data: null, report: null, busy: false,
         toIR: new Set(), activate: new Set(), drop: null,
         done: flash.done, error: flash.error || ""
     };
@@ -153,7 +153,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
                 return;
             }
         }
-        state.error = !roster && sent ? "Couldn’t check whether MFL made it. Reload the page to see your roster." : failedLine("save your IR moves", refused);
+        state.error = !roster && sent ? "Move sent, but couldn’t be confirmed. Reload the page to check your roster." : failedLine("save your IR moves", refused);
         state.busy = false;
         render();
         const again = mount.querySelector("[data-act=save]");
@@ -166,8 +166,6 @@ export async function drawIR({context, franchiseId, dropHref}) {
 
     // what each control does (its data-act)
     const onClick = {
-        retry: () => load(),
-        mfl: () => standAside(),
         save: () => save(),
         player: (target) => {
             if (window.fuadOpenPlayer) {
@@ -214,7 +212,6 @@ export async function drawIR({context, franchiseId, dropHref}) {
     wide.addEventListener("change", () => state.data && render());
 
     async function load() {
-        state.failed = false;
         render();
         try {
             const [data, injuries] = await Promise.all([
@@ -228,13 +225,8 @@ export async function drawIR({context, franchiseId, dropHref}) {
             state.data = data;
             state.report = injuryReport(injuries);
         } catch (error) {
-            console.warn("[fuad] couldn't load IR:", error);
-            state.data = null;
-            state.failed = error && error.status === 429 ? "busy" : true;
-            // Retry comes back on when MFL's wait is over
-            if (state.failed === "busy" && waitLeft()) {
-                setTimeout(render, waitLeft());
-            }
+            loadFailed("IR", error, body, standAside);
+            return;
         }
         // Rosters' popup IR opens with him ticked (`#player-<id>`)
         const asked = (window.location.hash.match(/^#player-(\d+)$/) || [])[1];
