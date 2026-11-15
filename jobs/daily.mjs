@@ -41,6 +41,7 @@ const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", na
 const {API_BASE, GAME_HOURS, asArray, displayName, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
 const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
+const {WEEK_ROSTERS, checkShape} = await lib("shapes.js");
 const {DEFAULT_END_WEEK, OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
 const {MAX_PENALTIES_PER_RUN, needsCharge, pendingPenalties, salaryAdjXml} =
@@ -143,6 +144,9 @@ function needsAttention(message) {
     attention.push(message);
     process.exitCode = 1;
 }
+
+// a check skipped for want of an export: flagged when MFL's export has changed, as that won't pass
+const skipped = (error, message) => (error.changed ? needsAttention : log)(message);
 
 // the run fails on purpose so GitHub emails the commissioner; the annotation says why
 function explainFailure() {
@@ -256,8 +260,10 @@ async function loginWorks(cookie) {
 const loginIsInLeague = () => loginLeagues.some((entry) => entry.league_id === leagueId
     || (/\/home\/(\d+)/.exec(entry.url || "") || [])[1] === leagueId);
 
-const fetchFrom = (base, type, params, section = type, year = season) =>
-    fetchExport(exportUrl(base, year, type, params), section, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
+// an export whose items lack a field the job relies on throws, so nothing is written from it (lib/shapes.js)
+const exportOptions = {fetchImpl: mflFetch, init: {headers: mflHeaders}, check: checkShape};
+const fetchFrom = (base, type, params, section = type, year = season, rules) =>
+    fetchExport(exportUrl(base, year, type, params), section, rules ? {...exportOptions, check: (name, body) => checkShape(name, body, rules)} : exportOptions);
 
 function writeSummary() {
     if (!process.env.GITHUB_STEP_SUMMARY) {
@@ -457,7 +463,7 @@ async function payouts(loggedIn, {built}) {
         log("No week has scores yet; no payouts to record.");
         return;
     }
-    const next = await weekKickoff(season, latest + 1, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
+    const next = await weekKickoff(season, latest + 1, exportOptions);
     const scored = next && now >= next ? latest : latest - 1;
     const finalWeek = Math.min(scored, backupsOpenFrom - 1);
     if (finalWeek < scored) {
@@ -866,7 +872,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
                 const game = games.find((each) => asArray(each.team).some((team) => team.id === teamOf(id)));
                 return game ? Number(game.kickoff) : null;
             };
-            const rostersThen = asArray((await fetchFrom(host, "rosters", {L: leagueId, W: week})).franchise);
+            const rostersThen = asArray((await fetchFrom(host, "rosters", {L: leagueId, W: week}, "rosters", season, WEEK_ROSTERS)).franchise);
             let lastWeek = null;
             let savedResults = null;
             const changed = [];
@@ -1023,25 +1029,25 @@ async function leagueState({loggedIn}) {
         fetchFrom(host, "freeAgents", {L: leagueId}),
         // only the anti-tanking check needs the week's results; without them it flags nothing
         fetchFrom(host, "weeklyResults", {L: leagueId}).catch((error) => {
-            log(`Couldn't load the league's weekly results (${error.message}); the anti-tanking check is skipped.`);
+            skipped(error, `Couldn't load the league's weekly results (${error.message}); the anti-tanking check is skipped.`);
             return {};
         }),
         // the final cut-down date, when the roster limits start before week 1; without it, from week 1
         // (MFL shows the calendar only to a member)
         loggedIn ? fetchFrom(host, "calendar", {L: leagueId}).catch((error) => {
-            log(`Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
+            skipped(error, `Couldn't load the league's calendar (${error.message}); the roster limits start with week 1.`);
             return null;
         }) : null
     ]);
     const cutDown = cutDownAt(calendar, season);
     // today's NFL injury report, for injured reserve eligibility; without it that check is skipped
     const currentInjuries = await fetchFrom(API_BASE, "injuries").catch((error) => {
-        log(`Couldn't load today's NFL injury report (${error.message}); the injured reserve check is skipped.`);
+        skipped(error, `Couldn't load today's NFL injury report (${error.message}); the injured reserve check is skipped.`);
         return null;
     });
     // the results week's report, for the anti-tanking check; without it that check flags nothing
     const injuries = await fetchFrom(API_BASE, "injuries", {W: weeklyResults.week || ""}).catch((error) => {
-        log(`Couldn't load the week ${weeklyResults.week || "(unknown)"} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
+        skipped(error, `Couldn't load the week ${weeklyResults.week || "(unknown)"} NFL injury report (${error.message}); the anti-tanking check is skipped.`);
         return null;
     });
     // buildLeague fills in the players it's given, so each build takes its own
@@ -1069,7 +1075,7 @@ async function leagueState({loggedIn}) {
         if ("weeks" in built && !built.weeks) {
             throw new Error("the league export gives no last regular season week or end week");
         }
-        Object.assign(built, await seasonPhase(season, now, {fetchImpl: mflFetch, init: {headers: mflHeaders}}, built.weeks));
+        Object.assign(built, await seasonPhase(season, now, exportOptions, built.weeks));
     } catch (error) {
         needsAttention(`Couldn't tell where the ${season} season is (${error.message}); the League Alerts checks were skipped, and teams over ${ROSTER_MAX} are held.`);
         built.seasonOver = null;
@@ -1214,7 +1220,7 @@ async function franchiseSnapshot(year) {
         log(`The ${year} franchise snapshot already exists.`);
         return false;
     }
-    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, {fetchImpl: mflFetch, init: {headers: mflHeaders}});
+    const deadline = await weekKickoff(year, TRADE_DEADLINE_WEEK, exportOptions);
     if (!deadline) {
         log(`MFL hasn't published the ${year} week ${TRADE_DEADLINE_WEEK} schedule yet; nothing to snapshot.`);
         return false;
