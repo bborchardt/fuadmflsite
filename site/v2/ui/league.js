@@ -5,6 +5,7 @@
 import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup, pageChanged} from "./panel.js";
 import {basicHref} from "./nav.js";
+import {lenient} from "./checked.js";
 import {cached} from "./store.js";
 import {DEFAULT_END_WEEK, lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
@@ -33,7 +34,8 @@ function playersMap(players) {
 
 function namesOf(league) {
     const names = new Map(Object.values(window.franchiseDatabase || {}).filter((team) => team.id && team.id !== "0000").map((team) => [team.id, team.name]));
-    for (const team of asArray(league && league.franchises && league.franchises.franchise)) {
+    // a name MFL left out (null: checked.js lenient) keeps the page's
+    for (const team of asArray(league && league.franchises && league.franchises.franchise).filter((each) => each.name !== null)) {
         names.set(team.id, team.name);
     }
     return names;
@@ -65,13 +67,20 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const host = window.location.origin;
     const season = context.season;
 
-    // one request per export per page (page-fetch.js); `fresh` asks MFL again
-    const exp = (type, params = {}, {base = host, optional = false, fresh = false, year = season} = {}) => {
+    // one request per export per page (page-fetch.js); `fresh` asks MFL again. Each is held to
+    // lib/shapes.js as a display panel's (checked.js lenient), but Scores' (`check` null), which
+    // doesn't read a field MFL left out as not known yet.
+    const exp = (type, params = {}, {base = host, optional = false, fresh = false, year = season, check = lenient} = {}) => {
         const leagueParams = base === host ? {L: context.leagueId, ...params} : params;
         // the year to date comes back as `allWeeklyResults`
         const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
-        const request = fetchExport(exportUrl(base, year, type, leagueParams), section, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}});
+        const request = fetchExport(exportUrl(base, year, type, leagueParams), section, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: check || undefined});
+        // one MFL has changed isn't gone without, which would read as none (Winners' pot "not in
+        // MFL's accounting yet"): its panel fails
         return optional ? request.catch((error) => {
+            if (error && error.changed) {
+                throw error;
+            }
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
         }) : request;
@@ -141,7 +150,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             const [before, lastScheduled] = await Promise.all([beforeSeason(), schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0)]);
             return drawScores(mount, {
-                context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14, basic: basic("Scores"),
+                context, viewer, exp: (type, params, options = {}) => exp(type, params, {...options, check: null}), feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14, basic: basic("Scores"),
                 names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),
                 showing: () => document.documentElement.classList.contains("fuad-league-on") && viewOf(window.location.hash) === "scores"
             });
@@ -166,7 +175,14 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 }
             });
             drawPanel(mount.lastElementChild, {
-                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, load: shared, basic: basic("Standings", year),
+                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, basic: basic("Standings", year),
+                // seeds that go by a record not known (a score MFL left out) aren't drawn
+                load: () => shared().then((value) => {
+                    if (!value.picture) {
+                        throw new Error("a record the seeds go by isn't known");
+                    }
+                    return value;
+                }),
                 render: (value, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");
                     const title = final ? `${final} playoff seeds` : value.inPlayoffs ? "Playoff seeds" : "Playoff picture";

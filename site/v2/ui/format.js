@@ -9,6 +9,9 @@ export function money(amount) {
     return `$${Number.isInteger(value) ? value : value.toFixed(2)}`;
 }
 
+// "12.5" to `digits` places; "—" for a number not known (NaN: lib/mfl.js numberOf)
+export const figure = (value, digits = 0) => (typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "—");
+
 // cap used within this many dollars of the cap reads as tight (Rosters, Moves)
 export const CAP_TIGHT = 10;
 

@@ -110,6 +110,6 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
 // MFL gave a page or feed v2 doesn't recognise, which v2 steps back from. Logged as an error, so the
 // header's devices form counts it: an MFL change is seen without a member reporting it
 // (docs/design.md: Outside change).
-export function pageChanged(what) {
-    console.error(`[fuad] MFL's ${what} has changed`);
+export function pageChanged(what, detail = "") {
+    console.error(`[fuad] MFL's ${what} has changed${detail ? `: ${detail}` : ""}`);
 }

@@ -54,10 +54,16 @@ export function dropUnusedKeys() {
     }
 }
 
+// A number a display panel doesn't know (NaN, a field MFL left out: ui/checked.js lenient) is kept as
+// one, where JSON would make it null, which reads as none
+const UNKNOWN = "fuad:unknown";
+const keepUnknown = (name, value) => (typeof value === "number" && Number.isNaN(value) ? UNKNOWN : value);
+const readUnknown = (name, value) => (value === UNKNOWN ? NaN : value);
+
 // {storedAt, value} under `key`, or null
 export function saved(key) {
     try {
-        const entry = JSON.parse(storage.get(keyOf(key)));
+        const entry = JSON.parse(storage.get(keyOf(key)), readUnknown);
         return entry && "storedAt" in entry ? entry : null;
     } catch (error) {
         return null;
@@ -65,7 +71,7 @@ export function saved(key) {
 }
 
 export function save(key, value) {
-    storage.set(keyOf(key), JSON.stringify({storedAt: Date.now(), value}));
+    storage.set(keyOf(key), JSON.stringify({storedAt: Date.now(), value}, keepUnknown));
 }
 
 export async function cached(key, maxAge, load) {

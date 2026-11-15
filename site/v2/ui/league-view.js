@@ -2,7 +2,7 @@
 // Winners and Champions, from what league.js and scores.js load (league-model.js's shapes).
 
 import {esc} from "./html.js";
-import {oneLineTimes} from "./format.js";
+import {figure, oneLineTimes} from "./format.js";
 import {clock, dayText} from "./home-model.js";
 import {WEEKLY_PRIZE, gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
 import {withIcon} from "./team-pictures.js";
@@ -153,11 +153,11 @@ export function standingsMarkup(divisions, {viewer, final, teamHref}) {
                 <thead>${head}</thead>
                 <tbody>${division.rows.map((row) => `<tr${row.id === viewer ? ' class="fuad-row-mine"' : ""}>
                     <td class="fuad-num fuad-muted">${row.rank}</td><th scope="row" class="fuad-team">${withIcon(row.id, `<a href="${esc(teamHref(row.id))}">${esc(row.name)}</a>`)}</th>
-                    <td class="fuad-num">${esc(`${row.h2h.w}-${row.h2h.l}-${row.h2h.t}`)}</td><td class="fuad-num fuad-wide">${esc(row.pct)}</td>
+                    <td class="fuad-num">${esc([row.h2h.w, row.h2h.l, row.h2h.t].every(Number.isFinite) ? `${row.h2h.w}-${row.h2h.l}-${row.h2h.t}` : "—")}</td><td class="fuad-num fuad-wide">${esc(row.pct)}</td>
                     <td class="fuad-num fuad-muted">${esc(row.gamesBack)}</td><td class="fuad-num fuad-wide">${esc(row.divisionRecord)}</td>
-                    <td class="fuad-num fuad-wide">${esc(recordText(row.allPlay))}</td><td class="fuad-num">${esc(row.pf.toFixed(1))}</td>
-                    <td class="fuad-num fuad-wide">${esc(row.avgPf.toFixed(1))}</td><td class="fuad-num fuad-wide">${esc(row.pa.toFixed(1))}</td>
-                    <td class="fuad-num fuad-wide">${esc(row.avgPa.toFixed(1))}</td><td class="fuad-num ${streak(row.streak)}">${esc(row.streak)}</td>
+                    <td class="fuad-num fuad-wide">${esc(recordText(row.allPlay))}</td><td class="fuad-num">${esc(figure(row.pf, 1))}</td>
+                    <td class="fuad-num fuad-wide">${esc(figure(row.avgPf, 1))}</td><td class="fuad-num fuad-wide">${esc(figure(row.pa, 1))}</td>
+                    <td class="fuad-num fuad-wide">${esc(figure(row.avgPa, 1))}</td><td class="fuad-num ${streak(row.streak)}">${esc(row.streak)}</td>
                 </tr>`).join("")}</tbody>
             </table></div>
         </section>`).join("");
@@ -224,7 +224,9 @@ function positionClass(position, order) {
 }
 
 export function positionsMarkup(rows, {viewer, teamHref}) {
-    const top = Math.max(...rows.map((row) => row.total), 1);
+    // a total not known (NaN) draws no bar
+    const known = (value) => (Number.isFinite(value) ? value : 0);
+    const top = Math.max(...rows.map((row) => known(row.total)), 1);
     const order = rows.length ? rows[0].parts.map((part) => part.position) : [];
     const legend = `<span class="fuad-legend">${order.map((position) => `<span><span class="fuad-swatch ${positionClass(position, order)}" aria-hidden="true"></span>${esc(position)}</span>`).join("")}</span>`;
     return `<section class="fuad-panel fuad-positions">
@@ -236,9 +238,9 @@ export function positionsMarkup(rows, {viewer, teamHref}) {
             ${legend}
             <ul class="fuad-position-rows">${rows.map((row) => `<li>
                 <span class="fuad-position-name${row.id === viewer ? " fuad-strong" : ""}"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></span>
-                <span class="fuad-position-total">${row.total}</span>
-                <span class="fuad-stack" style="width: ${Math.round(row.total / top * 100)}%" aria-hidden="true">${row.parts.map((part) => `<span class="${positionClass(part.position, order)}" style="flex: ${part.points} 1 0">${part.points}</span>`).join("")}</span>
-                <span class="fuad-position-values">${esc(row.parts.map((part) => `${part.position} ${part.points}`).join(" · "))}</span>
+                <span class="fuad-position-total">${figure(row.total)}</span>
+                <span class="fuad-stack" style="width: ${Math.round(known(row.total) / top * 100)}%" aria-hidden="true">${row.parts.map((part) => `<span class="${positionClass(part.position, order)}" style="flex: ${known(part.points)} 1 0">${figure(part.points)}</span>`).join("")}</span>
+                <span class="fuad-position-values">${esc(row.parts.map((part) => `${part.position} ${figure(part.points)}`).join(" · "))}</span>
             </li>`).join("")}</ul>
         </div>
     </section>`;
