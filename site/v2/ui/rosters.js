@@ -463,7 +463,12 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 what: "the draft", rows: 10,
                 basic: basicHref("Rosters/Draft", {base: `${host}/${season}`, leagueId: context.leagueId}),
                 load: async () => {
-                    const [{built, names}, before, results, ordered] = await Promise.all([league(), beforeSeason(), exp("draftResults", {}, {optional: true}), order().catch(() => null)]);
+                    const [{built, names}, before, results, ordered] = await Promise.all([league(), beforeSeason(), exp("draftResults", {}, {optional: true}),
+                        // shown as not known, not left out
+                        order().catch((error) => {
+                            console.warn("[fuad] couldn't work out the draft order:", error);
+                            return {rows: null, final: false};
+                        })]);
                     const salaries = new Map(built.rosteredPlayers.map((player) => [player.playerId, player.salary]));
                     const board = draftBoard(results, {names, players: built.players, salaries});
                     let tags = null;
