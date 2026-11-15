@@ -8,7 +8,7 @@ import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {kickoffAt} from "./context.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
-import {placeholders} from "./panel.js";
+import {pageChanged, placeholders} from "./panel.js";
 import {
     Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
 } from "./moves.js";
@@ -68,6 +68,11 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
     const page = readTradesPage(document);
     const asked = new URLSearchParams(window.location.search).get("FRANCHISE");
     // not the page v2 knows (MFL changed it, or another team's): MFL's own page, restyled
+    if (!page) {
+        pageChanged("Trades page");
+        standAside();
+        return;
+    }
     if (asked ? !proposal : !page.partners.length) {
         standAside();
         return;

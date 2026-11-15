@@ -173,6 +173,34 @@ Items marked *(to do)* are the plan, not yet built.
     sees broken, not ugly
   - `skins.py`, for a change to v2's colours or to what MFL's skins could reach
 
+## Outside change
+
+What changes without a change here: MFL's pages, exports and feeds; a member's own settings (their
+skin, Responsive View, Full width, time zone, their own home page layout); the commissioner's setup;
+the season's calendar; outside services (nflverse, GitHub); and the member's browser (forced dark
+mode, translation, content blockers, password managers). Items marked *(to do)* are the plan.
+
+- **A reader tells "not recognised" from "none":** it returns what it read, a "none" it has proof of,
+  or null (a throw, in the job), never an empty result for a page it found nothing on, which would
+  read as "no bids" or "no posts". Its proof is the page MFL drew, which MFL names on every page's
+  body (`mflProgram` in `lib/mfl.js`: `options_101` for Power Rank, `login` for its login page), or
+  what only its page has (the Add page's `pdb_add` list, the chat feed's `<messages>`, the stats
+  feed's `DATE` line); the message board's pages share one name, so a topic also needs a post.
+  `tests/readers.test.mjs` holds every reader of MFL's pages and feeds to it, on its own page,
+  another page, the login page and an empty one, and fails on an exported reader it doesn't list.
+- **Not recognised, v2 steps back and says so:** a screen leaves MFL's page as MFL draws it, or a
+  panel shows it couldn't load, and logs `[fuad] MFL's … has changed` as an error, which the header's
+  devices form counts (Devices), so an MFL change is seen without a member reporting it. Add, Drop,
+  Trades, Scores' feeds, Power and chat log it; Lineup and IR also stand aside for ordinary reasons
+  (a week without a form, another team's page), so they don't.
+- **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
+  others go on.
+- **Exports** are checked whole (`fetchExport`: a section missing fails), but MFL leaves an empty list
+  out, so a list renamed inside one reads as empty. *(to do: a present item missing a field a chore
+  relies on, or a number that won't read, fails the chore.)*
+- **A member's own home page** is a viewer of its own in `pages.py` (`member-custom`: every module MFL
+  offers, the header in a tab too).
+
 ## The daily job
 
 - **Dry run first:** each chore that writes to MFL only logs until its repository variable is

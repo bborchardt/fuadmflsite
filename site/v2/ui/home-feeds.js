@@ -24,8 +24,11 @@ function attributes(tag) {
 // The feed holds everyone's messages, private ones included: MFL's own script just skips those not
 // to or from the viewer, so this does too (docs/mfl.md, Chat). The feed lists the newest first and
 // writes `posted` as text ("Sat Oct 10 8:36:55 p.m. CT 2026"); each id starts with the post's time
-// in seconds. Returned oldest first, as the panel shows them.
+// in seconds. Returned oldest first, as the panel shows them; null without the feed's <messages>.
 export function readChat(xml, {viewer}) {
+    if (!/<messages\b/.test(String(xml))) {
+        return null;
+    }
     const messages = [];
     for (const match of String(xml).matchAll(/<message\b([^>]*?)(?:\/>|>([\s\S]*?)<\/message>)/g)) {
         const found = attributes(match[1]);

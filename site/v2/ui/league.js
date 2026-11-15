@@ -3,7 +3,7 @@
 // so Standings, Power and Winners show last season's final, which MFL keeps on the previous site.
 
 import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
-import {armRetry, drawPanel, failedMarkup} from "./panel.js";
+import {armRetry, drawPanel, failedMarkup, pageChanged} from "./panel.js";
 import {cached} from "./store.js";
 import {DEFAULT_END_WEEK, lineupPositions} from "../lib/rules.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
@@ -105,7 +105,14 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const projected = new Map();
     const projections = (week) => {
         if (!projected.has(week)) {
-            projected.set(week, feed(`live_proj_${two(week)}.txt`).then(readProjections).catch((error) => {
+            projected.set(week, feed(`live_proj_${two(week)}.txt`).then((text) => {
+                const read = readProjections(text);
+                if (!read) {
+                    pageChanged("projections feed");
+                    throw new Error("MFL's projections feed has changed");
+                }
+                return read;
+            }).catch((error) => {
                 projected.delete(week);
                 throw error;
             }));
@@ -177,6 +184,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                     }
                     const teams = readPowerPage(await response.text());
                     if (!teams) {
+                        pageChanged("Power Rank page");
                         throw new Error("MFL's Power Rank page has changed");
                     }
                     return teams;

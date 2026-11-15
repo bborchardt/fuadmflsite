@@ -8,6 +8,8 @@ import {
 
 // MFL's Add/Drop page script, as saved from the clone on 18 Oct 2026
 const page = `
+   var pdb_add = new Array;
+   var pdb_drop = new Array;
    pdb_add[0] = new Player2 ("15720","Haskins, Hassan#","NEP","RB",11,"$1","","","","NYJ","","1.00");
    pdb_add[1] = new Player2 ("17715","Montgomery, Tyren (R)#","TEN","WR",9,"$1","","","","@IND","","1.00");
    pdb_add[2] = new Player2 ("14239","Moreau, Foster!","HOU","TE",8,"$1","","","","@JAC",3,"1.00");

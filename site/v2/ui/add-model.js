@@ -55,8 +55,12 @@ export const firstLast = (mflName) => {
 export const surname = (mflName) => String(mflName).split(",")[0].trim().replace(SUFFIX, "");
 
 // MFL's player lists on the Add/Drop page (`playerDatabaseObj["add"]` and `["drop"]`), from the
-// page's script text: {add: [...], drop: [...]}, each player with his index in MFL's list
+// page's script text: {add: [...], drop: [...]}, each player with his index in MFL's list; null
+// without both lists declared, as on any other page
 export function readPlayerLists(html) {
+    if (!/\bvar pdb_add\s*=/.test(html) || !/\bvar pdb_drop\s*=/.test(html)) {
+        return null;
+    }
     const lists = {add: [], drop: []};
     const call = /pdb_(add|drop)\[(\d+)\]\s*=\s*new Player2\s*\(([^\n]*)\);/g;
     let found;

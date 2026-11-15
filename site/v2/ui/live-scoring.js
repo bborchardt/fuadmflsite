@@ -9,8 +9,13 @@ export const SIMULATIONS = 400;
 const GAME_SECONDS = 3600;
 
 // "0211|#R 2|CY 36|…" per player, "HOU|QUARTER 2|REMAINING 15:00|…" per NFL team, then DATE. MFL
-// leaves carriage returns inside lines ("DIF 7\r|EA 1\r"), so every value is trimmed.
+// leaves carriage returns inside lines ("DIF 7\r|EA 1\r"), so every value is trimmed. Null without
+// the DATE line every feed ends with; NO_STATS for a week MFL hasn't started one for.
+export const NO_STATS = Object.freeze({players: new Map(), teams: new Map(), updated: 0});
 export function readStats(text) {
+    if (!/^DATE\|/m.test(String(text))) {
+        return null;
+    }
     const players = new Map();
     const teams = new Map();
     let updated = 0;
@@ -38,7 +43,8 @@ const MIN_PROJECTIONS = {
     TE: {"#P": 0.02, "#R": 0.02, "#C": 0.1, IN: 0.01, FL: 0.02, CC: 0.5, PC: 0.01, RA: 0.08, C2: 0.02, PA: 0.02, APY: 0.2, ARY: 0.1, ACY: 0.2, TGT: 0.9}
 };
 
-// "16619,WR,RA=0.18,CC=1.92,…" per player; team lines (defenses) aren't used by this league
+// "16619,WR,RA=0.18,CC=1.92,…" per player; team lines (defenses) aren't used by this league. Null
+// without a player's line: MFL projects every player each week, so none means it isn't the feed.
 export function readProjections(text) {
     const projections = new Map();
     for (const line of String(text).split("\n")) {
@@ -53,7 +59,7 @@ export function readProjections(text) {
         }
         projections.set(fields[0], stats);
     }
-    return projections;
+    return projections.size ? projections : null;
 }
 
 // the `rules` export as [{positions, event, lower, upper, points}]
