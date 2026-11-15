@@ -8,7 +8,7 @@ import {waitLeft} from "./page-fetch.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {
     WIDE, alertLine, capTone, doneLine, failedBox, failedLine, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, rosterIds,
-    sendMove, takeFlash
+    loadFailed, mflFallback, sendMove, takeFlash
 } from "./moves.js";
 import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
@@ -236,7 +236,7 @@ export async function drawDrop({context, franchiseId}) {
         if (act === "retry") {
             load();
         } else if (act === "mfl") {
-            standAside();
+            mflFallback(body, standAside);
         } else if (act === "toggle" && !state.busy) {
             state.open = state.open === target.dataset.id ? null : target.dataset.id;
             state.error = "";
@@ -257,11 +257,13 @@ export async function drawDrop({context, franchiseId}) {
                 throw new Error("your team isn't in the rosters");
             }
         } catch (error) {
-            console.warn("[fuad] couldn't load Drop:", error);
             state.data = null;
-            state.failed = error && error.status === 429 ? "busy" : true;
+            state.failed = loadFailed("Drop", error, body, standAside);
+            if (!state.failed) {
+                return;
+            }
             // Retry comes back on when MFL's wait is over
-            if (state.failed === "busy" && waitLeft()) {
+            if (waitLeft()) {
                 setTimeout(render, waitLeft());
             }
         }

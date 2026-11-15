@@ -11,7 +11,7 @@ import {relayoutWhenTurned} from "./turned.js";
 import {openDialog, replaceEntry} from "./dialog.js";
 import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
-    sendMove, takeFlash
+    loadFailed, mflFallback, sendMove, takeFlash
 } from "./moves.js";
 import {postToContractTopic} from "./lengths-form.js";
 import {CONTRACT_WINDOW_TEXT} from "../lib/adds.js";
@@ -615,7 +615,7 @@ export async function drawAdd({context, franchiseId}) {
     const always = {
         retry: () => load(),
         mfl: () => {
-            standAside();
+            mflFallback(body, standAside);
             layer.remove();
         },
         popup: (target) => {
@@ -792,11 +792,13 @@ export async function drawAdd({context, franchiseId}) {
                 throw new Error("your team isn't in the rosters");
             }
         } catch (error) {
-            console.warn("[fuad] couldn't load Add:", error);
             state.data = null;
-            state.failed = error && error.status === 429 ? "busy" : true;
+            state.failed = loadFailed("Add", error, body, standAside);
+            if (!state.failed) {
+                return;
+            }
             // Retry comes back on when MFL's wait is over
-            if (state.failed === "busy" && waitLeft()) {
+            if (waitLeft()) {
                 setTimeout(render, waitLeft());
             }
         }

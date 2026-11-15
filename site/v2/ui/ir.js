@@ -7,7 +7,7 @@ import {API_BASE, exportUrl, fetchExport} from "../lib/mfl.js";
 import {pageFetch, waitLeft} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
-import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
+import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, loadFailed, mflFallback, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
 import {teamState} from "./add-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 import {controlSelector, irMarkup, loadingMarkup, moveCount} from "./ir-view.js";
@@ -167,7 +167,7 @@ export async function drawIR({context, franchiseId, dropHref}) {
     // what each control does (its data-act)
     const onClick = {
         retry: () => load(),
-        mfl: () => standAside(),
+        mfl: () => mflFallback(body, standAside),
         save: () => save(),
         player: (target) => {
             if (window.fuadOpenPlayer) {
@@ -228,11 +228,13 @@ export async function drawIR({context, franchiseId, dropHref}) {
             state.data = data;
             state.report = injuryReport(injuries);
         } catch (error) {
-            console.warn("[fuad] couldn't load IR:", error);
             state.data = null;
-            state.failed = error && error.status === 429 ? "busy" : true;
+            state.failed = loadFailed("IR", error, body, standAside);
+            if (!state.failed) {
+                return;
+            }
             // Retry comes back on when MFL's wait is over
-            if (state.failed === "busy" && waitLeft()) {
+            if (waitLeft()) {
                 setTimeout(render, waitLeft());
             }
         }

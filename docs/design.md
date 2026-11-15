@@ -196,6 +196,15 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   draws in place of the one asked for, for an ordinary reason, is recognised and not logged: Lineup's
   refusal ("You may not set your lineup at this time because …": the season over, a roster to fix),
   another team's IR page, MFL's answer to an add made on its own form.
+- **Moves that can't check fall back to MFL's page:** when Add, Drop, IR or Trades can't load what
+  its checks need, MFL unreachable or an export changed, the member gets MFL's own page, so a move
+  is never stopped by v2, with a line above it: "Error loading cap and roster data. Rule checks are
+  disabled; please ensure this transaction follows league rules." and Reload Page, which tries v2's
+  again (`mflFallback` in `ui/moves.js`). It's logged as an error (`[fuad] Drop couldn't load, so
+  MFL's page was shown: …`), which the devices form counts. MFL asking us to wait (HTTP 429) keeps
+  the screen's "Couldn't check your cap." with Retry instead, as MFL's own page would be refused
+  too; its MFL's page button gives the same page and line. A move made there that breaks the
+  league's rules is the daily job's to flag, its penalties and contract years held.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **Exports the job, and v2's checks and forms, read** are checked as they come (`fetchExport`: a section missing fails), and
@@ -205,12 +214,12 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   reports, the calendar) flags too. An empty list passes, as MFL leaves one out; a field only some
   items have is needed only of those (the team of a lock or a waiver run), and one that may be blank
   (a charge's description) only has to be there. Its rules are fields every saved export
-  (`tests/fixtures`, and the clone's in `tools/verify/screens`) has where it's needed; `tests/export-shapes.test.mjs` takes each out in turn, and
-  fails on an export the job reads that has no rules. In v2, the checks and forms that rely on an
+  (`tests/fixtures`, and the clone's in `tools/verify/screens`) has where it's needed;
+  `tests/export-shapes.test.mjs` takes each out in turn, and fails on an export the job reads that
+  has no rules. In v2, the checks and forms that rely on an
   export (Moves' checks, Home's alerts and forms, Lineup's backups, IR's eligibility, Trades'
-  locks) pass `check: strict` (`ui/checked.js`): a changed export fails as one that couldn't load
-  ("Couldn't check your cap.", "Couldn't load my alerts.", each with Retry), and is logged once a
-  page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
+  locks) pass `check: strict` (`ui/checked.js`): a changed export fails as one that couldn't load,
+  and is logged once a page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
   without when MFL has changed it. `tests/checked.test.mjs` fails on a read in v2's screens without
   the check, the display panels' aside. *(to do: a display panel shows "–" for one item missing a
   field and "Couldn't load" when every item is.)*

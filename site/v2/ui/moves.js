@@ -214,6 +214,37 @@ export function leaveFlash(key, flash) {
 export const doneLine = (text) => `<p class="fuad-move-status" role="status">${CHECK}<span>${esc(text)}</span></p>`;
 export const alertLine = (text) => `<p class="fuad-move-alert" role="alert">${esc(text)}</p>`;
 
+// When a screen's checks can't load, the member is given MFL's own page, which doesn't check the
+// league's rules, with a line saying so above it and a reload, which tries v2's again
+export const FALLBACK_TEXT = "Error loading cap and roster data. Rule checks are disabled; please ensure this transaction follows league rules.";
+export function mflFallback(body, standAside) {
+    standAside();
+    if (!body || document.getElementById("fuad-fallback")) {
+        return;
+    }
+    const line = document.createElement("div");
+    line.id = "fuad-fallback";
+    line.className = "fuad-move-failed";
+    line.setAttribute("role", "alert");
+    line.innerHTML = `<span>${FALLBACK_TEXT}</span><span class="fuad-move-failed-buttons"><button type="button" class="fuad-move-retry">Reload Page</button></span>`;
+    line.querySelector("button").addEventListener("click", () => window.location.reload());
+    body.prepend(line);
+}
+
+// A screen's load failed: MFL's wait keeps the Retry box ("busy"), as MFL's own page would be
+// refused too; anything else falls back to MFL's page, logged as an error so the header's devices
+// form counts it (docs/design.md: Outside change). Returns the screen's `failed`, or null once
+// fallen back.
+export function loadFailed(screen, error, body, standAside) {
+    if (error && error.status === 429) {
+        console.warn(`[fuad] MFL asked ${screen} to wait:`, error);
+        return "busy";
+    }
+    console.error(`[fuad] ${screen} couldn't load, so MFL's page was shown:`, error);
+    mflFallback(body, standAside);
+    return null;
+}
+
 // The data a screen's checks need couldn't load (`failed` is "busy" while MFL asks us to wait):
 // Retry, off until the wait is over, or MFL's own page
 export function failedBox(what, failed) {

@@ -11,7 +11,7 @@ import {pageFetch, waitLeft} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {
-    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
+    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, loadFailed, mflFallback, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
 } from "./moves.js";
 import {
     answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
@@ -312,7 +312,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
     // what each control does (its data-act), given the control and the offer it names
     const onClick = {
         retry: () => load(),
-        mfl: () => standAside(),
+        mfl: () => mflFallback(body, standAside),
         player: (target) => {
             if (window.fuadOpenPlayer) {
                 window.fuadOpenPlayer(target.dataset.id, {opener: target});
@@ -464,11 +464,13 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
             state.games = await loadGames(context, data.calendar);
             state.data = data;
         } catch (error) {
-            console.warn("[fuad] couldn't load Trades:", error);
             state.data = null;
-            state.failed = error && error.status === 429 ? "busy" : true;
+            state.failed = loadFailed("Trades", error, body, standAside);
+            if (!state.failed) {
+                return;
+            }
             // Retry comes back on when MFL's wait is over
-            if (state.failed === "busy" && waitLeft()) {
+            if (waitLeft()) {
                 setTimeout(render, waitLeft());
             }
             render();
