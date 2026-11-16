@@ -96,3 +96,5 @@ Milton: 1 year").
 - 2026-11-12 16:09 UTC: Set Mack Hollins to 1 year (blind bid comment "1 year.").
 - 2026-11-13 15:38 UTC: Set Darren Waller to 1 year (post "Waller: 1 year").
 - 2026-11-13 15:38 UTC: Recorded "Most Points Week 9" $15.00 to Not 100% A Dick.
+- 2026-11-16 17:21 UTC: Charged $5 to So your saying there’s a chance? for MarShawn Lloyd (1yrs@12, 11/15), and reset the player to $1 / 0 years.
+- 2026-11-16 17:21 UTC: Set Konata Mumpfield to 1 year (no length stated: the default).
