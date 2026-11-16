@@ -6,7 +6,8 @@ import assert from "node:assert/strict";
 import {readFileSync, readdirSync} from "node:fs";
 import {join} from "node:path";
 import {checkShape} from "../site/v2/lib/shapes.js";
-import {checkMfl} from "../jobs/mfl-check.mjs";
+import {checkMfl, pageChecks} from "../jobs/mfl-check.mjs";
+import {fixedPages} from "../site/capture/capture-model.js";
 
 const fixtures = join(import.meta.dirname, "fixtures");
 const fixture = (name) => readFileSync(join(fixtures, name), "utf8");
@@ -141,4 +142,37 @@ test("without the login's team, only the exports; out of season, nothing of a we
     await run({...CONTEXT, inSeason: false});
     assert.ok(!asked.some((type) => ["liveScoring", "projectedScores", "nflSchedule"].includes(type)), asked.join());
     assert.ok(!pages.some((path) => /live_/.test(path)), pages.join("\n"));
+});
+
+test("each page is saved under its own name, the capture bookmark's where it saves the page too", async () => {
+    const list = await pageChecks({...CONTEXT, week: 6});
+    const names = list.map((each) => each.name);
+    assert.equal(new Set(names).size, names.length);
+    const captured = fixedPages({season: "2026", leagueId: "50965", franchiseId: "0001"});
+    for (const each of list) {
+        const name = each.name.replace(/\.html$/, "");
+        const same = Object.entries(captured).find(([, path]) => `/2026/${path}` === each.path);
+        assert.ok(!same || same[0] === name, `${each.what}: ${name}, the bookmark's ${same && same[0]}`);
+    }
+});
+
+// the run's files are public: a page of the commissioner's own team (its pending bids and offers,
+// its settings), or of what only members see, is saved only from a league other than the real one
+test("which pages show what only members see is decided for each", async () => {
+    const list = await pageChecks({...CONTEXT, week: 6});
+    assert.deepEqual(list.filter((each) => each.members).map((each) => each.name), ["add_drop.html", "options-O257.html", "options-O18.html", "options-O05.html",
+        "options-O05-propose.html", "lineup.html", "processed_waivers.html", "csetup-SKIN.html", "csetup-FCUSTOM.html", "chat.xml"]);
+});
+
+test("a page v2 can't read is offered to keep, and its flag says when it was kept", async () => {
+    const offered = [];
+    const other = fixture("pages/guest/home.html");
+    const {changed} = await checkMfl(CONTEXT, {exportRead: savedExport, pageRead: (path) => (path.includes("O=101") ? {status: 200, body: other} : savedPage(path)),
+        keep: (page, answer, unread) => {
+            offered.push([page.name, unread]);
+            return unread;
+        }});
+    assert.deepEqual(changed, ["Power Rankings (/2026/options?L=50965&O=101): v2 can't read it; MFL's page is saved on the run"]);
+    assert.ok(offered.some(([name, unread]) => name === "add_drop.html" && !unread));
+    assert.ok(offered.some(([name, unread]) => name === "options-O101.html" && unread));
 });
