@@ -1243,6 +1243,9 @@ test("the check of what v2 reads: a page MFL no longer has fails the run, read a
     assert.ok(checked.length >= 8, checked.map((request) => request.url).join("\n"));
     assert.ok(checked.every((request) => request.method === "GET" && request.cookie === "MFL_USER_ID=abc+def="), JSON.stringify(checked));
     assert.ok(result.requests.some((request) => request.url.includes("O=171&FID=0001")));
+    // a feed from one of MFL's pages, as the stats feed answers 403 otherwise
+    const feeds = result.requests.filter((request) => request.url.includes("fflnetdynamic"));
+    assert.ok(feeds.length && feeds.every((request) => request.referer === "https://www44.myfantasyleague.com/2026/home/48571"), JSON.stringify(feeds));
 
     const teamless = run({env: {...LOGIN, MFL_CHECK: "on"}});
     assert.equal(teamless.status, 1);

@@ -85,18 +85,20 @@ export async function pageChecks({season, leagueId, franchise, partner, playerId
         }},
         {uses: ["readArticle"], what: "a news article", path: (found) => (found.article ? `/${season}/view_news_article?L=${L}&ID=${encodeURIComponent(found.article)}` : null),
             read: (html) => Boolean(readArticle(html))},
-        // the week before's, which is final; this week's may have no games yet
-        {uses: ["readStats"], what: `the live stats feed for week ${week - 1}`, path: `/fflnetdynamic${season}/live_stats_${two(week - 1)}.txt`, when: inSeason && week > 1,
+        // the feeds, as MFL's pages ask for them: the stats feed answers 403 without one as referrer
+        // (docs/mfl.md). The week before's stats, which are final; this week's may have no games yet
+        {uses: ["readStats"], feed: true, what: `the live stats feed for week ${week - 1}`, path: `/fflnetdynamic${season}/live_stats_${two(week - 1)}.txt`, when: inSeason && week > 1,
             read: (text) => Boolean(readStats(text))},
-        {uses: ["readProjections"], what: `the projections feed for week ${week}`, path: `/fflnetdynamic${season}/live_proj_${two(week)}.txt`, when: inSeason && week > 0,
+        {uses: ["readProjections"], feed: true, what: `the projections feed for week ${week}`, path: `/fflnetdynamic${season}/live_proj_${two(week)}.txt`, when: inSeason && week > 0,
             read: (text) => Boolean(readProjections(text))},
-        {uses: ["readChat"], what: "the chat feed", path: `/fflnetdynamic${season}/${L}_chat.xml`, read: (xml) => Boolean(readChat(xml, {viewer: franchise}))}
+        {uses: ["readChat"], feed: true, what: "the chat feed", path: `/fflnetdynamic${season}/${L}_chat.xml`, read: (xml) => Boolean(readChat(xml, {viewer: franchise}))}
     ].filter((each) => each.when !== false);
 }
 
 // `context`: {season, leagueId, franchise (the login's team), partner (another), playerId (one of the
 // team's), inSeason}. `exportRead(check)` resolves to the export's section, checked, or throws
-// fetchExport's error; `pageRead(path)` to {status, body}, or throws when it couldn't be asked.
+// fetchExport's error; `pageRead(path, {referer})` to {status, body}, or throws when it couldn't be
+// asked, `referer` the league's home page's path, to send as the referrer, for a feed.
 // Resolves to {changed, unchecked, count}: what v2 can't read, which needs the commissioner, and what
 // couldn't be asked this time. Without a franchise, only the exports.
 export async function checkMfl(context, {exportRead, pageRead, version}) {
@@ -132,7 +134,7 @@ export async function checkMfl(context, {exportRead, pageRead, version}) {
         count++;
         let answer;
         try {
-            answer = await pageRead(path);
+            answer = await pageRead(path, each.feed ? {referer: `/${context.season}/home/${encodeURIComponent(context.leagueId)}`} : {});
         } catch (error) {
             unchecked.push(`Couldn't load ${each.what}: ${error.message}`);
             continue;

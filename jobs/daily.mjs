@@ -1322,8 +1322,8 @@ async function mflCheck(loggedIn, {built, rosters}) {
     const {changed, unchecked, count} = await checkMfl(context, {
         version,
         exportRead: ({type, params = {}, section = type, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}, section),
-        pageRead: async (path) => {
-            const response = await mflAsk(`${host}${path}`, {headers: mflHeaders});
+        pageRead: async (path, {referer} = {}) => {
+            const response = await mflAsk(`${host}${path}`, {headers: referer ? {...mflHeaders, Referer: `${host}${referer}`} : mflHeaders});
             return {status: response.status, body: await response.text()};
         }
     });

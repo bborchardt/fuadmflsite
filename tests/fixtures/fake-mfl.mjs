@@ -90,7 +90,8 @@ function exportAnswer(host, year, params, cookie) {
 globalThis.fetch = async (input, init = {}) => {
     const url = new URL(String(input));
     const body = init.body ? String(init.body) : "";
-    record({method: init.method || "GET", url: url.href, body, userAgent: (init.headers || {})["User-Agent"] || null, cookie: (init.headers || {}).Cookie || null, ifNoneMatch: (init.headers || {})["If-None-Match"] || null});
+    record({method: init.method || "GET", url: url.href, body, userAgent: (init.headers || {})["User-Agent"] || null, cookie: (init.headers || {}).Cookie || null, ifNoneMatch: (init.headers || {})["If-None-Match"] || null,
+        referer: (init.headers || {}).Referer || null});
     const picture = (scenario.pictures || {})[url.href];
     if (picture !== undefined) {
         if (typeof picture === "number") {

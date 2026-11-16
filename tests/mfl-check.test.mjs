@@ -54,8 +54,12 @@ function savedPage(path) {
 
 const CONTEXT = {season: 2026, leagueId: "50965", franchise: "0001", partner: "0002", playerId: "13593", inSeason: true};
 const pages = [];
-const run = (context = CONTEXT, {exportRead = savedExport, pageRead = savedPage} = {}) => checkMfl(context, {exportRead, pageRead: (path) => {
+const referred = [];
+const run = (context = CONTEXT, {exportRead = savedExport, pageRead = savedPage} = {}) => checkMfl(context, {exportRead, pageRead: (path, {referer} = {}) => {
     pages.push(path);
+    if (referer) {
+        referred.push([path, referer]);
+    }
     return pageRead(path);
 }});
 
@@ -71,6 +75,9 @@ test("on the saved pages and exports, every read is as v2 expects", async () => 
     // and the article the player's page names
     assert.ok(pages.includes("/2026/view_news_article?L=50965&ID=rotowire644769"), pages.join("\n"));
     assert.ok(pages.includes("/2026/options?L=50965&O=05&FRANCHISE=0001,0002"));
+    // the feeds as MFL's pages ask for them, from one of its pages; the pages as a member opens them
+    assert.deepEqual(referred.map(([path]) => path), ["/fflnetdynamic2026/live_stats_05.txt", "/fflnetdynamic2026/live_proj_06.txt", "/fflnetdynamic2026/50965_chat.xml"]);
+    assert.ok(referred.every(([, referer]) => referer === "/2026/home/50965"));
 });
 
 test("a page that isn't the one v2 reads is named as changed, by what it is and where", async () => {
