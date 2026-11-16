@@ -52,10 +52,18 @@ export const SHAPES = {
         ...scores.map((rule) => ({...rule, path: ["weeklyResults", ...rule.path]}))
     ],
     playerScores: [{path: ["playerScore"], need: ["id"], numbers: ["score"]}],
+    // MFL ends the list with a blank entry
+    projectedScores: [{path: ["playerScore"], need: ["id"], numbers: ["score"], only: (item) => !(item.id === "" && item.score === "")}],
     playoffBrackets: [{path: ["playoffBracket"], need: ["id"]}],
     playoffBracket: [side("home"), side("away")],
-    // a pick not yet made has no player
-    draftResults: [{path: ["draftUnit", "draftPick"], need: ["round", "pick"], have: ["player"]}],
+    // a pick not yet made has no player; `keys` (for a display panel): a pick that doesn't say these can't
+    // be put on the board, nor told from one not yet made
+    draftResults: [{path: ["draftUnit", "draftPick"], need: ["round", "pick"], have: ["player"], keys: ["round", "pick", "player"]}],
+    futureDraftPicks: [
+        {path: ["franchise"], need: ["id"]},
+        {path: ["franchise", "futureDraftPick"], need: ["year", "round", "originalPickFor"], numbers: ["year", "round"], keys: ["year", "round", "originalPickFor"]}
+    ],
+    nflByeWeeks: [{path: ["team"], need: ["id", "bye_week"], numbers: ["bye_week"]}],
     injuries: [{path: ["injury"], need: ["id", "status"]}],
     calendar: [{path: ["event"], need: ["type", "start_time"], numbers: ["start_time"]}],
     // who starts, and a player's points and seconds left where the stats feed can't be read
@@ -114,8 +122,8 @@ export function shapeProblem(section, body, rules = SHAPES[section] || []) {
     return null;
 }
 
-// the fields that say which item an item is (a team, a player, a trade): an item without one can't be
-// shown in its place, so a display panel goes without the whole export
+// the fields that say which item an item is (a team, a player, a trade), and a rule's own `keys`: an
+// item without one can't be shown in its place, so a display panel goes without the whole export
 const KEYS = new Set(["id", "franchise_id", "franchise", "franchise2", "offeringteam", "offeredto", "trade_id"]);
 
 // For a display panel (ui/checked.js lenient): each field an item breaks its rules on is set to null,
@@ -147,7 +155,7 @@ export function markMissing(section, body, rules = SHAPES[section] || []) {
                 continue;
             }
             problem = problem || broken[0][1];
-            every = every || broken.some(([field]) => KEYS.has(field));
+            every = every || broken.some(([field]) => KEYS.has(field) || (rule.keys || []).includes(field));
             broken.forEach(([field]) => {
                 item[field] = null;
             });

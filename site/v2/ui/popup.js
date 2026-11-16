@@ -9,6 +9,7 @@ import {capPenalty} from "../lib/rules.js";
 import {NFL_TEAMS, holderOf, openerName, readArticle, readPlayerPage} from "./player-page.js";
 import {openDialog} from "./dialog.js";
 import {drawPanel} from "./panel.js";
+import {lenient, strict} from "./checked.js";
 import {cached} from "./store.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {esc} from "./html.js";
@@ -34,9 +35,9 @@ async function page(url) {
     return response.text();
 }
 
-// the page's own league load, when it has one (page-fetch.js)
-function leagueExport({season, leagueId}, type) {
-    return fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}});
+// the page's own league load, when it has one (page-fetch.js); `check`: ui/checked.js's
+function leagueExport({season, leagueId}, type, check = lenient) {
+    return fetchExport(exportUrl(window.location.origin, season, type, {L: leagueId}), type, {fetchImpl: pageFetch, init: {cache: "no-store"}, check: check || undefined});
 }
 
 // player id → the team holding him (holderOf), or null when the rosters can't be had
@@ -49,10 +50,11 @@ function holders(context) {
         });
 }
 
-// the viewer's cap used, for "Cut now"; kept a couple of minutes, since it's only shown, not checked
+// the viewer's cap used, for "Cut now"; kept a couple of minutes, since it's only shown, not checked.
+// Held to lib/shapes.js as the cap is everywhere: one MFL has changed isn't shown.
 function capUsed(context, franchiseId) {
     const {season} = context;
-    const league = (type) => leagueExport(context, type);
+    const league = (type) => leagueExport(context, type, strict);
     return cached(`fuad.capUsed.${season}.${franchiseId}`, CAP_AGE, async () => {
         const [players, leagueInfo, rosters, salaryAdjustments, transactions, freeAgents] = await Promise.all([
             playerList(season),

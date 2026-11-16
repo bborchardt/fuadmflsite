@@ -54,9 +54,9 @@ test("a check does without an export MFL can't give, but not one MFL has changed
 
 // The display panels' reads not yet held to lib/shapes.js (the next steps of docs/design.md's Outside
 // change), and the web app's, which asks only whether next season's site is there. A new read of an
-// export elsewhere in v2's screens passes `check: strict`, or a display panel's helper defaults to
-// `check = lenient` and passes it on.
-const UNCHECKED = new Set(["all-moves.js", "popup.js", "rosters.js", "web-app.js"]);
+// export elsewhere in v2's screens passes `check: strict` or, for a display panel, `check: lenient`
+// (or a helper defaulting to `check = lenient` passes it on).
+const UNCHECKED = new Set(["all-moves.js", "web-app.js"]);
 
 test("every export v2's checks and forms read is checked", () => {
     const dir = join(root, "site", "v2", "ui");
@@ -65,7 +65,7 @@ test("every export v2's checks and forms read is checked", () => {
         const source = readFileSync(join(dir, file), "utf8");
         for (const [index, line] of source.split("\n").entries()) {
             // a read's options, on its line or a shared `options` holding the check
-            const passed = /check: strict/.test(line) || (/check: check \|\| undefined/.test(line) && /\bcheck = lenient\b/.test(source));
+            const passed = /check: (strict|lenient)\b/.test(line) || (/check: check \|\| undefined/.test(line) && /\bcheck = lenient\b/.test(source));
             if (/\b(fetchExport|weekKickoff|weekEnd|seasonPhase)\(/.test(line) && !/^import\b/.test(line)
                 && !passed && !/\boptions\b\)?/.test(line)) {
                 missing.push(`${file}:${index + 1}`);

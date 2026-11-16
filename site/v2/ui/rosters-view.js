@@ -6,10 +6,10 @@ import {esc} from "./html.js";
 import {STAR} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
 import {contractYears, drafted, scalePicks, scaleRange, scaleText} from "./rosters-model.js";
-import {money} from "./format.js";
+import {figure, money} from "./format.js";
 import {teamPicturesMarkup, withIcon} from "./team-pictures.js";
 
-const pts = (value) => (Number(value) || 0).toFixed(1);
+const pts = (value) => figure(value, 1);
 
 // ---- Pieces shared by My team and a team's page ----
 
@@ -74,8 +74,12 @@ export function rosterTable(sheet, {cut, pointsLabel = "Pts"}) {
     </section>`;
 }
 
+// `years` null, or a year with no rows: the picks aren't known (rosters-model.js picksOf)
 export function picksPanels(years, {nextYear, live}) {
-    return `<div class="fuad-picks">${years.map((year) => `<section class="fuad-panel" aria-label="${year.year} draft picks">
+    return `<div class="fuad-picks">${(years || [{year: null, rows: null}]).map((year) => !year.rows ? `<section class="fuad-panel" aria-label="Draft picks">
+        <h2 class="fuad-panel-heading">${year.year === null ? "" : `${year.year} `}Draft picks</h2>
+        <p class="fuad-muted fuad-empty">—</p>
+    </section>` : `<section class="fuad-panel" aria-label="${year.year} draft picks">
         <h2 class="fuad-panel-heading">${year.year} draft picks</h2>
         ${year.year === nextYear && live ? '<p class="fuad-meta fuad-if">If the season ended today</p>' : ""}
         <ul class="fuad-rows fuad-pick-rows">${year.rows.map((row) => `<li class="${row.traded ? "fuad-muted" : ""}">
@@ -118,11 +122,18 @@ export function tagsPanel(view, year) {
 
 const teamLink = (id, name) => `<a href="#rosters-teams/${esc(id)}">${esc(name)}</a>`;
 
+// `order` null: not known (rosters.js)
 export function orderPanel(order, year, {final}) {
+    if (!order) {
+        return `<section class="fuad-panel" aria-labelledby="fuad-order">
+        <h2 class="fuad-panel-heading" id="fuad-order">${year} draft order</h2>
+        <p class="fuad-muted fuad-empty">—</p>
+    </section>`;
+    }
     const list = (rows) => `<ol class="fuad-rows fuad-order">${rows.map((row) => `<li>
             <span class="fuad-seed">${row.pick || ""}</span>
             <span class="fuad-row-text"><span class="fuad-row-title">${teamLink(row.id, row.name)}</span><span class="fuad-meta">${esc(row.why)}</span>
-                ${row.traded.map((line) => `<span class="fuad-caution fuad-traded">${esc(line)}</span>`).join("")}</span>
+                ${(row.traded || []).map((line) => `<span class="fuad-caution fuad-traded">${esc(line)}</span>`).join("")}</span>
         </li>`).join("")}</ol>`;
     // the playoff teams' picks aren't numbered until the playoffs are played: they get a group of their own
     const open = order.findIndex((row) => !row.pick);
@@ -133,6 +144,7 @@ export function orderPanel(order, year, {final}) {
     return `<section class="fuad-panel" aria-labelledby="fuad-order">
         <h2 class="fuad-panel-heading" id="fuad-order">${year} draft order</h2>
         ${final ? "" : '<p class="fuad-meta fuad-if">If the season ended today</p>'}
+        ${order.some((row) => !row.traded) ? '<p class="fuad-meta">Traded picks —</p>' : ""}
         ${groups}
     </section>`;
 }
@@ -302,7 +314,7 @@ function playerCell(player, key, {phoneKeys, before}) {
         case "position": return `<td class="fuad-mid${phone}">${esc(player.position)}</td>`;
         case "nfl": return `<td class="fuad-mid${phone}">${esc(player.nfl)}</td>`;
         case "bye": return `<td class="fuad-num${phone}">${esc(player.bye || "—")}</td>`;
-        case "projected": return `<td class="fuad-num${phone}">${player.projected === null ? "—" : esc(player.projected.toFixed(1))}</td>`;
+        case "projected": return `<td class="fuad-num${phone}">${esc(figure(player.projected, 1))}</td>`;
         case "points": return `<td class="fuad-num${phone}">${esc(pts(player.points))}</td>`;
         case "salary": return `<td class="fuad-num${phone}">${player.salary === null ? "—" : esc(money(player.salary))}</td>`;
         case "years": return player.fa && !before ? `<td class="fuad-num fuad-muted${phone}">—</td>` : `<td class="fuad-num${phone}">${player.fa ? "UFA" : player.rfa ? "RFA" : esc(contractYears(player))}</td>`;

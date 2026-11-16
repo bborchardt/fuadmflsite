@@ -3,9 +3,10 @@
 // Names open the player popup with its Rosters actions (popup.js).
 
 import {keepHere, keptHere, onSectionTap} from "./kept.js";
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, numberOf} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
+import {lenient} from "./checked.js";
 import {pageFetch} from "./page-fetch.js";
 import {lineupPositions} from "../lib/rules.js";
 import {beforeWeek1} from "./context.js";
@@ -62,14 +63,22 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         trade: (teamId, playerId = null) => (viewer ? `${base}/options?L=${context.leagueId}&O=05&FRANCHISE=${viewer},${teamId}${playerId ? `#player-${encodeURIComponent(playerId)}` : ""}` : null)
     };
 
-    const exp = (type, params = {}, {base: from = host, optional = false, year = season} = {}) => {
+    // A figure MFL left out of an export shows "—" (ui/checked.js lenient). `optional`: done without
+    // when MFL can't give it, but not when it's changed it, which a panel can't read as "none";
+    // `unknown`: shown as not known ("—") either way. The contracts and cap come from the page's
+    // league load (`league()`), held to lib/shapes.js as Moves' checks are.
+    const exp = (type, params = {}, {base: from = host, optional = false, unknown = false, year = season} = {}) => {
         const leagueParams = from === host ? {L: context.leagueId, ...params} : params;
         const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
-        const request = fetchExport(exportUrl(from, year, type, leagueParams), section, {fetchImpl: pageFetch, init: {cache: "no-store"}});
-        return optional ? request.catch((error) => {
+        const request = fetchExport(exportUrl(from, year, type, leagueParams), section, {fetchImpl: pageFetch, init: {cache: "no-store"}, check: lenient});
+        const warned = (error) => {
+            if (error && error.changed && !unknown) {
+                throw error;
+            }
             console.warn(`[fuad] couldn't load ${type}:`, error);
             return null;
-        }) : request;
+        };
+        return optional || unknown ? request.catch(warned) : request;
     };
     const once = (load) => {
         let value = null;
@@ -98,10 +107,10 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     });
     const extras = once(async () => {
         const [futureDraftPicks, byes, points] = await Promise.all([
-            exp("futureDraftPicks", {}, {optional: true}),
+            exp("futureDraftPicks", {}, {unknown: true}),
             cached(`fuad.byes.${season}`, DAY, () => exp("nflByeWeeks", {}, {base: API_BASE})).catch(() => null),
             // before week 1 the new site has no points: last season's, from its own site
-            beforeSeason().then((before) => exp("playerScores", {W: "YTD"}, {optional: true, year: before ? season - 1 : season}))
+            beforeSeason().then((before) => exp("playerScores", {W: "YTD"}, {unknown: true, year: before ? season - 1 : season}))
         ]);
         return {futureDraftPicks, byes: byeWeeks(byes), points: pointsById(points)};
     });
@@ -118,7 +127,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             const results = await Promise.all(placeBrackets(list).map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {optional: true})));
             finish = results.every(Boolean) ? playoffFinish(results, {completedWeek: Number(window.completedWeek) || 0}) : null;
         }
-        const rows = draftOrder(playoffPicture(divisions), {finish, futureDraftPicks, names, nextYear: season + 1});
+        // rows null: not known, while a team's record isn't
+        const picture = playoffPicture(divisions);
+        const rows = picture && draftOrder(picture, {finish, futureDraftPicks, names, nextYear: season + 1});
         return {rows, final: Boolean(finish)};
     });
     // this site's draft before it's held (its picks matter most then), else null
@@ -193,8 +204,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 }
                 // before the draft its picks first, then the two years after it, also tradable
                 // the board has this year's, should MFL still list them as future picks
-                const later = picksOf(teamId, futureDraftPicks, {names, nextYear: season + 1}).filter((entry) => !board || entry.year > season);
-                return {sheet, picks: board ? [boardPicksOf(teamId, board, season), ...later] : later, live: !before};
+                const later = picksOf(teamId, futureDraftPicks, {names, nextYear: season + 1});
+                const after = later ? later.filter((entry) => !board || entry.year > season) : [{year: null, rows: null}];
+                return {sheet, picks: board ? [boardPicksOf(teamId, board, season), ...after] : after, live: !before};
             },
             render: ({sheet, picks, live}, body) => {
                 const own = teamId === viewer;
@@ -216,7 +228,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 if (live) {
                     order().then((ordered) => {
                         const mountPicks = body.querySelector(".fuad-picks-mount");
-                        if (mountPicks && mount.contains(mountPicks)) {
+                        if (mountPicks && mount.contains(mountPicks) && ordered.rows) {
                             return Promise.all([league(), extras()]).then(([{names}, {futureDraftPicks}]) => {
                                 mountPicks.innerHTML = picksPanels(picksOf(teamId, futureDraftPicks, {names, numbers: pickNumbers(ordered.rows), nextYear: season + 1}), {nextYear: season + 1, live});
                             });
@@ -305,9 +317,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 load: async () => {
                     const [{built, settings, freeAgents, names}, {byes, points}, before, projected] = await Promise.all([
                         league(), extras(), beforeSeason(),
-                        exp("projectedScores", {W: Number(window.liveScoringWeek) || 1}, {optional: true})
+                        exp("projectedScores", {W: Number(window.liveScoringWeek) || 1}, {unknown: true})
                     ]);
-                    const projections = new Map(asArray(projected && projected.playerScore).map((entry) => [entry.id, Number(entry.score) || 0]));
+                    const projections = new Map(asArray(projected && projected.playerScore).map((entry) => [entry.id, numberOf(entry.score)]));
                     const positions = lineupPositions(settings);
                     return {pool: playerPool(built, {freeAgents, points, projections: before ? new Map() : projections, byes, names, offseason: before, positions}), before, positions};
                 },
@@ -451,7 +463,12 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 what: "the draft", rows: 10,
                 basic: basicHref("Rosters/Draft", {base: `${host}/${season}`, leagueId: context.leagueId}),
                 load: async () => {
-                    const [{built, names}, before, results, ordered] = await Promise.all([league(), beforeSeason(), exp("draftResults", {}, {optional: true}), order().catch(() => null)]);
+                    const [{built, names}, before, results, ordered] = await Promise.all([league(), beforeSeason(), exp("draftResults", {}, {optional: true}),
+                        // shown as not known, not left out
+                        order().catch((error) => {
+                            console.warn("[fuad] couldn't work out the draft order:", error);
+                            return {rows: null, final: false};
+                        })]);
                     const salaries = new Map(built.rosteredPlayers.map((player) => [player.playerId, player.salary]));
                     const board = draftBoard(results, {names, players: built.players, salaries});
                     let tags = null;

@@ -5,13 +5,16 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {fetchExport} from "../site/v2/lib/mfl.js";
+import {fetchExport, numberOf} from "../site/v2/lib/mfl.js";
 import {lenient} from "../site/v2/ui/checked.js";
 import {markMissing} from "../site/v2/lib/shapes.js";
 import {figure} from "../site/v2/ui/format.js";
 import {NO_STATS, gameStates, readProjections, readRules, readStats} from "../site/v2/ui/live-scoring.js";
 import {allPlayRecords, gameText, ledger, scoreCards, teamSeason, playoffPicture, playoffPlaces, positionPoints, recordText, standings, weeklyWinners, winnings, winningsLine} from "../site/v2/ui/league-model.js";
 import {cardsMarkup, positionsMarkup, standingsMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
+import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
+import {byeWeeks, draftOrder, picksOf, picksSummary, playerPool, playoffFinish, pointsById, sortPlayers, teamSheets} from "../site/v2/ui/rosters-model.js";
+import {orderPanel, picksPanels, playerLayout, playerRows, teamMarkup, teamsMarkup} from "../site/v2/ui/rosters-view.js";
 
 const raw = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 const fixture = (name) => JSON.parse(raw(name));
@@ -196,4 +199,95 @@ test("Your season: a result whose score won't read shows only W, L or T", async 
     const season = teamSeason(value, schedule.weeklySchedule[0].matchup[0].franchise[0].id);
     assert.match(season[0].result, /^[WLT]$/);
     assert.match(season[1].result, /^[WLT] \d+\.\d–\d+\.\d$/);
+});
+
+// ---- Rosters ----
+
+const built = buildLeague({
+    players: playersFromExport(fixture("players-league.json").players), league: settings, salaryAdjustments: fixture("salary-adjustments.json").salaryAdjustments,
+    rosters: fixture("rosters.json").rosters, freeAgents: fixture("free-agents.json").freeAgents
+});
+const sheetsOf = ({points, futureDraftPicks = fixture("future-draft-picks.json").futureDraftPicks}) => teamSheets(built, {
+    salaryAdjustments: fixture("salary-adjustments.json").salaryAdjustments, futureDraftPicks,
+    byes: byeWeeks(fixture("nfl-bye-weeks.json").nflByeWeeks), points, season: 2026, names
+});
+const poolOf = (points, projections = new Map()) => playerPool(built, {freeAgents: fixture("free-agents.json").freeAgents, points, projections,
+    byes: byeWeeks(fixture("nfl-bye-weeks.json").nflByeWeeks), names, offseason: false, positions: ["QB", "RB", "WR", "TE", "PK"]});
+
+test("Rosters: a player's points that won't read are —, sorted last either way; without the export every player's are", async () => {
+    const scores = fixture("player-scores-ytd.json").playerScores;
+    const rostered = built.rosteredPlayers[0].playerId;
+    scores.playerScore.find((entry) => entry.id === rostered).score = "1.2.3";
+    const {value} = await read("playerScores", scores);
+    const points = pointsById(value);
+    const pool = poolOf(points);
+    assert.ok(Number.isNaN(pool.find((player) => player.id === rostered).points));
+    for (const direction of [1, -1]) {
+        assert.equal(sortPlayers(pool, "points", direction).at(-1).id, rostered);
+    }
+    const layout = playerLayout({before: false, season: 2026});
+    assert.doesNotMatch(playerRows(pool, layout, {before: false, viewer: null}), /NaN|undefined/);
+    const sheet = sheetsOf({points}).find((each) => each.groups.some((group) => group.players.some((player) => player.id === rostered)));
+    assert.ok(Number.isNaN(sheet.groups.flatMap((group) => group.players).find((player) => player.id === rostered).points));
+    assert.doesNotMatch(teamMarkup({sheet, picks: [], live: true, own: false, fromTeams: true, tradeHref: null, season: 2026}), /NaN|undefined/);
+    // no export: unknown, not 0
+    assert.ok(poolOf(pointsById(null)).every((player) => Number.isNaN(player.points)));
+});
+
+test("Rosters: a projection that won't read is —; the blank entry MFL ends the list with is no change", async () => {
+    const projected = JSON.parse(readFileSync(new URL("../tools/verify/screens/projectedScores-W6.json", import.meta.url), "utf8")).projectedScores;
+    assert.equal(markMissing("projectedScores", structuredClone(projected)).problem, null);
+    const id = projected.playerScore[0].id;
+    projected.playerScore[0].score = "soon";
+    const {value} = await read("projectedScores", projected);
+    // as rosters.js reads them
+    const projections = new Map(value.playerScore.map((entry) => [entry.id, numberOf(entry.score)]));
+    assert.ok(Number.isNaN(projections.get(id)));
+    const pool = poolOf(pointsById(fixture("player-scores-ytd.json").playerScores), projections);
+    const layout = playerLayout({before: false, season: 2026});
+    assert.doesNotMatch(playerRows(pool, layout, {before: false, viewer: null}), /NaN|undefined/);
+});
+
+test("Rosters: a draft pick that doesn't say its year, round or first owner leaves every team's picks —", async () => {
+    const picks = fixture("future-draft-picks.json").futureDraftPicks;
+    delete picks.franchise[1].futureDraftPick[0].round;
+    assert.equal((await read("futureDraftPicks", picks)).value.changed, true);
+    // rosters.js reads it as not known
+    const sheets = sheetsOf({points: pointsById(fixture("player-scores-ytd.json").playerScores), futureDraftPicks: null});
+    assert.ok(sheets.every((sheet) => sheet.picksLine === "—"));
+    assert.equal(picksSummary("0001", null, 2027), "—");
+    assert.equal(picksOf("0001", null, {names, nextYear: 2027}), null);
+    assert.match(picksPanels(null, {nextYear: 2027, live: true}), /Draft picks<\/h2>\s*<p class="fuad-muted fuad-empty">—/);
+    assert.doesNotMatch(teamsMarkup(sheets, {viewer: "0001", season: 2026}), /NaN|undefined|no 1st/);
+    const order = draftOrder(playoffPicture(standings(fixture("league-standings.json").leagueStandings, settings, names)), {names, nextYear: 2027, futureDraftPicks: null});
+    assert.ok(order.every((row) => row.traded === null));
+    assert.match(orderPanel(order, 2027, {final: false}), /Traded picks —/);
+    assert.doesNotMatch(orderPanel(order, 2027, {final: false}), /undefined/);
+    // with the picks, no such line
+    const known = draftOrder(playoffPicture(standings(fixture("league-standings.json").leagueStandings, settings, names)), {names, nextYear: 2027, futureDraftPicks: fixture("future-draft-picks.json").futureDraftPicks});
+    assert.doesNotMatch(orderPanel(known, 2027, {final: false}), /Traded picks —/);
+});
+
+test("Rosters: a draft pick MFL left without a player, round or number fails the board; the order without the standings is —", async () => {
+    for (const field of ["player", "round", "pick"]) {
+        const results = fixture("draft-results.json").draftResults;
+        delete results.draftUnit.draftPick[0][field];
+        assert.equal((await read("draftResults", results)).value.changed, true, field);
+    }
+    assert.match(orderPanel(null, 2027, {final: false}), /2027 draft order<\/h2>\s*<p class="fuad-muted fuad-empty">—/);
+});
+
+test("Rosters: a playoff game whose points MFL left out isn't a result for the draft order", () => {
+    const brackets = [fixture("playoff-bracket-2025-1.json").playoffBracket, fixture("playoff-bracket-2025-2.json").playoffBracket];
+    assert.ok(playoffFinish(structuredClone(brackets)));
+    const rounds = [].concat(brackets[0].playoffRound);
+    [].concat(rounds[rounds.length - 1].playoffGame)[0].away.points = null;
+    assert.equal(playoffFinish(brackets), null);
+});
+
+test("Rosters: a bye MFL left out is —", async () => {
+    const byes = fixture("nfl-bye-weeks.json").nflByeWeeks;
+    byes.team[0].bye_week = "";
+    const {value} = await read("nflByeWeeks", byes);
+    assert.equal(byeWeeks(value).get(byes.team[0].id) || "—", "—");
 });

@@ -2,7 +2,7 @@
 // roster, its penalties and draft picks, the player pool for Players, and the Draft view's order,
 // board and rookie scale. No drawing here, so each can be checked against saved exports.
 
-import {asArray} from "../lib/mfl.js";
+import {asArray, numberOf} from "../lib/mfl.js";
 import {POSITIONS, SALARY_CAP, positionOrder, rookieSalary} from "../lib/rules.js";
 import {CAP_TIGHT, cents, money, yearsText} from "./format.js";
 import settings from "../lib/settings.js";
@@ -19,9 +19,13 @@ export function byeWeeks(nflByeWeeks) {
     return new Map(asArray(nflByeWeeks && nflByeWeeks.team).map((team) => [team.id, team.bye_week]));
 }
 
+// null when the export couldn't be had: every player's points are then unknown (pointsOf)
 export function pointsById(playerScores) {
-    return new Map(asArray(playerScores && playerScores.playerScore).map((entry) => [entry.id, Number(entry.score) || 0]));
+    return playerScores ? new Map(asArray(playerScores.playerScore).map((entry) => [entry.id, numberOf(entry.score)])) : null;
 }
+
+// a player's points: 0 if he has none yet, NaN (shown "—") if they're not known
+export const pointsOf = (points, playerId) => (!points ? NaN : points.has(playerId) ? points.get(playerId) : 0);
 
 // "Ollie Gordon (2yrs@2)", "Harrison Mevis (2yrs@1, 10/15)", "Pat Freiermuth (1yr@1), Joe Mixon
 // (1yr@1)": who was cut, and on what terms
@@ -75,7 +79,7 @@ export function rosterGroups(team, rosteredPlayers, {byes, points}) {
         position: player.nflPosition,
         nfl: player.team,
         bye: byes.get(player.team) || "",
-        points: points.get(player.playerId) || 0,
+        points: pointsOf(points, player.playerId),
         salary: player.salary,
         years: player.years,
         rfa: Boolean(player.rfa), lengthDue: Boolean(player.lengthDue),
@@ -100,7 +104,11 @@ export function rosterGroups(team, rosteredPlayers, {byes, points}) {
 
 // Picks by year from `futureDraftPicks`: each team's held picks (its own and others'), and its own
 // traded away. `numbers` maps an original owner to its place in next year's order, when decided.
+// Null, not known, when the export couldn't be had (or MFL changed it: rosters.js).
 export function picksOf(teamId, futureDraftPicks, {names, numbers = new Map(), nextYear}) {
+    if (!futureDraftPicks) {
+        return null;
+    }
     const held = asArray(futureDraftPicks && futureDraftPicks.franchise).flatMap((team) =>
         asArray(team.futureDraftPick).map((pick) => ({holder: team.id, year: Number(pick.year), round: Number(pick.round), original: pick.originalPickFor})));
     const years = [...new Set(held.map((pick) => pick.year))].sort((a, b) => a - b);
@@ -124,8 +132,11 @@ export function picksOf(teamId, futureDraftPicks, {names, numbers = new Map(), n
     });
 }
 
-// "8 · 3 1sts", "4 · no 1st": next year's picks held
+// "8 · 3 1sts", "4 · no 1st": next year's picks held; "—" when they're not known
 export function picksSummary(teamId, futureDraftPicks, year) {
+    if (!futureDraftPicks) {
+        return "—";
+    }
     const mine = asArray(futureDraftPicks && futureDraftPicks.franchise).filter((team) => team.id === teamId)
         .flatMap((team) => asArray(team.futureDraftPick)).filter((pick) => Number(pick.year) === year);
     const firsts = mine.filter((pick) => Number(pick.round) === 1).length;
@@ -166,7 +177,7 @@ export function playerPool(league, {freeAgents, points, projections, byes, names
         const rfa = offseason && Boolean(player.rfa);
         return {
             id: player.playerId, name: player.fullName, position: player.nflPosition, nfl: player.team,
-            bye: byes.get(player.team) || "", points: points.get(player.playerId) || 0,
+            bye: byes.get(player.team) || "", points: pointsOf(points, player.playerId),
             projected: projections.has(player.playerId) ? projections.get(player.playerId) : null,
             salary: rfa ? null : player.salary, years: rfa ? null : player.years, rfa, lengthDue: Boolean(player.lengthDue), fa: false,
             owner: player.franchise.franchiseId, ownerName: names.get(player.franchise.franchiseId) || player.franchise.teamName
@@ -178,7 +189,7 @@ export function playerPool(league, {freeAgents, points, projections, byes, names
         .filter((player) => player && !onRoster.has(player.playerId) && player.team && !/^FA/.test(player.team) && positions.includes(player.nflPosition))
         .map((player) => ({
             id: player.playerId, name: player.fullName, position: player.nflPosition, nfl: player.team,
-            bye: byes.get(player.team) || "", points: points.get(player.playerId) || 0,
+            bye: byes.get(player.team) || "", points: pointsOf(points, player.playerId),
             projected: projections.has(player.playerId) ? projections.get(player.playerId) : null,
             salary: null, years: null, rfa: false, fa: true, owner: null, ownerName: "Free agent"
         }));
@@ -223,9 +234,11 @@ const SORTS = {
 // names read A–Z first; the numbers highest first
 export const FIRST_DIRECTION = {name: 1, bye: 1, points: -1, projected: -1, salary: -1, years: -1};
 
+// a figure not known (NaN) goes last either way
 export function sortPlayers(list, key, direction = FIRST_DIRECTION[key]) {
-    const compare = SORTS[key] || SORTS.points;
-    return list.slice().sort((a, b) => direction * compare(a, b) || SORTS.name(a, b));
+    const field = SORTS[key] ? key : "points";
+    const unknown = (player) => Number(Number.isNaN(player[field]));
+    return list.slice().sort((a, b) => unknown(a) - unknown(b) || direction * SORTS[field](a, b) || SORTS.name(a, b));
 }
 
 // ---- Draft ----
@@ -264,7 +277,8 @@ export function draftOrder(picture, {finish = null, futureDraftPicks = null, nam
     const out = (standingsOnly ? picture.seeds.map((seed) => seed.team) : []).concat(picture.hunt.map((entry) => entry.team))
         .sort((a, b) => b.order - a.order);
     const inOrder = standingsOnly ? [] : finish || picture.seeds.slice().reverse().map((seed) => seed.team.id);
-    const traded = (teamId) => asArray(futureDraftPicks && futureDraftPicks.franchise).flatMap((team) =>
+    // null, not known, without the picks
+    const traded = (teamId) => futureDraftPicks && asArray(futureDraftPicks.franchise).flatMap((team) =>
         asArray(team.futureDraftPick).filter((pick) => Number(pick.year) === nextYear && pick.originalPickFor === teamId && team.id !== teamId)
             .map((pick) => `Round ${pick.round} → ${names.get(team.id) || team.id}`));
     const rows = [
@@ -287,7 +301,9 @@ export function playoffFinish(brackets, {completedWeek = Infinity, thirdPlaceGam
     const [championship, third] = brackets;
     const rounds = asArray(championship && championship.playoffRound);
     const games = (round) => asArray(round && round.playoffGame);
-    const decided = (game) => game && game.home && game.away && game.home.points !== undefined && game.away.points !== undefined;
+    // points MFL left out (null: ui/checked.js lenient) aren't a result
+    const known = (side) => side.points !== undefined && side.points !== null;
+    const decided = (game) => game && game.home && game.away && known(game.home) && known(game.away);
     const loser = (game) => (Number(game.home.points) >= Number(game.away.points) ? game.away : game.home);
     const winner = (game) => (loser(game) === game.home ? game.away : game.home);
     const final = games(rounds[rounds.length - 1])[0];
