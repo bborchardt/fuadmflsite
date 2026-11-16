@@ -21,6 +21,7 @@
 //                               only logs them
 //   BACKUP_STARTERS             "apply" to start members' backups for inactive starters (bylaw 16.5);
 //                               anything else only logs them
+//   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
 //   NOW                         optional ISO time, for testing
 //   DRY_RUN                     "true": writes nothing to MFL or DATA_DIR, whatever the variables above
 //                               say, and may name a league the version doesn't list
@@ -65,6 +66,7 @@ const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLin
     await import("./backup-starters.mjs");
 const {mflForm, mflHomePage} = await import("./mfl-form.mjs");
 const {MAX_RFA_SHARE, RFA_SALARY, atOneYear, rfaSalaries} = await import("./rfa-salaries.mjs");
+const {checkMfl} = await import("./mfl-check.mjs");
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -257,8 +259,8 @@ async function loginWorks(cookie) {
 }
 
 // a dry run can name any league; the session is only for one the login is in
-const loginIsInLeague = () => loginLeagues.some((entry) => entry.league_id === leagueId
-    || (/\/home\/(\d+)/.exec(entry.url || "") || [])[1] === leagueId);
+const isThisLeague = (entry) => entry.league_id === leagueId || (/\/home\/(\d+)/.exec(entry.url || "") || [])[1] === leagueId;
+const loginIsInLeague = () => loginLeagues.some(isThisLeague);
 
 // an export whose items lack a field the job relies on throws, so nothing is written from it (lib/shapes.js)
 const exportOptions = {fetchImpl: mflFetch, init: {headers: mflHeaders}, check: checkShape};
@@ -1298,6 +1300,42 @@ async function teamIcons({league}) {
     return {changed: !dryRun && (written.length > 0 || removed.length > 0 || knownChanged), publish: !dryRun && (written.length > 0 || removed.length > 0)};
 }
 
+// What v2 reads from MFL that the chores don't, as the commissioner's own team sees it: a change MFL
+// made fails the run before a member meets it. Only the exports without a team of the login's.
+async function mflCheck(loggedIn, {built, rosters}) {
+    if (process.env.MFL_CHECK === "off") {
+        return;
+    }
+    if (!loggedIn) {
+        log("The check of what v2 reads from MFL needs the commissioner login; skipped.");
+        return;
+    }
+    const entry = loginLeagues.find(isThisLeague) || {};
+    const franchise = /^\d{4}$/.test(entry.franchise_id || "") && entry.franchise_id !== "0000" ? entry.franchise_id : null;
+    if (!franchise) {
+        needsAttention("MFL check: the commissioner login owns no team in this league that MFL names, so only the exports were checked, not members' pages.");
+    }
+    const mine = asArray(rosters.franchise).find((each) => each.id === franchise);
+    const context = {season, leagueId, franchise, inSeason: built.started === true && built.seasonOver === false,
+        partner: [...built.franchises.keys()].find((id) => id !== franchise) || null,
+        playerId: mine ? (asArray(mine.player)[0] || {}).id || null : null};
+    const {changed, unchecked, count} = await checkMfl(context, {
+        version,
+        exportRead: ({type, params = {}, section = type, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}, section),
+        pageRead: async (path, {referer} = {}) => {
+            const response = await mflAsk(`${host}${path}`, {headers: referer ? {...mflHeaders, Referer: `${host}${referer}`} : mflHeaders});
+            return {status: response.status, body: await response.text()};
+        }
+    });
+    for (const item of changed) {
+        needsAttention(`MFL check: ${item}`);
+    }
+    for (const item of unchecked) {
+        log(`MFL check: ${item}; tried again tomorrow.`);
+    }
+    log(`MFL check: ${count - changed.length - unchecked.length} of ${count} reads as v2 expects.`);
+}
+
 // icon stills on league-data that the site doesn't have, as for snapshots
 async function iconsToPublish() {
     const dir = join(dataDir, "data", "icons");
@@ -1422,6 +1460,12 @@ try {
             await payouts(loggedIn, state);
         } catch (error) {
             needsAttention(`Payouts: ${error.message}`);
+        }
+        // it writes nothing, so last
+        try {
+            await mflCheck(loggedIn, state);
+        } catch (error) {
+            needsAttention(`MFL check: ${error.message}`);
         }
     }
     // last season is for a job that missed its snapshot; a test league may have no site for it

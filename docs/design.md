@@ -212,6 +212,20 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   logged as an error. A panel showing a copy kept from before only warns.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
+- **The job tries what v2 reads each morning** (`jobs/mfl-check.mjs`), after its chores: each export
+  v2 reads that the chores don't, through `lib/shapes.js`, and each of MFL's pages and feeds v2 reads,
+  through v2's own reader, as the commissioner's login sees them, which is a member's view of the team
+  it owns (the commissioner's own pages need MFL's switch, which the check doesn't make). One MFL has
+  changed, or no longer has (HTTP 404), fails the run like a flag, naming the page, or the item and
+  field, usually before a member opens it; one MFL couldn't give this time (a refusal, an error, its
+  home page) is only logged and tried the next day. It only reads, and nothing of a page goes in the
+  run's log, which is public. Out of season it leaves out what's of a week (live scoring, projections,
+  the stats feed); Lineup passes as v2 takes it, MFL's refusal included (the season over). Pages are parsed with jsdom, not a browser, and MFL's scripts aren't run:
+  Add/Drop's fields are found on the page rather than in its form, which MFL puts inside a table and
+  jsdom, unlike a browser, doesn't give them to. `tests/readers.test.mjs` fails on a reader of MFL's
+  pages that neither the check nor a chore tries on MFL's page. Not seen: how a page draws, what MFL's
+  scripts give (Add's picker), the message board's pages (restyled, with no reader), and what only a
+  member's own settings change.
 - **Exports the job, and v2's checks and forms, read** are checked as they come (`fetchExport`: a section missing fails), and
   then item by item (`lib/shapes.js`): an item without a field a chore relies on, or with a number
   that won't read, fails the export, and the chore that read it flags, naming the item ("franchise

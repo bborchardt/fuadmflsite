@@ -26,6 +26,8 @@ runs inside MFL's own pages, loaded by a home page message.
 - puts in members' backup starters for inactive starters (bylaw 16.5), from the "Conditional
   starters" thread, and recalculates the week
 - flags rule problems (cap, roster limit, IR, anti-tanking) and anything it can't decide
+- tries what v2 reads from MFL (its exports, pages and feeds, as a member sees them) and flags one
+  MFL has changed, usually before a member meets it
 
 A flag fails the run, so GitHub emails the commissioner. Chores that write to MFL only log what they
 would do until they're switched on.

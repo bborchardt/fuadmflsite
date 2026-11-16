@@ -14,6 +14,7 @@
 //   login         "ok" (default), "refused", or "escaped": MFL takes the session cookie only with
 //                 its +, / and = escaped
 //   myLeagues     the leagues the login is in, default ["48571"]
+//   myFranchise   the login's team in them, as MFL's franchise_id (default: none)
 //   leagueUrls    more of them, as entries with only a url
 //   nflSchedule   an HTTP status to answer the NFL schedule with, in place of the schedule
 //   importError   MFL's <error> for every import, or a list of them, one per import in turn (null:
@@ -69,7 +70,7 @@ function exportAnswer(host, year, params, cookie) {
     }
     if (type === "myleagues") {
         const accepted = scenario.login === "escaped" ? cookie === "MFL_USER_ID=abc%2Bdef%3D" : Boolean(cookie);
-        return json({leagues: {league: accepted ? [...(scenario.myLeagues || ["48571"]).map((league_id) => ({league_id})), ...(scenario.leagueUrls || []).map((url) => ({url}))] : []}});
+        return json({leagues: {league: accepted ? [...(scenario.myLeagues || ["48571"]).map((league_id) => ({league_id, ...(scenario.myFranchise ? {franchise_id: scenario.myFranchise} : {})})), ...(scenario.leagueUrls || []).map((url) => ({url}))] : []}});
     }
     const exports = {...scenario.exports, ...(recalculated ? scenario.recalculated : {})};
     const keyed = params.get("W") || params.get("BRACKET_ID");
@@ -89,7 +90,8 @@ function exportAnswer(host, year, params, cookie) {
 globalThis.fetch = async (input, init = {}) => {
     const url = new URL(String(input));
     const body = init.body ? String(init.body) : "";
-    record({method: init.method || "GET", url: url.href, body, userAgent: (init.headers || {})["User-Agent"] || null, cookie: (init.headers || {}).Cookie || null, ifNoneMatch: (init.headers || {})["If-None-Match"] || null});
+    record({method: init.method || "GET", url: url.href, body, userAgent: (init.headers || {})["User-Agent"] || null, cookie: (init.headers || {}).Cookie || null, ifNoneMatch: (init.headers || {})["If-None-Match"] || null,
+        referer: (init.headers || {}).Referer || null});
     const picture = (scenario.pictures || {})[url.href];
     if (picture !== undefined) {
         if (typeof picture === "number") {

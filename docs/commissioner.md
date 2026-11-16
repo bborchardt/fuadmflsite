@@ -181,6 +181,9 @@ week 12's kickoff.
 - **The beta fails to load or start:** that member gets `MAIN` instead, with a bar that leads out of
   the beta. To take the beta down for everyone, delete its offer line from MFL's header (Betas and
   versions).
+- **An "MFL check" flag:** MFL changed a page, feed or export v2 reads; the flag names which, and
+  the item and field for an export. Members see "—" or MFL's own page there until v2 is changed to
+  read it again, which is a code change, with nothing to do in MFL.
 - **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
   (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
   again, or you can run it by hand.

@@ -26,6 +26,7 @@ import {readChat} from "../site/v2/ui/home-feeds.js";
 import {readIRPage} from "../site/v2/ui/ir-model.js";
 import {readSetupNav} from "../site/v2/ui/setup.js";
 import {readLineupForm} from "../jobs/backup-starters.mjs";
+import {pageChecks} from "../jobs/mfl-check.mjs";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 const doc = (html) => parseHTML(html).document;
@@ -127,6 +128,21 @@ test("every reader is listed: of MFL's pages, or of something else", () => {
     assert.deepEqual(unlisted, [], "add each to READERS (with its own page) or NOT_PAGES (with what it reads)");
     const gone = [...Object.keys(READERS), ...Object.keys(NOT_PAGES)].filter((name) => !exported.includes(name));
     assert.deepEqual(gone, []);
+});
+
+// the daily job reads MFL's pages for its chores with these, on the days a chore needs them
+const CHORES_READ = {
+    readProcessedWaivers: "contract years, after a bid run",
+    readLineupDetails: "backup starters, after a week's games",
+    readTopicPage: "backup starters",
+    readLineupForm: "backup starters, when one is due"
+};
+
+// so a change MFL made shows in the job's run before a member meets it (jobs/mfl-check.mjs)
+test("every reader of MFL's pages is tried on MFL's live page by the daily job", async () => {
+    const context = {season: 2026, leagueId: "48571", franchise: "0001", partner: "0002", playerId: "13593", week: 6, inSeason: true};
+    const checked = new Set((await pageChecks(context)).flatMap((each) => each.uses));
+    assert.deepEqual(Object.keys(READERS).filter((name) => !checked.has(name) && !(name in CHORES_READ)), [], "add each to jobs/mfl-check.mjs");
 });
 
 test("mflProgram names the page MFL drew, from its HTML or a document", () => {

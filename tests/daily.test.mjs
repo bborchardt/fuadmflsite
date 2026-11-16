@@ -90,7 +90,7 @@ function run({scenario = {}, env = {}, files = {"data/franchise-2025.json": SNAP
         encoding: "utf8",
         timeout: 60000,
         // nothing from the real environment: no login, no live league
-        env: {PATH: process.env.PATH, DATA_DIR: dataDir, MFL_LEAGUE_ID: "48571", MFL_HOST: "https://www44.myfantasyleague.com", GITHUB_REPOSITORY: "bborchardt/fuadmflsite", NOW: now, FAKE_MFL: paths.fake, FAKE_MFL_LOG: paths.log, GITHUB_OUTPUT: paths.output, GITHUB_STEP_SUMMARY: paths.summary, ...env}
+        env: {PATH: process.env.PATH, DATA_DIR: dataDir, MFL_LEAGUE_ID: "48571", MFL_HOST: "https://www44.myfantasyleague.com", GITHUB_REPOSITORY: "bborchardt/fuadmflsite", NOW: now, FAKE_MFL: paths.fake, FAKE_MFL_LOG: paths.log, GITHUB_OUTPUT: paths.output, GITHUB_STEP_SUMMARY: paths.summary, MFL_CHECK: "off", ...env}
     });
     const read = (file) => (existsSync(file) ? readFileSync(file, "utf8") : "");
     const choreLog = read(join(dataDir, "chore-log.md"));
@@ -1230,4 +1230,26 @@ test("backup starters: a week without backups is settled without waiting for nfl
     assert.equal(result.status, 0, result.stdout);
     assert.ok(!result.requests.some((request) => /nflverse|dynastyprocess/.test(request.url)));
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
+});
+
+test("the check of what v2 reads: a page MFL no longer has fails the run, read as the login's own team; without one, only the exports", () => {
+    const result = run({scenario: {myFranchise: "0001"}, env: {...LOGIN, MFL_CHECK: "on"}});
+    assert.equal(result.status, 1, result.stdout);
+    assert.ok(result.entries.includes("MFL check: Add/Drop (/2026/add_drop?L=48571): MFL answered HTTP 404"), result.entries.join("\n"));
+    // an export the fake has none of is an error, not a change: only logged
+    assert.match(result.stdout, /MFL check: Couldn't load rules: MFL said "no rules in the scenario"; tried again tomorrow\./);
+    // only read, as a member: the login's own cookie, never the commissioner's
+    const checked = result.requests.filter((request) => /\/2026\/(add_drop|csetup|player)\b|O=(257|18|05|171)\b|fflnetdynamic/.test(request.url));
+    assert.ok(checked.length >= 8, checked.map((request) => request.url).join("\n"));
+    assert.ok(checked.every((request) => request.method === "GET" && request.cookie === "MFL_USER_ID=abc+def="), JSON.stringify(checked));
+    assert.ok(result.requests.some((request) => request.url.includes("O=171&FID=0001")));
+    // a feed from one of MFL's pages, as the stats feed answers 403 otherwise
+    const feeds = result.requests.filter((request) => request.url.includes("fflnetdynamic"));
+    assert.ok(feeds.length && feeds.every((request) => request.referer === "https://www44.myfantasyleague.com/2026/home/48571"), JSON.stringify(feeds));
+
+    const teamless = run({env: {...LOGIN, MFL_CHECK: "on"}});
+    assert.equal(teamless.status, 1);
+    assert.ok(teamless.entries.includes("MFL check: the commissioner login owns no team in this league that MFL names, so only the exports were checked, not members' pages."));
+    assert.ok(!teamless.requests.some((request) => request.url.includes("add_drop")));
+    assert.ok(teamless.requests.some((request) => request.url.includes("TYPE=futureDraftPicks")));
 });
