@@ -227,7 +227,7 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   and is logged once a page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
   without when MFL has changed it. The log names the first item and field, as a display panel's does. `tests/checked.test.mjs` fails on a read in v2's screens without
   the check, the display panels' aside.
-- **A display panel shows what it can of a changed export:** League's, Rosters' and All moves' reads, Scores' included, pass `check: lenient`
+- **A display panel shows what it can of a changed export:** League's, Rosters', All moves' and Home's display panels' reads, Scores' included, pass `check: lenient`
   (`ui/checked.js`). An item missing a field has it set to null (`markMissing` in `lib/shapes.js`),
   which reads as not known (`numberOf`: NaN) and shows as "—"; so does anything worked out from it,
   never a total of the rest: a week's score that won't read leaves every team's all-play and weekly
@@ -246,13 +246,17 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   a move whose kind or players MFL left out as "—", and one whose time it left out last, under "—";
   All bids' voided bids go by a win's transaction not being there, so they read the transactions
   strictly and, on a change, show the run as MFL has it. All moves' Basic view stands v2's view
-  aside for MFL's list on the same page. An export with no item whole, or an item
+  aside for MFL's list on the same page. Home's message board shows a topic's subject or time MFL
+  left out as "—", the time last. Coming up's dates are worked out across the calendar's events
+  (free agency closes with the last waiver run), so a calendar or league settings MFL has changed
+  leave them all not known: the season's own dates show, then "Other league dates —". My alerts,
+  whose checks read the same exports, fail on the change as checks do. An export with no item whole, or an item
   without the field that says which it is (an id, a team, or a rule's own `keys`: a draft pick's
   round, number and player), fails as "Couldn't load", even where the
   panel goes without the export when MFL can't give it (Winners' accounting, whose absence reads as
   no pot yet). Either is logged
   once a page, naming the first item and field. A panel's saved copy keeps NaN as not known
-  (`ui/store.js`), where JSON would make it null, which reads as none. *(to do: Home's board and coming panels, from strict.)*
+  (`ui/store.js`), where JSON would make it null, which reads as none.
 - **A member's own home page** is a viewer of its own in `pages.py` (`member-custom`: every module MFL
   offers, the header in a tab too).
 

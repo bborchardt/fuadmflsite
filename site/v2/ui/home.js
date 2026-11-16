@@ -18,7 +18,7 @@ import {
 import {draftPicked, kickoffAt} from "./context.js";
 import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";
 import {moveRows} from "./move-rows.js";
-import {strict} from "./checked.js";
+import {lenient, strict} from "./checked.js";
 
 const CHAT_POLL = 15 * 1000;
 // MFL's own chat stops polling after about two hours without posting
@@ -38,12 +38,12 @@ function mflPage(pattern) {
 
 // Each export is fetched once per page, however many panels use it (page-fetch.js); `fresh` reads
 // it again, after a post. An optional one resolves to null when it can't be had, but not when MFL
-// has changed it: Home's alerts are checks (checked.js).
+// has changed it: Home's alerts are checks (checked.js). A display panel's read passes `lenient`.
 function fetcher({season, leagueId}, {fresh = false} = {}) {
     const host = window.location.origin;
-    return (type, params = {}, {base = host, optional = false} = {}) => {
+    return (type, params = {}, {base = host, optional = false, check = strict} = {}) => {
         const leagueParams = base === host ? {L: leagueId, ...params} : params;
-        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: strict});
+        const request = fetchExport(exportUrl(base, season, type, leagueParams), type, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: check || undefined});
         return optional ? request.catch((error) => {
             if (error && error.changed) {
                 throw error;
@@ -244,7 +244,7 @@ function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
     // MFL's own page, for its formatting, email replies and Preview; its import drops line breaks
     const addHref = `${window.location.origin}/${context.season}/mb/topic_add.pl?bid=${encodeURIComponent(`${context.season}${context.leagueId}`)}`;
     const actions = `${boardHref ? `<a href="${esc(boardHref)}">All topics</a>` : ""}${loggedIn ? `<a class="fuad-chip" href="${esc(addHref)}">New topic</a>` : ""}`;
-    const load = async () => boardTopics(await exp("messageBoard", {COUNT: 20}));
+    const load = async () => boardTopics(await exp("messageBoard", {COUNT: 20}, {check: lenient}));
     const render = (topics, body) => {
         body.innerHTML = topics.length
             ? `<ul class="fuad-rows">${topics.map((topic) => `<li><a class="fuad-topic" href="${esc(threadHref(topic.id))}"><span class="fuad-row-title">${esc(topic.title)}</span><span class="fuad-meta">${esc(topic.when)}</span></a></li>`).join("")}</ul>`
@@ -292,13 +292,33 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     // the calendar needs a login; logged out, Coming up keeps the season's own dates
     const calendar = loggedIn ? exp("calendar", {}, {optional: true}) : Promise.resolve(null);
-    const dates = Promise.all([calendar, exp("league", {}, {optional: true}).then(seasonWeeks)]).then(async ([found, season]) => {
+    const settings = exp("league", {}, {optional: true});
+    const datesOf = (calendarRead, settingsRead) => Promise.all([calendarRead, settingsRead.then(seasonWeeks)]).then(async ([found, season]) => {
         const weeks = new Set([1, TRADE_DEADLINE_WEEK, ...(season ? [season.playoffsStart, season.championship] : [])]);
         asArray(found && found.event).map((event) => Number(event.start_time)).filter((n) => n > 0 && n < 100).forEach((n) => weeks.add(n));
         const times = await kickoffs(context.season, [...weeks]);
         return {calendar: found, kickoffs: times, weeks: season, dates: calendarDates(found, times)};
     });
-    const coming = () => dates.then(({calendar: found, dates: list, kickoffs: times, weeks}) => comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}));
+    // My alerts' checks go by these; they fail on a change
+    const dates = datesOf(calendar, settings);
+    // Coming up shows what it can: a calendar or league settings MFL has changed (logged by strict)
+    // leave the dates worked out from them not known, so the season's own dates show with a line
+    // saying the rest aren't; a date worked out from part of the calendar could be wrong
+    const changed = Symbol("changed");
+    const unlessChangedHere = (read) => read.catch((error) => {
+        if (error && error.changed) {
+            return changed;
+        }
+        throw error;
+    });
+    const shownCalendar = unlessChangedHere(calendar);
+    const shownSettings = unlessChangedHere(settings);
+    const shownDates = Promise.all([shownCalendar, shownSettings]).then(([found, season]) =>
+        datesOf(Promise.resolve(found === changed ? null : found), Promise.resolve(season === changed ? null : season))
+            .then((value) => ({...value, unknown: found === changed || season === changed})));
+    const comingOf = (read) => read.then(({calendar: found, dates: list, kickoffs: times, weeks, unknown}) =>
+        comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}).concat(unknown ? [{what: "Other league dates", when: "—"}] : []));
+    const coming = () => comingOf(dates);
 
     // the viewer's players still due a length before the season, read against their posts in the
     // board's contract topics (lib/lengths.js), reaching back as far as the daily job does. `from`: when
@@ -468,7 +488,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         what: "coming up",
         key: `fuad.home.dates.${context.season}.${loggedIn ? "member" : "guest"}`,
         // every date, a to-do close by in My alerts too, so a date never depends on My alerts loading
-        load: coming,
+        load: () => comingOf(shownDates),
         render: (list, body) => {
             body.innerHTML = list.length
                 ? `<ul class="fuad-rows">${list.map((date) => `<li class="fuad-date"><span class="fuad-row-text"><span class="fuad-row-title">${esc(date.what)}</span>${date.detail ? `<span class="fuad-meta">${esc(date.detail)}</span>` : ""}</span><span class="fuad-meta">${esc(date.when)}</span></li>`).join("")}</ul>`

@@ -438,12 +438,14 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
 }
 
 // MFL's `messageBoard`: the newest topics first
+// A subject or time MFL left out (null: ui/checked.js lenient) is "—", a time not known last.
 export function boardTopics(messageBoard, limit = TOPICS) {
+    const unknown = (topic) => Number(!Number.isFinite(topic.at));
     return asArray(messageBoard && messageBoard.thread)
-        .map((thread) => ({id: thread.id, title: String(thread.subject || "").trim() || "(no subject)", at: Number(thread.lastPostTime)}))
-        .sort((a, b) => b.at - a.at)
+        .map((thread) => ({id: thread.id, title: thread.subject === null ? "—" : String(thread.subject || "").trim() || "(no subject)", at: numberOf(thread.lastPostTime)}))
+        .sort((a, b) => unknown(a) - unknown(b) || b.at - a.at)
         .slice(0, limit)
-        .map((topic) => ({...topic, when: dayText(topic.at).replace(/^\w+ /, "")}));
+        .map((topic) => ({...topic, when: Number.isFinite(topic.at) ? dayText(topic.at).replace(/^\w+ /, "") : "—"}));
 }
 
 // the newest topic whose subject names contracts, where lengths are posted
