@@ -37,6 +37,8 @@ export function exportChecks({week, inSeason}) {
 
 // The pages and feeds: `path` from the league's host, `read(text, found)` true when v2's readers
 // (`uses`, which tests/readers.test.mjs holds to every reader) can read it. `when` as for exports.
+// `name` is the file it's saved as, as the capture bookmark names it; `members`, a page with what only
+// the league's members see, or the login's own team's (its pending bids and offers, its settings).
 export async function pageChecks({season, leagueId, franchise, partner, playerId, week, inSeason}, version = "v2") {
     const ui = (name) => import(pathToFileURL(join(import.meta.dirname, "..", "site", version, "ui", name)).href);
     const [{readPlayerLists}, {readRoster}, {readBidRun}, {lineupForm, lineupRefusal, readLineupPage}, {readProposal, readTradesPage}, {readIRPage},
@@ -51,47 +53,47 @@ export async function pageChecks({season, leagueId, franchise, partner, playerId
     return [
         // the fields add.js and drop.js post besides the lists they read; MFL's Add/Drop form is inside a
         // table, which jsdom, unlike a browser, doesn't give its fields to, so they're found on the page
-        {uses: ["readPlayerLists"], what: "Add/Drop", path: `/${season}/add_drop?L=${L}`, read: onDoc((doc) => {
+        {uses: ["readPlayerLists"], what: "Add/Drop", name: "add_drop.html", members: true, path: `/${season}/add_drop?L=${L}`, read: onDoc((doc) => {
             const lists = readPlayerLists(scripts(doc));
             return lists && lists.add.length && ["#add_pid_field_id", "#drop_pid_field_id", "[name=ROUND]", "[name=COMMENTS]"].every((field) => doc.querySelector(field));
         })},
-        {uses: ["readRoster"], what: "Drop Players", path: option("257"), read: onDoc((doc) => {
+        {uses: ["readRoster"], what: "Drop Players", name: "options-O257.html", members: true, path: option("257"), read: onDoc((doc) => {
             const select = doc.querySelector("select[name=drop_pid]");
             return readRoster(scripts(doc)) && select && select.form && select.form.elements.OPTION && select.form.elements.OPTION.value === "257";
         })},
-        {uses: ["readIRPage"], what: "Injured Reserve", path: option("18"), read: onDoc((doc) => readIRPage(doc, franchise))},
-        {uses: ["readTradesPage"], what: "Trades", path: option("05"), read: onDoc(readTradesPage)},
-        {uses: ["readProposal"], what: "a trade proposal", path: option("05", `&FRANCHISE=${franchise},${partner}`), when: Boolean(partner), read: onDoc((doc) => readProposal(doc, franchise))},
+        {uses: ["readIRPage"], what: "Injured Reserve", name: "options-O18.html", members: true, path: option("18"), read: onDoc((doc) => readIRPage(doc, franchise))},
+        {uses: ["readTradesPage"], what: "Trades", name: "options-O05.html", members: true, path: option("05"), read: onDoc(readTradesPage)},
+        {uses: ["readProposal"], what: "a trade proposal", name: "options-O05-propose.html", members: true, path: option("05", `&FRANCHISE=${franchise},${partner}`), when: Boolean(partner), read: onDoc((doc) => readProposal(doc, franchise))},
         // or MFL's refusal in its place, as lineup.js has it (the season over, a roster to fix first)
-        {uses: ["readLineupPage"], what: "Submit Lineup", path: `/${season}/lineup?L=${L}&F=${franchise}`, read: onDoc((doc) => {
+        {uses: ["readLineupPage"], what: "Submit Lineup", name: "lineup.html", members: true, path: `/${season}/lineup?L=${L}&F=${franchise}`, read: onDoc((doc) => {
             const page = readLineupPage(doc);
             return lineupRefusal(doc) || (lineupForm(doc) && page && page.players.length);
         })},
-        {uses: ["readBidRun"], what: "Processed Waivers", path: `/${season}/processed_waivers?LEAGUE_ID=${L}`, read: (html) => Boolean(readBidRun(documentOf(html).body.innerHTML))},
-        {uses: ["readScoring"], what: "League Rules", path: option("09"), read: onDoc(readScoring)},
-        {uses: ["readSettings"], what: "League Settings", path: option("26"), read: onDoc(readSettings)},
-        {uses: ["readPowerPage"], what: "Power Rankings", path: option("101"), read: (html) => Boolean(readPowerPage(html))},
-        {uses: ["readChampions"], what: "League Champions", path: option("194"), read: (html) => Boolean(readChampions(html))},
-        {uses: ["readCareer"], what: "Career Records", path: option("208"), read: (html) => Boolean(readCareer(html))},
-        {uses: ["readSeries"], what: "All-Time Series Records", path: option("171", `&FID=${franchise}`), read: (html) => Boolean(readSeries(html))},
-        {uses: ["readSkinForm", "readSetupNav"], what: "the skin form", path: `/${season}/csetup?L=${L}&C=SKIN`,
+        {uses: ["readBidRun"], what: "Processed Waivers", name: "processed_waivers.html", members: true, path: `/${season}/processed_waivers?LEAGUE_ID=${L}`, read: (html) => Boolean(readBidRun(documentOf(html).body.innerHTML))},
+        {uses: ["readScoring"], what: "League Rules", name: "options-O09.html", path: option("09"), read: onDoc(readScoring)},
+        {uses: ["readSettings"], what: "League Settings", name: "options-O26.html", path: option("26"), read: onDoc(readSettings)},
+        {uses: ["readPowerPage"], what: "Power Rankings", name: "options-O101.html", path: option("101"), read: (html) => Boolean(readPowerPage(html))},
+        {uses: ["readChampions"], what: "League Champions", name: "options-O194.html", path: option("194"), read: (html) => Boolean(readChampions(html))},
+        {uses: ["readCareer"], what: "Career Records", name: "options-O208.html", path: option("208"), read: (html) => Boolean(readCareer(html))},
+        {uses: ["readSeries"], what: "All-Time Series Records", name: "options-O171.html", path: option("171", `&FID=${franchise}`), read: (html) => Boolean(readSeries(html))},
+        {uses: ["readSkinForm", "readSetupNav"], what: "the skin form", name: "csetup-SKIN.html", members: true, path: `/${season}/csetup?L=${L}&C=SKIN`,
             read: onDoc((doc) => readSkinForm(doc) && readSetupNav(doc.querySelector("#withmenus > span.reportnavigation")))},
-        {uses: ["readCustomizeForm"], what: "the customize form", path: `/${season}/csetup?L=${L}&C=FCUSTOM`, read: onDoc(readCustomizeForm)},
+        {uses: ["readCustomizeForm"], what: "the customize form", name: "csetup-FCUSTOM.html", members: true, path: `/${season}/csetup?L=${L}&C=FCUSTOM`, read: onDoc(readCustomizeForm)},
         // the player's page names his news, whose first article is read after it
-        {uses: ["readPlayerPage"], what: "a player's page", path: `/${season}/player?L=${L}&P=${encodeURIComponent(playerId)}`, when: Boolean(playerId), read: (html, found) => {
+        {uses: ["readPlayerPage"], what: "a player's page", name: "player.html", path: `/${season}/player?L=${L}&P=${encodeURIComponent(playerId)}`, when: Boolean(playerId), read: (html, found) => {
             const player = readPlayerPage(html);
             found.article = player && player.news.length ? player.news[0].id : null;
             return Boolean(player);
         }},
-        {uses: ["readArticle"], what: "a news article", path: (found) => (found.article ? `/${season}/view_news_article?L=${L}&ID=${encodeURIComponent(found.article)}` : null),
+        {uses: ["readArticle"], what: "a news article", name: "view_news_article.html", path: (found) => (found.article ? `/${season}/view_news_article?L=${L}&ID=${encodeURIComponent(found.article)}` : null),
             read: (html) => Boolean(readArticle(html))},
         // the feeds, as MFL's pages ask for them: the stats feed answers 403 without one as referrer
         // (docs/mfl.md). The week before's stats, which are final; this week's may have no games yet
-        {uses: ["readStats"], feed: true, what: `the live stats feed for week ${week - 1}`, path: `/fflnetdynamic${season}/live_stats_${two(week - 1)}.txt`, when: inSeason && week > 1,
+        {uses: ["readStats"], feed: true, what: `the live stats feed for week ${week - 1}`, name: `live_stats_${two(week - 1)}.txt`, path: `/fflnetdynamic${season}/live_stats_${two(week - 1)}.txt`, when: inSeason && week > 1,
             read: (text) => Boolean(readStats(text))},
-        {uses: ["readProjections"], feed: true, what: `the projections feed for week ${week}`, path: `/fflnetdynamic${season}/live_proj_${two(week)}.txt`, when: inSeason && week > 0,
+        {uses: ["readProjections"], feed: true, what: `the projections feed for week ${week}`, name: `live_proj_${two(week)}.txt`, path: `/fflnetdynamic${season}/live_proj_${two(week)}.txt`, when: inSeason && week > 0,
             read: (text) => Boolean(readProjections(text))},
-        {uses: ["readChat"], feed: true, what: "the chat feed", path: `/fflnetdynamic${season}/${L}_chat.xml`, read: (xml) => Boolean(readChat(xml, {viewer: franchise}))}
+        {uses: ["readChat"], feed: true, what: "the chat feed", name: "chat.xml", members: true, path: `/fflnetdynamic${season}/${L}_chat.xml`, read: (xml) => Boolean(readChat(xml, {viewer: franchise}))}
     ].filter((each) => each.when !== false);
 }
 
@@ -99,9 +101,11 @@ export async function pageChecks({season, leagueId, franchise, partner, playerId
 // team's), inSeason}. `exportRead(check)` resolves to the export's section, checked, or throws
 // fetchExport's error; `pageRead(path, {referer})` to {status, body}, or throws when it couldn't be
 // asked, `referer` the league's home page's path, to send as the referrer, for a feed.
+// `keep(page, answer, changed)`, when given, is told of each page MFL answered, and gives true when it
+// kept a copy, which a change's flag then says.
 // Resolves to {changed, unchecked, count}: what v2 can't read, which needs the commissioner, and what
 // couldn't be asked this time. Without a franchise, only the exports.
-export async function checkMfl(context, {exportRead, pageRead, version}) {
+export async function checkMfl(context, {exportRead, pageRead, version, keep = () => false}) {
     const changed = [];
     const unchecked = [];
     let count = 0;
@@ -145,8 +149,12 @@ export async function checkMfl(context, {exportRead, pageRead, version}) {
             unchecked.push(`Couldn't load ${each.what}: HTTP ${answer.status}`);
         } else if (mflHomePage(answer.body)) {
             unchecked.push(`Couldn't load ${each.what}: ${mflHomePage(answer.body)}`);
-        } else if (!each.read(answer.body, found)) {
-            changed.push(`${each.what} (${path}): v2 can't read it`);
+        } else {
+            const read = Boolean(each.read(answer.body, found));
+            const kept = keep({...each, path}, answer, !read);
+            if (!read) {
+                changed.push(`${each.what} (${path}): v2 can't read it${kept ? "; MFL's page is saved on the run" : ""}`);
+            }
         }
     }
     return {changed, unchecked, count};

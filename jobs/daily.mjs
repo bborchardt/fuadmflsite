@@ -22,6 +22,9 @@
 //   BACKUP_STARTERS             "apply" to start members' backups for inactive starters (bylaw 16.5);
 //                               anything else only logs them
 //   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
+//   SAVED_PAGES_DIR             where the check saves MFL's pages, cleaned as the capture bookmark
+//                               cleans them: a page it flags, and with SAVE_PAGES every one it reads
+//   SAVE_PAGES                  on a dry run, "true" saves every page the check reads
 //   NOW                         optional ISO time, for testing
 //   DRY_RUN                     "true": writes nothing to MFL or DATA_DIR, whatever the variables above
 //                               say, and may name a league the version doesn't list
@@ -67,6 +70,7 @@ const {NFLVERSE_ROSTERS, PLAYER_IDS, lineupFields, lineupSaved, readCsv, readLin
 const {mflForm, mflHomePage} = await import("./mfl-form.mjs");
 const {MAX_RFA_SHARE, RFA_SALARY, atOneYear, rfaSalaries} = await import("./rfa-salaries.mjs");
 const {checkMfl} = await import("./mfl-check.mjs");
+const {ownersOf, scrub} = await import(pathToFileURL(join(root, "site", "capture", "capture-model.js")).href);
 
 if (!process.env.DATA_DIR) {
     throw new Error("DATA_DIR must point at a checkout of the league-data branch");
@@ -1302,7 +1306,7 @@ async function teamIcons({league}) {
 
 // What v2 reads from MFL that the chores don't, as the commissioner's own team sees it: a change MFL
 // made fails the run before a member meets it. Only the exports without a team of the login's.
-async function mflCheck(loggedIn, {built, rosters}) {
+async function mflCheck(loggedIn, {built, rosters, league}) {
     if (process.env.MFL_CHECK === "off") {
         return;
     }
@@ -1319,14 +1323,17 @@ async function mflCheck(loggedIn, {built, rosters}) {
     const context = {season, leagueId, franchise, inSeason: built.started === true && built.seasonOver === false,
         partner: [...built.franchises.keys()].find((id) => id !== franchise) || null,
         playerId: mine ? (asArray(mine.player)[0] || {}).id || null : null};
+    const saving = pageSaver(league);
     const {changed, unchecked, count} = await checkMfl(context, {
         version,
         exportRead: ({type, params = {}, section = type, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}, section),
         pageRead: async (path, {referer} = {}) => {
             const response = await mflAsk(`${host}${path}`, {headers: referer ? {...mflHeaders, Referer: `${host}${referer}`} : mflHeaders});
-            return {status: response.status, body: await response.text()};
-        }
+            return {status: response.status, body: await response.text(), served: response.url};
+        },
+        keep: saving.keep
     });
+    saving.finish(franchise);
     for (const item of changed) {
         needsAttention(`MFL check: ${item}`);
     }
@@ -1334,6 +1341,50 @@ async function mflCheck(loggedIn, {built, rosters}) {
         log(`MFL check: ${item}; tried again tomorrow.`);
     }
     log(`MFL check: ${count - changed.length - unchecked.length} of ${count} reads as v2 expects.`);
+}
+
+// MFL's pages as the check reads them, for tests/fixtures/pages: cleaned as the capture bookmark
+// cleans them (site/capture/capture-model.js), into SAVED_PAGES_DIR/<league>/member/ with the
+// bookmark's manifest, which the workflow puts on the run. The run's files are public, as the repo is,
+// so a page with what only members see, or the commissioner's own team's (pending bids and offers), is
+// saved only from a league other than the real one (a dry run of the test league).
+function pageSaver(league) {
+    const dir = process.env.SAVED_PAGES_DIR ? join(resolve(process.env.SAVED_PAGES_DIR), leagueId, "member") : null;
+    const all = dryRun && process.env.SAVE_PAGES === "true";
+    const realLeague = !dryRun || !process.env.DATA_LEAGUE_ID || process.env.DATA_LEAGUE_ID === leagueId;
+    // a page that would keep the owners' names isn't saved, as the bookmark saves none
+    const owners = ownersOf({league});
+    const pages = [];
+    const held = [];
+    const keep = (page, answer, changed) => {
+        if (!dir || !(all || changed)) {
+            return false;
+        }
+        if (page.members && realLeague) {
+            held.push(page.what);
+            return false;
+        }
+        if (!owners.length) {
+            return false;
+        }
+        mkdirSync(dir, {recursive: true});
+        writeFileSync(join(dir, page.name), scrub(answer.body, owners));
+        pages.push({name: page.name.replace(/\.html$/, ""), url: `${host}${page.path}`, served: answer.served || `${host}${page.path}`, status: answer.status});
+        return true;
+    };
+    const finish = (franchise) => {
+        if (all && dir && !owners.length) {
+            needsAttention("MFL check: the league export gave no owners' names to take out, so no pages were saved.");
+        }
+        if (held.length) {
+            log(`MFL check: not saved, as they show what only members see or the commissioner's own team: ${held.join(", ")}. A dry run of the test league with "Save pages" saves them.`);
+        }
+        if (pages.length) {
+            writeFileSync(join(dir, "manifest.json"), JSON.stringify({league: leagueId, season: String(season), viewer: "member", franchise, at: now.toISOString(), pages}, null, 2));
+            log(`MFL check: saved ${pages.length} of MFL's pages, cleaned, on the run.`);
+        }
+    };
+    return {keep, finish};
 }
 
 // icon stills on league-data that the site doesn't have, as for snapshots

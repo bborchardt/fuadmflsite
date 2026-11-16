@@ -4,7 +4,7 @@
 import {after, test} from "node:test";
 import assert from "node:assert/strict";
 import {spawnSync} from "node:child_process";
-import {existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
+import {existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -1252,4 +1252,35 @@ test("the check of what v2 reads: a page MFL no longer has fails the run, read a
     assert.ok(teamless.entries.includes("MFL check: the commissioner login owns no team in this league that MFL names, so only the exports were checked, not members' pages."));
     assert.ok(!teamless.requests.some((request) => request.url.includes("add_drop")));
     assert.ok(teamless.requests.some((request) => request.url.includes("TYPE=futureDraftPicks")));
+});
+
+test("the check saves MFL's pages cleaned: with Save pages, every one of another league's; of the real league's, a flagged one members' views aside", () => {
+    const owned = league();
+    owned.league.franchises.franchise[0].owner_name = "Dana Smith";
+    const page = "<html><head><title>Not v2's</title></head><body>Owner: Dana Smith, dana.smith@example.org</body></html>";
+    const pages = (id) => ({[`/2026/add_drop?L=${id}`]: page, [`/2026/options?L=${id}&O=101`]: page});
+    const saved = mkdtempSync(join(tmpdir(), "fuad-saved-"));
+    dirs.push(saved);
+
+    const other = run({scenario: {myLeagues: ["99999"], myFranchise: "0001", exports: owned, pages: pages("99999")},
+        env: {...DRY, ...LOGIN, MFL_LEAGUE_ID: "99999", MFL_CHECK: "on", SAVE_PAGES: "true", SAVED_PAGES_DIR: saved}});
+    const folder = join(saved, "99999", "member");
+    const manifest = JSON.parse(readFileSync(join(folder, "manifest.json"), "utf8"));
+    // and the fake's Processed Waivers, which answers every request alike; the others it has none of
+    assert.deepEqual(manifest.pages.map((each) => each.name), ["add_drop", "processed_waivers", "options-O101"], other.stdout);
+    assert.deepEqual([manifest.league, manifest.viewer, manifest.franchise], ["99999", "member", "0001"]);
+    const text = readFileSync(join(folder, "add_drop.html"), "utf8");
+    assert.match(text, /Owner: Owner 0001, owner@example\.com/);
+    assert.doesNotMatch(text, /Dana|dana/);
+    assert.ok(other.stdout.includes("MFL check: Add/Drop (/2026/add_drop?L=99999): v2 can't read it; MFL's page is saved on the run"), other.stdout);
+
+    // the real league's run saves only what it flags, and not a page of the commissioner's own team
+    const realSaved = mkdtempSync(join(tmpdir(), "fuad-saved-"));
+    dirs.push(realSaved);
+    const real = run({scenario: {myFranchise: "0001", exports: owned, pages: pages("48571")},
+        env: {...LOGIN, MFL_CHECK: "on", SAVE_PAGES: "true", SAVED_PAGES_DIR: realSaved}});
+    assert.deepEqual(readdirSync(join(realSaved, "48571", "member")).sort(), ["manifest.json", "options-O101.html"]);
+    assert.ok(real.entries.includes("MFL check: Power Rankings (/2026/options?L=48571&O=101): v2 can't read it; MFL's page is saved on the run"), real.entries.join("\n"));
+    assert.ok(real.entries.includes("MFL check: Add/Drop (/2026/add_drop?L=48571): v2 can't read it"));
+    assert.match(real.stdout, /not saved, as they show what only members see or the commissioner's own team: Add\/Drop, Processed Waivers\./);
 });

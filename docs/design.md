@@ -226,6 +226,16 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   pages that neither the check nor a chore tries on MFL's page. Not seen: how a page draws, what MFL's
   scripts give (Add's picker), the message board's pages (restyled, with no reader), and what only a
   member's own settings change.
+- **The job keeps MFL's pages as it finds them,** for `tests/fixtures/pages/`: a page the check flags
+  as v2 can't read is saved on the run, so its fix starts from MFL's new page, and a dry run with
+  "Save pages" saves every page the check reads, so the saved samples can follow the season (its
+  draft, playoffs and offseason). They're cleaned as the capture bookmark cleans them
+  (`site/capture/capture-model.js`), with the owners' names from the league export (none saved
+  without them), into `<league>/member/` with the bookmark's manifest. A run's files are public, as
+  the repo is, so a page with what only members see or the commissioner's own team (pending bids and
+  offers, its settings, the chat) is saved only from a league other than the real one: a dry run of
+  the test league, where the commissioner owns a team too. A flagged one of the real league's says
+  so in the log.
 - **Exports the job, and v2's checks and forms, read** are checked as they come (`fetchExport`: a section missing fails), and
   then item by item (`lib/shapes.js`): an item without a field a chore relies on, or with a number
   that won't read, fails the export, and the chore that read it flags, naming the item ("franchise

@@ -183,7 +183,14 @@ week 12's kickoff.
   versions).
 - **An "MFL check" flag:** MFL changed a page, feed or export v2 reads; the flag names which, and
   the item and field for an export. Members see "—" or MFL's own page there until v2 is changed to
-  read it again, which is a code change, with nothing to do in MFL.
+  read it again, which is a code change, with nothing to do in MFL. When the flag says "MFL's page is
+  saved on the run", the run's page has it under Artifacts (`mfl-pages`, kept 14 days), cleaned, to
+  fix v2 against. A page of your own team in the real league isn't saved, as the run's files are
+  public: run a dry run of the test league with **Save pages** ticked to get it.
+- **New saved pages for the tests:** at each stage of the season (preseason, the draft, the regular
+  season, the playoffs), a dry run with **Save pages** ticked puts every page the check reads on the
+  run, cleaned. Run it on the test league (league `50965`) for the team pages, and on the real league
+  for history, rules, settings and Power.
 - **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
   (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
   again, or you can run it by hand.
