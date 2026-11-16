@@ -9,6 +9,7 @@ import {playersFromExport} from "../lib/league.js";
 import {mflTime} from "../lib/zone.js";
 import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
+import {lenient, strict} from "./checked.js";
 import {pageFetch} from "./page-fetch.js";
 import {clock, dayText, recentMoves} from "./home-model.js";
 import {moveRows} from "./move-rows.js";
@@ -30,7 +31,10 @@ function players(season) {
     return playerList(season).then(playersFromExport);
 }
 
-const transactions = ({season, leagueId}) => fetchExport(exportUrl(window.location.origin, season, "transactions", {L: leagueId}), "transactions", {fetchImpl: pageFetch, init: {cache: "no-store"}});
+// `check`: ui/checked.js's. All moves lists what it can of a changed export ("—"); All bids' voided
+// bids go by a win's transaction not being there, so they need every one whole.
+const transactions = ({season, leagueId}, check = lenient) =>
+    fetchExport(exportUrl(window.location.origin, season, "transactions", {L: leagueId}), "transactions", {fetchImpl: pageFetch, init: {cache: "no-store"}, check: check || undefined});
 
 // v2's view at the top of MFL's page body, MFL's own content hidden under it (fuad.css)
 function mountOn(id, className) {
@@ -122,8 +126,16 @@ export function drawAllMoves({context, franchiseId, teamHref}) {
         show();
     });
 
+    // MFL's list is under v2's view: Basic view, when the moves can't load, stands v2 aside for it
+    list.addEventListener("click", (event) => {
+        if (event.target.closest("[data-fuad-basic]")) {
+            event.preventDefault();
+            mount.remove();
+            document.documentElement.classList.remove("fuad-all-moves-on");
+        }
+    });
     drawPanel(list, {
-        what: "the moves", rows: 8,
+        what: "the moves", rows: 8, basic: window.location.href,
         load: async () => {
             const [found, knownPlayers] = await Promise.all([transactions(context), known()]);
             const franchises = new Map([...teams].map(([id, name]) => [id, {teamName: name}]));
@@ -149,7 +161,7 @@ function runLabel(option) {
 // voided them, deleting the transaction (docs/design.md)
 // `players_`: the players export's promise, shared with the popup's ids
 async function voided(context, period, list, players_) {
-    const [found, known] = await Promise.all([transactions(context), players_]);
+    const [found, known] = await Promise.all([transactions(context, strict), players_]);
     const wins = new Set([].concat(found && found.transaction || [])
         .filter((transaction) => transaction.type === "BBID_WAIVER" && Number(transaction.timestamp) === Number(period))
         .map((transaction) => {
@@ -230,7 +242,7 @@ export function drawAllBids({context, franchiseId, teamHref}) {
     draw();
     // one read of the players: `cached` doesn't share a load still on its way
     const known = players(context.season);
-    // voided bids once the transactions arrive; without them the run shows as MFL has it
+    // voided bids once the transactions arrive; without them (or MFL changed them) the run shows as MFL has it
     voided(context, period, list, known).then((found) => {
         if (found.size) {
             gone = found;

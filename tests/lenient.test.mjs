@@ -13,6 +13,7 @@ import {NO_STATS, gameStates, readProjections, readRules, readStats} from "../si
 import {allPlayRecords, gameText, ledger, scoreCards, teamSeason, playoffPicture, playoffPlaces, positionPoints, recordText, standings, weeklyWinners, winnings, winningsLine} from "../site/v2/ui/league-model.js";
 import {cardsMarkup, positionsMarkup, standingsMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
 import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
+import {recentMoves} from "../site/v2/ui/home-model.js";
 import {byeWeeks, draftOrder, picksOf, picksSummary, playerPool, playoffFinish, pointsById, sortPlayers, teamSheets} from "../site/v2/ui/rosters-model.js";
 import {orderPanel, picksPanels, playerLayout, playerRows, teamMarkup, teamsMarkup} from "../site/v2/ui/rosters-view.js";
 
@@ -290,4 +291,38 @@ test("Rosters: a bye MFL left out is —", async () => {
     byes.team[0].bye_week = "";
     const {value} = await read("nflByeWeeks", byes);
     assert.equal(byeWeeks(value).get(byes.team[0].id) || "—", "—");
+});
+
+// ---- All moves ----
+
+const movePlayers = playersFromExport(fixture("players-in-transactions.json").players);
+const teamsById = new Map([...names].map(([id, name]) => [id, {teamName: name}]));
+const allMoves = (transactions) => recentMoves(transactions, {players: movePlayers, franchises: teamsById, limit: Infinity});
+
+test("All moves: a move whose kind, players or time MFL left out is listed with —, a time not known last", async () => {
+    const body = fixture("transactions.json").transactions;
+    const whole = allMoves(structuredClone(body)).length;
+    const shown = body.transaction.filter((move) => ["FREE_AGENT", "BBID_WAIVER", "TRADE", "IR"].includes(move.type));
+    const [a, b, c] = [shown[0], shown.find((move) => move.type === "BBID_WAIVER"), shown[shown.length - 1]];
+    a.type = "";
+    delete b.transaction;
+    c.timestamp = "soon";
+    const {value} = await read("transactions", body);
+    const moves = allMoves(value);
+    assert.equal(moves.length, whole);
+    assert.equal(moves.filter((move) => move.what === "—").length, 2);
+    assert.ok(moves.filter((move) => move.what === "—").every((move) => move.kind === null && !move.bid));
+    const last = moves[moves.length - 1];
+    assert.equal(last.when, "—");
+    assert.ok(Number.isNaN(last.at));
+    assert.ok(moves.slice(0, -1).every((move, i) => !i || moves[i - 1].at >= move.at));
+    // the commissioner's lock, its kind left out, isn't a member's move
+    const lock = {...fixture("transactions.json").transactions, transaction: [{type: "", franchise: "", transaction: "", timestamp: "1793000000"}]};
+    assert.deepEqual(allMoves((await read("transactions", lock)).value), []);
+});
+
+test("All moves: a move that doesn't say its team fails the list", async () => {
+    const body = fixture("transactions.json").transactions;
+    delete body.transaction.find((move) => move.type === "TRADE").franchise2;
+    assert.equal((await read("transactions", body)).value.changed, true);
 });

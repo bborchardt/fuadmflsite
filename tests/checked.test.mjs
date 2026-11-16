@@ -52,11 +52,11 @@ test("a check does without an export MFL can't give, but not one MFL has changed
     await assert.rejects(Promise.reject(changed).catch(unlessChanged(null)), /has no type/);
 });
 
-// The display panels' reads not yet held to lib/shapes.js (the next steps of docs/design.md's Outside
-// change), and the web app's, which asks only whether next season's site is there. A new read of an
+// The web app's read, which asks only whether next season's site is there, isn't held to
+// lib/shapes.js (docs/design.md: Outside change). A new read of an
 // export elsewhere in v2's screens passes `check: strict` or, for a display panel, `check: lenient`
 // (or a helper defaulting to `check = lenient` passes it on).
-const UNCHECKED = new Set(["all-moves.js", "web-app.js"]);
+const UNCHECKED = new Set(["web-app.js"]);
 
 test("every export v2's checks and forms read is checked", () => {
     const dir = join(root, "site", "v2", "ui");
