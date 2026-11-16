@@ -1,6 +1,6 @@
 // What Home shows, from MFL's exports, with no DOM or fetching so it can be tested on saved ones.
 
-import {asArray, nflCode} from "../lib/mfl.js";
+import {asArray, nflCode, numberOf} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations, titleKind} from "../lib/violations.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
@@ -392,12 +392,19 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
     const clause = (before, list_, after = "") => (list_.length ? [plain(before), ...named(list_), ...(after ? [plain(after)] : [])] : null);
     const moves = [];
     for (const transaction of asArray(transactions && transactions.transaction)) {
-        const at = Number(transaction.timestamp);
+        // a field MFL left out (null: ui/checked.js lenient): the move is listed, its what or when "—";
+        // one naming no team is the commissioner's or MFL's own (a lock, a waiver run), not listed
+        const at = numberOf(transaction.timestamp);
         const team = teamName(transaction.franchise);
         let kind = null;
         let parts = [];
         let extra = {};
-        if (transaction.type === "FREE_AGENT" || transaction.type === "WAIVER") {
+        if (transaction.type === null || transaction.transaction === null) {
+            if (!transaction.franchise) {
+                continue;
+            }
+            parts = [plain("—")];
+        } else if (transaction.type === "FREE_AGENT" || transaction.type === "WAIVER") {
             const [added, dropped] = transaction.type === "WAIVER"
                 ? [ids(transaction.added), ids(transaction.dropped)]
                 : String(transaction.transaction || "").split("|").map(ids);
@@ -408,7 +415,7 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
             kind = "Bid";
             parts = joined([[plain("won "), ...named(ids(added).slice(0, 1)), plain(` for $${Number(bid) || 0}`)], clause("dropped ", ids(dropped).slice(0, 1))].filter(Boolean), ", ");
             // the run is MFL's processed waivers period, the transaction's time (docs/mfl.md)
-            extra = {bid: {period: at, player: ids(added)[0] || "", team: transaction.franchise}};
+            extra = Number.isFinite(at) ? {bid: {period: at, player: ids(added)[0] || "", team: transaction.franchise}} : {};
         } else if (transaction.type === "IR") {
             const off = ids(transaction.activated);
             const on = ids(transaction.deactivated);
@@ -420,12 +427,14 @@ export function recentMoves(transactions, {players, franchises, limit = RECENT_M
                 plain(" for "), ...named(ids(transaction.franchise2_gave_up))];
         }
         const what = textOf(parts);
-        if (kind && what) {
+        if ((kind || what === "—") && what) {
             const teamIds = [transaction.franchise, transaction.type === "TRADE" ? transaction.franchise2 : null].filter(Boolean);
-            moves.push({kind, team, teamIds, what, parts, at, when: dayText(at), ...extra});
+            moves.push({kind, team, teamIds, what, parts, at, when: Number.isFinite(at) ? dayText(at) : "—", ...extra});
         }
     }
-    return moves.sort((a, b) => b.at - a.at).slice(0, limit);
+    // newest first, a time not known last
+    const unknown = (move) => Number(!Number.isFinite(move.at));
+    return moves.sort((a, b) => unknown(a) - unknown(b) || b.at - a.at).slice(0, limit);
 }
 
 // MFL's `messageBoard`: the newest topics first
