@@ -8,6 +8,7 @@ import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {asArray} from "../site/v2/lib/mfl.js";
 import {SHAPES, WEEK_ROSTERS, checkShape, shapeProblem} from "../site/v2/lib/shapes.js";
+import {exportChecks} from "../jobs/mfl-check.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtures = join(root, "tests", "fixtures");
@@ -43,6 +44,11 @@ const itemsAt = (body, path) => path.reduce((items, key) => items.flatMap((item)
 
 test("every export the job checks has a saved sample or a stand-in", () => {
     assert.deepEqual(Object.keys(SHAPES).filter((section) => !samples.has(section)), []);
+});
+
+test("every export the daily check of what v2 reads asks for has rules", () => {
+    const sections = [...exportChecks({week: 6, inSeason: true}).map((each) => each.section || each.type), "liveScoring"];
+    assert.deepEqual(sections.filter((section) => !(section in SHAPES)), []);
 });
 
 test("every saved export passes", () => {

@@ -64,6 +64,8 @@ export const SHAPES = {
         {path: ["franchise", "futureDraftPick"], need: ["year", "round", "originalPickFor"], numbers: ["year", "round"], keys: ["year", "round", "originalPickFor"]}
     ],
     nflByeWeeks: [{path: ["team"], need: ["id", "bye_week"], numbers: ["bye_week"]}],
+    // League's live scores are worked out from them (ui/live-scoring.js readRules); MFL gives each field as {$t}
+    rules: [{path: ["positionRules"], need: ["positions"]}, {path: ["positionRules", "rule"], need: ["event", "points", "range"]}],
     injuries: [{path: ["injury"], need: ["id", "status"]}],
     calendar: [{path: ["event"], need: ["type", "start_time"], numbers: ["start_time"]}],
     // who starts, and a player's points and seconds left where the stats feed can't be read

@@ -4,7 +4,8 @@
 # chore log, the weeks whose backup starters are settled), and, to MFL when the DROP_PENALTIES,
 # CONTRACT_YEARS, PAYOUTS, RFA_SALARIES or BACKUP_STARTERS variable is "apply": cap penalties for
 # dropped players, contract years for added ones, the payouts in the league's accounting, $0.01 for
-# the renewal's RFAs, and backups for inactive starters.
+# the renewal's RFAs, and backups for inactive starters. It also tries what v2 reads from MFL
+# (jobs/mfl-check.mjs), only reading.
 # master is protected and takes changes through pull requests, so nothing here pushes to it.
 #
 # A manual run is a dry run unless unticked: jobs/daily.mjs then writes nothing to MFL or league-data,
