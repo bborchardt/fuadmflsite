@@ -13,7 +13,7 @@ import {NO_STATS, gameStates, readProjections, readRules, readStats} from "../si
 import {allPlayRecords, gameText, ledger, scoreCards, teamSeason, playoffPicture, playoffPlaces, positionPoints, recordText, standings, weeklyWinners, winnings, winningsLine} from "../site/v2/ui/league-model.js";
 import {cardsMarkup, positionsMarkup, standingsMarkup, winnersMarkup} from "../site/v2/ui/league-view.js";
 import {buildLeague, playersFromExport} from "../site/v2/lib/league.js";
-import {recentMoves} from "../site/v2/ui/home-model.js";
+import {boardTopics, recentMoves} from "../site/v2/ui/home-model.js";
 import {byeWeeks, draftOrder, picksOf, picksSummary, playerPool, playoffFinish, pointsById, sortPlayers, teamSheets} from "../site/v2/ui/rosters-model.js";
 import {orderPanel, picksPanels, playerLayout, playerRows, teamMarkup, teamsMarkup} from "../site/v2/ui/rosters-view.js";
 
@@ -325,4 +325,20 @@ test("All moves: a move that doesn't say its team fails the list", async () => {
     const body = fixture("transactions.json").transactions;
     delete body.transaction.find((move) => move.type === "TRADE").franchise2;
     assert.equal((await read("transactions", body)).value.changed, true);
+});
+
+// ---- Home ----
+
+test("Message board: a topic whose subject or time MFL left out shows —, a time not known last", async () => {
+    const board = {thread: [
+        {id: "1", subject: "Contracts 2026", lastPostTime: "1793000000"},
+        {id: "2", lastPostTime: "1793100000"},
+        {id: "3", subject: "Trade talk", lastPostTime: "soon"},
+        {id: "4", subject: "", lastPostTime: "1792900000"}
+    ]};
+    const {value} = await read("messageBoard", board);
+    const topics = boardTopics(value);
+    assert.deepEqual(topics.map((topic) => [topic.id, topic.title]), [["2", "—"], ["1", "Contracts 2026"], ["4", "(no subject)"], ["3", "Trade talk"]]);
+    assert.equal(topics[3].when, "—");
+    assert.ok(topics.slice(0, 3).every((topic) => /^\w{3} \d+$/.test(topic.when)));
 });
