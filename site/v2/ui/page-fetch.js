@@ -5,6 +5,7 @@
 
 import {storage} from "./store.js";
 import {TIME_ZONE} from "../lib/zone.js";
+import {HELD} from "../lib/mfl.js";
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -145,7 +146,7 @@ function thisWeeksSchedule() {
 export async function mflFetch(url, init) {
     const until = Number(storage.get(WAIT_KEY)) || 0;
     if (Date.now() < until) {
-        return new Response("", {status: 429});
+        return new Response("", {status: 429, statusText: HELD});
     }
     const response = await fetch(url, init);
     if (response.status === 429) {

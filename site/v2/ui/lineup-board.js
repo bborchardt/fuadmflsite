@@ -3,7 +3,7 @@
 // of it, as the daily job reads them. Nothing is posted: Save puts the backups in the lineup's message.
 
 import {THREAD_TITLE, readLineupDetails, readTopicPage} from "../lib/backups.js";
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import {mflTime} from "../lib/zone.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {strict} from "./checked.js";
@@ -13,7 +13,7 @@ const topicPath = (season, leagueId, thread) => `/${season}/mb/topic_show.pl?bid
 async function page(url) {
     const response = await mflFetch(url, {credentials: "include", cache: "no-store"});
     if (!response.ok) {
-        throw new Error(`MFL answered HTTP ${response.status}`);
+        throw new Error(`MFL answered ${httpStatus(response)}`);
     }
     return response.text();
 }

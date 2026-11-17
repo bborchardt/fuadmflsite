@@ -3,7 +3,7 @@
 // except opened from Rosters (`window.fuadOpenPlayer`), where it offers the move that fits: Drop
 // and IR for the member's own, Propose a trade for another team's, Add for a free agent.
 
-import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import {buildLeague, playersFromExport} from "../lib/league.js";
 import {capPenalty} from "../lib/rules.js";
 import {NFL_TEAMS, holderOf, openerName, readArticle, readPlayerPage} from "./player-page.js";
@@ -30,7 +30,7 @@ function injuryTone(status) {
 async function page(url) {
     const response = await mflFetch(url, {credentials: "include"});
     if (!response.ok) {
-        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
+        throw Object.assign(new Error(httpStatus(response)), {status: response.status});
     }
     return response.text();
 }

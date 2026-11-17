@@ -7,13 +7,14 @@ import {drawPanel} from "./panel.js";
 import {pageFetch} from "./page-fetch.js";
 import {matching, readScoring, readSettings, ruleSections} from "./rules-model.js";
 import {rulesMarkup} from "./rules-view.js";
+import {httpStatus} from "../lib/mfl.js";
 
 const SEARCH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>';
 
 async function readOther({season, leagueId}, option, read) {
     const response = await pageFetch(`${window.location.origin}/${season}/options?L=${encodeURIComponent(leagueId)}&O=${option}`, {credentials: "include"});
     if (!response.ok) {
-        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
+        throw Object.assign(new Error(httpStatus(response)), {status: response.status});
     }
     const found = read(new DOMParser().parseFromString(await response.text(), "text/html"));
     if (!found) {

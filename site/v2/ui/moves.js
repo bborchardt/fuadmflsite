@@ -1,7 +1,7 @@
 // What Moves' pages share: the team's data as their checks need it, fresh where the cap and roster
 // limits depend on it, posting MFL's own forms and links from the page, and the lines a move leaves.
 
-import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import {buildLeague, draftedIds, markContracts, playersFromExport} from "../lib/league.js";
 import {pendingGroups} from "../lib/bids.js";
 import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
@@ -69,7 +69,7 @@ export async function send(url, init) {
     forget();
     const response = await fetch(url, {credentials: "include", ...init}).finally(forget);
     if (!response.ok) {
-        throw new Error(`MFL answered HTTP ${response.status}`);
+        throw new Error(`MFL answered ${httpStatus(response)}`);
     }
     return response.text();
 }

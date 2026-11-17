@@ -2,7 +2,7 @@
 // Coming up, each panel loading on its own (ui/panel.js). MFL's tabs stay on the page underneath,
 // shown again for a home page tab that isn't Home.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import {pendingGroups} from "../lib/bids.js";
 import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
@@ -124,7 +124,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
     const load = async () => {
         const response = await mflFetch(feedUrl, {cache: "no-store"});
         if (!response.ok) {
-            throw Object.assign(new Error(`the chat feed returned HTTP ${response.status}`), {status: response.status});
+            throw Object.assign(new Error(`the chat feed returned ${httpStatus(response)}`), {status: response.status});
         }
         const messages = readChat(await response.text(), {viewer: franchiseId});
         if (!messages) {
@@ -209,7 +209,7 @@ function drawChat(mount, {context, franchiseId, teams}) {
                 const url = `${window.location.origin}/${context.season}/chat_save?L=${context.leagueId}&MESSAGE=${encodeURIComponent(text)}&TO_FID=${encodeURIComponent(to.value)}`;
                 const response = await fetch(url, {credentials: "same-origin", cache: "no-store"});
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    throw new Error(httpStatus(response));
                 }
                 input.value = "";
                 lastPost = Date.now();
@@ -256,7 +256,7 @@ function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
         const loadPage = async () => {
             const response = await mflFetch(page, {cache: "no-store"});
             if (!response.ok) {
-                throw Object.assign(new Error(`the board's page returned HTTP ${response.status}`), {status: response.status});
+                throw Object.assign(new Error(`the board's page returned ${httpStatus(response)}`), {status: response.status});
             }
             const topics = pageTopics(await response.text());
             if (!topics) {

@@ -584,6 +584,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel
   with nothing to show says "Server is busy. Try again in a few seconds.", with Retry off until
   then, and Moves' screens fall back to MFL's page (Outside change). Moves themselves aren't held.
+  A read held back fails as `HTTP 429, held by v2 after MFL's 429` in what's logged, so the devices
+  form's rows tell MFL's refusals from the reads v2 held after one.
 - League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from
   MFL's page by a point or so: MFL's simulation carries a random value across every lineup it has
   shown since the page loaded.

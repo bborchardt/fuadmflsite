@@ -6,6 +6,7 @@ import {esc} from "./html.js";
 import {cached} from "./store.js";
 import {pageFetch} from "./page-fetch.js";
 import {otherBids, readBidRun} from "./bids-model.js";
+import {httpStatus} from "../lib/mfl.js";
 
 const YEAR = 365 * 24 * 60 * 60 * 1000;
 // tests/stored-shapes.test.mjs ties it to what readBidRun returns
@@ -16,7 +17,7 @@ export function bidRuns({season, leagueId}) {
     return (period) => cached(`${BIDS_KEY}.${season}.${period}`, YEAR, async () => {
         const response = await pageFetch(`${window.location.origin}/${season}/processed_waivers?LEAGUE_ID=${leagueId}&PERIOD=${encodeURIComponent(period)}`, {credentials: "include"});
         if (!response.ok) {
-            throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
+            throw Object.assign(new Error(httpStatus(response)), {status: response.status});
         }
         const groups = readBidRun(await response.text());
         if (!groups) {
