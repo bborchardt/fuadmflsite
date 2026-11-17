@@ -98,3 +98,5 @@ Milton: 1 year").
 - 2026-11-13 15:38 UTC: Recorded "Most Points Week 9" $15.00 to Not 100% A Dick.
 - 2026-11-16 17:21 UTC: Charged $5 to So your saying there’s a chance? for MarShawn Lloyd (1yrs@12, 11/15), and reset the player to $1 / 0 years.
 - 2026-11-16 17:21 UTC: Set Konata Mumpfield to 1 year (no length stated: the default).
+- 2026-11-17 17:01 UTC: Backup starters: All Hands on Beck, week 10: A.J. Brown was active, so Antonio Williams wasn't started for him.
+- 2026-11-17 17:01 UTC: Backup starters: All Hands on Beck, week 10: Amon-Ra St. Brown was active, so Xavier Worthy wasn't started for him.
