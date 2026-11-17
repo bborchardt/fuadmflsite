@@ -2,7 +2,7 @@
 // MFL's form in place, then reads MFL's page back to confirm what it kept. MFL's form stays in the
 // page underneath, so its hidden fields go with every save.
 
-import {API_BASE, asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {API_BASE, asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import settings from "../lib/settings.js";
 import {TIME_ZONE} from "../lib/zone.js";
 import {esc} from "./html.js";
@@ -222,7 +222,7 @@ async function save(context, form, state, message = null) {
         throw Object.assign(error, {sent: false});
     }
     if (!response.ok) {
-        throw Object.assign(new Error(`MFL answered HTTP ${response.status}`), {sent: false});
+        throw Object.assign(new Error(`MFL answered ${httpStatus(response)}`), {sent: false});
     }
     try {
         const answered = formIn(await response.text(), state.page.week);
@@ -232,7 +232,7 @@ async function save(context, form, state, message = null) {
         const url = `${window.location.origin}/${context.season}/lineup?L=${encodeURIComponent(context.leagueId)}&WEEK=${state.page.week}&F=${encodeURIComponent(state.page.team)}`;
         const again = await fetch(url, {credentials: "include", cache: "no-store"});
         if (!again.ok) {
-            throw new Error(`MFL answered HTTP ${again.status}`);
+            throw new Error(`MFL answered ${httpStatus(again)}`);
         }
         const read = formIn(await again.text(), state.page.week);
         if (!read) {

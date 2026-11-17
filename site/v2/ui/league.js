@@ -2,7 +2,7 @@
 // (`#league-standings`) and loaded the first time it shows. Before week 1 the new site has no games,
 // so Standings, Power and Winners show last season's final, which MFL keeps on the previous site.
 
-import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup, pageChanged} from "./panel.js";
 import {basicHref} from "./nav.js";
 import {lenient} from "./checked.js";
@@ -88,7 +88,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const feed = async (name) => {
         const response = await mflFetch(`${host}/fflnetdynamic${season}/${name}?RANDOM=${Date.now()}`, {cache: "no-store"});
         if (!response.ok) {
-            throw Object.assign(new Error(`${name} returned HTTP ${response.status}`), {status: response.status});
+            throw Object.assign(new Error(`${name} returned ${httpStatus(response)}`), {status: response.status});
         }
         return response.text();
     };
@@ -198,7 +198,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 load: async () => {
                     const response = await pageFetch(`${host}/${year}/options?L=${context.leagueId}&O=101`, {credentials: "include"});
                     if (!response.ok) {
-                        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
+                        throw Object.assign(new Error(httpStatus(response)), {status: response.status});
                     }
                     const teams = readPowerPage(await response.text());
                     if (!teams) {

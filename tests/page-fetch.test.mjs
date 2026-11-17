@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {allAtOnce, forget, gameToday, keepFor, keepable, mflFetch} from "../site/v2/ui/page-fetch.js";
+import {fetchExport} from "../site/v2/lib/mfl.js";
 
 const MINUTE = 60 * 1000;
 const league = (type, extra = "") => `https://www44.myfantasyleague.com/2026/export?TYPE=${type}&L=48571${extra}&JSON=1`;
@@ -106,9 +107,10 @@ test("after MFL answers 429, nothing is asked of it for 30 seconds", async () =>
         return new Response("{}", {status});
     };
     try {
-        assert.equal((await mflFetch(league("rosters"))).status, 429);
+        // MFL's refusal and v2's hold after it are told apart in what's logged
+        await assert.rejects(fetchExport(league("rosters"), "rosters", {fetchImpl: mflFetch}), {status: 429, message: /HTTP 429$/});
         status = 200;
-        assert.equal((await mflFetch(league("transactions"))).status, 429);
+        await assert.rejects(fetchExport(league("transactions"), "transactions", {fetchImpl: mflFetch}), {status: 429, message: /HTTP 429, held by v2 after MFL's 429$/});
         assert.deepEqual(asked, [league("rosters")]);
         items.set("fuad.mflWait", String(Date.now() - 1));
         assert.equal((await mflFetch(league("transactions"))).status, 200);

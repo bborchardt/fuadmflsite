@@ -57,6 +57,11 @@ export class MflError extends Error {
     }
 }
 
+// v2's own answer to a read it holds back after MFL's refusal (ui/page-fetch.js), told apart from
+// MFL's in what's logged, as the devices form counts both
+export const HELD = "held by v2 after MFL's 429";
+export const httpStatus = (response) => `HTTP ${response.status}${response.statusText === HELD ? `, ${HELD}` : ""}`;
+
 // `check(section, body)`, when given, gives back the section or throws (the job's lib/shapes.js checkShape)
 export async function fetchExport(url, section, {fetchImpl = fetch, init, check} = {}) {
     let response;
@@ -66,7 +71,7 @@ export async function fetchExport(url, section, {fetchImpl = fetch, init, check}
         throw new MflError(section, `network error (${error.message})`);
     }
     if (!response.ok) {
-        throw new MflError(section, `HTTP ${response.status}`, response.status);
+        throw new MflError(section, httpStatus(response), response.status);
     }
     let body;
     try {

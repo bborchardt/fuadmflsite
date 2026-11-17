@@ -5,6 +5,7 @@
 import {pageFetch} from "./page-fetch.js";
 import {cached} from "./store.js";
 import {readCareer, readChampions, readSeries} from "./history-model.js";
+import {httpStatus} from "../lib/mfl.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const WEEK = 7 * DAY;
@@ -15,7 +16,7 @@ export const KEYS = {champions: "fuad.history.champions", career: "fuad.history.
 async function historyPage({season, leagueId}, query, read, what) {
     const response = await pageFetch(`${window.location.origin}/${season}/options?L=${leagueId}&${query}`, {credentials: "include"});
     if (!response.ok) {
-        throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
+        throw Object.assign(new Error(httpStatus(response)), {status: response.status});
     }
     const value = read(await response.text());
     if (!value) {

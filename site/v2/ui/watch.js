@@ -3,7 +3,7 @@
 // by the player popup, which changes it, and the Watching chips in Moves › Add and Rosters › Players,
 // which hear of a change through the window's `fuad-watch` event.
 
-import {exportUrl} from "../lib/mfl.js";
+import {exportUrl, httpStatus} from "../lib/mfl.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 
 // the Watching chips' star (filled by fuad.css when pressed)
@@ -29,7 +29,7 @@ export function watchList({season, leagueId}) {
         loading = pageFetch(exportUrl(window.location.origin, season, "myWatchList", {L: leagueId}), {cache: "no-store"})
             .then(async (response) => {
                 if (!response.ok) {
-                    throw Object.assign(new Error(`HTTP ${response.status}`), {status: response.status});
+                    throw Object.assign(new Error(httpStatus(response)), {status: response.status});
                 }
                 const body = await response.json();
                 if (body.error) {
@@ -76,7 +76,7 @@ async function send({season, leagueId}, id, on) {
     });
     const answer = await response.text();
     if (!response.ok || !/<status\b[^>]*>\s*OK\s*<\/status>/i.test(answer)) {
-        throw Object.assign(new Error(`MFL didn't update the watch list: ${(/<error>([^<]*)<\/error>/.exec(answer) || [])[1] || `HTTP ${response.status}`}`), {status: response.status});
+        throw Object.assign(new Error(`MFL didn't update the watch list: ${(/<error>([^<]*)<\/error>/.exec(answer) || [])[1] || httpStatus(response)}`), {status: response.status});
     }
     const list = await watchList({season, leagueId});
     list[on ? "add" : "delete"](id);

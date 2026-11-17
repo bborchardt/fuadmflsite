@@ -9,6 +9,7 @@
 import {esc} from "./html.js";
 import {mflFetch, mflSend} from "./page-fetch.js";
 import {storage} from "./store.js";
+import {httpStatus} from "../lib/mfl.js";
 
 export const LOOKS = [
     {id: "night", name: "Night Game", skin: "-1", folder: null},
@@ -225,7 +226,7 @@ export async function saveLook({season, leagueId}, look, looks = LOOKS) {
     const readForm = async (get = mflSend) => {
         const read = await get(page, {credentials: "include", cache: "no-store"});
         if (!read.ok) {
-            throw failure(`HTTP ${read.status}`, read.status);
+            throw failure(httpStatus(read), read.status);
         }
         return readSkinForm(new DOMParser().parseFromString(await read.text(), "text/html"));
     };
@@ -249,7 +250,7 @@ export async function saveLook({season, leagueId}, look, looks = LOOKS) {
         throw unconfirmed(error);
     });
     if (!sent.ok) {
-        throw failure(`HTTP ${sent.status}`, sent.status);
+        throw failure(httpStatus(sent), sent.status);
     }
     const text = await sent.text().catch((error) => {
         throw unconfirmed(error);
