@@ -4486,6 +4486,11 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 
 .fuad-side body form.msa .reportnavigation { margin-bottom: 8px; font-size: 13px; color: var(--fuad-muted); text-align: left; }
 
+/* Search's fields keep MFL's sizes (Keywords 30 letters wide), which at 320 to 390 push its table past
+   the card: they take their column instead */
+.fuad-side body form.sea select,
+.fuad-side body form.sea input[name="words"] { box-sizing: border-box; width: 100%; max-width: 100%; }
+
 .fuad-side body form.msa button.tbt {
     width: auto;
     min-width: 44px;
