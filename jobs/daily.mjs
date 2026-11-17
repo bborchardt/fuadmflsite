@@ -1425,10 +1425,10 @@ function saveExports() {
         return;
     }
     const dir = join(resolve(process.env.SAVED_PAGES_DIR), leagueId, "exports");
-    const league = [...exportsRead].find(([url, read]) => new URL(url).searchParams.get("TYPE") === "league"
-        && new URL(url).pathname.startsWith(`/${season}/`) && read.body);
-    const owners = league ? ownersOf(JSON.parse(league[1].body)) : [];
-    if (!owners.length) {
+    // every season's league export read, so an owner since gone comes out of last season's too
+    const leagues = [...exportsRead].filter(([url, read]) => new URL(url).searchParams.get("TYPE") === "league" && read.body);
+    const owners = leagues.flatMap(([, read]) => ownersOf(JSON.parse(read.body)));
+    if (!leagues.some(([url]) => new URL(url).pathname.startsWith(`/${season}/`)) || !owners.length) {
         needsAttention("Save pages: the league export gave no owners' names to take out, so no exports were saved.");
         return;
     }
@@ -1438,7 +1438,9 @@ function saveExports() {
         if (!body) {
             continue;
         }
-        const name = exportFileName(url, season);
+        // the same ask of another host is kept apart
+        const asked = exportFileName(url, season);
+        const name = saved.some((each) => each.name === asked) ? asked.replace(/\.json$/, `-${new URL(url).hostname.split(".")[0]}.json`) : asked;
         if (body.length > EXPORT_MAX_BYTES) {
             large.push(name);
             continue;
