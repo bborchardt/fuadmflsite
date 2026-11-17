@@ -60,6 +60,13 @@ jobs:
         run: npm ci
       - if: steps.changed.outputs.run
         uses: astral-sh/setup-uv@v10.3.3
+      # MFL's skins, which the fallback screens are drawn in (screens.py fetches one it doesn't have
+      # once); kept between runs so a pull request rarely asks MFL for them
+      - if: steps.changed.outputs.run
+        uses: actions/cache@v6
+        with:
+          path: tools/verify/mfl-skins
+          key: mfl-skins-${{ hashFiles('tools/verify/skins.json') }}
       - if: steps.changed.outputs.run
         name: Install ${{ matrix.browsers }}
         run: uv run --no-project --with playwright==1.64.1 playwright install --with-deps ${{ matrix.browsers }}

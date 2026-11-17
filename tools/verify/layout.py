@@ -14,6 +14,8 @@ Then it measures:
 squeezed  text wrapped to under four characters a line ("Final" a letter a line)
 offscreen something past the window's edge, not inside a box that scrolls
 clipped   a box cutting off its own content, other than with an ellipsis
+cut       a control (button, field, list) past the edge of a box that scrolls sideways, so a member
+          finds it only by scrolling there
 overlap   two controls drawn over each other
 offcentre in a row that centres its children on one line, a child's one line of text more than 2px
           from the row's middle (a box centred with its text not, from padding on one side)
@@ -23,8 +25,8 @@ stale     a height that's wrong after the window turns: the screen laid out at t
 --minimum draws with the stylesheet as a browser at the minimum (docs/design.md: Devices) reads it, the
 newer CSS it marks taken out (tools/minimum-css.mjs), so a page that needs one of those extras shows up.
 
-Only v2's parts are measured (the frame and its views, and the message board's pages, which v2
-restyles): MFL's own pages are left as MFL draws them.
+Only v2's parts are measured (the frame and its views, the message board's pages, which v2 restyles,
+and a move's page fallen back to MFL's, which v2 fits): MFL's own pages are left as MFL draws them.
 It sees what's drawn, not whether it looks good: a finding is worth a look, and the screenshot
 (--shots) shows it. A screen whose moves are answered differently (screens.py's "moves") looks the
 same as its plain screen until a move is made, so only the plain one is measured.
@@ -68,8 +70,10 @@ STATES = {
     "rosters": [("player popup", "#fuad-rosters [data-player]")],
 }
 
-# v2's parts; on the message board's pages, which v2 restyles in place, MFL's page body too
-ROOTS = """[...document.querySelectorAll('#fuad-frame, [id^="fuad-"], :is(.fuad-board, .fuad-topic, .fuad-reply, .fuad-side) #withmenus')]
+# v2's parts; on the message board's pages, which v2 restyles in place, and a move's page fallen back
+# to MFL's, which v2 fits to the window, MFL's page body too
+ROOTS = """[...document.querySelectorAll('#fuad-frame, [id^="fuad-"], :is(.fuad-board, .fuad-topic, .fuad-reply, .fuad-side) #withmenus'),
+    ...(document.getElementById('fuad-fallback') ? document.querySelectorAll('#withmenus') : [])]
     .filter((el, i, all) => !all.some((other) => other !== el && other.contains(el)))"""
 
 MEASURE = r"""() => {
@@ -102,6 +106,12 @@ MEASURE = r"""() => {
         const s = getComputedStyle(el);
         if (s.position !== 'fixed' && (r.right > innerWidth + 1 || r.left < -1) && !scrolls(el)
             && !(el.closest('.fuad-layer') && r.right <= 0)) found.push(['offscreen', name(el)]);
+        if (el.matches('button, input:not([type=hidden]), select, textarea')) {
+            for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+                const o = getComputedStyle(a).overflowX;
+                if ((o === 'auto' || o === 'scroll') && r.right > a.getBoundingClientRect().right + 1) { found.push(['cut', name(el)]); break; }
+            }
+        }
         if ((s.overflowX === 'hidden' || s.overflowX === 'clip') && el.scrollWidth > el.clientWidth + 2
             && s.textOverflow !== 'ellipsis' && el.clientWidth > 2) found.push(['clipped', name(el)]);
     }
@@ -113,9 +123,12 @@ MEASURE = r"""() => {
         for (let j = i + 1; j < controls.length; j++) {
             const a = controls[i], b = controls[j];
             if (a.contains(b) || b.contains(a) || layer(a) !== layer(b)) continue;
-            const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-            const w = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left), h = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
-            if (w > 2 && h > 2 && w * h > 0.25 * Math.min(ra.width * ra.height, rb.width * rb.height)) found.push(['overlap', `${name(a)} / ${name(b)}`]);
+            // by each line's box: a link wrapped onto two lines spans both, the next link's line included
+            const clash = [...a.getClientRects()].some((ra) => [...b.getClientRects()].some((rb) => {
+                const w = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left), h = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
+                return w > 2 && h > 2 && w * h > 0.25 * Math.min(ra.width * ra.height, rb.width * rb.height);
+            }));
+            if (clash) found.push(['overlap', `${name(a)} / ${name(b)}`]);
         }
     }
     // offcentre: in a row that centres its children (flex or grid, align-items: center, all on one

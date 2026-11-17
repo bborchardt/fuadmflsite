@@ -4737,6 +4737,52 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 
 #fuad-fallback button { min-height: 44px; padding: 0 16px; border: 1px solid var(--fuad-field); border-radius: 12px; background: transparent; color: var(--fuad-text); font: 600 15px var(--fuad-body); }
 
+/* MFL's page under the fallback line, fitted to the window so every control shows without the page or
+   its column scrolling sideways, up to the width MFL's widest layout (Add's) fits: the skin's
+   scrolling column let go; Add's and Drop's picker layout (the list, its buttons, the players chosen;
+   moves.js marks it, and moves a list's row of filters below it) stacked, a list wider than the
+   window scrolling in its own box */
+@media (max-width: 72em) {
+    .fuad-fallback-on body .pagebody { overflow: visible; }
+
+    .fuad-fallback-on body .fuad-fallback-stack,
+    .fuad-fallback-on body .fuad-fallback-stack > caption,
+    .fuad-fallback-on body .fuad-fallback-stack > tbody,
+    .fuad-fallback-on body .fuad-fallback-stack > tbody > tr:not(.hidden),
+    .fuad-fallback-on body .fuad-fallback-stack > tbody > tr:not(.hidden) > td { display: block; box-sizing: border-box; width: auto !important; max-width: 100%; }
+
+    .fuad-fallback-on body .fuad-fallback-stack > tbody > tr:not(.hidden) > td { text-align: center; }
+
+    .fuad-fallback-on body .fuad-fallback-stack > tbody > tr > td > table:not(.fuad-fallback-stack) { display: block; max-width: 100%; margin: 0 auto; overflow-x: auto; }
+
+    .fuad-fallback-on body .fuad-fallback-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; }
+
+    .fuad-fallback-on body #withmenus select,
+    .fuad-fallback-on body #withmenus input,
+    .fuad-fallback-on body #withmenus textarea { box-sizing: border-box; max-width: 100%; }
+}
+
+/* on phones, too: Add's claims and Trades' offers a row of wrapping cells, the actions included; IR's
+   rows, MFL's phone column (its skin hides the desktop one), scrolling in their own box at 320 to 375 */
+@media (max-width: 48em) {
+    .fuad-fallback-on body #withmenus div.mobile-wrap { display: block; max-width: 100%; overflow-x: auto; }
+
+    .fuad-fallback-on body #withmenus > table.report,
+    .fuad-fallback-on body #withmenus > table.report > tbody,
+    .fuad-fallback-on body #withmenus > table.report > caption,
+    .fuad-fallback-on body #withmenus div.mobile-wrap > table.report > tbody { display: block; }
+
+    .fuad-fallback-on body #withmenus > table.report > tbody > tr,
+    .fuad-fallback-on body #withmenus div.mobile-wrap > table.report > tbody > tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 14px; }
+
+    .fuad-fallback-on body #withmenus > table.report > tbody > tr > :is(td, th),
+    .fuad-fallback-on body #withmenus div.mobile-wrap > table.report > tbody > tr > :is(td, th) { display: block; padding: 0; border: 0; }
+
+    .fuad-fallback-on body #withmenus form > table.report:not(.fuad-fallback-stack) { width: 100%; table-layout: fixed; }
+
+    .fuad-fallback-on body #withmenus td.mobile-view > table.report { display: block; max-width: 100%; overflow-x: auto; }
+}
+
 #fuad-add .fuad-cta,
 #fuad-add .fuad-add-start,
 #fuad-add .fuad-add-submit,

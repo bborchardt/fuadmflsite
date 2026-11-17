@@ -151,6 +151,35 @@ test("a screen that can't load gives MFL's own page, says its rules aren't check
     }
 });
 
+// Add's page as MFL lays it out: the list beside the players chosen, a row of filters under the list
+const ADD_PAGE = `<html><body><div class="pagebody"><div id="fuad-add"></div><div id="withmenus"><table id="layout"><tbody><tr>
+    <td><table id="list"><tbody><tr><th>Name</th><th>Team</th></tr><tr><td colspan="2"><div><table class="pickerbox"><tbody><tr><td>Abdullah</td></tr></tbody></table></div></td></tr>
+        <tr><td colspan="2">Filter by: <select id="add_filt_pos"></select><input id="add_filt_name"></td></tr></tbody></table></td>
+    <td><table id="chosen"><tbody><tr><td>To Add:</td><td><input type="submit" id="add_drop_submit"></td></tr></tbody></table></td>
+</tr></tbody></table></div></div></body></html>`;
+
+test("a fallen-back Add has its layout marked to stack, and its filters moved out from under the list", async () => {
+    const doc = new DOMParser().parseFromString(ADD_PAGE, "text/html");
+    const saved = {document: globalThis.document, error: console.error};
+    Object.assign(globalThis, {document: doc});
+    console.error = () => {};
+    try {
+        loadFailed("Add", new Error("HTTP 429"), doc.querySelector(".pagebody"), () => doc.getElementById("fuad-add").remove());
+    } finally {
+        Object.assign(globalThis, {document: saved.document});
+        console.error = saved.error;
+    }
+    assert.ok(doc.documentElement.classList.contains("fuad-fallback-on"));
+    assert.ok(doc.getElementById("layout").classList.contains("fuad-fallback-stack"));
+    // the table without a list stacks; the list's own table scrolls instead
+    assert.ok(doc.getElementById("chosen").classList.contains("fuad-fallback-stack"));
+    assert.ok(!doc.getElementById("list").classList.contains("fuad-fallback-stack"));
+    const controls = doc.getElementById("list").nextElementSibling;
+    assert.equal(controls.className, "fuad-fallback-controls");
+    assert.ok(controls.querySelector("#add_filt_pos") && controls.querySelector("#add_filt_name"));
+    assert.equal(doc.getElementById("list").querySelectorAll("select, input").length, 0);
+});
+
 test("a move that didn't happen says why if MFL said, else to try again, and asks for a review when something changed anyway", () => {
     assert.equal(failedLine("drop Jackson", new Refused("Roster moves are locked for this team.")), "Couldn’t drop Jackson: Roster moves are locked for this team.");
     assert.equal(failedLine("drop Jackson", new Error("HTTP 500")), "Couldn’t drop Jackson. Reload the page and try again.");
