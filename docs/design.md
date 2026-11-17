@@ -158,7 +158,7 @@ Items marked *(to do)* are the plan, not yet built.
   | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
   | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`, or no `:where()`) getting `OLDER`; the device rows; the header placed in a member's home page tab too, running once | Old engines: below the minimum is simulated |
   | `pages.py`, `requests.py` | Which screen takes each MFL page, a member's own home page layout included; v2 asking MFL for more | How it looks; what MFL's own modules do under v2, as their scripts aren't saved |
-  | `layout.py`: WebKit at 320, 360, 375, 390 and 412 upright, 780 to 1280, and the app sideways; Chromium and Firefox at 360 and 1280 | Squeezed, offscreen, clipped or overlapping parts; a row's text off its middle (`offcentre`); heights left wrong after the phone turns | Old engines; whether it looks good; Android's text scaling (iOS's page zoom is a narrower width, which 320 stands for). Drawn in Barlow, served by the harness (`tools/verify/fonts/`), so a Mac and CI measure what members see |
+  | `layout.py`: WebKit at 320, 360, 375, 390 and 412 upright, 780 to 1280, and the app sideways; Chromium and Firefox at 360 and 1280 | Squeezed, offscreen, clipped or overlapping parts, in v2's screens and the message board's pages it restyles; a row's text off its middle (`offcentre`); heights left wrong after the phone turns | Old engines; whether it looks good; Android's text scaling (iOS's page zoom is a narrower width, which 320 stands for). Drawn in Barlow, served by the harness (`tools/verify/fonts/`), so a Mac and CI measure what members see |
   | `layout.py --minimum` (WebKit at 320, 390 and 1280) | A page that needs an extra: the stylesheet drawn as a browser at the minimum reads it, what it marks as newer taken out as such a browser drops it (`tools/minimum-css.mjs`) | Newer CSS that isn't marked (the lint's to catch); what an old engine draws differently, not just lacks |
 
   Playwright's engines are current ones, so no automated check draws as an old Safari does: the
@@ -307,9 +307,9 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed
     shows in git diff
-  - once each, live, as nothing checks them: the message board's pages under v2; how often MFL's own
-    clock script asks for `time.xml` on a page v2 draws; whether a week with no games played gives an
-    empty stats feed or a 404; what a member's time zone, Responsive View and Full width change
+  - once each, live, as nothing checks them: how often MFL's own clock script asks for `time.xml` on a
+    page v2 draws; whether a week with no games played gives an empty stats feed or a 404; what a
+    member's time zone, Responsive View and Full width change
 
 ## The daily job
 

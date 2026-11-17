@@ -118,6 +118,10 @@ SCREENS = {
     "rosters-teams": (f"/2026/home/{LEAGUE}#rosters-teams", {}),
     "rosters-my-team": (f"/2026/home/{LEAGUE}#rosters-my-team", {}),
     "rosters-draft": (f"/2026/home/{LEAGUE}#rosters-draft", {}),
+    # the message board's pages, which v2 restyles: the capture bookmark's, as team 0001 got them
+    **{f"board-{page}": (f"/2026/mb/{page}.pl{query}", {}) for page, query in [
+        ("board_show", f"?bid=2026{LEAGUE}"), ("topic_show", f"?bid=2026{LEAGUE}&tid=6755292"), ("post_add", f"?bid=2026{LEAGUE}&pid=23216675"),
+        ("topic_add", f"?bid=2026{LEAGUE}"), ("message_list", ""), ("message_add", ""), ("user_options", ""), ("forum_search", "")]},
 }
 
 # Paths into a screen's deeper states, as data-act names (one that isn't there is skipped), from which
@@ -287,8 +291,18 @@ class Site:
         return self.cache[path]
 
 
+# the board's pages are the capture bookmark's (tests/fixtures/pages/member/), not saved twice
+BOARD_PAGES = SAMPLES.parents[2] / "tests" / "fixtures" / "pages" / "member"
+
+
+def sample_path(name):
+    return BOARD_PAGES / name if name.startswith("mb-") else SAMPLES / name
+
+
 def sample(name):
-    return (SAMPLES / name).read_text()
+    text = sample_path(name).read_text()
+    # v2 as the main version, as pages.py has it: the bookmark saved the header as it was
+    return text.replace('var MAIN = "v1"', 'var MAIN = "v2"') if name.startswith("mb-") else text
 
 
 TEAM = "0001"
@@ -592,6 +606,8 @@ class Mfl:
             return self.swaps.get("page:lineup", "lineup.html")
         if path.endswith("/player"):
             return "player.html"
+        if "/mb/" in path and path.endswith(".pl"):
+            return f"mb-{path.rsplit('/', 1)[1][:-3]}.html"
         if path.endswith("/ajax_ls"):
             return "ajax_ls.html"
         if path.endswith("/options"):
@@ -704,7 +720,7 @@ class Mfl:
         if self.moves and url.path.endswith("/options") and query.get("O") in (["257"], ["18"]):
             return route.fulfill(content_type="text/html", body=self.drop_page() if query["O"] == ["257"] else self.ir_page())
         name = self.page_for(url.path, query)
-        if name and (SAMPLES / name).exists():
+        if name and sample_path(name).exists():
             return route.fulfill(content_type="text/html", body=self.add_page() if url.path.endswith("/add_drop") else sample(name))
         # MFL's own scripts the pages need (picker.js, mfl_common.js)
         if url.path.endswith(".js") and (SAMPLES / url.path.rsplit("/", 1)[1]).exists():

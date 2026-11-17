@@ -23,7 +23,8 @@ stale     a height that's wrong after the window turns: the screen laid out at t
 --minimum draws with the stylesheet as a browser at the minimum (docs/design.md: Devices) reads it, the
 newer CSS it marks taken out (tools/minimum-css.mjs), so a page that needs one of those extras shows up.
 
-Only v2's parts are measured (the frame and its views): MFL's own pages are left as MFL draws them.
+Only v2's parts are measured (the frame and its views, and the message board's pages, which v2
+restyles): MFL's own pages are left as MFL draws them.
 It sees what's drawn, not whether it looks good: a finding is worth a look, and the screenshot
 (--shots) shows it. A screen whose moves are answered differently (screens.py's "moves") looks the
 same as its plain screen until a move is made, so only the plain one is measured.
@@ -67,7 +68,9 @@ STATES = {
     "rosters": [("player popup", "#fuad-rosters [data-player]")],
 }
 
-ROOTS = """[...document.querySelectorAll('#fuad-frame, [id^="fuad-"]')].filter((el) => !el.parentElement.closest('[id^="fuad-"]'))"""
+# v2's parts; on the message board's pages, which v2 restyles in place, MFL's page body too
+ROOTS = """[...document.querySelectorAll('#fuad-frame, [id^="fuad-"], :is(.fuad-board, .fuad-topic, .fuad-reply, .fuad-side) #withmenus')]
+    .filter((el, i, all) => !all.some((other) => other !== el && other.contains(el)))"""
 
 MEASURE = r"""() => {
     const roots = """ + ROOTS + r""";
