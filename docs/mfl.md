@@ -50,7 +50,8 @@ MFL documents little of this.
   REMAINING 15:00|POSSESSION 2|…`), then `DATE|<seconds>|…` and `REFRESH|40000`. A team's game is
   over when `QUARTER` is empty or `F`; `H` is halftime, `O` overtime. Lines carry stray carriage
   returns inside them (`DIF 7\r|EA 1\r`). It answers 403 without a referrer from MFL's pages. A
-  past week's file stays readable.
+  past week's file stays readable. A week with no games played yet has its file, with only the
+  `DATE` and `REFRESH|3600000` lines (week 11, 17 Nov 2026), while its projections are already in.
 - **The projections feed** is a line per player: `16619,WR,RA=0.18,CC=1.92,ARY=3.44,…`, stats only.
 - **`liveScoring`** needs `DETAILS=1` to list the bench (without it, only the starters). It lists each team's `playersCurrentlyPlaying`, `playersYetToPlay` and
   `gameSecondsRemaining`, and each player's `score` and `gameSecondsRemaining`, but no stats

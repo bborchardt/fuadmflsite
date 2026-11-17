@@ -64,9 +64,9 @@ export function drawScores(mount, data) {
         }
         return lineup;
     };
-    // a week MFL hasn't started a feed for yet (missing or empty) reads as no stats, as MFL's page
-    // treats it; a feed v2 doesn't recognise is null, and the cards go by liveScoring alone, as no stats
-    // would show every game unplayed
+    // a week with no games played (MFL's feed of a DATE line alone; missing or empty) reads as no
+    // stats, as MFL's page treats it; a feed v2 doesn't recognise is null, and the cards go by
+    // liveScoring alone, as no stats would show every game unplayed
     const statsOf = (week) => feed(`live_stats_${two(week)}.txt`).then((text) => {
         const stats = String(text).trim() ? readStats(text) : NO_STATS;
         if (!stats) {
