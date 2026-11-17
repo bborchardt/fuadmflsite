@@ -1,6 +1,8 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {applyInjuries, lineupStatus, lineupWarnings, readName, tagOf} from "../site/v2/ui/lineup-model.js";
+import {applyInjuries, lineupStatus, lineupWarnings, readName, tagOf, withKickoff} from "../site/v2/ui/lineup-model.js";
+import {clock} from "../site/v2/ui/home-model.js";
+import {TIME_ZONE} from "../site/v2/lib/zone.js";
 
 // the league's starter limits, as MFL's page heads each position
 const limits = {QB: [1, 2], RB: [1, 3], WR: [2, 5], TE: [1, 3], PK: [1, 1]};
@@ -79,4 +81,24 @@ test("the week's injury report names what MFL's one-letter column can't", () => 
 test("MFL's lineup names read as first name first", () => {
     assert.deepEqual(readName("St. Brown, Amon-Ra DET WR"), {name: "Amon-Ra St. Brown", mflName: "St. Brown, Amon-Ra", nfl: "DET", pos: "WR"});
     assert.deepEqual(readName("Fairbairn, Ka'imi HOU PK"), {name: "Ka'imi Fairbairn", mflName: "Fairbairn, Ka'imi", nfl: "HOU", pos: "PK"});
+});
+
+// MFL writes the kickoff in the member's own MFL zone, unnamed but for GMT; Lineup writes it in the
+// league's (CT), named on a device on another clock (the tests' is Pacific), as v2's other times
+test("Lineup's kickoffs are the league's time whatever zone the member set on MFL", () => {
+    // Sun Nov 22 2026, 1:00 p.m. ET
+    const kickoff = Date.UTC(2026, 10, 22, 18) / 1000;
+    const timeText = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", timeZone: TIME_ZONE})} ${clock(seconds)}`;
+    for (const opp of ["@KCC Sun 1:00 p.m.", "@KCC Sun 10:00 a.m.", "@KCC Sun 6:00 p.m. GMT"]) {
+        assert.equal(withKickoff(opp, kickoff, timeText), "@KCC Sun 12:00 p.m. CT", opp);
+    }
+    assert.equal(withKickoff("vs PIT Mon 8:15 p.m.", kickoff, timeText), "vs PIT Sun 12:00 p.m. CT");
+});
+
+test("MFL's opponent text stays as it is without a kickoff, or when it isn't a day and time", () => {
+    const timeText = () => "Sun 12:00 p.m.";
+    assert.equal(withKickoff("@KCC Sun 1:00 p.m.", null, timeText), "@KCC Sun 1:00 p.m.");
+    for (const opp of ["@KCC", "Bye", "@KCC W 24-17", "", "Sun 1:00 p.m."]) {
+        assert.equal(withKickoff(opp, 1795370400, timeText), opp);
+    }
 });

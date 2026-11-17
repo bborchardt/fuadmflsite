@@ -355,7 +355,13 @@ Each is an ordinary page form, posted from the logged-in browser.
   labelled ("11 p.m. CT") only on a device whose clock differs (`zoneLabel`), MFL's text read through
   `mflTime` (`lib/zone.js`); a bid run's `PERIOD` option is its moment in
   seconds. MFL's own content that v2 only restyles (the board's Messages and Search) keeps the
-  member's zone, labelled.
+  member's zone, labelled. Lineup's opponent cell ("@KCC Sun 1:00 p.m.") has the kickoff in the
+  member's zone too, named only for GMT ("Sun 6:00 p.m. GMT"), so Lineup writes it from
+  `nflSchedule` (`withKickoff` in `ui/lineup-model.js`); Add's opponent is the team alone. On the
+  clone with ET, PT and GMT set, v2's other screens read the same in each (16 Nov 2026).
+- **Responsive View and Full width, live** (the clone, 16 Nov 2026): with Responsive View off, v2's
+  pages had the viewport tag and `link#responsive` back and nothing past a phone's width; with Full
+  width on, every page was `body.full-width` and v2's column the window's.
 - **MFL's app** doesn't run home page messages, so none of this code.
 
 ## GitHub

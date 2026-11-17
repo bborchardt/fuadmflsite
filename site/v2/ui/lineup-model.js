@@ -43,6 +43,13 @@ function weekLinks(doc) {
     return new Map(picker ? [...picker.querySelectorAll("a[href*='WEEK=']")].map((a) => [Number((a.getAttribute("href").match(/WEEK=(\d+)/) || [])[1]), a.getAttribute("href")]) : []);
 }
 
+// MFL's opponent text ("@KCC Sun 1:00 p.m.", "vs PIT Sun 9:25 p.m. GMT") with its day and time as
+// `timeText(kickoff)` writes them; as MFL has it when it isn't a day and time or there's no kickoff
+export function withKickoff(opp, kickoff, timeText) {
+    const match = /^(.*\S)\s+(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+\d{1,2}:\d{2}\s*[ap]\.m\.(?:\s+[A-Z]{1,4})?$/.exec(String(opp));
+    return match && kickoff ? `${match[1]} ${timeText(kickoff)}` : opp;
+}
+
 // {team, week, total, limits, players, ir, irNames (MFL's "Last, First"), prev, next} from MFL's page, or null if it isn't the form
 export function readLineupPage(doc) {
     const form = lineupForm(doc);
