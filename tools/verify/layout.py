@@ -14,6 +14,8 @@ Then it measures:
 squeezed  text wrapped to under four characters a line ("Final" a letter a line)
 offscreen something past the window's edge, not inside a box that scrolls
 clipped   a box cutting off its own content, other than with an ellipsis
+cut       a control (button, field, list) mostly past the edge of a box that scrolls sideways (under
+          half of it, or under 24px, in view), so a member finds it only by scrolling there
 overlap   two controls drawn over each other
 offcentre in a row that centres its children on one line, a child's one line of text more than 2px
           from the row's middle (a box centred with its text not, from padding on one side)
@@ -102,6 +104,16 @@ MEASURE = r"""() => {
         const s = getComputedStyle(el);
         if (s.position !== 'fixed' && (r.right > innerWidth + 1 || r.left < -1) && !scrolls(el)
             && !(el.closest('.fuad-layer') && r.right <= 0)) found.push(['offscreen', name(el)]);
+        if (el.matches('button, input:not([type=hidden]), select, textarea')) {
+            for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+                const o = getComputedStyle(a).overflowX;
+                if (o === 'auto' || o === 'scroll') {
+                    const shownWidth = Math.min(r.right, a.getBoundingClientRect().right) - r.left;
+                    if (r.right > a.getBoundingClientRect().right + 1 && (shownWidth < r.width / 2 || shownWidth < 24)) found.push(['cut', name(el)]);
+                    break;
+                }
+            }
+        }
         if ((s.overflowX === 'hidden' || s.overflowX === 'clip') && el.scrollWidth > el.clientWidth + 2
             && s.textOverflow !== 'ellipsis' && el.clientWidth > 2) found.push(['clipped', name(el)]);
     }
