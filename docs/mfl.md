@@ -94,6 +94,13 @@ MFL documents little of this.
   commissioner switch turned away (`mflAsk`); an import turned away fails at once, as one posted
   twice could charge a penalty twice. Its errors name MFL's home page should one reach it
   (`jobs/mfl-form.mjs`) (the clone and the league, Nov 2026).
+- **MFL's clock** (`readServerTime` in `mfl_common.js`) asks for `time.xml` only on a page with the
+  "Current MFL System Time" home page module (`#current_system_timestamp`): once a second after
+  load, then every 15 seconds while the page is open. The league's home page doesn't have it, so a
+  tab of it asks for none (3 minutes live, as a guest, MFL alone, v1 and v2 alike); a member's own
+  home page with the module asks at that rate, v2 or not (the saved custom layout, 65 seconds each).
+  Headless WebKit holds back a background tab's timers and fires them together, so a tab is timed
+  alone (Nov 2026).
 - **API imports:** `blindBidWaiverRequest` takes `PICKS` (`ADD_BID_DROP`, …) and `ROUND` but no
   comment; `messageBoard` lets an owner post (`THREAD` + `BODY`, or `SUBJECT` + `BODY`), posted to
   `/<season>/import?TYPE=messageBoard&L=<league>` from the logged-in page, which answers
