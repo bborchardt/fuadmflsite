@@ -302,10 +302,13 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 - **Checked by hand,** each when it's due:
   - at each season stage (preseason, the draft, the regular season, the playoffs, the offseason): a
     dry run with "Save pages" on the test league and one on the real league, whose pages go into
-    `tests/fixtures/pages/stages/<year>-<stage>/` by pull request as the run has them. Each stage's
+    `tests/fixtures/pages/stages/<year>-<stage>/` by pull request as the run has them, and the test
+    league's exports too (every one the job read, cleaned, its players' whole list aside for its size;
+    only the test league's, as a logged-in export may hold what only members see). Each stage's
     folder is kept: `tests/stage-pages.test.mjs` reads every page in each with the reader the daily
-    check tries on it, and `pages.py` checks which screen takes each, so a change that stops reading
-    an earlier stage's MFL page fails. The other saved pages stay as they are, for the tests of what
+    check tries on it, `pages.py` checks which screen takes each, and `tests/stage-exports.test.mjs`
+    reads every export with the rules the job read it by (`lib/shapes.js`), so a change that stops
+    reading an earlier stage's MFL page, or a rule that turns down an export MFL gave then, fails. The other saved pages stay as they are, for the tests of what
     a screen draws
   - once a season: the devices form's rows read for errors, fallbacks and the oldest browsers
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)

@@ -24,7 +24,8 @@
 //   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
 //   SAVED_PAGES_DIR             where the check saves MFL's pages, cleaned as the capture bookmark
 //                               cleans them: a page it flags, and with SAVE_PAGES every one it reads
-//   SAVE_PAGES                  on a dry run, "true" saves every page the check reads
+//   SAVE_PAGES                  on a dry run, "true" saves every page the check reads, and of a league
+//                               other than the real one every export the job reads
 //   NOW                         optional ISO time, for testing
 //   DRY_RUN                     "true": writes nothing to MFL or DATA_DIR, whatever the variables above
 //                               say, and may name a league the version doesn't list
@@ -32,6 +33,7 @@
 //   DATA_LEAGUE_ID              on a dry run, the league DATA_DIR's files are from; another starts with none
 
 import {existsSync, readFileSync, readdirSync, writeFileSync, appendFileSync, mkdirSync} from "node:fs";
+import {createHash} from "node:crypto";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 
@@ -266,10 +268,28 @@ async function loginWorks(cookie) {
 const isThisLeague = (entry) => entry.league_id === leagueId || (/\/home\/(\d+)/.exec(entry.url || "") || [])[1] === leagueId;
 const loginIsInLeague = () => loginLeagues.some(isThisLeague);
 
+// With Save pages, on a dry run of a league other than the real one (the run's files are public, and
+// a logged-in export may hold what only members see): every export the job reads, as MFL gave it,
+// by address, with the rules other than its section's it was read by; saveExports writes them out
+const exportsRead = dryRun && process.env.SAVE_PAGES === "true" && process.env.SAVED_PAGES_DIR
+    && process.env.DATA_LEAGUE_ID && process.env.DATA_LEAGUE_ID !== leagueId ? new Map() : null;
+async function exportFetch(url, init) {
+    const response = await mflFetch(url, init);
+    if (exportsRead && response.ok) {
+        exportsRead.set(String(url), {...exportsRead.get(String(url)), body: await response.clone().text()});
+    }
+    return response;
+}
+
 // an export whose items lack a field the job relies on throws, so nothing is written from it (lib/shapes.js)
-const exportOptions = {fetchImpl: mflFetch, init: {headers: mflHeaders}, check: checkShape};
-const fetchFrom = (base, type, params, section = type, year = season, rules) =>
-    fetchExport(exportUrl(base, year, type, params), section, rules ? {...exportOptions, check: (name, body) => checkShape(name, body, rules)} : exportOptions);
+const exportOptions = {fetchImpl: exportFetch, init: {headers: mflHeaders}, check: checkShape};
+const fetchFrom = (base, type, params, section = type, year = season, rules) => {
+    const url = exportUrl(base, year, type, params);
+    if (exportsRead && rules === WEEK_ROSTERS) {
+        exportsRead.set(url, {...exportsRead.get(url), rules: "WEEK_ROSTERS"});
+    }
+    return fetchExport(url, section, rules ? {...exportOptions, check: (name, body) => checkShape(name, body, rules)} : exportOptions);
+};
 
 function writeSummary() {
     if (!process.env.GITHUB_STEP_SUMMARY) {
@@ -1387,6 +1407,70 @@ function pageSaver(league) {
     return {keep, finish};
 }
 
+// The exports read on the run (exportsRead), for tests/fixtures/pages/stages: cleaned as the pages
+// are, the owners' names from the league export among them, into SAVED_PAGES_DIR/<league>/exports/
+// with a manifest of each one's address and rules. The players' whole list is left out for its size.
+const EXPORT_MAX_BYTES = 400000;
+// a commissioner's league export gives each owner's contact details, login and preferences, in fields
+// the text cleaning can't recognize (a phone number as bare digits, a street address): a franchise
+// keeps only its team's own fields, and the league neither the commissioner's login nor alerts' numbers
+const LEAGUE_PRIVATE = ["commish_username", "mobileAlerts"];
+const FRANCHISE_FIELDS = ["id", "name", "owner_name", "abbrev", "division", "icon", "logo", "salaryCapAmount", "bbidAvailableBalance", "waiverSortOrder", "future_draft_picks"];
+function withoutContacts(body) {
+    const parsed = JSON.parse(body);
+    const franchises = parsed.league?.franchises;
+    if (!franchises?.franchise) {
+        return body;
+    }
+    for (const field of LEAGUE_PRIVATE) {
+        delete parsed.league[field];
+    }
+    const kept = (franchise) => Object.fromEntries(Object.entries(franchise).filter(([field]) => FRANCHISE_FIELDS.includes(field)));
+    franchises.franchise = Array.isArray(franchises.franchise) ? franchises.franchise.map(kept) : kept(franchises.franchise);
+    return JSON.stringify(parsed);
+}
+// an export's file by what it asked for: rosters-W3.json, and the year when not this season's
+// (rosters-2025.json); a long list (playerScores' players) by a short hash of it
+function exportFileName(url, year) {
+    const {pathname, searchParams} = new URL(url);
+    const value = (text) => (text.length > 20 ? createHash("sha256").update(text).digest("hex").slice(0, 8) : text.replace(/[^A-Za-z0-9]+/g, "_"));
+    const params = [...searchParams].filter(([key]) => !["TYPE", "L", "JSON"].includes(key)).sort(([a], [b]) => a.localeCompare(b));
+    const asked = pathname.split("/")[1];
+    return `${[searchParams.get("TYPE"), ...params.map(([key, text]) => `${key}${value(text)}`), ...(asked === String(year) ? [] : [asked])].join("-")}.json`;
+}
+function saveExports() {
+    if (!exportsRead || !exportsRead.size) {
+        return;
+    }
+    const dir = join(resolve(process.env.SAVED_PAGES_DIR), leagueId, "exports");
+    // every season's league export read, so an owner since gone comes out of last season's too
+    const leagues = [...exportsRead].filter(([url, read]) => new URL(url).searchParams.get("TYPE") === "league" && read.body);
+    const owners = leagues.flatMap(([, read]) => ownersOf(JSON.parse(read.body)));
+    if (!leagues.some(([url]) => new URL(url).pathname.startsWith(`/${season}/`)) || !owners.length) {
+        needsAttention("Save pages: the league export gave no owners' names to take out, so no exports were saved.");
+        return;
+    }
+    const saved = [];
+    const large = [];
+    for (const [url, {body, rules}] of exportsRead) {
+        if (!body) {
+            continue;
+        }
+        // the same ask of another host is kept apart
+        const asked = exportFileName(url, season);
+        const name = saved.some((each) => each.name === asked) ? asked.replace(/\.json$/, `-${new URL(url).hostname.split(".")[0]}.json`) : asked;
+        if (body.length > EXPORT_MAX_BYTES) {
+            large.push(name);
+            continue;
+        }
+        mkdirSync(dir, {recursive: true});
+        writeFileSync(join(dir, name), scrub(withoutContacts(body), owners));
+        saved.push({name, url: url.replace(/^https:\/\/[^/]+/, ""), ...(rules ? {rules} : {})});
+    }
+    writeFileSync(join(dir, "manifest.json"), JSON.stringify({league: leagueId, season: String(season), at: now.toISOString(), exports: saved}, null, 2));
+    log(`Save pages: saved ${saved.length} of MFL's exports, cleaned, on the run${large.length ? `; not ${large.join(", ")}, over ${EXPORT_MAX_BYTES / 1000} kB` : ""}.`);
+}
+
 // icon stills on league-data that the site doesn't have, as for snapshots
 async function iconsToPublish() {
     const dir = join(dataDir, "data", "icons");
@@ -1543,6 +1627,11 @@ try {
 } catch (error) {
     needsAttention(`Failed: ${error.message}`);
 } finally {
+    try {
+        saveExports();
+    } catch (error) {
+        needsAttention(`Save pages: the exports couldn't be saved: ${error.message}`);
+    }
     explainFailure();
     const logChanged = !dryRun && updateChoreLog();
     setOutput("changed", snapshotWritten || iconsChanged || backupsChanged || logChanged ? "true" : "false");
