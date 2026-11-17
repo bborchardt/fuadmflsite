@@ -14,8 +14,9 @@ const dirs = (dir) => readdirSync(dir, {withFileTypes: true}).filter((entry) => 
 const folders = dirs(STAGES).flatMap(dirs).map((league) => join(league, "exports")).filter(existsSync);
 // the rules other than an export's section's that the job reads one by, by the name the manifest gives
 const RULES = {WEEK_ROSTERS};
-// what a commissioner's league export gives of each owner that the daily job's saving takes out
-const CONTACT = ["address", "city", "state", "zip", "country", "email", "phone", "cell", "cell2", "username", "lastVisit", "mail_event"];
+// a franchise's fields the daily job's saving keeps (jobs/daily.mjs: FRANCHISE_FIELDS); the rest of
+// a commissioner's league export is owners' contact details, logins and preferences
+const FRANCHISE_FIELDS = ["id", "name", "owner_name", "abbrev", "division", "icon", "logo", "salaryCapAmount", "bbidAvailableBalance", "waiverSortOrder", "future_draft_picks"];
 
 for (const folder of folders) {
     const name = folder.slice(STAGES.length + 1);
@@ -27,10 +28,11 @@ for (const folder of folders) {
         assert.deepEqual(manifest.exports.filter((each) => each.rules && !(each.rules in RULES)), []);
     });
 
-    test(`${name}: the league export holds no owner's contact details`, () => {
+    test(`${name}: the league export holds no login or contact details, only each franchise's team fields`, () => {
         const saved = manifest.exports.filter((each) => /[?&]TYPE=league(&|$)/.test(each.url));
         const fields = saved.flatMap(({name: file}) => [JSON.parse(readFileSync(join(folder, file), "utf8")).league?.franchises?.franchise ?? []].flat()
-            .flatMap((franchise) => CONTACT.filter((field) => field in franchise).map((field) => `${file}: ${franchise.id} ${field}`)));
+            .flatMap((franchise) => Object.keys(franchise).filter((field) => !FRANCHISE_FIELDS.includes(field)).map((field) => `${file}: ${franchise.id} ${field}`))
+            .concat(["commish_username", "mobileAlerts"].filter((field) => field in (JSON.parse(readFileSync(join(folder, file), "utf8")).league ?? {})).map((field) => `${file}: ${field}`)));
         assert.deepEqual(fields, []);
     });
 
