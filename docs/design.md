@@ -307,9 +307,8 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed
     shows in git diff
-  - once each, live, as nothing checks them: how often MFL's own clock script asks for `time.xml` on a
-    page v2 draws; whether a week with no games played gives an empty stats feed or a 404; what a
-    member's time zone, Responsive View and Full width change
+  - once each, live, as nothing checks them: whether a week with no games played gives an empty stats
+    feed or a 404; what a member's time zone, Responsive View and Full width change
 
 ## The daily job
 
