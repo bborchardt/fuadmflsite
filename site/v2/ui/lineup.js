@@ -15,7 +15,7 @@ import {pageChanged, placeholders} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
-    applyInjuries, lineupForm, lineupRefusal, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf
+    applyInjuries, lineupForm, lineupRefusal, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf, withKickoff
 } from "./lineup-model.js";
 import {backupMessage, backupOffered, choices, heldPairs, keptPairs, kickoffsOf, lockedStarters, pairProblems, pendingPairs, samePairs, teamBackups, weekFacts} from "./lineup-backups.js";
 import {readLineups, readThreads, weekKickoffs} from "./lineup-board.js";
@@ -36,7 +36,15 @@ function tag(player) {
     return found ? `<span class="fuad-tag fuad-tag-${found.tone}">${esc(found.text)}</span>` : "";
 }
 
-const oppText = (player) => (player.onBye ? "bye week" : oneLineTimes(player.opp));
+// the opponent and kickoff: MFL's text has the time in the member's own MFL zone, unnamed, so the time
+// is the NFL schedule's, in the league's zone as v2's other times are
+function oppText(player, state) {
+    if (player.onBye) {
+        return "bye week";
+    }
+    const kickoffs = state.backups ? state.backups.kickoffs : state.kickoffs;
+    return oneLineTimes(withKickoff(player.opp, kickoffs && kickoffs.get(player.nfl.replace("*", "")), lockText));
+}
 
 // a starter's backup (16.5): set, locked, or a button to pick one; "" when backups are off or none can be
 function backupCell(player, state) {
@@ -89,7 +97,7 @@ function phoneRow(player, state) {
         <button type="button" class="fuad-lineup-open" data-player="${esc(player.id)}" aria-haspopup="dialog">
             <span class="fuad-lineup-who">
                 <span class="fuad-lineup-name"><span>${esc(player.name)}</span>${tag(player)}${backupTag(player, state)}</span>
-                <span class="fuad-meta">${esc([player.nfl, oppText(player)].filter(Boolean).join(" · "))}</span>
+                <span class="fuad-meta">${esc([player.nfl, oppText(player, state)].filter(Boolean).join(" · "))}</span>
             </span>
         </button>
         <span class="fuad-lineup-proj"><span class="${player.proj ? "" : "fuad-muted"}">${esc(pts(player.proj || 0))}</span><span class="fuad-meta">proj</span></span>
@@ -106,7 +114,7 @@ function deskRow(player, state) {
         ${state.backups ? `<span role="cell" class="fuad-lineup-backup">${backupCell(player, state)}</span>` : ""}
         <span role="cell" class="fuad-num fuad-lineup-projected${player.proj ? "" : " fuad-muted"}">${esc(pts(player.proj || 0))}</span>
         <span role="cell" class="fuad-mid fuad-muted">${esc(player.nfl)}</span>
-        <span role="cell" class="fuad-muted">${esc(player.onBye ? "Bye week" : oneLineTimes(player.opp))}</span>
+        <span role="cell" class="fuad-muted">${esc(player.onBye ? "Bye week" : oppText(player, state))}</span>
         <span role="cell" class="fuad-num fuad-muted">${esc(player.oppRank || "—")}</span>
         <span role="cell" class="fuad-num">${esc(pts(player.ytd))}</span>
         <span role="cell" class="fuad-num fuad-muted">${esc(pts(player.avg))}</span>
@@ -266,7 +274,7 @@ function sheetMarkup(starter, state) {
         <div class="fuad-popup-head">
             <div class="fuad-popup-title">
                 <h2 id="fuad-backup-title">Backup for ${esc(starter.name)}</h2>
-                <span class="fuad-meta fuad-popup-meta">${line(starter, oppText(starter))} ${tag(starter)}</span>
+                <span class="fuad-meta fuad-popup-meta">${line(starter, oppText(starter, state))} ${tag(starter)}</span>
             </div>
             <button type="button" class="fuad-close" data-close aria-label="Close">${CLOSE_ICON}</button>
         </div>
@@ -274,7 +282,7 @@ function sheetMarkup(starter, state) {
             ${choice("", "No backup", "", "")}
             ${can.length ? `<h3 class="fuad-backup-group">Can back him up</h3>` : ""}
             ${can.map(({player, deadline}) => choice(player.id, `${esc(player.name)} ${tag(player)}`,
-                `<span class="fuad-meta">${line(player, oppText(player))} · locks ${esc(lockText(deadline))}</span>`, proj(player))).join("")}
+                `<span class="fuad-meta">${line(player, oppText(player, state))} · locks ${esc(lockText(deadline))}</span>`, proj(player))).join("")}
             ${cant.length ? `<h3 class="fuad-backup-group">Can’t</h3>` : ""}
             ${cant.map(({player, why}) => choice(player.id, esc(player.name), `<span class="fuad-backup-why">${esc(`${player.pos} · ${why}`)}</span>`, proj(player), true)).join("")}
         </div>
@@ -321,7 +329,7 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
     // `stale`: a save went but couldn't be checked, so the form underneath may be out of date;
     // `backups`: the week's pairs once read, with the backups setting on (lineup-backups.js)
     const state = {page, on: startersOf(page), base: startersOf(page), irHref, addHref, report: null, saved: false, saving: false, stale: false, error: "",
-        backups: null, backupError: ""};
+        backups: null, backupError: "", kickoffs: null};
     const render = () => {
         const focused = document.activeElement && mount.contains(document.activeElement) ? document.activeElement : null;
         const key = focused && ["toggle", "player", "backup"].find((name) => focused.dataset[name]);
@@ -571,6 +579,17 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
             render();
         })
         .catch((error) => console.warn("[fuad] couldn't read the injury report:", error));
+
+    // the week's kickoffs, which the backups read fresh; without them, the schedule as Home keeps it.
+    // Until then, or if it can't be read, MFL's own text
+    if (!settings.backupStarters) {
+        weekKickoffs(context.season, page.week, {keep: true})
+            .then((schedule) => {
+                state.kickoffs = kickoffsOf(schedule);
+                render();
+            })
+            .catch((error) => console.warn("[fuad] couldn't read the NFL schedule for kickoffs:", error));
+    }
 
     if (settings.backupStarters) {
         loadBackups().then(render, (error) => {
