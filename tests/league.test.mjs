@@ -260,6 +260,11 @@ test("the feed's stray carriage returns don't reach the values", () => {
     assert.equal(stats.updated, 1792332659);
 });
 
+test("a week with no games played yet, as MFL's feed gives it, reads as no stats", () => {
+    const stats = readStats("DATE|1794463500|Thu Nov 12, 2026  1:05:00am ET\nREFRESH|3600000\n");
+    assert.deepEqual([stats.players.size, stats.teams.size, stats.updated], [0, 0, 1794463500]);
+});
+
 test("the best lineup is MFL's: week 5's every team at MFL's own best score", () => {
     const limits = starterLimits(fixture("league-settings.json").league);
     assert.deepEqual(limits, {count: 10, limits: {QB: [1, 2], RB: [1, 3], WR: [2, 5], TE: [1, 3], PK: [1, 1]}});
