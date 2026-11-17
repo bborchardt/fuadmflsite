@@ -5268,6 +5268,18 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     #fuad-add .fuad-add-claim-actions button { position: relative; min-height: 32px; padding: 0 12px; border-radius: 9px; font-size: 13px; }
     #fuad-add .fuad-add-claim-actions button::after,
     #fuad-add .fuad-add-claim-line .fuad-add-arrow::after { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+    /* a window narrower than the table (a tablet, a phone turned sideways) scrolls it sideways: the
+       actions stay pinned at its right edge, over the columns scrolling under them */
+    #fuad-add .fuad-add-claim-line > :nth-last-child(-n+2),
+    #fuad-add .fuad-add-fa-line > :last-child { position: sticky; right: 0; z-index: 1; align-self: stretch; display: flex; align-items: center; background: var(--fuad-panel); box-shadow: -10px 0 0 var(--fuad-panel); }
+    #fuad-add .fuad-add-claim-line > :nth-last-child(2) { right: 246px; justify-content: center; }
+    #fuad-add .fuad-add-claim-line > :last-child { justify-content: flex-end; }
+    /* a bid just changed keeps its tint over the pinned cells: the tint laid over the panel's colour */
+    #fuad-add .fuad-add-flash > :nth-last-child(-n+2) {
+        background: linear-gradient(var(--fuad-accent-tint), var(--fuad-accent-tint)) var(--fuad-panel);
+        box-shadow: -10px 0 0 var(--fuad-accent-tint), -10px 0 0 var(--fuad-panel);
+    }
+    #fuad-add .fuad-add-fa-line > :last-child { justify-content: flex-end; }
     #fuad-add .fuad-add-copies-wide { display: block; padding: 0 4px 10px; }
     #fuad-add .fuad-add-copies-wide > span { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
     #fuad-add .fuad-add-copies-wide .fuad-add-chip { min-height: 32px; font-size: 13px; }
@@ -5812,6 +5824,20 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
         align-items: center;
         box-sizing: border-box;
     }
+
+    /* the actions pinned at the right edge of a table scrolling sideways, as Add's are */
+    #fuad-ir .fuad-ir-line > :last-child {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        background: var(--fuad-panel);
+        /* over the gap before it, and the panel's padding after it, which the scrolling columns pass under */
+        box-shadow: -12px 0 0 var(--fuad-panel), 24px 0 0 var(--fuad-panel);
+    }
+    #fuad-ir .fuad-ir-on-row > :last-child { background: var(--fuad-raised); box-shadow: -12px 0 0 var(--fuad-raised), 8px 0 0 var(--fuad-raised), 24px 0 0 var(--fuad-panel); }
 
     #fuad-ir .fuad-ir-item { min-height: 46px; padding: 0 8px; border-top: 1px solid var(--fuad-rule); border-radius: 6px; font-size: 14px; }
 
