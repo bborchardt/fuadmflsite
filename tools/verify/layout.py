@@ -6,7 +6,7 @@
 
 Each screen loads as screens.py loads it (its saved pages, the clock fixed) in WebKit, which is what
 iPhones draw with, or another --engine, at each of WIDTHS: phones from 320 (the first iPhone SE, and
-iOS's page zoom on a wider one) to 412, just past where v2's desktop layout starts, an iPhone
+iOS's page zoom on a wider one) to 440 (the largest iPhones), just past where v2's desktop layout starts, an iPhone
 turned sideways in the home screen app (its notch padding added, as iOS gives it), an iPad
 turned sideways or a small laptop, and a desktop.
 Then it measures:
@@ -45,12 +45,13 @@ import screens  # noqa: E402
 # name: (width, height, the size it's first laid out at for `stale`, as the app turned sideways)
 WIDTHS = {
     # phones, upright: the first iPhone SE (the narrowest, and iOS's page zoom on a wider one), common
-    # Androids, the iPhone 8 and SE, the newer iPhones, larger Androids
+    # Androids, the iPhone 8 and SE, the newer iPhones, larger Androids, the largest iPhones (Pro Max)
     "320": (320, 568, (568, 320), False),
     "360": (360, 780, (780, 360), False),
     "375": (375, 667, (667, 375), False),
     "phone": (390, 844, (844, 390), False),
     "412": (412, 915, (915, 412), False),
+    "440": (440, 956, (956, 440), False),
     "780": (780, 1000, (1000, 780), False),
     "860": (860, 1000, (1000, 860), False),
     "app-sideways": (874, 402, (402, 874), True),
