@@ -290,14 +290,19 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   | `tests/readers.test.mjs` | every pull request | A reader that takes another page, the login page or an empty one for "none"; a reader no check or chore tries on MFL's page | MFL's live page |
   | `tests/export-shapes.test.mjs` | every pull request | A rule that doesn't fail without its field; an export the job reads with no rules | MFL's live exports |
   | `tests/checked.test.mjs` | every pull request | A read in v2's screens without `check: strict` or `lenient` | Whether the chosen one is right |
-  | `pages.py` | pull requests that touch the site, header or harness | Which screen takes each saved page, a member's own home page layout included | Pages not saved; what changed since they were saved |
+  | `tests/stage-pages.test.mjs` | every pull request | A reader that no longer reads a season stage's saved page | Stages not saved |
+  | `pages.py` | pull requests that touch the site, header or harness | Which screen takes each saved page, each season stage's and a member's own home page layout included | Pages not saved; what changed since they were saved |
   | The daily job's check (`jobs/mfl-check.mjs`) | every morning | An export, page or feed v2 reads that MFL changed or removed, as the commissioner's team sees it | How a page draws; MFL's scripts; the message board's pages; what only a member's own settings change; the commissioner's own pages |
   | The devices form's rows (Devices) | each page with errors | A fallback, a "Couldn't load" or an "MFL's … has changed" a member met | What no member opened |
 
 - **Checked by hand,** each when it's due:
   - at each season stage (preseason, the draft, the regular season, the playoffs, the offseason): a
     dry run with "Save pages" on the test league and one on the real league, whose pages go into
-    `tests/fixtures/pages/` by pull request, so the saved samples are the stage's
+    `tests/fixtures/pages/stages/<year>-<stage>/` by pull request as the run has them. Each stage's
+    folder is kept: `tests/stage-pages.test.mjs` reads every page in each with the reader the daily
+    check tries on it, and `pages.py` checks which screen takes each, so a change that stops reading
+    an earlier stage's MFL page fails. The other saved pages stay as they are, for the tests of what
+    a screen draws
   - once a season: the devices form's rows read for errors, fallbacks and the oldest browsers
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed

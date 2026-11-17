@@ -3,7 +3,8 @@
 
     uv run --no-project --with playwright python tools/verify/pages.py [--record]
 
-Loads every page the capture bookmark saved (tests/fixtures/pages/<viewer>/), at the address MFL
+Loads every page the capture bookmark saved (tests/fixtures/pages/<viewer>/), and each season stage's
+the daily job saved (tests/fixtures/pages/stages/<stage>/<league>/member/), at the address MFL
 served it from, in WebKit with the working copy built as Pages publishes it and v2 as the main
 version, the clock at the capture's time. Exports and other pages v2 asks for come from the screen
 harness's saved clone samples (screens.py). For each page it notes whether v2 drew over it (the
@@ -28,6 +29,9 @@ PAGES = REPO / "tests" / "fixtures" / "pages"
 # member-custom: a member's own home page layout, every module MFL offers spread over seven tabs, the
 # header in one of them too
 VIEWERS = ["guest", "member", "commish", "member-custom"]
+# each season stage's pages as the daily job's "Save pages" saved them, a member's view of the
+# commissioner's team, which v2 takes as it takes a member's
+STAGES = sorted(str(path.relative_to(PAGES)) for path in PAGES.glob("stages/*/*/member"))
 
 _spec = importlib.util.spec_from_file_location("screens_harness", HERE / "screens.py")
 harness = importlib.util.module_from_spec(_spec)
@@ -79,6 +83,11 @@ EXPECTED = {
     "player": {"guest": None, "member": None, "commish": None},
     "processed_waivers": {"guest": None, "member": "fuad-all-bids-on", "commish": None},
 }
+# what only a stage's pages have, as a member gets it: a news article, which stays MFL's, read by v2's
+# player popup
+STAGE_ONLY = {
+    "view_news_article": None,
+}
 
 
 class Captured(harness.Mfl):
@@ -129,12 +138,22 @@ def check(job):
     return viewer, name, taken[0] if taken else None, sorted(set(errors)), sorted(set(failed))
 
 
+def expected_as(viewer):
+    return "member" if viewer in STAGES else viewer
+
+
+def expected(name, viewer):
+    if viewer in STAGES and name in STAGE_ONLY:
+        return STAGE_ONLY[name]
+    return EXPECTED.get(name, {}).get(expected_as(viewer), "missing")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--record", action="store_true", help="print what each page did instead of comparing")
     args = parser.parse_args()
     built = harness.build_working_copy()
-    jobs = [(built, viewer, path.stem) for viewer in VIEWERS for path in sorted((PAGES / viewer).glob("*.html"))]
+    jobs = [(built, viewer, path.stem) for viewer in VIEWERS + STAGES for path in sorted((PAGES / viewer).glob("*.html"))]
     with ProcessPoolExecutor(harness.WORKERS) as pool:
         results = list(pool.map(check, jobs))
     found = {}
@@ -146,11 +165,14 @@ def main():
         if errors:
             differ_errors.append(f"{viewer}/{name}: page errors {errors}")
         # a guest's login page fails to draw as the screen v2 tries first; only a page v2 should take matters
-        if failed and EXPECTED.get(name, {}).get(viewer):
+        if failed and expected(name, viewer) not in (None, "missing"):
             differ_errors.append(f"{viewer}/{name}: {failed}")
     if args.record:
+        # EXPECTED is by viewer; a stage's pages are held to a member's
         for name in sorted(found):
-            print(f"    {json.dumps(name)}: {json.dumps(found[name])},")
+            row = {viewer: taken for viewer, taken in found[name].items() if viewer in VIEWERS}
+            if row:
+                print(f"    {json.dumps(name)}: {json.dumps(row)},")
         return 0
     print("\n".join(differ_errors))
     differ = len(differ_errors)
@@ -161,6 +183,12 @@ def main():
             if want != got:
                 differ += 1
                 print(f"{viewer}/{name}: expected {want or 'MFL’s page'}, got {got or 'MFL’s page'}")
+    for viewer in STAGES:
+        for name in sorted(name for name, got in found.items() if viewer in got):
+            want = expected(name, viewer)
+            if want != found[name][viewer]:
+                differ += 1
+                print(f"{viewer}/{name}: expected {want or 'MFL’s page'}, got {found[name][viewer] or 'MFL’s page'}")
     print(f"\n{len(results)} pages, {differ} differences")
     return 1 if differ else 0
 
