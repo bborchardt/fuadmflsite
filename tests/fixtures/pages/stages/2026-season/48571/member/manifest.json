@@ -1,0 +1,69 @@
+{
+  "league": "48571",
+  "season": "2026",
+  "viewer": "member",
+  "franchise": "0001",
+  "at": "2026-11-17T01:06:17.662Z",
+  "pages": [
+    {
+      "name": "options-O09",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=09",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=09",
+      "status": 200
+    },
+    {
+      "name": "options-O26",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=26",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=26",
+      "status": 200
+    },
+    {
+      "name": "options-O101",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=101",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=101",
+      "status": 200
+    },
+    {
+      "name": "options-O194",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=194",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=194",
+      "status": 200
+    },
+    {
+      "name": "options-O208",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=208",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=208",
+      "status": 200
+    },
+    {
+      "name": "options-O171",
+      "url": "https://www44.myfantasyleague.com/2026/options?L=48571&O=171&FID=0001",
+      "served": "https://www44.myfantasyleague.com/2026/options?L=48571&O=171&FID=0001",
+      "status": 200
+    },
+    {
+      "name": "player",
+      "url": "https://www44.myfantasyleague.com/2026/player?L=48571&P=12676",
+      "served": "https://www44.myfantasyleague.com/2026/player?L=48571&P=12676",
+      "status": 200
+    },
+    {
+      "name": "view_news_article",
+      "url": "https://www44.myfantasyleague.com/2026/view_news_article?L=48571&ID=rotowire647906",
+      "served": "https://www44.myfantasyleague.com/2026/view_news_article?L=48571&ID=rotowire647906",
+      "status": 200
+    },
+    {
+      "name": "live_stats_09.txt",
+      "url": "https://www44.myfantasyleague.com/fflnetdynamic2026/live_stats_09.txt",
+      "served": "https://www44.myfantasyleague.com/fflnetdynamic2026/live_stats_09.txt",
+      "status": 200
+    },
+    {
+      "name": "live_proj_10.txt",
+      "url": "https://www44.myfantasyleague.com/fflnetdynamic2026/live_proj_10.txt",
+      "served": "https://www44.myfantasyleague.com/fflnetdynamic2026/live_proj_10.txt",
+      "status": 200
+    }
+  ]
+}

@@ -79,7 +79,7 @@ A second league can try the site with no code change, and any setting can be tri
   `mfl/message-header.html` as their header, in Chromium and WebKit, through each beta, fallback and
   failure case, before the commissioner pastes it; `speed.py --header` times it.
 - `uv run --no-project --with playwright python tools/verify/pages.py` loads every page the capture
-  bookmark or the daily job's "Save pages" saved (`tests/fixtures/pages/`), as the guest, a member or the commissioner got it, with
+  bookmark or the daily job's "Save pages" saved (`tests/fixtures/pages/`, each season stage's in `stages/`), as the guest, a member or the commissioner got it, with
   the working copy built and v2 as the main version, and checks which of v2's screens takes each one,
   or that MFL's page stays.
 - `uv run --no-project --with playwright python tools/verify/skins.py` draws v2's screens in each look,

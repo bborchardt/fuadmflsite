@@ -190,7 +190,8 @@ week 12's kickoff.
 - **New saved pages for the tests:** at each stage of the season (preseason, the draft, the regular
   season, the playoffs), a dry run with **Save pages** ticked puts every page the check reads on the
   run, cleaned. Run it on the test league (league `50965`) for the team pages, and on the real league
-  for history, rules, settings and Power.
+  for history, rules, settings and Power. Each run's `mfl-pages` download goes into the tests as that
+  stage's folder (`tests/fixtures/pages/stages/`), by pull request.
 - **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
   (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
   again, or you can run it by hand.
