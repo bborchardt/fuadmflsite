@@ -1,0 +1,147 @@
+{
+  "league": "50965",
+  "season": "2026",
+  "at": "2026-11-17T13:44:45.145Z",
+  "exports": [
+    {
+      "name": "players.json",
+      "url": "/2026/export?TYPE=players&JSON=1"
+    },
+    {
+      "name": "league.json",
+      "url": "/2026/export?TYPE=league&L=50965&JSON=1"
+    },
+    {
+      "name": "salaryAdjustments.json",
+      "url": "/2026/export?TYPE=salaryAdjustments&L=50965&JSON=1"
+    },
+    {
+      "name": "rosters.json",
+      "url": "/2026/export?TYPE=rosters&L=50965&JSON=1"
+    },
+    {
+      "name": "transactions.json",
+      "url": "/2026/export?TYPE=transactions&L=50965&JSON=1"
+    },
+    {
+      "name": "freeAgents.json",
+      "url": "/2026/export?TYPE=freeAgents&L=50965&JSON=1"
+    },
+    {
+      "name": "weeklyResults.json",
+      "url": "/2026/export?TYPE=weeklyResults&L=50965&JSON=1"
+    },
+    {
+      "name": "calendar.json",
+      "url": "/2026/export?TYPE=calendar&L=50965&JSON=1"
+    },
+    {
+      "name": "injuries.json",
+      "url": "/2026/export?TYPE=injuries&JSON=1"
+    },
+    {
+      "name": "injuries-W10.json",
+      "url": "/2026/export?TYPE=injuries&W=10&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W1.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=1&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W15.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=15&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W17.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=17&JSON=1"
+    },
+    {
+      "name": "messageBoard-COUNT100.json",
+      "url": "/2026/export?TYPE=messageBoard&L=50965&COUNT=100&JSON=1"
+    },
+    {
+      "name": "messageBoardThread-THREAD6764570.json",
+      "url": "/2026/export?TYPE=messageBoardThread&L=50965&THREAD=6764570&JSON=1"
+    },
+    {
+      "name": "messageBoardThread-THREAD6761097.json",
+      "url": "/2026/export?TYPE=messageBoardThread&L=50965&THREAD=6761097&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W9.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=9&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W10.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=10&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W11.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=11&JSON=1"
+    },
+    {
+      "name": "weeklyResults-WYTD.json",
+      "url": "/2026/export?TYPE=weeklyResults&L=50965&W=YTD&JSON=1"
+    },
+    {
+      "name": "accounting.json",
+      "url": "/2026/export?TYPE=accounting&L=50965&JSON=1"
+    },
+    {
+      "name": "liveScoring-DETAILS1.json",
+      "url": "/2026/export?TYPE=liveScoring&L=50965&DETAILS=1&JSON=1"
+    },
+    {
+      "name": "rules.json",
+      "url": "/2026/export?TYPE=rules&L=50965&JSON=1"
+    },
+    {
+      "name": "schedule.json",
+      "url": "/2026/export?TYPE=schedule&L=50965&JSON=1"
+    },
+    {
+      "name": "leagueStandings.json",
+      "url": "/2026/export?TYPE=leagueStandings&L=50965&JSON=1"
+    },
+    {
+      "name": "playoffBrackets.json",
+      "url": "/2026/export?TYPE=playoffBrackets&L=50965&JSON=1"
+    },
+    {
+      "name": "pendingWaivers.json",
+      "url": "/2026/export?TYPE=pendingWaivers&L=50965&JSON=1"
+    },
+    {
+      "name": "pendingTrades.json",
+      "url": "/2026/export?TYPE=pendingTrades&L=50965&JSON=1"
+    },
+    {
+      "name": "messageBoard-COUNT20.json",
+      "url": "/2026/export?TYPE=messageBoard&L=50965&COUNT=20&JSON=1"
+    },
+    {
+      "name": "draftResults.json",
+      "url": "/2026/export?TYPE=draftResults&L=50965&JSON=1"
+    },
+    {
+      "name": "futureDraftPicks.json",
+      "url": "/2026/export?TYPE=futureDraftPicks&L=50965&JSON=1"
+    },
+    {
+      "name": "playerScores-WYTD.json",
+      "url": "/2026/export?TYPE=playerScores&L=50965&W=YTD&JSON=1"
+    },
+    {
+      "name": "nflByeWeeks.json",
+      "url": "/2026/export?TYPE=nflByeWeeks&JSON=1"
+    },
+    {
+      "name": "projectedScores-W10.json",
+      "url": "/2026/export?TYPE=projectedScores&L=50965&W=10&JSON=1"
+    },
+    {
+      "name": "nflSchedule-W12.json",
+      "url": "/2026/export?TYPE=nflSchedule&W=12&JSON=1"
+    }
+  ]
+}
