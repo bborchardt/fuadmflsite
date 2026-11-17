@@ -1257,6 +1257,8 @@ test("the check of what v2 reads: a page MFL no longer has fails the run, read a
 test("the check saves MFL's pages cleaned: with Save pages, every one of another league's; of the real league's, a flagged one members' views aside", () => {
     const owned = league();
     owned.league.franchises.franchise[0].owner_name = "Dana Smith";
+    // as the commissioner's league export gives them
+    Object.assign(owned.league.franchises.franchise[1], {cell: "2125550123", address: "12 Elm Street", zip: "10001", username: "dsmith"});
     const page = "<html><head><title>Not v2's</title></head><body>Owner: Dana Smith, dana.smith@example.org</body></html>";
     const pages = (id) => ({[`/2026/add_drop?L=${id}`]: page, [`/2026/options?L=${id}&O=101`]: page});
     const saved = mkdtempSync(join(tmpdir(), "fuad-saved-"));
@@ -1281,7 +1283,7 @@ test("the check saves MFL's pages cleaned: with Save pages, every one of another
     assert.deepEqual(readdirSync(exportsDir).filter((name) => name !== "manifest.json").sort(), [...names].sort());
     const leagueSaved = readFileSync(join(exportsDir, "league.json"), "utf8");
     assert.match(leagueSaved, /"owner_name":"Owner 0001"/);
-    assert.doesNotMatch(leagueSaved, /Dana/);
+    assert.doesNotMatch(leagueSaved, /Dana|2125550123|Elm Street|10001|dsmith/);
     assert.ok(exported.exports.every((each) => each.url.startsWith("/") && /TYPE=/.test(each.url)));
     assert.match(other.stdout, /Save pages: saved \d+ of MFL's exports, cleaned, on the run/);
 

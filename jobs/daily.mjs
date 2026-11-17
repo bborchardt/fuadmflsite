@@ -1411,6 +1411,22 @@ function pageSaver(league) {
 // are, the owners' names from the league export among them, into SAVED_PAGES_DIR/<league>/exports/
 // with a manifest of each one's address and rules. The players' whole list is left out for its size.
 const EXPORT_MAX_BYTES = 400000;
+// a commissioner's league export gives each owner's contact details and login, in fields the text
+// cleaning can't recognize (a phone number as bare digits, a street address); no rule reads them
+const CONTACT_FIELDS = ["address", "city", "state", "zip", "country", "email", "phone", "cell", "cell2", "username", "lastVisit", "mail_event"];
+function withoutContacts(body) {
+    const parsed = JSON.parse(body);
+    const franchises = parsed.league?.franchises?.franchise;
+    if (!franchises) {
+        return body;
+    }
+    for (const franchise of [franchises].flat()) {
+        for (const field of CONTACT_FIELDS) {
+            delete franchise[field];
+        }
+    }
+    return JSON.stringify(parsed);
+}
 // an export's file by what it asked for: rosters-W3.json, and the year when not this season's
 // (rosters-2025.json); a long list (playerScores' players) by a short hash of it
 function exportFileName(url, year) {
@@ -1446,7 +1462,7 @@ function saveExports() {
             continue;
         }
         mkdirSync(dir, {recursive: true});
-        writeFileSync(join(dir, name), scrub(body, owners));
+        writeFileSync(join(dir, name), scrub(withoutContacts(body), owners));
         saved.push({name, url: url.replace(/^https:\/\/[^/]+/, ""), ...(rules ? {rules} : {})});
     }
     writeFileSync(join(dir, "manifest.json"), JSON.stringify({league: leagueId, season: String(season), at: now.toISOString(), exports: saved}, null, 2));

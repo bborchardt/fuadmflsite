@@ -14,6 +14,8 @@ const dirs = (dir) => readdirSync(dir, {withFileTypes: true}).filter((entry) => 
 const folders = dirs(STAGES).flatMap(dirs).map((league) => join(league, "exports")).filter(existsSync);
 // the rules other than an export's section's that the job reads one by, by the name the manifest gives
 const RULES = {WEEK_ROSTERS};
+// what a commissioner's league export gives of each owner that the daily job's saving takes out
+const CONTACT = ["address", "city", "state", "zip", "country", "email", "phone", "cell", "cell2", "username", "lastVisit", "mail_event"];
 
 for (const folder of folders) {
     const name = folder.slice(STAGES.length + 1);
@@ -23,6 +25,13 @@ for (const folder of folders) {
         const files = readdirSync(folder).filter((file) => file !== "manifest.json").sort();
         assert.deepEqual(manifest.exports.map((each) => each.name).sort(), files);
         assert.deepEqual(manifest.exports.filter((each) => each.rules && !(each.rules in RULES)), []);
+    });
+
+    test(`${name}: the league export holds no owner's contact details`, () => {
+        const saved = manifest.exports.filter((each) => /[?&]TYPE=league(&|$)/.test(each.url));
+        const fields = saved.flatMap(({name: file}) => [JSON.parse(readFileSync(join(folder, file), "utf8")).league?.franchises?.franchise ?? []].flat()
+            .flatMap((franchise) => CONTACT.filter((field) => field in franchise).map((field) => `${file}: ${franchise.id} ${field}`)));
+        assert.deepEqual(fields, []);
     });
 
     test(`${name}: every saved export passes the rules the job read it by`, () => {
