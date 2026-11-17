@@ -5228,6 +5228,11 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
     #fuad-add .fuad-add-fa-line > :last-child { position: sticky; right: 0; z-index: 1; align-self: stretch; display: flex; align-items: center; background: var(--fuad-panel); box-shadow: -10px 0 0 var(--fuad-panel); }
     #fuad-add .fuad-add-claim-line > :nth-last-child(2) { right: 246px; justify-content: center; }
     #fuad-add .fuad-add-claim-line > :last-child { justify-content: flex-end; }
+    /* a bid just changed keeps its tint over the pinned cells: the tint laid over the panel's colour */
+    #fuad-add .fuad-add-flash > :nth-last-child(-n+2) {
+        background: linear-gradient(var(--fuad-accent-tint), var(--fuad-accent-tint)) var(--fuad-panel);
+        box-shadow: -10px 0 0 var(--fuad-accent-tint), -10px 0 0 var(--fuad-panel);
+    }
     #fuad-add .fuad-add-fa-line > :last-child { justify-content: flex-end; }
     #fuad-add .fuad-add-copies-wide { display: block; padding: 0 4px 10px; }
     #fuad-add .fuad-add-copies-wide > span { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
