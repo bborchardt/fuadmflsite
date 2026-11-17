@@ -4486,10 +4486,37 @@ body .fuad-setup-save button.fuad-saving { opacity: 0.6; pointer-events: none; }
 
 .fuad-side body form.msa .reportnavigation { margin-bottom: 8px; font-size: 13px; color: var(--fuad-muted); text-align: left; }
 
-/* Search's fields keep MFL's sizes (Keywords 30 letters wide), which at 320 to 390 push its table past
-   the card: they take their column instead */
+/* the side pages' fields keep MFL's sizes (Search's Keywords 30 letters wide, Options' signature 80),
+   which at 320 to 390 push their table past the card unless a skin sizes them: they take their column */
 .fuad-side body form.sea select,
-.fuad-side body form.sea input[name="words"] { box-sizing: border-box; width: 100%; max-width: 100%; }
+.fuad-side body form.sea input[name="words"],
+.fuad-side body #withmenus table.report textarea { box-sizing: border-box; width: 100%; max-width: 100%; }
+
+/* Messages' two tables, four columns (subject, the other team, date, Delete), are too wide for a phone:
+   each message is a row of its own, as the board lists topics: its subject and Delete, then who and when */
+@media (max-width: 48em) {
+    .fuad-side body #withmenus table.report.nocaption,
+    .fuad-side body #withmenus table.report.nocaption tbody { display: block; }
+
+    .fuad-side body #withmenus table.report.nocaption tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--fuad-rule); }
+
+    .fuad-side body #withmenus table.report.nocaption tr:last-child { border-bottom: 0; }
+
+    .fuad-side body #withmenus table.report.nocaption th,
+    .fuad-side body #withmenus table.report.nocaption td { padding: 0; border: 0; text-align: left; }
+
+    .fuad-side body #withmenus table.report.nocaption th:not(:first-child) { display: none; }
+
+    .fuad-side body #withmenus table.report.nocaption td:nth-child(1) { grid-column: 1; grid-row: 1; font-weight: 600; }
+
+    .fuad-side body #withmenus table.report.nocaption td:nth-child(2),
+    .fuad-side body #withmenus table.report.nocaption td:nth-child(3) { grid-column: 1; color: var(--fuad-muted); font-size: 13px; }
+
+    /* Barlow's space is narrow at this size: "Oct 21 9:32" read as "219:32" */
+    .fuad-side body #withmenus table.report.nocaption td:nth-child(3) { word-spacing: 0.12em; }
+
+    .fuad-side body #withmenus table.report.nocaption td:nth-child(4) { grid-column: 2; grid-row: 1 / span 3; }
+}
 
 .fuad-side body form.msa button.tbt {
     width: auto;

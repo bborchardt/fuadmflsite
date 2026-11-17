@@ -51,7 +51,7 @@ A second league can try the site with no code change, and any setting can be tri
 - `uv run --no-project --with playwright python tools/verify/verify.py compare --local v1` renders the
   live league page with and without your working copy and compares every area.
 - `uv run --no-project --with playwright python tools/verify/screens.py compare` uses v2's screens,
-  loaded from pages saved from the clone league with no MFL requests, on master and on your working
+  the message board's included, loaded from pages saved from the clone league with no MFL requests, on master and on your working
   copy, and lists every step whose HTML or moves to MFL differ, and every move whose message doesn't
   match how MFL answered it (lands, fails, refuses, lags, can't be reached); `--built` uses the
   working copy as Pages publishes it, and `check` checks the messages alone.
