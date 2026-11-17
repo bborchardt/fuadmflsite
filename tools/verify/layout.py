@@ -6,7 +6,7 @@
 
 Each screen loads as screens.py loads it (its saved pages, the clock fixed) in WebKit, which is what
 iPhones draw with, or another --engine, at each of WIDTHS: phones from 320 (the first iPhone SE, and
-iOS's page zoom on a wider one) to 412, just past where v2's desktop layout starts, an iPhone
+iOS's page zoom on a wider one) to 440 (the largest iPhones), just past where v2's desktop layout starts, an iPhone
 turned sideways in the home screen app (its notch padding added, as iOS gives it), an iPad
 turned sideways or a small laptop, and a desktop.
 Then it measures:
