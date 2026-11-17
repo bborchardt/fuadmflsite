@@ -158,7 +158,7 @@ Items marked *(to do)* are the plan, not yet built.
   | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
   | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`, or no `:where()`) getting `OLDER`; the device rows; the header placed in a member's home page tab too, running once | Old engines: below the minimum is simulated |
   | `pages.py`, `requests.py` | Which screen takes each MFL page, a member's own home page layout included; v2 asking MFL for more | How it looks; what MFL's own modules do under v2, as their scripts aren't saved |
-  | `layout.py`: WebKit at 320, 360, 375, 390 and 412 upright, 780 to 1280, and the app sideways; Chromium and Firefox at 360 and 1280 | Squeezed, offscreen, clipped or overlapping parts, and a control mostly past the edge of a box that scrolls sideways (`cut`), in v2's screens and the message board's pages it restyles; a row's text off its middle (`offcentre`); heights left wrong after the phone turns | Old engines; whether it looks good; Android's text scaling (iOS's page zoom is a narrower width, which 320 stands for). Drawn in Barlow, served by the harness (`tools/verify/fonts/`), so a Mac and CI measure what members see |
+  | `layout.py`: WebKit at 320, 360, 375, 390 and 412 upright, 780 to 1280, and the app sideways; Chromium and Firefox at 360 and 1280 | Squeezed, offscreen, clipped or overlapping parts, and a control mostly past the edge of a box that scrolls sideways (`cut`), in v2's screens, the message board's pages it restyles and the moves fallen back to MFL's page; a row's text off its middle (`offcentre`); heights left wrong after the phone turns | Old engines; whether it looks good; Android's text scaling (iOS's page zoom is a narrower width, which 320 stands for). Drawn in Barlow, served by the harness (`tools/verify/fonts/`), so a Mac and CI measure what members see |
   | `layout.py --minimum` (WebKit at 320, 390 and 1280) | A page that needs an extra: the stylesheet drawn as a browser at the minimum reads it, what it marks as newer taken out as such a browser drops it (`tools/minimum-css.mjs`) | Newer CSS that isn't marked (the lint's to catch); what an old engine draws differently, not just lacks |
 
   Playwright's engines are current ones, so no automated check draws as an old Safari does: the
@@ -200,7 +200,11 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   its checks need, for any reason (MFL unreachable, MFL asking us to wait, an export changed), the
   member gets MFL's own page, so a move is never held up by v2, with a line above it: "Error loading
   cap and roster data. Rule checks are disabled; please ensure this transaction follows league
-  rules." and Reload Page, which tries v2's again (`mflFallback` in `ui/moves.js`). It's logged as
+  rules." and Reload Page, which tries v2's again (`mflFallback` in `ui/moves.js`). MFL's page is
+  fitted to the window below 72em, so every control shows without scrolling sideways: Add's and
+  Drop's side-by-side layout stacked, a list scrolling in its own box with Add's filters moved below
+  it, Trades' offers and Add's claims as wrapping rows; `layout.py` draws all four fallen back, in the
+  league's skin, whose responsive stylesheet MFL's page relies on. It's logged as
   an error with its cause (`[fuad] Drop couldn't load, so MFL's page was shown: … HTTP 429`), which
   the devices form counts: a fallback that happens is a design issue to fix, not a member's to work
   around. A move made there that breaks the league's rules is the daily job's to flag, its

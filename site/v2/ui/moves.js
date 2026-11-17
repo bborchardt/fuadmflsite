@@ -219,6 +219,34 @@ export const alertLine = (text) => `<p class="fuad-move-alert" role="alert">${es
 export const FALLBACK_TEXT = "Error loading cap and roster data. Rule checks are disabled; please ensure this transaction follows league rules.";
 export function mflFallback(body, standAside) {
     standAside();
+    // fuad.css fits MFL's page to a phone under it: the table that lays out Add's and Drop's pickers
+    // side by side is stacked, which isn't always inside its form
+    document.documentElement.classList.add("fuad-fallback-on");
+    for (const picker of document.querySelectorAll("#withmenus .pickerbox")) {
+        let layout = null;
+        for (let at = picker.parentElement; at && at.id !== "withmenus"; at = at.parentElement) {
+            layout = at.tagName === "TABLE" ? at : layout;
+        }
+        if (layout) {
+            layout.classList.add("fuad-fallback-stack");
+            // its tables without a list (Add's "To Add", "To Drop" and its button) are stacked too
+            for (const inner of layout.querySelectorAll(":scope > tbody > tr > td > table")) {
+                inner.classList.toggle("fuad-fallback-stack", !inner.querySelector(".pickerbox"));
+            }
+        }
+        // a row of controls in the list's table (Add's filters) is as wide as the list, which scrolls
+        // sideways: its controls go just below the table instead, in the same form
+        const table = picker.parentElement && picker.parentElement.closest("table");
+        for (const row of table ? table.querySelectorAll(":scope > tbody > tr") : []) {
+            const cell = row.children.length === 1 ? row.children[0] : null;
+            if (cell && !cell.querySelector(".pickerbox") && cell.querySelector("input, select, button")) {
+                const controls = document.createElement("div");
+                controls.className = "fuad-fallback-controls";
+                controls.append(...cell.childNodes);
+                table.after(controls);
+            }
+        }
+    }
     if (!body || document.getElementById("fuad-fallback")) {
         return;
     }

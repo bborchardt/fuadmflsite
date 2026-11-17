@@ -48,6 +48,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 from html import escape
@@ -118,6 +119,12 @@ SCREENS = {
     "rosters-teams": (f"/2026/home/{LEAGUE}#rosters-teams", {}),
     "rosters-my-team": (f"/2026/home/{LEAGUE}#rosters-my-team", {}),
     "rosters-draft": (f"/2026/home/{LEAGUE}#rosters-draft", {}),
+    # MFL asking v2 to wait on every export, so each move's screen falls back to MFL's page, which a
+    # member must still be able to use; drawn in the league's skin, as MFL's page relies on its
+    # responsive stylesheet (IR's rows have a desktop and a phone column, one of them hidden)
+    **{f"{move}-fallback": (path, {"waits": True, "skin": "NeonBlue"}) for move, path in [
+        ("add", f"/2026/add_drop?L={LEAGUE}"), ("drop", f"/2026/options?L={LEAGUE}&O=257"), ("ir", f"/2026/options?L={LEAGUE}&O=18"),
+        ("trades", f"/2026/options?L={LEAGUE}&O=05")]},
     # the message board's pages, which v2 restyles: the capture bookmark's, as team 0001 got them
     **{f"board-{page}": (f"/2026/mb/{page}.pl{query}", {}) for page, query in [
         ("board_show", f"?bid=2026{LEAGUE}"), ("topic_show", f"?bid=2026{LEAGUE}&tid=6755292"), ("post_add", f"?bid=2026{LEAGUE}&pid=23216675"),
@@ -293,6 +300,27 @@ class Site:
 
 # the board's pages are the capture bookmark's (tests/fixtures/pages/member/), not saved twice
 BOARD_PAGES = SAMPLES.parents[2] / "tests" / "fixtures" / "pages" / "member"
+
+
+# MFL's skins, as skins.py keeps them (git ignores them: they aren't the repo's to publish)
+SKINS = SAMPLES.parent / "mfl-skins"
+
+
+def skin_css(path, folder):
+    """MFL's stylesheet at `path` (after /skins17/) in `folder`'s skin, fetched once from MFL if it
+    isn't kept yet, as a browser asks for it; never the daily job's registered client name"""
+    parts = path.split("/")
+    name = parts[-1] if len(parts) == 1 else f"{folder}/{parts[-1].replace(parts[0], folder)}"
+    kept = SKINS / name
+    if not kept.exists():
+        request = urllib.request.Request(f"{HOST}/skins17/{name}", headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            # the harness's workers may fetch the same file at once: none reads another's half-written copy
+            part = kept.with_name(f"{kept.name}.{os.getpid()}")
+            part.write_bytes(response.read())
+            part.replace(kept)
+    return kept.read_text()
 
 
 def sample_path(name):
@@ -702,7 +730,12 @@ class Mfl:
                 return route.fulfill(content_type="text/xml", body="<status>OK</status>")
             name = self.page_for(url.path, query)
             return route.fulfill(content_type="text/html", body=sample(name) if name else "<html><body></body></html>")
+        if self.swaps.get("skin") and "/skins17/" in url.path and url.path.endswith(".css"):
+            return route.fulfill(content_type="text/css", body=skin_css(url.path.split("/skins17/", 1)[1], self.swaps["skin"]))
         if url.path.endswith("/export"):
+            # MFL asking v2 to wait on every export: Moves' screens fall back to MFL's own page
+            if self.swaps.get("waits"):
+                return route.fulfill(status=429, body="")
             if self.offline and query.get("TYPE") == ["rosters"] or query.get("TYPE", [""])[0] in self.unread:
                 return route.abort()
             return route.fulfill(content_type="application/json", body=self.export(query))
