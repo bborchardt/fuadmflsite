@@ -43,6 +43,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
   MFL's page each morning. An export a chore, check or form relies on
   gets its fields in `lib/shapes.js`, and v2's read of it `check: strict`: `tests/export-shapes.test.mjs`
   fails on the job's read of an export with no rules, `tests/checked.test.mjs` on v2's without the check.
+  A change that adds what v2 reads from MFL, or relies on a member's setting, puts it on one side of
+  docs/design.md's Outside change lists, checked automatically or by hand, and says when.
 - Python tools run through uv (`uv run --no-project --with playwright …`), never global installs.
 
 ## Conventions
