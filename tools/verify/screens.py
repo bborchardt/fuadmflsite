@@ -316,7 +316,10 @@ def skin_css(path, folder):
         request = urllib.request.Request(f"{HOST}/skins17/{name}", headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(request, timeout=30) as response:
             kept.parent.mkdir(parents=True, exist_ok=True)
-            kept.write_bytes(response.read())
+            # the harness's workers may fetch the same file at once: none reads another's half-written copy
+            part = kept.with_name(f"{kept.name}.{os.getpid()}")
+            part.write_bytes(response.read())
+            part.replace(kept)
     return kept.read_text()
 
 
