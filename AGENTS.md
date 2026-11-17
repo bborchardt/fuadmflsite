@@ -31,8 +31,8 @@ docs/design.md and docs/mfl.md explain why things are as they are; MFL behaves i
 - The repo is public: a page saved from MFL goes in only through the capture bookmark (`site/capture/`)
   or the daily job's saved pages (its cleaning), which take out emails, phone numbers, owners' names,
   private messages, the apiKey and the board's `auth` token. Clean a page saved any other way the same
-  way; a run's saved pages are public too, so the commissioner's own team's (pending bids and offers)
-  come only from the test league. `tests/saved-pages.test.mjs` fails on
+  way; a run's saved pages are public too, so the commissioner's own team's (pending bids and offers),
+  and its saved exports, come only from the test league. `tests/saved-pages.test.mjs` fails on
   what it can recognize, but only that.
 - Changes in MFL's header or tab messages are made by the commissioner by hand: give the exact lines
   to paste, tab messages first and the header last.

@@ -1273,6 +1273,17 @@ test("the check saves MFL's pages cleaned: with Save pages, every one of another
     assert.match(text, /Owner: Owner 0001, owner@example\.com/);
     assert.doesNotMatch(text, /Dana|dana/);
     assert.ok(other.stdout.includes("MFL check: Add/Drop (/2026/add_drop?L=99999): v2 can't read it; MFL's page is saved on the run"), other.stdout);
+    // and every export the job read, cleaned
+    const exportsDir = join(saved, "99999", "exports");
+    const exported = JSON.parse(readFileSync(join(exportsDir, "manifest.json"), "utf8"));
+    const names = exported.exports.map((each) => each.name);
+    assert.ok(["league.json", "rosters.json", "transactions.json", "salaryAdjustments.json"].every((name) => names.includes(name)), names.join(", "));
+    assert.deepEqual(readdirSync(exportsDir).filter((name) => name !== "manifest.json").sort(), [...names].sort());
+    const leagueSaved = readFileSync(join(exportsDir, "league.json"), "utf8");
+    assert.match(leagueSaved, /"owner_name":"Owner 0001"/);
+    assert.doesNotMatch(leagueSaved, /Dana/);
+    assert.ok(exported.exports.every((each) => each.url.startsWith("/") && /TYPE=/.test(each.url)));
+    assert.match(other.stdout, /Save pages: saved \d+ of MFL's exports, cleaned, on the run/);
 
     // the real league's run saves only what it flags, and not a page of the commissioner's own team
     const realSaved = mkdtempSync(join(tmpdir(), "fuad-saved-"));
@@ -1280,6 +1291,9 @@ test("the check saves MFL's pages cleaned: with Save pages, every one of another
     const real = run({scenario: {myFranchise: "0001", exports: owned, pages: pages("48571")},
         env: {...LOGIN, MFL_CHECK: "on", SAVE_PAGES: "true", SAVED_PAGES_DIR: realSaved}});
     assert.deepEqual(readdirSync(join(realSaved, "48571", "member")).sort(), ["manifest.json", "options-O101.html"]);
+    // nor any export: a logged-in one may hold what only members see
+    assert.deepEqual(readdirSync(realSaved), ["48571"]);
+    assert.deepEqual(readdirSync(join(realSaved, "48571")), ["member"]);
     assert.ok(real.entries.includes("MFL check: Power Rankings (/2026/options?L=48571&O=101): v2 can't read it; MFL's page is saved on the run"), real.entries.join("\n"));
     assert.ok(real.entries.includes("MFL check: Add/Drop (/2026/add_drop?L=48571): v2 can't read it"));
     assert.match(real.stdout, /not saved, as they show what only members see or the commissioner's own team: Add\/Drop, Processed Waivers\./);
