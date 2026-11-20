@@ -102,3 +102,4 @@ Milton: 1 year").
 - 2026-11-17 17:01 UTC: Backup starters: All Hands on Beck, week 10: Amon-Ra St. Brown was active, so Xavier Worthy wasn't started for him.
 - 2026-11-19 16:44 UTC: Set Gavin Bartholomew to 5 years (blind bid comment "5 years").
 - 2026-11-19 16:44 UTC: Set Laquon Treadwell to 1 year (no length stated: the default).
+- 2026-11-20 16:19 UTC: Recorded "Most Points Week 10" $15.00 to Golden Ratio.
