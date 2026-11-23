@@ -104,3 +104,7 @@ Milton: 1 year").
 - 2026-11-19 16:44 UTC: Set Laquon Treadwell to 1 year (no length stated: the default).
 - 2026-11-20 16:19 UTC: Recorded "Most Points Week 10" $15.00 to Golden Ratio.
 - 2026-11-22 15:36 UTC: League rules: Smooth City Styles! has Roman Wilson on injured reserve, but the NFL doesn't list him on IR: move him to the active roster!
+- 2026-11-23 19:26 UTC: Charged $1 to The Obliterators  for Case Keenum (1yrs@1, 11/22), and reset the player to $1 / 0 years.
+- 2026-11-23 19:26 UTC: Set Tommy DeVito to 1 year (post "DeVito: 1 year").
+- 2026-11-23 19:26 UTC: Set Eddy Pineiro to 1 year (post "Pineiro: 1 year").
+- 2026-11-23 19:26 UTC: Set Myles Price to 2 years (post "Price: 2 years").
