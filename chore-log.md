@@ -108,3 +108,7 @@ Milton: 1 year").
 - 2026-11-23 19:26 UTC: Set Tommy DeVito to 1 year (post "DeVito: 1 year").
 - 2026-11-23 19:26 UTC: Set Eddy Pineiro to 1 year (post "Pineiro: 1 year").
 - 2026-11-23 19:26 UTC: Set Myles Price to 2 years (post "Price: 2 years").
+- 2026-11-24 19:02 UTC: Backup starters: The Obliterators, week 11: Carnell Tate was active, so Keenan Allen wasn't started for him.
+- 2026-11-24 19:02 UTC: Backup starters: Golden Ratio, week 11: Ladd McConkey was active, so Gunnar Helm wasn't started for him.
+- 2026-11-24 19:02 UTC: Backup starters: The Fighting Injured Reserves!, week 11: Mike Evans was active, so Jakobi Meyers wasn't started for him.
+- 2026-11-24 19:02 UTC: Backup starters: The Fighting Injured Reserves!, week 11: Matt Gay was active, so Eddy Pineiro wasn't started for him.
