@@ -165,6 +165,13 @@ export async function freshPending(context) {
     return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
 }
 
+// the league's trades made since `since` (seconds), fresh, to tell an offer accepted from one withdrawn
+export function freshTradesMade(context, since) {
+    const days = Math.max(1, Math.ceil((Date.now() / 1000 - since) / (24 * 60 * 60)) + 1);
+    const url = exportUrl(window.location.origin, context.season, "transactions", {L: context.leagueId, TRANS_TYPE: "TRADE", DAYS: days});
+    return fetchExport(url, "transactions", {init: {cache: "no-store"}, check: strict});
+}
+
 // the member's pending trades, fresh, to confirm a move
 export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}, check: strict});
 

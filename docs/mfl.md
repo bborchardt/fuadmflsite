@@ -159,7 +159,11 @@ MFL documents little of this.
 - **Pending trades** (`export?TYPE=pendingTrades`) are the logged-in owner's, both offered and
   received; with none it's an empty `{"pendingTrades":{}}`. `transactions` also lists each offer as a
   `TRADE_PROPOSAL` and each refusal as a `TRADE_REJECTION` (`by_commish` when the commissioner acted
-  for a team).
+  for a team). A trade made is a `TRADE` (`TRANS_TYPE=TRADE` lists only those, `DAYS=<n>` the last n
+  days): `franchise` and `franchise2`, either team first, and what each gave up
+  (`franchise1_gave_up`, `franchise2_gave_up`: players and picks, `""` or `","` for nothing). An
+  offer withdrawn after one with the same player was accepted is still revoked; MFL's own page
+  warns that it's "Potentially Invalid".
 - **Message board API** (`messageBoard`, `messageBoardThread`) needs a login and returns nothing for
   2024 and earlier; past seasons' boards are a public archive at `/<season>/options?L=<league>&O=28`.
 - **Edited posts** keep their original `postTime` and return the edited text; the API has no edit

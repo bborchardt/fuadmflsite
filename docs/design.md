@@ -265,7 +265,7 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   `tests/export-shapes.test.mjs` takes each out in turn, and fails on an export the job reads that
   has no rules. In v2, the checks and forms that rely on an
   export (Moves' checks, Home's alerts and forms, Lineup's backups, IR's eligibility, Trades'
-  locks) pass `check: strict` (`ui/checked.js`): a changed export fails as one that couldn't load,
+  withdrawals and locks) pass `check: strict` (`ui/checked.js`): a changed export fails as one that couldn't load,
   and is logged once a page; one they do without when MFL can't give it (the calendar, the injury reports) they don't do
   without when MFL has changed it. The log names the first item and field, as a display panel's does. `tests/checked.test.mjs` fails on a read in v2's screens without
   the check, the display panels' aside.

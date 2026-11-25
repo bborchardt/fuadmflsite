@@ -11,10 +11,10 @@ import {pageFetch} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {
-    Refused, WIDE, failedLine, freshTrades, leaveFlash, limitsApply, loadData, loadFailed, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
+    Refused, WIDE, failedLine, freshTrades, freshTradesMade, leaveFlash, limitsApply, loadData, loadFailed, movesPhase, readBack, refusal, rosterIds, sendMove, takeFlash
 } from "./moves.js";
 import {
-    answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs
+    answerFields, zoneSeconds, deadlineWeek, findOffer, offersOf, proposalFields, readProposal, readTradesPage, teamKickoffs, tradeMade
 } from "./trades-model.js";
 import {
     closedMarkup, controlSelector, deskProposal, expiryOptions, listMarkup, loadingMarkup, phoneProposal, proposalCheck, stepTitle
@@ -228,15 +228,23 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
             failed(error || new Refused(refusal(reply)), {after, offerId: offer.id, what: `withdraw your offer to ${nameOf(offer.partner)}`});
             return;
         }
-        // gone from the pending trades, but the other team may have accepted it just before: then the
-        // roster has the players it got and not those it gave
+        // gone from the pending trades, but the other team may have accepted it before: then the league's
+        // trades have it. One made a moment ago may not be listed yet, so for an offer that brings the
+        // member players, the roster having them and not those given says so too. The roster alone
+        // can't: what was given may have gone in another offer of the same players.
         const players = state.data.league.players;
         const give = offer.give.filter((id) => players.has(id));
         const get = offer.get.filter((id) => players.has(id));
-        const roster = give.length || get.length ? await rosterIds(context, franchiseId).catch(() => null) : [];
-        if (!roster) {
+        const made = await freshTradesMade(context, offer.made).then((found) => tradeMade(found, offer, franchiseId)).catch((error) => {
+            console.warn("[fuad] couldn't read the league's trades:", error);
+            return null;
+        });
+        // one read at a time, as MFL asks
+        const roster = !made && get.length ? await rosterIds(context, franchiseId).catch(() => null) : null;
+        const arrived = Boolean(roster) && give.every((id) => !roster.includes(id)) && get.every((id) => roster.includes(id));
+        if (made === null && !roster) {
             reloadList({note: "Move sent, but couldn’t be confirmed. Review current trades below."});
-        } else if ((give.length || get.length) && give.every((id) => !roster.includes(id)) && get.every((id) => roster.includes(id))) {
+        } else if (made || arrived) {
             reloadList({error: failedLine(`withdraw your offer to ${nameOf(offer.partner)}`, new Refused("they accepted it first"))});
         } else {
             reloadList({done: stop(`Offer to ${nameOf(offer.partner)} withdrawn`)});

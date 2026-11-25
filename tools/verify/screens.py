@@ -169,8 +169,13 @@ for _name in TRADE_SCREENS:
                                     and not (isinstance(seed[0], tuple) and seed[0][1] == "counter")]
 SCREENS["trades-offer-gone"] = (SCREENS["trades-offer"][0], {**SCREENS["trades-offer"][1], "moves": "gone"})
 SEEDS["trades-offer-gone"] = [["answer", "send-answer"]]
-SCREENS["trades-taken"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves": "taken"})
-SEEDS["trades-taken"] = SEEDS["trades"]
+for _how in ["taken", "taken-lags", "taken-unread", "elsewhere"]:
+    SCREENS[f"trades-{_how}"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves": _how})
+    SEEDS[f"trades-{_how}"] = SEEDS["trades"]
+# the same with an offer of a player for a pick: with none to get, only the league's trades can tell
+for _how in ["taken", "taken-unread", "elsewhere"]:
+    SCREENS[f"trades-picks-{_how}"] = (SCREENS["trades"][0], {**SCREENS["trades"][1], "moves": _how, "pendingTrades": "pendingTrades-picks.json"})
+    SEEDS[f"trades-picks-{_how}"] = SEEDS["trades"]
 # MFL keeping the pending claims and roster that Add's moves change, in the same ways (or the claims
 # and rosters unread after it): a bid, a claim removed, an add made at once in the free agent window
 # (the rosters export lagging it or leaving the team out) and its length's board post; on add-group-*,
@@ -362,7 +367,10 @@ class Mfl:
     rosters reads don't reach MFL). Trades' moves too: "lands", "fails", "fails-made", "refuses";
     "gone" (an accepted offer removed with no players moved); "then-fails" (the first move lands, those
     after it fail); "lands-unread" (made, MFL's answer its Trades page, the pending trades unread after);
-    "taken" (an offer withdrawn, but the other team accepted it first). Add's moves too: "lands", "fails",
+    "taken" (an offer withdrawn, but the other team accepted it first, the league's trades listing it);
+    "taken-lags" (the same, the league's trades not listing it yet); "taken-unread" (the same, the
+    league's trades unread); "elsewhere" (an offer withdrawn whose players went in another trade
+    before). Add's moves too: "lands", "fails",
     "fails-made", "refuses", "lags", "offline", "-noteam"; "unread" (made, the pending claims and
     rosters unread after); "board-fails" (the add made, the
     board post of its length refused). With swaps["window"], no free agent is locked."""
@@ -375,8 +383,9 @@ class Mfl:
         self.lineups = []
         self.moves = swaps.get("moves")
         self.rosters = json.loads(sample("rosters.json")) if self.moves else None
-        # the pending trades, as moves change them
+        # the pending trades, as moves change them, and the league's trades made
         self.trades = None
+        self.made = []
         if self.moves:
             pending = json.loads(sample(swaps.get("pendingTrades", "pendingTrades.json")))["pendingTrades"].get("pendingTrade", [])
             self.trades = pending if isinstance(pending, list) else [pending]
@@ -448,7 +457,18 @@ class Mfl:
                 trade = next((trade for trade in self.trades if trade["trade_id"] == field("TRADE_ID")), None)
                 if trade:
                     self.trades.remove(trade)
-                if trade and (field("ACTION") == "accept" and how != "gone" or how == "taken"):
+                if trade and how == "elsewhere":
+                    # what it gives went in another trade, to a team this offer isn't to
+                    other = next(team for team in ("0009", "0010") if team != trade["offeredto"])
+                    self.move_players(TEAM, other, trade["will_give_up"])
+                    self.made.append({"type": "TRADE", "timestamp": str(int(trade["timestamp"]) + 60), "franchise": TEAM, "franchise2": other,
+                                      "franchise1_gave_up": trade["will_give_up"], "franchise2_gave_up": "FP_%s_2027_2," % other})
+                if trade and how.startswith("taken"):
+                    if how == "taken":
+                        self.made.append({"type": "TRADE", "timestamp": str(int(trade["timestamp"]) + 60), "franchise": trade["offeringteam"],
+                                          "franchise2": trade["offeredto"], "franchise1_gave_up": trade["will_give_up"],
+                                          "franchise2_gave_up": trade["will_receive"]})
+                if trade and (field("ACTION") == "accept" and how != "gone" or how.startswith("taken")):
                     teams = {team["id"]: team for team in self.rosters["rosters"]["franchise"]}
                     for giver, taker, listed in [(trade["offeringteam"], trade["offeredto"], trade["will_give_up"]),
                                                  (trade["offeredto"], trade["offeringteam"], trade["will_receive"])]:
@@ -464,6 +484,12 @@ class Mfl:
             # MFL's Trades page, whose header warning ("No outstanding trade proposals received") isn't a refusal
             return route.fulfill(content_type="text/html", body=sample("trades-O05.html"))
         return route.fulfill(content_type="text/html", body="<html><body><div class=\"pagebody\"></div></body></html>")
+
+    def move_players(self, giver, taker, listed):
+        teams = {team["id"]: team for team in self.rosters["rosters"]["franchise"]}
+        ids = [id_ for id_ in listed.split(",") if id_]
+        teams[taker]["player"] += [player for player in teams[giver]["player"] if player["id"] in ids]
+        teams[giver]["player"] = [player for player in teams[giver]["player"] if player["id"] not in ids]
 
     def add(self, route, fields):
         """MFL's answer to Add's move: a blind bid joins its group's claims (its comment a line of the
@@ -663,6 +689,8 @@ class Mfl:
         if kind == "pendingTrades" and self.moves:
             # MFL's shape with none left
             return json.dumps({"pendingTrades": {"pendingTrade": self.trades} if self.trades else {}})
+        if kind == "transactions" and query.get("TRANS_TYPE") == ["TRADE"] and self.moves:
+            return json.dumps({"transactions": {"transaction": self.made} if self.made else {}})
         if kind in self.swaps:
             return sample(self.swaps[kind])
         if kind == "rosters" and self.noteam:
@@ -736,7 +764,9 @@ class Mfl:
             # MFL asking v2 to wait on every export: Moves' screens fall back to MFL's own page
             if self.swaps.get("waits"):
                 return route.fulfill(status=429, body="")
-            if self.offline and query.get("TYPE") == ["rosters"] or query.get("TYPE", [""])[0] in self.unread:
+            trades_made = query.get("TYPE") == ["transactions"] and query.get("TRANS_TYPE") == ["TRADE"]
+            if (self.offline and query.get("TYPE") == ["rosters"] or query.get("TYPE", [""])[0] in self.unread
+                    or trades_made and self.moves == "taken-unread"):
                 return route.abort()
             return route.fulfill(content_type="application/json", body=self.export(query))
         if "/fflnetdynamic" in url.path:
@@ -963,6 +993,9 @@ OUTCOMES = {
     "offline": f"{FAILED}|{UNCHECKED}",
     "gone": r"Couldn’t accept the offer from .+: it’s no longer open\.",
     "taken": r"Couldn’t withdraw your offer to .+: they accepted it first\.",
+    "taken-lags": r"Couldn’t withdraw your offer to .+: they accepted it first\.",
+    "taken-unread": r"Couldn’t withdraw your offer to .+: they accepted it first\.",
+    "elsewhere": r"Offer to .+ withdrawn\.?",
     "then-fails": r"Counter sent to .+ \| Your counter was sent, but this offer is still open\.",
     "refuses-drop": r"Saved: [^|]+(?: \| Couldn’t drop .+: Roster moves are locked for this team\.)?",
     "board-fails": r".+ added\b.* Couldn’t post the length “.+”; it’s due within the hour\.",
@@ -987,7 +1020,8 @@ def check(found):
         how = swaps.get("moves")
         if not how:
             continue
-        expect = UNCHECKED if how.endswith("-noteam") else OUTCOMES[how]
+        # a player for a pick, the league's trades unread: no players to get, so nothing to tell by
+        expect = UNCHECKED if how.endswith("-noteam") or name == "trades-picks-taken-unread" else OUTCOMES[how]
         for width in WIDTHS:
             # the steps after the screen first shows
             steps = {key: result for key, result in found.items() if key.startswith(f"{name} {width} ") and key != f"{name} {width} "}
