@@ -16,8 +16,9 @@ import {careers, champions} from "./history.js";
 import {titles} from "./history-model.js";
 import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings} from "./league-model.js";
 import {championsMarkup, pictureMarkup, positionsMarkup, powerMarkup, standingsMarkup, winnersMarkup} from "./league-view.js";
-import {drawScores, two} from "./scores.js";
+import {drawScores} from "./scores.js";
 import {onBack} from "./back.js";
+import {feedText, weekInjuries, withoutRuledOut} from "./projections.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -119,17 +120,18 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const beforeSeason = once(() => beforeWeek1(season), {lasting: true});
     const players = once(async () => playersMap(await playerList(season)), {lasting: true});
     const rules = once(async () => readRules(await cached(`fuad.rules.${season}`, DAY, () => exp("rules"))), {lasting: true});
-    // the projections don't change during a week: read once, as MFL's page does
+    // the projections, read once a page, as MFL's page reads them
     const projected = new Map();
     const projections = (week) => {
         if (!projected.has(week)) {
-            projected.set(week, feed(`live_proj_${two(week)}.txt`).then((text) => {
+            // a player the injury report has ruled out projects 0, as everywhere in v2 (ui/projections.js)
+            projected.set(week, Promise.all([feedText(context, week), weekInjuries(context, week)]).then(([text, injuries]) => {
                 const read = readProjections(text);
                 if (!read) {
                     pageChanged("projections feed");
                     throw new Error("MFL's projections feed has changed");
                 }
-                return read;
+                return withoutRuledOut(read, injuries);
             }).catch((error) => {
                 projected.delete(week);
                 throw error;

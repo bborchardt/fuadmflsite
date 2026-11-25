@@ -9,6 +9,7 @@ import {esc} from "./html.js";
 import {oneLineTimes, plural} from "./format.js";
 import {clock} from "./home-model.js";
 import {openDialog} from "./dialog.js";
+import {lineupProjections, weekFeed} from "./projections.js";
 import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {strict} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
@@ -310,6 +311,9 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
     // drawn at once, so MFL's form doesn't show while the season's phase is read
     mount.innerHTML = `<section class="fuad-panel">${placeholders(8)}</section>`;
     show();
+    // the week's projections, as Scores has them (ui/projections.js), read meanwhile
+    const shownWeek = (readLineupPage(document) || {}).week;
+    const feedRead = weekFeed(context, shownWeek);
     if (await stillBeforeDraft(context)) {
         mount.innerHTML = '<section class="fuad-panel fuad-lineup-note"><span>Lineups open for week 1 after the draft.</span></section>';
         return;
@@ -326,6 +330,20 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
         document.documentElement.classList.remove("fuad-lineup-on");
         return;
     }
+    const feed = await feedRead;
+    // MFL's own figures stay where the feed has none (a bye, or the feed unread)
+    const projected = (read) => {
+        if (feed && feed.week === read.week) {
+            const points = lineupProjections(feed, read.players);
+            read.players.forEach((player) => {
+                if (points.has(player.id)) {
+                    player.proj = points.get(player.id);
+                }
+            });
+        }
+        return read;
+    };
+    projected(page);
     // `stale`: a save went but couldn't be checked, so the form underneath may be out of date;
     // `backups`: the week's pairs once read, with the backups setting on (lineup-backups.js)
     const state = {page, on: startersOf(page), base: startersOf(page), irHref, addHref, report: null, saved: false, saving: false, stale: false, error: "",
@@ -448,7 +466,7 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
                 throw new Error("the saved lineup couldn't be read");
             }
             const before = state.base;
-            state.page = read;
+            state.page = projected(read);
             applyInjuries(state.page.players, state.report);
             const kept = startersOf(state.page);
             state.base = kept;

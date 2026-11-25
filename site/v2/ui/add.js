@@ -5,6 +5,7 @@
 // so its comment line goes with it. An immediate add's length is posted to the board once MFL has
 // made the add. MFL's form stays in the page underneath; anything v2 can't read leaves MFL's page.
 
+import {listProjection, weekFeed} from "./projections.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {openDialog, replaceEntry} from "./dialog.js";
@@ -780,7 +781,20 @@ export async function drawAdd({context, franchiseId}) {
     async function load() {
         render();
         try {
-            state.data = await loadData(context, franchiseId);
+            // the week's projections, as Scores has them (ui/projections.js), with the data, so the
+            // list is sorted by them as it first shows; MFL's own where the feed has none
+            const [data, feed] = await Promise.all([loadData(context, franchiseId), weekFeed(context, Number(window.liveScoringWeek))]);
+            if (feed) {
+                for (const player of lists.add.concat(lists.drop)) {
+                    // none for a week he doesn't play (a bye, no team), as Scores has it
+                    const plays = player.nfl && player.nfl !== "FA" && !/^bye$/i.test(player.opp);
+                    const points = plays ? listProjection(feed, player.id, player.pos) : null;
+                    if (points !== null) {
+                        player.proj = points;
+                    }
+                }
+            }
+            state.data = data;
             if (!state.data.league.franchises.get(franchiseId)) {
                 throw new Error("your team isn't in the rosters");
             }

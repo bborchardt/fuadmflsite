@@ -4,6 +4,7 @@
 
 import {keepHere, keptHere, onSectionTap} from "./kept.js";
 import {onBack} from "./back.js";
+import {listProjection, weekFeed} from "./projections.js";
 import {API_BASE, asArray, exportUrl, fetchExport, numberOf} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -327,11 +328,24 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
             drawPanel(mount, {
                 what: "players", rows: 12, refreshes,
                 load: async () => {
-                    const [{built, settings, freeAgents, names}, {byes, points}, before, projected] = await Promise.all([
-                        league(), extras(), beforeSeason(),
-                        exp("projectedScores", {W: Number(window.liveScoringWeek) || 1}, {unknown: true})
+                    // the week's projections, as Scores has them (ui/projections.js); MFL's own for a player
+                    // the feed has none of, as on Lineup and Add
+                    const week = Number(window.liveScoringWeek) || 1;
+                    const [{built, settings, freeAgents, names}, {byes, points}, before, feed, projected] = await Promise.all([
+                        league(), extras(), beforeSeason(), beforeSeason().then((before) => (before ? null : weekFeed(context, week))),
+                        exp("projectedScores", {W: week}, {unknown: true})
                     ]);
                     const projections = new Map(asArray(projected && projected.playerScore).map((entry) => [entry.id, numberOf(entry.score)]));
+                    if (feed) {
+                        for (const [id, player] of built.players) {
+                            // none for a week he doesn't play (a bye, no team), as Scores has it
+                            const plays = player.team && player.team !== "FA" && Number(byes.get(player.team)) !== week;
+                            const figure = plays ? listProjection(feed, id, player.nflPosition) : null;
+                            if (figure !== null) {
+                                projections.set(id, figure);
+                            }
+                        }
+                    }
                     const positions = lineupPositions(settings);
                     return {pool: playerPool(built, {freeAgents, points, projections: before ? new Map() : projections, byes, names, offseason: before, positions}), before, positions};
                 },

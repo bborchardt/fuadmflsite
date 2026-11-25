@@ -53,6 +53,14 @@ MFL documents little of this.
   past week's file stays readable. A week with no games played yet has its file, with only the
   `DATE` and `REFRESH|3600000` lines (week 11, 17 Nov 2026), while its projections are already in.
 - **The projections feed** is a line per player: `16619,WR,RA=0.18,CC=1.92,ARY=3.44,…`, stats only.
+  It changes during the week (week 12's file last changed Tuesday afternoon), and it projects players
+  ruled out or on IR. `projectedScores` did too on the Wednesday of week 12, but by the Sunday of week
+  6 MFL's Lineup and Add/Drop pages showed none for a player Out or on IR (Questionable kept his), and
+  the feed missed a player they projected (A.J. Brown). Scored by the league's rules, it doesn't
+  agree with `projectedScores`, the Fantasy Sharks points MFL's Submit Lineup and Add/Drop pages show
+  (their "Use projections from" select, `PROJSRC=mfl`): for week 12 (25 Nov 2026) the feed's were
+  higher by about 1.3 points for a QB, 2–2.6 for an RB, WR or TE and double for a kicker. MFL's live
+  scoring page shows the feed's.
 - **`liveScoring`** needs `DETAILS=1` to list the bench (without it, only the starters). It lists each team's `playersCurrentlyPlaying`, `playersYetToPlay` and
   `gameSecondsRemaining`, and each player's `score` and `gameSecondsRemaining`, but no stats
   (`updatedStats` is a counter), and leaves out injured reserve.
