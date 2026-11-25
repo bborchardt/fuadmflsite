@@ -177,7 +177,7 @@ week 12's kickoff.
   v1's custom tabs would be, members see "League tools are temporarily unavailable. MFL's own pages
   still work." A page still hidden behind "Loading…" shows MFL's page after 30 seconds. Nothing needs
   doing on MFL. Check the "Publish site" workflow under Actions: a failed run can be re-run from its
-  page, and a GitHub outage clears on its own.
+  page ("Re-run failed jobs" deploys again what was built), and a GitHub outage clears on its own.
 - **The beta fails to load or start:** that member gets `MAIN` instead, with a bar that leads out of
   the beta. To take the beta down for everyone, delete its offer line from MFL's header (Betas and
   versions).

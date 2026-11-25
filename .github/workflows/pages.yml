@@ -5,6 +5,9 @@
 #
 # Runs on every push to master that touches site/ or the build, on demand, and from the daily job when
 # league-data has a snapshot or still the site doesn't (pushes made by a workflow don't trigger others).
+# Building and deploying are separate jobs, as GitHub's template has them: a deploy started the moment
+# the upload finished sometimes found no upload yet, and a failed deploy re-runs alone ("Re-run failed
+# jobs") with what was built.
 name: Publish site
 
 on:
@@ -24,11 +27,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -55,5 +55,13 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
