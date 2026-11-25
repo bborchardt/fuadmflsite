@@ -340,9 +340,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         for (const [id, player] of built.players) {
                             // none for a week he doesn't play (a bye, no team), as Scores has it
                             const plays = player.team && player.team !== "FA" && Number(byes.get(player.team)) !== week;
-                            const projected = plays ? listProjection(feed, id, player.nflPosition) : null;
-                            if (projected !== null) {
-                                projections.set(id, projected);
+                            const figure = plays ? listProjection(feed, id, player.nflPosition) : null;
+                            if (figure !== null) {
+                                projections.set(id, figure);
                             }
                         }
                     }
