@@ -360,6 +360,17 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         });
     };
 
+    // A check My alerts couldn't make leaves its alerts out, as members can see the same on its screen
+    // (Trades, Lineup); logged as an error, so the header's devices form counts how often. One MFL has
+    // changed still fails the panel (checked.js).
+    const unchecked = (what, {changedFails = true} = {}) => (error) => {
+        if (changedFails && error && error.changed) {
+            throw error;
+        }
+        console.error(`[fuad] My alerts couldn't check ${what}:`, error);
+        return null;
+    };
+
     if (member) {
         drawPanel(panels.alerts, {
             heading: "My alerts",
@@ -373,15 +384,16 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 const week = Number(window.liveScoringWeek) || Number(built.week) || 1;
                 const [timeline, live, schedule, waivers, trades, board, lengths, upcoming, draft] = await Promise.all([
                     dates,
-                    exp("liveScoring", {W: week, DETAILS: 1}, {optional: true}),
-                    exp("nflSchedule", {W: week}, {base: API_BASE, optional: true}),
-                    exp("pendingWaivers", {}, {optional: true}),
-                    exp("pendingTrades", {}, {optional: true}),
+                    exp("liveScoring", {W: week, DETAILS: 1}).catch(unchecked("the lineup")),
+                    exp("nflSchedule", {W: week}, {base: API_BASE}).catch(unchecked("the lineup")),
+                    exp("pendingWaivers").catch(unchecked("bids")),
+                    exp("pendingTrades").catch(unchecked("trade offers")),
+                    // only for the contracts topic's link, which is the board's without it
                     exp("messageBoard", {COUNT: 20}, {optional: true}),
-                    readings(built).catch(() => null),
+                    readings(built).catch(unchecked("contract lengths", {changedFails: false})),
                     coming(),
                     // only before week 1 does the draft matter
-                    dates.then(({kickoffs: times}) => (times.get(1) && nowSeconds() >= times.get(1) ? null : exp("draftResults", {}, {optional: true})))
+                    dates.then(({kickoffs: times}) => (times.get(1) && nowSeconds() >= times.get(1) ? null : exp("draftResults").catch(unchecked("the draft"))))
                 ]);
                 const now = nowSeconds();
                 const phase = homePhase({
@@ -393,7 +405,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 });
                 const topic = contractTopic(board);
                 const cutDown = cutDownAt(timeline.calendar, context.season);
-                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, cutDown || timeline.kickoffs.get(1)).catch(() => null) : null;
+                const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, cutDown || timeline.kickoffs.get(1)).catch(unchecked("contract lengths", {changedFails: false})) : null;
                 return myAlerts({
                     league: built,
                     franchiseId,
