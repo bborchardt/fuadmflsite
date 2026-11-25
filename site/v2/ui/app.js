@@ -12,6 +12,7 @@ import {useTeamPictures} from "./team-pictures.js";
 import {playerList} from "./player-list.js";
 import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
+import {reloadIfUntouched} from "./back.js";
 import {REBUILT, pageOf, routeFor, sections, teamLinks} from "./nav.js";
 
 export function pageContext(location = window.location) {
@@ -175,6 +176,9 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             }
             if (route.on) {
                 onDrawn();
+            }
+            if (result !== false && route.shownAgain === "reload") {
+                reloadIfUntouched(route.view.split("/")[0]);
             }
             await result;
         } catch (error) {

@@ -6,42 +6,46 @@
 // `draw` gets what `load` gave and {context, franchiseId, view, teamHref, page, location}:
 // `view(section, name)` is a view's href, `teamHref(id)` a team's page, `page` the page as nav.js's
 // pageOf reads it.
+//
+// `shownAgain` (ui/back.js): "reload", loaded again once it's 2 minutes old if the member hasn't
+// tapped or typed on it; "as left", one MFL's form may have answered (a POST, which loading again
+// would send again).
 
 export const ROUTES = [
     // MFL's menu also reaches Submit Lineup as options?O=02
-    {name: "Lineup", view: "Lineup", match: {paths: ["lineup"], options: ["02"]}, on: "fuad-lineup-on",
+    {name: "Lineup", shownAgain: "reload", view: "Lineup", match: {paths: ["lineup"], options: ["02"]}, on: "fuad-lineup-on",
         load: () => import("./lineup.js"),
         draw: (screen, {context, franchiseId, view}) => screen.drawLineup({context, franchiseId, irHref: view("Moves", "IR"), addHref: view("Moves", "Add")})},
-    {name: "Add", view: "Moves/Add", match: {paths: ["add_drop"]}, on: "fuad-add-on",
+    {name: "Add", shownAgain: "reload", view: "Moves/Add", match: {paths: ["add_drop"]}, on: "fuad-add-on",
         load: () => import("./add.js"),
         draw: (screen, {context, franchiseId}) => screen.drawAdd({context, franchiseId})},
-    {name: "Drop", view: "Moves/Drop", match: {options: ["257"]}, on: "fuad-drop-on",
+    {name: "Drop", shownAgain: "reload", view: "Moves/Drop", match: {options: ["257"]}, on: "fuad-drop-on",
         load: () => import("./drop.js"),
         draw: (screen, {context, franchiseId}) => screen.drawDrop({context, franchiseId})},
-    {name: "IR", view: "Moves/IR", match: {options: ["18"]}, on: "fuad-ir-on",
+    {name: "IR", shownAgain: "reload", view: "Moves/IR", match: {options: ["18"]}, on: "fuad-ir-on",
         load: () => import("./ir.js"),
         draw: (screen, {context, franchiseId, view}) => screen.drawIR({context, franchiseId, dropHref: view("Moves", "Drop")})},
     // and its proposal page (`O=05&FRANCHISE=<mine>,<theirs>`)
-    {name: "Trades", view: "Moves/Trades", match: {options: ["05"]}, on: "fuad-trades-on",
+    {name: "Trades", shownAgain: "reload", view: "Moves/Trades", match: {options: ["05"]}, on: "fuad-trades-on",
         load: () => import("./trades.js"),
         draw: (screen, {context, franchiseId, view, teamHref}) => screen.drawTrades({context, franchiseId, addHref: view("Moves", "Add"), teamHref})},
     // Home's All moves and All bids: MFL's Transactions and Processed Waivers pages
-    {name: "All moves", view: "Home", match: {options: ["03"]}, on: "fuad-all-moves-on",
+    {name: "All moves", shownAgain: "reload", view: "Home", match: {options: ["03"]}, on: "fuad-all-moves-on",
         load: () => import("./all-moves.js"),
         draw: (screen, {context, franchiseId, teamHref}) => screen.drawAllMoves({context, franchiseId, teamHref})},
-    {name: "All bids", view: "Home", match: {paths: ["processed_waivers"], options: ["76"]}, on: "fuad-all-bids-on",
+    {name: "All bids", shownAgain: "reload", view: "Home", match: {paths: ["processed_waivers"], options: ["76"]}, on: "fuad-all-bids-on",
         load: () => import("./all-moves.js"),
         draw: (screen, {context, franchiseId, teamHref}) => screen.drawAllBids({context, franchiseId, teamHref})},
     // League Rules and League Settings: one Rules page over either
-    {name: "Rules", view: "Home", match: {options: ["09", "26"]}, on: "fuad-rules-on", members: true,
+    {name: "Rules", shownAgain: "reload", view: "Home", match: {options: ["09", "26"]}, on: "fuad-rules-on", members: true,
         load: () => import("./rules.js"),
         draw: (screen, {context, page}) => screen.drawRules({context, option: page.option})},
     // MFL's forms under v2's heading and tabs; reached from the team sheet, not a section
-    {name: "Franchise setup", view: null, match: {paths: ["csetup"]}, on: "fuad-setup-on",
+    {name: "Franchise setup", shownAgain: "as left", view: null, match: {paths: ["csetup"]}, on: "fuad-setup-on",
         load: () => import("./setup.js"),
         draw: (screen, {context, franchiseId}) => screen.restyleSetup(document, {context, franchiseId})},
     // the message board's pages (`mb/…`), MFL's restyled
-    {name: "the message board page", view: "Home", match: {paths: ["mb"]},
+    {name: "the message board page", shownAgain: "as left", view: "Home", match: {paths: ["mb"]},
         load: () => import("./topic.js"),
         draw: (board, {context, franchiseId, location}) => {
             const boardPage = (location.pathname.match(/\/mb\/(\w+)\.pl$/) || [])[1];

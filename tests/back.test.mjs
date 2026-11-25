@@ -1,5 +1,6 @@
 // A screen shown again (ui/back.js) refreshes once what it shows is older than MOVES_KEPT, in each way
-// of coming back, and not when it isn't the screen in view or was drawn just now.
+// of coming back, and not when it isn't the screen in view or was drawn just now; and every screen
+// takes part.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
@@ -80,5 +81,66 @@ test("not within the keep time, and not while another screen is in view", async 
     document.dispatchEvent(new window.Event("visibilitychange"));
     await settled();
     assert.equal(league.count(), 0);
+});
+
+test("a section's view back from another under its own #", async () => {
+    root.classList.add("fuad-league-on");
+    let hash = "#league-standings";
+    let refreshed = 0;
+    onBack({showing: () => root.classList.contains("fuad-league-on") && hash === "#league-standings", section: "League", refresh: () => refreshed++});
+    hash = "#league-power";
+    window.dispatchEvent(new window.Event("hashchange"));
+    now += MOVES_KEPT;
+    hash = "#league-standings";
+    window.dispatchEvent(new window.Event("hashchange"));
+    assert.equal(refreshed, 1);
+    root.classList.remove("fuad-league-on");
+    await settled();
+});
+
+test("a page of its own loads again, unless the member has tapped or typed on it", async () => {
+    const {reloadIfUntouched} = await import("../site/v2/ui/back.js");
+    let reloads = 0;
+    const location = window.location;
+    Object.defineProperty(window, "location", {configurable: true, value: {hash: "", reload: () => reloads++}});
+    reloadIfUntouched("Lineup");
+    now += MOVES_KEPT;
+    document.dispatchEvent(new window.Event("visibilitychange"));
+    assert.equal(reloads, 1);
+    document.body.dispatchEvent(new window.Event("click", {bubbles: true}));
+    now += MOVES_KEPT;
+    document.dispatchEvent(new window.Event("visibilitychange"));
+    assert.equal(reloads, 1);
+    Object.defineProperty(window, "location", {configurable: true, value: location});
+});
+
+// Every screen takes part: a page of its own says what it does when shown again, and every panel on
+// Home, League and Rosters is loaded again (drawPanel's `refreshes`)
+test("every v2 screen is refreshed when shown again", async () => {
+    const {ROUTES} = await import("../site/v2/ui/routes.js");
+    for (const route of ROUTES) {
+        assert.ok(["reload", "as left"].includes(route.shownAgain), `${route.name} says what it does when shown again`);
+    }
+    const {readFileSync} = await import("node:fs");
+    for (const file of ["home", "league", "rosters", "scores"]) {
+        const source = readFileSync(new URL(`../site/v2/ui/${file}.js`, import.meta.url), "utf8");
+        let at = source.indexOf("drawPanel(", source.indexOf("export function"));
+        let calls = 0;
+        while (at !== -1) {
+            let depth = 0;
+            let end = at + "drawPanel".length;
+            do {
+                depth += {"(": 1, ")": -1}[source[end]] || 0;
+                end++;
+            } while (depth > 0 && end < source.length);
+            const call = source.slice(at, end);
+            assert.match(call, /\brefreshes\b/, `${file}.js: ${call.split("\n")[0]}`);
+            calls++;
+            at = source.indexOf("drawPanel(", end);
+        }
+        assert.ok(calls > 0, file);
+    }
+});
+test.after(() => {
     Date.now = realNow;
 });

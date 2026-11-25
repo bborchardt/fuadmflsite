@@ -17,6 +17,7 @@ import {titles} from "./history-model.js";
 import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings} from "./league-model.js";
 import {championsMarkup, pictureMarkup, positionsMarkup, powerMarkup, standingsMarkup, winnersMarkup} from "./league-view.js";
 import {drawScores, two} from "./scores.js";
+import {onBack} from "./back.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -92,8 +93,16 @@ export function drawLeague({context, franchiseId, teamHref}) {
         }
         return response.text();
     };
-    const once = (load) => {
+    // what's built from MFL's answers is built anew when a view is shown again (ui/back.js): `lasting`
+    // for what holds all season
+    const renewed = [];
+    const once = (load, {lasting = false} = {}) => {
         let value = null;
+        if (!lasting) {
+            renewed.push(() => {
+                value = null;
+            });
+        }
         return () => {
             if (!value) {
                 value = load().catch((error) => {
@@ -107,9 +116,9 @@ export function drawLeague({context, franchiseId, teamHref}) {
 
     // before week 1's kickoff the new site has no games: last season's final stands in. MFL's page
     // says so once a week is done; otherwise week 1's kickoff, and if that can't be had, in season.
-    const beforeSeason = once(() => beforeWeek1(season));
-    const players = once(async () => playersMap(await playerList(season)));
-    const rules = once(async () => readRules(await cached(`fuad.rules.${season}`, DAY, () => exp("rules"))));
+    const beforeSeason = once(() => beforeWeek1(season), {lasting: true});
+    const players = once(async () => playersMap(await playerList(season)), {lasting: true});
+    const rules = once(async () => readRules(await cached(`fuad.rules.${season}`, DAY, () => exp("rules"))), {lasting: true});
     // the projections don't change during a week: read once, as MFL's page does
     const projected = new Map();
     const projections = (week) => {
@@ -144,17 +153,17 @@ export function drawLeague({context, franchiseId, teamHref}) {
     const drawn = new Map();
     let visible = null;
     const views = {
-        scores: async (mount) => {
+        scores: async (mount, refreshes) => {
             const schedule = once(() => exp("schedule"));
             const [before, lastScheduled] = await Promise.all([beforeSeason(), schedule().then((found) => Math.max(0, ...asArray(found && found.weeklySchedule)
                 .filter((week) => asArray(week.matchup).length).map((week) => Number(week.week))), () => 0)]);
             return drawScores(mount, {
                 context, viewer, exp, feed, before, lastScheduled, teamHref, lastRegular: Number(window.standingsEndWeek) || 14, basic: basic("Scores"),
-                names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season),
+                names: () => namesFor(), players, rules, projections, schedule, league: () => leagueOf(season), refreshes,
                 showing: () => document.documentElement.classList.contains("fuad-league-on") && viewOf(window.location.hash) === "scores"
             });
         },
-        standings: async (mount) => {
+        standings: async (mount, refreshes) => {
             const year = await shownSeason();
             const final = year !== season ? String(year) : "";
             mount.innerHTML = '<div class="fuad-division-panels"></div><div class="fuad-picture-panel"></div>';
@@ -167,14 +176,14 @@ export function drawLeague({context, franchiseId, teamHref}) {
             };
             const shared = once(load);
             drawPanel(mount.firstElementChild, {
-                what: "standings", key: `fuad.league.standings.${year}`, maxAge: 2 * MINUTE, rows: 10, load: shared, basic: basic("Standings", year),
+                what: "standings", key: `fuad.league.standings.${year}`, maxAge: 2 * MINUTE, rows: 10, load: shared, basic: basic("Standings", year), refreshes,
                 render: (value, body) => {
                     mount.firstElementChild.classList.remove("fuad-panel");
                     body.innerHTML = standingsMarkup(value.divisions, {viewer, final, teamHref});
                 }
             });
             drawPanel(mount.lastElementChild, {
-                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, basic: basic("Standings", year),
+                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, basic: basic("Standings", year), refreshes,
                 // seeds that go by a record not known (a score MFL left out) aren't drawn
                 load: () => shared().then((value) => {
                     if (!value.picture) {
@@ -189,12 +198,12 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 }
             });
         },
-        power: async (mount) => {
+        power: async (mount, refreshes) => {
             const year = await shownSeason();
             const final = year !== season ? String(year) : "";
             mount.innerHTML = '<div class="fuad-power-panel"></div><div class="fuad-positions-panel"></div>';
             drawPanel(mount.firstElementChild, {
-                what: "power rankings", key: `fuad.league.power.${year}`, maxAge: 10 * MINUTE, rows: 10, basic: basic("Power", year),
+                what: "power rankings", key: `fuad.league.power.${year}`, maxAge: 10 * MINUTE, rows: 10, basic: basic("Power", year), refreshes,
                 load: async () => {
                     const response = await pageFetch(`${host}/${year}/options?L=${context.leagueId}&O=101`, {credentials: "include"});
                     if (!response.ok) {
@@ -213,7 +222,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 }
             });
             drawPanel(mount.lastElementChild, {
-                what: "starter points by position", key: `fuad.league.positions.${year}`, maxAge: 10 * MINUTE, rows: 10, basic: basic("Power", year),
+                what: "starter points by position", key: `fuad.league.positions.${year}`, maxAge: 10 * MINUTE, rows: 10, basic: basic("Power", year), refreshes,
                 load: async () => {
                     const [ytd, settings, known] = await Promise.all([exp("weeklyResults", {W: "YTD"}, {year}), leagueOf(year), players()]);
                     const positions = new Map([...known].map(([id, player]) => [id, player.position]));
@@ -225,13 +234,13 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 }
             });
         },
-        winners: async (mount) => {
+        winners: async (mount, refreshes) => {
             const year = await shownSeason();
             const final = year !== season ? String(year) : "";
             mount.innerHTML = '<div class="fuad-winners-panel"></div><div class="fuad-champions-panel"></div>';
             const championsMount = mount.lastElementChild;
             drawPanel(championsMount, {
-                what: "the champions", rows: 6,
+                what: "the champions", rows: 6, refreshes,
                 load: async () => {
                     const list = await champions(context);
                     // highlighting the viewer's titles is a nicety: without the careers, none
@@ -245,7 +254,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
             });
             const winnersMount = mount.firstElementChild;
             drawPanel(winnersMount, {
-                what: "winnings", key: `fuad.league.winners.${year}`, maxAge: 10 * MINUTE, rows: 10,
+                what: "winnings", key: `fuad.league.winners.${year}`, maxAge: 10 * MINUTE, rows: 10, refreshes,
                 load: async () => {
                     const [settings, accounting, ytd, standing, brackets] = await Promise.all([
                         leagueOf(year), exp("accounting", {}, {year, optional: true}), exp("weeklyResults", {W: "YTD"}, {year}),
@@ -274,6 +283,23 @@ export function drawLeague({context, franchiseId, teamHref}) {
         }
     };
 
+    // each view, shown again (ui/back.js), loads its panels again: `refreshes`, its latest drawing's
+    const latest = new Map();
+    const shownAgain = (view, refreshes) => {
+        if (!latest.has(view)) {
+            onBack({
+                showing: () => document.documentElement.classList.contains("fuad-league-on") && viewOf(window.location.hash) === view,
+                section: "League",
+                // after what show() does on the view's drawing (Scores' resume), which may load it itself
+                refresh: () => {
+                    renewed.forEach((renew) => renew());
+                    Promise.resolve(drawn.get(view)).then(() => latest.get(view).forEach((run) => run()));
+                }
+            });
+        }
+        latest.set(view, refreshes);
+    };
+
     const show = () => {
         const on = document.documentElement.classList.contains("fuad-league-on");
         const view = on ? viewOf(window.location.hash) : null;
@@ -290,7 +316,9 @@ export function drawLeague({context, franchiseId, teamHref}) {
         }
         if (!drawn.has(view)) {
             const mount = root.querySelector(`[data-view="${view}"]`);
-            drawn.set(view, Promise.resolve().then(() => views[view](mount)).catch((error) => {
+            const refreshes = [];
+            shownAgain(view, refreshes);
+            drawn.set(view, Promise.resolve().then(() => views[view](mount, refreshes)).catch((error) => {
                 console.error(`[fuad] couldn't draw League's ${view}:`, error);
                 drawn.delete(view);
                 mount.innerHTML = `<div class="fuad-panel">${failedMarkup("this page", error, basic(view[0].toUpperCase() + view.slice(1)))}</div>`;
