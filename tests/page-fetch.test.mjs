@@ -170,6 +170,45 @@ test("what's expired goes when the page first keeps something, not each time; th
     }
 });
 
+test("a page left open asks again once an answer's keep time is over, the one kept or not", async () => {
+    const items = new Map();
+    globalThis.window = {franchise_id: "0001", location: {pathname: "/2026/home/48571"}, localStorage: new Proxy({
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => items.set(key, String(value)),
+        removeItem: (key) => items.delete(key)
+    }, {ownKeys: () => [...items.keys()], getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})})};
+    const realFetch = globalThis.fetch;
+    const realNow = Date.now;
+    let now = realNow();
+    Date.now = () => now;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        const type = new URL(url).searchParams.get("TYPE");
+        return new Response(JSON.stringify({[type]: {}}), {status: 200});
+    };
+    try {
+        const {pageFetch} = await import("../site/v2/ui/page-fetch.js?open");
+        const trades = league("pendingTrades", "&X=open");
+        const live = league("liveScoring", "&W=6&X=open");
+        // one kept on the page before: it lasts only as long as it's kept
+        const calendar = league("calendar", "&X=open");
+        items.set(`fuad.keep.0001|${calendar}`, JSON.stringify({expires: now + MINUTE, body: '{"calendar":{}}'}));
+        await Promise.all([pageFetch(trades), pageFetch(live), pageFetch(calendar), pageFetch(trades)]);
+        assert.deepEqual(asked, [trades, live]);
+        now += MINUTE;
+        await Promise.all([pageFetch(trades), pageFetch(live), pageFetch(calendar)]);
+        assert.deepEqual(asked, [trades, live, calendar]);
+        now += MINUTE;
+        await Promise.all([pageFetch(trades), pageFetch(live), pageFetch(calendar)]);
+        assert.deepEqual(asked, [trades, live, calendar, trades, live]);
+    } finally {
+        globalThis.fetch = realFetch;
+        Date.now = realNow;
+        delete globalThis.window;
+    }
+});
+
 test("reads asked at once fail with MFL's refusal, whichever failed first", async () => {
     const refusal = Object.assign(new Error("HTTP 429"), {status: 429});
     const early = Promise.reject(new Error("network"));
