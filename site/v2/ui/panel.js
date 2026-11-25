@@ -43,8 +43,9 @@ export function placeholders(rows = 3) {
 
 // `mount` gets the panel's markup. `what` names it in "Couldn't load standings.". `key` and
 // `maxAge` cache what `load` resolves to; `render(value, body)` draws it into the body. `actions`
-// is markup for the heading's row (a count, a link, a button). `basic`: failedMarkup's.
-export function drawPanel(mount, {heading = "", actions = "", what, key = null, maxAge = 0, load, render, rows = 3, basic = null}) {
+// is markup for the heading's row (a count, a link, a button). `basic`: failedMarkup's. `refreshes`,
+// when given, gets the panel's load again (ui/back.js), which keeps what's shown until it's in.
+export function drawPanel(mount, {heading = "", actions = "", what, key = null, maxAge = 0, load, render, rows = 3, basic = null, refreshes = null}) {
     const title = heading ? `<h2 class="fuad-panel-heading">${esc(heading)}</h2>` : "";
     let body;
     let asOf;
@@ -71,6 +72,7 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
             if (key) {
                 save(key, value);
             }
+            entry = {value, storedAt: Date.now()};
             asOf.hidden = true;
             show(value);
             return value;
@@ -90,6 +92,9 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
         });
     };
 
+    if (refreshes) {
+        refreshes.push(run);
+    }
     if (entry) {
         try {
             show(entry.value);

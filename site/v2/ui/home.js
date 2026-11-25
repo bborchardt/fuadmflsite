@@ -17,6 +17,7 @@ import {
 } from "./home-model.js";
 import {draftPicked, kickoffAt} from "./context.js";
 import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";
+import {onBack} from "./back.js";
 import {moveRows} from "./move-rows.js";
 import {lenient, strict} from "./checked.js";
 
@@ -102,7 +103,7 @@ function betaLine({inBeta, beta}) {
     return "";
 }
 
-function drawChat(mount, {context, franchiseId, teams}) {
+function drawChat(mount, {context, franchiseId, teams, refreshes}) {
     const feedUrl = `${window.location.origin}/fflnetdynamic${context.season}/${context.leagueId}_chat.xml`;
     const others = [...teams].filter(([id]) => id !== franchiseId).concat(franchiseId === "0000" ? [] : [["0000", "Commissioner"]]);
     let lastPost = Date.now();
@@ -237,10 +238,10 @@ function drawChat(mount, {context, franchiseId, teams}) {
         };
         schedule();
     };
-    drawPanel(mount, {heading: "Chat", actions: '<button type="button" class="fuad-text-button fuad-chat-older-button" hidden>Older messages</button>', what: "chat", key: `fuad.home.chat.${context.season}.${franchiseId}`, rows: 3, load, render});
+    drawPanel(mount, {heading: "Chat", actions: '<button type="button" class="fuad-text-button fuad-chat-older-button" hidden>Older messages</button>', what: "chat", key: `fuad.home.chat.${context.season}.${franchiseId}`, rows: 3, load, render, refreshes});
 }
 
-function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
+function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref, refreshes}) {
     // MFL's own page, for its formatting, email replies and Preview; its import drops line breaks
     const addHref = `${window.location.origin}/${context.season}/mb/topic_add.pl?bid=${encodeURIComponent(`${context.season}${context.leagueId}`)}`;
     const actions = `${boardHref ? `<a href="${esc(boardHref)}">All topics</a>` : ""}${loggedIn ? `<a class="fuad-chip" href="${esc(addHref)}">New topic</a>` : ""}`;
@@ -265,10 +266,10 @@ function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref}) {
             return topics;
         };
         // kept as long as members' board export
-        drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}.guest`, maxAge: MOVES_KEPT, load: loadPage, render});
+        drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}.guest`, maxAge: MOVES_KEPT, load: loadPage, render, refreshes});
         return;
     }
-    drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}`, load, render});
+    drawPanel(mount, {heading: "Message board", actions, what: "the message board", key: `fuad.home.board.${context.season}`, load, render, refreshes});
 }
 
 // `league()` resolves to the league model (app.js), with `raw` holding the exports it was built from.
@@ -290,17 +291,14 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     const anchor = document.querySelector(".pagebody") || document.body;
     anchor.prepend(root);
 
-    // the calendar needs a login; logged out, Coming up keeps the season's own dates
-    const calendar = loggedIn ? exp("calendar", {}, {optional: true}) : Promise.resolve(null);
-    const settings = exp("league", {}, {optional: true});
+    // every panel's load, again when Home is shown again (ui/back.js)
+    const refreshes = [];
     const datesOf = (calendarRead, settingsRead) => Promise.all([calendarRead, settingsRead.then(seasonWeeks)]).then(async ([found, season]) => {
         const weeks = new Set([1, TRADE_DEADLINE_WEEK, ...(season ? [season.playoffsStart, season.championship] : [])]);
         asArray(found && found.event).map((event) => Number(event.start_time)).filter((n) => n > 0 && n < 100).forEach((n) => weeks.add(n));
         const times = await kickoffs(context.season, [...weeks]);
         return {calendar: found, kickoffs: times, weeks: season, dates: calendarDates(found, times)};
     });
-    // My alerts' checks go by these; they fail on a change
-    const dates = datesOf(calendar, settings);
     // Coming up shows what it can: a calendar or league settings MFL has changed (logged by strict)
     // leave the dates worked out from them not known, so the season's own dates show with a line
     // saying the rest aren't; a date worked out from part of the calendar could be wrong
@@ -311,11 +309,19 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         }
         throw error;
     });
-    const shownCalendar = unlessChangedHere(calendar);
-    const shownSettings = unlessChangedHere(settings);
-    const shownDates = Promise.all([shownCalendar, shownSettings]).then(([found, season]) =>
-        datesOf(Promise.resolve(found === changed ? null : found), Promise.resolve(season === changed ? null : season))
-            .then((value) => ({...value, unknown: found === changed || season === changed})));
+    // My alerts' checks go by `dates`, which fails on a change; read again when Home is shown again
+    let dates;
+    let shownDates;
+    const readDates = () => {
+        // the calendar needs a login; logged out, Coming up keeps the season's own dates
+        const calendar = loggedIn ? exp("calendar", {}, {optional: true}) : Promise.resolve(null);
+        const settings = exp("league", {}, {optional: true});
+        dates = datesOf(calendar, settings);
+        shownDates = Promise.all([unlessChangedHere(calendar), unlessChangedHere(settings)]).then(([found, season]) =>
+            datesOf(Promise.resolve(found === changed ? null : found), Promise.resolve(season === changed ? null : season))
+                .then((value) => ({...value, unknown: found === changed || season === changed})));
+    };
+    readDates();
     const comingOf = (read) => read.then(({calendar: found, dates: list, kickoffs: times, weeks, unknown}) =>
         comingUp({dates: list, kickoffs: times, weeks, calendar: found, now: nowSeconds()}).concat(unknown ? [{what: "Other league dates", when: "—"}] : []));
     const coming = () => comingOf(dates);
@@ -361,6 +367,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             what: "my alerts",
             key: `fuad.home.myAlerts.${context.season}.${franchiseId}`,
             rows: 3,
+            refreshes,
             load: async () => {
                 const built = await league();
                 const week = Number(window.liveScoringWeek) || Number(built.week) || 1;
@@ -447,6 +454,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         what: "league alerts",
         key: `fuad.home.league.${context.season}.${franchiseId || "guest"}`,
         rows: 2,
+        refreshes,
         load: async () => leagueAlerts(await league(), member ? franchiseId : null, {now: nowSeconds(), cutDown: cutDownAt((await dates.catch(() => ({}))).calendar, context.season)})
             .map((alert) => ({team: alert.franchise.teamName, franchiseId: alert.franchise.franchiseId, text: alert.text, figure: alert.figure, tone: alert.tone})),
         render: (alerts, body) => {
@@ -459,9 +467,9 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     });
 
     if (panels.chat) {
-        drawChat(panels.chat, {context, franchiseId, teams});
+        drawChat(panels.chat, {context, franchiseId, teams, refreshes});
     }
-    drawBoard(panels.board, {context, loggedIn, exp, boardHref, threadHref});
+    drawBoard(panels.board, {context, loggedIn, exp, boardHref, threadHref, refreshes});
 
     const allMoves = mflPage(/^transactions$/i);
     const allBids = mflPage(/^processed waivers$/i) || `${base}/processed_waivers?L=${context.leagueId}`;
@@ -473,6 +481,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         what: "recent moves",
         key: `fuad.home.recent.${context.season}`,
         rows: 5,
+        refreshes,
         load: async () => {
             const built = await league();
             return recentMoves(built.raw.transactions, {players: built.players, franchises: built.franchises});
@@ -487,12 +496,26 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         heading: "Coming up",
         what: "coming up",
         key: `fuad.home.dates.${context.season}.${loggedIn ? "member" : "guest"}`,
+        refreshes,
         // every date, a to-do close by in My alerts too, so a date never depends on My alerts loading
         load: () => comingOf(shownDates),
         render: (list, body) => {
             body.innerHTML = list.length
                 ? `<ul class="fuad-rows">${list.map((date) => `<li class="fuad-date"><span class="fuad-row-text"><span class="fuad-row-title">${esc(date.what)}</span>${date.detail ? `<span class="fuad-meta">${esc(date.detail)}</span>` : ""}</span><span class="fuad-meta">${esc(date.when)}</span></li>`).join("")}</ul>`
                 : '<p class="fuad-muted fuad-empty">Nothing on the calendar.</p>';
+        }
+    });
+
+    // shown again: what's built from MFL's answers is built anew, and every panel loads again
+    onBack({
+        showing: () => document.documentElement.classList.contains("fuad-home-on"),
+        section: "Home",
+        refresh: () => {
+            if (league.renew) {
+                league.renew();
+            }
+            readDates();
+            refreshes.forEach((run) => run());
         }
     });
 

@@ -79,14 +79,15 @@ export function keepable(url, body) {
     }
 }
 
-function kept(key) {
+function keptEntry(key) {
     try {
         const entry = JSON.parse(storage.get(key));
-        return entry && entry.expires > Date.now() ? entry.body : null;
+        return entry && entry.expires > Date.now() ? entry : null;
     } catch (error) {
         return null;
     }
 }
+const kept = (key) => (keptEntry(key) || {}).body ?? null;
 
 // MFL's own pages share this browser storage, so what's expired goes as the first thing a page keeps
 // is kept: reading every entry is slow on a phone, so once a page
@@ -180,18 +181,27 @@ export function waitLeft() {
     return Math.max(0, (Number(storage.get(WAIT_KEY)) || 0) - Date.now());
 }
 
+// each read's answer for this page, `{request, until}`: shared by every panel that asks within its keep
+// time (MOVES_KEPT for one that isn't kept), as a page left open, or shown again, asks MFL afresh
 const responses = new Map();
 
 export function pageFetch(url, init) {
     const key = String(url);
-    if (!responses.has(key)) {
+    const held = responses.get(key);
+    if (!held || held.until <= Date.now()) {
+        // a failed read is asked again next time, unless a newer one has taken its place
+        const drop = () => {
+            if ((responses.get(key) || {}).request === request) {
+                responses.delete(key);
+            }
+        };
         const maxAge = keepFor(key, {liveWeek: liveWeek(), gameDay: () => gameToday(thisWeeksSchedule(), new Date())});
-        const body = maxAge ? kept(keyOf(key)) : null;
-        const request = body !== null
-            ? Promise.resolve(new Response(body, {status: 200, headers: {"Content-Type": "application/json"}}))
+        const stored = maxAge ? keptEntry(keyOf(key)) : null;
+        const request = stored
+            ? Promise.resolve(new Response(stored.body, {status: 200, headers: {"Content-Type": "application/json"}}))
             : mflFetch(url, init).then(async (response) => {
                 if (!response.ok) {
-                    responses.delete(key);
+                    drop();
                 } else if (maxAge) {
                     const text = await response.clone().text();
                     if (keepable(key, text)) {
@@ -200,11 +210,11 @@ export function pageFetch(url, init) {
                 }
                 return response;
             }, (error) => {
-                responses.delete(key);
+                drop();
                 throw error;
             });
-        responses.set(key, request);
+        responses.set(key, {request, until: stored ? stored.expires : Date.now() + (maxAge || MOVES_KEPT)});
     }
     // each caller reads its own copy of the body
-    return responses.get(key).then((response) => response.clone());
+    return responses.get(key).request.then((response) => response.clone());
 }

@@ -28,6 +28,11 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   left; and Back returns to it as it was left, from its own history entry, even after another page.
   Paging (Scores' weeks, All bids' runs) isn't an entry of its own, so Back leaves the view rather
   than stepping back a page. Moves' tabs are pages of their own and start afresh.
+- **A view shown again shows what's true now** (`ui/back.js`): Home, when its section is tapped,
+  League or Rosters is left for it on the same page, the app or tab is come back to, or Back finds
+  it in the browser's cache, refreshes its panels once what it shows is 2 minutes old, keeping them
+  on screen until the new answers are in. Nothing runs while it's away, and in view it refreshes
+  only as its own polling does (Chat; Scores while games are on).
 - Within **MFL's rules**.
 - **As few chores as possible** for the commissioner, stable year to year.
 
@@ -574,7 +579,8 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   week's results for an hour; rosters, adjustments, transactions, free agents, pending bids and
   trades, and the message board for 2 minutes, which a move made in v2 clears; MFL's League History
   pages until the next week's results or a week, League Champions for a day; a processed bid run,
-  for good. So a move made on
+  for good. A page left open holds what it read no longer than that, and what it doesn't keep for
+  2 minutes. So a move made on
   MFL's own pages, or by another team, can take 2 minutes to show. Moves' checks and who starts in
   League › Scores always ask MFL. MFL's player list (`ui/player-list.js`) is kept a day as bare
   rows; where it's only shown (League, Recent moves, a player's card), a copy up to two days old

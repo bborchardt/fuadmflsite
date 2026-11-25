@@ -10,7 +10,7 @@ import {leagueIdIn} from "../lib/settings.js";
 import {dropUnusedKeys} from "./store.js";
 import {useTeamPictures} from "./team-pictures.js";
 import {playerList} from "./player-list.js";
-import {mflFetch, pageFetch} from "./page-fetch.js";
+import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {REBUILT, pageOf, routeFor, sections, teamLinks} from "./nav.js";
 
@@ -198,16 +198,27 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
         chatStopped = true;
     };
 
-    // one load shared by every panel; a failed one is tried again by the next Retry
+    // one load shared by every panel; a failed one is tried again by the next Retry. A screen shown
+    // again (ui/back.js) renews one older than the exports it's built from are kept
     let loading = null;
+    let loadedAt = 0;
     const league = () => {
         if (!loading) {
-            loading = loadLeague(context).catch((error) => {
-                loading = null;
+            const load = loadLeague(context).catch((error) => {
+                if (loading === load) {
+                    loading = null;
+                }
                 throw error;
             });
+            loading = load;
+            loadedAt = Date.now();
         }
         return loading;
+    };
+    league.renew = () => {
+        if (Date.now() - loadedAt >= MOVES_KEPT) {
+            loading = null;
+        }
     };
     const homeShown = whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn})).catch((error) => {
         console.error("[fuad] couldn't draw Home:", error);

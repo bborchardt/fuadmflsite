@@ -96,3 +96,35 @@ test("a panel the member sees fail is logged as an error, with Basic view when i
     }
     assert.deepEqual(logged, ["[fuad] couldn't load standings:"]);
 });
+
+test("loaded again (a screen shown again), a panel keeps what it shows until the new answer is in, and on a failure keeps it, dated", async () => {
+    const mount = document.getElementById("mount");
+    const refreshes = [];
+    let answer = Promise.resolve(["first"]);
+    const render = (rows, body) => {
+        body.innerHTML = rows.map((row) => `<p>${row}</p>`).join("");
+    };
+    await drawPanel(mount, {what: "my alerts", load: () => answer, render, refreshes});
+    assert.equal(refreshes.length, 1);
+    let arrive;
+    answer = new Promise((resolve) => {
+        arrive = resolve;
+    });
+    const again = refreshes[0]();
+    assert.equal(bodyOf(mount).textContent, "first");
+    assert.equal(mount.getAttribute("aria-busy"), null);
+    arrive(["second"]);
+    await again;
+    assert.equal(bodyOf(mount).textContent, "second");
+    const warn = console.warn;
+    console.warn = () => {};
+    try {
+        answer = Promise.reject(new Error("offline"));
+        await refreshes[0]();
+    } finally {
+        console.warn = warn;
+    }
+    assert.equal(bodyOf(mount).textContent, "second");
+    assert.match(mount.querySelector(".fuad-as-of").textContent, /^As of /);
+    assert.equal(mount.querySelector(".fuad-as-of").hidden, false);
+});
