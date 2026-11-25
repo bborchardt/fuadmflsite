@@ -1,7 +1,7 @@
 // A panel's saved copy: one from an older version that its render no longer reads is loaded afresh,
 // not left to break the page.
 
-import {test} from "node:test";
+import {mock, test} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
 
@@ -10,7 +10,7 @@ const items = new Map();
 window.localStorage = {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))};
 globalThis.window = window;
 globalThis.document = document;
-const {cutOff, drawPanel, failedMarkup} = await import("../site/v2/ui/panel.js");
+const {CUT_OFF_RETRY, cutOff, drawPanel, failedMarkup, retryCutOff} = await import("../site/v2/ui/panel.js");
 const {fetchExport} = await import("../site/v2/lib/mfl.js");
 
 const OLD = [{team: "Old"}];
@@ -147,4 +147,53 @@ test("a read cut off before MFL answered is told from MFL's answers and from v2'
     // v2's own mistake, a TypeError too
     assert.equal(cutOff(new TypeError("Cannot read properties of undefined (reading 'week')")), false);
     assert.equal(cutOff(null), false);
+});
+
+test("a load cut off is tried once more after a wait; MFL's answers, and a load no longer wanted, aren't", async () => {
+    mock.timers.enable({apis: ["setTimeout"]});
+    const warn = console.warn;
+    console.warn = () => {};
+    try {
+        const loads = (...results) => {
+            const load = () => {
+                load.calls += 1;
+                const next = results.shift();
+                return next instanceof Error ? Promise.reject(next) : Promise.resolve(next);
+            };
+            load.calls = 0;
+            return load;
+        };
+        const settle = async (promise) => {
+            const result = promise.then((value) => ({value}), (error) => ({error}));
+            for (let i = 0; i < 5; i++) {
+                await Promise.resolve();
+            }
+            mock.timers.tick(CUT_OFF_RETRY);
+            return result;
+        };
+        const once = loads(new TypeError("Load failed"), "drawn");
+        assert.deepEqual(await settle(retryCutOff(once, {what: "test"})), {value: "drawn"});
+        assert.equal(once.calls, 2);
+        const twice = loads(new TypeError("Load failed"), new TypeError("Load failed"));
+        assert.equal((await settle(retryCutOff(twice, {what: "test"}))).error.message, "Load failed");
+        assert.equal(twice.calls, 2);
+        // MFL answered: shown at once
+        const answered = loads(Object.assign(new Error("Couldn't load rosters: HTTP 500"), {status: 500}), "never");
+        assert.match((await settle(retryCutOff(answered, {what: "test"}))).error.message, /HTTP 500/);
+        assert.equal(answered.calls, 1);
+        // the member moved on during the wait
+        let wanted = true;
+        const left = loads(new TypeError("Load failed"), "never");
+        const leaving = retryCutOff(left, {what: "test", still: () => wanted});
+        for (let i = 0; i < 5; i++) {
+            await Promise.resolve();
+        }
+        wanted = false;
+        mock.timers.tick(CUT_OFF_RETRY);
+        assert.equal((await leaving.then(() => null, (error) => error)).message, "Load failed");
+        assert.equal(left.calls, 1);
+    } finally {
+        console.warn = warn;
+        mock.timers.reset();
+    }
 });
