@@ -112,6 +112,10 @@ SCREENS = {
     "scores-backups": (f"/2026/home/{LEAGUE}#league-scores", {"settings": BACKUPS_ON, "now": "2026-10-18T17:10:00Z", "details": (
         "Week 6: If A.J. Brown is out, start Elic Ayomanor; if Lamar Jackson is out, start Aaron Rodgers; if Xavier Worthy is out, start Tre Harris.",
         "Jackson, Lamar BAL QB, Brown, A.J. NEP WR, Worthy, Xavier KCC WR")}),
+    # the week's first live scoring read cut off before MFL answers (a phone's signal dropping), then
+    # the first two: Scores tries once more, so the first shows the cards and the second Retry
+    "scores-cut-once": (f"/2026/home/{LEAGUE}#league-scores", {"cut": 1}),
+    "scores-cut-twice": (f"/2026/home/{LEAGUE}#league-scores", {"cut": 2}),
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
     "power": (f"/2026/home/{LEAGUE}#league-power", {}),
     "winners": (f"/2026/home/{LEAGUE}#league-winners", {}),
@@ -400,6 +404,8 @@ class Mfl:
         self.claims = pending if isinstance(pending, list) else [pending]
         # the exports that can no longer be read
         self.unread = set()
+        # live scoring reads cut off so far (swaps["cut"])
+        self.cuts = 0
 
     def team(self, rosters=None):
         return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
@@ -764,6 +770,9 @@ class Mfl:
             # MFL asking v2 to wait on every export: Moves' screens fall back to MFL's own page
             if self.swaps.get("waits"):
                 return route.fulfill(status=429, body="")
+            if query.get("TYPE") == ["liveScoring"] and self.cuts < self.swaps.get("cut", 0):
+                self.cuts += 1
+                return route.abort()
             trades_made = query.get("TYPE") == ["transactions"] and query.get("TRANS_TYPE") == ["TRADE"]
             if (self.offline and query.get("TYPE") == ["rosters"] or query.get("TYPE", [""])[0] in self.unread
                     or trades_made and self.moves == "taken-unread"):
@@ -886,7 +895,7 @@ def explore(job):
     ref, name, width = job
     site = Site(ref)
     # a screen where MFL keeps what moves change is there for its moves: only its seeds run
-    seeds_only = "moves" in SCREENS[name][1]
+    seeds_only = "moves" in SCREENS[name][1] or "cut" in SCREENS[name][1]
     out = {}
     start = time.time()
     label = lambda path: f"{name} {width} " + " > ".join(f"{s['sig']}#{s['index']}" for s in path)
@@ -1014,7 +1023,8 @@ def outcome(html):
 
 def check(found):
     """each failure-mode screen's seeds, at each width: the last step of each must have made a move
-    (one that stops short means a seed no longer reaches it) and say what OUTCOMES expects"""
+    (one that stops short means a seed no longer reaches it) and say what OUTCOMES expects; and
+    Scores with its reads cut off, as the scores-cut-* screens say"""
     wrong = 0
     for name, (url, swaps) in SCREENS.items():
         how = swaps.get("moves")
@@ -1033,6 +1043,17 @@ def check(found):
                 if problem:
                     wrong += 1
                     print(f"## {key}: {problem}")
+    # Scores with its reads cut off: once is tried again and drawn, twice says so with Retry
+    for name, (url, swaps) in SCREENS.items():
+        if "cut" not in swaps:
+            continue
+        for width in WIDTHS:
+            html = (found.get(f"{name} {width} ") or {}).get("html") or ""
+            failed = "Couldn’t load scores." in html
+            drawn = "fuad-cards" in html
+            if (failed or not drawn) if swaps["cut"] == 1 else not failed:
+                wrong += 1
+                print(f"## {name} {width}: " + ("says it couldn't load" if failed else "shows no cards" if swaps["cut"] == 1 else "doesn't say it couldn't load"))
     print(f"\n{len(found)} steps, {wrong} outcomes not as expected")
     return wrong
 
@@ -1060,7 +1081,7 @@ def main():
         return
     head = build_working_copy() if args.built else None
     if args.command == "check":
-        moves = {name for name, (url, swaps) in SCREENS.items() if "moves" in swaps}
+        moves = {name for name, (url, swaps) in SCREENS.items() if "moves" in swaps or "cut" in swaps}
         if only and not only & moves:
             parser.error(f"none of these screens has moves of its own (such as {', '.join(sorted(moves)[:3])})")
         sys.exit(1 if check(record([head], (only or moves) & moves)[head]) else 0)
