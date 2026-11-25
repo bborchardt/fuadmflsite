@@ -125,7 +125,7 @@ function teamLink(view) {
 
 // v2's Home on the home page, drawn at once with the league still loading. The frame shows it when
 // Home is the current view (`fuad-home-on`); MFL's tabs stay underneath for the other home page tabs.
-function startHome(context, league, {beta, inBeta, drawn}) {
+function startHome(context, league, {beta, inBeta, drawn, dataBase}) {
     const franchiseId = window.franchise_id || null;
     const view = viewLinks(context, franchiseId);
     return import("./home.js").then(({drawHome}) => drawn(drawHome({
@@ -142,7 +142,8 @@ function startHome(context, league, {beta, inBeta, drawn}) {
             team: teamLink(view)
         },
         inBeta,
-        beta
+        beta,
+        dataBase
     }).shown));
 }
 
@@ -224,7 +225,7 @@ export async function start({dataBase, beta = null, inBeta = null, onTrouble = (
             loading = null;
         }
     };
-    const homeShown = whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn})).catch((error) => {
+    const homeShown = whenShown("fuad-home-on").then(() => startHome(context, league, {beta, inBeta, drawn, dataBase})).catch((error) => {
         console.error("[fuad] couldn't draw Home:", error);
         // MFL's chat may be what's left, so it reads again; restarted only if it was stopped, as a
         // timer still pending would start a second one

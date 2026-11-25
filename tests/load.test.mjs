@@ -1,5 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {rookieBaselines} from "../site/v2/lib/rules.js";
 import {contractProblem, draftResultsXml, matchOwner, matchPlayer, planAuction, planRookies, planSend, plainName, readAuction, readRookies, rosterSteps, salariesXml} from "../site/v2/lib/load.js";
 
 const tsv = (rows) => rows.map((row) => row.join("\t")).join("\n");
@@ -121,14 +122,14 @@ test("a rookie send: the same player picked twice is a conflict, and a draft MFL
     const rosters = {franchise: [{id: "0001", player: []}, {id: "0002", player: []}]};
     const read = {kind: "rookies", sheet: [{owner: "Ann", name: "Josh Johnson"}, {owner: "Bob", name: "Josh Johnson"}]};
     const chosen = {owners: new Map([["Ann", "0001"], ["Bob", "0002"]]), players: new Map([["0:Josh Johnson", "9"], ["1:Josh Johnson", "9"]])};
-    assert.deepEqual(planSend(read, {chosen, rosters, players, teamCount: 2}).conflicts, [{id: "9", franchiseIds: ["0001", "0002"]}]);
+    assert.deepEqual(planSend(read, {chosen, rosters, players, teamCount: 2, baselines: rookieBaselines(null)}).conflicts, [{id: "9", franchiseIds: ["0001", "0002"]}]);
     const once = {...read, sheet: [read.sheet[0]]};
     const draft = {draftPick: [{round: "01", pick: "01", franchise: "0001", player: "9"}]};
-    const sent = planSend(once, {chosen, rosters, players, teamCount: 2, draft});
+    const sent = planSend(once, {chosen, rosters, players, teamCount: 2, draft, baselines: rookieBaselines(null)});
     assert.equal(sent.loadDraft, false);
     // still to load onto the roster at the scale's salary
     assert.deepEqual([sent.add.map((pick) => pick.id), sent.salaries], [["9"], [{id: "9", salary: 10, years: 0}]]);
-    assert.equal(planSend(once, {chosen, rosters, players, teamCount: 2}).loadDraft, true);
+    assert.equal(planSend(once, {chosen, rosters, players, teamCount: 2, baselines: rookieBaselines(null)}).loadDraft, true);
 });
 
 test("the rookie tab: its Pick, Owner and Player columns in pick order, on the rookie scale", () => {
@@ -140,7 +141,7 @@ test("the rookie tab: its Pick, Owner and Player columns in pick order, on the r
         ["Sam Roush", "", "", "", "", "", "", "", "", "", "", "", ""]
     ]);
     assert.deepEqual(readRookies(sheet).map(({owner, name}) => [owner, name]), [["Ann", "Josh Johnson"], ["Bob", "Lamar Jackson"], ["Bob", "AJ Brown"]]);
-    const picks = planRookies({picks: [{franchiseId: "0001", id: "9"}, {franchiseId: "0002", id: "1"}, {franchiseId: "0002", id: "3"}], teams: 2, players});
+    const picks = planRookies({picks: [{franchiseId: "0001", id: "9"}, {franchiseId: "0002", id: "1"}, {franchiseId: "0002", id: "3"}], teams: 2, players, baselines: rookieBaselines(null)});
     // WR $10 first overall; QB $6 at the second pick, 20% less: $5; WR at the third: $6
     assert.deepEqual(picks.map(({round, pick, salary}) => [round, pick, salary]), [[1, 1, 10], [1, 2, 5], [2, 1, 6]]);
     assert.equal(draftResultsXml(picks), '<draftResults><draftUnit unit="LEAGUE" round1DraftOrder="0001,0002,">'

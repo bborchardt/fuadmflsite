@@ -81,6 +81,7 @@ roster checks run until the championship is over.
 | Setting | Value | Meaning |
 |---|---|---|
 | `rookieScale.firstPick` | QB 6, RB 10, WR 10, TE 4, PK 1 | The first pick's salary at each position. Its positions are the ones the rookie scale and the franchise tag cover, in this order. The scale table shows picks until every position pays $1, and the draft has the rounds MFL's draft picks have. |
+| `rookieScale.firstPickFromRank` | (not set) | In place of `firstPick`: the first pick's salary at each position is the salary at this rank among the position's at the trade deadline before the draft, e.g. `{"QB": 15, "RB": 20, "WR": 35, "TE": 15, "PK": 15}`, the 15th-highest QB salary and so on, $1 where the position had fewer. Its positions and their order are taken as `firstPick`'s are. It comes from the same snapshot as franchise salaries, which then keeps salaries down to the deepest rank, and falls back as they do: before the deadline, and where there's no snapshot, Rosters › Draft shows the scale from salaries as they stand, saying so, as does Load results for the draft. A league sets one of the two; setting either drops the other it would inherit. |
 | `rookieScale.dropPerPick` | 0.20 | Each later pick costs this much less than the one before (0.20 is 80% of it), rounded, never under $1. |
 
 ## Adds
@@ -129,7 +130,7 @@ Not in the file either:
 These follow MFL's own settings, so they're not in the file: the teams, the divisions, the
 standings order, the scoring, the starting lineup's positions (in MFL's order on Add, Drop, Trades,
 Lineup, Scores, League's chart and Rosters › Players; team rosters, the franchise tag and the
-rookie scale follow `rookieScale.firstPick`'s), the
+rookie scale follow `rookieScale.firstPick`'s, or `firstPickFromRank`'s), the
 season's weeks, the number of bid groups and the draft picks.
 
 ## Not supported yet

@@ -243,26 +243,28 @@ export function sortPlayers(list, key, direction = FIRST_DIRECTION[key]) {
 
 // ---- Draft ----
 
+// `baselines` throughout: each position's first-pick salary (rules.js rookieBaselines)
+
 // what the scale pays at an overall pick, by position (POSITIONS' order)
-export const scaleAt = (pick) => POSITIONS.map((position) => rookieSalary(position.rookieBaseline, pick));
+export const scaleAt = (pick, baselines) => POSITIONS.map((position) => rookieSalary(baselines[position.code], pick));
 
 // the picks the scale table shows: through the first that pays $1 at every position
-export function scalePicks() {
+export function scalePicks(baselines) {
     let last = 1;
-    while (last < 100 && !scaleAt(last).every((value) => value === 1)) {
+    while (last < 100 && !scaleAt(last, baselines).every((value) => value === 1)) {
         last += 1;
     }
     return Array.from({length: last}, (_, i) => i + 1);
 }
 
-export function scaleText(pick) {
-    const values = scaleAt(pick);
+export function scaleText(pick, baselines) {
+    const values = scaleAt(pick, baselines);
     return values.every((value) => value === 1) ? "$1 at every position" : POSITIONS.map((position, i) => `${position.code} $${values[i]}`).join(" · ");
 }
 
 // "$1–8": the lowest and highest the scale pays at an overall pick
-export function scaleRange(pick) {
-    const values = scaleAt(pick);
+export function scaleRange(pick, baselines) {
+    const values = scaleAt(pick, baselines);
     const low = Math.min(...values);
     const high = Math.max(...values);
     return low === high ? `$${low}` : `$${low}–${high}`;

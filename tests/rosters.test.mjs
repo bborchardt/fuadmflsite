@@ -2,7 +2,10 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {buildLeague, draftedIds, lengthDuePenalty, markContracts, playersFromExport} from "../site/v2/lib/league.js";
-import {SALARY_CAP} from "../site/v2/lib/rules.js";
+import {SALARY_CAP, rookieBaselines} from "../site/v2/lib/rules.js";
+
+// FUAD's rookie scale, a fixed amount for each position's first pick
+const FIXED = rookieBaselines(null);
 import leagueSettings from "../site/v2/lib/settings.js";
 import {playoffPicture, standings} from "../site/v2/ui/league-model.js";
 import {
@@ -97,9 +100,9 @@ test("in the offseason a player without years left is a restricted free agent", 
 });
 
 test("the rookie scale by overall pick", () => {
-    assert.equal(scaleText(1), "QB $6 · RB $10 · WR $10 · TE $4 · PK $1");
-    assert.equal(scaleRange(1), "$1–10");
-    assert.equal(scaleText(15), "$1 at every position");
+    assert.equal(scaleText(1, FIXED), "QB $6 · RB $10 · WR $10 · TE $4 · PK $1");
+    assert.equal(scaleRange(1, FIXED), "$1–10");
+    assert.equal(scaleText(15, FIXED), "$1 at every position");
 });
 
 test("next year's order: the four out of the playoffs worst first, then the seeds unnumbered", () => {
@@ -239,10 +242,10 @@ test("other leagues: draft order by the standings alone, and a finish without a 
 });
 
 test("the scale table runs to the first pick paying $1 at every position; the rounds are MFL's", () => {
-    const rows = scalePicks();
+    const rows = scalePicks(FIXED);
     assert.equal(rows.length, 10);
-    assert.equal(scaleText(rows.length), "$1 at every position");
-    assert.notEqual(scaleText(rows.length - 1), "$1 at every position");
+    assert.equal(scaleText(rows.length, FIXED), "$1 at every position");
+    assert.notEqual(scaleText(rows.length - 1, FIXED), "$1 at every position");
     const picks = {franchise: [{id: "0001", futureDraftPick: [1, 2, 3].map((round) => ({year: "2027", round: String(round), originalPickFor: "0001"}))}]};
     assert.deepEqual(picksOf("0001", picks, {names: new Map(), nextYear: 2027})[0].rows.map((row) => row.round), [1, 2, 3]);
 });

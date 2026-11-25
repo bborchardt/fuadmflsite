@@ -32,7 +32,29 @@ export const PREVIOUS_FRANCHISE_UNTIL_WEEK = 1;
 
 export const ROOKIE_DECAY = 1 - settings.rookieScale.dropPerPick;
 
-export const POSITIONS = Object.entries(settings.rookieScale.firstPick).map(([code, rookieBaseline]) => ({code, rookieBaseline}));
+// rookieScale.firstPickFromRank: each position's first pick is paid the salary at that rank among
+// the position's at the trade deadline before the draft (a franchise snapshot, lib/franchise.js)
+export const ROOKIE_RANKED = Boolean(settings.rookieScale.firstPickFromRank);
+
+// each {code, rookieBaseline} (firstPick) or {code, rookieRank} (firstPickFromRank)
+export const POSITIONS = ROOKIE_RANKED
+    ? Object.entries(settings.rookieScale.firstPickFromRank).map(([code, rookieRank]) => ({code, rookieRank}))
+    : Object.entries(settings.rookieScale.firstPick).map(([code, rookieBaseline]) => ({code, rookieBaseline}));
+
+// how many salaries a position's snapshot keeps: the franchise tag's, or the rookie scale's deepest rank
+export const SNAPSHOT_DEPTH = Math.max(FRANCHISE_PLAYER_COUNT, ...POSITIONS.map((position) => position.rookieRank || 0));
+
+// each position's first-pick salary, by code: firstPick's, or the salary at its rank in `topSalaries`
+// (franchiseTopSalaries' or a snapshot's), $1 where the position had fewer; null when the scale is
+// ranked and there are none
+export function rookieBaselines(topSalaries) {
+    if (ROOKIE_RANKED && !topSalaries) {
+        return null;
+    }
+    return Object.fromEntries(POSITIONS.map((position) => [position.code, position.rookieRank
+        ? ((topSalaries[position.code] || [])[position.rookieRank - 1] || {salary: 1}).salary
+        : position.rookieBaseline]));
+}
 
 // The league's positions in MFL's order, from its `league` export's starting lineup; the rookie
 // scale's without it
@@ -80,14 +102,15 @@ export function franchiseTopSalaries(rosteredPlayers) {
             continue;
         }
         const list = top[player.nflPosition] || (top[player.nflPosition] = []);
-        if (list.length < FRANCHISE_PLAYER_COUNT) {
+        if (list.length < SNAPSHOT_DEPTH) {
             list.push({fullName: player.fullName, salary: player.salary});
         }
     }
     return top;
 }
 
+// the top FRANCHISE_PLAYER_COUNT's average, of a list that may hold more (SNAPSHOT_DEPTH)
 export function franchiseSalary(topPlayers) {
-    const total = (topPlayers || []).reduce((sum, player) => sum + player.salary, 0);
+    const total = (topPlayers || []).slice(0, FRANCHISE_PLAYER_COUNT).reduce((sum, player) => sum + player.salary, 0);
     return Math.round(total / FRANCHISE_PLAYER_COUNT);
 }

@@ -123,6 +123,9 @@ SCREENS = {
     "rosters-teams": (f"/2026/home/{LEAGUE}#rosters-teams", {}),
     "rosters-my-team": (f"/2026/home/{LEAGUE}#rosters-my-team", {}),
     "rosters-draft": (f"/2026/home/{LEAGUE}#rosters-draft", {}),
+    # a rookie scale set by salary rank (rookieScale.firstPickFromRank), as a test league has it: from
+    # the salaries as they stand, there being no snapshots
+    "rosters-draft-ranked": (f"/2026/home/{LEAGUE}#rosters-draft", {"settings": 'window.fuadSettings = {extends: "48571", rookieScale: {firstPickFromRank: {QB: 15, RB: 20, WR: 35, TE: 15, PK: 15}}};'}),
     # MFL asking v2 to wait on every export, so each move's screen falls back to MFL's page, which a
     # member must still be able to use; drawn in the league's skin, as MFL's page relies on its
     # responsive stylesheet (IR's rows have a desktop and a phone column, one of them hidden)
