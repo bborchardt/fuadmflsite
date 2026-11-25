@@ -10,7 +10,9 @@ import data from "./settings-data.js";
 export const ZONES = {ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu", GMT: "UTC"};
 const CHOICES = {timeZone: Object.keys(ZONES), "playoffs.wildcardsBy": ["allPlay", "standings"], draftOrder: ["playoffFinish", "standings"]};
 // taken whole: its positions are the ones a league uses
-const WHOLE = ["rookieScale.firstPick"];
+const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
+// a league has one of each pair: setting either drops the other it would otherwise inherit
+const EITHER = {"rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick"};
 const LISTS = {
     "payouts.places": (item) => isAmount(item) && item <= 1,
     renumberedFranchises: (item) => isObject(item) && typeof item.was === "string" && typeof item.now === "string" && isAmount(item.through)
@@ -44,6 +46,9 @@ function merged(base, over, path = "") {
     Object.keys(over).forEach((name) => {
         const here = path ? `${path}.${name}` : name;
         result[name] = isObject(over[name]) && isObject(base[name]) && !WHOLE.includes(here) ? merged(base[name], over[name], here) : over[name];
+        if (EITHER[here]) {
+            delete result[EITHER[here]];
+        }
     });
     return result;
 }
@@ -55,6 +60,10 @@ function fault(path, value, model) {
     }
     if (CHOICES[path] && !CHOICES[path].includes(value)) {
         return `must be one of ${CHOICES[path].join(", ")}`;
+    }
+    if (path === "rookieScale.firstPickFromRank") {
+        return isObject(value) && Object.keys(value).length && Object.values(value).every((rank) => Number.isInteger(rank) && rank >= 1)
+            ? null : "must name each position's rank, a whole number from 1";
     }
     if (WHOLE.includes(path)) {
         return isObject(value) && Object.keys(value).length && Object.values(value).every(isAmount) ? null : "must name each position's amount";
@@ -79,7 +88,7 @@ function checked(header, base, path = "") {
     const problems = [];
     Object.keys(header).forEach((name) => {
         const here = path ? `${path}.${name}` : name;
-        if (!has(base, name)) {
+        if (!has(base, name) && !(EITHER[here] && has(base, EITHER[here]))) {
             problems.push(`${here} isn't a setting`);
         } else if (isObject(base[name]) && !WHOLE.includes(here)) {
             if (isObject(header[name])) {

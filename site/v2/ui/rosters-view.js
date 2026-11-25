@@ -1,7 +1,7 @@
 // What Rosters draws, as HTML: My team and each team's page, Teams, Players and Draft, from what
 // rosters.js loads (rosters-model.js's sheets, pool and board).
 
-import {POSITIONS, ROSTER_MAX, SALARY_CAP, franchiseSalary, rookieSalary} from "../lib/rules.js";
+import {FRANCHISE_PLAYER_COUNT, POSITIONS, ROOKIE_RANKED, ROSTER_MAX, SALARY_CAP, franchiseSalary, rookieBaselines, rookieSalary} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {STAR} from "./watch.js";
 import {historyLine, titles, versusLine} from "./history-model.js";
@@ -109,7 +109,7 @@ export function chipRow(label, names, chosen, key, extra = "") {
 // ---- Draft ----
 
 export function tagsPanel(view, year) {
-    const tags = POSITIONS.map((position) => ({position: position.code, top: view.topSalaries[position.code] || []}))
+    const tags = POSITIONS.map((position) => ({position: position.code, top: (view.topSalaries[position.code] || []).slice(0, FRANCHISE_PLAYER_COUNT)}))
         .map((tag) => ({...tag, price: franchiseSalary(tag.top)}));
     return `<section class="fuad-panel" aria-labelledby="fuad-tags">
         <h2 class="fuad-panel-heading" id="fuad-tags">${year} franchise tags</h2>
@@ -149,7 +149,8 @@ export function orderPanel(order, year, {final}) {
     </section>`;
 }
 
-export function boardPanel(board, {year, viewer, before, open}) {
+// `baselines` (rules.js rookieBaselines) null: the scale isn't known, so a pick shows none
+export function boardPanel(board, {year, viewer, before, open, baselines}) {
     return `<section class="fuad-panel" aria-labelledby="fuad-board">
         <h2 class="fuad-panel-heading" id="fuad-board">${year} rookie draft</h2>
         <div class="fuad-rounds" style="--fuad-picks: ${Math.max(0, ...board.map((round) => round.picks.length))}">${board.map((round) => `<div class="fuad-round">
@@ -157,35 +158,62 @@ export function boardPanel(board, {year, viewer, before, open}) {
             <ul class="fuad-rows fuad-board-picks" id="fuad-round-${round.round}"${open(round.round) ? "" : " hidden"}>${round.picks.map((pick) => `<li class="${pick.team === viewer ? "fuad-row-mine" : ""}">
                 <span class="fuad-meta">${esc(pick.number)}</span>
                 ${before
-                    ? `<span class="fuad-row-text"><span class="fuad-row-title">${teamLink(pick.team, pick.teamName)}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span><span class="fuad-meta">${esc(scaleRange(pick.overall))}</span>`
+                    ? `<span class="fuad-row-text"><span class="fuad-row-title">${teamLink(pick.team, pick.teamName)}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span><span class="fuad-meta">${baselines ? esc(scaleRange(pick.overall, baselines)) : ""}</span>`
                     : `<span class="fuad-row-text"><span class="fuad-row-title">${pick.player ? `<button type="button" class="fuad-name" data-player="${esc(pick.player.id)}">${esc(pick.player.name)}</button> <span class="fuad-meta">${esc(pick.player.position)}</span>` : "—"}</span><span class="fuad-meta">${teamLink(pick.team, pick.teamName)}</span></span><span class="fuad-num">${pick.salary === null ? "—" : esc(money(pick.salary))}</span>`}
             </li>`).join("")}</ul>
         </div>`).join("")}</div>
     </section>`;
 }
 
-export function myPicksPanel(board, {viewer, year}) {
+export function myPicksPanel(board, {viewer, year, baselines}) {
     const mine = board.flatMap((round) => round.picks).filter((pick) => pick.team === viewer);
     return `<section class="fuad-panel" aria-labelledby="fuad-my-picks">
         <h2 class="fuad-panel-heading" id="fuad-my-picks">Your ${year} picks</h2>
         ${mine.length ? `<ul class="fuad-rows fuad-my-picks">${mine.map((pick) => `<li><span class="fuad-pick-number">${esc(pick.number)}</span>
-            <span class="fuad-row-text"><span>${esc(scaleText(pick.overall))}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span></li>`).join("")}</ul>`
+            <span class="fuad-row-text"><span>${baselines ? esc(scaleText(pick.overall, baselines)) : ""}</span>${pick.from ? `<span class="fuad-caution">from ${esc(pick.from)}</span>` : ""}</span></li>`).join("")}</ul>`
             : '<p class="fuad-muted fuad-empty">No picks this year.</p>'}
     </section>`;
 }
 
-export function scalePanel() {
-    const rows = scalePicks();
+// `note`: where a ranked scale's first picks come from (scaleNote)
+export function scalePanel(baselines, note = "") {
+    if (!baselines) {
+        return `<section class="fuad-panel fuad-scale" aria-labelledby="fuad-scale">
+        <h2 class="fuad-panel-heading" id="fuad-scale">Rookie scale</h2>
+        <p class="fuad-muted fuad-empty">Couldn’t load the trade deadline salaries the rookie scale is set from.</p>
+    </section>`;
+    }
+    const rows = scalePicks(baselines);
+    const said = note ? `<p class="fuad-meta fuad-scale-note">${esc(note)}</p>` : "";
     return `<section class="fuad-panel fuad-scale" aria-labelledby="fuad-scale">
         <button type="button" class="fuad-scale-toggle fuad-phone-only" aria-expanded="false" aria-controls="fuad-scale-table">
-            <span class="fuad-panel-heading" id="fuad-scale">Rookie scale</span><span class="fuad-meta fuad-scale-summary">Pick 1: ${esc(scaleText(1))}</span>
+            <span class="fuad-panel-heading" id="fuad-scale">Rookie scale</span><span class="fuad-meta fuad-scale-summary">Pick 1: ${esc(scaleText(1, baselines))}</span>
         </button>
         <h2 class="fuad-panel-heading fuad-desktop-only">Rookie scale</h2>
-        <div class="fuad-table-scroll fuad-scale-table" id="fuad-scale-table" hidden><table class="fuad-table">
+        <div class="fuad-table-scroll fuad-scale-table" id="fuad-scale-table" hidden>${said}<table class="fuad-table">
             <thead><tr><th scope="col">Pick</th>${POSITIONS.map((position) => `<th scope="col" class="fuad-num">${position.code}</th>`).join("")}</tr></thead>
-            <tbody>${rows.map((pick) => `<tr><th scope="row">${pick}</th>${POSITIONS.map((position) => `<td class="fuad-num">$${rookieSalary(position.rookieBaseline, pick)}</td>`).join("")}</tr>`).join("")}</tbody>
+            <tbody>${rows.map((pick) => `<tr><th scope="row">${pick}</th>${POSITIONS.map((position) => `<td class="fuad-num">$${rookieSalary(baselines[position.code], pick)}</td>`).join("")}</tr>`).join("")}</tbody>
         </table></div>
     </section>`;
+}
+
+// A ranked scale's source, by franchiseView's phase (tags): the deadline before the draft's
+// snapshot, or salaries as they stand where there's none yet. "" for a scale of fixed amounts.
+export function scaleNote(tags, season) {
+    if (!ROOKIE_RANKED || !tags) {
+        return "";
+    }
+    const deadline = tags.phase === "previous" ? season - 1 : season;
+    const ranks = POSITIONS.map((position) => `${position.code}${position.rookieRank}`);
+    const from = `Pick 1 is paid the ${ranks.slice(0, -1).join(", ")}${ranks.length > 1 ? " and " : ""}${ranks[ranks.length - 1]} salaries`;
+    if (tags.phase === "projected") {
+        return `${from} as they stand now, until the ${deadline} trade deadline sets them.`;
+    }
+    if (tags.missing) {
+        return `${from} as they stand now: there’s no snapshot from the ${deadline} trade deadline.`;
+    }
+    const short = POSITIONS.filter((position) => (tags.topSalaries[position.code] || []).length < position.rookieRank).map((position) => position.code);
+    return `${from} at the ${deadline} trade deadline.${short.length ? ` ${short.join(", ")} had fewer under contract, so ${short.length > 1 ? "they start" : "it starts"} at $1.` : ""}`;
 }
 
 // ---- A team's page and Teams ----
@@ -339,24 +367,27 @@ export function playerChips(state, {positions, yearChips, viewer, watched}) {
 
 // the site's own draft: before it, the board (and the viewer's picks); after, next year's order and
 // the results, whose rounds start closed on phones in season. `tags`: franchise tag prices, if had.
+// The rookie scale is the next draft's, set from the same deadline as `tags`: a ranked one isn't known
+// without them.
 export function draftMarkup({board, before, tags, order, viewer, season, phone}) {
     const done = drafted(board);
     const tagYear = tags && tags.phase === "previous" ? season : season + 1;
+    const baselines = rookieBaselines(tags ? tags.topSalaries : null);
     const parts = [];
     if (tags && !(before && done)) {
         parts.push(tagsPanel(tags, tagYear));
     }
     if (before && !done) {
         if (viewer) {
-            parts.push(myPicksPanel(board, {viewer, year: season}));
+            parts.push(myPicksPanel(board, {viewer, year: season, baselines}));
         }
-        parts.push(boardPanel(board, {year: season, viewer, before: true, open: () => true}));
+        parts.push(boardPanel(board, {year: season, viewer, before: true, open: () => true, baselines}));
     } else {
         if (!before && order) {
             parts.push(orderPanel(order.rows, season + 1, {final: order.final}));
         }
-        parts.push(boardPanel(board, {year: season, viewer, before: false, open: (round) => !before ? !phone : round === 1}));
+        parts.push(boardPanel(board, {year: season, viewer, before: false, open: (round) => !before ? !phone : round === 1, baselines}));
     }
-    parts.push(scalePanel());
+    parts.push(scalePanel(baselines, scaleNote(tags, season)));
     return parts.join("");
 }

@@ -275,7 +275,8 @@ function drawBoard(mount, {context, loggedIn, exp, boardHref, threadHref, refres
 // `league()` resolves to the league model (app.js), with `raw` holding the exports it was built from.
 // `readings(league)` resolves to the contract lengths read from the board, or null. Resolves to
 // whether League alerts, which hold the beta's way back, were drawn.
-export function drawHome({context, franchiseId, league, readings = () => Promise.resolve(null), links, inBeta = null, beta = null}) {
+// `dataBase`: where the published franchise snapshots are (Load results' ranked rookie scale)
+export function drawHome({context, franchiseId, league, readings = () => Promise.resolve(null), links, inBeta = null, beta = null, dataBase = null}) {
     const member = Boolean(franchiseId && franchiseId !== "0000");
     const loggedIn = Boolean(franchiseId);
     const base = `${window.location.origin}/${context.season}`;
@@ -454,7 +455,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 const button = event.target.closest(".fuad-load-open");
                 if (button) {
                     Promise.all([league(), import("./load-form.js")])
-                        .then(([built, form]) => form.openLoadForm({context, built, opener: button}))
+                        .then(([built, form]) => form.openLoadForm({context, built, opener: button, dataBase}))
                         .catch((error) => console.warn("[fuad] couldn't open Load results:", error));
                 }
             });

@@ -5,7 +5,7 @@
 // rookie tab's Pick, Owner and Player columns are the draft, in pick order. Players are named as
 // people write them ("AJ Brown", "Marvin Harrison Jr."); MFL names them "Brown, A.J.".
 
-import {rookieSalary, POSITIONS} from "./rules.js";
+import {rookieSalary} from "./rules.js";
 import {asArray, salariesImportXml} from "./mfl.js";
 import settings from "./settings.js";
 import {SUFFIXES, withoutAccents} from "./names.js";
@@ -192,17 +192,16 @@ export function rosterSteps({rosters, release = [], add = []}) {
     return steps;
 }
 
-const baseline = (position) => (POSITIONS.find((entry) => entry.code === position) || {rookieBaseline: 1}).rookieBaseline;
-
 // The rookie draft's picks for MFL, `picks` [{franchiseId, id}] in order, `teams` how many to a
 // round: [{round, pick, franchiseId, id, salary}], each on the rookie scale by overall pick
-// (rules.js) at 0 years
-export function planRookies({picks, teams, players}) {
+// (rules.js) at 0 years, from `baselines` (rules.js rookieBaselines); a position the scale doesn't
+// have starts at $1
+export function planRookies({picks, teams, players, baselines}) {
     return picks.map((entry, index) => ({
         ...entry,
         round: Math.floor(index / teams) + 1,
         pick: (index % teams) + 1,
-        salary: rookieSalary(baseline((players.get(entry.id) || {}).position), index + 1)
+        salary: rookieSalary(baselines[(players.get(entry.id) || {}).position] || 1, index + 1)
     }));
 }
 
@@ -226,8 +225,8 @@ export function contractProblem({salary, years}) {
 // planAuction, its `clear` taking in any player an earlier send unloaded (`clearing`) whose salaries
 // step didn't go through, unless the sheet places him; or the rookie draft's picks, with what differs
 // from MFL's draft results, rosters and salaries. `chosen` maps the sheet's owners to teams and its
-// entries to players.
-export function planSend(read, {chosen, rosters, players, draft, teamCount, clearing = new Set()}) {
+// entries to players; `baselines`, the rookie scale's first picks (planRookies).
+export function planSend(read, {chosen, rosters, players, draft, teamCount, clearing = new Set(), baselines = null}) {
     if (read.kind === "auction") {
         const teams = read.sheet.map((team) => ({
             franchiseId: chosen.owners.get(team.owner),
@@ -246,7 +245,8 @@ export function planSend(read, {chosen, rosters, players, draft, teamCount, clea
         picks: read.sheet.map((pick, index) => ({franchiseId: chosen.owners.get(pick.owner), id: chosen.players.get(`${index}:${pick.name}`)})),
         // the league's teams, not the sheet's owners: a team that traded all its picks is still in the order
         teams: teamCount,
-        players
+        players,
+        baselines
     });
     const held = new Map(asArray(rosters.franchise).flatMap((team) => asArray(team.player).map((entry) => [entry.id, entry])));
     // MFL's import overwrites the picks it's sent and keeps the others (the clone, 3 Nov 2026)

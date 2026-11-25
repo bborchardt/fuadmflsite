@@ -116,7 +116,9 @@ gets it recorded twice.
 - **A missing franchise snapshot:** v1's Commish tab (as 0000, outside the beta) has a **Show
   franchise snapshot** button that shows the snapshot as text. Save that text as
   `franchise-<season>.json` (e.g. `franchise-2026.json`), commit it to the `league-data` branch's
-  `data/` folder, and the next run publishes it.
+  `data/` folder, and the next run publishes it. It has each position's top 5 salaries; a league
+  whose rookie scale is set by rank (`rookieScale.firstPickFromRank`, docs/settings.md) needs them
+  down to the deepest rank, added below in the same form, or a rank past the list pays $1.
 
 ## The devices form
 

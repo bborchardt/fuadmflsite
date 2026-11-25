@@ -26,19 +26,27 @@ async function loadSnapshot(season, dataBase) {
 
 const deadlineText = (date) => (date ? whenText(Math.floor(date.getTime() / 1000)) : "the trade deadline");
 
+// as the league uses them for `season` (franchise tags, and its rookie draft's ranked scale): last
+// season's deadline snapshot, or live where there's none
+async function previousView(season, live, dataBase) {
+    const previous = await loadSnapshot(season - 1, dataBase);
+    if (previous) {
+        return {topSalaries: previous, phase: "previous", note: `Franchise salaries for ${season}, set at the ${season - 1} trade deadline.`};
+    }
+    return {topSalaries: live, phase: "previous", missing: true, note: `Projected franchise salaries. No snapshot from the ${season - 1} trade deadline was found.`};
+}
+
+const TEST_LEAGUE = "Projected franchise salaries, live: a test league has no trade deadline snapshots.";
+
 export async function franchiseView(season, league, dataBase) {
     const live = franchiseTopSalaries(league.rosteredPlayers);
     if (!leagueStatus.snapshots) {
-        return {topSalaries: live, phase: "projected", note: "Projected franchise salaries, live: a test league has no trade deadline snapshots."};
+        return {topSalaries: live, phase: "projected", note: TEST_LEAGUE};
     }
     const times = await kickoffs(season);
     const phase = franchisePhase(new Date(), times.start, times.deadline);
     if (phase === "previous") {
-        const previous = await loadSnapshot(season - 1, dataBase);
-        if (previous) {
-            return {topSalaries: previous, phase, note: `Franchise salaries for ${season}, set at the ${season - 1} trade deadline.`};
-        }
-        return {topSalaries: live, phase, missing: true, note: `Projected franchise salaries. No snapshot from the ${season - 1} trade deadline was found.`};
+        return previousView(season, live, dataBase);
     }
     if (phase === "final") {
         const final = await loadSnapshot(season, dataBase);
@@ -48,4 +56,11 @@ export async function franchiseView(season, league, dataBase) {
         return {topSalaries: live, phase, missing: true, note: `Provisional franchise salaries for ${season + 1}: the ${season} trade deadline snapshot hasn't been taken yet.`};
     }
     return {topSalaries: live, phase, note: `Projected franchise salaries for ${season + 1}, live until the trade deadline (${deadlineText(times.deadline)}).`};
+}
+
+// the salaries `season`'s rookie draft is paid from, whenever in the season it's loaded: franchiseView's
+// before week 1
+export async function draftView(season, league, dataBase) {
+    const live = franchiseTopSalaries(league.rosteredPlayers);
+    return leagueStatus.snapshots ? previousView(season, live, dataBase) : {topSalaries: live, phase: "projected", note: TEST_LEAGUE};
 }

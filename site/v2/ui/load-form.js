@@ -11,6 +11,8 @@ import {openDialog} from "./dialog.js";
 import {money} from "./format.js";
 import {esc} from "./html.js";
 import {readBack, send} from "./moves.js";
+import {ROOKIE_RANKED, rookieBaselines} from "../lib/rules.js";
+import {draftView} from "./franchise-view.js";
 
 const CLOSE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 // MFL asks for about a second between requests
@@ -170,7 +172,8 @@ async function loadRoster(context, franchiseId, ids, rosters) {
 
 // `built` is Home's league (lib/league.js): its players, franchises and the commissioner's league
 // export with owners' names
-export function openLoadForm({context, built, opener}) {
+// `dataBase`: the published franchise snapshots, which a ranked rookie scale is paid from
+export function openLoadForm({context, built, opener, dataBase}) {
     const players = built.boardContext.playerNames;
     const teams = new Map([...built.franchises].map(([id, franchise]) => [id, franchise.teamName]));
     const franchises = asArray(built.raw.league.franchises && built.raw.league.franchises.franchise);
@@ -179,6 +182,9 @@ export function openLoadForm({context, built, opener}) {
     // players unloaded whose salaries aren't cleared yet, kept across reads
     const clearing = new Set();
     const state = {kind: "auction", text: "", read: null, result: null, rosters: null, draft: null, busy: false, log: [], error: "", chosen: {owners: new Map(), players: new Map()}};
+    // the rookie scale's first picks (rules.js rookieBaselines); a ranked scale's are read with the
+    // draft's sheet, its note said where they're projected
+    const scale = {baselines: ROOKIE_RANKED ? null : rookieBaselines(null), note: ""};
 
     const choices = () => (state.read ? choicesNeeded(state.read, {players, teams, chosen: state.chosen}) : []);
 
@@ -193,7 +199,7 @@ export function openLoadForm({context, built, opener}) {
             ${needed.length ? `<div class="fuad-load-choices"><p class="fuad-load-note">Pick what these are on MFL:</p><ul class="fuad-rows">${needed.map((item) => `<li class="fuad-lengths-row"><span class="fuad-row-text">${esc(item.label)}</span>${item.options.length
                 ? `<select data-choice="${esc(item.key)}"><option value="">Pick</option>${item.options.map((option) => `<option value="${esc(option.value)}">${esc(option.text)}</option>`).join("")}</select>`
                 : `<span class="fuad-meta fuad-load-bad">${item.key.startsWith("bad:") ? "Fix the sheet and read again" : "Not on MFL: fix the spelling and read again"}</span>`}</li>`).join("")}</ul></div>` : ""}
-            ${state.result && !needed.length ? `<div class="fuad-load-preview">${previewMarkup(state.result, {players, teams, rosters: state.rosters})}</div>` : ""}
+            ${state.result && !needed.length ? `<div class="fuad-load-preview">${state.result.kind === "rookies" && scale.note ? `<p class="fuad-load-note fuad-load-bad">${esc(scale.note)}</p>` : ""}${previewMarkup(state.result, {players, teams, rosters: state.rosters})}</div>` : ""}
             ${state.log.length ? `<ul class="fuad-rows fuad-load-log" role="status">${state.log.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>` : ""}
             ${state.error ? `<p class="fuad-lengths-error" role="alert">${esc(state.error)}</p>` : ""}
             ${ready ? `<button type="button" class="fuad-cta fuad-load-apply"${state.busy ? " disabled" : ""}>${state.busy ? "Sending…" : "Send to MFL"}</button>` : ""}`;
@@ -224,10 +230,19 @@ export function openLoadForm({context, built, opener}) {
         try {
             state.rosters = await fresh("rosters");
             state.draft = state.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
+            if (state.kind === "rookies" && !scale.baselines) {
+                const view = await draftView(context.season, built, dataBase).catch((error) => {
+                    throw new Error(`Couldn’t load the trade deadline salaries the rookie scale is set from: ${error.message}`);
+                });
+                scale.baselines = rookieBaselines(view.topSalaries);
+                scale.note = view.missing || view.phase === "projected"
+                    ? `Salaries are projected from the rosters as they stand: ${view.missing ? `there’s no snapshot from the ${context.season - 1} trade deadline` : "a test league has no trade deadline snapshots"}.`
+                    : "";
+            }
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
-            state.result = choices().length || !state.read.sheet.length ? null : planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
+            state.result = choices().length || !state.read.sheet.length ? null : planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing, baselines: scale.baselines});
         } catch (error) {
-            state.error = `Couldn’t read MFL’s rosters: ${error.message}`;
+            state.error = error.message.startsWith("Couldn’t") ? error.message : `Couldn’t read MFL’s rosters: ${error.message}`;
         }
         state.busy = false;
         render();
