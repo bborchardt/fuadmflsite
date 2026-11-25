@@ -224,6 +224,10 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   would leave no way to it. Its "Couldn't load standings." has Basic view beside Retry, a link to
   the MFL page it replaces (`basicHref` in `ui/nav.js`) that the link rewriting leaves be, and is
   logged as an error. A panel showing a copy kept from before only warns.
+- **A check My alerts can't make is logged, not shown:** trade offers, bids, the lineup, the draft
+  or contract lengths MFL can't give leave that check's alerts out, as the member sees the same on
+  its screen, and log `[fuad] My alerts couldn't check trade offers` as an error, so the header's
+  devices form shows how often.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **The job tries what v2 reads each morning** (`jobs/mfl-check.mjs`), after its chores: each export
