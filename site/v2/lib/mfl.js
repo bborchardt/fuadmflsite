@@ -68,7 +68,8 @@ export async function fetchExport(url, section, {fetchImpl = fetch, init, check}
     try {
         response = await fetchImpl(url, init);
     } catch (error) {
-        throw new MflError(section, `network error (${error.message})`);
+        // `cutOff`: no answer came (ui/panel.js cutOff)
+        throw Object.assign(new MflError(section, `network error (${error.message})`), {cutOff: true});
     }
     if (!response.ok) {
         throw new MflError(section, httpStatus(response), response.status);

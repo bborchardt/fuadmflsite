@@ -10,6 +10,11 @@ import {TIME_ZONE, zoneLabel} from "../lib/zone.js";
 // MFL refusing a burst (HTTP 429), as against any other failure
 export const refused = (error) => Boolean(error && error.status === 429);
 
+// a read cut off before MFL answered (a phone's signal dropping, the app put away): fetchExport's, or
+// fetch's own rejection as each browser words it ("Load failed" on an iPhone)
+export const cutOff = (error) => Boolean(error && (error.cutOff
+    || error.name === "TypeError" && /^(?:Load failed|Failed to fetch|NetworkError when attempting to fetch resource\.?)$/.test(error.message)));
+
 // "Couldn't load standings." and Retry; when MFL asked to wait, Retry is off until the wait is over.
 // `basic`: the MFL page the view replaces (nav.js basicHref), as Basic view, so a member always has
 // a way on; the site's link rewriting leaves it be (frame.js).

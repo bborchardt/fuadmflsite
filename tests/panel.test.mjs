@@ -10,7 +10,8 @@ const items = new Map();
 window.localStorage = {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))};
 globalThis.window = window;
 globalThis.document = document;
-const {drawPanel, failedMarkup} = await import("../site/v2/ui/panel.js");
+const {cutOff, drawPanel, failedMarkup} = await import("../site/v2/ui/panel.js");
+const {fetchExport} = await import("../site/v2/lib/mfl.js");
 
 const OLD = [{team: "Old"}];
 const NEW = [{team: "New", teamIds: ["0001"]}];
@@ -127,4 +128,23 @@ test("loaded again (a screen shown again), a panel keeps what it shows until the
     assert.equal(bodyOf(mount).textContent, "second");
     assert.match(mount.querySelector(".fuad-as-of").textContent, /^As of /);
     assert.equal(mount.querySelector(".fuad-as-of").hidden, false);
+});
+
+test("a read cut off before MFL answered is told from MFL's answers and from v2's own errors", async () => {
+    // fetch's rejection, as Safari (an iPhone), Chrome and Firefox word it
+    for (const message of ["Load failed", "Failed to fetch", "NetworkError when attempting to fetch resource."]) {
+        assert.equal(cutOff(new TypeError(message)), true, message);
+    }
+    const failing = (thrown) => () => Promise.reject(thrown);
+    const exportError = (fetchImpl) => fetchExport("https://example.test/export", "liveScoring", {fetchImpl}).then(() => null, (error) => error);
+    const network = await exportError(failing(new TypeError("Load failed")));
+    assert.equal(network.message, "Couldn't load liveScoring: network error (Load failed)");
+    assert.equal(cutOff(network), true);
+    // MFL answered: an error page, a refusal, or something not JSON
+    assert.equal(cutOff(await exportError(async () => ({ok: false, status: 500, statusText: ""}))), false);
+    assert.equal(cutOff(await exportError(async () => ({ok: false, status: 429, statusText: ""}))), false);
+    assert.equal(cutOff(await exportError(async () => ({ok: true, json: async () => { throw new SyntaxError("Unexpected token <"); }}))), false);
+    // v2's own mistake, a TypeError too
+    assert.equal(cutOff(new TypeError("Cannot read properties of undefined (reading 'week')")), false);
+    assert.equal(cutOff(null), false);
 });
