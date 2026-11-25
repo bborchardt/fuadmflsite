@@ -37,7 +37,9 @@ export const SHAPES = {
         // the commissioner's lock and unlock, and MFL's own waiver runs, name no team
         withTypes(["FREE_AGENT", "BBID_WAIVER"], ["franchise", "transaction"]),
         withTypes(["WAIVER", "IR"], ["franchise"]),
-        withTypes(["TRADE"], ["franchise", "franchise2"])
+        withTypes(["TRADE"], ["franchise", "franchise2"]),
+        // each side, empty ("" or ",") for one that gave nothing; Trades tells an offer accepted by them
+        {path: ["transaction"], have: ["franchise1_gave_up", "franchise2_gave_up"], only: (item) => item.type === "TRADE"}
     ],
     // the contract and backup topics are found by subject
     messageBoard: [{path: ["thread"], need: ["id", "lastPostTime"], have: ["subject"], numbers: ["lastPostTime"]}],

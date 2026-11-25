@@ -6,7 +6,7 @@ import {withForms} from "./fixtures/forms.mjs";
 import {
     answerFields, assetView, bidsAfter, blockReason, zoneParts, zoneSeconds, deadlineWeek, expiryChoices, findOffer,
     kickoffText, lockedText, offersOf, pickedSummary, pickGroups, proposalFields, readPick, readProposal, readTradesPage, rosterNotices,
-    teamKickoffs, throughGames, tradeEffect
+    teamKickoffs, throughGames, tradeEffect, tradeMade
 } from "../site/v2/ui/trades-model.js";
 
 const at = (...utc) => Date.UTC(...utc) / 1000;
@@ -300,4 +300,24 @@ test("MFL's proposal page: each side's players and picks, its expiry, and only f
     assert.equal(proposal.expiry, 1793826000);
     assert.deepEqual(proposal.years, [2026, 2027]);
     assert.equal(readProposal(page, "0003"), null);
+});
+
+// One player in several offers, one accepted (docs/mfl.md: transactions): withdrawing the others
+// finds no trade of theirs, whatever the roster now lacks
+test("tradeMade finds the member's offer among the league's trades, each side exactly", () => {
+    const offer = (partner, give, get, made = 1795500000) => ({partner, give, get, made});
+    const accepted = {transaction: [
+        {type: "TRADE", timestamp: "1795614958", franchise: "0001", franchise2: "0007", franchise1_gave_up: "14085,7836,", franchise2_gave_up: "FP_0007_2028_2,13163,"},
+        {type: "TRADE", timestamp: "1795581095", franchise: "0007", franchise2: "0001", franchise1_gave_up: "17543,17485,", franchise2_gave_up: "15754,"}
+    ]};
+    // the one accepted, listed either way round
+    assert.equal(tradeMade(accepted, offer("0007", ["14085", "7836"], ["13163", "FP_0007_2028_2"]), "0001"), true);
+    assert.equal(tradeMade(accepted, offer("0007", ["15754"], ["17485", "17543"]), "0001"), true);
+    // the same player for a pick, or two players for a pick and a player, to other teams
+    assert.equal(tradeMade(accepted, offer("0008", ["14085"], ["FP_0008_2027_2"]), "0001"), false);
+    assert.equal(tradeMade(accepted, offer("0003", ["14085", "7836"], ["FP_0003_2027_1", "16080"]), "0001"), false);
+    // the same team, but not this offer's sides, or made before it was offered
+    assert.equal(tradeMade(accepted, offer("0007", ["14085"], ["13163", "FP_0007_2028_2"]), "0001"), false);
+    assert.equal(tradeMade(accepted, offer("0007", ["14085", "7836"], ["13163", "FP_0007_2028_2"], 1795700000), "0001"), false);
+    assert.equal(tradeMade({}, offer("0007", ["14085"], []), "0001"), false);
 });

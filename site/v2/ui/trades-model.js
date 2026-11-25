@@ -143,6 +143,23 @@ export function offersOf(pendingTrades, franchiseId) {
 
 const sameSet = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
 
+// Whether the league's trades (`transactions` with TRANS_TYPE=TRADE, as fetchExport gives them) have
+// the member's `offer` made since it was offered: the two teams, and each one's side exactly, players
+// and picks. Another offer of the same player, accepted, isn't this one.
+export function tradeMade(transactions, offer, franchiseId) {
+    return asArray(transactions && transactions.transaction).some((trade) => {
+        if (trade.type !== "TRADE" || Number(trade.timestamp) < offer.made) {
+            return false;
+        }
+        const first = idsOf(trade.franchise1_gave_up);
+        const second = idsOf(trade.franchise2_gave_up);
+        if (trade.franchise === franchiseId && trade.franchise2 === offer.partner) {
+            return sameSet(first, offer.give) && sameSet(second, offer.get);
+        }
+        return trade.franchise === offer.partner && trade.franchise2 === franchiseId && sameSet(first, offer.get) && sameSet(second, offer.give);
+    });
+}
+
 // the member's offer to `partner` of exactly these, among `offers`
 export const findOffer = (offers, {partner, give, get}) => offers.find((offer) => !offer.received && offer.partner === partner && sameSet(offer.give, give) && sameSet(offer.get, get)) || null;
 
