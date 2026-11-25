@@ -12,7 +12,7 @@ import {openDialog} from "./dialog.js";
 import {lineupProjections, weekFeed} from "./projections.js";
 import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {strict} from "./checked.js";
-import {pageChanged, placeholders} from "./panel.js";
+import {pageChanged, placeholders, retryCutOff} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
 import {draftPicked, seasonFacts} from "./context.js";
 import {
@@ -610,7 +610,8 @@ export async function drawLineup({context, franchiseId, irHref, addHref}) {
     }
 
     if (settings.backupStarters) {
-        loadBackups().then(render, (error) => {
+        // a read cut off is tried once more before saying so (ui/panel.js retryCutOff)
+        retryCutOff(loadBackups, {what: "backups"}).then(render, (error) => {
             console.error("[fuad] couldn't read the backups:", error);
             state.backupError = "Backups couldn’t be read. Reload the page to try again.";
             render();

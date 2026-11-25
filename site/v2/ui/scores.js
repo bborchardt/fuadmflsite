@@ -3,7 +3,7 @@
 // and Season the member's own results in place of the week.
 
 import {API_BASE, asArray} from "../lib/mfl.js";
-import {armRetry, cutOff, drawPanel, failedMarkup, pageChanged, placeholders} from "./panel.js";
+import {armRetry, drawPanel, failedMarkup, pageChanged, placeholders, retryCutOff} from "./panel.js";
 import {dayText} from "./home-model.js";
 import {NO_STATS, gameStates, readStats} from "./live-scoring.js";
 import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
@@ -21,8 +21,6 @@ const MINUTE = 60 * 1000;
 const LIVE_POLL = 40 * 1000;
 // who starts can change until each game kicks off
 const LINEUP_POLL = 5 * MINUTE;
-// how long a week's load cut off waits to be tried again
-const CUT_OFF_RETRY = 3000;
 // Scores' cards in two columns (fuad.css)
 const TWO_COLUMNS = "(min-width: 57.01em)";
 
@@ -260,20 +258,8 @@ export function drawScores(mount, data) {
         const week = state.week;
         body.setAttribute("aria-busy", "true");
         body.innerHTML = `<div class="fuad-panel">${placeholders(6)}</div>`;
-        // a read cut off is tried once more, a few seconds on, before Retry: on a phone the signal is
-        // often back by then (docs/design.md: Views v2 rebuilds). Logged as a warning, not counted as a failure.
-        loadWeek(week).catch((error) => {
-            if (!cutOff(error) || week !== state.week || state.season) {
-                throw error;
-            }
-            console.warn("[fuad] scores cut off, trying again:", error);
-            return new Promise((resolve) => setTimeout(resolve, CUT_OFF_RETRY)).then(() => {
-                if (week !== state.week || state.season) {
-                    throw error;
-                }
-                return loadWeek(week);
-            });
-        }).then((shown) => {
+        // a read cut off is tried once more before Retry (ui/panel.js retryCutOff)
+        retryCutOff(() => loadWeek(week), {what: "scores", still: () => week === state.week && !state.season}).then((shown) => {
             if (week !== state.week || state.season) {
                 return;
             }

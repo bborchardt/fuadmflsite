@@ -15,6 +15,27 @@ export const refused = (error) => Boolean(error && error.status === 429);
 export const cutOff = (error) => Boolean(error && (error.cutOff
     || error.name === "TypeError" && /^(?:Load failed|Failed to fetch|NetworkError when attempting to fetch resource\.?)$/.test(error.message)));
 
+// how long a load cut off waits to be tried again
+export const CUT_OFF_RETRY = 3000;
+
+// `load()`, tried once more CUT_OFF_RETRY on when a read was cut off (on a phone the signal is often
+// back by then) and `still()` says it's still wanted; warned, as only a second failure is the
+// member's to see. `what` names it in the warning. Any other failure is at once.
+export function retryCutOff(load, {what, still = () => true}) {
+    return Promise.resolve().then(load).catch((error) => {
+        if (!cutOff(error) || !still()) {
+            throw error;
+        }
+        console.warn(`[fuad] ${what} cut off, trying again:`, error);
+        return new Promise((resolve) => setTimeout(resolve, CUT_OFF_RETRY)).then(() => {
+            if (!still()) {
+                throw error;
+            }
+            return load();
+        });
+    });
+}
+
 // "Couldn't load standings." and Retry; when MFL asked to wait, Retry is off until the wait is over.
 // `basic`: the MFL page the view replaces (nav.js basicHref), as Basic view, so a member always has
 // a way on; the site's link rewriting leaves it be (frame.js).
@@ -69,11 +90,13 @@ export function drawPanel(mount, {heading = "", actions = "", what, key = null, 
         render(value, body);
     };
     const run = () => {
-        if (!entry) {
+        // with nothing shown, a load cut off is tried again before it says so
+        const first = !entry;
+        if (first) {
             mount.setAttribute("aria-busy", "true");
             body.innerHTML = placeholders(rows);
         }
-        return Promise.resolve().then(load).then((value) => {
+        return (first ? retryCutOff(load, {what}) : Promise.resolve().then(load)).then((value) => {
             if (key) {
                 save(key, value);
             }

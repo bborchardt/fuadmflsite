@@ -112,10 +112,14 @@ SCREENS = {
     "scores-backups": (f"/2026/home/{LEAGUE}#league-scores", {"settings": BACKUPS_ON, "now": "2026-10-18T17:10:00Z", "details": (
         "Week 6: If A.J. Brown is out, start Elic Ayomanor; if Lamar Jackson is out, start Aaron Rodgers; if Xavier Worthy is out, start Tre Harris.",
         "Jackson, Lamar BAL QB, Brown, A.J. NEP WR, Worthy, Xavier KCC WR")}),
-    # the week's first live scoring read cut off before MFL answers (a phone's signal dropping), then
-    # the first two: Scores tries once more, so the first shows the cards and the second Retry
-    "scores-cut-once": (f"/2026/home/{LEAGUE}#league-scores", {"cut": 1}),
-    "scores-cut-twice": (f"/2026/home/{LEAGUE}#league-scores", {"cut": 2}),
+    # a first load's reads of one export cut off before MFL answers (a phone's signal dropping), for a
+    # moment ("once") or every time ("always"): tried once more (ui/panel.js retryCutOff), the first
+    # is drawn and the second says it couldn't load (CUTS: the export, what failing says, what drawn has)
+    **{f"{name}-cut-{how}": (path, {**extra, "cut": (name, how)}) for name, path, extra in [
+        ("scores", f"/2026/home/{LEAGUE}#league-scores", {}),
+        ("standings", f"/2026/home/{LEAGUE}#league-standings", {}),
+        ("lineup-backups", f"/2026/lineup?L={LEAGUE}", {"settings": BACKUPS_ON, "now": "2026-10-18T15:00:00Z"})]
+       for how in ["once", "always"]},
     "standings": (f"/2026/home/{LEAGUE}#league-standings", {}),
     "power": (f"/2026/home/{LEAGUE}#league-power", {}),
     "winners": (f"/2026/home/{LEAGUE}#league-winners", {}),
@@ -407,8 +411,8 @@ class Mfl:
         self.claims = pending if isinstance(pending, list) else [pending]
         # the exports that can no longer be read
         self.unread = set()
-        # live scoring reads cut off so far (swaps["cut"])
-        self.cuts = 0
+        # when the first read swaps["cut"] cuts off was (time.time())
+        self.cut_at = None
 
     def team(self, rosters=None):
         return next(team for team in (rosters or self.rosters)["rosters"]["franchise"] if team["id"] == TEAM)
@@ -773,9 +777,11 @@ class Mfl:
             # MFL asking v2 to wait on every export: Moves' screens fall back to MFL's own page
             if self.swaps.get("waits"):
                 return route.fulfill(status=429, body="")
-            if query.get("TYPE") == ["liveScoring"] and self.cuts < self.swaps.get("cut", 0):
-                self.cuts += 1
-                return route.abort()
+            if "cut" in self.swaps and query.get("TYPE") == [CUTS[self.swaps["cut"][0]][0]]:
+                # "once": every read in the 2 s from the first, so the retry 3 s on is answered
+                if self.swaps["cut"][1] == "always" or self.cut_at is None or time.time() - self.cut_at < 2:
+                    self.cut_at = self.cut_at or time.time()
+                    return route.abort()
             trades_made = query.get("TYPE") == ["transactions"] and query.get("TRANS_TYPE") == ["TRADE"]
             if (self.offline and query.get("TYPE") == ["rosters"] or query.get("TYPE", [""])[0] in self.unread
                     or trades_made and self.moves == "taken-unread"):
@@ -907,7 +913,12 @@ def explore(job):
         # (a page's preconnect links) from reaching anything
         browser = p.chromium.launch(headless=True, args=["--host-resolver-rules=MAP * ~NOTFOUND"])
         context, page, mfl, errors = open_screen(browser, site, name, width)
-        out[label([])] = {"html": settle(page), "posts": [], "errors": list(errors)}
+        html = settle(page)
+        if "cut" in SCREENS[name][1]:
+            # past the retry, which a part loading quietly (Lineup's backups) doesn't show it waits on
+            page.wait_for_timeout(4000)
+            html = settle(page)
+        out[label([])] = {"html": html, "posts": [], "errors": list(errors)}
         firsts = [] if seeds_only else [c for c in ev(page, CONTROLS) if c["index"] < PER_KIND]
         context.close()
         for seed in SEEDS.get(name, []) + [[first] for first in firsts]:
@@ -990,6 +1001,13 @@ def compare(base, head):
     return differ
 
 
+# The *-cut-* screens' first loads: the export cut off, what failing says, and a class drawn has
+CUTS = {
+    "scores": ("liveScoring", "Couldn’t load scores.", "fuad-cards"),
+    "standings": ("leagueStandings", "Couldn’t load standings.", "fuad-standings"),
+    "lineup-backups": ("nflSchedule", "Backups couldn’t be read.", "fuad-backup"),
+}
+
 # What a move's screen says once MFL has answered, by how MFL answers it (Mfl's "moves"): a pattern
 # the move's lines (alerts and status lines, joined by " | ") must match in full. A move MFL made
 # says so, or nothing (a bid is shown highlighted); one it didn't make says why, or to try again;
@@ -1046,17 +1064,19 @@ def check(found):
                 if problem:
                     wrong += 1
                     print(f"## {key}: {problem}")
-    # Scores with its reads cut off: once is tried again and drawn, twice says so with Retry
+    # a first load with its reads cut off: for a moment, tried again and drawn; always, says so
     for name, (url, swaps) in SCREENS.items():
         if "cut" not in swaps:
             continue
+        export, says, has = CUTS[swaps["cut"][0]]
         for width in WIDTHS:
             html = (found.get(f"{name} {width} ") or {}).get("html") or ""
-            failed = "Couldn’t load scores." in html
-            drawn = "fuad-cards" in html
-            if (failed or not drawn) if swaps["cut"] == 1 else not failed:
+            failed, drawn = says in html, has in html
+            problem = ("says it couldn't load" if failed else f"has no {has}" if not drawn else None) if swaps["cut"][1] == "once" \
+                else None if failed else "doesn't say it couldn't load"
+            if problem:
                 wrong += 1
-                print(f"## {name} {width}: " + ("says it couldn't load" if failed else "shows no cards" if swaps["cut"] == 1 else "doesn't say it couldn't load"))
+                print(f"## {name} {width}: {problem}")
     print(f"\n{len(found)} steps, {wrong} outcomes not as expected")
     return wrong
 

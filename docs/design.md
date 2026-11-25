@@ -234,9 +234,11 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   Draft replace MFL's page (MFL's links to it open v2's, `ui/frame.js`), so one that can't load
   would leave no way to it. Its "Couldn't load standings." has Basic view beside Retry, a link to
   the MFL page it replaces (`basicHref` in `ui/nav.js`) that the link rewriting leaves be, and is
-  logged as an error. A panel showing a copy kept from before only warns. Scores tries a week once
-  more, 3 seconds on, when a read was cut off before MFL answered (`cutOff` in `ui/panel.js`: an
-  iPhone's "Load failed", a signal dropping), warning; only a second failure shows Retry.
+  logged as an error. A panel showing a copy kept from before only warns.
+- **A first load cut off is tried once more:** a panel with nothing shown yet, a Scores week and
+  Lineup's backups try again 3 seconds on when a read was cut off before MFL answered (`retryCutOff`
+  in `ui/panel.js`: an iPhone's "Load failed", a signal dropping), with a warning; only a second
+  failure says it couldn't load, and is logged as an error. A failure MFL answered is shown at once.
 - **A check My alerts can't make is logged, not shown:** trade offers, bids, the lineup, the draft
   or contract lengths MFL can't give leave that check's alerts out, as the member sees the same on
   its screen, and log `[fuad] My alerts couldn't check trade offers` as an error, so the header's
