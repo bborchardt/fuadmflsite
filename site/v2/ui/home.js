@@ -432,6 +432,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             actions: commish ? '<button type="button" class="fuad-text-button fuad-load-open">Load auction or rookie draft</button>' : "",
             what: "my alerts",
             load: () => null,
+            refreshes,
             render: (value, body) => {
                 body.innerHTML = '<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>';
             }

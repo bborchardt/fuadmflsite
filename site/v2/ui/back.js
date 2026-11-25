@@ -2,6 +2,9 @@
 // moves (MOVES_KEPT): its section tapped, the page's other view it was hidden behind left for it, the
 // app or tab come back to, or Back to it from the browser's cache (docs/design.md). Nothing runs
 // while it's away, and a screen in view refreshes only as its own polling does.
+//
+// A page of its own (Lineup, Moves) refreshes by loading again (`reloadIfUntouched`), unless the
+// member has tapped or typed on it since it loaded: what they've started stays as they left it.
 
 import {onSectionTap} from "./kept.js";
 import {MOVES_KEPT} from "./page-fetch.js";
@@ -28,12 +31,26 @@ export function onBack({showing, section, refresh, after = MOVES_KEPT}) {
             back();
         }
     });
-    // the frame marks the view in view on the page's root (`fuad-home-on`) as the # changes
-    new MutationObserver(() => {
+    // the frame marks the section in view on the page's root (`fuad-home-on`) as the # changes, and
+    // a section's views (League's Standings) are each under their own #
+    const moved = () => {
         const now = showing();
         if (now && !wasShowing) {
             back();
         }
         wasShowing = now;
-    }).observe(document.documentElement, {attributes: true, attributeFilter: ["class"]});
+    };
+    new MutationObserver(moved).observe(document.documentElement, {attributes: true, attributeFilter: ["class"]});
+    window.addEventListener("hashchange", moved);
+}
+
+// `section`: the page's section, or null for one under none
+export function reloadIfUntouched(section) {
+    let touched = false;
+    for (const type of ["click", "input", "change"]) {
+        document.addEventListener(type, () => {
+            touched = true;
+        }, true);
+    }
+    onBack({showing: () => true, section, refresh: () => touched || window.location.reload()});
 }

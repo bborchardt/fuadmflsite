@@ -278,7 +278,10 @@ export function drawScores(mount, data) {
         });
     };
 
+    // the season's panel, loaded again when Scores is shown again
+    const seasonRuns = [];
     const showSeason = async () => {
+        seasonRuns.length = 0;
         clearTimeout(timer);
         // a week still loading is dropped, and its placeholders with it; the season's panel says its own
         body.removeAttribute("aria-busy");
@@ -288,6 +291,7 @@ export function drawScores(mount, data) {
             what: "your season",
             rows: 8,
             basic,
+            refreshes: seasonRuns,
             load: async () => {
                 const [schedule, names, standing] = await Promise.all([data.schedule(), namesFor(), exp("leagueStandings", {}, {optional: true})]);
                 let liveResult = "";
@@ -339,34 +343,50 @@ export function drawScores(mount, data) {
             }
         });
     }
-    // Refresh, in the iPhone's app (no pull to refresh there): the week again from MFL, its cards staying
-    // up meanwhile; with none drawn (still loading, or Retry), the week afresh
+    // the week again from MFL, its cards staying up meanwhile
+    const drawnWeek = () => body.getAttribute("aria-busy") !== "true" && Boolean(body.querySelector(".fuad-cards, .fuad-empty"));
+    const refreshWeek = () => {
+        const week = state.week;
+        clearTimeout(timer);
+        timer = null;
+        return loadWeek(week, {fresh: true}).then((shown) => {
+            if (week === state.week && !state.season) {
+                label(shown);
+                draw(shown);
+                schedule(shown);
+            }
+        }, (error) => {
+            console.warn("[fuad] couldn't refresh scores:", error);
+            if (week === state.week && !state.season) {
+                schedule(lastShown);
+            }
+        });
+    };
+    // Refresh, in the iPhone's app (no pull to refresh there); with no cards drawn (still loading, or
+    // Retry), the week afresh
     const refreshButton = mount.querySelector("[data-refresh]");
     if (refreshButton) {
         refreshButton.addEventListener("click", () => {
             if (refreshButton.hidden || refreshButton.getAttribute("aria-busy") === "true") {
                 return;
             }
-            if (body.getAttribute("aria-busy") === "true" || !body.querySelector(".fuad-cards, .fuad-empty")) {
+            if (!drawnWeek()) {
                 showWeek();
                 return;
             }
-            const week = state.week;
-            clearTimeout(timer);
-            timer = null;
             refreshButton.setAttribute("aria-busy", "true");
-            loadWeek(week, {fresh: true}).then((shown) => {
-                if (week === state.week && !state.season) {
-                    label(shown);
-                    draw(shown);
-                    schedule(shown);
-                }
-            }, (error) => {
-                console.warn("[fuad] couldn't refresh scores:", error);
-                if (week === state.week && !state.season) {
-                    schedule(lastShown);
-                }
-            }).finally(() => refreshButton.removeAttribute("aria-busy"));
+            refreshWeek().finally(() => refreshButton.removeAttribute("aria-busy"));
+        });
+    }
+    // shown again (ui/back.js): the season, or the current week once drawn; a past week is final, a
+    // later one a preview, and a week loading or failed has its own load or Retry
+    if (data.refreshes) {
+        data.refreshes.push(() => {
+            if (state.season) {
+                seasonRuns.forEach((run) => run());
+            } else if (state.week === currentWeek && drawnWeek()) {
+                refreshWeek();
+            }
         });
     }
 
@@ -447,7 +467,7 @@ export function drawScores(mount, data) {
     }
     return {
         // back on Scores from another view: as its entry has it (Back), or as it was (a tab, or League's
-        // link, which started it afresh); refreshed at once if it's been waiting
+        // link, which started it afresh)
         resume: () => {
             const kept = fromKept(keptHere(KEPT));
             if (kept && (stale || !same(kept))) {
@@ -459,8 +479,6 @@ export function drawScores(mount, data) {
             if (stale) {
                 stale = false;
                 setView(state);
-            } else if (!state.season && state.week === currentWeek && !timer) {
-                showWeek();
             }
         }
     };

@@ -28,11 +28,16 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   left; and Back returns to it as it was left, from its own history entry, even after another page.
   Paging (Scores' weeks, All bids' runs) isn't an entry of its own, so Back leaves the view rather
   than stepping back a page. Moves' tabs are pages of their own and start afresh.
-- **A view shown again shows what's true now** (`ui/back.js`): Home, when its section is tapped,
-  League or Rosters is left for it on the same page, the app or tab is come back to, or Back finds
-  it in the browser's cache, refreshes its panels once what it shows is 2 minutes old, keeping them
-  on screen until the new answers are in. Nothing runs while it's away, and in view it refreshes
-  only as its own polling does (Chat; Scores while games are on).
+- **A view shown again shows what's true now** (`ui/back.js`): Home, and each of League's and
+  Rosters' views, when its section is tapped, another view on the same page is left for it, the app
+  or tab is come back to, or Back finds it in the browser's cache, refreshes its panels once what it
+  shows is 2 minutes old, keeping them on screen until the new answers are in, and what was set on
+  it (Scores' week, Players' filters) as it was. A page of its own (Lineup, Moves' tabs, All moves,
+  Rules) loads again instead, unless the member has tapped or typed on it since it loaded, so what
+  they've started stays as they left it; MFL's forms v2 restyles (Franchise setup, the message
+  board's pages) stay as left, as loading one again could send it again. Nothing runs while it's
+  away, and in view it refreshes only as its own polling does (Chat; Scores while games are on).
+  `tests/back.test.mjs` fails on a screen that doesn't take part.
 - Within **MFL's rules**.
 - **As few chores as possible** for the commissioner, stable year to year.
 

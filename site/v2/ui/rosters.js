@@ -3,6 +3,7 @@
 // Names open the player popup with its Rosters actions (popup.js).
 
 import {keepHere, keptHere, onSectionTap} from "./kept.js";
+import {onBack} from "./back.js";
 import {API_BASE, asArray, exportUrl, fetchExport, numberOf} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
@@ -80,8 +81,16 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         };
         return optional || unknown ? request.catch(warned) : request;
     };
-    const once = (load) => {
+    // what's built from MFL's answers is built anew when a view is shown again (ui/back.js): `lasting`
+    // for what holds all season
+    const renewed = [];
+    const once = (load, {lasting = false} = {}) => {
         let value = null;
+        if (!lasting) {
+            renewed.push(() => {
+                value = null;
+            });
+        }
         return () => {
             if (!value) {
                 value = load().catch((error) => {
@@ -94,7 +103,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     };
 
     // before week 1: MFL's page says so once a week is done; else week 1's kickoff; in season on error
-    const beforeSeason = once(() => beforeWeek1(season));
+    const beforeSeason = once(() => beforeWeek1(season), {lasting: true});
     // the league model with every team's contracts, cap and penalties (lib/league.js), from the
     // page's own load
     const league = once(async () => {
@@ -192,9 +201,9 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
 
     // a team in My team's layout: yours with the cut columns, another's with Propose a trade
     // `fromTeams`: opened from Teams, with Propose a trade
-    const teamPage = (mount, teamId, {fromTeams}) => {
+    const teamPage = (mount, teamId, {fromTeams, refreshes}) => {
         drawPanel(mount, {
-            what: teamId === viewer ? "your team" : "this team", key: `fuad.rosters.team.${season}.${teamId}`, maxAge: 2 * MINUTE, rows: 10,
+            what: teamId === viewer ? "your team" : "this team", key: `fuad.rosters.team.${season}.${teamId}`, maxAge: 2 * MINUTE, rows: 10, refreshes,
             basic: basicHref("Rosters/Team", {base: `${host}/${season}`, leagueId: context.leagueId, team: teamId}),
             load: async () => {
                 const [all, {futureDraftPicks}, {names}, before, board] = await Promise.all([sheets(), extras(), league(), beforeSeason(), coming()]);
@@ -240,14 +249,14 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     };
 
     const views = {
-        "my-team": (mount) => teamPage(mount, viewer, {fromTeams: false}),
-        teams: (mount, route) => {
+        "my-team": (mount, route, refreshes) => teamPage(mount, viewer, {fromTeams: false, refreshes}),
+        teams: (mount, route, refreshes) => {
             if (route.team) {
-                teamPage(mount, route.team, {fromTeams: true});
+                teamPage(mount, route.team, {fromTeams: true, refreshes});
                 return;
             }
             drawPanel(mount, {
-                what: "teams", key: `fuad.rosters.teams.${season}`, maxAge: 2 * MINUTE, rows: 10,
+                what: "teams", key: `fuad.rosters.teams.${season}`, maxAge: 2 * MINUTE, rows: 10, refreshes,
                 basic: basicHref("Rosters/Teams", {base: `${host}/${season}`, leagueId: context.leagueId}),
                 load: async () => (await sheets()).map((sheet) => ({id: sheet.id, name: sheet.name, capUsed: sheet.capUsed, tight: sheet.tight, picksLine: sheet.picksLine, picksYear: sheet.picksYear, active: sheet.active, ir: sheet.ir, seasons: sheet.seasons})),
                 render: (list, body) => {
@@ -257,7 +266,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 }
             });
         },
-        players: (mount) => {
+        players: (mount, route, refreshes) => {
             // the sort the list starts on, once it's known whether the season has begun
             let firstSort = null;
             const fresh = () => ({positions: [], years: [], owners: [], watching: false, text: "", sort: firstSort, direction: firstSort && FIRST_DIRECTION[firstSort]});
@@ -312,8 +321,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                     }
                 });
             }
+            // drawn again when loaded again: its taps go to the latest drawing's
+            let onTap = () => {};
+            let tapsWired = false;
             drawPanel(mount, {
-                what: "players", rows: 12,
+                what: "players", rows: 12, refreshes,
                 load: async () => {
                     const [{built, settings, freeAgents, names}, {byes, points}, before, projected] = await Promise.all([
                         league(), extras(), beforeSeason(),
@@ -366,7 +378,11 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                         body.querySelector("input").value = state.text;
                         redraw();
                     };
-                    body.addEventListener("click", (event) => {
+                    if (!tapsWired) {
+                        tapsWired = true;
+                        body.addEventListener("click", (event) => onTap(event));
+                    }
+                    onTap = (event) => {
                         const chip = event.target.closest("[data-chip]");
                         if (chip && chip.dataset.chip === "watching") {
                             state.watching = !state.watching;
@@ -408,7 +424,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                             redraw();
                             keep();
                         }
-                    });
+                    };
                     // a redraw from outside (the list arriving, a star changed) keeps focus on the chip or
                     // player it was on
                     redrawn = () => {
@@ -427,7 +443,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 }
             });
         },
-        draft: (mount) => {
+        draft: (mount, route, refreshes) => {
             // the rounds open, as each way here expects (ui/kept.js): as drawn, unless kept
             const toggles = () => [...mount.querySelectorAll(".fuad-round-toggle")];
             const openRounds = () => toggles().filter((toggle) => toggle.getAttribute("aria-expanded") === "true").map((toggle) => toggle.getAttribute("aria-controls"));
@@ -460,7 +476,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 }
             });
             drawPanel(mount, {
-                what: "the draft", rows: 10,
+                what: "the draft", rows: 10, refreshes,
                 basic: basicHref("Rosters/Draft", {base: `${host}/${season}`, leagueId: context.leagueId}),
                 load: async () => {
                     const [{built, names}, before, results, ordered] = await Promise.all([league(), beforeSeason(), exp("draftResults", {}, {optional: true}),
@@ -490,6 +506,26 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
                 }
             });
         }
+    };
+
+    // each view, shown again (ui/back.js), loads its panels again: `refreshes`, its latest drawing's
+    // (Teams' list or a team's page)
+    const latest = new Map();
+    const shownAgain = (view, refreshes) => {
+        if (!latest.has(view)) {
+            onBack({
+                showing: () => document.documentElement.classList.contains("fuad-rosters-on") && (routeOf(window.location.hash) || {}).view === view,
+                section: "Rosters",
+                refresh: () => {
+                    if (pageLeague.renew) {
+                        pageLeague.renew();
+                    }
+                    renewed.forEach((renew) => renew());
+                    latest.get(view).forEach((run) => run());
+                }
+            });
+        }
+        latest.set(view, refreshes);
     };
 
     const drawn = new Map();
@@ -524,8 +560,10 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         // a team's page and the list share Teams' mount: each change redraws it
         if (drawn.get(route.view) !== key) {
             drawn.set(route.view, key);
+            const refreshes = [];
+            shownAgain(route.view, refreshes);
             try {
-                views[route.view](mount, route);
+                views[route.view](mount, route, refreshes);
             } catch (error) {
                 console.error(`[fuad] couldn't draw Rosters' ${route.view}:`, error);
                 drawn.delete(route.view);
