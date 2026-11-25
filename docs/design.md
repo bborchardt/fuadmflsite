@@ -124,6 +124,17 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
   of one page, so that's Safari's `navigation.canGoBack` (iOS 26.2), which counts a view's entry too,
   but not a dialog's; before 26.2, only a page a link on the host led to (its referrer, and not a
   launch). Android's app keeps its own Back, so neither shows there.
+- **Projections are the live scoring page's everywhere** (`ui/projections.js`): Scores', Lineup's,
+  Add's and Players' come from MFL's projected stats feed scored by the league's rules, not the
+  Fantasy Sharks points MFL's Lineup and Add/Drop pages show (docs/mfl.md), so a player has one
+  projection. Scores and Lineup run MFL's simulation, Lineup's starters together in MFL's order as
+  Scores does, so the two match; Add's and Players' lists of hundreds score each player's average
+  stat line, which is within a point of it (mostly 0.2) and quick on a phone, where the simulation
+  takes a second or two. A player MFL's injury report has out, suspended or on IR projects 0 in all
+  four, as MFL's Fantasy Sharks figures have him and the feed doesn't, so Scores differs from MFL's
+  live scoring page for a team starting one. Before kickoff only: in a game Scores' moves with the
+  stats, the others' don't. For a player the feed has none of, and without the feed, a page keeps
+  MFL's own figure.
 
 ## Devices
 

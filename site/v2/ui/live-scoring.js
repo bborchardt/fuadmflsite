@@ -359,6 +359,50 @@ function simulateTeam(random, {starters, done, total, perPlayer = new Map()}, {g
     return totals;
 }
 
+// Each player's projection for `week` before kickoff, as Scores shows it: `starters`, in MFL's order
+// (position, then name), simulated together, since a random value carries from one to the next, and
+// `others` each alone. Players are {playerId, position}; one the feed doesn't project is left out.
+export function simulatedProjections({starters = [], others = []}, {projections, rules, week}) {
+    const games = {of: () => ({state: "scheduled"})};
+    const perPlayer = new Map();
+    const run = (list) => simulateTeam(new Random(), {
+        starters: list.filter((player) => projections.has(player.playerId)).map((player) => ({...player, team: "-", points: 0, stats: {}})), done: false, perPlayer
+    }, {games, projections, rules, week});
+    run(starters);
+    others.forEach((player) => run([player]));
+    return perPlayer;
+}
+
+// the standard normal's cumulative chance (Abramowitz and Stegun 7.1.26, within 1.5e-7)
+function normalBelow(z) {
+    const x = Math.abs(z) / Math.SQRT2;
+    const t = 1 / (1 + 0.3275911 * x);
+    const erf = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+    return z < 0 ? (1 - erf) / 2 : (1 + erf) / 2;
+}
+
+// A player's projection from his average stat line, for lists of hundreds (Add, Players), where the
+// simulation is too slow on a phone: within a point of it, mostly 0.2. Yards are the attempts times
+// the average, as the simulation's mean; each kick's points are the expected over its lengths, 41
+// yards on average and 6 either way, in whole yards.
+export function averageProjection(stats, position, rules) {
+    const line = {...stats};
+    for (const [yards, average, attempts] of YARDS) {
+        line[yards] = (Number(stats[average]) || 0) * (Number(stats[attempts]) || 0);
+    }
+    const points = scoreStats(line, position, rules);
+    const kicks = Number(stats["#F"]) || 0;
+    if (!kicks) {
+        return points;
+    }
+    let perKick = 0;
+    for (let yards = 10; yards <= 75; yards++) {
+        const chance = normalBelow((yards + 0.5 - 41) / 6) - normalBelow((yards - 0.5 - 41) / 6);
+        perKick += chance * (scoreStats({...line, FG: String(yards)}, position, rules) - points);
+    }
+    return points + kicks * perKick;
+}
+
 // {away, home} each {projected, chance}: the average simulated final and the chance of winning,
 // 1–99% while anyone has minutes left. Ties count for neither side, as MFL counts them.
 export function winProbability({away, home}, context) {
