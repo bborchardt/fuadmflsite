@@ -70,7 +70,9 @@ A second league can try the site with no code change, and any setting can be tri
   differs; a request no saved page answers fails it.
 - `uv run --no-project --with playwright python tools/verify/requests.py` walks a member through every
   view twice, first with nothing stored and then again, on master and on your working copy, and
-  fails if a step asks MFL for more than it did, listing what it adds.
+  fails if a step asks MFL for more than it did, listing what it adds. When a pull request adds a
+  read on purpose, label it "more requests" and say in its description why each is needed: the check
+  then lists them and passes.
 - `uv run --no-project --with playwright python tools/verify/speed.py` times Lineup and Home from the
   same saved pages over a simulated slow phone connection, pictures, fonts and third-party scripts
   at typical sizes: when the page shows, how long MFL's own page shows first, when v2's screen is

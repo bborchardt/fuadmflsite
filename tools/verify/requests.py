@@ -10,7 +10,9 @@ the working copy. What each step asks MFL for (exports, feeds and pages; not MFL
 styles or images, the page the member opened, nor MFL's page polling its chat and visitors) is
 counted, and a step that asks for more, or for something it didn't, fails the run. The clock is
 fixed, so the returning visit is one moments later: what v2 keeps answers it, however long it keeps
-it. MFL's answers are screens.py's saved clone samples.
+it. MFL's answers are screens.py's saved clone samples. --more-intended lists the same and passes: a
+pull request labelled "more requests" (.github/workflows/browser-checks.yml), whose description says
+why each is needed.
 """
 import argparse
 import importlib.util
@@ -124,6 +126,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base", default="master")
     parser.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
+    parser.add_argument("--more-intended", action="store_true", help="list what's asked for more, and pass")
     args = parser.parse_args()
     head = harness.build_working_copy() if args.built else None
     with ProcessPoolExecutor(2) as pool:
@@ -143,6 +146,9 @@ def main():
         total = lambda ref: sum(sum(asked.values()) for key, asked in found[ref].items() if key.startswith(visit))
         print(f"{visit}: {total(head)} requests (base {total(args.base)})")
     print(f"base: {args.base}, head: the working copy{', built' if args.built else ''}; steps asking MFL for more: {more}")
+    if more and args.more_intended:
+        print("Passing: asking for more is intended (--more-intended, the pull request's \"more requests\" label).")
+        return 0
     return 1 if more else 0
 
 
