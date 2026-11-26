@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {readFileSync, readdirSync} from "node:fs";
 import {join} from "node:path";
 import {checkShape} from "../site/v2/lib/shapes.js";
+import {exportSection} from "../site/v2/lib/mfl.js";
 import {checkMfl, pageChecks} from "../jobs/mfl-check.mjs";
 import {fixedPages} from "../site/capture/capture-model.js";
 
@@ -28,7 +29,9 @@ sections.set("playoffBrackets", {playoffBracket: [{id: "1"}]});
 sections.set("projectedScores", {playerScore: [{id: "13593", score: "18.5"}]});
 
 const asked = [];
-function savedExport({type, section = type}) {
+// as the job reads each: the section its answer comes in (the year to date's weekly results, allWeeklyResults)
+function savedExport({type, params}) {
+    const section = exportSection(type, params);
     asked.push(type);
     if (!sections.has(section)) {
         throw new Error(`no saved ${section}`);
