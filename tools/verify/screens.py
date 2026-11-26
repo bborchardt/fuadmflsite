@@ -838,10 +838,13 @@ def ev(page, script, arg=None):
 def settle(page, timeout=15.0):
     """v2's parts once they've stopped changing for 0.3 s (compared by a hash, the HTML being large)
     and no move or load is under way: a button saying "Saving…" may wait on MFL with nothing
-    changing, as may a panel's placeholders (aria-busy)"""
+    changing, as may a panel's placeholders (aria-busy). A font still loading counts as a load: a
+    browser fetches a weight only once text first needs it, so the fonts v2's views use come after
+    the page's load event, and one a turn needs after that (IR's phone layout, Barlow 500), each
+    drawn in another font until it lands. The layout forced first starts any such fetch."""
     last, since, start = None, time.time(), time.time()
     while time.time() - start < timeout:
-        now = ev(page, f"() => {{ const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*<|aria-busy=\"true\"/.test(s) ? 'busy:' : '') + h + ':' + s.length; }}")
+        now = ev(page, f"() => {{ document.documentElement.getBoundingClientRect(); const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*<|aria-busy=\"true\"/.test(s) || document.fonts.status === 'loading' ? 'busy:' : '') + h + ':' + s.length; }}")
         if now != last:
             last, since = now, time.time()
         elif time.time() - since >= 0.3 and not now.startswith("busy:"):
