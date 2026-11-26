@@ -185,6 +185,8 @@ export function openLoadForm({context, built, opener, dataBase}) {
     const scale = {baselines: ROOKIE_RANKED ? null : rookieBaselines(null), note: ""};
 
     const choices = () => (state.read ? choicesNeeded(state.read, {players, teams, chosen: state.chosen}) : []);
+    // what a send would do now, the sheet as read against MFL as last read, on the rookie scale
+    const plan = () => planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing, baselines: scale.baselines});
 
     function markup() {
         const needed = choices();
@@ -238,7 +240,7 @@ export function openLoadForm({context, built, opener, dataBase}) {
                     : "";
             }
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
-            state.result = choices().length || !state.read.sheet.length ? null : planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing, baselines: scale.baselines});
+            state.result = choices().length || !state.read.sheet.length ? null : plan();
         } catch (error) {
             state.error = error.message.startsWith("Couldn’t") ? error.message : `Couldn’t read MFL’s rosters: ${error.message}`;
         }
@@ -290,7 +292,7 @@ export function openLoadForm({context, built, opener, dataBase}) {
         try {
             state.rosters = await fresh("rosters");
             state.draft = result.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
-            state.result = planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
+            state.result = plan();
             if (!state.error) {
                 state.log.push(nothingLeft(state.result) ? "Done: MFL matches the sheet." : "MFL doesn’t match the sheet yet: what’s left is below.");
             }
@@ -321,7 +323,7 @@ export function openLoadForm({context, built, opener, dataBase}) {
             state.read = readSheet(state.kind, state.text, {players, rosters: state.rosters, franchises, chosen: state.chosen});
         }
         if (!choices().length) {
-            state.result = planSend(state.read, {chosen: state.chosen, rosters: state.rosters, players, draft: state.draft, teamCount, clearing});
+            state.result = plan();
         }
         render();
     });
