@@ -14,7 +14,6 @@ import {installPopup} from "./popup.js";
 import {LOOKS, looksMarkup, teamSkin, wireLooks} from "./looks.js";
 import {widthMarkup, wireWidth} from "./width.js";
 
-export {locate, pageOf, sections};
 
 const ICONS = {
     Home: '<path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path>',

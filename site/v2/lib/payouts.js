@@ -8,7 +8,8 @@ export const WEEKLY_PRIZE = settings.payouts.weeklyHighScore;
 export const ALL_PLAY_RATE = settings.payouts.allPlayPerGameOver500;
 export const PRIZE_SHARES = settings.payouts.places;
 
-const cents = (amount) => Math.round(amount * 100) / 100;
+// to the cent, as MFL keeps salaries ($0.01 for a player whose contract has run out)
+export const cents = (amount) => Math.round(amount * 100) / 100;
 // "24-11-1", "32-4": a tie shows only when there is one; "—" for one not known (a score MFL left out)
 export const recordText = ({w, l, t}) => ([w, l, t].every(Number.isFinite) ? `${w}-${l}${t ? `-${t}` : ""}` : "—");
 // "1st", "2nd", "3rd", "4th"…

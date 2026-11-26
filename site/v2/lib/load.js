@@ -6,7 +6,7 @@
 // people write them ("AJ Brown", "Marvin Harrison Jr."); MFL names them "Brown, A.J.".
 
 import {rookieSalary} from "./rules.js";
-import {asArray, salariesImportXml} from "./mfl.js";
+import {asArray, salariesImportXml, xmlAttr as attr} from "./mfl.js";
 import settings from "./settings.js";
 import {SUFFIXES, withoutAccents} from "./names.js";
 
@@ -283,7 +283,6 @@ export function notOnTeam(picks, rosters) {
 }
 
 const two = (number) => String(number).padStart(2, "0");
-const attr = (value) => String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 // MFL's draftResults import: the whole draft, replacing what MFL has
 export function draftResultsXml(picks) {
