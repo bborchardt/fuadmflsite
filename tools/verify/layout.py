@@ -223,7 +223,10 @@ def measure(job):
         # a job that failed partway leaves its context open, which the next job mustn't share
         if WORKER["browser"] and WORKER["browser"].is_connected():
             for context in list(WORKER["browser"].contexts):
-                context.close()
+                try:
+                    context.close()
+                except Exception:
+                    pass  # the browser gone since: the next job launches another
 
 
 def launch(p, engine):
