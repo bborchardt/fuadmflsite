@@ -193,12 +193,40 @@ def load(browser, site, name, size, app):
     return context, page
 
 
+# one browser and one copy of the site's files per worker, kept for all its jobs: each job gets new
+# contexts, so nothing a page left carries over, and launching a browser per job cost about a second each
+WORKER = {}
+
+
+def start_worker(ref, engine):
+    WORKER["engine"] = engine
+    WORKER["site"] = screens.Site(ref)
+    WORKER["playwright"] = sync_playwright().start()
+    WORKER["browser"] = None
+
+
+def worker_browser():
+    """the worker's browser, launched on its first job (a browser that won't start fails each job, as
+    a finding) and again if it has crashed"""
+    if not (WORKER["browser"] and WORKER["browser"].is_connected()):
+        WORKER["browser"] = launch(WORKER["playwright"], WORKER["engine"])
+    return WORKER["browser"]
+
+
 def measure(job):
     """one screen at one width, as findings; a screen that doesn't load is one"""
     try:
-        return measure_screen(*job)
+        return measure_screen(worker_browser(), WORKER["site"], *job, engine=WORKER["engine"])
     except Exception as error:
-        return [(job[1], job[2], None, "failed", str(error).splitlines()[0])]
+        return [(job[0], job[1], None, "failed", str(error).splitlines()[0])]
+    finally:
+        # a job that failed partway leaves its context open, which the next job mustn't share
+        if WORKER["browser"] and WORKER["browser"].is_connected():
+            for context in list(WORKER["browser"].contexts):
+                try:
+                    context.close()
+                except Exception:
+                    pass  # the browser gone since: the next job launches another
 
 
 def launch(p, engine):
@@ -210,45 +238,41 @@ def launch(p, engine):
     return p.webkit.launch()
 
 
-def measure_screen(ref, name, width, shots, engine="webkit"):
+def measure_screen(browser, site, name, width, shots, engine="webkit"):
     w, h, first, app = WIDTHS[width]
-    site = screens.Site(ref)
     out = []
-    with sync_playwright() as p:
-        browser = launch(p, engine)
-        for state, css in [(None, None)] + STATES.get(name, []):
-            context, page = load(browser, site, name, (w, h), app)
-            if css:
-                try:
-                    page.locator(css).first.click(timeout=2000)
-                except Exception as error:
-                    out.append((name, width, state, "missing", f"couldn't open it with {css}: {str(error).splitlines()[0]}"))
-                    context.close()
-                    continue
-                screens.settle(page)
-                page.wait_for_timeout(300)
-            found = page.evaluate(MEASURE)
-            out += [(name, width, state, kind, what) for kind, what in dict.fromkeys(map(tuple, found))]
-            if shots and found:
-                page.screenshot(path=str(Path(shots) / f"{name}-{width}-{engine}{'-' + state.replace(' ', '-') if state else ''}.png"), full_page=True)
-            context.close()
-        # turned: laid out the other way round first, then at this size, against the same page laid out afresh
-        context, page = load(browser, site, name, first, app)
-        page.set_viewport_size({"width": w, "height": h})
-        # a view that redraws for the new width (Scores' lineups) has done so, so only layout differs
-        screens.settle(page)
-        page.wait_for_timeout(300)
-        turned = page.evaluate(HEIGHTS)
-        page.evaluate(RELAYOUT)
-        fresh = page.evaluate(HEIGHTS)
-        differ = sorted(int(i) for i in fresh if i in turned and abs(turned[i][0] - fresh[i][0]) > 2)
-        # the first that differs with nothing inside it differing says where: its boxes around it differ with it
-        inner = [i for i in differ if not any(i < j <= fresh[str(i)][2] for j in differ)]
-        if inner:
-            first = fresh[str(inner[0])]
-            out.append((name, width, None, "stale", f"{first[1]} {turned[str(inner[0])][0]}px, afresh {first[0]}px ({len(differ)} heights in all)"))
+    for state, css in [(None, None)] + STATES.get(name, []):
+        context, page = load(browser, site, name, (w, h), app)
+        if css:
+            try:
+                page.locator(css).first.click(timeout=2000)
+            except Exception as error:
+                out.append((name, width, state, "missing", f"couldn't open it with {css}: {str(error).splitlines()[0]}"))
+                context.close()
+                continue
+            screens.settle(page)
+            page.wait_for_timeout(300)
+        found = page.evaluate(MEASURE)
+        out += [(name, width, state, kind, what) for kind, what in dict.fromkeys(map(tuple, found))]
+        if shots and found:
+            page.screenshot(path=str(Path(shots) / f"{name}-{width}-{engine}{'-' + state.replace(' ', '-') if state else ''}.png"), full_page=True)
         context.close()
-        browser.close()
+    # turned: laid out the other way round first, then at this size, against the same page laid out afresh
+    context, page = load(browser, site, name, first, app)
+    page.set_viewport_size({"width": w, "height": h})
+    # a view that redraws for the new width (Scores' lineups) has done so, so only layout differs
+    screens.settle(page)
+    page.wait_for_timeout(300)
+    turned = page.evaluate(HEIGHTS)
+    page.evaluate(RELAYOUT)
+    fresh = page.evaluate(HEIGHTS)
+    differ = sorted(int(i) for i in fresh if i in turned and abs(turned[i][0] - fresh[i][0]) > 2)
+    # the first that differs with nothing inside it differing says where: its boxes around it differ with it
+    inner = [i for i in differ if not any(i < j <= fresh[str(i)][2] for j in differ)]
+    if inner:
+        first = fresh[str(inner[0])]
+        out.append((name, width, None, "stale", f"{first[1]} {turned[str(inner[0])][0]}px, afresh {first[0]}px ({len(differ)} heights in all)"))
+    context.close()
     return out
 
 
@@ -278,9 +302,9 @@ def main():
         sheet = Path(ref[len(screens.BUILT):]) / "v2" / "fuad.css"
         with open(screens.REPO / "site" / "v2" / "fuad.css") as source, open(sheet, "w") as out:
             subprocess.run(["node", "tools/minimum-css.mjs"], cwd=screens.REPO, stdin=source, stdout=out, stderr=subprocess.DEVNULL, check=True)
-    jobs = [(ref, name, width, args.shots, args.engine) for name in plain if not only or name in only for width in widths]
+    jobs = [(name, width, args.shots) for name in plain if not only or name in only for width in widths]
     findings = []
-    with ProcessPoolExecutor(screens.WORKERS) as pool:
+    with ProcessPoolExecutor(screens.WORKERS, initializer=start_worker, initargs=(ref, args.engine)) as pool:
         for out in pool.map(measure, jobs):
             findings += out
     # one line per finding, with every screen and width it's on
