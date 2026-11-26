@@ -115,3 +115,6 @@ Milton: 1 year").
 - 2026-11-26 02:38 UTC: Charged $2 to The Fighting Injured Reserves! for Aaron Rodgers (1yrs@4, 11/25), and reset the player to $1 / 0 years.
 - 2026-11-26 02:38 UTC: Recorded "Most Points Week 11" $15.00 to Smooth City Styles!.
 - 2026-11-26 02:38 UTC: Took the 2026 franchise salary snapshot (QB $67, RB $70, WR $70, TE $21, PK $2).
+- 2026-11-26 17:52 UTC: Charged $1 to Smooth City Styles! for Chad Ryland (1yrs@1, 11/25), and reset the player to $1 / 0 years.
+- 2026-11-26 17:52 UTC: Set Jason Sanders to 1 year (blind bid comment "1 year").
+- 2026-11-26 17:52 UTC: Set Justice Hill to 1 year (post "Hill: 1 year").
