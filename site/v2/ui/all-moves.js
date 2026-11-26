@@ -15,12 +15,12 @@ import {clock, dayText, recentMoves} from "./home-model.js";
 import {moveRows} from "./move-rows.js";
 import {playerList} from "./player-list.js";
 import {playerIdOf, readBidRun, runPlayers} from "./bids-model.js";
-import {plural} from "./format.js";
+import {plural, yearsText as lengthText} from "./format.js";
 
 const KINDS = [["All", null], ["Adds", "Add"], ["Drops", "Drop"], ["Bids", "Bid"], ["Trades", "Trade"], ["IR", "IR"]];
 const CHEVRON_DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
-const yearsText = (years) => (years ? ` · ${years} yr${years === 1 ? "" : "s"}` : "");
+const yearsText = (years) => (years ? ` · ${lengthText(years)}` : "");
 
 // today's teams by id, from MFL's page
 function teamNames() {

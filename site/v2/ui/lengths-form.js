@@ -2,7 +2,7 @@
 // due one, posted to the board as the member, where the daily job reads it the next morning. Every
 // player kept needs a length (bylaw 12.4), so it can't be sent with more than the roster limit.
 
-import {exportUrl, fetchExport} from "../lib/mfl.js";
+import {displayName as firstLast, exportUrl, fetchExport} from "../lib/mfl.js";
 import {strict} from "./checked.js";
 import {formPost} from "../lib/lengths.js";
 import {ROSTER_MAX} from "../lib/rules.js";
@@ -30,7 +30,6 @@ export async function postToContractTopic(context, body) {
     }
 }
 
-const firstLast = (name) => String(name).split(",").reverse().map((part) => part.trim()).join(" ");
 
 // `players`: [{player, salary}], player as MFL's players export has him; `active` the team's active
 // players; `due` when they're due ("by Mon Sep 7"), or null past it; `unread` the day of a post made

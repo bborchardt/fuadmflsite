@@ -4,7 +4,7 @@
 import {contractDeadline as deadline} from "./adds.js";
 import settings from "./settings.js";
 import {SUFFIXES, normalize} from "./names.js";
-import {asArray} from "./mfl.js";
+import {asArray, displayName as label} from "./mfl.js";
 
 export const MIN_YEARS = 1;
 export const MAX_YEARS = settings.contracts.maxYears;
@@ -227,7 +227,6 @@ export function teamPlayers({rosters, players}) {
         ({playerId: entry.id, name: (players.get(entry.id) || {name: ""}).name}))]));
 }
 
-const label = (name) => name.split(",").reverse().map((part) => part.trim()).join(" ");
 
 // counts taking back the add's, when no other add (`others`) is left for them to be about
 function retracted(read, add, others) {

@@ -4,11 +4,11 @@
 // sends is the difference between the sheet and MFL, read afresh each time, so after a failure it's
 // sent again from where it stopped.
 
-import {asArray, exportUrl, fetchExport} from "../lib/mfl.js";
+import {asArray, displayName as firstLast, exportUrl, fetchExport} from "../lib/mfl.js";
 import {strict} from "./checked.js";
 import {contractProblem, draftResultsXml, matchOwner, matchPlayer, movedFrom, notOnTeam, planSend, readAuction, readRookies, rosterSteps, salariesXml} from "../lib/load.js";
 import {openDialog} from "./dialog.js";
-import {money} from "./format.js";
+import {money, yearsText} from "./format.js";
 import {esc} from "./html.js";
 import {readBack, send} from "./moves.js";
 import {ROOKIE_RANKED, rookieBaselines} from "../lib/rules.js";
@@ -24,8 +24,6 @@ const KINDS = {
     rookies: {label: "Rookie draft", tab: "Rookie", hint: "Copy the whole Rookie tab and paste it here: its Pick, Owner and Player columns are read."}
 };
 
-const firstLast = (name) => String(name).split(",").reverse().map((part) => part.trim()).join(" ");
-const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;
 
 // Each sheet name the commissioner still has to pick an MFL player for, and each owner a team:
 // [{key, label, options: [{value, text}]}]

@@ -355,10 +355,7 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
     const earliest = Math.min(...adds.map((add) => add.added));
     const board = await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100});
     const threads = asArray(board.thread).filter((thread) => Number(thread.lastPostTime) >= earliest);
-    const posts = [];
-    for (const thread of threads) {
-        posts.push(...asArray((await fetchFrom(host, "messageBoardThread", {L: leagueId, THREAD: thread.id})).post));
-    }
+    const posts = await threadPosts(threads);
     const bidRequests = [];
     for (const period of new Set(adds.filter((add) => add.type === "BBID_WAIVER").map((add) => add.added))) {
         // each request tagged with its period, so a bid is only matched on its own week's page
@@ -371,7 +368,7 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
         needsAttention(`Contract years: ${flag}. Left for the commissioner.`);
     }
     const describe = (contract) => {
-        const name = contract.name.split(",").reverse().map((part) => part.trim()).join(" ");
+        const name = displayName(contract.name);
         return `${name} to ${contract.years} year${contract.years === 1 ? "" : "s"} (${contract.source})`;
     };
     if (!contracts.length) {
@@ -425,13 +422,10 @@ async function offseasonLengths(loggedIn, {built, rosters, playerNames, cutDown}
     if (!loggedIn) {
         throw new Error(`${teams.length} team(s) have players waiting for contract lengths, but reading the board needs the commissioner login, so none were set.`);
     }
-    const posts = [];
-    for (const thread of lengthTopics(await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100}))) {
-        posts.push(...asArray((await fetchFrom(host, "messageBoardThread", {L: leagueId, THREAD: thread.id})).post));
-    }
+    const posts = await threadPosts(lengthTopics(await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100})));
     const salaries = new Map(asArray(rosters.franchise).flatMap((team) => asArray(team.player)).map((entry) => [entry.id, entry.salary]));
     const name = (id) => displayName((playerNames.get(id) || {name: id}).name);
-    const teamName = (id) => (built.franchises.get(id) || {}).teamName || id;
+    const teamName = (id) => teamNameIn(built, id);
     const pastCut = Boolean(cutDown) && now.getTime() / 1000 >= cutDown;
     const contracts = [];
     for (const team of teams) {
@@ -517,7 +511,7 @@ async function payouts(loggedIn, {built}) {
         log("No payouts to record.");
         return;
     }
-    const teamName = (id) => (built.franchises.get(id) || {}).teamName || id;
+    const teamName = (id) => teamNameIn(built, id);
     const describe = (record) => `"${record.description}" $${record.amount.toFixed(2)} to ${teamName(record.franchise)}`;
     if ((applyPayouts || dryRun) && records.length > MAX_PAYOUTS_PER_RUN) {
         throw new Error(`${records.length} payouts are waiting to be recorded, more than the ${MAX_PAYOUTS_PER_RUN} expected, so none were. `
@@ -551,9 +545,8 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     const added = new Set(pendingAdds({rosters, transactions, players: playerNames}).map((add) => add.playerId));
     // a player set once is settled after: an RFA kept for $1 with no bids (bylaw 6.5) looks like an
     // unsettled one when last season's salary was $1 too
-    const file = join(dataDir, "rfa-salaries.json");
-    const record = dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
-    const done = rfasSet();
+    const record = rfaRecord();
+    const done = rfasSet(record);
     const rfas = rfaSalaries({lastRosters, rosters, asArray, added}).filter((rfa) => !done.has(rfa.playerId));
     if (!rfas.length) {
         log("No players have gone from 1 contract year to 0 without $0.01.");
@@ -566,10 +559,9 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     }
     const name = (rfa) => {
         const player = playerNames.get(rfa.playerId);
-        return player ? player.name.split(",").reverse().map((part) => part.trim()).join(" ") : rfa.playerId;
+        return player ? displayName(player.name) : rfa.playerId;
     };
-    const team = (rfa) => (built.franchises.get(rfa.franchiseId) || {}).teamName || rfa.franchiseId;
-    const describe = (rfa) => `${name(rfa)} (${team(rfa)})`;
+    const describe = (rfa) => `${name(rfa)} (${teamNameIn(built, rfa.franchiseId)})`;
     if (!applyRfaSalaries) {
         rfas.forEach((rfa) => choreLog(`Dry run: would set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
         return rfas.map((rfa) => rfa.playerId);
@@ -578,7 +570,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
         throw new Error(`${rfas.length} RFA(s) are waiting for $${RFA_SALARY}, but the job isn't logged in, so none were set.`);
     }
     await mflImport("salaries", contractsXml(rfas.map((rfa) => ({playerId: rfa.playerId, salary: RFA_SALARY, years: 0}))), {APPEND: "1"});
-    writeFileSync(file, JSON.stringify({...record, [season]: [...done, ...rfas.map((rfa) => rfa.playerId)]}, null, 2) + "\n");
+    writeFileSync(rfaFile(), JSON.stringify({...record, [season]: [...done, ...rfas.map((rfa) => rfa.playerId)]}, null, 2) + "\n");
     rfas.forEach((rfa) => choreLog(`Set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
     return rfas.map((rfa) => rfa.playerId);
 }
@@ -1025,11 +1017,32 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
     return finish();
 }
 
-// the players this job has set to $0.01 this season (rfa-salaries.json)
-function rfasSet() {
-    const file = join(dataDir, "rfa-salaries.json");
-    const record = dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+function rfaFile() {
+    return join(dataDir, "rfa-salaries.json");
+}
+
+// the players this job has set to $0.01, by season (rfa-salaries.json)
+function rfaRecord() {
+    const file = rfaFile();
+    return dataIsThisLeagues && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+}
+
+// those set this season
+function rfasSet(record = rfaRecord()) {
     return new Set(record[season] || []);
+}
+
+function teamNameIn(built, id) {
+    return (built.franchises.get(id) || {}).teamName || id;
+}
+
+// every post in `threads`, read one thread at a time
+async function threadPosts(threads) {
+    const posts = [];
+    for (const thread of threads) {
+        posts.push(...asArray((await fetchFrom(host, "messageBoardThread", {L: leagueId, THREAD: thread.id})).post));
+    }
+    return posts;
 }
 
 // last season's rosters, read once a run; null when the league had no site then, as a season with

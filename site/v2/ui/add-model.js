@@ -2,7 +2,7 @@
 // no DOM here, so each can be checked against saved pages. A bid that could put a team over a limit
 // is invalid by league rule (5.5), so every move is checked with the pending bids as they could land.
 
-import {asArray} from "../lib/mfl.js";
+import {asArray, displayName as firstLast} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib/rules.js";
 import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
@@ -45,11 +45,7 @@ export function readMarks(name) {
     return {mflName: rest.replace(/\s*\(R\)$/, ""), mark: mark ? mark[mark.length - 1] : null, rookie};
 }
 
-// "Brown, A.J." → "A.J. Brown"
-export const firstLast = (mflName) => {
-    const [last, first] = String(mflName).split(",").map((part) => part.trim());
-    return first ? `${first} ${last}` : last;
-};
+export {firstLast};
 
 // "Harrison Jr., Marvin" → "Harrison": the name a comment line goes by, as the job's reader takes it
 export const surname = (mflName) => String(mflName).split(",")[0].trim().replace(SUFFIX, "");

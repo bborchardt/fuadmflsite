@@ -3,11 +3,8 @@
 // send them with v2's form, which posts them to the board in the form below; the daily job reads
 // only that form, as lengths posted by hand come in too many shapes to read (docs/design.md).
 
-import settings from "./settings.js";
 import {asArray} from "./mfl.js";
-
-const MIN_YEARS = 1;
-const MAX_YEARS = settings.contracts.maxYears;
+import {MAX_YEARS, MIN_YEARS, postText as decode} from "./contract-years.js";
 
 export const FORM_HEADING = "Contract lengths, sent from the league site:";
 
@@ -28,12 +25,6 @@ const formName = (player) => `${player.name} ${player.team} ${player.position}`;
 export function formPost(lines) {
     return [FORM_HEADING, ...lines.map(({player, years}) => `${formName(player)}: ${years} year${years === 1 ? "" : "s"}`)].join("\n");
 }
-
-const decode = (text) => String(text)
-    .replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&quot;/g, "\"").replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&");
 
 // [{name, team, position, years}] from a post made with the form, or null for any other post. Each entry ends its
 // own match, so it reads the same whether or not MFL kept the post's line breaks.

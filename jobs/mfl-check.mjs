@@ -5,11 +5,14 @@
 
 import {pathToFileURL} from "node:url";
 import {join} from "node:path";
-import {JSDOM} from "jsdom";
 import {mflHomePage} from "./mfl-form.mjs";
 
-// MFL's page as a browser's parser builds it; MFL's scripts aren't run
-const documentOf = (html) => new JSDOM(html).window.document;
+// MFL's page as a browser's parser builds it; MFL's scripts aren't run. jsdom is loaded only by a run
+// that checks pages, as it is most of the job's start-up.
+const documentOfLoaded = async () => {
+    const {JSDOM} = await import("jsdom");
+    return (html) => new JSDOM(html).window.document;
+};
 const scripts = (doc) => [...doc.querySelectorAll("script")].map((script) => script.textContent).join("\n");
 const two = (week) => String(week).padStart(2, "0");
 
@@ -40,6 +43,7 @@ export function exportChecks({week, inSeason}) {
 // `name` is the file it's saved as, as the capture bookmark names it; `members`, a page with what only
 // the league's members see, or the login's own team's (its pending bids and offers, its settings).
 export async function pageChecks({season, leagueId, franchise, partner, playerId, week, inSeason}, version = "v2") {
+    const documentOf = await documentOfLoaded();
     const ui = (name) => import(pathToFileURL(join(import.meta.dirname, "..", "site", version, "ui", name)).href);
     const [{readPlayerLists}, {readRoster}, {readBidRun}, {lineupForm, lineupRefusal, readLineupPage}, {readProposal, readTradesPage}, {readIRPage},
         {readScoring, readSettings}, {readPowerPage}, {readCareer, readChampions, readSeries}, {readSkinForm}, {readCustomizeForm},
