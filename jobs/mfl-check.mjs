@@ -23,7 +23,7 @@ export function exportChecks({week, inSeason}) {
         {type: "rules"},
         {type: "schedule"},
         {type: "leagueStandings"},
-        {type: "weeklyResults", params: {W: "YTD"}, section: "allWeeklyResults"},
+        {type: "weeklyResults", params: {W: "YTD"}},
         {type: "playoffBrackets"},
         {type: "accounting"},
         {type: "pendingWaivers"},

@@ -2,7 +2,7 @@
 // (`#league-standings`) and loaded the first time it shows. Before week 1 the new site has no games,
 // so Standings, Power and Winners show last season's final, which MFL keeps on the previous site.
 
-import {asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
+import {asArray, exportSection, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup, pageChanged} from "./panel.js";
 import {basicHref} from "./nav.js";
 import {lenient} from "./checked.js";
@@ -73,9 +73,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
     // lib/shapes.js as a display panel's (checked.js lenient).
     const exp = (type, params = {}, {base = host, optional = false, fresh = false, year = season, check = lenient} = {}) => {
         const leagueParams = base === host ? {L: context.leagueId, ...params} : params;
-        // the year to date comes back as `allWeeklyResults`
-        const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
-        const request = fetchExport(exportUrl(base, year, type, leagueParams), section, {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: check || undefined});
+        const request = fetchExport(exportUrl(base, year, type, leagueParams), exportSection(type, params), {fetchImpl: fresh ? mflFetch : pageFetch, init: {cache: "no-store"}, check: check || undefined});
         // one MFL has changed isn't gone without, which would read as none (Winners' pot "not in
         // MFL's accounting yet"): its panel fails
         return optional ? request.catch((error) => {

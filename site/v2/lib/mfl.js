@@ -44,6 +44,10 @@ export function salariesImportXml(players) {
 export const nflCode = (team) => NFL_CODES[team] || team;
 
 // league-independent exports (players, injuries, nflSchedule) live on the api host
+// the section an export's answer comes in: its type, but the year to date's weekly results come
+// back as `allWeeklyResults`
+export const exportSection = (type, params = {}) => (type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type);
+
 export function exportUrl(base, season, type, params = {}) {
     const query = new URLSearchParams({TYPE: type, ...params, JSON: "1"});
     return `${base}/${season}/export?${query}`;

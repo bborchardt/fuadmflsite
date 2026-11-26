@@ -44,7 +44,7 @@ if (!/^v\d+$/.test(version) || version === "v1") {
     throw new Error(`RULES_VERSION must name a version from v2 on, as v2, not "${version}"`);
 }
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
-const {API_BASE, GAME_HOURS, asArray, displayName, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
+const {API_BASE, GAME_HOURS, asArray, displayName, exportSection, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
 const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
 const {WEEK_ROSTERS, checkShape} = await lib("shapes.js");
@@ -283,7 +283,7 @@ async function exportFetch(url, init) {
 
 // an export whose items lack a field the job relies on throws, so nothing is written from it (lib/shapes.js)
 const exportOptions = {fetchImpl: exportFetch, init: {headers: mflHeaders}, check: checkShape};
-const fetchFrom = (base, type, params, section = type, year = season, rules) => {
+const fetchFrom = (base, type, params, section = exportSection(type, params), year = season, rules) => {
     const url = exportUrl(base, year, type, params);
     if (exportsRead && rules === WEEK_ROSTERS) {
         exportsRead.set(url, {...exportsRead.get(url), rules: "WEEK_ROSTERS"});
@@ -476,8 +476,7 @@ async function payouts(loggedIn, {built}) {
     }
     const lastRegular = built.weeks.playoffsStart - 1;
     const endWeek = built.weeks.championship;
-    // the year to date comes back as `allWeeklyResults`
-    const weeklyResults = await fetchFrom(host, "weeklyResults", {L: leagueId, W: "YTD"}, "allWeeklyResults");
+    const weeklyResults = await fetchFrom(host, "weeklyResults", {L: leagueId, W: "YTD"});
     const latest = latestScoredWeek(weeklyResults);
     if (!latest) {
         log("No week has scores yet; no payouts to record.");
@@ -1359,7 +1358,7 @@ async function mflCheck(loggedIn, {built, rosters, league}) {
     const saving = pageSaver(league);
     const {changed, unchecked, count} = await checkMfl(context, {
         version,
-        exportRead: ({type, params = {}, section = type, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}, section),
+        exportRead: ({type, params = {}, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}),
         pageRead: async (path, {referer} = {}) => {
             const response = await mflAsk(`${host}${path}`, {headers: referer ? {...mflHeaders, Referer: `${host}${referer}`} : mflHeaders});
             return {status: response.status, body: await response.text(), served: response.url};
