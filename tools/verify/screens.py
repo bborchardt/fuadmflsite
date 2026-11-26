@@ -844,7 +844,7 @@ def settle(page, timeout=15.0):
     drawn in another font until it lands. The layout forced first starts any such fetch."""
     last, since, start = None, time.time(), time.time()
     while time.time() - start < timeout:
-        now = ev(page, f"() => {{ document.body.getBoundingClientRect(); const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*<|aria-busy=\"true\"/.test(s) || document.fonts.status === 'loading' ? 'busy:' : '') + h + ':' + s.length; }}")
+        now = ev(page, f"() => {{ document.documentElement.getBoundingClientRect(); const s = ({SNAPSHOT})(); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (/[A-Z][a-z]+ing…\\s*<|aria-busy=\"true\"/.test(s) || document.fonts.status === 'loading' ? 'busy:' : '') + h + ':' + s.length; }}")
         if now != last:
             last, since = now, time.time()
         elif time.time() - since >= 0.3 and not now.startswith("busy:"):
