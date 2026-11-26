@@ -74,39 +74,63 @@ export function readRules(rules) {
     });
 }
 
+// A rule's range and points form, read from the export's text once: a simulation scores each
+// player's stats 400 times
+function prepared(rule) {
+    const form = rule.points;
+    const ready = {event: rule.event, lower: Number(rule.lower), upper: Number(rule.upper), each: rule.event === "FG" || rule.event === "FR"};
+    if (/^\*/.test(form)) {
+        ready.times = Number(form.slice(1));
+    } else if (/\//.test(form)) {
+        const [perUnit, unitText] = form.split("/");
+        const multiplier = Number(perUnit);
+        ready.unit = Number(unitText || 1) || 1;
+        ready.whole = !/\./.test(unitText || "");
+        ready.multiplier = perUnit !== "" && !Number.isNaN(multiplier) && multiplier !== 0 ? multiplier : null;
+    } else {
+        ready.points = Number(form);
+    }
+    return ready;
+}
+
+// the rules for one position, prepared, kept with the rules they came from (readRules gives a new
+// list each read)
+const preparedRules = new WeakMap();
+function rulesFor(rules, position) {
+    let byPosition = preparedRules.get(rules);
+    if (!byPosition) {
+        byPosition = new Map();
+        preparedRules.set(rules, byPosition);
+    }
+    if (!byPosition.has(position)) {
+        byPosition.set(position, rules.filter((rule) => rule.positions.includes(position)).map(prepared));
+    }
+    return byPosition.get(position);
+}
+
 // MFL's ls_get_points2: a stat's points under one rule, its integer math included ("1/30" is a
 // whole point per full 30 yards)
-function rulePoints(value, lower, upper, form) {
-    if (value === undefined) {
-        return 0;
-    }
+function rulePoints(value, rule) {
     const number = Number(value);
     let match;
     if (/^[A-Z]/.test(value)) {
-        match = number == lower; // eslint-disable-line eqeqeq
+        match = number === rule.lower;
     } else if (/&/.test(value)) {
-        match = value.split("&").map(Number).every((part) => part >= Number(lower) && part <= Number(upper));
+        match = value.split("&").map(Number).every((part) => part >= rule.lower && part <= rule.upper);
     } else {
-        match = number >= Number(lower) && number <= Number(upper);
+        match = number >= rule.lower && number <= rule.upper;
     }
     if (!match) {
         return 0;
     }
-    if (/^\*/.test(form)) {
-        return number * Number(form.slice(1));
+    if (rule.times !== undefined) {
+        return number * rule.times;
     }
-    if (/\//.test(form)) {
-        const [perUnit, unitText] = form.split("/");
-        const unit = Number(unitText || 1) || 1;
-        const multiplier = Number(perUnit);
-        const whole = !/\./.test(unitText || "");
-        let points = whole ? (number / unit) | 0 : number / unit;
-        if (perUnit !== "" && !Number.isNaN(multiplier) && multiplier !== 0) {
-            points *= multiplier;
-        }
-        return points;
+    if (rule.unit !== undefined) {
+        const points = rule.whole ? (number / rule.unit) | 0 : number / rule.unit;
+        return rule.multiplier === null ? points : points * rule.multiplier;
     }
-    return Number(form);
+    return rule.points;
 }
 
 // MFL lists some stats (field goal lengths) as "55,34", each scored on its own
@@ -115,17 +139,16 @@ function statPoints(value, rule) {
         return 0;
     }
     const text = String(value);
-    if (rule.event === "FG" || rule.event === "FR" || /,/.test(text)) {
-        return text.split(",").reduce((sum, part) => sum + rulePoints(part, rule.lower, rule.upper, rule.points), 0);
+    if (rule.each || /,/.test(text)) {
+        return text.split(",").reduce((sum, part) => sum + rulePoints(part, rule), 0);
     }
-    return rulePoints(text, rule.lower, rule.upper, rule.points);
+    return rulePoints(text, rule);
 }
 
+const scoreWith = (stats, ready) => ready.reduce((sum, rule) => sum + statPoints(stats[rule.event], rule), 0);
+
 export function scoreStats(stats, position, rules) {
-    if (!stats) {
-        return 0;
-    }
-    return rules.reduce((sum, rule) => rule.positions.includes(position) ? sum + statPoints(stats[rule.event], rule) : sum, 0);
+    return stats ? scoreWith(stats, rulesFor(rules, position)) : 0;
 }
 
 // Each NFL team's game: "bye", "scheduled" (with its kickoff), "playing" (quarter, seconds left,
@@ -224,6 +247,12 @@ export function statLine(stats, position) {
     return parts.join("; ");
 }
 
+// `x % m` for a whole number 0 ≤ x < 2^53: the quotient's rounding is put right by one step
+function remainder(x, m) {
+    const r = x - Math.floor(x / m) * m;
+    return r < 0 ? r + m : r >= m ? r - m : r;
+}
+
 // MFL's seeded random numbers, so a player's simulations are the same on every page
 class Random {
     constructor() {
@@ -239,10 +268,13 @@ class Random {
         }
     }
 
+    // MFL's, without `%`: on numbers this size it's a slow floating-point call, and the generator runs
+    // a few million times a refresh. Each product is a whole number under 2^53, so this is exact.
     uniform() {
-        this.a = (this.a * 65539) % 4294967087;
-        this.b = (this.b * 65537) % 4294965887;
-        return ((this.a + this.b) % 0xffffffff) / 0xffffffff;
+        this.a = remainder(this.a * 65539, 4294967087);
+        this.b = remainder(this.b * 65537, 4294965887);
+        const sum = this.a + this.b;
+        return (sum >= 0xffffffff ? sum - 0xffffffff : sum) / 0xffffffff;
     }
 
     // one Box-Muller pair, the second kept for the next call (across players, as MFL's is)
@@ -295,22 +327,25 @@ function simulatePlayer(random, {playerId, position, secondsLeft, projected, cur
     random.seed(playerId, week);
     const totals = [];
     const now = current || {};
+    // what's the same in every simulation, worked out once: the draws are made in the same order
+    const sofarOf = (stat) => (Number.isNaN(Number(now[stat])) ? 0 : Number(now[stat] || 0));
+    const projectedStats = Object.keys(projected).map((stat) => [stat, projected[stat], sofarOf(stat)]);
+    const yardsSofar = YARDS.map(([yards]) => sofarOf(yards));
+    const ready = rulesFor(rules, position);
     for (let i = 0; i < SIMULATIONS; i++) {
         const stats = {};
         const rest = {};
-        for (const stat of Object.keys(projected)) {
-            const sofar = Number.isNaN(Number(now[stat])) ? 0 : Number(now[stat] || 0);
-            rest[stat] = restOf(random, stat, projected[stat], sofar, secondsLeft);
+        for (const [stat, expected, sofar] of projectedStats) {
+            rest[stat] = restOf(random, stat, expected, sofar, secondsLeft);
             stats[stat] = sofar + rest[stat];
         }
-        for (const [yards, average, attempts, deviation] of YARDS) {
-            const sofar = Number.isNaN(Number(now[yards])) ? 0 : Number(now[yards] || 0);
+        YARDS.forEach(([yards, average, attempts, deviation], index) => {
             if (rest[attempts] > 0) {
-                stats[yards] = sofar + random.normal(projected[average], deviation) * rest[attempts];
+                stats[yards] = yardsSofar[index] + random.normal(projected[average], deviation) * rest[attempts];
             } else {
-                stats[yards] = sofar;
+                stats[yards] = yardsSofar[index];
             }
-        }
+        });
         if (rest["#F"] > 0) {
             const lengths = now.FG !== undefined ? [String(now.FG)] : [];
             for (let kick = 1; kick < rest["#F"] + 0.5; kick++) {
@@ -318,7 +353,7 @@ function simulatePlayer(random, {playerId, position, secondsLeft, projected, cur
             }
             stats.FG = lengths.filter(Boolean).join(",");
         }
-        totals.push(scoreStats(stats, position, rules));
+        totals.push(scoreWith(stats, ready));
     }
     return totals;
 }
