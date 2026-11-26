@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import {readFileSync, readdirSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
-import {asArray} from "../site/v2/lib/mfl.js";
+import {asArray, exportSection} from "../site/v2/lib/mfl.js";
 import {SHAPES, WEEK_ROSTERS, checkShape, shapeProblem} from "../site/v2/lib/shapes.js";
 import {exportChecks} from "../jobs/mfl-check.mjs";
 
@@ -47,7 +47,7 @@ test("every export the job checks has a saved sample or a stand-in", () => {
 });
 
 test("every export the daily check of what v2 reads asks for has rules", () => {
-    const sections = [...exportChecks({week: 6, inSeason: true}).map((each) => each.section || each.type), "liveScoring"];
+    const sections = [...exportChecks({week: 6, inSeason: true}).map((each) => exportSection(each.type, each.params)), "liveScoring"];
     assert.deepEqual(sections.filter((section) => !(section in SHAPES)), []);
 });
 

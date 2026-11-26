@@ -5,7 +5,7 @@
 import {keepHere, keptHere, onSectionTap} from "./kept.js";
 import {onBack} from "./back.js";
 import {listProjection, weekFeed} from "./projections.js";
-import {API_BASE, asArray, exportUrl, fetchExport, numberOf} from "../lib/mfl.js";
+import {API_BASE, asArray, exportSection, exportUrl, fetchExport, numberOf} from "../lib/mfl.js";
 import {drawPanel} from "./panel.js";
 import {cached} from "./store.js";
 import {lenient} from "./checked.js";
@@ -71,8 +71,7 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
     // league load (`league()`), held to lib/shapes.js as Moves' checks are.
     const exp = (type, params = {}, {base: from = host, optional = false, unknown = false, year = season} = {}) => {
         const leagueParams = from === host ? {L: context.leagueId, ...params} : params;
-        const section = type === "weeklyResults" && params.W === "YTD" ? "allWeeklyResults" : type;
-        const request = fetchExport(exportUrl(from, year, type, leagueParams), section, {fetchImpl: pageFetch, init: {cache: "no-store"}, check: lenient});
+        const request = fetchExport(exportUrl(from, year, type, leagueParams), exportSection(type, params), {fetchImpl: pageFetch, init: {cache: "no-store"}, check: lenient});
         const warned = (error) => {
             if (error && error.changed && !unknown) {
                 throw error;
