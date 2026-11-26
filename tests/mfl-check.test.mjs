@@ -132,6 +132,17 @@ test("Lineup's refusal in place of the form is as v2 takes it, not a change", as
     assert.deepEqual(changed, []);
 });
 
+test("Trades closed, MFL's note in place of the teams to trade with, is as v2 takes it; with neither it's a change", async () => {
+    const page = fixture("pages/member/options-O05.html");
+    const form = /<form action="options" method="post">\s*<h3>Select Franchise[\s\S]*?<\/form>/;
+    assert.match(page, form);
+    const trades = (body) => (path) => (/O=05$/.test(path) ? {status: 200, body} : savedPage(path));
+    const closed = await run(CONTEXT, {pageRead: trades(page.replace(form, '<h3 class="warning">Note: Trades Are Not Allowed Now According To Your <a href="options?L=50965&O=123">League Calendar</a>'))});
+    assert.deepEqual(closed.changed, []);
+    const neither = await run(CONTEXT, {pageRead: trades(page.replace(form, ""))});
+    assert.deepEqual(neither.changed, ["Trades (/2026/options?L=50965&O=05): v2 can't read it"]);
+});
+
 test("without the login's team, only the exports; out of season, nothing of a week", async () => {
     pages.length = 0;
     asked.length = 0;

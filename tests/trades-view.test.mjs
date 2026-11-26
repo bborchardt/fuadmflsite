@@ -79,9 +79,13 @@ test("the teams to propose to, each with cap used, until the deadline closes tra
     assert.match(html, /<a class="fuad-trades-partner" href="\/trades&amp;FRANCHISE&#x3D;0001,0002"><span>Pat&#x27;s Team<\/span><span class="fuad-trades-used fuad-muted">\$280 used ›<\/span><\/a>/);
     assert.doesNotMatch(html, /0001,0001/);
     assert.match(html, /Deadline /);
-    const closed = listMarkup(viewOf({closed: true}));
+    const closed = listMarkup(viewOf({closed: true, pastDeadline: true}));
     assert.match(closed, /Closed since the deadline, .*Trades reopen after the season\./);
     assert.doesNotMatch(closed, /fuad-trades-partner/);
+    // MFL's calendar closing trades outside the season, with no deadline passed
+    const calendar = listMarkup(viewOf({closed: true, partners: []}));
+    assert.match(calendar, /Closed for now by the league calendar\./);
+    assert.doesNotMatch(calendar, /Deadline |fuad-trades-partner/);
 });
 
 const proposal = {partner: "0002", mine: [{id: "olave"}, {id: "higbee"}], theirs: [{id: "lamar"}], expiry: NOW + 7 * 86400, years: [2026, 2027]};

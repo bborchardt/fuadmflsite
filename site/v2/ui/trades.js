@@ -74,7 +74,7 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
         standAside();
         return;
     }
-    if (asked ? !proposal : !page.partners.length) {
+    if (asked ? !proposal : !page.partners.length && !page.closed) {
         standAside();
         return;
     }
@@ -96,14 +96,15 @@ export async function drawTrades({context, franchiseId, addHref, teamHref}) {
 
     const names = () => new Map([...state.data.league.franchises.values()].map((team) => [team.franchiseId, String(team.teamName || "").trim()]));
     const phase = () => movesPhase(state.data.facts);
-    const closed = () => phase() === "season" && state.games.deadline && now() >= state.games.deadline;
+    const pastDeadline = () => phase() === "season" && state.games.deadline && now() >= state.games.deadline;
+    const closed = () => page.closed || pastDeadline();
 
     // ---- what's drawn: the state, and what trades-view.js reads with it ----
 
     function view() {
         return {
             state, franchiseId, season: context.season, names: names(), positions: state.data.positions, proposal, partners: page.partners, now: now(), phase: phase(),
-            limits: limitsApply(state.data, now() * 1000), closed: closed(), wide: wide.matches, addHref, listUrl, proposeUrl, teamHref
+            limits: limitsApply(state.data, now() * 1000), closed: closed(), pastDeadline: Boolean(pastDeadline()), wide: wide.matches, addHref, listUrl, proposeUrl, teamHref
         };
     }
     const nameOf = (id) => names().get(id) || "another team";

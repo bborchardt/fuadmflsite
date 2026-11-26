@@ -249,7 +249,9 @@ Each is an ordinary page form, posted from the logged-in browser.
   commissioner's skin is the league's.
 - **Trades** (`options?L=<league>&O=05`): "Trades Offered By You", "Trades Offered To You", and a
   "Select Franchise To Trade With" form (`options`, `OPTION=05`, `FRANCHISE` select) that opens the
-  proposal page.
+  proposal page. While the league calendar closes trades (past the deadline) the form is gone, and in
+  its place an `h3.warning` reads "Note: Trades Are Not Allowed Now According To Your League
+  Calendar", left unclosed.
   - Propose: one form posted to `trade_offer`: `LEAGUE_ID`, `FRANCHISE_ID` (both teams,
     `0001,0002`), `input_expires`, checkboxes `drop<team>` per side, each valued with a player id or
     a future pick (`FP_<owner>_<year>_<round>`, "Year 2027 Round 1 Draft Pick from …"),
