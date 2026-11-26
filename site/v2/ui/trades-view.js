@@ -5,7 +5,7 @@
 //   proposal    the proposal page as readProposal reads it, or null on the Trades list
 //   partners    the teams MFL's Trades page lists
 //   now         seconds; phase: movesPhase; limits: whether the roster limits hold; closed: past
-//               the deadline
+//               the deadline or MFL says so (its calendar); pastDeadline: the first
 //   wide        the desktop layout; addHref: Add's page; listUrl: the Trades list;
 //               proposeUrl(partner): the proposal page with that team; teamHref(id): a team's page
 
@@ -147,7 +147,7 @@ function proposePanel(v) {
     const deadline = v.state.games.deadline;
     let inner;
     if (v.closed) {
-        inner = `<p class="fuad-trades-none">Closed since the deadline, ${esc(dayText(deadline))}. Trades reopen after the season.</p>`;
+        inner = `<p class="fuad-trades-none">${closedText(v)}</p>`;
     } else {
         const franchises = v.state.data.league.franchises;
         const partners = v.partners.filter((partner) => partner.id !== v.franchiseId && franchises.get(partner.id));
@@ -180,9 +180,13 @@ export function listMarkup(v) {
     ${proposePanel(v)}`;
 }
 
-// the proposal page past the deadline
+const closedText = (v) => (v.pastDeadline
+    ? `Closed since the deadline, ${esc(dayText(v.state.games.deadline))}. Trades reopen after the season.`
+    : "Closed for now by the league calendar.");
+
+// the proposal page when trades are closed
 export function closedMarkup(v) {
-    return `<section class="fuad-panel fuad-trades-note"><span>Closed since the deadline, ${esc(dayText(v.state.games.deadline))}. Trades reopen after the season.</span><a class="fuad-button" href="${esc(v.listUrl)}">Trades</a></section>`;
+    return `<section class="fuad-panel fuad-trades-note"><span>${closedText(v)}</span><a class="fuad-button" href="${esc(v.listUrl)}">Trades</a></section>`;
 }
 
 // ---- the proposal ----

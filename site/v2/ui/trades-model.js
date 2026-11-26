@@ -21,9 +21,10 @@ export const KICKOFF_WARNING_HOURS = 3;
 const actionOf = (form) => String(form.getAttribute("action") || "");
 
 // The Trades page (`options?O=05`): each offer's answer form by trade id, each of the member's
-// offers' revoke link, and the teams to trade with. The answer forms open inside table rows, so
-// their fields belong to them without being inside them (`form.elements`, not querySelector). Null
-// for any page but the Trades pages, the proposal's included (it has no teams to trade with).
+// offers' revoke link, the teams to trade with, and whether MFL says trades are closed (its calendar:
+// past the deadline it has no teams to trade with, only that note). The answer forms open inside table
+// rows, so their fields belong to them without being inside them (`form.elements`, not querySelector).
+// Null for any page but the Trades pages, the proposal's included (it has no teams to trade with).
 export function readTradesPage(doc) {
     if (mflProgram(doc) !== "options_05") {
         return null;
@@ -43,7 +44,8 @@ export function readTradesPage(doc) {
     }
     const select = [...doc.querySelectorAll("select[name=FRANCHISE]")].find((node) => node.form && node.form.elements.OPTION && node.form.elements.OPTION.value === "05");
     const partners = select ? [...select.options].map((option) => ({id: option.value, name: option.textContent.trim()})) : [];
-    return {answers, revokes, partners};
+    const closed = [...doc.querySelectorAll("h3.warning")].some((note) => /Trades Are Not Allowed Now/i.test(note.textContent));
+    return {answers, revokes, partners, closed};
 }
 
 // "Year 2027 Round 1 Draft Pick from So your saying there’s a chance?"

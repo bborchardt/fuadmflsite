@@ -83,6 +83,8 @@ SCREENS = {
     "ir": (f"/2026/options?L={LEAGUE}&O=18", {}),
     "trades": (f"/2026/options?L={LEAGUE}&O=05", {"now": BEFORE_DEADLINE}),
     "trades-closed": (f"/2026/options?L={LEAGUE}&O=05", {}),
+    # MFL's page once trades are closed: its note in place of the team picker
+    "trades-closed-mfl": (f"/2026/options?L={LEAGUE}&O=05", {"page:trades": "trades-O05-closed.html"}),
     "trades-offer": (f"/2026/options?L={LEAGUE}&O=05", {"pendingTrades": "pendingTrades-offer.json", "page:trades": "trades-O05-offer.html", "now": BEFORE_DEADLINE}),
     "propose": (f"/2026/options?L={LEAGUE}&O=05&FRANCHISE=0001,0002", {"now": BEFORE_DEADLINE}),
     # after a move: MFL's answer here is the saved page, unchanged, so a move never succeeds; the
