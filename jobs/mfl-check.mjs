@@ -62,7 +62,12 @@ export async function pageChecks({season, leagueId, franchise, partner, playerId
             return readRoster(scripts(doc)) && select && select.form && select.form.elements.OPTION && select.form.elements.OPTION.value === "257";
         })},
         {uses: ["readIRPage"], what: "Injured Reserve", name: "options-O18.html", members: true, path: option("18"), read: onDoc((doc) => readIRPage(doc, franchise))},
-        {uses: ["readTradesPage"], what: "Trades", name: "options-O05.html", members: true, path: option("05"), read: onDoc(readTradesPage)},
+        // v2 draws Trades with teams to trade with, or MFL's note that trades are closed; with neither it
+        // stands aside for MFL's page
+        {uses: ["readTradesPage"], what: "Trades", name: "options-O05.html", members: true, path: option("05"), read: onDoc((doc) => {
+            const page = readTradesPage(doc);
+            return page && (page.partners.length || page.closed);
+        })},
         {uses: ["readProposal"], what: "a trade proposal", name: "options-O05-propose.html", members: true, path: option("05", `&FRANCHISE=${franchise},${partner}`), when: Boolean(partner), read: onDoc((doc) => readProposal(doc, franchise))},
         // or MFL's refusal in its place, as lineup.js has it (the season over, a roster to fix first)
         {uses: ["readLineupPage"], what: "Submit Lineup", name: "lineup.html", members: true, path: `/${season}/lineup?L=${L}&F=${franchise}`, read: onDoc((doc) => {
