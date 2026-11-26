@@ -1,0 +1,117 @@
+{
+  "season": 2026,
+  "takenAt": "2026-11-26T02:38:16.267Z",
+  "source": "Daily job, after the trade deadline",
+  "positions": {
+    "QB": [
+      {
+        "fullName": "Justin Herbert",
+        "salary": 70
+      },
+      {
+        "fullName": "Lamar Jackson",
+        "salary": 68
+      },
+      {
+        "fullName": "Trevor Lawrence",
+        "salary": 66
+      },
+      {
+        "fullName": "Jalen Hurts",
+        "salary": 65
+      },
+      {
+        "fullName": "Joe Burrow",
+        "salary": 65
+      }
+    ],
+    "RB": [
+      {
+        "fullName": "Jahmyr Gibbs",
+        "salary": 90
+      },
+      {
+        "fullName": "Christian McCaffrey",
+        "salary": 70
+      },
+      {
+        "fullName": "James Cook",
+        "salary": 70
+      },
+      {
+        "fullName": "Jonathan Taylor",
+        "salary": 60
+      },
+      {
+        "fullName": "Kyren Williams",
+        "salary": 60
+      }
+    ],
+    "WR": [
+      {
+        "fullName": "CeeDee Lamb",
+        "salary": 90
+      },
+      {
+        "fullName": "Ja'Marr Chase",
+        "salary": 90
+      },
+      {
+        "fullName": "Amon-Ra St. Brown",
+        "salary": 61
+      },
+      {
+        "fullName": "Justin Jefferson",
+        "salary": 61
+      },
+      {
+        "fullName": "D.J. Moore",
+        "salary": 50
+      }
+    ],
+    "TE": [
+      {
+        "fullName": "George Kittle",
+        "salary": 30
+      },
+      {
+        "fullName": "Kyle Pitts",
+        "salary": 25
+      },
+      {
+        "fullName": "Dalton Kincaid",
+        "salary": 20
+      },
+      {
+        "fullName": "Mark Andrews",
+        "salary": 15
+      },
+      {
+        "fullName": "David Njoku",
+        "salary": 15
+      }
+    ],
+    "PK": [
+      {
+        "fullName": "Cameron Dicker",
+        "salary": 3
+      },
+      {
+        "fullName": "Brandon Aubrey",
+        "salary": 3
+      },
+      {
+        "fullName": "Evan McPherson",
+        "salary": 2
+      },
+      {
+        "fullName": "Ka'imi Fairbairn",
+        "salary": 1
+      },
+      {
+        "fullName": "Tyler Bass",
+        "salary": 1
+      }
+    ]
+  }
+}
