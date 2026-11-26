@@ -21,6 +21,7 @@ const CLOSE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" 
 // Posts `body` to the board (messageBoard import): a reply in the newest contract topic, or a new one
 export async function postToContractTopic(context, body) {
     const {season, leagueId} = context;
+    // part of the post, so not held by MFL's wait, as a move's reads aren't (moves.js)
     const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {init: {cache: "no-store"}, check: strict});
     const topic = contractTopic(board);
     const fields = new URLSearchParams(topic ? {THREAD: topic.id, BODY: body} : {SUBJECT: NEW_TOPIC, BODY: body});
