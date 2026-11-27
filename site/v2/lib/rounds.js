@@ -129,8 +129,11 @@ export function weekScores(weeklyResults, week) {
     return found ? weekOf(found).scores : new Map();
 }
 
-// the teams with a matchup in `week`
-export function pairedIn(weeklyResults, week) {
+// the matchups in `week`, each its teams' ids
+export function matchupsIn(weeklyResults, week) {
     const found = weeksOf(weeklyResults).find((entry) => Number(entry.week) === week);
-    return found ? weekOf(found).paired.flat() : [];
+    return found ? weekOf(found).paired : [];
 }
+
+// the teams with a matchup in `week`
+export const pairedIn = (weeklyResults, week) => matchupsIn(weeklyResults, week).flat();
