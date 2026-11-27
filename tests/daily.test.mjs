@@ -938,6 +938,14 @@ const BACKUP_FILES = {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starter
 const posted = (result, page) => result.requests.filter((request) => request.method === "POST" && new URL(request.url).pathname === `/2026/${page}`)
     .map((request) => [...new URLSearchParams(request.body)]);
 
+test("backup starters off: nothing read, posted or flagged, and payouts don't wait for them", () => {
+    const result = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "off"}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.deepEqual(posted(result, "lineup"), []);
+    assert.ok(!result.requests.some((request) => /O=210|messageBoard/.test(request.url)), "no lineup details or board read");
+    assert.match(result.stdout, /Backup starters: off \(BACKUP_STARTERS\), as the league handles them itself\./);
+});
+
 test("backup starters: an inactive starter's backup goes in, the week is recalculated and settled, nothing posted", () => {
     const result = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
     assert.equal(result.status, 0, result.stdout);

@@ -20,7 +20,8 @@
 //   RFA_SALARIES                "apply" to set the renewal's RFAs (1 year to 0) to $0.01; anything else
 //                               only logs them
 //   BACKUP_STARTERS             "apply" to start members' backups for inactive starters (bylaw 16.5);
-//                               anything else only logs them
+//                               "off" for a league that handles them itself: nothing is read or
+//                               flagged; anything else only logs them
 //   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
 //   SAVED_PAGES_DIR             where the check saves MFL's pages, cleaned as the capture bookmark
 //                               cleans them: a page it flags, and with SAVE_PAGES every one it reads
@@ -129,6 +130,7 @@ const applyContractYears = !dryRun && process.env.CONTRACT_YEARS === "apply";
 const applyPayouts = !dryRun && process.env.PAYOUTS === "apply";
 const applyRfaSalaries = !dryRun && process.env.RFA_SALARIES === "apply";
 const applyBackups = !dryRun && process.env.BACKUP_STARTERS === "apply";
+const backupsOff = process.env.BACKUP_STARTERS === "off";
 const dataIsThisLeagues = !dryRun || process.env.DATA_LEAGUE_ID === leagueId;
 // a season's weekly prizes and all-play payouts, with room for a backfill: more means something's wrong
 const MAX_PAYOUTS_PER_RUN = 30;
@@ -730,6 +732,10 @@ const weekResults = async (week) => asArray((await fetchFrom(host, "weeklyResult
 // backups for inactive starters go in, each pair locked as it was at its deadline, and the week is
 // recalculated. Returns whether league-data changed. docs/design.md has the rules.
 async function backupStarters(loggedIn, {league, playerNames, built}) {
+    if (backupsOff) {
+        log("Backup starters: off (BACKUP_STARTERS), as the league handles them itself.");
+        return false;
+    }
     if (!loggedIn) {
         log("Backup starters: not checked, as the run isn't logged in (the board and the lineups need the commissioner).");
         return false;
