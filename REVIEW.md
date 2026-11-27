@@ -25,8 +25,9 @@ from AGENTS.md.
   stable; a change that would break an existing league's settings needs a new key or a new version.
 - Daily job: repository variables in UPPER_SNAKE; a chore writes only on `apply`. A flag fails the
   run and says what to do by hand. A flag that hands work back names MFL's own page for it, not one
-  of the site's tabs.
-- MFL pastes: the whole file from master, tab messages first, header last.
+  of the site's tabs (not yet: the contract-years and drop-penalty stops, #315).
+- MFL pastes: the whole file from master, tab messages first, header last (not yet: the header's
+  beta offer line, kept by hand, #324).
 - Dev CLI: Python argparse tools run through uv; `--built`, `--base`, `--ref`, and `--only` as a
   comma list.
 
@@ -40,7 +41,8 @@ from AGENTS.md.
   next time those files change.
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads and `mflSend` for
   moves, so a 429 holds reads on every page. A direct `fetch` is only for the site's own files on
-  Pages. `ui/store.js`: localStorage.
+  Pages (not yet: moves.js `send`, lineup.js and home.js's chat post; #317). `ui/store.js`:
+  localStorage.
 - `jobs/daily.mjs` only sequences: it runs the chores in order, collects flags and writes the
   summary. The MFL transport and session (login, request spacing, timeouts, waiting out refusals)
   belong in their own module, and each chore in `jobs/<chore>.mjs`, taking a context object (lib,
@@ -63,7 +65,7 @@ from AGENTS.md.
 - The old-device minimum (ES2020, one bundled file) is a fixed constraint.
 - New runtime dependencies are rare (today jsdom and sharp).
 - One DOM parser outside a real browser: jsdom, the one the job reads MFL's pages with, while the
-  job needs it. Tests use it too.
+  job needs it. Tests use it too (not yet: the tests on linkedom, #321).
 - Cost is measured in one maintainer's reading time.
 
 ## Performance
@@ -71,16 +73,16 @@ from AGENTS.md.
   path (v2 as the main version) first.
 - Most important: the number of requests to MFL, guarded in CI by requests.py against the base
   branch. Then round trips, hence one bundle.
-- Budget: v2's fuad.js at most 200 KB gzipped (160 KB today), raised only on purpose, as "more
-  requests" is. fuad.css is 27 KB gzipped today.
+- Budget: v2's fuad.js at most 200 KB gzipped, raised only on purpose, as "more requests" is.
 - Nothing a member waits on comes from a third party: before v2's screen is drawn, the page fetches
-  only from MFL and GitHub Pages (no outside stylesheet, `@import`, font or script).
+  only from MFL and GitHub Pages (no outside stylesheet, `@import`, font or script; not yet:
+  fuad.css's Barlow fonts, #320).
 - The job's speed doesn't matter; its request count does.
 
 ## Testing strategy
-- Node unit and DOM tests (74 files, ~15 s, `npm test`), parsing pages with jsdom.
-- tests/daily.test.mjs: 71 end-to-end runs of the job against a fake MFL
-  (tests/fixtures/fake-mfl.mjs); end to end is preferred over mocks.
+- Node unit and DOM tests (`npm test`), parsing pages with jsdom.
+- tests/daily.test.mjs: end-to-end runs of the job against a fake MFL (tests/fixtures/fake-mfl.mjs);
+  end to end is preferred over mocks.
 - Guard tests for the repo's own rules (readers, export shapes, stored shapes, saved pages, the
   regex guard).
 - Playwright browser checks: pages, header, requests and layout run in CI on site/mfl/tools
@@ -89,7 +91,8 @@ from AGENTS.md.
 - The highest-risk code is the job's writes to MFL. Each condition that decides a write has a test
   that fails without it, and each deadline or limit that decides one is tested at its edge. The
   per-run caps are exempt: a slip there only makes the job refuse to write.
-- Each outside service the job uses has a test for it being unreachable.
+- Each outside service the job uses has a test for it being unreachable (not yet: nflverse and
+  DynastyProcess; #314).
 
 ## Documentation
 - README: an overview plus a reference for the developer tools. docs/commissioner.md: the
@@ -106,14 +109,16 @@ from AGENTS.md.
 - Settings modes for leagues not listed in settings.json (forks, test leagues) are accepted, each
   covered by tests, while supporting forks is a goal. Dismisses the complexity finding on
   `playoffs.rounds`, `allPlayTop`/`placeAmounts`, `rookieScale.firstPickFromRank` and
-  `allPlayThenPlayoffFinish`. (audit 2026-11-27)
+  `allPlayThenPlayoffFinish`.
 - Devices form (Google Forms): members' error reports go there after the page has run. While it's
-  down, reports are lost and the page is unaffected. (mfl/message-header.html:138-143)
+  down, reports are lost and the page is unaffected. (mfl/message-header.html: the devices form,
+  `DEVICES`)
 - nflverse weekly rosters and DynastyProcess player IDs: backup starters reads them, and only when a
   week has backups waiting. While either is down, the run flags, nothing is written for unsettled
-  weeks, payouts wait, and the next run tries again. (jobs/daily.mjs:734-747, 1636-1641)
+  weeks, payouts wait, and the next run tries again. (jobs/daily.mjs: `nflverseFiles`, and the
+  backup starters catch before payouts)
 - v2 is bundled into one file, for round trips on slow phones; code splitting measured no faster on
-  "slow" and slower on "3g". (design.md; audit 2026-11-27)
+  "slow" and slower on "3g". (design.md)
 - v1 is frozen with its own lib/. (AGENTS.md)
 - The morning check (jobs/mfl-check.mjs) loads the version's ui/ readers, so it catches an MFL
   change to a page or feed before a member meets it, judged by the same code members' browsers run.
@@ -122,4 +127,4 @@ from AGENTS.md.
   the next run re-reads MFL and does only what's still due. A failed write waits for that run.
 - The Moves fallback line keeps its own wording ("Error loading cap and roster data. Rule checks are
   disabled; …", Reload Page): a warning that the rule checks are off, louder on purpose than v2's
-  routine failures. (moves.js:226; the commissioner's wording, 2026-11-15)
+  routine failures. (site/v2/ui/moves.js: `FALLBACK_TEXT`; the commissioner's wording)
