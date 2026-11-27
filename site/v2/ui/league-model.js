@@ -10,7 +10,8 @@ import {
     PRIZE_SHARES, WEEKLY_PRIZE, allPlayPayout, forPlayoffs, ordinal, potOf, prizeAmount, recordText, weeklyWinners, weeksOf
 } from "../lib/payouts.js";
 import settings from "../lib/settings.js";
-import {lineupPositions} from "../lib/rules.js";
+import {lineupPositions, seasonWeeks} from "../lib/rules.js";
+import {roundPlaces} from "../lib/rounds.js";
 
 export {
     WEEKLY_PRIZE, allPlayRecords, bracketCount, placeBrackets, playoffPlaces, recordText, weeklyWinners
@@ -92,6 +93,17 @@ export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divi
         return {team, record: recordText(recordOf(team)), back: back > 0 ? `${back} back` : "tied · out on standings"};
     });
     return {seeds, hunt};
+}
+
+// Whether the playoffs are rounds of weekly scores (settings.playoffs.rounds) rather than MFL brackets
+export const byRounds = () => settings.playoffs.rounds.length > 0;
+
+// The places from the rounds (lib/rounds.js roundPlaces), ties going to the higher seed of the
+// playoff picture: {places, note}. `ytd` the season's weekly results, `league` its league export.
+export function placesByRounds(ytd, league, divisions, completedWeek) {
+    const picture = playoffPicture(divisions);
+    const seeds = new Map((picture ? picture.seeds : []).map((seed) => [seed.team.id, seed.seed]));
+    return roundPlaces(ytd, {rounds: settings.playoffs.rounds, weeks: seasonWeeks(league), seeds, completedWeek});
 }
 
 // MFL's Power Rank page (`options?O=101`), whose report has no export: null on any other page (the
@@ -177,7 +189,7 @@ export const ledger = (value) => (typeof value !== "number" || !Number.isFinite(
 // null, and so are the playoffs' amounts. `places` names the prize winners once the playoffs are over.
 // A week whose high score isn't known leaves every team's weekly winnings unknown (NaN), as a record
 // not known does its all-play payout, and so the totals and what the places split.
-export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, names}) {
+export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, placesNote = null, names}) {
     const {entries, pot} = potOf(accounting);
     const weekly = new Map();
     let weeklyKnown = true;
@@ -212,7 +224,7 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
         const prize = prizeOf(team.id);
         return {...team, prize, total: team.weekly + team.allPlay + (prize && prize.amount ? prize.amount : 0)};
     }).sort((a, b) => Number(Number.isFinite(b.total)) - Number(Number.isFinite(a.total)) || b.total - a.total || b.net - a.net);
-    return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs: pool, prizes, rows};
+    return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs: pool, prizes, rows, placesNote};
 }
 
 // "Week 3 $15.00 · 17-19 all-play · 2nd $139.51": a team's winnings in one grey line

@@ -16,7 +16,7 @@ import {REBUILT, basicHref, sections} from "./nav.js";
 import {franchiseView} from "./franchise-view.js";
 import {careers, champions, series} from "./history.js";
 import {watchList, whenPopupClosed} from "./watch.js";
-import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, standings} from "./league-model.js";
+import {allPlayRecords, bracketCount, byRounds, placeBrackets, placesByRounds, playoffPicture, standings} from "./league-model.js";
 import {
     FIRST_DIRECTION, boardPicksOf, byeWeeks, draftBoard, draftOrder, drafted, filterPlayers, pickNumbers, picksOf, playerPool, playoffFinish, pointsById,
     sortPlayers, teamSheets
@@ -132,7 +132,10 @@ export function drawRosters({context, franchiseId, dataBase, league: pageLeague}
         const divisions = standings(standing, settings, names, ytd ? allPlayRecords(ytd, lastRegular) : null);
         let finish = null;
         const list = asArray(brackets && brackets.playoffBracket);
-        if (Number(window.liveScoringWeek) > lastRegular && list.length >= bracketCount()) {
+        if (byRounds() && ytd && Number(window.liveScoringWeek) > lastRegular) {
+            const {places} = placesByRounds(ytd, settings, divisions, Number(window.completedWeek) || 0);
+            finish = places && places.slice().reverse();
+        } else if (Number(window.liveScoringWeek) > lastRegular && list.length >= bracketCount()) {
             const results = await Promise.all(placeBrackets(list).map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {optional: true})));
             finish = results.every(Boolean) ? playoffFinish(results, {completedWeek: Number(window.completedWeek) || 0}) : null;
         }

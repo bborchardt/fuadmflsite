@@ -288,6 +288,7 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
         </section>
         <section class="fuad-panel" aria-labelledby="fuad-prizes">
             <h2 class="fuad-panel-heading" id="fuad-prizes">${final ? `${esc(final)} playoff prizes` : "Playoff prizes"}</h2>${today}
+            ${result.placesNote ? `<p class="fuad-meta">${esc(result.placesNote)}</p>` : ""}
             <div class="fuad-prize-columns">${prizes}${pot}</div>
         </section>`;
 }

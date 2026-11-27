@@ -15,6 +15,9 @@ const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
 const EITHER = {"rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick"};
 const LISTS = {
     "payouts.places": (item) => isAmount(item) && item <= 1,
+    // lib/rounds.js; only these two, so a misspelt one isn't quietly left out
+    "playoffs.rounds": (item) => isObject(item) && Object.keys(item).every((name) => name === "weeks" || name === "headToHead")
+        && Number.isInteger(item.weeks) && item.weeks >= 1 && typeof item.headToHead === "boolean",
     renumberedFranchises: (item) => isObject(item) && typeof item.was === "string" && typeof item.now === "string" && isAmount(item.through)
 };
 

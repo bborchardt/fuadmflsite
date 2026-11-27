@@ -119,6 +119,19 @@ test("next year's order: the four out of the playoffs worst first, then the seed
     assert.equal(pickNumbers(order).size, 4);
 });
 
+test("next year's order: a finish with a team the picture has out lists him once, in the finish", () => {
+    const divisions = standings(fixture("league-standings.json").leagueStandings, settings, names);
+    const picture = playoffPicture(divisions);
+    // the commissioner's playoffs had the first team in the hunt in place of seed 6
+    const finish = [picture.hunt[0].team.id, ...picture.seeds.slice(0, 5).reverse().map((seed) => seed.team.id)];
+    const order = draftOrder(picture, {finish, names, nextYear: 2027, futureDraftPicks: context.futureDraftPicks});
+    assert.equal(order.length, 10);
+    assert.equal(new Set(order.map((row) => row.id)).size, 10);
+    assert.deepEqual(order.slice(4).map((row) => row.id), finish);
+    assert.ok(order.slice(0, 4).some((row) => row.id === picture.seeds[5].team.id));
+    assert.deepEqual(order.map((row) => row.pick), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
+
 test("2025's playoffs: first-round losers by seed, the 3rd place game, the final", () => {
     const finish = playoffFinish([fixture("playoff-bracket-2025-1.json").playoffBracket, fixture("playoff-bracket-2025-2.json").playoffBracket]);
     // seed 6 (0002) and seed 5 (0007) lost in round 1; 0009 lost the 3rd place game to 0005; 0001 lost the final to 0004
