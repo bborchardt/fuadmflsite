@@ -9,7 +9,8 @@ The file has `defaults` and `leagues`, listed by the number in the league's page
 league's settings are the defaults under its entry, where nested values merge and lists replace. A
 test holds FUAD's to their values, so a change to the defaults can't quietly change its rules.
 
-The values below are FUAD's: the defaults, with the wordmark and renumbered franchises its own.
+The values below are FUAD's: the defaults, with the wordmark, backup starters and renumbered
+franchises its own.
 
 ## Test leagues
 
@@ -90,7 +91,7 @@ roster checks run until the championship is over.
 |---|---|---|
 | `adds.ownDropBidAfterHours` | 48 | A team can't bid on a player it dropped for this long. MFL's own lock on dropped players ("Dropped Players are Locked Until") applies to every team, and v2 follows it separately. 0 turns this off. |
 | `antiTanking` | true | Starting an injured or suspended player in the regular season is flagged. False turns the flag off; a member's own lineup alerts stay. |
-| `backupStarters` | false | Lineup lets a member pick each starter's backup (bylaw 16.5), saved in the lineup's Optional Message, and Scores shows each team's pairs once locked. With false, neither shows backups, and members write them in that message on MFL's own lineup page or post them in the board's "Conditional starters" thread. Whether the daily job swaps backups in is its own `BACKUP_STARTERS` variable: `apply`, `log` to only log them, and unset the job doesn't read or flag them at all. |
+| `backupStarters` | true | Lineup lets a member pick each starter's backup (bylaw 16.5), saved in the lineup's Optional Message, and Scores shows each team's pairs once locked. With false, neither shows backups, and members write them in that message on MFL's own lineup page or post them in the board's "Conditional starters" thread. Whether the daily job swaps backups in is its own `BACKUP_STARTERS` variable: `apply`, `log` to only log them, and unset the job doesn't read or flag them at all. |
 
 How many bid groups a team can have is MFL's ("Maximum Number of Conditional Blind Bid Groups").
 
