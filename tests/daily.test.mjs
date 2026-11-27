@@ -195,7 +195,7 @@ test("a team over the cap only by its unsigned rookies (4.6) isn't flagged or he
     assert.ok(!result.entries.some((entry) => /Over the cap/.test(entry)), result.entries.join("\n"));
     assert.match(result.stdout, /Alpha is at \$303 of \$300 only by its unsigned rookies' \$10, which count once their lengths are set \(bylaw 4\.6\); its chores aren't held\./);
     // Alpha's penalty for Mixon is charged, not held
-    assert.ok(result.entries.includes("Charged $1 to Alpha for Joe Mixon (1yrs@1, 10/23), and reset the player to $1 / 0 years."), result.entries.join("\n"));
+    assert.ok(result.entries.includes("Charged $1 to Alpha for Joe Mixon (1yrs@1, 10/23), and cleared the player's contract."), result.entries.join("\n"));
     // without the draft's results he counts as any player does
     const unknown = run({scenario: {exports: {...exports, draftResults: 500}}, env: LOGIN});
     assert.match(unknown.entries[0], /^Over the cap: Alpha/);

@@ -27,8 +27,8 @@ function league({salaryAdjustments, rosters = {franchise: []}} = {}) {
         freeAgents: {leagueUnit: {player: [
             {id: "4", salary: "10", contractYear: "2"},
             {id: "5", salary: "1", contractYear: "1"},
-            // already reset: nothing owed
-            {id: "6", salary: "1", contractYear: "0"}
+            // already cleared, as MFL reads one: nothing owed
+            {id: "6", salary: "1.00", contractYear: "0"}
         ]}}
     });
 }
