@@ -110,6 +110,11 @@ test("the context line: the week in season, the phase outside it", () => {
     assert.equal(line("2027-01-10T12:00:00-06:00"), "Season over");
     // MFL hasn't published the schedule yet
     assert.equal(contextLine({now: at2026("2027-03-20T12:00:00-05:00"), week: 17, week1: null, seasonEnd: null, drafted: false}), "Before the draft");
+    // nor when MFL's page still shows last season's week
+    assert.equal(contextLine({now: at2026("2027-03-20T12:00:00-05:00"), week: 17, week1: null, seasonEnd: null, drafted: false, started: true}), "Before the draft");
+    // the kickoff couldn't be read: MFL's page says whether the season has begun
+    assert.equal(line("2026-10-17T12:00:00-05:00", {week1: null, week1Known: false, started: true}), "Week 6");
+    assert.equal(line("2026-09-01T12:00:00-05:00", {week1: null, week1Known: false, started: false}), "Before week 1");
 });
 
 test("the draft is in once a pick names a player; draft day comes from the calendar", () => {

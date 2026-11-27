@@ -67,6 +67,11 @@ from AGENTS.md.
 - One DOM parser outside a real browser: jsdom, the one the job reads MFL's pages with, while the
   job needs it. Tests use it too (not yet: the tests on linkedom, #321).
 - Cost is measured in one maintainer's reading time.
+- Logging for the devices form is to see that something fails, where, and roughly how often. Exact
+  counts aren't worth code: a failure logged more than once, or logged by each caller, is left as it
+  is (the header merges identical labels into one, with a count) unless it takes rows or labels
+  another error would need (the header's limits: `mfl/message-header.html`, `report` and
+  `noteError`).
 
 ## Performance
 - Hot paths: the first view of Lineup and Home on an old iPhone on a slow connection, the direct

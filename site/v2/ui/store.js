@@ -30,11 +30,11 @@ const SHARED = /^fuad\.(playerList|kickoff|byes)\./;
 const keyOf = (key) => (SHARED.test(key) ? key : `${key}@${league.keyId}`);
 
 // what's kept from before it was kept per league, a bid run for up to a year, a list v2 no longer
-// keeps, Moves' copy of the league export from when it kept the owners' names and emails, and the
-// player list as the export's objects
-const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids|players)\.[^@]*|homeTabs|tidied2?\.\d+|league\.\d+\.\d+@.*)$/;
+// keeps, Moves' copy of the league export from when it kept the owners' names and emails, the
+// player list as the export's objects, and the season's facts from before they were kept per viewer
+const UNUSED = /^fuad\.(?:(?:context|rules|home|league|rosters|history|capUsed|bids|players)\.[^@]*|homeTabs|tidied[23]?\.\d+|league\.\d+\.\d+@.*|context\.\d+@.*)$/;
 // a new name when there's more to tidy, so each browser tidies once more
-const TIDIED = "fuad.tidied3";
+const TIDIED = "fuad.tidied4";
 
 // Also what this league kept under settings it no longer has, nothing else would ever remove it. Once
 // for the settings a browser has, as MFL's pages fill this storage too and this is on every page.
@@ -74,13 +74,16 @@ export function save(key, value) {
     storage.set(keyOf(key), JSON.stringify({storedAt: Date.now(), value}, keepUnknown));
 }
 
-export async function cached(key, maxAge, load) {
+// `keep(value)` false: the value is used but not kept, so the next call loads again
+export async function cached(key, maxAge, load, keep = () => true) {
     const entry = saved(key);
     if (entry && Date.now() - entry.storedAt < maxAge) {
         return entry.value;
     }
     const value = await load();
-    save(key, value);
+    if (keep(value)) {
+        save(key, value);
+    }
     return value;
 }
 

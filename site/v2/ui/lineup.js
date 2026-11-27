@@ -14,7 +14,7 @@ import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
 import {strict} from "./checked.js";
 import {pageChanged, placeholders, retryCutOff} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
-import {draftPicked, seasonFacts} from "./context.js";
+import {draftPicked, seasonFacts, seasonStarted} from "./context.js";
 import {
     applyInjuries, lineupForm, lineupRefusal, lineupStatus, lineupWarnings, positionName, rangeText, readLineupPage, sameLineup, tagOf, withKickoff
 } from "./lineup-model.js";
@@ -247,12 +247,10 @@ async function save(context, form, state, message = null) {
 
 // the draft's picks, asked fresh: a day-old "not drafted" may be out of date on draft day
 async function stillBeforeDraft(context) {
-    if (Number(window.liveScoringWeek) > 1) {
-        return false;
-    }
     const facts = await seasonFacts(context).catch(() => null);
-    // `draftKnown` false: the draft results failed to load; missing: cached before it was recorded
-    if (!facts || facts.draftKnown === false || facts.drafted || (facts.week1 && Date.now() >= facts.week1)) {
+    // `draftKnown` false: the draft results weren't read (not asked for once the season has begun, or
+    // MFL didn't give them)
+    if (!facts || facts.draftKnown === false || facts.drafted || seasonStarted(facts)) {
         return false;
     }
     const results = await fetchExport(exportUrl(window.location.origin, context.season, "draftResults", {L: context.leagueId}), "draftResults", {fetchImpl: mflFetch, init: {cache: "no-store"}, check: strict}).catch(() => null);

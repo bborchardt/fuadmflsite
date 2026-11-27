@@ -149,7 +149,7 @@ Items marked *(to do)* are the plan, not yet built.
   larger text.
 - **The minimum moves on what members' browsers report, never on a guess.** The header sends the
   commissioner's devices form a row from each browser: the day's first, then one for each page with
-  errors, at most 6 a day. A row is the team (`guest` logged out), what ran (`v1`, `v2`, `-fallback`
+  errors, at most 20 a day. A row is the team (`guest` logged out), what ran (`v1`, `v2`, `-fallback`
   when a beta couldn't start, `-old` below the minimum, `none` when no version could, `loading` when
   the page was left first), the user agent, the screen and window widths and whether it's the home
   screen app, the page, and the errors v1's and v2's code logged (`[fuad] couldn't draw Home: …`) or
@@ -243,6 +243,15 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   or contract lengths MFL can't give leave that check's alerts out, as the member sees the same on
   its screen, and log `[fuad] My alerts couldn't check trade offers` as an error, so the header's
   devices form shows how often.
+- **The season's facts are kept only whole:** the line under the wordmark, Moves' phase and Lineup's
+  draft check go by week 1's kickoff, the season's end, the draft results and the calendar
+  (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL fails to give (an error, a
+  refusal) is left out so the line still draws, logged as an error (`[fuad] the season's facts
+  couldn't read the season's end: …`), and the result isn't kept, so the next page asks again for what
+  failed, and for the draft results before week 1. Without week 1's kickoff, MFL's page says whether
+  the season has begun. What MFL hasn't published yet (the schedule before it's out) counts as none
+  and is kept. So is an export MFL has changed, which fails every time until the code follows and is
+  logged once a page. A guest's calendar, which MFL always refuses, isn't asked for.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **The job tries what v2 reads each morning** (`jobs/mfl-check.mjs`), after its chores: each export
@@ -342,6 +351,11 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   - once a season, in the playoffs' first week: Standings' Playoffs panel against MFL's Playoff
     Brackets page (`options?O=79`), as MFL fills in a bracket's teams only as the playoffs go, which
     the saved brackets (2025's finished, 2026's before week 15) don't show
+  - once a season, after the league renews and before MFL publishes the NFL schedule: the
+    `liveScoringWeek` and `completedWeek` MFL's page gives, on a page saved then (that stage's
+    saved pages). Without week 1's kickoff, `seasonStarted` (`ui/context.js`) goes by them, and it
+    isn't known whether they still show last season's week then: `tools/verify/phases.py` takes them
+    as 1 and 0, the context line's tests as 17
   - once a season: the devices form's rows read for errors, fallbacks and the oldest browsers
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed

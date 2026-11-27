@@ -65,7 +65,7 @@ export function keepFor(url, {liveWeek, gameDay}) {
 
 // Some exports answer for whoever is logged in (the calendar, pending bids and trades), so what's
 // kept is the viewer's own: `fuad.keep.<team or guest>|<url>`
-const viewer = () => (typeof window !== "undefined" && window.franchise_id) || "guest";
+export const viewer = () => (typeof window !== "undefined" && window.franchise_id) || "guest";
 const keyOf = (url) => `${KEEP}${viewer()}|${url}`;
 const urlOf = (name) => name.slice(name.indexOf("|") + 1);
 
