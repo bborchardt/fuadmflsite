@@ -186,11 +186,15 @@ test("what's kept is kept per league, but for what every league shares, and old 
         // Moves' copy of the league export from when it kept the owners
         items.set("fuad.league.2026.48571@48571", "{}");
         items.set("fuad.league.2026.50965@50965-abc", "{}");
+        // the season's facts from before they were kept per viewer
+        items.set("fuad.context.2026@48571", "{}");
+        items.set("fuad.context.2026.0001@48571", "{}");
         items.set("fuad.tidied.48571", "x");
         items.set("fuad.tidied2.48571", "x");
+        items.set("fuad.tidied3.48571", "x");
         globalThis.window.localStorage = new Proxy(globalThis.window.localStorage, {ownKeys: () => [...items.keys()], getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})});
         dropUnusedKeys();
-        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.home.recent.2026@50965-abc", "fuad.league.power.2026@48571", "fuad.playerList.2026", "fuad.tidied3.48571"]);
+        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.context.2026.0001@48571", "fuad.home.recent.2026@50965-abc", "fuad.league.power.2026@48571", "fuad.playerList.2026", "fuad.tidied4.48571"]);
         items.set("fuad.homeTabs", "{}");
         dropUnusedKeys();
         assert.ok(items.has("fuad.homeTabs"), "once for the settings a browser has");

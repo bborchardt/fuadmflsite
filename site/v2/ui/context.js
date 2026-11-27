@@ -59,22 +59,35 @@ export function draftDays(calendar) {
         .map((seconds) => leagueDate(new Date(seconds * 1000)));
 }
 
-// cached for a day; a part that can't be read is left out rather than hold up the line
+// Kept a day, per viewer, as the calendar answers for whoever is logged in. A part that can't be read
+// is left out rather than hold up the line, and logged; the result is then not kept, so the next page
+// asks again for what failed (page-fetch keeps the rest).
 export function seasonFacts({season, leagueId}) {
     const host = window.location.origin;
     const options = {fetchImpl: pageFetch, check: strict};
-    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, options).catch(() => null);
-    return cached(`fuad.context.${season}`, DAY, async () => {
-        const week1Promise = weekKickoff(season, 1, options).catch(() => null);
+    const viewer = window.franchise_id || "guest";
+    let complete = true;
+    const without = (part) => (error) => {
+        complete = false;
+        // strict has logged a changed export already
+        if (!(error && error.changed)) {
+            console.error(`[fuad] the context line couldn't read ${part}:`, error);
+        }
+        return null;
+    };
+    const league = (type) => fetchExport(exportUrl(host, season, type, {L: leagueId}), type, options);
+    return cached(`fuad.context.${season}.${viewer}`, DAY, async () => {
+        const week1Promise = weekKickoff(season, 1, options).catch(without("week 1's kickoff"));
         const [week1, seasonEnd, draftResults, calendar] = await Promise.all([
             week1Promise,
             league("league").then((info) => {
                 const weeks = seasonWeeks(info);
                 return weeks ? weekEnd(season, weeks.championship, options) : null;
-            }).catch(() => null),
+            }).catch(without("the season's end")),
             // only before week 1 does the draft matter
-            week1Promise.then((date) => (date && Date.now() >= date.getTime() ? null : league("draftResults"))),
-            league("calendar")
+            week1Promise.then((date) => (date && Date.now() >= date.getTime() ? null : league("draftResults").catch(without("the draft results")))),
+            // logged out MFL refuses the calendar, and there's no draft day to show
+            viewer === "guest" ? league("calendar").catch(() => null) : league("calendar").catch(without("the calendar"))
         ]);
         return {
             week1: week1 && week1.getTime(),
@@ -84,7 +97,7 @@ export function seasonFacts({season, leagueId}) {
             draftKnown: Boolean(draftResults),
             draftDays: draftDays(calendar)
         };
-    });
+    }, () => complete);
 }
 
 export async function loadContext(context) {

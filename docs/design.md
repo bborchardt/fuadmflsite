@@ -243,6 +243,12 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   or contract lengths MFL can't give leave that check's alerts out, as the member sees the same on
   its screen, and log `[fuad] My alerts couldn't check trade offers` as an error, so the header's
   devices form shows how often.
+- **The season's facts are kept only whole:** the line under the wordmark, Moves' phase and Lineup's
+  draft check go by week 1's kickoff, the season's end, the draft results and the calendar
+  (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL can't give is left out so the
+  line still draws, logged as an error (`[fuad] the context line couldn't read the season's end: …`),
+  and the result isn't kept, so the next page asks again for what failed. A guest's calendar, which
+  MFL always refuses, counts as none.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **The job tries what v2 reads each morning** (`jobs/mfl-check.mjs`), after its chores: each export

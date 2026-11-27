@@ -54,20 +54,46 @@ test("before week 1: its kickoff, the season's end, whether the draft is in, and
     assert.deepEqual(facts, {
         week1: WEEK1 * 1000, seasonEnd: Date.parse("2027-01-04T01:25:00Z"), drafted: true, draftKnown: true, draftDays: ["2026-05-02"]
     });
-    // kept a day in the browser, so the line under the wordmark doesn't ask again on every page
-    assert.deepEqual(JSON.parse(globalThis.window.localStorage.getItem("fuad.context.2101@48571")).value, facts);
+    // kept a day in the browser, per viewer, so the line under the wordmark doesn't ask again on every page
+    assert.deepEqual(JSON.parse(globalThis.window.localStorage.getItem("fuad.context.2101.guest@48571")).value, facts);
     globalThis.window.liveScoringWeek = "1";
     assert.equal(await loadContext({season: 2101, leagueId: "48571"}), "Draft day");
 });
 
-test("in season the draft isn't asked for, and what can't be read is left out rather than hold up the line", async (t) => {
+test("in season the draft isn't asked for, and what can't be read is left out rather than hold up the line, logged and not kept", async (t) => {
     t.mock.timers.enable({apis: ["Date"], now: Date.parse("2026-10-24T12:00:00Z")});
-    answers = {nflSchedule1: schedule(WEEK1), nflSchedule17: 500, calendar: 500, draftResults: {draftResults: {}}};
+    const logged = t.mock.method(console, "error", () => {});
+    answers = {nflSchedule1: schedule(WEEK1), nflSchedule17: 500, league: {league: {lastRegularSeasonWeek: "14", endWeek: "17"}}, calendar: 500, draftResults: {draftResults: {}}};
     const facts = await seasonFacts({season: 2102, leagueId: "48571"});
     assert.deepEqual(facts, {week1: WEEK1 * 1000, seasonEnd: null, drafted: false, draftKnown: false, draftDays: []});
     assert.ok(!asked.some((url) => url.includes("TYPE=draftResults")));
+    // a guest's calendar is refused every time, so only the season's end is a failure
+    assert.deepEqual(logged.mock.calls.map((call) => call.arguments[0]), ["[fuad] the context line couldn't read the season's end:"]);
+    assert.equal(globalThis.window.localStorage.getItem("fuad.context.2102.guest@48571"), null);
     globalThis.window.liveScoringWeek = "7";
     assert.equal(await loadContext({season: 2102, leagueId: "48571"}), "Week 7");
+    // the next page asks again for what failed, and the rest is kept
+    asked = [];
+    answers.nflSchedule17 = schedule(at("2027-01-03T18:00:00Z"));
+    const again = await seasonFacts({season: 2102, leagueId: "48571"});
+    assert.equal(again.seasonEnd, Date.parse("2027-01-03T22:00:00Z"));
+    const params = (url) => new URL(url).searchParams;
+    assert.deepEqual(asked.map((url) => params(url).get("TYPE") + (params(url).get("W") || "")).sort(), ["calendar", "nflSchedule17"]);
+    assert.ok(globalThis.window.localStorage.getItem("fuad.context.2102.guest@48571"));
+});
+
+test("a member's calendar that can't be read isn't kept, and a guest's facts aren't a member's", async (t) => {
+    t.mock.timers.enable({apis: ["Date"], now: Date.parse("2026-10-24T12:00:00Z")});
+    const logged = t.mock.method(console, "error", () => {});
+    answers = {nflSchedule1: schedule(WEEK1), nflSchedule17: schedule(at("2027-01-03T18:00:00Z")), league: {league: {lastRegularSeasonWeek: "14", endWeek: "17"}}, calendar: 500};
+    await seasonFacts({season: 2106, leagueId: "48571"});
+    assert.ok(globalThis.window.localStorage.getItem("fuad.context.2106.guest@48571"));
+    assert.equal(logged.mock.calls.length, 0);
+    globalThis.window.franchise_id = "0001";
+    await seasonFacts({season: 2106, leagueId: "48571"});
+    assert.ok(asked.filter((url) => url.includes("TYPE=calendar")).length >= 2, "the member's own, not the guest's");
+    assert.deepEqual(logged.mock.calls.map((call) => call.arguments[0]), ["[fuad] the context line couldn't read the calendar:"]);
+    assert.equal(globalThis.window.localStorage.getItem("fuad.context.2106.0001@48571"), null);
 });
 
 test("before week 1: MFL's page says once a week is done; otherwise week 1's kickoff decides", async (t) => {

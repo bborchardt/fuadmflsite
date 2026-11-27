@@ -41,6 +41,13 @@ test("cached: a failed load isn't kept, so the next asks again", () => withStora
     assert.equal(await cached("fuad.test.b", DAY, async () => "fresh"), "fresh");
 }));
 
+test("cached: a value `keep` turns down is used but not kept, so the next asks again", () => withStorage(async () => {
+    assert.equal(await cached("fuad.test.d", DAY, async () => "partial", () => false), "partial");
+    assert.equal(saved("fuad.test.d"), null);
+    assert.equal(await cached("fuad.test.d", DAY, async () => "whole", (value) => value === "whole"), "whole");
+    assert.equal(saved("fuad.test.d").value, "whole");
+}));
+
 test("cached: with storage blocked, every call loads and none fails", async () => {
     globalThis.window = {};
     Object.defineProperty(globalThis.window, "localStorage", {get() {
