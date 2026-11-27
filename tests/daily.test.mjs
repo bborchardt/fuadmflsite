@@ -116,8 +116,8 @@ test("an ordinary day without the login: penalties only logged, nothing posted, 
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Working on the 2026 league site\./);
     assert.deepEqual(result.entries, [
-        "Dry run: would charge $1 to Alpha for Joe Mixon (1yrs@1, 10/23), then reset the player to $1 / 0 years.",
-        "Dry run: would charge $8 to Beta for Ollie Gordon (2yrs@10, 10/23), then reset the player to $1 / 0 years."
+        "Dry run: would charge $1 to Alpha for Joe Mixon (1yrs@1, 10/23), then clear the player's contract.",
+        "Dry run: would charge $8 to Beta for Ollie Gordon (2yrs@10, 10/23), then clear the player's contract."
     ]);
     assert.ok(!result.requests.some((request) => request.method === "POST"));
     assert.deepEqual(result.output, {changed: "true", publish: "false"});
@@ -142,14 +142,14 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     const after = run({scenario: {exports: {...exports, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
     assert.equal(after.status, 0, after.stderr);
     assert.deepEqual(lengthDue(after), [
-        "Dry run: would charge $3 to Alpha for Ray Rookie (0yrs@6, length due, 10/23), then reset the player to $1 / 0 years.",
-        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then reset the player to $1 / 0 years."
+        "Dry run: would charge $3 to Alpha for Ray Rookie (0yrs@6, length due, 10/23), then clear the player's contract.",
+        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."
     ]);
     // cut before it: the rookie goes free
     const before = run({scenario: {exports: {...exports, calendar: cutDown("2026-10-30T23:00:00Z")}}, env: LOGIN});
     assert.deepEqual(lengthDue(before), [
-        "Dry run: would reset Ray Rookie to $1 / 0 years (no penalty owed).",
-        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then reset the player to $1 / 0 years."
+        "Dry run: would clear Ray Rookie's contract (no penalty owed).",
+        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."
     ]);
     // Kamara ended last season at 1 year on $20: the rollover left him an RFA not yet at $0.01, whose
     // contract ran out
@@ -159,24 +159,24 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     assert.equal(rfa.status, 1);
     assert.ok(rfa.entries.includes("Cap chores: left as they are, since it can't be told whether they owe a penalty (each ended last season "
         + "at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's): "
-        + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand with his full name, as here, and the next run resets him; "
-        + "set one who owes nothing to $1 / 0 years on MFL's Salaries page."), rfa.entries.join("\n"));
+        + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand with his full name, as here, and the next run clears his contract; "
+        + "clear the salary and years of one who owes nothing on MFL's Salaries page."), rfa.entries.join("\n"));
     assert.ok(!imports(rfa).some((data) => /id="6"/.test(data.DATA || "")));
     // charged by hand as the flag asks: the next run only resets him
     const byHand = {salaryAdjustment: [{franchise_id: "0002", amount: "8", description: "Alvin Kamara (1yr@20)", timestamp: String(DROPPED + 3600)}]};
     const charged = run({scenario: {exports: {...exports, salaryAdjustments: byHand, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
-    assert.ok(charged.entries.includes("Dry run: would reset Alvin Kamara to $1 / 0 years (penalty already charged)."), charged.entries.join("\n"));
+    assert.ok(charged.entries.includes("Dry run: would clear Alvin Kamara's contract (penalty already charged)."), charged.entries.join("\n"));
     assert.ok(!charged.entries.some((entry) => /can't be told/.test(entry)));
     // one the job set to $0.01 this season isn't one of them: he was settled, then won back
     const settled = run({scenario: {exports: {...exports, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN,
         files: {"data/franchise-2025.json": SNAPSHOT_2025, "rfa-salaries.json": '{"2026": ["6"]}'}});
-    assert.ok(settled.entries.includes("Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then reset the player to $1 / 0 years."), settled.entries.join("\n"));
+    assert.ok(settled.entries.includes("Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."), settled.entries.join("\n"));
     // without the draft's results, length-due drops are left for the commissioner; the rest go on
     const unknown = run({scenario: {exports: {...exports, draftResults: 500, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(unknown.status, 1);
     assert.ok(unknown.entries.some((entry) => /^Cap chores: left as they are, since it can't be told whether they owe a penalty \(this season's draft couldn't be read: .*\): Ray Rookie \(0yrs@6, length due, 10\/23\), Alvin Kamara \(0yrs@20, length due, 10\/23\)\. Charge any owed by hand .*$/.test(entry)), unknown.entries.join("\n"));
     assert.ok(!imports(unknown).some((data) => /id="[67]"/.test(data.DATA || "")));
-    assert.ok(unknown.entries.includes("Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and reset the player to $1 / 0 years."), unknown.entries.join("\n"));
+    assert.ok(unknown.entries.includes("Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and cleared the player's contract."), unknown.entries.join("\n"));
 });
 
 test("a team over the cap fails the run and holds its penalty; the other team's is charged", () => {
@@ -184,7 +184,7 @@ test("a team over the cap fails the run and holds its penalty; the other team's 
     assert.equal(result.status, 1);
     assert.match(result.entries[0], /^Over the cap: Alpha/);
     assert.match(result.entries[0], /Joe Mixon/);
-    assert.deepEqual(result.entries.slice(1), ["Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and reset the player to $1 / 0 years."]);
+    assert.deepEqual(result.entries.slice(1), ["Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and cleared the player's contract."]);
     // the charge, then the reset, Beta's only, with the session MFL gave the login
     const posted = imports(result);
     assert.deepEqual(posted.map((data) => data.TYPE), ["salaryAdj", "salaries"]);
@@ -249,8 +249,8 @@ test("a penalty charged whose reset then failed is only reset the next day, not 
     const charged = {salaryAdjustment: [{franchise_id: "0002", amount: "8", description: "Ollie Gordon (2yrs@10, 10/23)", timestamp: String(DROPPED + 3600)}]};
     const next = run({scenario: {exports: {...exports, salaryAdjustments: charged}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.deepEqual(imports(next).map((data) => data.TYPE), ["salaries"]);
-    assert.match(imports(next)[0].DATA, /<player id="4" salary="1" contractYear="0"\/>/);
-    assert.ok(next.entries.includes("Reset Ollie Gordon to $1 / 0 years (penalty already charged)."), next.entries.join("\n"));
+    assert.match(imports(next)[0].DATA, /<player id="4" salary="" contractYear=""\/>/);
+    assert.ok(next.entries.includes("Cleared Ollie Gordon's contract (penalty already charged)."), next.entries.join("\n"));
 });
 
 test("an export missing a field the job relies on is flagged, and nothing is written from it", () => {
