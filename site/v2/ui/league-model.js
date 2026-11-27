@@ -66,6 +66,14 @@ export function standings(leagueStandings, league, names, allPlay = null) {
     }).filter((division) => division.rows.length);
 }
 
+// Teams by all-play, best first: the winning percentage, then with `tiesBy` "points" the regular
+// season's points (allPlayRecords; MFL's keep counting through the playoffs) and the overall record.
+// 0 for a tie left, which the caller breaks.
+export function byAllPlay(a, b, {tiesBy = settings.playoffs.allPlayTiesBy} = {}) {
+    const points = (team) => (Number.isFinite(team.allPlay.points) ? team.allPlay.points : team.pf || 0);
+    return pct(b.allPlay) - pct(a.allPlay) || (tiesBy === "points" ? points(b) - points(a) || pct(b.h2h) - pct(a.h2h) : 0);
+}
+
 // The playoff seeds (settings.playoffs): the division winners and the best other records. With
 // `winnersFirst` the winners are the first seeds, in standings order; without, every seed goes by
 // record. A record is all-play or the standings' (`wildcardsBy`); all-play ties go by the standings
@@ -83,10 +91,7 @@ export function playoffPicture(divisions, {
     if (!all.every((team) => [team.h2h, recordOf(team)].every((each) => [each.w, each.l, each.t].every(Number.isFinite)))) {
         return null;
     }
-    // the regular season's points (allPlayRecords), as MFL's keep counting through the playoffs
-    const points = (team) => (Number.isFinite(team.allPlay.points) ? team.allPlay.points : team.pf || 0);
-    const byPoints = (a, b) => (tiesBy === "points" ? points(b) - points(a) || pct(b.h2h) - pct(a.h2h) : 0);
-    const byRecord = (a, b) => (allPlay ? pct(b.allPlay) - pct(a.allPlay) || byPoints(a, b) : 0) || byStandings(a, b);
+    const byRecord = (a, b) => (allPlay ? byAllPlay(a, b, {tiesBy}) : 0) || byStandings(a, b);
     const winners = divisions.map((division) => division.rows[0]).filter(Boolean)
         .map((team) => all.find((row) => row.id === team.id)).sort(winnersFirst ? byStandings : byRecord);
     const rest = all.filter((team) => !winners.includes(team)).sort(byRecord);

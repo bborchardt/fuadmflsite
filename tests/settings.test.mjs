@@ -32,7 +32,7 @@ const FUAD = {
     antiTanking: true,
     backupStarters: true,
     playoffs: {teams: 6, divisionWinnersSeededFirst: true, byes: 2, wildcardsBy: "allPlay", allPlayTiesBy: "standings", thirdPlaceGame: true, rounds: []},
-    draftOrder: "playoffFinish",
+    draftOrder: "standingsThenPlayoffFinish",
     payouts: {weeklyHighScore: 15, allPlayPerGameOver500: 0.75, places: [0.55, 0.30, 0.15]},
     renumberedFranchises: [{was: "0009", now: "0005", through: 2020}]
 };

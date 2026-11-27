@@ -7,6 +7,8 @@ import {POSITIONS, SALARY_CAP, positionOrder, rookieSalary} from "../lib/rules.j
 import {CAP_TIGHT, cents, money, yearsText} from "./format.js";
 import settings from "../lib/settings.js";
 import {dayText} from "./home-model.js";
+import {byAllPlay} from "./league-model.js";
+import {recordText} from "../lib/payouts.js";
 
 export const SEASONS_SHOWN = 5;
 
@@ -270,23 +272,31 @@ export function scaleRange(pick, baselines) {
     return low === high ? `$${low}` : `$${low}–${high}`;
 }
 
-// Next year's order (settings.draftOrder), worst to first. "playoffFinish": the teams out of the
-// playoffs, worst first by the standings order; then the playoff teams, numbered once their finish
-// is known. "standings": every team, worst first by the standings order. `picture` is League's
-// playoffPicture; `finish` the playoff teams' final order, worst first, when known (playoffFinish).
+// Next year's order (settings.draftOrder), worst to first: the teams out of the playoffs, worst first
+// by the standings order ("standingsThenPlayoffFinish") or by all-play ("allPlayThenPlayoffFinish",
+// ties as the seeds' (playoffs.allPlayTiesBy), reversed: by points, one still tied a coin flip); then the playoff teams, numbered once
+// their finish is known. `picture` is League's playoffPicture; `finish` the playoff teams' final
+// order, worst first, when known (playoffFinish).
 export function draftOrder(picture, {finish = null, futureDraftPicks = null, names, nextYear, by = settings.draftOrder}) {
-    const standingsOnly = by === "standings";
-    const inOrder = standingsOnly ? [] : finish || picture.seeds.slice().reverse().map((seed) => seed.team.id);
+    const inOrder = finish || picture.seeds.slice().reverse().map((seed) => seed.team.id);
+    const allPlay = by === "allPlayThenPlayoffFinish";
     // the teams not in the finish, which may not be the picture's seeds: a league's own playoff
-    // matchups (lib/rounds.js) are the record
+    // matchups (lib/rounds.js) are the record. A tie all-play can't break is the standings' until the
+    // coin is flipped
     const out = picture.seeds.map((seed) => seed.team).concat(picture.hunt.map((entry) => entry.team))
-        .filter((team) => !inOrder.includes(team.id)).sort((a, b) => b.order - a.order);
+        .filter((team) => !inOrder.includes(team.id))
+        .sort((a, b) => (allPlay ? byAllPlay(b, a) : 0) || b.order - a.order);
+    // with ties by points, a tie still left; by the standings, they break it
+    const coinFlip = (team) => allPlay && settings.playoffs.allPlayTiesBy === "points" && out.some((other) => other !== team && byAllPlay(team, other) === 0);
     // null, not known, without the picks
     const traded = (teamId) => futureDraftPicks && asArray(futureDraftPicks.franchise).flatMap((team) =>
         asArray(team.futureDraftPick).filter((pick) => Number(pick.year) === nextYear && pick.originalPickFor === teamId && team.id !== teamId)
             .map((pick) => `Round ${pick.round} → ${names.get(team.id) || team.id}`));
     const rows = [
-        ...out.map((team, i) => ({pick: i + 1, id: team.id, name: team.name, why: `${team.h2h.w}-${team.h2h.l}-${team.h2h.t}`, traded: traded(team.id)})),
+        ...out.map((team, i) => ({
+            pick: i + 1, id: team.id, name: team.name, traded: traded(team.id),
+            why: allPlay ? `${recordText(team.allPlay)} all-play${coinFlip(team) ? " · tied: coin flip" : ""}` : `${team.h2h.w}-${team.h2h.l}-${team.h2h.t}`
+        })),
         ...inOrder.map((id, i) => {
             const seed = picture.seeds.find((entry) => entry.team.id === id);
             return {pick: finish ? out.length + i + 1 : null, id, name: names.get(id) || (seed && seed.team.name) || id, why: seed ? `Seed ${seed.seed}` : "", traded: traded(id)};

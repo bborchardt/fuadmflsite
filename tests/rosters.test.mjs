@@ -241,12 +241,7 @@ test("Players' Watching chip keeps only the watched players, with the other chip
     assert.deepEqual(ids(filterPlayers(pool, {})), ["1", "2", "3"]);
 });
 
-test("other leagues: draft order by the standings alone, and a finish without a 3rd place game", () => {
-    const divisions = standings(fixture("league-standings.json").leagueStandings, settings, names);
-    const order = draftOrder(playoffPicture(divisions), {names, nextYear: 2027, by: "standings"});
-    const standingsOrder = fixture("league-standings.json").leagueStandings.franchise.map((team) => team.id);
-    assert.deepEqual(order.map((row) => row.id), standingsOrder.slice().reverse());
-    assert.deepEqual(order.map((row) => row.pick), Array.from({length: 10}, (_, i) => i + 1));
+test("other leagues: a finish without a 3rd place game", () => {
     // the semifinal losers by seed, after the first round's
     const finish = playoffFinish([fixture("playoff-bracket-2025-1.json").playoffBracket], {thirdPlaceGame: false});
     assert.deepEqual(finish.slice(0, 2), ["0002", "0007"]);
@@ -280,3 +275,43 @@ test("bylaw 4.6: a team over the cap only by this season's unsigned rookies is t
     const at = (capTotal, unsignedRookieSalary) => overOnlyByRookies({capTotal, unsignedRookieSalary});
     assert.deepEqual([at(SALARY_CAP + 5, 6), at(SALARY_CAP + 6, 6), at(SALARY_CAP + 7, 6), at(SALARY_CAP + 5, 0), at(SALARY_CAP, 6)], [true, true, false, false, false]);
 });
+
+// teams out of the playoffs for the all-play order: `order` the standings', 1 the best
+const team = (id, order, allPlay, points, h2h = {w: 7, l: 7, t: 0}) => ({id, name: id, order, h2h, allPlay: {...allPlay, points}});
+const withTies = (tiesBy, run) => {
+    const before = leagueSettings.playoffs.allPlayTiesBy;
+    leagueSettings.playoffs.allPlayTiesBy = tiesBy;
+    try {
+        run();
+    } finally {
+        leagueSettings.playoffs.allPlayTiesBy = before;
+    }
+};
+
+test("draft order by all-play: the lowest winning percentage first, ties by fewer points, then the worse record, then a coin flip", () => withTies("points", () => {
+    const picture = {
+        seeds: [{seed: 1, team: team("S1", 1, {w: 100, l: 54, t: 0}, 1900)}],
+        hunt: [
+            {team: team("A", 2, {w: 70, l: 84, t: 0}, 1500)},
+            {team: team("B", 3, {w: 60, l: 94, t: 0}, 1400)},
+            {team: team("C", 4, {w: 70, l: 84, t: 0}, 1450)},
+            {team: team("D", 5, {w: 50, l: 104, t: 0}, 1500, {w: 8, l: 6, t: 0})},
+            {team: team("E", 6, {w: 50, l: 104, t: 0}, 1500, {w: 6, l: 8, t: 0})},
+            {team: team("F", 7, {w: 40, l: 114, t: 0}, 1300)},
+            {team: team("G", 8, {w: 40, l: 114, t: 0}, 1300)}
+        ]
+    };
+    const order = draftOrder(picture, {names: new Map(), nextYear: 2027, by: "allPlayThenPlayoffFinish"});
+    // F and G level on all three: the standings' worse (G) until the coin is flipped
+    assert.deepEqual(order.map((row) => row.id), ["G", "F", "E", "D", "B", "C", "A", "S1"]);
+    assert.deepEqual(order.slice(0, 3).map((row) => row.why), ["40-114 all-play · tied: coin flip", "40-114 all-play · tied: coin flip", "50-104 all-play"]);
+    // FUAD's: the standings' order, worst first
+    const standingsFirst = draftOrder(picture, {names: new Map(), nextYear: 2027, by: "standingsThenPlayoffFinish"});
+    assert.deepEqual(standingsFirst.map((row) => row.id), ["G", "F", "E", "D", "C", "B", "A", "S1"]);
+    // all-play ties by the standings: no coin to flip
+    withTies("standings", () => {
+        const order2 = draftOrder(picture, {names: new Map(), nextYear: 2027, by: "allPlayThenPlayoffFinish"});
+        assert.deepEqual(order2.map((row) => row.id), ["G", "F", "E", "D", "B", "C", "A", "S1"]);
+        assert.ok(order2.every((row) => !row.why.includes("coin")));
+    });
+}));
