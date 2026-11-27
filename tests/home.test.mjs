@@ -99,6 +99,9 @@ test("my alerts: over the cap only by unsigned rookies (4.6) is a to-do, not a r
     const alerts = myAlerts({league, franchiseId: "0001", phase: "before-cut", links, now: at("2026-07-17T12:00:00-05:00"), cutDown});
     assert.deepEqual(alerts.map((a) => [a.title, a.detail, a.href, a.tone]),
         [["Over the cap once your rookies’ lengths are set: $305 of $300", "Get under by Sun Aug 30 · Drop", "D", "orange"]]);
+    // past the cut-down date, its day is gone
+    const late = myAlerts({league, franchiseId: "0001", phase: "preseason", links, now: at("2026-09-01T12:00:00-05:00"), cutDown});
+    assert.equal(late[0].detail, "Get under before week 1 · Drop");
     assert.deepEqual(leagueAlerts(league, null).map((a) => [a.franchise.teamName, a.text, a.tone]), [
         ["Me", "Over the cap once rookies’ lengths are set: $305 of $300", "orange"],
         ["Them", "Over the salary cap: $305 of $300", "red"]

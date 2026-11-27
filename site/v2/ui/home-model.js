@@ -235,7 +235,7 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     const kinds = new Set(own.map((item) => item.kind));
     if (kinds.has("cap") && overOnlyByRookies(franchise)) {
         push(tones.orange, "$", `Over the cap once your rookies’ lengths are set: ${money(franchise.capTotal)} of $${SALARY_CAP}`,
-            `Get under ${byCut}`, links.drop, "Drop");
+            phase === "preseason" ? "Get under before week 1" : `Get under ${byCut}`, links.drop, "Drop");
     } else if (kinds.has("cap")) {
         push(tones.red, "$", `Over the salary cap: ${money(franchise.capTotal)} of $${SALARY_CAP}`, "The commissioner will reverse the move that did it", null);
     }
