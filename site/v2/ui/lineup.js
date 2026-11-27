@@ -251,7 +251,7 @@ async function stillBeforeDraft(context) {
         return false;
     }
     const facts = await seasonFacts(context).catch(() => null);
-    // `draftKnown` false: the draft results failed to load; missing: cached before it was recorded
+    // `draftKnown` false: the draft results failed to load
     if (!facts || facts.draftKnown === false || facts.drafted || (facts.week1 && Date.now() >= facts.week1)) {
         return false;
     }

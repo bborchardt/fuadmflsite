@@ -149,7 +149,7 @@ Items marked *(to do)* are the plan, not yet built.
   larger text.
 - **The minimum moves on what members' browsers report, never on a guess.** The header sends the
   commissioner's devices form a row from each browser: the day's first, then one for each page with
-  errors, at most 6 a day. A row is the team (`guest` logged out), what ran (`v1`, `v2`, `-fallback`
+  errors, at most 20 a day. A row is the team (`guest` logged out), what ran (`v1`, `v2`, `-fallback`
   when a beta couldn't start, `-old` below the minimum, `none` when no version could, `loading` when
   the page was left first), the user agent, the screen and window widths and whether it's the home
   screen app, the page, and the errors v1's and v2's code logged (`[fuad] couldn't draw Home: …`) or
@@ -245,10 +245,13 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   devices form shows how often.
 - **The season's facts are kept only whole:** the line under the wordmark, Moves' phase and Lineup's
   draft check go by week 1's kickoff, the season's end, the draft results and the calendar
-  (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL can't give is left out so the
-  line still draws, logged as an error (`[fuad] the context line couldn't read the season's end: …`),
-  and the result isn't kept, so the next page asks again for what failed. A guest's calendar, which
-  MFL always refuses, counts as none.
+  (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL fails to give (an error, a
+  refusal) is left out so the line still draws, logged as an error (`[fuad] the context line couldn't
+  read the season's end: …`), and the result isn't kept, so the next page asks again for what
+  failed, and for the draft results before week 1. Without week 1's kickoff, MFL's page says whether
+  the season has begun. What MFL hasn't published yet (the schedule before it's out) counts as none
+  and is kept. So is an export MFL has changed, which fails every time until the code follows and is
+  logged once a page. A guest's calendar, which MFL always refuses, isn't asked for.
 - **Not recognised, the job flags and writes nothing from it:** a chore stops with a flag, and the
   others go on.
 - **The job tries what v2 reads each morning** (`jobs/mfl-check.mjs`), after its chores: each export

@@ -135,7 +135,7 @@
         var started = function () { return Boolean(window.fuadLoader && (!direct || window.fuadLoader.started)); };
         var loaded = function () { if (!started()) { failed(); } };
         // A row to the commissioner's devices form from each browser, a day's first and then one for
-        // each page with errors, at most 6 a day: what ran, the browser, the screen and the errors the
+        // each page with errors, at most 20 a day: what ran, the browser, the screen and the errors the
         // versions' code logged or threw, so the minimum follows what members use and an error is seen
         // without anyone reporting it. Sent from here, so it comes whichever version ran, or none.
         // Only this league's, and not with storage blocked, which couldn't tell the day's rows were sent.
@@ -180,7 +180,7 @@
                 var today = new Date().toDateString();
                 var day = (localStorage.getItem("fuad.deviceRows") || "").split("|");
                 var rows = day[0] === today ? Number(day[1]) || 0 : 0;
-                if ((rows && !labels.length) || rows >= 6) { return; }
+                if ((rows && !labels.length) || rows >= 20) { return; }
                 var stamp = today + "|" + (rows + 1);
                 localStorage.setItem("fuad.deviceRows", stamp);
                 if (localStorage.getItem("fuad.deviceRows") !== stamp) { return; }
