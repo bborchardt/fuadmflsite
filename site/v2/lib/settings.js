@@ -12,7 +12,7 @@ const CHOICES = {
     timeZone: Object.keys(ZONES),
     "playoffs.wildcardsBy": ["allPlay", "standings"],
     "playoffs.allPlayTiesBy": ["standings", "points"],
-    draftOrder: ["playoffFinish", "standings"]
+    draftOrder: ["standingsThenPlayoffFinish", "allPlayThenPlayoffFinish"]
 };
 // taken whole: its positions are the ones a league uses
 const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
