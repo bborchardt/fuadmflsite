@@ -28,8 +28,10 @@ export function seasonStarted(facts, now = Date.now(), mflStarted = mflSaysStart
     return !(facts && facts.week1Known === true) && mflStarted;
 }
 
-// before week 1's kickoff: MFL's page says so once a week is done; otherwise week 1's kickoff, and
-// if that can't be had, in season
+// before week 1's kickoff: MFL's page says so once a week is done or scored; otherwise week 1's
+// kickoff, and if that can't be had, in season. Unlike seasonStarted, a failed read counts as in
+// season, and so does MFL's page showing a week before the schedule is out: League and Rosters would
+// rather show the season's views than hide them.
 export async function beforeWeek1(season) {
     if (mflSaysStarted()) {
         return false;

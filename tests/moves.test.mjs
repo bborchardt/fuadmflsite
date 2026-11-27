@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DOMParser} from "linkedom";
-import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, loadFailed, moveOutcome, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
+import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, limitsApply, loadFailed, moveOutcome, movesPhase, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads
 function reads(...answers) {
@@ -185,4 +185,34 @@ test("a move that didn't happen says why if MFL said, else to try again, and ask
     assert.equal(failedLine("drop Jackson", new Error("HTTP 500")), "Couldn’t drop Jackson. Reload the page and try again.");
     assert.equal(failedLine("save your IR moves", new Refused("Invalid roster"), {changed: true}),
         "Couldn’t save your IR moves: Invalid roster. Some changes may have gone through; review below.");
+});
+
+// MFL's page as `page` ({liveScoringWeek, completedWeek}) for the length of `run`
+function withMflWeek(page, run) {
+    globalThis.window = {...page};
+    try {
+        return run();
+    } finally {
+        delete globalThis.window;
+    }
+}
+
+test("Moves' phase goes by week 1's kickoff, as the line does; without it by MFL's page, unless the schedule isn't out", () => {
+    const week1 = Date.parse("2026-09-11T00:20:00Z");
+    const drafted = {draftKnown: true, drafted: true};
+    withMflWeek({liveScoringWeek: "1", completedWeek: "0"}, () => {
+        assert.equal(movesPhase({...drafted, week1, week1Known: true}, week1 - 1), "preseason");
+        assert.equal(movesPhase({...drafted, week1, week1Known: true}, week1), "season");
+    });
+    // the schedule isn't out, though MFL's page still shows last season's week: no roster limits yet
+    withMflWeek({liveScoringWeek: "17", completedWeek: "17"}, () => {
+        const facts = {...drafted, week1: null, week1Known: true};
+        assert.equal(movesPhase(facts, week1), "preseason");
+        assert.equal(limitsApply({facts, calendar: null, season: 2027}, week1), false);
+    });
+    // no facts could be read: a completed week says the season has begun
+    withMflWeek({liveScoringWeek: "4", completedWeek: "3"}, () => {
+        assert.equal(movesPhase({}, week1), "season");
+        assert.equal(limitsApply({facts: {}, calendar: null, season: 2026}, week1), true);
+    });
 });

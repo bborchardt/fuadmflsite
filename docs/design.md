@@ -351,6 +351,11 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   - once a season, in the playoffs' first week: Standings' Playoffs panel against MFL's Playoff
     Brackets page (`options?O=79`), as MFL fills in a bracket's teams only as the playoffs go, which
     the saved brackets (2025's finished, 2026's before week 15) don't show
+  - once a season, after the league renews and before MFL publishes the NFL schedule: the
+    `liveScoringWeek` and `completedWeek` MFL's page gives, on a page saved then (that stage's
+    saved pages). Without week 1's kickoff, `seasonStarted` (`ui/context.js`) goes by them, and it
+    isn't known whether they still show last season's week then: `tools/verify/phases.py` takes them
+    as 1 and 0, the context line's tests as 17
   - once a season: the devices form's rows read for errors, fallbacks and the oldest browsers
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed

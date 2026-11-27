@@ -247,9 +247,6 @@ async function save(context, form, state, message = null) {
 
 // the draft's picks, asked fresh: a day-old "not drafted" may be out of date on draft day
 async function stillBeforeDraft(context) {
-    if (Number(window.liveScoringWeek) > 1) {
-        return false;
-    }
     const facts = await seasonFacts(context).catch(() => null);
     // `draftKnown` false: the draft results weren't read (not asked for once the season has begun, or
     // MFL didn't give them)
