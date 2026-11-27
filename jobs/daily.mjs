@@ -1,4 +1,4 @@
-// The daily job. What it does: README.md; why: docs/design.md.
+// The daily job. What it does: docs/commissioner.md (The daily job); why: docs/design.md.
 //
 // Environment:
 //   DATA_DIR                    checkout of the league-data branch (required)

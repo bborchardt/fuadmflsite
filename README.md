@@ -15,19 +15,10 @@ runs inside MFL's own pages, loaded by a home page message.
 - **v1**, the main version: the Contracts tab (salaries, contract years, a cut calculator, rookie and
   franchise salaries), League Alerts on the Main tab, and the Commish and Links tabs.
 
-**For the commissioner**, a job every morning (about 07:40 UTC):
-- snapshots franchise salaries at the trade deadline
-- makes small stills of the team icons for v2's lists
-- charges cap penalties for dropped players
-- sets contract years for added players, from the bid comment or a message board post; before the
-  season, for every player due one, from the lengths members send with v2's form
-- records the payouts in MFL's accounting: each week's high score, all-play, and the places
-- after the commissioner's contract-year rollover, sets the new RFAs (1 year to 0) to $0.01
-- puts in members' backup starters for inactive starters (bylaw 16.5), from the "Conditional
-  starters" thread, and recalculates the week
-- flags rule problems (cap, roster limit, IR, anti-tanking) and anything it can't decide
-- tries what v2 reads from MFL (its exports, pages and feeds, as a member sees them) and flags one
-  MFL has changed, usually before a member meets it
+**For the commissioner**, a job every morning (about 07:40 UTC) that does the routine chores:
+salary snapshots, cap penalties, contract years, payouts, RFA salaries and backup starters. It also
+flags rule problems, and checks what v2 reads from MFL before a member meets a change. The
+[commissioner's guide](docs/commissioner.md#the-daily-job) lists each chore and what's left for you.
 
 A flag fails the run, so GitHub emails the commissioner. Chores that write to MFL only log what they
 would do until they're switched on.
@@ -42,8 +33,9 @@ daily job's settings and runs, each season's steps, and what to do when somethin
 A second league can try the site with no code change, and any setting can be tried on one: see
 "Test leagues" and "Forking" in docs/settings.md.
 
-- `npm test` runs the unit tests (Node 24+); after `npm ci`, `npm run lint` runs ESLint's standard
-  rules and checks that what runs in members' browsers stays within ES2020 (Safari since iOS 14).
+- After `npm ci` (Node 24+): `npm test` runs the unit tests, and `npm run lint` runs ESLint's
+  standard rules and checks that what runs in members' browsers stays within ES2020 (Safari since
+  iOS 14).
 - `npm run build` makes `dist/` as GitHub Pages publishes it, v2 bundled into one minified file.
 - `uv run --no-project --with playwright python tools/app-icons.py` redraws v2's home screen icons.
 - `python3 tools/dev-server.py`, then `?fuadPreview=local` on a league page, runs your working copy
@@ -61,8 +53,9 @@ A second league can try the site with no code change, and any setting can be tri
   past the window's edge or cut off, a control left past the edge of a table that scrolls sideways,
   controls drawn over each other, a row's text off its middle, and
   heights left wrong after the window turns; `--engine chromium` or `firefox` and `--widths` draw in
-  another engine, `--shots DIR` saves a screenshot of each screen with a finding. About a minute and a
-  half; the pull request's Browser checks run it in all three engines.
+  another engine, `--minimum` draws with the stylesheet as a browser at the minimum reads it (the
+  newer CSS taken out), `--shots DIR` saves a screenshot of each screen with a finding. About a
+  minute and a half; the pull request's Browser checks run it in all three engines.
 - `uv run --no-project --with playwright python tools/verify/phases.py` draws every view on nine dates
   through the league's year (offseason, draft, cut-down, preseason, season, trade deadline, playoffs,
   season over), from the same saved pages reshaped for each date, with and without the trade
@@ -91,7 +84,8 @@ A second league can try the site with no code change, and any setting can be tri
   stylesheets are fetched on the first run into `tools/verify/mfl-skins/`, which git ignores; `--refresh` fetches them again
   and updates their fingerprints in `tools/verify/skins.json`, so a skin MFL changed shows in git diff.
 - On a pull request that touches the site, the header or the harness, GitHub runs `pages.py`,
-  `header.py --built` and `requests.py --built` against the pull request's base
+  `header.py --built`, `requests.py --built` against the pull request's base, and `layout.py` in
+  WebKit at every width, in Chromium and Firefox, and with `--minimum`
   (`.github/workflows/browser-checks.yml`); the others list differences to read, and are run by hand.
 
 ## What's where

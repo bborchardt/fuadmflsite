@@ -32,8 +32,9 @@ To paste one:
 4. When more than one file changed, paste the tab messages first and the header last. The header
    loads code that looks for the tabs' messages, so the tabs need to be in place before it.
 5. Reload the league's home page and check that the site loads and the changed tab looks right.
-   For the header, open it again in Messages Setup and check that it still ends with
-   `<div id="fuadlinksdiv"></div>`: MFL doesn't say how long a message may be.
+   For the header, open it again in Messages Setup and check that it still ends as the file does,
+   with `if (!fuadLoad.capable) { window.fuadBeta = null; }` and then `</script>`: MFL doesn't say
+   how long a message may be.
    A change to the site's code shows a few minutes after its pull request merges; browsers keep the
    old copy up to 10 minutes more.
 
@@ -67,6 +68,7 @@ home page (League Alerts in v1, Home in v2), and can switch back.
 GitHub runs it every morning at about 07:40 UTC, as the "Daily chores" workflow under the repo's
 Actions tab. It:
 - snapshots each franchise's salaries at the trade deadline;
+- makes small stills of the team icons for v2's lists, published with the site;
 - charges cap penalties for dropped players;
 - sets contract years for players added after the cut-down date, from the bid comment or a message
   board post within the hour;
@@ -85,7 +87,10 @@ Actions tab. It:
   deadline, and the week's standings are recalculated (no email to the owners); nothing is posted,
   and the chore log says what changed. Left for you: what it flags (a name it can't place, an
   inactive starter who scored);
-- flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide.
+- flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide;
+- tries what v2 reads from MFL (its exports, pages and feeds, as a member sees them), and flags one
+  MFL has changed, usually before a member meets it. Left for you: nothing in MFL (see "An MFL
+  check flag" under When something breaks).
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
 
@@ -190,10 +195,13 @@ week 12's kickoff.
   fix v2 against. A page of your own team in the real league isn't saved, as the run's files are
   public: run a dry run of the test league with **Save pages** ticked to get it.
 - **New saved pages for the tests:** at each stage of the season (preseason, the draft, the regular
-  season, the playoffs), a dry run with **Save pages** ticked puts every page the check reads on the
-  run, cleaned. Run it on the test league (league `50965`) for the team pages, and on the real league
-  for history, rules, settings and Power. Each run's `mfl-pages` download goes into the tests as that
-  stage's folder (`tests/fixtures/pages/stages/`), by pull request.
+  season, the playoffs, the offseason), a dry run with **Save pages** ticked puts every page the
+  check reads on the run, cleaned. Run it on the test league (league `50965`) for the team pages, and
+  on the real league for history, rules, settings and Power. Each run's `mfl-pages` download goes
+  into the tests as that stage's folder (`tests/fixtures/pages/stages/<year>-<stage>/`), by pull
+  request, as the run has it. The test league's run also holds its exports (every one the job read,
+  cleaned, the players' whole list aside for its size); only the test league's go in, as a logged-in
+  export may hold what only members see.
 - **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
   (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
   again, or you can run it by hand.
