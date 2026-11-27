@@ -148,6 +148,8 @@ test("all-play over the regular season matches MFL's while the season is on", ()
     const records = allPlayRecords(fixture("weekly-results-ytd.json").allWeeklyResults, 14);
     for (const team of fixture("league-standings.json").leagueStandings.franchise) {
         assert.equal(recordText(records.get(team.id)), recordText({w: +team.all_play_wlt.split("-")[0], l: +team.all_play_wlt.split("-")[1], t: +team.all_play_wlt.split("-")[2]}), team.id);
+        // and the points, for the playoff seeds' ties
+        assert.equal(records.get(team.id).points, Number(team.pf), team.id);
     }
 });
 
@@ -304,7 +306,7 @@ test("a best lineup counts as started when a player brought in has played, thoug
     assert.deepEqual([team.score, team.actual, team.started, team.starters[0].id], [30, 0, true, "r2"]);
 });
 
-test("other leagues' playoffs: wildcards by the standings, or no division winners seeded first", () => {
+test("other leagues' playoffs: wildcards by the standings", () => {
     const team = (id, h2h, allPlay) => ({id, h2hwlt: h2h, all_play_wlt: allPlay, divwlt: "", pf: "1"});
     const league = {divisions: {division: [{id: "00", name: "West"}, {id: "01", name: "East"}]}, franchises: {franchise: [
         ...["A", "B", "C"].map((id) => ({id, division: "00"})), ...["D", "E", "F", "G", "H"].map((id) => ({id, division: "01"}))
@@ -317,8 +319,30 @@ test("other leagues' playoffs: wildcards by the standings, or no division winner
     assert.deepEqual(byStandings.seeds.map((seed) => seed.team.id), ["A", "D", "B", "E", "C", "F"]);
     assert.equal(byStandings.seeds[2].why, "6-3");
     assert.deepEqual(byStandings.hunt.map((entry) => [entry.team.id, entry.back]), [["G", "1 back"], ["H", "2 back"]]);
-    // no division winners first: the six best all-play records
-    assert.deepEqual(playoffPicture(divisions, {winnersFirst: false}).seeds.map((seed) => seed.team.id), ["A", "C", "G", "D", "B", "E"]);
+});
+
+test("division winners in, all seeded by all-play; ties by points, then the overall record", () => {
+    const team = (id, h2h, allPlay, pf) => ({id, h2hwlt: h2h, all_play_wlt: allPlay, divwlt: "", pf: String(pf)});
+    const league = {divisions: {division: [{id: "00", name: "West"}, {id: "01", name: "East"}, {id: "02", name: "North"}]}, franchises: {franchise: [
+        ...["A", "B", "C"].map((id) => ({id, division: "00"})), ...["D", "E", "F"].map((id) => ({id, division: "01"})), ...["G", "H", "I"].map((id) => ({id, division: "02"}))
+    ]}};
+    // MFL's standings order: A, D, G, B, E, H, C, F, I, so A, D and G win their divisions; D's all-play is
+    // the league's second worst. B and E tie on all-play and points, B with the better record; C and I
+    // tie on all-play, C with more points.
+    const rows = [team("A", "8-1-0", "40-30-0", 900), team("D", "7-2-0", "20-50-0", 700), team("G", "7-2-0", "50-20-0", 1000),
+        team("B", "6-3-0", "45-25-0", 950), team("E", "5-4-0", "45-25-0", 950), team("H", "4-5-0", "30-40-0", 800),
+        team("C", "3-6-0", "35-35-0", 880), team("F", "2-7-0", "10-60-0", 600), team("I", "1-8-0", "35-35-0", 870)];
+    const divisions = standings({franchise: rows}, league, new Map());
+    const {seeds, hunt} = playoffPicture(divisions, {winnersFirst: false, tiesBy: "points"});
+    assert.deepEqual(seeds.map((seed) => [seed.seed, seed.team.id, seed.why, seed.bye]), [
+        [1, "G", "North winner", true], [2, "B", "45-25 all-play", true], [3, "E", "45-25 all-play", false],
+        [4, "A", "West winner", false], [5, "C", "35-35 all-play", false], [6, "D", "East winner", false]
+    ]);
+    assert.deepEqual(hunt.map((entry) => [entry.team.id, entry.back]), [["I", "tied · out on points"], ["H", "5 back"], ["F", "25 back"]]);
+    // FUAD's: the winners first, in standings order, and all-play ties by the standings
+    const fuad = playoffPicture(divisions, {winnersFirst: true});
+    assert.deepEqual(fuad.seeds.map((seed) => seed.team.id), ["A", "D", "G", "B", "E", "C"]);
+    assert.deepEqual(fuad.hunt.map((entry) => entry.back), ["tied · out on standings", "5 back", "25 back"]);
 });
 
 test("without a 3rd place game the places are the final's two", () => {
