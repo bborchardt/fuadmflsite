@@ -69,8 +69,9 @@ from AGENTS.md.
 - Cost is measured in one maintainer's reading time.
 - Logging for the devices form is to see that something fails, where, and roughly how often. Exact
   counts aren't worth code: a failure logged more than once, or logged by each caller, is left as it
-  is unless it takes rows or labels another error would need (the form's 20 rows a day per browser,
-  10 labels a page).
+  is (the header merges identical labels into one, with a count) unless it takes rows or labels
+  another error would need (the header's limits: `mfl/message-header.html`, `report` and
+  `noteError`).
 
 ## Performance
 - Hot paths: the first view of Lineup and Home on an old iPhone on a slow connection, the direct

@@ -246,8 +246,8 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 - **The season's facts are kept only whole:** the line under the wordmark, Moves' phase and Lineup's
   draft check go by week 1's kickoff, the season's end, the draft results and the calendar
   (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL fails to give (an error, a
-  refusal) is left out so the line still draws, logged as an error (`[fuad] the context line couldn't
-  read the season's end: …`), and the result isn't kept, so the next page asks again for what
+  refusal) is left out so the line still draws, logged as an error (`[fuad] the season's facts
+  couldn't read the season's end: …`), and the result isn't kept, so the next page asks again for what
   failed, and for the draft results before week 1. Without week 1's kickoff, MFL's page says whether
   the season has begun. What MFL hasn't published yet (the schedule before it's out) counts as none
   and is kept. So is an export MFL has changed, which fails every time until the code follows and is

@@ -18,6 +18,16 @@ export const kickoffAt = (season, week) => cached(`fuad.kickoff.${season}.${week
 // MFL's page says the season has begun once a week is done or scored
 const mflSaysStarted = () => Number(window.completedWeek) > 0 || Number(window.liveScoringWeek) > 1;
 
+// Whether week 1 has kicked off, for the line, Moves and Lineup alike: by week 1's kickoff (ms); when
+// it couldn't be read, or no facts could, by MFL's page (`mflStarted`); a schedule MFL hasn't
+// published yet (`week1Known` with no kickoff) means not yet, whatever week MFL's page shows.
+export function seasonStarted(facts, now = Date.now(), mflStarted = mflSaysStarted()) {
+    if (facts && facts.week1) {
+        return now >= facts.week1;
+    }
+    return !(facts && facts.week1Known === true) && mflStarted;
+}
+
 // before week 1's kickoff: MFL's page says so once a week is done; otherwise week 1's kickoff, and
 // if that can't be had, in season
 export async function beforeWeek1(season) {
@@ -40,7 +50,7 @@ export function contextLine({now, week, week1, week1Known = true, started = fals
     if (seasonEnd && now >= seasonEnd) {
         return "Season over";
     }
-    if (week1 ? now >= week1 : !week1Known && started) {
+    if (seasonStarted({week1: week1 && week1.getTime(), week1Known}, now.getTime(), started)) {
         return week ? `Week ${week}` : "";
     }
     if (draftDays.includes(leagueDate(now))) {
@@ -77,7 +87,7 @@ export function seasonFacts({season, leagueId}) {
     const without = (part) => (error) => {
         if (!(error && error.changed)) {
             complete = false;
-            console.error(`[fuad] the context line couldn't read ${part}:`, error);
+            console.error(`[fuad] the season's facts couldn't read ${part}:`, error);
         }
         return null;
     };
@@ -94,7 +104,7 @@ export function seasonFacts({season, leagueId}) {
                 return weeks ? weekEnd(season, weeks.championship, options) : null;
             }).catch(without("the season's end")),
             // only before week 1 does the draft matter
-            week1Promise.then((date) => ((date ? Date.now() >= date.getTime() : !week1Known && mflSaysStarted())
+            week1Promise.then((date) => (seasonStarted({week1: date && date.getTime(), week1Known})
                 ? null : league("draftResults").catch(without("the draft results")))),
             // logged out MFL refuses the calendar, and there's no draft day to show
             viewer === "guest" ? null : league("calendar").catch(without("the calendar"))
@@ -104,7 +114,8 @@ export function seasonFacts({season, leagueId}) {
             week1Known,
             seasonEnd: seasonEnd && seasonEnd.getTime(),
             drafted: draftPicked(draftResults),
-            // whether `drafted` was read, rather than assumed from a failed request
+            // whether `drafted` was read, rather than assumed because the draft results weren't asked
+            // for or MFL didn't give them
             draftKnown: Boolean(draftResults),
             draftDays: draftDays(calendar)
         };

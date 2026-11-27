@@ -9,7 +9,7 @@ import {esc} from "./html.js";
 import {CAP_TIGHT} from "./format.js";
 import {cached} from "./store.js";
 import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
-import {seasonFacts} from "./context.js";
+import {seasonFacts, seasonStarted} from "./context.js";
 import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
 import {cutDownAt} from "../lib/violations.js";
@@ -42,7 +42,7 @@ export async function loadData(context, franchiseId, {more = []} = {}) {
     const {rosters, salaryAdjustments, transactions, freeAgents, pendingWaivers} = found;
     // this season's rookies, whose cut costs nothing while their length is due, until the cut-down
     // date (lib/league.js lengthDuePenalty); only before week 1
-    const draftResults = facts.week1 && Date.now() >= facts.week1 ? null
+    const draftResults = seasonStarted(facts) ? null
         : await fetchExport(exportUrl(host, season, "draftResults", {L: leagueId}), "draftResults", {fetchImpl: pageFetch, check: strict}).catch(unlessChanged(null));
     const lengthDue = {rookies: draftedIds(draftResults), freeUntil: cutDownAt(calendar, season)};
     const league = markContracts(buildLeague({players: playersFromExport(players), league: leagueInfo, salaryAdjustments, rosters, transactions, freeAgents, lengthDue}), lengthDue);
@@ -182,11 +182,11 @@ export function limitsApply({facts, calendar, season}, now = Date.now()) {
     return phase === "season" || (phase === "preseason" && Boolean(cut) && now / 1000 >= cut);
 }
 
-// Add's phase (add-model.js) from the season's dates. Without them, MFL's own week says whether
-// the season has started; a draft that couldn't be checked counts as made.
+// Add's phase (add-model.js) from the season's dates (context.js seasonStarted); a draft that
+// couldn't be checked counts as made.
 export function movesPhase(facts, now = Date.now()) {
     return addPhase({
-        started: facts.week1 ? now >= facts.week1 : Number(window.liveScoringWeek) > 1,
+        started: seasonStarted(facts, now),
         over: Boolean(facts.seasonEnd && now >= facts.seasonEnd),
         drafted: facts.draftKnown === false || facts.drafted !== false
     });
