@@ -99,9 +99,10 @@ How many bid groups a team can have is MFL's ("Maximum Number of Conditional Bli
 | Setting | Value | Meaning |
 |---|---|---|
 | `playoffs.teams` | 6 | Teams in the playoffs. |
-| `playoffs.divisionWinnersSeededFirst` | true | The division winners are the first seeds, in standings order. With false, every seed is picked as the wildcards are. |
+| `playoffs.divisionWinnersSeededFirst` | true | The division winners make the playoffs. With true they're the first seeds, in standings order; with false every seed goes by record, the winners' included. |
 | `playoffs.byes` | 2 | The top seeds shown with a bye. MFL's playoff bracket decides who plays. |
-| `playoffs.wildcardsBy` | "allPlay" | How the other seeds are picked: `"allPlay"`, the best all-play records, ties by the standings; or `"standings"`, the next teams in MFL's standings. |
+| `playoffs.wildcardsBy` | "allPlay" | How the other seeds are picked: `"allPlay"`, the best all-play records; or `"standings"`, the next teams in MFL's standings. |
+| `playoffs.allPlayTiesBy` | "standings" | How all-play ties are broken: `"standings"`, MFL's standings order; or `"points"`, total points, then the overall record, then the standings. |
 | `playoffs.thirdPlaceGame` | true | Whether MFL's playoffs have a 3rd place game, which decides 3rd place. With false, `payouts.places` has at most two shares. |
 | `draftOrder` | "playoffFinish" | Next year's rookie draft order, worst first: `"playoffFinish"`, the teams out of the playoffs by the standings, then the playoff teams by how far they got; or `"standings"`, every team by the standings. |
 | `payouts.weeklyHighScore` | 15 | Dollars to each regular season week's high score, split on a tie. |

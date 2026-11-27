@@ -65,31 +65,39 @@ export function standings(leagueStandings, league, names, allPlay = null) {
     }).filter((division) => division.rows.length);
 }
 
-// The playoff seeds (settings.playoffs): the division winners first, if the league seeds them so, in
-// standings order; then the best all-play records, or the next teams in the standings, ties going
-// by the standings order. The top seeds have byes. "In the hunt" is the rest, games back of the last
-// seed by the same record. Null when a record it goes by isn't known (a score MFL left out).
-export function playoffPicture(divisions, {winnersFirst = settings.playoffs.divisionWinnersSeededFirst, wildcardsBy = settings.playoffs.wildcardsBy} = {}) {
+// The playoff seeds (settings.playoffs): the division winners and the best other records. With
+// `winnersFirst` the winners are the first seeds, in standings order; without, every seed goes by
+// record. A record is all-play or the standings' (`wildcardsBy`); all-play ties go by the standings
+// order, or by total points and then the overall record (`allPlayTiesBy`), and any tie left by the
+// standings.
+// The top seeds have byes. "In the hunt" is the rest, games back of the last team in by the same
+// record. Null when a record it goes by isn't known (a score MFL left out).
+export function playoffPicture(divisions, {
+    winnersFirst = settings.playoffs.divisionWinnersSeededFirst, wildcardsBy = settings.playoffs.wildcardsBy, tiesBy = settings.playoffs.allPlayTiesBy
+} = {}) {
     const all = divisions.flatMap((division) => division.rows.map((team) => ({...team, divisionName: division.name})));
     const byStandings = (a, b) => a.order - b.order;
-    const winners = !winnersFirst ? [] : divisions.map((division) => division.rows[0]).filter(Boolean)
-        .map((team) => all.find((row) => row.id === team.id)).sort(byStandings);
     const allPlay = wildcardsBy === "allPlay";
     const recordOf = (team) => (allPlay ? team.allPlay : team.h2h);
     if (!all.every((team) => [team.h2h, recordOf(team)].every((each) => [each.w, each.l, each.t].every(Number.isFinite)))) {
         return null;
     }
-    const rest = all.filter((team) => !winners.includes(team))
-        .sort((a, b) => (allPlay ? pct(b.allPlay) - pct(a.allPlay) : 0) || byStandings(a, b));
+    // the regular season's points (allPlayRecords), as MFL's keep counting through the playoffs
+    const points = (team) => (Number.isFinite(team.allPlay.points) ? team.allPlay.points : team.pf || 0);
+    const byPoints = (a, b) => (tiesBy === "points" ? points(b) - points(a) || pct(b.h2h) - pct(a.h2h) : 0);
+    const byRecord = (a, b) => (allPlay ? pct(b.allPlay) - pct(a.allPlay) || byPoints(a, b) : 0) || byStandings(a, b);
+    const winners = divisions.map((division) => division.rows[0]).filter(Boolean)
+        .map((team) => all.find((row) => row.id === team.id)).sort(winnersFirst ? byStandings : byRecord);
+    const rest = all.filter((team) => !winners.includes(team)).sort(byRecord);
     const wildcards = rest.slice(0, PLAYOFF_TEAMS - winners.length);
-    const seeds = [
-        ...winners.map((team) => ({team, why: `${team.divisionName} winner`})),
-        ...wildcards.map((team) => ({team, why: `${recordText(recordOf(team))}${allPlay ? " all-play" : ""}`}))
-    ].map((seed, i) => ({...seed, seed: i + 1, bye: i < settings.playoffs.byes}));
+    const label = (team) => (winners.includes(team) ? `${team.divisionName} winner` : `${recordText(recordOf(team))}${allPlay ? " all-play" : ""}`);
+    const order = winnersFirst ? [...winners, ...wildcards] : [...winners, ...wildcards].sort(byRecord);
+    const seeds = order.map((team, i) => ({team, why: label(team), seed: i + 1, bye: i < settings.playoffs.byes}));
     const last = wildcards[wildcards.length - 1];
+    const tiedOut = allPlay && tiesBy === "points" ? "tied · out on points" : "tied · out on standings";
     const hunt = rest.slice(wildcards.length).map((team) => {
         const back = last ? gamesBack(recordOf(last), recordOf(team)) : 0;
-        return {team, record: recordText(recordOf(team)), back: back > 0 ? `${back} back` : "tied · out on standings"};
+        return {team, record: recordText(recordOf(team)), back: back > 0 ? `${back} back` : tiedOut};
     });
     return {seeds, hunt};
 }

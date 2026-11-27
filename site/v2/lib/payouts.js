@@ -27,17 +27,18 @@ const unknownIn = (scores) => scores.some((team) => Number.isNaN(team.score));
 export const latestScoredWeek = (weeklyResults) => Math.max(0, ...weeksOf(weeklyResults).filter((week) => scoresOf(week).length).map((week) => Number(week.week)));
 
 // Each team's all-play record over the regular season's weeks with results: every week, a win
-// against each team it outscored (bylaws 1.3 and 1.7)
+// against each team it outscored (bylaws 1.3 and 1.7); `points`, its regular season's total
 export function allPlayRecords(weeklyResults, lastRegularWeek) {
     const records = new Map();
     for (const week of weeksOf(weeklyResults).filter((entry) => Number(entry.week) <= lastRegularWeek)) {
         const scores = scoresOf(week);
         const unknown = unknownIn(scores);
         for (const team of scores) {
-            const sum = records.get(team.id) || {w: 0, l: 0, t: 0};
+            const sum = records.get(team.id) || {w: 0, l: 0, t: 0, points: 0};
             if (unknown) {
-                Object.assign(sum, {w: NaN, l: NaN, t: NaN});
+                Object.assign(sum, {w: NaN, l: NaN, t: NaN, points: NaN});
             }
+            sum.points = Math.round((sum.points + team.score) * 100) / 100;
             for (const other of scores) {
                 if (other !== team) {
                     sum[team.score > other.score ? "w" : team.score < other.score ? "l" : "t"]++;
