@@ -14,7 +14,9 @@ import {playerList} from "./player-list.js";
 import {readProjections, readRules} from "./live-scoring.js";
 import {careers, champions} from "./history.js";
 import {titles} from "./history-model.js";
-import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings} from "./league-model.js";
+import {
+    allPlayRecords, bracketCount, byRounds, placeBrackets, placesByRounds, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings
+} from "./league-model.js";
 import {championsMarkup, pictureMarkup, positionsMarkup, powerMarkup, standingsMarkup, winnersMarkup} from "./league-view.js";
 import {drawScores} from "./scores.js";
 import {onBack} from "./back.js";
@@ -263,7 +265,13 @@ export function drawLeague({context, franchiseId, teamHref}) {
                     const lastRegular = Number(settings.lastRegularSeasonWeek) || 14;
                     const lastWeek = Number(settings.endWeek) || DEFAULT_END_WEEK;
                     const names = namesOf(settings);
-                    const rows = standings(standing, settings, names, allPlayRecords(ytd, lastRegular)).flatMap((division) => division.rows);
+                    const divisions = standings(standing, settings, names, allPlayRecords(ytd, lastRegular));
+                    const rows = divisions.flatMap((division) => division.rows);
+                    if (byRounds()) {
+                        // a past season's weeks are all done
+                        const {places, note} = placesByRounds(ytd, settings, divisions, final ? Infinity : Number(window.completedWeek) || 0);
+                        return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, placesNote: note, names});
+                    }
                     // the places count once the last week has results
                     let places = null;
                     const played = asArray(ytd && ytd.weeklyResults).some((week) => Number(week.week) === lastWeek

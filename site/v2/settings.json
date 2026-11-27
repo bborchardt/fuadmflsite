@@ -16,7 +16,7 @@
     "adds": { "ownDropBidAfterHours": 48 },
     "antiTanking": true,
     "backupStarters": false,
-    "playoffs": { "teams": 6, "divisionWinnersSeededFirst": true, "byes": 2, "wildcardsBy": "allPlay", "allPlayTiesBy": "standings", "thirdPlaceGame": true },
+    "playoffs": { "teams": 6, "divisionWinnersSeededFirst": true, "byes": 2, "wildcardsBy": "allPlay", "allPlayTiesBy": "standings", "thirdPlaceGame": true, "rounds": [] },
     "draftOrder": "playoffFinish",
     "payouts": { "weeklyHighScore": 15, "allPlayPerGameOver500": 0.75, "places": [0.55, 0.30, 0.15] },
     "renumberedFranchises": []

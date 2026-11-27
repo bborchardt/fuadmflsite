@@ -276,9 +276,11 @@ export function scaleRange(pick, baselines) {
 // playoffPicture; `finish` the playoff teams' final order, worst first, when known (playoffFinish).
 export function draftOrder(picture, {finish = null, futureDraftPicks = null, names, nextYear, by = settings.draftOrder}) {
     const standingsOnly = by === "standings";
-    const out = (standingsOnly ? picture.seeds.map((seed) => seed.team) : []).concat(picture.hunt.map((entry) => entry.team))
-        .sort((a, b) => b.order - a.order);
     const inOrder = standingsOnly ? [] : finish || picture.seeds.slice().reverse().map((seed) => seed.team.id);
+    // the teams not in the finish, which may not be the picture's seeds: a league's own playoff
+    // matchups (lib/rounds.js) are the record
+    const out = picture.seeds.map((seed) => seed.team).concat(picture.hunt.map((entry) => entry.team))
+        .filter((team) => !inOrder.includes(team.id)).sort((a, b) => b.order - a.order);
     // null, not known, without the picks
     const traded = (teamId) => futureDraftPicks && asArray(futureDraftPicks.franchise).flatMap((team) =>
         asArray(team.futureDraftPick).filter((pick) => Number(pick.year) === nextYear && pick.originalPickFor === teamId && team.id !== teamId)
