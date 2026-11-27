@@ -91,6 +91,23 @@ test("my alerts: the team's own violations, with where to fix them", () => {
     assert.equal(leagueAlerts(leagueOf([me, other]), null).length, 3);
 });
 
+test("my alerts: over the cap only by unsigned rookies (4.6) is a to-do, not a reversed move", () => {
+    const me = team("0001", "Me", {capTotal: 305, unsignedRookieSalary: 10});
+    const them = team("0002", "Them", {capTotal: 305, unsignedRookieSalary: 3});
+    const league = leagueOf([me, them], [], {started: false});
+    const cutDown = at("2026-08-30T12:00:00-05:00");
+    const alerts = myAlerts({league, franchiseId: "0001", phase: "before-cut", links, now: at("2026-07-17T12:00:00-05:00"), cutDown});
+    assert.deepEqual(alerts.map((a) => [a.title, a.detail, a.href, a.tone]),
+        [["Over the cap once your rookies’ lengths are set: $305 of $300", "Get under by Sun Aug 30 · Drop", "D", "orange"]]);
+    // past the cut-down date, its day is gone
+    const late = myAlerts({league, franchiseId: "0001", phase: "preseason", links, now: at("2026-09-01T12:00:00-05:00"), cutDown});
+    assert.equal(late[0].detail, "Past the cut-down date: get under ASAP · Drop");
+    assert.deepEqual(leagueAlerts(league, null).map((a) => [a.franchise.teamName, a.text, a.tone]), [
+        ["Me", "Over the cap once rookies’ lengths are set: $305 of $300", "orange"],
+        ["Them", "Over the salary cap: $305 of $300", "red"]
+    ]);
+});
+
 test("lineup problems: out, IR, suspended, bye and no team; a started game is left alone", () => {
     const kickoffs = new Map([["KC", at("2026-10-18T12:00:00-05:00")], ["BAL", at("2026-10-15T19:15:00-05:00")]]);
     const starters = [

@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {buildLeague, draftedIds, lengthDuePenalty, markContracts, playersFromExport} from "../site/v2/lib/league.js";
+import {buildLeague, draftedIds, lengthDuePenalty, markContracts, overOnlyByRookies, playersFromExport} from "../site/v2/lib/league.js";
 import {SALARY_CAP, rookieBaselines} from "../site/v2/lib/rules.js";
 
 // FUAD's rookie scale, a fixed amount for each position's first pick
@@ -261,4 +261,22 @@ test("the scale table runs to the first pick paying $1 at every position; the ro
     assert.notEqual(scaleText(rows.length - 1, FIXED), "$1 at every position");
     const picks = {franchise: [{id: "0001", futureDraftPick: [1, 2, 3].map((round) => ({year: "2027", round: String(round), originalPickFor: "0001"}))}]};
     assert.deepEqual(picksOf("0001", picks, {names: new Map(), nextYear: 2027})[0].rows.map((row) => row.round), [1, 2, 3]);
+});
+
+test("bylaw 4.6: a team over the cap only by this season's unsigned rookies is told apart", () => {
+    const rosters = JSON.parse(JSON.stringify(fixture("rosters.json").rosters));
+    const [rookie, pickedUp, signed] = rosters.franchise[0].player;
+    Object.assign(rookie, {salary: "6", contractYear: "0"});
+    Object.assign(pickedUp, {salary: "4", contractYear: "0"});
+    Object.assign(signed, {contractYear: "2"});
+    const rookies = new Set([rookie.id, pickedUp.id, signed.id]);
+    // drafted, cut and picked up as a free agent: he counts at once (4.5)
+    const transactions = {transaction: [{type: "FREE_AGENT", franchise: rosters.franchise[0].id, transaction: `${pickedUp.id},|`, timestamp: "100"}]};
+    const build = (lengthDue) => buildLeague({players: playersFromExport(playersExport), league: settings, rosters, transactions, lengthDue});
+    const team = build({rookies}).franchises.get(rosters.franchise[0].id);
+    assert.equal(team.unsignedRookieSalary, 6);
+    // without the draft known, none are
+    assert.equal(build({}).franchises.get(rosters.franchise[0].id).unsignedRookieSalary, 0);
+    const at = (capTotal, unsignedRookieSalary) => overOnlyByRookies({capTotal, unsignedRookieSalary});
+    assert.deepEqual([at(SALARY_CAP + 5, 6), at(SALARY_CAP + 6, 6), at(SALARY_CAP + 7, 6), at(SALARY_CAP + 5, 0), at(SALARY_CAP, 6)], [true, true, false, false, false]);
 });

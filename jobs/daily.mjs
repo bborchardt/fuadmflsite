@@ -46,7 +46,7 @@ if (!/^v\d+$/.test(version) || version === "v1") {
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, GAME_HOURS, asArray, displayName, exportSection, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
 const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
-const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
+const {buildLeague, draftedIds, overOnlyByRookies, playersFromExport} = await lib("league.js");
 const {WEEK_ROSTERS, checkShape} = await lib("shapes.js");
 const {DEFAULT_END_WEEK, OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
@@ -1097,10 +1097,13 @@ async function leagueState({loggedIn}) {
     };
     let built = build();
     // a drop whose length was due is free for this season's rookie before the cut-down date
-    // (lib/league.js lengthDuePenalty): the draft is read only when there's such a drop, and without
+    // (lib/league.js lengthDuePenalty), and a team over the cap only by its unsigned rookies isn't held
+    // (overOnlyByRookies): the draft is read only when there's such a drop or such a team, and without
     // it they're held for the commissioner
     let lengthDueUnknown = null;
-    if ([...built.franchises.values()].some((franchise) => franchise.pendingDroppedPlayers.some((player) => player.years === 0))) {
+    const values = [...built.franchises.values()];
+    if (values.some((franchise) => franchise.pendingDroppedPlayers.some((player) => player.years === 0))
+        || values.some((franchise) => franchise.capTotal > SALARY_CAP && franchise.signedPlayers.some((player) => player.salary >= 1))) {
         try {
             built = build(draftedIds(await fetchFrom(host, "draftResults", {L: leagueId})));
         } catch (error) {
@@ -1163,8 +1166,16 @@ function leagueRules({players, built, cutDown, penalties, transactions}) {
 function overCap({players, built, penalties, transactions}) {
     const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
     const over = new Set();
+    let excused = 0;
     for (const {franchiseId, capTotal: total} of built.franchises.values()) {
         if (total <= SALARY_CAP) {
+            continue;
+        }
+        const franchise = built.franchises.get(franchiseId);
+        if (overOnlyByRookies(franchise)) {
+            log(`${franchise.teamName} is at $${total} of $${SALARY_CAP} only by its unsigned rookies' $${franchise.unsignedRookieSalary}, `
+                + "which count once their lengths are set (bylaw 4.6); its chores aren't held.");
+            excused++;
             continue;
         }
         over.add(franchiseId);
@@ -1176,7 +1187,7 @@ function overCap({players, built, penalties, transactions}) {
             held: penalties.filter((penalty) => penalty.franchiseId === franchiseId).map((penalty) => penalty.explanation)
         })}`);
     }
-    if (!over.size) {
+    if (!over.size && !excused) {
         log("No team is over the cap.");
     }
     return over;

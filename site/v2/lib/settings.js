@@ -8,7 +8,12 @@ import data from "./settings-data.js";
 
 // the zones MFL's Franchise setup › Customize › Time Zone offers, by the letters it writes after a time
 export const ZONES = {ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu", GMT: "UTC"};
-const CHOICES = {timeZone: Object.keys(ZONES), "playoffs.wildcardsBy": ["allPlay", "standings"], draftOrder: ["playoffFinish", "standings"]};
+const CHOICES = {
+    timeZone: Object.keys(ZONES),
+    "playoffs.wildcardsBy": ["allPlay", "standings"],
+    "playoffs.allPlayTiesBy": ["standings", "points"],
+    draftOrder: ["playoffFinish", "standings"]
+};
 // taken whole: its positions are the ones a league uses
 const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
 // a league has one of each pair: setting either drops the other it would otherwise inherit
