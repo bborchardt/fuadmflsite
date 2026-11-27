@@ -3,6 +3,7 @@
 import {asArray, nflCode, numberOf} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {onNflIR, ruleViolations, titleKind} from "../lib/violations.js";
+import {overOnlyByRookies} from "../lib/league.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {DEFAULT_YEARS} from "../lib/contract-years.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
@@ -232,7 +233,10 @@ export function myAlerts({league, franchiseId, phase, links, lineup = null, grou
     // the same violations League Alerts and the daily job flag, for the viewer's team
     const own = ruleViolations(league, {now, cutDown}).filter((item) => item.franchiseId === franchiseId);
     const kinds = new Set(own.map((item) => item.kind));
-    if (kinds.has("cap")) {
+    if (kinds.has("cap") && overOnlyByRookies(franchise)) {
+        push(tones.orange, "$", `Over the cap once your rookies’ lengths are set: ${money(franchise.capTotal)} of $${SALARY_CAP}`,
+            `Get under ${byCut}`, links.drop, "Drop");
+    } else if (kinds.has("cap")) {
         push(tones.red, "$", `Over the salary cap: ${money(franchise.capTotal)} of $${SALARY_CAP}`, "The commissioner will reverse the move that did it", null);
     }
     if (kinds.has("roster-over")) {
@@ -339,7 +343,9 @@ export function leagueAlerts(league, franchiseId, {now, cutDown = null} = {}) {
             const franchise = league.franchises.get(item.franchiseId);
             switch (item.kind) {
             case "cap":
-                return {franchise, text: `Over the salary cap: ${money(franchise.capTotal)} of $${SALARY_CAP}`, figure: `+${money(franchise.capTotal - SALARY_CAP)}`, tone: tones.red};
+                return overOnlyByRookies(franchise)
+                    ? {franchise, text: `Over the cap once rookies’ lengths are set: ${money(franchise.capTotal)} of $${SALARY_CAP}`, figure: `+${money(franchise.capTotal - SALARY_CAP)}`, tone: tones.orange}
+                    : {franchise, text: `Over the salary cap: ${money(franchise.capTotal)} of $${SALARY_CAP}`, figure: `+${money(franchise.capTotal - SALARY_CAP)}`, tone: tones.red};
             case "roster-over":
                 return {franchise, text: `Over the roster limit: ${franchise.numPlayers} active of ${ROSTER_MAX}`, figure: String(franchise.numPlayers), tone: tones.red};
             case "roster-under":

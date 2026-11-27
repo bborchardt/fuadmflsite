@@ -1,7 +1,7 @@
 // The league model from MFL exports, with no DOM or fetching, so the page and the daily job share it.
 
 import {asArray, displayName} from "./mfl.js";
-import {capPenalty, netCapSpace, seasonWeeks} from "./rules.js";
+import {SALARY_CAP, capPenalty, netCapSpace, seasonWeeks} from "./rules.js";
 import settings from "./settings.js";
 
 /** Fewer entries than this on today's NFL injury report means it didn't load properly. */
@@ -30,9 +30,22 @@ function newFranchise(id, teamName) {
         // rostered players with no contract years yet
         signedPlayers: [],
         // players on MFL's injured reserve
-        irPlayers: []
+        irPlayers: [],
+        // this season's drafted rookies' salaries while their length is due (unsignedRookie)
+        unsignedRookieSalary: 0
     };
 }
+
+// A rookie from this season's draft (`rookies`, player ids) whose length is still due. Bylaw 4.6 keeps
+// his salary off the cap until it's set; capTotal still counts it, so a team over only by these is
+// told so (overOnlyByRookies) and its chores aren't held, while Moves still block as for any team
+// over. One picked up as a free agent since counts at once (4.5), as any add does.
+export const unsignedRookie = (player, rookies) => player.years === 0 && player.salary >= 1 && rookies.has(player.playerId)
+    && !player.transactions.some((transaction) => transaction.added);
+
+// over the cap, but not without this season's unsigned rookies (unsignedRookie)
+export const overOnlyByRookies = (franchise) => franchise.capTotal > SALARY_CAP && franchise.unsignedRookieSalary > 0
+    && franchise.capTotal - franchise.unsignedRookieSalary <= SALARY_CAP;
 
 export function playersFromExport(players) {
     const byId = new Map();
@@ -214,6 +227,12 @@ export function buildLeague({players, league, salaryAdjustments, rosters, transa
     // rounded to the cent, so amounts with cents can't add up to a hair over the cap
     for (const franchise of franchises.values()) {
         franchise.capTotal = Math.round((franchise.salary + franchise.unchargedPenalty) * 100) / 100;
+    }
+    const rookies = lengthDue.rookies || new Set();
+    for (const player of rosteredPlayers) {
+        if (unsignedRookie(player, rookies) && player.franchise) {
+            player.franchise.unsignedRookieSalary = Math.round((player.franchise.unsignedRookieSalary + player.salary) * 100) / 100;
+        }
     }
 
     return {players, franchises, rosteredPlayers, week, weeks: seasonWeeks(league), injuryReportKnown};

@@ -455,7 +455,13 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in `settings.json`
 (docs/settings.md); the numbers below are this league's. A rule change means a new version.
 
-- **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
+- **Salary cap:** $300, counting adjustments and drop penalties not yet charged. Cap used counts
+  this season's drafted rookies whose length is still due, though bylaw 4.6 counts them only once
+  it's set (one picked up as a free agent since counts at once, 4.5). A team over only by them is
+  told to get under by the cut-down date, not that a move will be reversed, and the daily job notes
+  it without a flag or holding its chores; Moves still block as for any team over. The rookies are
+  this season's draft results, which v2 reads before week 1 and the job when such a team, or a cut
+  whose length was due, needs them.
 - **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
   commissioner's first one-off calendar event, at a set time in the season's year (a renewed
   league's calendar can still hold last season's), with a word starting "cut" in its
