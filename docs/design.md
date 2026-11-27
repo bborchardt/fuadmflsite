@@ -326,6 +326,7 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   | `tests/stage-pages.test.mjs` | every pull request | A reader that no longer reads a season stage's saved page | Stages not saved |
   | `pages.py` | pull requests that touch the site, header or harness | Which screen takes each saved page, each season stage's and a member's own home page layout included | Pages not saved; what changed since they were saved |
   | The daily job's check (`jobs/mfl-check.mjs`) | every morning | An export, page or feed v2 reads that MFL changed or removed, as the commissioner's team sees it | How a page draws; MFL's scripts; the message board's pages; what only a member's own settings change; the commissioner's own pages |
+  | `lib/rounds.js` (`roundPlaces`), in a league with `playoffs.rounds` | each time League › Winners or Rosters › Draft loads in the playoffs | The commissioner's playoff-week matchups not fitting the rounds: a round's weeks not MFL's, a week with none, a team back after going out, a head-to-head round's winners not going on, or a ranked round's top scores, or its `advance`, not going on; all but the last two show a note in place of the places | Matchups that fit the rounds but aren't what the league decided; on League › Scores, a ranked round's card is left out when a round's team has no matchup that week, with nothing said |
   | The devices form's rows (Devices) | each page with errors | A fallback, a "Couldn't load" or an "MFL's … has changed" a member met | What no member opened |
 
 - **Checked by hand,** each when it's due:
@@ -339,6 +340,12 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
     reads every export with the rules the job read it by (`lib/shapes.js`), so a change that stops
     reading an earlier stage's MFL page, or a rule that turns down an export MFL gave then, fails. The other saved pages stay as they are, for the tests of what
     a screen draws
+  - once a season, in week 2, for a league with MFL's own weekly high score credit on: the daily
+    job's log records no "Most Points Week 1", as it counts MFL's "Credit for week 1 high score of …"
+    as paid; MFL renaming that entry would have the job pay the week again
+  - once a season, in the playoffs' first week: Standings' Playoffs panel against MFL's Playoff
+    Brackets page (`options?O=79`), as MFL fills in a bracket's teams only as the playoffs go, which
+    the saved brackets (2025's finished, 2026's before week 15) don't show
   - once a season: the devices form's rows read for errors, fallbacks and the oldest browsers
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed
@@ -455,7 +462,13 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in `settings.json`
 (docs/settings.md); the numbers below are this league's. A rule change means a new version.
 
-- **Salary cap:** $300, counting adjustments and drop penalties not yet charged.
+- **Salary cap:** $300, counting adjustments and drop penalties not yet charged. Cap used counts
+  this season's drafted rookies whose length is still due, though bylaw 4.6 counts them only once
+  it's set (one picked up as a free agent since counts at once, 4.5). A team over only by them is
+  told to get under by the cut-down date, not that a move will be reversed, and the daily job notes
+  it without a flag or holding its chores; Moves still block as for any team over. The rookies are
+  this season's draft results, which v2 reads before week 1 and the job when such a team, or a cut
+  whose length was due, needs them.
 - **Roster:** 23–30 active players (IR doesn't count), from the final cut-down date (2.5; the
   commissioner's first one-off calendar event, at a set time in the season's year (a renewed
   league's calendar can still hold last season's), with a word starting "cut" in its
@@ -552,9 +565,14 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   winners are seeds 1–2, the other four the best all-play records, ties by standings order (1.1–1.3);
   $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),
   never below $0 (1.6–1.7); what's left of the pot goes 55/30/15 (1.8). All-play counts weeks 1–14
-  only, from the weekly results, since MFL's standings keep counting it through the playoffs. The
+  only, from the weekly results, since MFL's standings keep counting it through the playoffs. Another
+  league's payouts can be dollar amounts (docs/settings.md: `allPlayTop`, `placeAmounts`,
+  `divisionWinner`). The
   pot is the accounting's league-wide entries; before they're recorded the prizes show their shares
-  without amounts.
+  without amounts. In the playoffs and for a past season, Standings shows the playoffs as they stand
+  (`ui/bracket-model.js`) in place of the seeds: MFL's championship and 3rd place brackets round by
+  round, or a `playoffs.rounds` league's rounds ranked on their totals; the seeds show when neither
+  can be read.
 
 ## Ruled out
 

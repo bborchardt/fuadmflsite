@@ -8,13 +8,29 @@ import data from "./settings-data.js";
 
 // the zones MFL's Franchise setup › Customize › Time Zone offers, by the letters it writes after a time
 export const ZONES = {ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu", GMT: "UTC"};
-const CHOICES = {timeZone: Object.keys(ZONES), "playoffs.wildcardsBy": ["allPlay", "standings"], draftOrder: ["playoffFinish", "standings"]};
+const CHOICES = {
+    timeZone: Object.keys(ZONES),
+    "playoffs.wildcardsBy": ["allPlay", "standings"],
+    "playoffs.allPlayTiesBy": ["standings", "points"],
+    draftOrder: ["standingsThenPlayoffFinish", "allPlayThenPlayoffFinish"]
+};
 // taken whole: its positions are the ones a league uses
 const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
 // a league has one of each pair: setting either drops the other it would otherwise inherit
-const EITHER = {"rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick"};
+const EITHER = {
+    "rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick",
+    "payouts.allPlayPerGameOver500": "allPlayTop", "payouts.allPlayTop": "allPlayPerGameOver500",
+    "payouts.places": "placeAmounts", "payouts.placeAmounts": "places"
+};
 const LISTS = {
     "payouts.places": (item) => isAmount(item) && item <= 1,
+    "payouts.placeAmounts": (item) => isAmount(item),
+    "payouts.allPlayTop": (item) => isAmount(item),
+    // lib/rounds.js; only these keys, so a misspelt one isn't quietly left out. `advance` on a ranked
+    // round before the last, and only there: Scores draws its cutoff from it while it's played
+    "playoffs.rounds": (item, i, list) => isObject(item) && Object.keys(item).every((name) => ["weeks", "headToHead", "advance"].includes(name))
+        && Number.isInteger(item.weeks) && item.weeks >= 1 && typeof item.headToHead === "boolean"
+        && (!item.headToHead && i < list.length - 1 ? Number.isInteger(item.advance) && item.advance >= 1 : !("advance" in item)),
     renumberedFranchises: (item) => isObject(item) && typeof item.was === "string" && typeof item.now === "string" && isAmount(item.through)
 };
 

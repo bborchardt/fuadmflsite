@@ -20,7 +20,8 @@
 //   RFA_SALARIES                "apply" to set the renewal's RFAs (1 year to 0) to $0.01; anything else
 //                               only logs them
 //   BACKUP_STARTERS             "apply" to start members' backups for inactive starters (bylaw 16.5);
-//                               anything else only logs them
+//                               "log" only logs them; unset or anything else, the chore doesn't run,
+//                               as a league without the rule handles backups itself, if at all
 //   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
 //   SAVED_PAGES_DIR             where the check saves MFL's pages, cleaned as the capture bookmark
 //                               cleans them: a page it flags, and with SAVE_PAGES every one it reads
@@ -45,8 +46,9 @@ if (!/^v\d+$/.test(version) || version === "v1") {
 }
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, GAME_HOURS, asArray, displayName, exportSection, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
-const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
-const {buildLeague, draftedIds, playersFromExport} = await lib("league.js");
+const {ALL_PLAY_TOP, DIVISION_PRIZE, divisionWinners, latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
+const {placesWithoutSeeds} = await lib("rounds.js");
+const {buildLeague, draftedIds, overOnlyByRookies, playersFromExport} = await lib("league.js");
 const {WEEK_ROSTERS, checkShape} = await lib("shapes.js");
 const {DEFAULT_END_WEEK, OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
 const {makeSnapshot, snapshotFileName} = await lib("franchise.js");
@@ -92,7 +94,7 @@ if (dryRun && !/^https:\/\/([a-z0-9-]+\.)*myfantasyleague\.com\/?$/i.test(proces
     throw new Error(`A dry run's host must be on myfantasyleague.com, not ${process.env.MFL_HOST}`);
 }
 // A league with no entry has only assumed rules, too little to go by.
-const {league: leagueSettings} = await lib("settings.js");
+const {default: settings, league: leagueSettings} = await lib("settings.js");
 if (!leagueSettings.listed && !dryRun) {
     throw new Error(`League ${leagueId} isn't listed in site/${version}/settings.json`);
 }
@@ -130,6 +132,8 @@ const applyContractYears = !dryRun && process.env.CONTRACT_YEARS === "apply";
 const applyPayouts = !dryRun && process.env.PAYOUTS === "apply";
 const applyRfaSalaries = !dryRun && process.env.RFA_SALARIES === "apply";
 const applyBackups = !dryRun && process.env.BACKUP_STARTERS === "apply";
+// unlike the other chores, off unless asked for: the rule is a league's own choice (settings.backupStarters)
+const backupsOff = !["apply", "log"].includes(process.env.BACKUP_STARTERS);
 const dataIsThisLeagues = !dryRun || process.env.DATA_LEAGUE_ID === leagueId;
 // a season's weekly prizes and all-play payouts, with room for a backfill: more means something's wrong
 const MAX_PAYOUTS_PER_RUN = 30;
@@ -495,15 +499,32 @@ async function payouts(loggedIn, {built}) {
     }
     const accounting = await fetchFrom(host, "accounting", {L: leagueId});
     let places = null;
+    let placesProblem = null;
+    const rounds = settings.playoffs.rounds;
     if (finalWeek >= endWeek && unpaidPlaces(accounting).length) {
-        const list = asArray((await fetchFrom(host, "playoffBrackets", {L: leagueId})).playoffBracket);
-        const brackets = [];
-        for (const bracket of placeBrackets(list)) {
-            brackets.push(bracket ? await fetchFrom(host, "playoffBracket", {L: leagueId, BRACKET_ID: bracket.id}) : null);
+        if (rounds.length) {
+            // a league whose playoffs are rounds of scores (lib/rounds.js)
+            ({places, problem: placesProblem} = placesWithoutSeeds(weeklyResults, {rounds, weeks: built.weeks, completedWeek: finalWeek}));
+        } else {
+            const list = asArray((await fetchFrom(host, "playoffBrackets", {L: leagueId})).playoffBracket);
+            const brackets = [];
+            for (const bracket of placeBrackets(list)) {
+                brackets.push(bracket ? await fetchFrom(host, "playoffBracket", {L: leagueId, BRACKET_ID: bracket.id}) : null);
+            }
+            places = playoffPlaces(brackets);
         }
-        places = playoffPlaces(brackets);
     }
-    const {records, problem} = missingPayouts({accounting, weeklyResults, lastRegularWeek: lastRegular, endWeek, finalWeek, places});
+    // the standings, for each division's winner and all-play ties by the standings, once the regular
+    // season is over
+    let divisions = [];
+    let standingsOrder = [];
+    const byStandings = ALL_PLAY_TOP.length && settings.playoffs.allPlayTiesBy === "standings";
+    if (finalWeek >= lastRegular && (DIVISION_PRIZE > 0 || byStandings)) {
+        const [standing, league] = await Promise.all([fetchFrom(host, "leagueStandings", {L: leagueId}), fetchFrom(host, "league", {L: leagueId})]);
+        divisions = divisionWinners(standing, league);
+        standingsOrder = asArray(standing.franchise).map((team) => team.id);
+    }
+    const {records, problem} = missingPayouts({accounting, weeklyResults, lastRegularWeek: lastRegular, endWeek, finalWeek, places, placesProblem, divisions, standingsOrder});
     if (problem) {
         needsAttention(`Payouts: the places can't be recorded: ${problem}. Left for the commissioner.`);
     }
@@ -731,6 +752,10 @@ const weekResults = async (week) => asArray((await fetchFrom(host, "weeklyResult
 // backups for inactive starters go in, each pair locked as it was at its deadline, and the week is
 // recalculated. Returns whether league-data changed. docs/design.md has the rules.
 async function backupStarters(loggedIn, {league, playerNames, built}) {
+    if (backupsOff) {
+        log("Backup starters: off (BACKUP_STARTERS isn't apply or log).");
+        return false;
+    }
     if (!loggedIn) {
         log("Backup starters: not checked, as the run isn't logged in (the board and the lineups need the commissioner).");
         return false;
@@ -1098,10 +1123,13 @@ async function leagueState({loggedIn}) {
     };
     let built = build();
     // a drop whose length was due is free for this season's rookie before the cut-down date
-    // (lib/league.js lengthDuePenalty): the draft is read only when there's such a drop, and without
+    // (lib/league.js lengthDuePenalty), and a team over the cap only by its unsigned rookies isn't held
+    // (overOnlyByRookies): the draft is read only when there's such a drop or such a team, and without
     // it they're held for the commissioner
     let lengthDueUnknown = null;
-    if ([...built.franchises.values()].some((franchise) => franchise.pendingDroppedPlayers.some((player) => player.years === 0))) {
+    const values = [...built.franchises.values()];
+    if (values.some((franchise) => franchise.pendingDroppedPlayers.some((player) => player.years === 0))
+        || values.some((franchise) => franchise.capTotal > SALARY_CAP && franchise.signedPlayers.some((player) => player.salary >= 1))) {
         try {
             built = build(draftedIds(await fetchFrom(host, "draftResults", {L: leagueId})));
         } catch (error) {
@@ -1164,8 +1192,16 @@ function leagueRules({players, built, cutDown, penalties, transactions}) {
 function overCap({players, built, penalties, transactions}) {
     const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
     const over = new Set();
+    let excused = 0;
     for (const {franchiseId, capTotal: total} of built.franchises.values()) {
         if (total <= SALARY_CAP) {
+            continue;
+        }
+        const franchise = built.franchises.get(franchiseId);
+        if (overOnlyByRookies(franchise)) {
+            log(`${franchise.teamName} is at $${total} of $${SALARY_CAP} only by its unsigned rookies' $${franchise.unsignedRookieSalary}, `
+                + "which count once their lengths are set (bylaw 4.6); its chores aren't held.");
+            excused++;
             continue;
         }
         over.add(franchiseId);
@@ -1177,7 +1213,7 @@ function overCap({players, built, penalties, transactions}) {
             held: penalties.filter((penalty) => penalty.franchiseId === franchiseId).map((penalty) => penalty.explanation)
         })}`);
     }
-    if (!over.size) {
+    if (!over.size && !excused) {
         log("No team is over the cap.");
     }
     return over;

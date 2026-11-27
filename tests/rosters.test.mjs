@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {buildLeague, draftedIds, lengthDuePenalty, markContracts, playersFromExport} from "../site/v2/lib/league.js";
+import {buildLeague, draftedIds, lengthDuePenalty, markContracts, overOnlyByRookies, playersFromExport} from "../site/v2/lib/league.js";
 import {SALARY_CAP, rookieBaselines} from "../site/v2/lib/rules.js";
 
 // FUAD's rookie scale, a fixed amount for each position's first pick
@@ -119,6 +119,19 @@ test("next year's order: the four out of the playoffs worst first, then the seed
     assert.equal(pickNumbers(order).size, 4);
 });
 
+test("next year's order: a finish with a team the picture has out lists him once, in the finish", () => {
+    const divisions = standings(fixture("league-standings.json").leagueStandings, settings, names);
+    const picture = playoffPicture(divisions);
+    // the commissioner's playoffs had the first team in the hunt in place of seed 6
+    const finish = [picture.hunt[0].team.id, ...picture.seeds.slice(0, 5).reverse().map((seed) => seed.team.id)];
+    const order = draftOrder(picture, {finish, names, nextYear: 2027, futureDraftPicks: context.futureDraftPicks});
+    assert.equal(order.length, 10);
+    assert.equal(new Set(order.map((row) => row.id)).size, 10);
+    assert.deepEqual(order.slice(4).map((row) => row.id), finish);
+    assert.ok(order.slice(0, 4).some((row) => row.id === picture.seeds[5].team.id));
+    assert.deepEqual(order.map((row) => row.pick), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
+
 test("2025's playoffs: first-round losers by seed, the 3rd place game, the final", () => {
     const finish = playoffFinish([fixture("playoff-bracket-2025-1.json").playoffBracket, fixture("playoff-bracket-2025-2.json").playoffBracket]);
     // seed 6 (0002) and seed 5 (0007) lost in round 1; 0009 lost the 3rd place game to 0005; 0001 lost the final to 0004
@@ -228,12 +241,7 @@ test("Players' Watching chip keeps only the watched players, with the other chip
     assert.deepEqual(ids(filterPlayers(pool, {})), ["1", "2", "3"]);
 });
 
-test("other leagues: draft order by the standings alone, and a finish without a 3rd place game", () => {
-    const divisions = standings(fixture("league-standings.json").leagueStandings, settings, names);
-    const order = draftOrder(playoffPicture(divisions), {names, nextYear: 2027, by: "standings"});
-    const standingsOrder = fixture("league-standings.json").leagueStandings.franchise.map((team) => team.id);
-    assert.deepEqual(order.map((row) => row.id), standingsOrder.slice().reverse());
-    assert.deepEqual(order.map((row) => row.pick), Array.from({length: 10}, (_, i) => i + 1));
+test("other leagues: a finish without a 3rd place game", () => {
     // the semifinal losers by seed, after the first round's
     const finish = playoffFinish([fixture("playoff-bracket-2025-1.json").playoffBracket], {thirdPlaceGame: false});
     assert.deepEqual(finish.slice(0, 2), ["0002", "0007"]);
@@ -249,3 +257,61 @@ test("the scale table runs to the first pick paying $1 at every position; the ro
     const picks = {franchise: [{id: "0001", futureDraftPick: [1, 2, 3].map((round) => ({year: "2027", round: String(round), originalPickFor: "0001"}))}]};
     assert.deepEqual(picksOf("0001", picks, {names: new Map(), nextYear: 2027})[0].rows.map((row) => row.round), [1, 2, 3]);
 });
+
+test("bylaw 4.6: a team over the cap only by this season's unsigned rookies is told apart", () => {
+    const rosters = JSON.parse(JSON.stringify(fixture("rosters.json").rosters));
+    const [rookie, pickedUp, signed] = rosters.franchise[0].player;
+    Object.assign(rookie, {salary: "6", contractYear: "0"});
+    Object.assign(pickedUp, {salary: "4", contractYear: "0"});
+    Object.assign(signed, {contractYear: "2"});
+    const rookies = new Set([rookie.id, pickedUp.id, signed.id]);
+    // drafted, cut and picked up as a free agent: he counts at once (4.5)
+    const transactions = {transaction: [{type: "FREE_AGENT", franchise: rosters.franchise[0].id, transaction: `${pickedUp.id},|`, timestamp: "100"}]};
+    const build = (lengthDue) => buildLeague({players: playersFromExport(playersExport), league: settings, rosters, transactions, lengthDue});
+    const team = build({rookies}).franchises.get(rosters.franchise[0].id);
+    assert.equal(team.unsignedRookieSalary, 6);
+    // without the draft known, none are
+    assert.equal(build({}).franchises.get(rosters.franchise[0].id).unsignedRookieSalary, 0);
+    const at = (capTotal, unsignedRookieSalary) => overOnlyByRookies({capTotal, unsignedRookieSalary});
+    assert.deepEqual([at(SALARY_CAP + 5, 6), at(SALARY_CAP + 6, 6), at(SALARY_CAP + 7, 6), at(SALARY_CAP + 5, 0), at(SALARY_CAP, 6)], [true, true, false, false, false]);
+});
+
+// teams out of the playoffs for the all-play order: `order` the standings', 1 the best
+const team = (id, order, allPlay, points, h2h = {w: 7, l: 7, t: 0}) => ({id, name: id, order, h2h, allPlay: {...allPlay, points}});
+const withTies = (tiesBy, run) => {
+    const before = leagueSettings.playoffs.allPlayTiesBy;
+    leagueSettings.playoffs.allPlayTiesBy = tiesBy;
+    try {
+        run();
+    } finally {
+        leagueSettings.playoffs.allPlayTiesBy = before;
+    }
+};
+
+test("draft order by all-play: the lowest winning percentage first, ties by fewer points, then the worse record, then a coin flip", () => withTies("points", () => {
+    const picture = {
+        seeds: [{seed: 1, team: team("S1", 1, {w: 100, l: 54, t: 0}, 1900)}],
+        hunt: [
+            {team: team("A", 2, {w: 70, l: 84, t: 0}, 1500)},
+            {team: team("B", 3, {w: 60, l: 94, t: 0}, 1400)},
+            {team: team("C", 4, {w: 70, l: 84, t: 0}, 1450)},
+            {team: team("D", 5, {w: 50, l: 104, t: 0}, 1500, {w: 8, l: 6, t: 0})},
+            {team: team("E", 6, {w: 50, l: 104, t: 0}, 1500, {w: 6, l: 8, t: 0})},
+            {team: team("F", 7, {w: 40, l: 114, t: 0}, 1300)},
+            {team: team("G", 8, {w: 40, l: 114, t: 0}, 1300)}
+        ]
+    };
+    const order = draftOrder(picture, {names: new Map(), nextYear: 2027, by: "allPlayThenPlayoffFinish"});
+    // F and G level on all three: the standings' worse (G) until the coin is flipped
+    assert.deepEqual(order.map((row) => row.id), ["G", "F", "E", "D", "B", "C", "A", "S1"]);
+    assert.deepEqual(order.slice(0, 3).map((row) => row.why), ["40-114 all-play · tied: coin flip", "40-114 all-play · tied: coin flip", "50-104 all-play"]);
+    // FUAD's: the standings' order, worst first
+    const standingsFirst = draftOrder(picture, {names: new Map(), nextYear: 2027, by: "standingsThenPlayoffFinish"});
+    assert.deepEqual(standingsFirst.map((row) => row.id), ["G", "F", "E", "D", "C", "B", "A", "S1"]);
+    // all-play ties by the standings: no coin to flip
+    withTies("standings", () => {
+        const order2 = draftOrder(picture, {names: new Map(), nextYear: 2027, by: "allPlayThenPlayoffFinish"});
+        assert.deepEqual(order2.map((row) => row.id), ["G", "F", "E", "D", "B", "C", "A", "S1"]);
+        assert.ok(order2.every((row) => !row.why.includes("coin")));
+    });
+}));

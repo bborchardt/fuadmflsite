@@ -179,6 +179,28 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     assert.ok(unknown.entries.includes("Charged $8 to Beta for Ollie Gordon (2yrs@10, 10/23), and cleared the player's contract."), unknown.entries.join("\n"));
 });
 
+test("a team over the cap only by its unsigned rookies (4.6) isn't flagged or held", () => {
+    const base = league({alphaSalary: 270});
+    const rosters = structuredClone(base.rosters);
+    rosters.franchise[0].player.push({id: "8", salary: "10", contractYear: "0", status: "ROSTER"});
+    const exports = {
+        ...base,
+        players: {player: [...base.players.player, {id: "8", name: "Rookie, Ray", position: "WR", team: "BUF"}]},
+        rosters,
+        draftResults: {draftUnit: {draftPick: [{round: "01", pick: "01", player: "8"}]}}
+    };
+    // $270 + 22 × $1 + $10, and Mixon's $1 penalty not yet charged: $303, $293 without him
+    const result = run({scenario: {exports}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(!result.entries.some((entry) => /Over the cap/.test(entry)), result.entries.join("\n"));
+    assert.match(result.stdout, /Alpha is at \$303 of \$300 only by its unsigned rookies' \$10, which count once their lengths are set \(bylaw 4\.6\); its chores aren't held\./);
+    // Alpha's penalty for Mixon is charged, not held
+    assert.ok(result.entries.includes("Charged $1 to Alpha for Joe Mixon (1yrs@1, 10/23), and reset the player to $1 / 0 years."), result.entries.join("\n"));
+    // without the draft's results he counts as any player does
+    const unknown = run({scenario: {exports: {...exports, draftResults: 500}}, env: LOGIN});
+    assert.match(unknown.entries[0], /^Over the cap: Alpha/);
+});
+
 test("a team over the cap fails the run and holds its penalty; the other team's is charged", () => {
     const result = run({scenario: {exports: league({alphaSalary: 290})}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(result.status, 1);
@@ -916,6 +938,16 @@ const BACKUP_FILES = {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starter
 const posted = (result, page) => result.requests.filter((request) => request.method === "POST" && new URL(request.url).pathname === `/2026/${page}`)
     .map((request) => [...new URLSearchParams(request.body)]);
 
+test("backup starters off unless asked for: nothing read, posted or flagged", () => {
+    for (const env of [LOGIN, {...LOGIN, BACKUP_STARTERS: "no"}]) {
+        const result = run({scenario: backups(), files: BACKUP_FILES, env});
+        assert.equal(result.status, 0, result.stdout);
+        assert.deepEqual(posted(result, "lineup"), []);
+        assert.ok(!result.requests.some((request) => /O=210|messageBoard/.test(request.url)), "no lineup details or board read");
+        assert.match(result.stdout, /Backup starters: off \(BACKUP_STARTERS isn't apply or log\)\./);
+    }
+});
+
 test("backup starters: an inactive starter's backup goes in, the week is recalculated and settled, nothing posted", () => {
     const result = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "apply"}});
     assert.equal(result.status, 0, result.stdout);
@@ -1131,8 +1163,8 @@ test("backup starters: a backup inactive too stays on the bench", () => {
     assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
 });
 
-test("backup starters: without BACKUP_STARTERS only logged; a dry run writes nothing, league-data included", () => {
-    const logged = run({scenario: backups(), files: BACKUP_FILES, env: LOGIN});
+test("backup starters: with BACKUP_STARTERS log only logged; a dry run writes nothing, league-data included", () => {
+    const logged = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "log"}});
     assert.equal(logged.status, 0, logged.stdout);
     assert.deepEqual(logged.entries.filter((entry) => entry.startsWith("Backup starters")), [
         "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."

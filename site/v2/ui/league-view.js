@@ -79,9 +79,10 @@ function cardMarkup(card, i, {names, viewer, open, benchOpen, preview, best = fa
     // once either side has a game going, both show points
     const started = card.teams.some((team) => team.started);
     // no leader while either score isn't known
-    const leader = started && b && Number.isFinite(a.score) && Number.isFinite(b.score) && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
+    // a ranked playoff round's pairing (roundCard) has no leader or win chance: the round card ranks it
+    const leader = !card.ranked && started && b && Number.isFinite(a.score) && Number.isFinite(b.score) && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
     const live = !best && card.teams.some((team) => team.playing);
-    const showBar = !best && a.chance !== null && b;
+    const showBar = !best && !card.ranked && a.chance !== null && b;
     const head = b
         ? `<span class="fuad-faces">${teamHead(a, {names, viewer, leader, side: 0, started, preview})}${teamHead(b, {names, viewer, leader, side: 1, started, preview})}</span>
            ${showBar ? `<span class="fuad-card-middle">${winBar(card.teams)}</span>` : ""}
@@ -132,10 +133,37 @@ export function scoresFrame({before, viewer}) {
 <div class="fuad-scores-body"></div>`;
 }
 
-// a week's cards; `open` the cards shown open, `bench` those with their bench shown
-export function cardsMarkup(cards, {names, viewer, open, bench, preview, best}) {
+// A ranked playoff round (league-model.js roundCard): its teams by their totals so far, the cutoff
+// after those going on, and each one's chance while it's known
+function roundMarkup(round, {names, viewer}) {
+    const span = round.weeks.length > 1 ? `Weeks ${round.weeks[0]}–${round.weeks[round.weeks.length - 1]} added up` : "";
+    const about = round.last ? span || `Week ${round.weeks[0]}` : [`Top ${round.advance} advance`, span].filter(Boolean).join(" · ");
+    const row = (entry, i) => {
+        const meta = [
+            entry.before && entry.started ? `${figure(entry.before, 1)} + ${figure(entry.week, 1)} this week` : "",
+            entry.projected !== null && !entry.done ? `proj ${figure(entry.projected, 1)}` : "",
+            entry.playing ? `${entry.playing} playing` : "",
+            entry.toPlay ? `${entry.toPlay} to play` : ""
+        ].filter(Boolean).join(" · ");
+        return `<li class="fuad-round-row${entry.id === viewer ? " fuad-row-mine" : ""}">
+            <span class="fuad-seed">${i + 1}</span>
+            <span class="fuad-row-text"><span class="fuad-row-title">${withIcon(entry.id, esc(names.get(entry.id) || entry.id))}</span>${meta ? `<span class="fuad-meta">${esc(meta)}</span>` : ""}</span>
+            <span class="fuad-round-figures"><span class="fuad-round-total">${Number.isFinite(entry.total) ? esc(figure(entry.total, 1)) : "—"}</span>${entry.chance === null ? "" : `<span class="fuad-meta">${entry.chance}% ${round.last ? "to win" : "to advance"}</span>`}</span>
+        </li>`;
+    };
+    const rows = round.rows.map((entry, i) => row(entry, i) + (i + 1 === round.advance && i + 1 < round.rows.length
+        ? `<li class="fuad-round-cut"><span class="fuad-label">Top ${round.advance} advance</span></li>` : "")).join("");
+    return `<section class="fuad-round" aria-labelledby="fuad-round-title">
+        <div class="fuad-panel-head"><h2 class="fuad-panel-heading" id="fuad-round-title">${round.last ? "Playoff final" : `Playoffs · Round ${round.number}`}</h2><span class="fuad-meta">${esc(about)}</span></div>
+        <ol class="fuad-rows">${rows}</ol>
+    </section>`;
+}
+
+// a week's cards; `open` the cards shown open, `bench` those with their bench shown; `round` a ranked
+// playoff round's card, first, across the row
+export function cardsMarkup(cards, {names, viewer, open, bench, preview, best, round = null}) {
     return cards.length
-        ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !preview, benchOpen: bench.has(i), preview, best})).join("")}</div>`
+        ? `<div class="fuad-cards">${round ? roundMarkup(round, {names, viewer}) : ""}${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !preview, benchOpen: bench.has(i), preview, best})).join("")}</div>`
         : '<p class="fuad-muted fuad-empty">No games this week.</p>';
 }
 
@@ -184,6 +212,60 @@ export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt, teamHref}
                 </li>`).join("")}</ul>
             </div>` : ""}
         </div>
+    </section>`;
+}
+
+// Standings' Playoffs panel (bracket-model.js): MFL's bracket round by round, or a rounds league's
+// rounds; a round being played links to Scores
+export function bracketMarkup({rounds, ranked = false}, {viewer, names, title, teamHref}) {
+    const name = (id) => `<a href="${esc(teamHref(id))}">${esc(names.get(id) || id)}</a>`;
+    const points = (value) => (value === null || value === undefined ? "" : Number.isFinite(value) ? esc(figure(value, 1)) : "—");
+    const liveLink = '<a class="fuad-meta fuad-live" href="#league-scores">Live ›</a>';
+    const gameMarkup = (game, caption = "") => `<li class="fuad-bracket-game${caption ? " fuad-bracket-captioned" : ""}">${caption ? `<p class="fuad-label fuad-bracket-caption">${esc(caption)}</p>` : ""}${game.sides.map((side) => `<div class="fuad-bracket-side${side.id && side.id === viewer ? " fuad-row-mine" : ""}${game.winner && side.id === game.winner ? " fuad-bracket-winner" : ""}">
+            <span class="fuad-seed">${side.seed || ""}</span>
+            <span class="fuad-row-title">${side.id ? name(side.id) : `<span class="fuad-muted">${esc(side.from || "To be decided")}</span>`}</span>
+            <span class="fuad-bracket-points">${game.state === "next" ? "" : points(side.points)}</span>
+        </div>`).join("")}</li>`;
+    const head = (round, weeks) => `<div class="fuad-bracket-head"><h3 class="fuad-label fuad-subhead">${esc(weeks)} · ${esc(round.title)}</h3>${round.live ? liveLink : ""}</div>`;
+    const weeksText = (list) => (list.length > 1 ? `Weeks ${list[0]}–${list[list.length - 1]}` : `Week ${list[0]}`);
+    const rankedMarkup = (round) => `<ol class="fuad-rows fuad-bracket-ranked">${round.rows.map((row) => `<li class="fuad-bracket-side${row.id === viewer ? " fuad-row-mine" : ""}${row.mark ? " fuad-bracket-winner" : ""}">
+            <span class="fuad-seed">${row.seed || ""}</span>
+            <span class="fuad-row-text"><span class="fuad-row-title">${name(row.id)}</span>${row.mark ? `<span class="fuad-tag fuad-tag-accent">${esc(row.mark)}</span>` : ""}</span>
+            <span class="fuad-bracket-points">${points(row.total)}</span>
+        </li>`).join("")}</ol>`;
+    const roundMarkup = (round) => {
+        const weeks = round.weeks ? weeksText(round.weeks) : `Week ${round.week}`;
+        const live = round.live || (round.games && round.games.some((game) => game.state === "live"));
+        const inner = round.notSet ? '<p class="fuad-muted">Matchups not set in MFL yet.</p>'
+            : ranked && round.ranked ? rankedMarkup(round)
+                : `<ol class="fuad-bracket-games">${round.games.map((game) => gameMarkup(game)).join("")}</ol>`;
+        return `<div class="fuad-bracket-round">${head({...round, live}, weeks)}${inner}</div>`;
+    };
+    // a column a week: the 3rd place game under the championship it's played with
+    const columns = [];
+    rounds.forEach((round) => {
+        const column = columns[columns.length - 1];
+        if (round.week && column && column[0].week === round.week) {
+            column.push(round);
+        } else {
+            columns.push([round]);
+        }
+    });
+    // a week's later rounds (the 3rd place game) join its first's list, each named over its game, so
+    // every column is one heading and its games, level with the others'
+    const body = columns.map((column) => {
+        if (column.length === 1) {
+            return `<div class="fuad-bracket-week">${roundMarkup(column[0])}</div>`;
+        }
+        const [first, ...later] = column;
+        const games = first.games.map((game) => gameMarkup(game))
+            .concat(later.flatMap((round) => round.games.map((game) => gameMarkup(game, round.title))));
+        const live = column.some((round) => round.games.some((game) => game.state === "live"));
+        return `<div class="fuad-bracket-week"><div class="fuad-bracket-round">${head({...first, live}, `Week ${first.week}`)}<ol class="fuad-bracket-games">${games.join("")}</ol></div></div>`;
+    }).join("");
+    return `<section class="fuad-panel" aria-labelledby="fuad-bracket-title">
+        <h2 class="fuad-panel-heading" id="fuad-bracket-title">${esc(title)}</h2>
+        <div class="fuad-bracket">${body}</div>
     </section>`;
 }
 
@@ -252,24 +334,26 @@ export function positionsMarkup(rows, {viewer, teamHref}) {
 export function winnersMarkup(result, {viewer, final, teamHref}) {
     const today = final ? "" : '<p class="fuad-meta fuad-if">If the season ended today</p>';
     const named = result.prizes.some((prize) => prize.team);
+    const division = result.divisionPrize > 0;
     const phone = `<ul class="fuad-rows fuad-phone-only">${result.rows.map((row) => `<li class="fuad-won${row.id === viewer ? " fuad-row-mine" : ""}">
         <span class="fuad-row-text"><span class="fuad-row-title"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></span><span class="fuad-meta">${esc(winningsLine(row))}</span></span>
         <span class="fuad-won-total${row.total > 0 ? "" : " fuad-muted"}">${esc(ledger(row.total))}</span>
     </li>`).join("")}</ul>`;
     const desktop = `<div class="fuad-table-scroll fuad-desktop-only"><table class="fuad-table fuad-winners">
         <thead><tr><th scope="col">Team</th><th scope="col" class="fuad-num">Weeks won</th><th scope="col" class="fuad-num">Weekly</th><th scope="col" class="fuad-num">All-play</th>
-            <th scope="col" class="fuad-num">All-play $</th>${named ? '<th scope="col" class="fuad-num">Playoffs</th>' : ""}<th scope="col" class="fuad-num">Total</th></tr></thead>
+            <th scope="col" class="fuad-num">All-play $</th>${division ? '<th scope="col" class="fuad-num">Division</th>' : ""}${named ? '<th scope="col" class="fuad-num">Playoffs</th>' : ""}<th scope="col" class="fuad-num">Total</th></tr></thead>
         <tbody>${result.rows.map((row) => `<tr${row.id === viewer ? ' class="fuad-row-mine"' : ""}>
             <th scope="row" class="fuad-team"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></th>
             <td class="fuad-num">${esc(row.weeks.join(", ") || "—")}</td><td class="fuad-num">${row.weekly ? esc(ledger(row.weekly)) : "—"}</td>
-            <td class="fuad-num">${esc(row.record)}</td><td class="fuad-num">${row.allPlay ? esc(ledger(row.allPlay)) : "—"}</td>
+            <td class="fuad-num">${esc(row.record)}</td><td class="fuad-num">${row.allPlay ? esc(`${row.allPlayPlace ? `${row.allPlayPlace} ` : ""}${ledger(row.allPlay)}`) : "—"}</td>
+            ${division ? `<td class="fuad-num">${row.division ? esc(ledger(row.division)) : "—"}</td>` : ""}
             ${named ? `<td class="fuad-num">${row.prize ? esc(row.prize.amount === null ? row.prize.place : `${row.prize.place} ${ledger(row.prize.amount)}`) : "—"}</td>` : ""}
             <td class="fuad-num fuad-strong${row.total > 0 ? "" : " fuad-muted"}">${esc(ledger(row.total))}</td>
         </tr>`).join("")}</tbody>
     </table></div>`;
     const names = new Map(result.rows.map((row) => [row.id, row.name]));
     const prizes = `<div class="fuad-prizes">${result.prizes.map((prize) => `<div class="fuad-prize">
-        <span class="fuad-prize-place${prize.team && prize.team === viewer ? " fuad-mine" : ""}">${esc(prize.place)} · ${Math.round(prize.share * 100)}%</span>
+        <span class="fuad-prize-place${prize.team && prize.team === viewer ? " fuad-mine" : ""}">${esc(prize.place)}${prize.share === null || prize.share === undefined ? "" : ` · ${Math.round(prize.share * 100)}%`}</span>
         ${prize.amount === null ? "" : `<span class="fuad-prize-amount">${esc(ledger(prize.amount))}</span>`}
         ${prize.team ? `<span class="fuad-prize-team"><a href="${esc(teamHref(prize.team))}">${esc(names.get(prize.team) || "")}</a></span>` : ""}
     </div>`).join("")}</div>`;
@@ -288,7 +372,8 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
         </section>
         <section class="fuad-panel" aria-labelledby="fuad-prizes">
             <h2 class="fuad-panel-heading" id="fuad-prizes">${final ? `${esc(final)} playoff prizes` : "Playoff prizes"}</h2>${today}
-            <div class="fuad-prize-columns">${prizes}${pot}</div>
+            ${result.placesNote ? `<p class="fuad-meta">${esc(result.placesNote)}</p>` : ""}
+            <div class="fuad-prize-columns${result.hasPot === false ? " fuad-prize-columns-alone" : ""}">${prizes}${result.hasPot === false ? "" : pot}</div>
         </section>`;
 }
 

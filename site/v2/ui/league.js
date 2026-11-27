@@ -7,15 +7,19 @@ import {armRetry, drawPanel, failedMarkup, pageChanged} from "./panel.js";
 import {basicHref} from "./nav.js";
 import {lenient} from "./checked.js";
 import {cached} from "./store.js";
-import {DEFAULT_END_WEEK, lineupPositions} from "../lib/rules.js";
+import {DEFAULT_END_WEEK, lineupPositions, seasonWeeks} from "../lib/rules.js";
+import settings from "../lib/settings.js";
+import {bracketRounds, roundsBracket} from "./bracket-model.js";
 import {mflFetch, pageFetch} from "./page-fetch.js";
 import {beforeWeek1} from "./context.js";
 import {playerList} from "./player-list.js";
 import {readProjections, readRules} from "./live-scoring.js";
 import {careers, champions} from "./history.js";
 import {titles} from "./history-model.js";
-import {allPlayRecords, bracketCount, placeBrackets, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings} from "./league-model.js";
-import {championsMarkup, pictureMarkup, positionsMarkup, powerMarkup, standingsMarkup, winnersMarkup} from "./league-view.js";
+import {
+    allPlayRecords, bracketCount, byRounds, placeBrackets, placesByRounds, playoffPicture, playoffPlaces, positionPoints, readPowerPage, standings, winnings
+} from "./league-model.js";
+import {bracketMarkup, championsMarkup, pictureMarkup, positionsMarkup, powerMarkup, standingsMarkup, winnersMarkup} from "./league-view.js";
 import {drawScores} from "./scores.js";
 import {onBack} from "./back.js";
 import {feedText, weekInjuries, withoutRuledOut} from "./projections.js";
@@ -172,7 +176,25 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 const lastRegular = Number(settings.lastRegularSeasonWeek) || 14;
                 const divisions = standings(standing, settings, namesOf(settings), ytd ? allPlayRecords(ytd, lastRegular) : null);
                 const inPlayoffs = Boolean(final) || Number(window.liveScoringWeek) > lastRegular;
-                return {divisions, picture: playoffPicture(divisions), inPlayoffs};
+                return {divisions, picture: playoffPicture(divisions), inPlayoffs, league: settings, ytd};
+            };
+            // the playoffs as they stand (bracket-model.js): a rounds league's from the weekly results,
+            // any other's from MFL's brackets; null without either, the seeds showing in their place
+            const bracket = async ({picture, league, ytd}) => {
+                const seeds = new Map((picture ? picture.seeds : []).map((seed) => [seed.seed, seed.team.id]));
+                const currentWeek = final ? Infinity : Number(window.liveScoringWeek) || Infinity;
+                const completedWeek = final ? Infinity : Number(window.completedWeek) || 0;
+                if (settings.playoffs.rounds.length) {
+                    const rounds = ytd && roundsBracket(ytd, {rounds: settings.playoffs.rounds, weeks: seasonWeeks(league), seeds, completedWeek, currentWeek});
+                    return rounds ? {rounds, ranked: true} : null;
+                }
+                const list = asArray((await exp("playoffBrackets", {}, {year, optional: true}) || {}).playoffBracket);
+                if (!list.length) {
+                    return null;
+                }
+                const brackets = await Promise.all(placeBrackets(list).filter(Boolean).map((entry) => exp("playoffBracket", {BRACKET_ID: entry.id}, {year, optional: true})));
+                const rounds = bracketRounds(brackets, {seeds, completedWeek, currentWeek});
+                return rounds ? {rounds} : null;
             };
             const shared = once(load);
             drawPanel(mount.firstElementChild, {
@@ -183,16 +205,22 @@ export function drawLeague({context, franchiseId, teamHref}) {
                 }
             });
             drawPanel(mount.lastElementChild, {
-                what: "the playoff picture", key: `fuad.league.picture.${year}`, maxAge: 2 * MINUTE, rows: 6, basic: basic("Standings", year), refreshes,
-                // seeds that go by a record not known (a score MFL left out) aren't drawn
-                load: () => shared().then((value) => {
-                    if (!value.picture) {
+                what: "the playoff picture", key: `fuad.league.playoffs.${year}`, maxAge: 2 * MINUTE, rows: 6, basic: basic("Standings", year), refreshes,
+                // in the playoffs, the bracket; seeds that go by a record not known (a score MFL left
+                // out) aren't drawn
+                load: () => shared().then(async (value) => {
+                    const drawn = value.inPlayoffs ? await bracket(value) : null;
+                    if (!drawn && !value.picture) {
                         throw new Error("a record the seeds go by isn't known");
                     }
-                    return value;
+                    return {picture: value.picture, inPlayoffs: value.inPlayoffs, bracket: drawn, names: [...namesOf(value.league)]};
                 }),
                 render: (value, body) => {
                     mount.lastElementChild.classList.remove("fuad-panel");
+                    if (value.bracket) {
+                        body.innerHTML = bracketMarkup(value.bracket, {viewer, names: new Map(value.names), title: final ? `${final} playoffs` : "Playoffs", teamHref});
+                        return;
+                    }
                     const title = final ? `${final} playoff seeds` : value.inPlayoffs ? "Playoff seeds" : "Playoff picture";
                     body.innerHTML = pictureMarkup(value.picture, {viewer, title, showHunt: !value.inPlayoffs, teamHref});
                 }
@@ -263,7 +291,15 @@ export function drawLeague({context, franchiseId, teamHref}) {
                     const lastRegular = Number(settings.lastRegularSeasonWeek) || 14;
                     const lastWeek = Number(settings.endWeek) || DEFAULT_END_WEEK;
                     const names = namesOf(settings);
-                    const rows = standings(standing, settings, names, allPlayRecords(ytd, lastRegular)).flatMap((division) => division.rows);
+                    const divisions = standings(standing, settings, names, allPlayRecords(ytd, lastRegular));
+                    const rows = divisions.flatMap((division) => division.rows);
+                    // each division's first, as Standings has them
+                    const leaders = divisions.map((division) => division.rows[0].id);
+                    if (byRounds()) {
+                        // a past season's weeks are all done
+                        const {places, note} = placesByRounds(ytd, settings, divisions, final ? Infinity : Number(window.completedWeek) || 0);
+                        return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, placesNote: note, names, divisionWinners: leaders});
+                    }
                     // the places count once the last week has results
                     let places = null;
                     const played = asArray(ytd && ytd.weeklyResults).some((week) => Number(week.week) === lastWeek
@@ -273,7 +309,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                         const results = await Promise.all(placeBrackets(list).map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {year, optional: true})));
                         places = results.every(Boolean) ? playoffPlaces(results) : null;
                     }
-                    return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, names});
+                    return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, names, divisionWinners: leaders});
                 },
                 render: (result, body) => {
                     winnersMount.classList.remove("fuad-panel");

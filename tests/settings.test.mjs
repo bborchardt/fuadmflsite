@@ -31,9 +31,9 @@ const FUAD = {
     adds: {ownDropBidAfterHours: 48},
     antiTanking: true,
     backupStarters: true,
-    playoffs: {teams: 6, divisionWinnersSeededFirst: true, byes: 2, wildcardsBy: "allPlay", thirdPlaceGame: true},
-    draftOrder: "playoffFinish",
-    payouts: {weeklyHighScore: 15, allPlayPerGameOver500: 0.75, places: [0.55, 0.30, 0.15]},
+    playoffs: {teams: 6, divisionWinnersSeededFirst: true, byes: 2, wildcardsBy: "allPlay", allPlayTiesBy: "standings", thirdPlaceGame: true, rounds: []},
+    draftOrder: "standingsThenPlayoffFinish",
+    payouts: {weeklyHighScore: 15, allPlayPerGameOver500: 0.75, places: [0.55, 0.30, 0.15], divisionWinner: 0},
     renumberedFranchises: [{was: "0009", now: "0005", through: 2020}]
 };
 
