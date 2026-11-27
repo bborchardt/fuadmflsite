@@ -293,10 +293,12 @@ export function drawLeague({context, franchiseId, teamHref}) {
                     const names = namesOf(settings);
                     const divisions = standings(standing, settings, names, allPlayRecords(ytd, lastRegular));
                     const rows = divisions.flatMap((division) => division.rows);
+                    // each division's first, as Standings has them
+                    const leaders = divisions.map((division) => division.rows[0].id);
                     if (byRounds()) {
                         // a past season's weeks are all done
                         const {places, note} = placesByRounds(ytd, settings, divisions, final ? Infinity : Number(window.completedWeek) || 0);
-                        return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, placesNote: note, names});
+                        return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, placesNote: note, names, divisionWinners: leaders});
                     }
                     // the places count once the last week has results
                     let places = null;
@@ -307,7 +309,7 @@ export function drawLeague({context, franchiseId, teamHref}) {
                         const results = await Promise.all(placeBrackets(list).map((bracket) => exp("playoffBracket", {BRACKET_ID: bracket.id}, {year, optional: true})));
                         places = results.every(Boolean) ? playoffPlaces(results) : null;
                     }
-                    return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, names});
+                    return winnings({accounting, weeklyResults: ytd, standingRows: rows, lastRegularWeek: lastRegular, places, names, divisionWinners: leaders});
                 },
                 render: (result, body) => {
                     winnersMount.classList.remove("fuad-panel");

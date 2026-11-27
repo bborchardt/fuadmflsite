@@ -334,24 +334,26 @@ export function positionsMarkup(rows, {viewer, teamHref}) {
 export function winnersMarkup(result, {viewer, final, teamHref}) {
     const today = final ? "" : '<p class="fuad-meta fuad-if">If the season ended today</p>';
     const named = result.prizes.some((prize) => prize.team);
+    const division = result.divisionPrize > 0;
     const phone = `<ul class="fuad-rows fuad-phone-only">${result.rows.map((row) => `<li class="fuad-won${row.id === viewer ? " fuad-row-mine" : ""}">
         <span class="fuad-row-text"><span class="fuad-row-title"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></span><span class="fuad-meta">${esc(winningsLine(row))}</span></span>
         <span class="fuad-won-total${row.total > 0 ? "" : " fuad-muted"}">${esc(ledger(row.total))}</span>
     </li>`).join("")}</ul>`;
     const desktop = `<div class="fuad-table-scroll fuad-desktop-only"><table class="fuad-table fuad-winners">
         <thead><tr><th scope="col">Team</th><th scope="col" class="fuad-num">Weeks won</th><th scope="col" class="fuad-num">Weekly</th><th scope="col" class="fuad-num">All-play</th>
-            <th scope="col" class="fuad-num">All-play $</th>${named ? '<th scope="col" class="fuad-num">Playoffs</th>' : ""}<th scope="col" class="fuad-num">Total</th></tr></thead>
+            <th scope="col" class="fuad-num">All-play $</th>${division ? '<th scope="col" class="fuad-num">Division</th>' : ""}${named ? '<th scope="col" class="fuad-num">Playoffs</th>' : ""}<th scope="col" class="fuad-num">Total</th></tr></thead>
         <tbody>${result.rows.map((row) => `<tr${row.id === viewer ? ' class="fuad-row-mine"' : ""}>
             <th scope="row" class="fuad-team"><a href="${esc(teamHref(row.id))}">${esc(row.name)}</a></th>
             <td class="fuad-num">${esc(row.weeks.join(", ") || "—")}</td><td class="fuad-num">${row.weekly ? esc(ledger(row.weekly)) : "—"}</td>
-            <td class="fuad-num">${esc(row.record)}</td><td class="fuad-num">${row.allPlay ? esc(ledger(row.allPlay)) : "—"}</td>
+            <td class="fuad-num">${esc(row.record)}</td><td class="fuad-num">${row.allPlay ? esc(`${row.allPlayPlace ? `${row.allPlayPlace} ` : ""}${ledger(row.allPlay)}`) : "—"}</td>
+            ${division ? `<td class="fuad-num">${row.division ? esc(ledger(row.division)) : "—"}</td>` : ""}
             ${named ? `<td class="fuad-num">${row.prize ? esc(row.prize.amount === null ? row.prize.place : `${row.prize.place} ${ledger(row.prize.amount)}`) : "—"}</td>` : ""}
             <td class="fuad-num fuad-strong${row.total > 0 ? "" : " fuad-muted"}">${esc(ledger(row.total))}</td>
         </tr>`).join("")}</tbody>
     </table></div>`;
     const names = new Map(result.rows.map((row) => [row.id, row.name]));
     const prizes = `<div class="fuad-prizes">${result.prizes.map((prize) => `<div class="fuad-prize">
-        <span class="fuad-prize-place${prize.team && prize.team === viewer ? " fuad-mine" : ""}">${esc(prize.place)} · ${Math.round(prize.share * 100)}%</span>
+        <span class="fuad-prize-place${prize.team && prize.team === viewer ? " fuad-mine" : ""}">${esc(prize.place)}${prize.share === null || prize.share === undefined ? "" : ` · ${Math.round(prize.share * 100)}%`}</span>
         ${prize.amount === null ? "" : `<span class="fuad-prize-amount">${esc(ledger(prize.amount))}</span>`}
         ${prize.team ? `<span class="fuad-prize-team"><a href="${esc(teamHref(prize.team))}">${esc(names.get(prize.team) || "")}</a></span>` : ""}
     </div>`).join("")}</div>`;
@@ -371,7 +373,7 @@ export function winnersMarkup(result, {viewer, final, teamHref}) {
         <section class="fuad-panel" aria-labelledby="fuad-prizes">
             <h2 class="fuad-panel-heading" id="fuad-prizes">${final ? `${esc(final)} playoff prizes` : "Playoff prizes"}</h2>${today}
             ${result.placesNote ? `<p class="fuad-meta">${esc(result.placesNote)}</p>` : ""}
-            <div class="fuad-prize-columns">${prizes}${pot}</div>
+            <div class="fuad-prize-columns${result.hasPot === false ? " fuad-prize-columns-alone" : ""}">${prizes}${result.hasPot === false ? "" : pot}</div>
         </section>`;
 }
 

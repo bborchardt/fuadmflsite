@@ -79,6 +79,11 @@ MFL documents little of this.
   with a total, plus Defunct Franchises; a year not linked is starred. Each table's name is in MFL's
   menu too, so a reader looks for its `<caption><span>`. Franchise numbers moved when teams left:
   Golden Ratio was 0009 through 2020, 0005 since 2021.
+- **`accounting`** is public. MFL's own weekly credit (League Settings: "Credit For Being The Weekly
+  High Scorer") goes into it as "Credit for week 3 high score of 140.83", for every week MFL scores,
+  playoff weeks included.
+- **`leagueStandings`** has `all_play_wlt` only for a league whose standings show all-play; v2 counts
+  all-play from `weeklyResults` either way.
 - **`playoffBracket` with `BRACKET_ID`** has `playoffRound`s of `playoffGame`s, each side's
   `franchise_id`, `points` and `seed` (or `winner_of_game` / `loser_of_game`); `playoffBrackets`
   names them (Championship, 3rd Place Game). Before the regular season is over a side has only its

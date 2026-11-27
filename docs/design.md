@@ -340,6 +340,9 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
     reads every export with the rules the job read it by (`lib/shapes.js`), so a change that stops
     reading an earlier stage's MFL page, or a rule that turns down an export MFL gave then, fails. The other saved pages stay as they are, for the tests of what
     a screen draws
+  - once a season, in week 2, for a league with MFL's own weekly high score credit on: the daily
+    job's log records no "Most Points Week 1", as it counts MFL's "Credit for week 1 high score of …"
+    as paid; MFL renaming that entry would have the job pay the week again
   - once a season, in the playoffs' first week: Standings' Playoffs panel against MFL's Playoff
     Brackets page (`options?O=79`), as MFL fills in a bracket's teams only as the playoffs go, which
     the saved brackets (2025's finished, 2026's before week 15) don't show
@@ -562,7 +565,9 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   winners are seeds 1–2, the other four the best all-play records, ties by standings order (1.1–1.3);
   $15 to each regular season week's high score, ties split; all-play pays $0.75 × (wins − losses),
   never below $0 (1.6–1.7); what's left of the pot goes 55/30/15 (1.8). All-play counts weeks 1–14
-  only, from the weekly results, since MFL's standings keep counting it through the playoffs. The
+  only, from the weekly results, since MFL's standings keep counting it through the playoffs. Another
+  league's payouts can be dollar amounts (docs/settings.md: `allPlayTop`, `placeAmounts`,
+  `divisionWinner`). The
   pot is the accounting's league-wide entries; before they're recorded the prizes show their shares
   without amounts. In the playoffs and for a past season, Standings shows the playoffs as they stand
   (`ui/bracket-model.js`) in place of the seeds: MFL's championship and 3rd place brackets round by
