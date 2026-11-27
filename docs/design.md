@@ -331,8 +331,8 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 
 - **Checked by hand,** each when it's due:
   - at each season stage: new saved pages and the test league's exports, taken as
-    docs/commissioner.md says ("New saved pages for the tests"). Each stage's folder is kept: `tests/stage-pages.test.mjs` reads every page in each with the reader the daily
-    check tries on it, `pages.py` checks which screen takes each, and `tests/stage-exports.test.mjs`
+    docs/commissioner.md says ("New saved pages for the tests"). Each stage's folder is kept:
+    `tests/stage-pages.test.mjs` reads every page in each with the reader the daily check tries on it, `pages.py` checks which screen takes each, and `tests/stage-exports.test.mjs`
     reads every export with the rules the job read it by (`lib/shapes.js`), so a change that stops
     reading an earlier stage's MFL page, or a rule that turns down an export MFL gave then, fails. The other saved pages stay as they are, for the tests of what
     a screen draws

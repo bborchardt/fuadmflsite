@@ -89,8 +89,8 @@ Actions tab. It:
   inactive starter who scored);
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide;
 - tries what v2 reads from MFL (its exports, pages and feeds, as a member sees them), and flags one
-  MFL has changed, usually before a member meets it. Left for you: nothing in MFL (see "An MFL
-  check flag" under When something breaks).
+  MFL has changed, usually before a member meets it. Left for you: nothing in MFL (see An "MFL
+  check" flag, under When something breaks).
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
 
