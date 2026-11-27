@@ -938,12 +938,14 @@ const BACKUP_FILES = {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starter
 const posted = (result, page) => result.requests.filter((request) => request.method === "POST" && new URL(request.url).pathname === `/2026/${page}`)
     .map((request) => [...new URLSearchParams(request.body)]);
 
-test("backup starters off: nothing read, posted or flagged, and payouts don't wait for them", () => {
-    const result = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "off"}});
-    assert.equal(result.status, 0, result.stdout);
-    assert.deepEqual(posted(result, "lineup"), []);
-    assert.ok(!result.requests.some((request) => /O=210|messageBoard/.test(request.url)), "no lineup details or board read");
-    assert.match(result.stdout, /Backup starters: off \(BACKUP_STARTERS\), as the league handles them itself\./);
+test("backup starters off unless asked for: nothing read, posted or flagged", () => {
+    for (const env of [LOGIN, {...LOGIN, BACKUP_STARTERS: "no"}]) {
+        const result = run({scenario: backups(), files: BACKUP_FILES, env});
+        assert.equal(result.status, 0, result.stdout);
+        assert.deepEqual(posted(result, "lineup"), []);
+        assert.ok(!result.requests.some((request) => /O=210|messageBoard/.test(request.url)), "no lineup details or board read");
+        assert.match(result.stdout, /Backup starters: off \(BACKUP_STARTERS isn't apply or log\)\./);
+    }
 });
 
 test("backup starters: an inactive starter's backup goes in, the week is recalculated and settled, nothing posted", () => {
@@ -1161,8 +1163,8 @@ test("backup starters: a backup inactive too stays on the bench", () => {
     assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
 });
 
-test("backup starters: without BACKUP_STARTERS only logged; a dry run writes nothing, league-data included", () => {
-    const logged = run({scenario: backups(), files: BACKUP_FILES, env: LOGIN});
+test("backup starters: with BACKUP_STARTERS log only logged; a dry run writes nothing, league-data included", () => {
+    const logged = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "log"}});
     assert.equal(logged.status, 0, logged.stdout);
     assert.deepEqual(logged.entries.filter((entry) => entry.startsWith("Backup starters")), [
         "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."

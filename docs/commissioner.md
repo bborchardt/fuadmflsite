@@ -102,7 +102,7 @@ gets it recorded twice.
   | `MFL_USER_AGENT` | secret | the client name registered with MFL; only for the job, never from your own computer |
   | `MFL_LEAGUE_ID` | variable | the league's id |
   | `MFL_HOST` | variable | the league's host, as `https://www44.myfantasyleague.com` |
-  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`, `RFA_SALARIES`, `BACKUP_STARTERS` | variable | `apply` to write that chore to MFL; anything else only logs what it would do. `BACKUP_STARTERS` also takes `off`, for a league whose commissioner applies backups by hand: the chore doesn't run at all |
+  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`, `RFA_SALARIES`, `BACKUP_STARTERS` | variable | `apply` to write that chore to MFL; anything else only logs what it would do. `BACKUP_STARTERS` is the exception: it takes `apply` or `log`, and otherwise the chore doesn't run at all, as a league without bylaw 16.5's backups handles them itself |
   | `RULES_VERSION` | variable | which version's league rules it uses; `v2` when unset |
 
 - **A flag:** anything it can't decide, or a rule problem, fails the run on purpose, so GitHub emails
