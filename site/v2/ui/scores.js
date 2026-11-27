@@ -6,10 +6,11 @@ import {API_BASE, asArray} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup, pageChanged, placeholders, retryCutOff} from "./panel.js";
 import {dayText} from "./home-model.js";
 import {NO_STATS, gameStates, readStats} from "./live-scoring.js";
-import {bestCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
+import {allPlayRecords, bestCard, playoffPicture, roundCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
 import {figure, ordinal} from "./format.js";
-import {DEFAULT_END_WEEK} from "../lib/rules.js";
+import {DEFAULT_END_WEEK, seasonWeeks} from "../lib/rules.js";
+import {roundOf} from "../lib/rounds.js";
 import {allAtOnce} from "./page-fetch.js";
 import {backupMarks, backupReader} from "./scores-backups.js";
 import {keepHere, keptHere, onSectionTap} from "./kept.js";
@@ -111,7 +112,31 @@ export function drawScores(mount, data) {
         const projections = anyLeft ? projected : null;
         const ir = new Map(asArray(rosters && rosters.franchise).map((team) => [team.id, asArray(team.player).filter((player) => player.status === "INJURED_RESERVE").map((player) => player.id)]));
         const cards = scoreCards({live: lineup.scoring, players, stats, games, rules, projections, week, viewer, irOf: (id) => ir.get(id) || [], order: limits && Object.keys(limits.limits).length ? Object.keys(limits.limits) : undefined});
-        return {cards, names, games, limits, state: weekState(cards, games, weekday), noFeed: !stats};
+        const round = await rankedRound(week, cards, names);
+        // a ranked round's pairings only say who's in: no win chance or leader on them
+        const shownCards = round ? cards.map((card) => ({...card, ranked: true})) : cards;
+        return {cards: shownCards, round, names, games, limits, state: weekState(cards, games, weekday), noFeed: !stats};
+    };
+
+    // a ranked playoff round's card (league-model.js roundCard), its earlier weeks and the seeds read only
+    // in such a week; null otherwise, or when they can't be read, the pairings showing as they are
+    const rankedRound = async (week, cards, names) => {
+        if (!settings.playoffs.rounds.length) {
+            return null;
+        }
+        const league = await data.league().catch(() => null);
+        const weeks = league && seasonWeeks(league);
+        const where = roundOf(week, {rounds: settings.playoffs.rounds, weeks});
+        if (!where || where.round.headToHead) {
+            return null;
+        }
+        const [ytd, standing] = await Promise.all([exp("weeklyResults", {W: "YTD"}, {optional: true}), exp("leagueStandings", {}, {optional: true})]);
+        if (!ytd) {
+            return null;
+        }
+        const picture = standing ? playoffPicture(standings(standing, league, names, allPlayRecords(ytd, data.lastRegular))) : null;
+        const seeds = new Map((picture ? picture.seeds : []).map((seed) => [seed.team.id, seed.seed]));
+        return roundCard(cards, {week, weeks, ytd, seeds});
     };
 
     // a team's lines with its backups' marks, once read; asked for when not, the cards drawn again
@@ -148,7 +173,7 @@ export function drawScores(mount, data) {
                 : shown.cards;
         drawn = {shown, open};
         body.innerHTML = (shown.noFeed ? '<p class="fuad-muted fuad-empty">MFL’s live stats couldn’t be read, so points are MFL’s, with no game clocks, stats or win chances.</p>' : "")
-            + cardsMarkup(cards, {names: shown.names, viewer, open, bench: state.bench, preview: Boolean(shown.preview), best});
+            + cardsMarkup(cards, {names: shown.names, viewer, open, bench: state.bench, preview: Boolean(shown.preview), best, round: shown.round || null});
     };
 
     // a card's head opens it, its button its bench; a player opens MFL's player page

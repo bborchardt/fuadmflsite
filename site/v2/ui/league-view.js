@@ -79,9 +79,10 @@ function cardMarkup(card, i, {names, viewer, open, benchOpen, preview, best = fa
     // once either side has a game going, both show points
     const started = card.teams.some((team) => team.started);
     // no leader while either score isn't known
-    const leader = started && b && Number.isFinite(a.score) && Number.isFinite(b.score) && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
+    // a ranked playoff round's pairing (roundCard) has no leader or win chance: the round card ranks it
+    const leader = !card.ranked && started && b && Number.isFinite(a.score) && Number.isFinite(b.score) && a.score !== b.score ? (a.score > b.score ? 0 : 1) : null;
     const live = !best && card.teams.some((team) => team.playing);
-    const showBar = !best && a.chance !== null && b;
+    const showBar = !best && !card.ranked && a.chance !== null && b;
     const head = b
         ? `<span class="fuad-faces">${teamHead(a, {names, viewer, leader, side: 0, started, preview})}${teamHead(b, {names, viewer, leader, side: 1, started, preview})}</span>
            ${showBar ? `<span class="fuad-card-middle">${winBar(card.teams)}</span>` : ""}
@@ -132,10 +133,37 @@ export function scoresFrame({before, viewer}) {
 <div class="fuad-scores-body"></div>`;
 }
 
-// a week's cards; `open` the cards shown open, `bench` those with their bench shown
-export function cardsMarkup(cards, {names, viewer, open, bench, preview, best}) {
+// A ranked playoff round (league-model.js roundCard): its teams by their totals so far, the cutoff
+// after those going on, and each one's chance while it's known
+function roundMarkup(round, {names, viewer}) {
+    const span = round.weeks.length > 1 ? `Weeks ${round.weeks[0]}–${round.weeks[round.weeks.length - 1]} added up` : "";
+    const about = round.last ? span || `Week ${round.weeks[0]}` : [`Top ${round.advance} advance`, span].filter(Boolean).join(" · ");
+    const row = (entry, i) => {
+        const meta = [
+            entry.before && entry.started ? `${figure(entry.before, 1)} + ${figure(entry.week, 1)} this week` : "",
+            entry.projected !== null && !entry.done ? `proj ${figure(entry.projected, 1)}` : "",
+            entry.playing ? `${entry.playing} playing` : "",
+            entry.toPlay ? `${entry.toPlay} to play` : ""
+        ].filter(Boolean).join(" · ");
+        return `<li class="fuad-round-row${entry.id === viewer ? " fuad-row-mine" : ""}">
+            <span class="fuad-seed">${i + 1}</span>
+            <span class="fuad-row-text"><span class="fuad-row-title">${withIcon(entry.id, esc(names.get(entry.id) || entry.id))}</span>${meta ? `<span class="fuad-meta">${esc(meta)}</span>` : ""}</span>
+            <span class="fuad-round-figures"><span class="fuad-round-total">${Number.isFinite(entry.total) ? esc(figure(entry.total, 1)) : "—"}</span>${entry.chance === null ? "" : `<span class="fuad-meta">${entry.chance}% ${round.last ? "to win" : "to advance"}</span>`}</span>
+        </li>`;
+    };
+    const rows = round.rows.map((entry, i) => row(entry, i) + (i + 1 === round.advance && i + 1 < round.rows.length
+        ? `<li class="fuad-round-cut"><span class="fuad-label">Top ${round.advance} advance</span></li>` : "")).join("");
+    return `<section class="fuad-round" aria-labelledby="fuad-round-title">
+        <div class="fuad-panel-head"><h2 class="fuad-panel-heading" id="fuad-round-title">${round.last ? "Playoff final" : `Playoffs · Round ${round.number}`}</h2><span class="fuad-meta">${esc(about)}</span></div>
+        <ol class="fuad-rows">${rows}</ol>
+    </section>`;
+}
+
+// a week's cards; `open` the cards shown open, `bench` those with their bench shown; `round` a ranked
+// playoff round's card, first, across the row
+export function cardsMarkup(cards, {names, viewer, open, bench, preview, best, round = null}) {
     return cards.length
-        ? `<div class="fuad-cards">${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !preview, benchOpen: bench.has(i), preview, best})).join("")}</div>`
+        ? `<div class="fuad-cards">${round ? roundMarkup(round, {names, viewer}) : ""}${cards.map((card, i) => cardMarkup(card, i, {names, viewer, open: open.has(i) && !preview, benchOpen: bench.has(i), preview, best})).join("")}</div>`
         : '<p class="fuad-muted fuad-empty">No games this week.</p>';
 }
 

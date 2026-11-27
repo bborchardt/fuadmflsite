@@ -438,8 +438,9 @@ export function averageProjection(stats, position, rules) {
     return points + kicks * perKick;
 }
 
-// {away, home} each {projected, chance}: the average simulated final and the chance of winning,
-// 1–99% while anyone has minutes left. Ties count for neither side, as MFL counts them.
+// {away, home} each {projected, chance, totals}: the average simulated final, the chance of winning,
+// 1–99% while anyone has minutes left, and the simulated finals (for advanceChances). Ties count for
+// neither side, as MFL counts them.
 export function winProbability({away, home}, context) {
     const random = new Random();
     const awayTotals = simulateTeam(random, away, context);
@@ -458,5 +459,28 @@ export function winProbability({away, home}, context) {
         chance = Math.min(99, Math.max(1, chance));
     }
     const average = (totals) => totals.reduce((sum, value) => sum + value, 0) / SIMULATIONS;
-    return {away: {projected: average(awayTotals), chance}, home: {projected: average(homeTotals), chance: 100 - chance}};
+    return {away: {projected: average(awayTotals), chance, totals: awayTotals}, home: {projected: average(homeTotals), chance: 100 - chance, totals: homeTotals}};
+}
+
+// A round whose teams are ranked on their totals (lib/rounds.js): each team's chance of being among
+// the top `top`, from the simulated finals winProbability gives each side (`totals`) plus what the
+// team scored in the round's earlier weeks (`before`). Teams are in seed order, the higher seed
+// first, which wins a tie. 1–99% while any team has minutes left; null if a team has no simulation.
+export function advanceChances(teams, top, {live = true} = {}) {
+    if (!teams.length || teams.some((team) => !team.totals)) {
+        return null;
+    }
+    const counts = teams.map(() => 0);
+    for (let i = 0; i < SIMULATIONS; i++) {
+        // to the cent, as lib/rounds.js ranks the round's totals
+        const finals = teams.map((team, k) => ({k, total: Math.round((team.before + team.totals[i]) * 100) / 100}));
+        // a stable sort keeps the seed order on a tie
+        finals.sort((a, b) => b.total - a.total).slice(0, top).forEach((entry) => {
+            counts[entry.k]++;
+        });
+    }
+    return teams.map((team, k) => {
+        const chance = Math.round(100 * counts[k] / SIMULATIONS);
+        return live ? Math.min(99, Math.max(1, chance)) : chance;
+    });
 }

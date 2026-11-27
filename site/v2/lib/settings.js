@@ -20,9 +20,11 @@ const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
 const EITHER = {"rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick"};
 const LISTS = {
     "payouts.places": (item) => isAmount(item) && item <= 1,
-    // lib/rounds.js; only these two, so a misspelt one isn't quietly left out
-    "playoffs.rounds": (item) => isObject(item) && Object.keys(item).every((name) => name === "weeks" || name === "headToHead")
-        && Number.isInteger(item.weeks) && item.weeks >= 1 && typeof item.headToHead === "boolean",
+    // lib/rounds.js; only these keys, so a misspelt one isn't quietly left out. `advance` on a ranked
+    // round before the last, and only there: Scores draws its cutoff from it while it's played
+    "playoffs.rounds": (item, i, list) => isObject(item) && Object.keys(item).every((name) => ["weeks", "headToHead", "advance"].includes(name))
+        && Number.isInteger(item.weeks) && item.weeks >= 1 && typeof item.headToHead === "boolean"
+        && (!item.headToHead && i < list.length - 1 ? Number.isInteger(item.advance) && item.advance >= 1 : !("advance" in item)),
     renumberedFranchises: (item) => isObject(item) && typeof item.was === "string" && typeof item.now === "string" && isAmount(item.through)
 };
 

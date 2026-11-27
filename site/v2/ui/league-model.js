@@ -5,13 +5,13 @@
 import {asArray, mflProgram, numberOf} from "../lib/mfl.js";
 import {figure} from "./format.js";
 import {text} from "./player-page.js";
-import {GAME_SECONDS, scoreStats, statLine, winProbability} from "./live-scoring.js";
+import {GAME_SECONDS, SIMULATIONS, advanceChances, scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {
     PRIZE_SHARES, WEEKLY_PRIZE, allPlayPayout, forPlayoffs, ordinal, potOf, prizeAmount, recordText, weeklyWinners, weeksOf
 } from "../lib/payouts.js";
 import settings from "../lib/settings.js";
 import {lineupPositions, seasonWeeks} from "../lib/rules.js";
-import {roundPlaces} from "../lib/rounds.js";
+import {pairedIn, roundOf, roundPlaces, weekScores} from "../lib/rounds.js";
 
 export {
     WEEKLY_PRIZE, allPlayRecords, bracketCount, placeBrackets, playoffPlaces, recordText, weeklyWinners
@@ -112,6 +112,48 @@ export function placesByRounds(ytd, league, divisions, completedWeek) {
     const picture = playoffPicture(divisions);
     const seeds = new Map((picture ? picture.seeds : []).map((seed) => [seed.team.id, seed.seed]));
     return roundPlaces(ytd, {rounds: settings.playoffs.rounds, weeks: seasonWeeks(league), seeds, completedWeek});
+}
+
+// A ranked playoff round's week in Scores (settings.playoffs.rounds, lib/rounds.js): the round's teams
+// ranked on their totals so far, its earlier weeks (`ytd`, the weekly results) and this week's cards
+// added up, ties to the higher seed. In the round's last week, while games are on, each team's chance
+// of being in the top `advance` (of 1st, in the last round), from the cards' simulations; earlier, a
+// week still to come isn't simulated, so none. Null for any other week, or a round whose teams
+// aren't all on this week's cards. `seeds`: team → seed.
+export function roundCard(cards, {week, weeks, ytd, seeds = new Map()}) {
+    const where = roundOf(week, {rounds: settings.playoffs.rounds, weeks});
+    if (!where || where.round.headToHead) {
+        return null;
+    }
+    const sides = new Map(cards.flatMap((card) => card.teams).map((team) => [team.id, team]));
+    const teams = where.weeks[0] === week ? [...sides.keys()] : pairedIn(ytd, where.weeks[0]);
+    if (!teams.length || teams.some((id) => !sides.has(id))) {
+        return null;
+    }
+    const earlier = where.weeks.filter((each) => each < week).map((each) => weekScores(ytd, each));
+    const seedOf = (id) => (seeds.has(id) ? seeds.get(id) : Infinity);
+    const cents = (value) => Math.round(value * 100) / 100;
+    const rows = teams.map((id) => {
+        const side = sides.get(id);
+        const before = cents(earlier.reduce((sum, scores) => sum + (scores.has(id) ? scores.get(id) : NaN), 0));
+        return {
+            id, before, week: side.score, total: cents(before + side.score),
+            projected: side.projected === null ? null : before + side.projected,
+            playing: side.playing, toPlay: side.toPlay, done: side.done, started: side.started,
+            // a side done has its final; one with no simulation (no projections) has none
+            totals: side.totals || (side.done && Number.isFinite(side.score) ? new Array(SIMULATIONS).fill(side.score) : null)
+        };
+    }).sort((a, b) => seedOf(a.id) - seedOf(b.id));
+    const top = where.last ? 1 : where.round.advance;
+    const live = rows.some((row) => !row.done);
+    const chances = live && week === where.weeks[where.weeks.length - 1] && rows.every((row) => Number.isFinite(row.before))
+        ? advanceChances(rows, top) : null;
+    const ranked = rows.map((row, i) => ({...row, chance: chances ? chances[i] : null, totals: undefined}))
+        .sort((a, b) => (Number.isFinite(b.total) ? b.total : -Infinity) - (Number.isFinite(a.total) ? a.total : -Infinity) || seedOf(a.id) - seedOf(b.id));
+    return {
+        number: where.index + 1, last: where.last, advance: where.last ? null : where.round.advance,
+        weeks: where.weeks, rows: ranked, chanceOf: where.last ? "1st" : "advance"
+    };
 }
 
 // MFL's Power Rank page (`options?O=101`), whose report has no export: null on any other page (the
@@ -391,6 +433,8 @@ export function scoreCards({live, players, stats, games, rules, projections = nu
         }
         built.forEach((team, i) => {
             team.projected = chances ? chances[i].projected : null;
+            // the simulated finals, for a ranked playoff round's chances (roundCard)
+            team.totals = chances ? chances[i].totals : null;
             team.chance = chances ? chances[i].chance : null;
         });
         return {teams: built, mine: built.some((team) => team.id === viewer)};
