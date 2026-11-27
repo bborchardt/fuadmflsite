@@ -17,9 +17,15 @@ const CHOICES = {
 // taken whole: its positions are the ones a league uses
 const WHOLE = ["rookieScale.firstPick", "rookieScale.firstPickFromRank"];
 // a league has one of each pair: setting either drops the other it would otherwise inherit
-const EITHER = {"rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick"};
+const EITHER = {
+    "rookieScale.firstPick": "firstPickFromRank", "rookieScale.firstPickFromRank": "firstPick",
+    "payouts.allPlayPerGameOver500": "allPlayTop", "payouts.allPlayTop": "allPlayPerGameOver500",
+    "payouts.places": "placeAmounts", "payouts.placeAmounts": "places"
+};
 const LISTS = {
     "payouts.places": (item) => isAmount(item) && item <= 1,
+    "payouts.placeAmounts": (item) => isAmount(item),
+    "payouts.allPlayTop": (item) => isAmount(item),
     // lib/rounds.js; only these keys, so a misspelt one isn't quietly left out. `advance` on a ranked
     // round before the last, and only there: Scores draws its cutoff from it while it's played
     "playoffs.rounds": (item, i, list) => isObject(item) && Object.keys(item).every((name) => ["weeks", "headToHead", "advance"].includes(name))

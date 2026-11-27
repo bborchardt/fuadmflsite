@@ -7,7 +7,8 @@ import {figure} from "./format.js";
 import {text} from "./player-page.js";
 import {GAME_SECONDS, SIMULATIONS, advanceChances, scoreStats, statLine, winProbability} from "./live-scoring.js";
 import {
-    PRIZE_SHARES, WEEKLY_PRIZE, allPlayPayout, forPlayoffs, ordinal, potOf, prizeAmount, recordText, weeklyWinners, weeksOf
+    allPlayPayout, allPlayPrizes,
+    forPlayoffs, ordinal, potOf, prizeAmount, recordText, weeklyWinners, weeksOf
 } from "../lib/payouts.js";
 import settings from "../lib/settings.js";
 import {lineupPositions, seasonWeeks} from "../lib/rules.js";
@@ -238,14 +239,18 @@ export function positionPoints(weeklyResults, positions, names, order) {
 export const ledger = (value) => (typeof value !== "number" || !Number.isFinite(value) ? "—"
     : `${value < 0 ? "−" : ""}$${Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`);
 
-// The payouts (settings.payouts). The pot is the league-wide (0000) entries in MFL's accounting; the
-// weekly prizes (every regular season week, known up front) and the all-play payouts so far come out
-// of it, and what's left is split by the places' shares. Until the commissioner records the pot it's
-// null, and so are the playoffs' amounts. `places` names the prize winners once the playoffs are over.
-// A week whose high score isn't known leaves every team's weekly winnings unknown (NaN), as a record
-// not known does its all-play payout, and so the totals and what the places split.
-export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, placesNote = null, names}) {
+// League › Winners: each team's winnings so far, best first, and the playoff prizes. `standingRows`
+// the standings' teams in MFL's order, `divisionWinners` the first of each division's; the places
+// once they're known (best first). The all-play payout is per game over .500 or, for a league with
+// `allPlayTop`, its prizes by place (`allPlayPlace`, the place won); the places are shares of what's
+// left of the pot or, with `placeAmounts`, dollars, with no pot to show. The pot is the league-wide
+// (0000) entries in MFL's accounting, less every regular season week's prize and the all-play payouts;
+// until the commissioner records it, it's null, and so are the shares' amounts. A week whose high
+// score isn't known leaves every team's weekly winnings unknown (NaN), as a record not known does its
+// all-play payout, and so the totals and what the places split.
+export function winnings({accounting, weeklyResults, standingRows, lastRegularWeek, places = null, placesNote = null, names, divisionWinners = []}) {
     const {entries, pot} = potOf(accounting);
+    const {weeklyHighScore: weeklyPrize, allPlayPerGameOver500: rate = 0, allPlayTop = [], places: shares = null, placeAmounts = null, divisionWinner = 0} = settings.payouts;
     const weekly = new Map();
     let weeklyKnown = true;
     for (const {week, teams} of weeklyWinners(weeklyResults, lastRegularWeek)) {
@@ -256,30 +261,40 @@ export function winnings({accounting, weeklyResults, standingRows, lastRegularWe
         for (const id of teams) {
             const won = weekly.get(id) || {weeks: [], amount: 0};
             won.weeks.push(week);
-            won.amount += WEEKLY_PRIZE / teams.length;
+            won.amount += weeklyPrize / teams.length;
             weekly.set(id, won);
         }
     }
+    const top = allPlayTop.length ? allPlayPrizes(new Map(standingRows.map((team) => [team.id, team.allPlay])), {standingsOrder: standingRows.map((team) => team.id)}) : null;
     const teams = standingRows.map((team) => {
         const won = weekly.get(team.id) || {weeks: [], amount: 0};
-        const allPlay = allPlayPayout(team.allPlay);
-        return {id: team.id, name: names.get(team.id) || team.name, record: recordText(team.allPlay), net: team.allPlay.w - team.allPlay.l, weeks: won.weeks, weekly: weeklyKnown ? won.amount : NaN, allPlay};
+        const placed = top && top.get(team.id);
+        const allPlay = allPlayTop.length ? (top ? (placed ? placed.amount : 0) : NaN) : allPlayPayout(team.allPlay);
+        const division = divisionWinner > 0 && divisionWinners.includes(team.id) ? divisionWinner : 0;
+        return {
+            id: team.id, name: names.get(team.id) || team.name, record: recordText(team.allPlay), net: team.allPlay.w - team.allPlay.l,
+            weeks: won.weeks, weekly: weeklyKnown ? won.amount : NaN, allPlay, allPlayPlace: placed ? ordinal(placed.place) : null, division
+        };
     });
-    const weeklyTotal = lastRegularWeek * WEEKLY_PRIZE;
+    const weeklyTotal = lastRegularWeek * weeklyPrize;
     const allPlayPaid = teams.reduce((sum, team) => sum + team.allPlay, 0);
-    const pool = forPlayoffs(pot, lastRegularWeek, allPlayPaid);
-    const prizes = PRIZE_SHARES.map((share, i) => ({
+    const pool = placeAmounts ? null : forPlayoffs(pot, lastRegularWeek, allPlayPaid);
+    const prizes = Array.from({length: (placeAmounts || shares).length}, (_, i) => ({
         place: ordinal(i + 1),
-        share,
+        share: shares ? shares[i] : null,
         amount: prizeAmount(pool, i),
-        team: places ? places[i] : null
+        team: places ? places[i] || null : null
     }));
     const prizeOf = (id) => prizes.find((prize) => prize.team === id) || null;
     const rows = teams.map((team) => {
         const prize = prizeOf(team.id);
-        return {...team, prize, total: team.weekly + team.allPlay + (prize && prize.amount ? prize.amount : 0)};
+        return {...team, prize, total: team.weekly + team.allPlay + team.division + (prize && prize.amount ? prize.amount : 0)};
     }).sort((a, b) => Number(Number.isFinite(b.total)) - Number(Number.isFinite(a.total)) || b.total - a.total || b.net - a.net);
-    return {potEntries: entries, pot, weeklyTotal, weeklyPrize: WEEKLY_PRIZE, allPlayPaid, forPlayoffs: pool, prizes, rows, placesNote};
+    return {
+        potEntries: entries, pot, weeklyTotal, weeklyPrize, allPlayPaid, forPlayoffs: pool, prizes, rows, placesNote,
+        // what the panels show: a pot only for places that split it, a division column only for a prize
+        hasPot: !placeAmounts, divisionPrize: divisionWinner, allPlayTop: allPlayTop.length > 0, allPlayRate: rate
+    };
 }
 
 // "Week 3 $15.00 · 17-19 all-play · 2nd $139.51": a team's winnings in one grey line
@@ -291,7 +306,10 @@ export function winningsLine(row) {
         parts.push("Weekly —");
     }
     // a record not known (a score MFL left out) leaves its payout unknown too
-    parts.push(row.record === "—" ? "All-play —" : `${row.record} all-play${row.allPlay ? ` ${ledger(row.allPlay)}` : ""}`);
+    parts.push(row.record === "—" ? "All-play —" : `${row.record} all-play${row.allPlayPlace ? ` ${row.allPlayPlace}` : ""}${row.allPlay ? ` ${ledger(row.allPlay)}` : ""}`);
+    if (row.division) {
+        parts.push(`Division ${ledger(row.division)}`);
+    }
     if (row.prize) {
         parts.push(row.prize.amount === null ? row.prize.place : `${row.prize.place} ${ledger(row.prize.amount)}`);
     }

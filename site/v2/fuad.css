@@ -3169,6 +3169,8 @@ body #fuad-home select {
     /* no team yet (the place and the amount only): the place centered on the amount */
     #fuad-league .fuad-prize-place:nth-last-child(2) { grid-row: 1 / 3; align-self: center; }
     #fuad-league .fuad-prize-amount { grid-area: amount; }
+    /* no pot (places in dollars): the places across the panel, three a row */
+    #fuad-league .fuad-prize-columns-alone .fuad-prizes { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: auto; }
 }
 
 @media (max-width: 48em) {

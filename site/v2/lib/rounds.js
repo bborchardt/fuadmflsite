@@ -137,3 +137,21 @@ export function matchupsIn(weeklyResults, week) {
 
 // the teams with a matchup in `week`
 export const pairedIn = (weeklyResults, week) => matchupsIn(weeklyResults, week).flat();
+
+// The places for the daily job, which has no seeds: {places, problem}. The places are worked out with
+// the round's teams in one order and in the other; if they differ, a tie decided a place, which goes
+// to the higher seed (rule of a league's own), so it's left for the commissioner. `problem` also says
+// when the matchups don't fit the rounds. Null places, no problem, until the last round is done.
+export function placesWithoutSeeds(weeklyResults, {rounds, weeks, completedWeek = Infinity}) {
+    const ids = [...new Set(weeksOf(weeklyResults).flatMap((week) => weekOf(week).paired.flat()))];
+    const run = (order) => roundPlaces(weeklyResults, {rounds, weeks, completedWeek, seeds: new Map(order.map((id, i) => [id, i + 1]))});
+    const one = run(ids);
+    if (!one.places) {
+        return {places: null, problem: one.note};
+    }
+    const other = run(ids.slice().reverse());
+    if (one.places.join() !== other.places.join()) {
+        return {places: null, problem: "a tie between playoff teams decides a place, which goes to the higher seed; v2's job doesn't work out the seeds"};
+    }
+    return {places: one.places, problem: null};
+}

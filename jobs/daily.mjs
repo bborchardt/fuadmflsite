@@ -45,7 +45,8 @@ if (!/^v\d+$/.test(version) || version === "v1") {
 }
 const lib = (name) => import(pathToFileURL(join(root, "site", version, "lib", name)).href);
 const {API_BASE, GAME_HOURS, asArray, displayName, exportSection, exportUrl, fetchExport, salariesImportXml, weekKickoff} = await lib("mfl.js");
-const {latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
+const {ALL_PLAY_TOP, DIVISION_PRIZE, divisionWinners, latestScoredWeek, missingPayouts, placeBrackets, playoffPlaces, unpaidPlaces} = await lib("payouts.js");
+const {placesWithoutSeeds} = await lib("rounds.js");
 const {buildLeague, draftedIds, overOnlyByRookies, playersFromExport} = await lib("league.js");
 const {WEEK_ROSTERS, checkShape} = await lib("shapes.js");
 const {DEFAULT_END_WEEK, OVER_AFTER_TRADE_HOURS, ROSTER_MAX, SALARY_CAP, TRADE_DEADLINE_WEEK, franchiseTopSalaries, franchiseSalary} = await lib("rules.js");
@@ -91,7 +92,7 @@ if (dryRun && !/^https:\/\/([a-z0-9-]+\.)*myfantasyleague\.com\/?$/i.test(proces
     throw new Error(`A dry run's host must be on myfantasyleague.com, not ${process.env.MFL_HOST}`);
 }
 // A league with no entry has only assumed rules, too little to go by.
-const {league: leagueSettings} = await lib("settings.js");
+const {default: settings, league: leagueSettings} = await lib("settings.js");
 if (!leagueSettings.listed && !dryRun) {
     throw new Error(`League ${leagueId} isn't listed in site/${version}/settings.json`);
 }
@@ -494,15 +495,32 @@ async function payouts(loggedIn, {built}) {
     }
     const accounting = await fetchFrom(host, "accounting", {L: leagueId});
     let places = null;
+    let placesProblem = null;
+    const rounds = settings.playoffs.rounds;
     if (finalWeek >= endWeek && unpaidPlaces(accounting).length) {
-        const list = asArray((await fetchFrom(host, "playoffBrackets", {L: leagueId})).playoffBracket);
-        const brackets = [];
-        for (const bracket of placeBrackets(list)) {
-            brackets.push(bracket ? await fetchFrom(host, "playoffBracket", {L: leagueId, BRACKET_ID: bracket.id}) : null);
+        if (rounds.length) {
+            // a league whose playoffs are rounds of scores (lib/rounds.js)
+            ({places, problem: placesProblem} = placesWithoutSeeds(weeklyResults, {rounds, weeks: built.weeks, completedWeek: finalWeek}));
+        } else {
+            const list = asArray((await fetchFrom(host, "playoffBrackets", {L: leagueId})).playoffBracket);
+            const brackets = [];
+            for (const bracket of placeBrackets(list)) {
+                brackets.push(bracket ? await fetchFrom(host, "playoffBracket", {L: leagueId, BRACKET_ID: bracket.id}) : null);
+            }
+            places = playoffPlaces(brackets);
         }
-        places = playoffPlaces(brackets);
     }
-    const {records, problem} = missingPayouts({accounting, weeklyResults, lastRegularWeek: lastRegular, endWeek, finalWeek, places});
+    // the standings, for each division's winner and all-play ties by the standings, once the regular
+    // season is over
+    let divisions = [];
+    let standingsOrder = [];
+    const byStandings = ALL_PLAY_TOP.length && settings.playoffs.allPlayTiesBy === "standings";
+    if (finalWeek >= lastRegular && (DIVISION_PRIZE > 0 || byStandings)) {
+        const [standing, league] = await Promise.all([fetchFrom(host, "leagueStandings", {L: leagueId}), fetchFrom(host, "league", {L: leagueId})]);
+        divisions = divisionWinners(standing, league);
+        standingsOrder = asArray(standing.franchise).map((team) => team.id);
+    }
+    const {records, problem} = missingPayouts({accounting, weeklyResults, lastRegularWeek: lastRegular, endWeek, finalWeek, places, placesProblem, divisions, standingsOrder});
     if (problem) {
         needsAttention(`Payouts: the places can't be recorded: ${problem}. Left for the commissioner.`);
     }

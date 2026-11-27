@@ -31,7 +31,9 @@ export const SHAPES = {
     // the commissioner may leave a description blank
     salaryAdjustments: [{path: ["salaryAdjustment"], need: ["franchise_id", "amount", "timestamp"], have: ["description"], numbers: ["amount", "timestamp"]}],
     accounting: [{path: ["entry"], need: ["franchise_id", "amount"], have: ["description"], numbers: ["amount"]}],
-    leagueStandings: [{path: ["franchise"], need: ["id", "h2hwlt", "all_play_wlt", "pf", "pa", "avgpf", "avgpa"], numbers: ["pf", "pa", "avgpf", "avgpa"]}],
+    // not all_play_wlt, which a league whose standings don't show all-play leaves out: v2 counts it from
+    // the weekly results
+    leagueStandings: [{path: ["franchise"], need: ["id", "h2hwlt", "h2hpct", "pf", "pa", "avgpf", "avgpa"], numbers: ["h2hpct", "pf", "pa", "avgpf", "avgpa"]}],
     transactions: [
         {path: ["transaction"], need: ["type", "timestamp"], numbers: ["timestamp"]},
         // the commissioner's lock and unlock, and MFL's own waiver runs, name no team
