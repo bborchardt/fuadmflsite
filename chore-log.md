@@ -118,3 +118,4 @@ Milton: 1 year").
 - 2026-11-26 17:52 UTC: Charged $1 to Smooth City Styles! for Chad Ryland (1yrs@1, 11/25), and reset the player to $1 / 0 years.
 - 2026-11-26 17:52 UTC: Set Jason Sanders to 1 year (blind bid comment "1 year").
 - 2026-11-26 17:52 UTC: Set Justice Hill to 1 year (post "Hill: 1 year").
+- 2026-11-27 17:36 UTC: Set Mac Jones to 5 years (post "Jones: 5 years").
