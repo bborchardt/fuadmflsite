@@ -2559,6 +2559,23 @@ body #fuad-home select {
     #fuad-rosters .fuad-card-open { order: -1; }
 }
 
+/* a ranked playoff round (ui/league-view.js roundMarkup): across the row, above an opened game */
+#fuad-league .fuad-round {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding: 14px 16px 6px;
+    background: var(--fuad-panel);
+    border: 1px solid var(--fuad-hairline);
+    border-radius: 16px;
+}
+@media (min-width: 57.01em) {
+    #fuad-league .fuad-round { order: -2; }
+}
+#fuad-league .fuad-round-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 44px; padding: 6px 0; }
+#fuad-league .fuad-round-figures { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+#fuad-league .fuad-round-total { font-family: var(--fuad-display); font-weight: 700; font-size: 20px; }
+#fuad-league .fuad-round-cut { padding: 4px 0; border-top: 2px dashed var(--fuad-accent); text-align: center; color: var(--fuad-accent); }
+
 #fuad-league .fuad-card-head,
 #fuad-rosters .fuad-card-head {
     width: 100%;

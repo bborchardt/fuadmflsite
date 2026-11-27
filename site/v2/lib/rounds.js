@@ -96,9 +96,41 @@ export function roundPlaces(weeklyResults, {rounds, weeks, seeds = new Map(), co
         if (entry.round.headToHead) {
             return [];
         }
+        if (on.length !== entry.round.advance) {
+            return [`Week ${next.span[0]}'s matchups have ${on.length} of week ${entry.span[0]}'s teams going on, but the round's setting says ${entry.round.advance}; the matchups stand.`];
+        }
         const top = ranked(entry).slice(0, on.length);
         return top.every((id) => on.includes(id)) ? []
             : [`Week ${next.span[0]}'s matchups don't have week ${entry.span[0]}'s top ${on.length} scores going on; the matchups stand.`];
     });
     return {places: [...ranked(last), ...out], note: notes.join(" ") || null};
+}
+
+// The round `week` is in: {round, index, weeks: its weeks, last: whether it's the last round}, or null
+// for a week before the playoffs or past the rounds
+export function roundOf(week, {rounds, weeks}) {
+    if (!weeks) {
+        return null;
+    }
+    let first = weeks.playoffsStart;
+    for (let index = 0; index < rounds.length; index++) {
+        const span = Array.from({length: rounds[index].weeks}, (_, i) => first + i);
+        if (span.includes(week)) {
+            return {round: rounds[index], index, weeks: span, last: index === rounds.length - 1};
+        }
+        first += rounds[index].weeks;
+    }
+    return null;
+}
+
+// each team's score in `week` of a weeklyResults export, with or without a matchup: id → points
+export function weekScores(weeklyResults, week) {
+    const found = weeksOf(weeklyResults).find((entry) => Number(entry.week) === week);
+    return found ? weekOf(found).scores : new Map();
+}
+
+// the teams with a matchup in `week`
+export function pairedIn(weeklyResults, week) {
+    const found = weeksOf(weeklyResults).find((entry) => Number(entry.week) === week);
+    return found ? weekOf(found).paired.flat() : [];
 }
