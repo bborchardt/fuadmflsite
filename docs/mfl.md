@@ -128,7 +128,8 @@ MFL documents little of this.
   others' salaries, years and IR, and logs a `LOAD_ROSTERS` transaction ("added,|dropped,"). The
   commissioner's `fcfsWaiver` import refuses a locked player ("Cannot Be Added Because Is Locked").
   An unloaded player keeps his salary and years; the `salaries` import (APPEND) with
-  `salary="" contractYear=""` clears them. The `draftResults` import puts each pick on its team's roster but, unlike its documentation says,
+  `salary="" contractYear=""` clears them. The `freeAgents` export then reads a cleared player as one never on a roster,
+  `salary="1.00" contractYear="0"`, where one set to $1 / 0 reads `"1"` (the test league, 26 Nov 2026). The `draftResults` import puts each pick on its team's roster but, unlike its documentation says,
   overwrites only the picks it's sent, keeping the others. `auctionResults` needs the auction set up
   on MFL ("Auction has not been setup yet").
 - **Becoming the commissioner:** when the commissioner is logged in as a team, MFL's menu has "Become

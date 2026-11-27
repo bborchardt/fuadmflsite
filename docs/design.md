@@ -483,7 +483,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   still due (0 years, $1 or more: draft day, or an add's hour) costs the 1-year penalty, except a
   rookie from this season's draft cut before the final cut-down date, who costs nothing
   (`lengthDuePenalty`, for v2's pages and the daily job alike). One at $1 isn't charged by the job:
-  it can't be told from a player already charged and reset to $1 / 0 years. 0 years at under $1 is
+  it can't be told from a player already charged and cleared, whom MFL reads at $1 / 0 years. 0 years at under $1 is
   an RFA after the rollover.
 - **Rookie salaries:** first pick QB $6, RB $10, WR $10, TE $4, PK $1; each later pick 80% of the
   one before, never under $1.
@@ -595,7 +595,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
 - The commissioner's own moves aren't in the history the job reads, and a hand-entered penalty must
   spell the player's name as MFL does to be recognized.
 - The over-cap flag lists the last 7 days' moves, so a team over for longer shows none.
-- The Commish tab's penalty form pre-fills penalties already charged but not yet reset.
+- The Commish tab's penalty form pre-fills penalties already charged whose contracts aren't cleared yet.
 - Contract years:
   - before the season only the form's posts are read: this year's cut-down posts by hand named
     players by nickname, misspelling or "all rookies", which no reading gets right

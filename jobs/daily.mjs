@@ -60,7 +60,8 @@ const {DEFAULT_YEARS, decideYears, postText, readProcessedWaivers, teamPlayers} 
 const {MAX_CONTRACTS_PER_RUN} = await import("./contract-years.mjs");
 // MFL's salaries import for [{playerId, salary, years}]; only sent with APPEND=1, or MFL replaces every salary
 const contractsXml = (contracts) => salariesImportXml(contracts.map(({playerId, salary, years}) => ({id: playerId, salary, years})));
-const resetSalaryXml = (penalty) => contractsXml([{playerId: penalty.playerId, salary: 1, years: 0}]);
+// blank clears them, and the free agents export then reads $1.00 / 0, as a player never on a roster
+const clearSalaryXml = (penalty) => contractsXml([{playerId: penalty.playerId, salary: "", years: ""}]);
 const {addedSince, formLengths, lengthTopics, lengthsDue} = await lib("lengths.js");
 const {mflImport: sendImport} = await import("./mfl-import.mjs");
 const {RECENT_MOVE_DAYS, overCapMessage, overRosterMessage, recentMoves, tradeOverRoster} = await import("./over-cap.mjs");
@@ -1218,8 +1219,8 @@ function overCap({players, built, penalties, transactions}) {
     return over;
 }
 
-// a penalty already charged (by a run that failed before the reset, or by hand), or a $0 one,
-// only gets the reset
+// a penalty already charged (by a run that failed before the clearing, or by hand), or a $0 one,
+// only gets the contract cleared
 // Of `penalties` for drops whose length was due, the ones that may be renewal RFAs not yet at $0.01,
 // whose contract ran out and owe nothing: at 1 year last season on the same salary, with no add this
 // season and not set to $0.01 by this job. One won back at the auction looks the same, so they're
@@ -1244,7 +1245,7 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     const lengthDue = penalties.filter((penalty) => penalty.lengthDue && !over.has(penalty.franchiseId));
     let unpriced = [];
     let why = lengthDueUnknown;
-    // one charged already, by hand or by an earlier run, only needs the reset
+    // one charged already, by hand or by an earlier run, only needs the contract cleared
     if (lengthDueUnknown) {
         unpriced = lengthDue.filter(needsCharge);
     } else {
@@ -1257,7 +1258,7 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     if (unpriced.length) {
         needsAttention(`Cap chores: left as they are, since it can't be told whether they owe a penalty (${why}): `
             + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand with his full name, as here, and the next run `
-            + "resets him; set one who owes nothing to $1 / 0 years on MFL's Salaries page.");
+            + "clears his contract; clear the salary and years of one who owes nothing on MFL's Salaries page.");
     }
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
     // held penalties don't count: they can wait for weeks on a team over the cap
@@ -1268,8 +1269,8 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     if (!applyDropPenalties) {
         for (const penalty of toApply) {
             choreLog(needsCharge(penalty)
-                ? `Dry run: would charge ${describe(penalty)}, then reset the player to $1 / 0 years.`
-                : `Dry run: would reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
+                ? `Dry run: would charge ${describe(penalty)}, then clear the player's contract.`
+                : `Dry run: would clear ${penalty.fullName}'s contract (${noCharge(penalty)}).`);
         }
         return;
     }
@@ -1279,11 +1280,11 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     for (const penalty of toApply) {
         if (needsCharge(penalty)) {
             await mflImport("salaryAdj", salaryAdjXml(penalty));
-            await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
-            choreLog(`Charged ${describe(penalty)}, and reset the player to $1 / 0 years.`);
+            await mflImport("salaries", clearSalaryXml(penalty), {APPEND: "1"});
+            choreLog(`Charged ${describe(penalty)}, and cleared the player's contract.`);
         } else {
-            await mflImport("salaries", resetSalaryXml(penalty), {APPEND: "1"});
-            choreLog(`Reset ${penalty.fullName} to $1 / 0 years (${noCharge(penalty)}).`);
+            await mflImport("salaries", clearSalaryXml(penalty), {APPEND: "1"});
+            choreLog(`Cleared ${penalty.fullName}'s contract (${noCharge(penalty)}).`);
         }
     }
 }
