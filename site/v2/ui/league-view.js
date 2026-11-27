@@ -215,6 +215,60 @@ export function pictureMarkup({seeds, hunt}, {viewer, title, showHunt, teamHref}
     </section>`;
 }
 
+// Standings' Playoffs panel (bracket-model.js): MFL's bracket round by round, or a rounds league's
+// rounds; a round being played links to Scores
+export function bracketMarkup({rounds, ranked = false}, {viewer, names, title, teamHref}) {
+    const name = (id) => `<a href="${esc(teamHref(id))}">${esc(names.get(id) || id)}</a>`;
+    const points = (value) => (value === null || value === undefined ? "" : Number.isFinite(value) ? esc(figure(value, 1)) : "—");
+    const liveLink = '<a class="fuad-meta fuad-live" href="#league-scores">Live ›</a>';
+    const gameMarkup = (game, caption = "") => `<li class="fuad-bracket-game${caption ? " fuad-bracket-captioned" : ""}">${caption ? `<p class="fuad-label fuad-bracket-caption">${esc(caption)}</p>` : ""}${game.sides.map((side) => `<div class="fuad-bracket-side${side.id && side.id === viewer ? " fuad-row-mine" : ""}${game.winner && side.id === game.winner ? " fuad-bracket-winner" : ""}">
+            <span class="fuad-seed">${side.seed || ""}</span>
+            <span class="fuad-row-title">${side.id ? name(side.id) : `<span class="fuad-muted">${esc(side.from || "To be decided")}</span>`}</span>
+            <span class="fuad-bracket-points">${game.state === "next" ? "" : points(side.points)}</span>
+        </div>`).join("")}</li>`;
+    const head = (round, weeks) => `<div class="fuad-bracket-head"><h3 class="fuad-label fuad-subhead">${esc(weeks)} · ${esc(round.title)}</h3>${round.live ? liveLink : ""}</div>`;
+    const weeksText = (list) => (list.length > 1 ? `Weeks ${list[0]}–${list[list.length - 1]}` : `Week ${list[0]}`);
+    const rankedMarkup = (round) => `<ol class="fuad-rows fuad-bracket-ranked">${round.rows.map((row) => `<li class="fuad-bracket-side${row.id === viewer ? " fuad-row-mine" : ""}${row.mark ? " fuad-bracket-winner" : ""}">
+            <span class="fuad-seed">${row.seed || ""}</span>
+            <span class="fuad-row-text"><span class="fuad-row-title">${name(row.id)}</span>${row.mark ? `<span class="fuad-tag fuad-tag-accent">${esc(row.mark)}</span>` : ""}</span>
+            <span class="fuad-bracket-points">${points(row.total)}</span>
+        </li>`).join("")}</ol>`;
+    const roundMarkup = (round) => {
+        const weeks = round.weeks ? weeksText(round.weeks) : `Week ${round.week}`;
+        const live = round.live || (round.games && round.games.some((game) => game.state === "live"));
+        const inner = round.notSet ? '<p class="fuad-muted">Matchups not set in MFL yet.</p>'
+            : ranked && round.ranked ? rankedMarkup(round)
+                : `<ol class="fuad-bracket-games">${round.games.map((game) => gameMarkup(game)).join("")}</ol>`;
+        return `<div class="fuad-bracket-round">${head({...round, live}, weeks)}${inner}</div>`;
+    };
+    // a column a week: the 3rd place game under the championship it's played with
+    const columns = [];
+    rounds.forEach((round) => {
+        const column = columns[columns.length - 1];
+        if (round.week && column && column[0].week === round.week) {
+            column.push(round);
+        } else {
+            columns.push([round]);
+        }
+    });
+    // a week's later rounds (the 3rd place game) join its first's list, each named over its game, so
+    // every column is one heading and its games, level with the others'
+    const body = columns.map((column) => {
+        if (column.length === 1) {
+            return `<div class="fuad-bracket-week">${roundMarkup(column[0])}</div>`;
+        }
+        const [first, ...later] = column;
+        const games = first.games.map((game) => gameMarkup(game))
+            .concat(later.flatMap((round) => round.games.map((game) => gameMarkup(game, round.title))));
+        const live = column.some((round) => round.games.some((game) => game.state === "live"));
+        return `<div class="fuad-bracket-week"><div class="fuad-bracket-round">${head({...first, live}, `Week ${first.week}`)}<ol class="fuad-bracket-games">${games.join("")}</ol></div></div>`;
+    }).join("");
+    return `<section class="fuad-panel" aria-labelledby="fuad-bracket-title">
+        <h2 class="fuad-panel-heading" id="fuad-bracket-title">${esc(title)}</h2>
+        <div class="fuad-bracket">${body}</div>
+    </section>`;
+}
+
 // ---- Power ----
 
 export function powerMarkup(teams, {viewer, final, teamHref}) {

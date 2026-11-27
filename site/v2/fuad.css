@@ -2927,6 +2927,32 @@ body #fuad-home select {
 #fuad-league .fuad-seed-why,
 #fuad-rosters .fuad-seed-why { text-align: right; font-variant-numeric: tabular-nums; }
 
+/* Standings' Playoffs panel (ui/league-view.js bracketMarkup): its rounds side by side where they fit, stacked on a phone */
+#fuad-league .fuad-bracket { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 24px; align-items: start; }
+#fuad-league .fuad-bracket-week { min-width: 0; }
+#fuad-league .fuad-bracket-round { min-width: 0; }
+#fuad-league .fuad-bracket-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+#fuad-league .fuad-bracket-games,
+#fuad-league .fuad-bracket-ranked { margin: 0; padding: 0; list-style: none; }
+/* games 28px apart in every column, so the rows line up; a 3rd place game's name sits in that space */
+#fuad-league .fuad-bracket-game { position: relative; margin: 0; border: 1px solid var(--fuad-hairline); border-radius: 12px; }
+#fuad-league .fuad-bracket-game + .fuad-bracket-game { margin-top: 28px; }
+/* stacked, nothing to line up with: closer, but for the room a name needs */
+@media (max-width: 48em) {
+    #fuad-league .fuad-bracket-game + .fuad-bracket-game:not(.fuad-bracket-captioned) { margin-top: 10px; }
+}
+#fuad-league .fuad-bracket-caption { position: absolute; bottom: 100%; left: 0; margin: 0 0 4px; }
+#fuad-league .fuad-bracket-game > .fuad-bracket-side:first-of-type { border-radius: 11px 11px 0 0; }
+#fuad-league .fuad-bracket-game > .fuad-bracket-side:last-child { border-radius: 0 0 11px 11px; }
+#fuad-league .fuad-bracket-game > .fuad-bracket-side + .fuad-bracket-side { border-top: 1px solid var(--fuad-rule); }
+#fuad-league .fuad-bracket-side { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 40px; padding: 4px 10px; }
+#fuad-league .fuad-bracket-ranked > .fuad-bracket-side { padding: 6px 0; }
+#fuad-league .fuad-bracket-side .fuad-seed { font-size: 16px; }
+#fuad-league .fuad-bracket-side .fuad-row-text { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+#fuad-league .fuad-bracket-points { text-align: right; font-variant-numeric: tabular-nums; color: var(--fuad-muted); }
+#fuad-league .fuad-bracket-winner .fuad-row-title,
+#fuad-league .fuad-bracket-winner .fuad-bracket-points { font-weight: 700; color: var(--fuad-text); }
+
 #fuad-league .fuad-hunt > li,
 #fuad-rosters .fuad-hunt > li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; min-height: 40px; padding: 6px 0; }
 

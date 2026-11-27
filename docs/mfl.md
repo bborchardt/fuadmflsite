@@ -81,7 +81,9 @@ MFL documents little of this.
   Golden Ratio was 0009 through 2020, 0005 since 2021.
 - **`playoffBracket` with `BRACKET_ID`** has `playoffRound`s of `playoffGame`s, each side's
   `franchise_id`, `points` and `seed` (or `winner_of_game` / `loser_of_game`); `playoffBrackets`
-  names them (Championship, 3rd Place Game). `schedule` covers the regular season only.
+  names them (Championship, 3rd Place Game). Before the regular season is over a side has only its
+  `seed`, or the game it follows, with no team or points. A league's list can name the same brackets
+  twice (FUAD's 2026 has ids 1–4); v2 takes the first. `schedule` covers the regular season only.
 
 ## Login and limits
 

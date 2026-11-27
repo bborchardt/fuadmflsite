@@ -340,6 +340,9 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
     reads every export with the rules the job read it by (`lib/shapes.js`), so a change that stops
     reading an earlier stage's MFL page, or a rule that turns down an export MFL gave then, fails. The other saved pages stay as they are, for the tests of what
     a screen draws
+  - once a season, in the playoffs' first week: Standings' Playoffs panel against MFL's Playoff
+    Brackets page (`options?O=79`), as MFL fills in a bracket's teams only as the playoffs go, which
+    the saved brackets (2025's finished, 2026's before week 15) don't show
   - once a season: the devices form's rows read for errors, fallbacks and the oldest browsers
   - before a version becomes the header's, and after any header change: the oldest Safari (Devices)
   - once a season, and after a change to v2's colours: `skins.py --refresh`, so a skin MFL changed
@@ -561,7 +564,10 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   never below $0 (1.6–1.7); what's left of the pot goes 55/30/15 (1.8). All-play counts weeks 1–14
   only, from the weekly results, since MFL's standings keep counting it through the playoffs. The
   pot is the accounting's league-wide entries; before they're recorded the prizes show their shares
-  without amounts.
+  without amounts. In the playoffs and for a past season, Standings shows the playoffs as they stand
+  (`ui/bracket-model.js`) in place of the seeds: MFL's championship and 3rd place brackets round by
+  round, or a `playoffs.rounds` league's rounds ranked on their totals; the seeds show when neither
+  can be read.
 
 ## Ruled out
 
