@@ -116,13 +116,31 @@ test("an ordinary day without the login: penalties only logged, nothing posted, 
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Working on the 2026 league site\./);
     assert.deepEqual(result.entries, [
-        "Dry run: would charge $1 to Alpha for Joe Mixon (1yrs@1, 10/23), then clear the player's contract.",
-        "Dry run: would charge $8 to Beta for Ollie Gordon (2yrs@10, 10/23), then clear the player's contract."
+        "DROP_PENALTIES isn't \"apply\": would charge $1 to Alpha for Joe Mixon (1yrs@1, 10/23), then clear the player's contract.",
+        "DROP_PENALTIES isn't \"apply\": would charge $8 to Beta for Ollie Gordon (2yrs@10, 10/23), then clear the player's contract."
     ]);
     assert.ok(!result.requests.some((request) => request.method === "POST"));
     assert.deepEqual(result.output, {changed: "true", publish: "false"});
-    assert.match(result.summary, /^## Daily chores: OK\n\n- Dry run: would charge \$1 to Alpha/);
+    // what each switch does, as the lines don't say a dry run's "Dry run:" on a real one
+    assert.match(result.summary, /^## Daily chores: OK\n\nChore switches: DROP_PENALTIES log only \(unset\), CONTRACT_YEARS log only \(unset\), PAYOUTS log only \(unset\), RFA_SALARIES log only \(unset\), BACKUP_STARTERS off \(unset\)\.\n\n- DROP_PENALTIES isn't "apply": would charge \$1 to Alpha/);
+    assert.doesNotMatch(result.summary + result.choreLog, /Dry run/);
     assert.doesNotMatch(result.stdout, /::error/);
+});
+
+test("a switch the job doesn't know fails the run, as a mistyped apply would only log; apply, log or unset doesn't", () => {
+    const mistyped = run({env: {DROP_PENALTIES: "Apply", BACKUP_STARTERS: "true", PAYOUTS: "log", CONTRACT_YEARS: "apply"}});
+    assert.equal(mistyped.status, 1);
+    assert.deepEqual(mistyped.entries.filter((entry) => /doesn't know/.test(entry)), [
+        "DROP_PENALTIES is \"Apply\", which the job doesn't know, so the chore only logs. Set it to apply or log, or remove it, in the repository's variables (Settings › Secrets and variables › Actions).",
+        "BACKUP_STARTERS is \"true\", which the job doesn't know, so the chore is off. Set it to apply or log, or remove it, in the repository's variables (Settings › Secrets and variables › Actions)."
+    ]);
+    assert.ok(mistyped.entries.includes("DROP_PENALTIES isn't \"apply\": would charge $1 to Alpha for Joe Mixon (1yrs@1, 10/23), then clear the player's contract."));
+    assert.match(mistyped.summary, /Chore switches: DROP_PENALTIES log only \("Apply"\), CONTRACT_YEARS apply, PAYOUTS log only \("log"\), RFA_SALARIES log only \(unset\), BACKUP_STARTERS off \("true"\)\./);
+    // a dry run says so of every switch
+    const dry = run({env: {DRY_RUN: "true", DATA_LEAGUE_ID: "48571", DROP_PENALTIES: "apply", BACKUP_STARTERS: "log"}});
+    assert.equal(dry.status, 0, dry.stdout);
+    assert.match(dry.summary, /Chore switches: DROP_PENALTIES apply, .*, BACKUP_STARTERS log only \("log"\); a dry run writes nothing, whatever they say\./);
+    assert.match(dry.stdout, /Dry run: would charge \$1 to Alpha/);
 });
 
 test("a player cut while his length is due costs the 1-year penalty; this season's rookie's only from the cut-down", () => {
@@ -142,14 +160,14 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     const after = run({scenario: {exports: {...exports, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
     assert.equal(after.status, 0, after.stderr);
     assert.deepEqual(lengthDue(after), [
-        "Dry run: would charge $3 to Alpha for Ray Rookie (0yrs@6, length due, 10/23), then clear the player's contract.",
-        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."
+        "DROP_PENALTIES isn't \"apply\": would charge $3 to Alpha for Ray Rookie (0yrs@6, length due, 10/23), then clear the player's contract.",
+        "DROP_PENALTIES isn't \"apply\": would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."
     ]);
     // cut before it: the rookie goes free
     const before = run({scenario: {exports: {...exports, calendar: cutDown("2026-10-30T23:00:00Z")}}, env: LOGIN});
     assert.deepEqual(lengthDue(before), [
-        "Dry run: would clear Ray Rookie's contract (no penalty owed).",
-        "Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."
+        "DROP_PENALTIES isn't \"apply\": would clear Ray Rookie's contract (no penalty owed).",
+        "DROP_PENALTIES isn't \"apply\": would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."
     ]);
     // Kamara ended last season at 1 year on $20: the rollover left him an RFA not yet at $0.01, whose
     // contract ran out
@@ -160,17 +178,17 @@ test("a player cut while his length is due costs the 1-year penalty; this season
     assert.ok(rfa.entries.includes("Cap chores: left as they are, since it can't be told whether they owe a penalty (each ended last season "
         + "at 1 year on the same salary: an RFA whose contract ran out owes nothing, one won back at the auction a year's): "
         + "Alvin Kamara (0yrs@20, length due, 10/23). Charge any owed by hand with his full name, as here, and the next run clears his contract; "
-        + "clear the salary and years of one who owes nothing on MFL's Salaries page."), rfa.entries.join("\n"));
+        + "clear the salary and years of one who owes nothing on MFL's Edit Player Salaries and Contracts page."), rfa.entries.join("\n"));
     assert.ok(!imports(rfa).some((data) => /id="6"/.test(data.DATA || "")));
     // charged by hand as the flag asks: the next run only resets him
     const byHand = {salaryAdjustment: [{franchise_id: "0002", amount: "8", description: "Alvin Kamara (1yr@20)", timestamp: String(DROPPED + 3600)}]};
     const charged = run({scenario: {exports: {...exports, salaryAdjustments: byHand, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN});
-    assert.ok(charged.entries.includes("Dry run: would clear Alvin Kamara's contract (penalty already charged)."), charged.entries.join("\n"));
+    assert.ok(charged.entries.includes("DROP_PENALTIES isn't \"apply\": would clear Alvin Kamara's contract (penalty already charged)."), charged.entries.join("\n"));
     assert.ok(!charged.entries.some((entry) => /can't be told/.test(entry)));
     // one the job set to $0.01 this season isn't one of them: he was settled, then won back
     const settled = run({scenario: {exports: {...exports, "rosters@2025": lastSeason, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: LOGIN,
         files: {"data/franchise-2025.json": SNAPSHOT_2025, "rfa-salaries.json": '{"2026": ["6"]}'}});
-    assert.ok(settled.entries.includes("Dry run: would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."), settled.entries.join("\n"));
+    assert.ok(settled.entries.includes("DROP_PENALTIES isn't \"apply\": would charge $8 to Beta for Alvin Kamara (0yrs@20, length due, 10/23), then clear the player's contract."), settled.entries.join("\n"));
     // without the draft's results, length-due drops are left for the commissioner; the rest go on
     const unknown = run({scenario: {exports: {...exports, draftResults: 500, calendar: cutDown("2026-09-08T23:00:00Z")}}, env: {...LOGIN, DROP_PENALTIES: "apply"}});
     assert.equal(unknown.status, 1);
@@ -341,6 +359,14 @@ test("a snapshot changed by hand on league-data is published again", () => {
     assert.equal(result.output.publish, "true");
 });
 
+test("GitHub Pages unreachable: what's published isn't known, so nothing is published, the run passes, and the next run checks again", () => {
+    const result = run({scenario: {pagesUnreachable: true}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.match(result.stdout, /Couldn't check whether franchise-2025\.json is published \(fetch failed\); will check again tomorrow\./);
+    assert.equal(result.output.publish, "false");
+    assert.ok(!result.entries.some((entry) => /Publishing snapshots/.test(entry)), result.entries.join("\n"));
+});
+
 test("with nothing to do the chore log is left alone, but gets a heartbeat once a month", () => {
     const quiet = {...league(), transactions: {transaction: []}};
     const recent = "# Chore log\n\n- 2026-10-10 06:00 UTC: Set Joe Mixon to 2 years (bid comment).\n";
@@ -404,8 +430,8 @@ test("contract years: a posted length and a bid comment's, logged in a dry run a
     const dry = run(day);
     assert.equal(dry.status, 0, dry.stderr);
     assert.deepEqual(contractEntries(dry), [
-        "Dry run: would set Jaylen Waddle to 2 years (blind bid comment \"2 years\").",
-        "Dry run: would set Chris Olave to 3 years (post \"Olave: 3 years\")."
+        "CONTRACT_YEARS isn't \"apply\": would set Jaylen Waddle to 2 years (blind bid comment \"2 years\").",
+        "CONTRACT_YEARS isn't \"apply\": would set Chris Olave to 3 years (post \"Olave: 3 years\")."
     ]);
     // the bid's own week's page, by its period
     assert.ok(dry.requests.some((request) => request.url.endsWith(`/processed_waivers?LEAGUE_ID=48571&PERIOD=${ADDED}`)));
@@ -470,9 +496,9 @@ test("payouts: each week's high score once the next week has kicked off, logged 
     const dry = run({scenario: {exports}, env: LOGIN});
     assert.equal(dry.status, 0, dry.stderr);
     assert.deepEqual(payoutEntries(dry), [
-        "Dry run: would record \"Most Points Week 2\" $7.50 to Alpha.",
-        "Dry run: would record \"Most Points Week 2\" $7.50 to Beta.",
-        ...[3, 4, 5, 6].map((week) => `Dry run: would record "Most Points Week ${week}" $15.00 to Alpha.`)
+        "PAYOUTS isn't \"apply\": would record \"Most Points Week 2\" $7.50 to Alpha.",
+        "PAYOUTS isn't \"apply\": would record \"Most Points Week 2\" $7.50 to Beta.",
+        ...[3, 4, 5, 6].map((week) => `PAYOUTS isn't "apply": would record "Most Points Week ${week}" $15.00 to Alpha.`)
     ]);
     assert.deepEqual(imports(dry), []);
     const applied = run({scenario: {exports}, env: {...LOGIN, PAYOUTS: "apply"}});
@@ -506,16 +532,16 @@ test("payouts: all-play and the places once the championship week is final, or a
     const pot = {franchise_id: "0000", amount: "1013.75", description: "Entry Fees"};
     const result = run({scenario: {exports: {...exports, accounting: {entry: [...weeklyPaid.entry, pot]}}}, env: LOGIN, now: after});
     assert.deepEqual(payoutEntries(result), [
-        "Dry run: would record \"All-play (9-4-1)\" $3.75 to Alpha.",
-        "Dry run: would record \"1st Place\" $440.00 to Alpha.",
-        "Dry run: would record \"2nd Place\" $240.00 to Beta.",
-        "Dry run: would record \"3rd Place\" $120.00 to 0003."
+        "PAYOUTS isn't \"apply\": would record \"All-play (9-4-1)\" $3.75 to Alpha.",
+        "PAYOUTS isn't \"apply\": would record \"1st Place\" $440.00 to Alpha.",
+        "PAYOUTS isn't \"apply\": would record \"2nd Place\" $240.00 to Beta.",
+        "PAYOUTS isn't \"apply\": would record \"3rd Place\" $120.00 to 0003."
     ]);
     const noPot = run({scenario: {exports: {...exports, accounting: weeklyPaid}}, env: LOGIN, now: after});
     assert.equal(noPot.status, 1);
     assert.deepEqual(payoutEntries(noPot), [
         "Payouts: the places can't be recorded: the accounting has no league-wide entries, so there's no pot to split. Left for the commissioner.",
-        "Dry run: would record \"All-play (9-4-1)\" $3.75 to Alpha."
+        "PAYOUTS isn't \"apply\": would record \"All-play (9-4-1)\" $3.75 to Alpha."
     ]);
 });
 
@@ -664,7 +690,7 @@ test("a dry run keeps the real job's limits on how much it would write", () => {
     exports.freeAgents.leagueUnit.player.push(...players.map((player) => ({id: player.id, salary: "1", contractYear: "1"})));
     const result = run({scenario: {exports}, env: DRY});
     assert.equal(result.status, 1, result.stdout);
-    assert.match(result.summary, /Cap chores: \d+ dropped players owe a cap penalty, more than the/);
+    assert.match(result.summary, /Cap chores: \d+ dropped players owe a cap penalty, more than the 6 expected in a day, so none were charged\. Check the drops and charge them on MFL.s Edit Salary Adjustments page by hand\./);
     const real = run({scenario: {exports}});
     assert.equal(real.status, 0, real.stdout);
 });
@@ -682,7 +708,7 @@ test("more contract years than a day's limit: none set", () => {
     Object.assign(exports, {messageBoard: {thread: []}, messageBoardThread: {post: []}});
     const result = run({scenario: {exports}, env: {...LOGIN, CONTRACT_YEARS: "apply"}});
     assert.equal(result.status, 1);
-    assert.ok(result.entries.some((entry) => /^Contract years: 16 added players are waiting for contract years, more than the 15 expected in a day, so none were set\./.test(entry)), result.entries.join("\n"));
+    assert.ok(result.entries.some((entry) => /^Contract years: 16 added players are waiting for contract years, more than the 15 expected in a day, so none were set\. Check the adds and set their years on MFL.s Edit Player Salaries and Contracts page by hand\.$/.test(entry)), result.entries.join("\n"));
     assert.ok(!imports(result).some((data) => data.TYPE === "salaries"));
 });
 
@@ -695,7 +721,7 @@ test("more default lengths than a quarter of the rostered players: none set", ()
     });
     const result = run({scenario: {exports}, env: {...LOGIN, CONTRACT_YEARS: "apply"}, now: "2026-09-11T12:00:00Z"});
     assert.equal(result.status, 1);
-    assert.ok(result.entries.some((entry) => /14 of 46 rostered players would get the default 1 year, more than expected, so no lengths were set/.test(entry)), result.entries.join("\n"));
+    assert.ok(result.entries.some((entry) => /14 of 46 rostered players would get the default 1 year, more than expected, so no lengths were set\. Check the rosters and set them on MFL.s Edit Player Salaries and Contracts page by hand\./.test(entry)), result.entries.join("\n"));
     assert.ok(!imports(result).some((data) => data.TYPE === "salaries"));
 });
 
@@ -797,8 +823,8 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
 
     const dry = run({scenario, now: spring, files: {}});
     assert.deepEqual(rfaEntries(dry), [
-        "Dry run: would set RFA A0 Player (Alpha) to $0.01.",
-        "Dry run: would set RFA B0 Player (Beta) to $0.01."
+        "RFA_SALARIES isn't \"apply\": would set RFA A0 Player (Alpha) to $0.01.",
+        "RFA_SALARIES isn't \"apply\": would set RFA B0 Player (Beta) to $0.01."
     ]);
     const applied = run({scenario, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {}});
     assert.deepEqual(rfaEntries(applied), ["Set RFA A0 Player (Alpha) to $0.01.", "Set RFA B0 Player (Beta) to $0.01."]);
@@ -829,7 +855,7 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
     }));
     const flagged = run({scenario: misread, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {}});
     assert.equal(flagged.status, 1);
-    assert.match(flagged.summary, /RFA salaries: 4\d of 47 rostered players look like RFAs/);
+    assert.match(flagged.summary, /RFA salaries: 4\d of 47 rostered players look like RFAs, more than expected, so none were set to \$0\.01\. Check the rosters against last season.s and set them on MFL.s Edit Player Salaries and Contracts page by hand\./);
     assert.ok(!imports(flagged).some((body) => /0\.01/.test(body.DATA || "")));
 });
 
@@ -856,8 +882,8 @@ test("offseason lengths: read from the form's posts only, flagged past the cut-d
     const dry = run({scenario: {exports}, env: LOGIN, now: draftWeek});
     assert.deepEqual(lengthEntries(dry), [
         "Contract lengths: Beta posted lengths without the form, which the job doesn't read: \"B0 - 2 years\". Set them by hand, or ask them to use the form.",
-        "Dry run: would set A0 Player (Alpha) to 3 years (the form).",
-        "Dry run: would set A1 Player (Alpha) to 1 year (the form)."
+        "CONTRACT_YEARS isn't \"apply\": would set A0 Player (Alpha) to 3 years (the form).",
+        "CONTRACT_YEARS isn't \"apply\": would set A1 Player (Alpha) to 1 year (the form)."
     ]);
     assert.equal(dry.status, 1);
     // only topics about contracts are read
@@ -875,9 +901,9 @@ test("offseason lengths: read from the form's posts only, flagged past the cut-d
 
     // from week 1's kickoff, 1 year for what's missing
     const kicked = run({scenario: {exports}, env: LOGIN, now: "2026-09-11T12:00:00Z"});
-    assert.ok(kicked.entries.includes("Dry run: would set A2 Player (Alpha) to 1 year (none by week 1: the default)."));
-    assert.ok(kicked.entries.includes("Dry run: would set B0 Player (Beta) to 1 year (none by week 1: the default)."));
-    assert.ok(kicked.entries.includes("Dry run: would set A0 Player (Alpha) to 3 years (the form)."));
+    assert.ok(kicked.entries.includes("CONTRACT_YEARS isn't \"apply\": would set A2 Player (Alpha) to 1 year (none by week 1: the default)."));
+    assert.ok(kicked.entries.includes("CONTRACT_YEARS isn't \"apply\": would set B0 Player (Beta) to 1 year (none by week 1: the default)."));
+    assert.ok(kicked.entries.includes("CONTRACT_YEARS isn't \"apply\": would set A0 Player (Alpha) to 3 years (the form)."));
 
     // one added after the cut-down date owes his within the hour, as in season: never late for the form
     const added = structuredClone(exports);
@@ -938,13 +964,14 @@ const BACKUP_FILES = {"data/franchise-2025.json": SNAPSHOT_2025, "backup-starter
 const posted = (result, page) => result.requests.filter((request) => request.method === "POST" && new URL(request.url).pathname === `/2026/${page}`)
     .map((request) => [...new URLSearchParams(request.body)]);
 
-test("backup starters off unless asked for: nothing read, posted or flagged", () => {
-    for (const env of [LOGIN, {...LOGIN, BACKUP_STARTERS: "no"}]) {
+test("backup starters off unless asked for: nothing read or posted, and flagged only for a value the job doesn't know", () => {
+    for (const [env, status] of [[LOGIN, 0], [{...LOGIN, BACKUP_STARTERS: "no"}, 1]]) {
         const result = run({scenario: backups(), files: BACKUP_FILES, env});
-        assert.equal(result.status, 0, result.stdout);
+        assert.equal(result.status, status, result.stdout);
         assert.deepEqual(posted(result, "lineup"), []);
         assert.ok(!result.requests.some((request) => /O=210|messageBoard/.test(request.url)), "no lineup details or board read");
         assert.match(result.stdout, /Backup starters: off \(BACKUP_STARTERS isn't apply or log\)\./);
+        assert.deepEqual(result.entries.filter((entry) => entry.startsWith("BACKUP_STARTERS is")).length, status);
     }
 });
 
@@ -1136,6 +1163,27 @@ test("backup starters: a backup nflverse doesn't list is flagged, not started", 
     assert.deepEqual(posted(result, "lineup"), []);
 });
 
+test("backup starters: nflverse or DynastyProcess unreachable is flagged, the week left open, and payouts wait for it", () => {
+    const apply = {...LOGIN, BACKUP_STARTERS: "apply", PAYOUTS: "apply"};
+    const rosters = "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.csv";
+    const ids = "https://raw.githubusercontent.com/dynastyprocess/data/master/files/db_playerids.csv";
+    assert.ok([rosters, ids].every((address) => address in backups().files));
+    for (const gone of [rosters, ids]) {
+        const scenario = backups();
+        delete scenario.files[gone];
+        Object.assign(scenario.exports, {"weeklyResults:YTD": scoredWeeks(7), accounting: handWeek1});
+        const result = run({scenario, files: BACKUP_FILES, env: apply});
+        assert.equal(result.status, 1);
+        assert.ok(result.entries.includes(`Backup starters: week 6 stopped: Couldn't load ${gone}: HTTP 404`), result.entries.join("\n"));
+        assert.deepEqual([posted(result, "lineup"), posted(result, "csetup")], [[], []]);
+        assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5]});
+        // week 6's scores are final, but its prize waits for its backups
+        assert.deepEqual(imports(result).filter((each) => each.TYPE === "accounting").map((each) => each.DESCRIPTION),
+            ["Most Points Week 2", "Most Points Week 2", "Most Points Week 3", "Most Points Week 4", "Most Points Week 5"]);
+        assert.match(result.stdout, /Payouts: week 6 waits for its backup starters\./);
+    }
+});
+
 test("backup starters: a week that fails is flagged, and left for the next run", () => {
     const scenario = backups();
     scenario.pages["/2026/options?L=48571&O=210&FRANCHISE=0002&W=6"] = "<p>Something else</p>";
@@ -1167,7 +1215,7 @@ test("backup starters: with BACKUP_STARTERS log only logged; a dry run writes no
     const logged = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "log"}});
     assert.equal(logged.status, 0, logged.stdout);
     assert.deepEqual(logged.entries.filter((entry) => entry.startsWith("Backup starters")), [
-        "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."
+        "Backup starters: BACKUP_STARTERS isn't \"apply\": would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."
     ]);
     assert.deepEqual([posted(logged, "lineup"), posted(logged, "csetup")], [[], []]);
     assert.ok(!logged.requests.some((request) => /BECOME=0000/.test(request.url)));
@@ -1264,12 +1312,19 @@ test("backup starters: a week without backups is settled without waiting for nfl
     assert.deepEqual(JSON.parse(readFileSync(join(result.dataDir, "backup-starters.json"), "utf8")), {2026: [1, 2, 3, 4, 5, 6]});
 });
 
-test("the check of what v2 reads: a page MFL no longer has fails the run, read as the login's own team; without one, only the exports", () => {
-    const result = run({scenario: {myFranchise: "0001"}, env: {...LOGIN, MFL_CHECK: "on"}});
+test("the check of what v2 reads: a page MFL no longer has, or didn't give, fails the run, read as the login's own team; without one, only the exports", () => {
+    const careerRecords = "/2026/options?L=48571&O=208";
+    const result = run({scenario: {myFranchise: "0001", turnedAway: {[careerRecords]: 3}, networkErrors: ["/2026/options?L=48571&O=194"], pages: {[careerRecords]: "<p>Career records</p>"}}, env: {...LOGIN, MFL_CHECK: "on"}});
     assert.equal(result.status, 1, result.stdout);
     assert.ok(result.entries.includes("MFL check: Add/Drop (/2026/add_drop?L=48571): MFL answered HTTP 404"), result.entries.join("\n"));
-    // an export the fake has none of is an error, not a change: only logged
-    assert.match(result.stdout, /MFL check: Couldn't load rules: MFL said "no rules in the scenario"; tried again tomorrow\./);
+    // what MFL didn't give this time is flagged too, not taken for a change: an export the fake has
+    // none of (an error), a page turned away each time, and one the network failed
+    const notGiven = (item) => `MFL check: ${item}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`;
+    for (const item of ["Couldn't load rules: MFL said \"no rules in the scenario\"", "Couldn't load Career Records: MFL turned it away with its home page 3 times",
+        "Couldn't load League Champions: network error (fetch failed)"]) {
+        assert.ok(result.entries.includes(notGiven(item)), result.entries.join("\n"));
+        assert.ok(result.stdout.includes(`- ${notGiven(item)}`), "in the run's failure annotation");
+    }
     // only read, as a member: the login's own cookie, never the commissioner's
     const checked = result.requests.filter((request) => /\/2026\/(add_drop|csetup|player)\b|O=(257|18|05|171)\b|fflnetdynamic/.test(request.url));
     assert.ok(checked.length >= 8, checked.map((request) => request.url).join("\n"));

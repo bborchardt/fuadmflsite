@@ -25,7 +25,7 @@ from AGENTS.md.
   stable; a change that would break an existing league's settings needs a new key or a new version.
 - Daily job: repository variables in UPPER_SNAKE; a chore writes only on `apply`. A flag fails the
   run and says what to do by hand. A flag that hands work back names MFL's own page for it, not one
-  of the site's tabs (not yet: the contract-years and drop-penalty stops, #315).
+  of the site's tabs.
 - MFL pastes: the whole file from master, tab messages first, header last (not yet: the header's
   beta offer line, kept by hand, #324).
 - Dev CLI: Python argparse tools run through uv; `--built`, `--base`, `--ref`, and `--only` as a
@@ -47,8 +47,9 @@ from AGENTS.md.
   summary. The MFL transport and session (login, request spacing, timeouts, waiting out refusals)
   belong in their own module, and each chore in `jobs/<chore>.mjs`, taking a context object (lib,
   the MFL session, log, choreLog, needsAttention, dryRun). A value one chore needs from another is
-  passed in explicitly. A new chore starts that way; an existing one moves out the next time it
-  changes. `jobs/<chore>.mjs` import no lib/ and take the version's lib as an argument.
+  passed in explicitly. A new chore starts that way; an existing one moves out when its logic
+  changes, or under #326; an edit to its messages alone doesn't call for it. `jobs/<chore>.mjs`
+  import no lib/ and take the version's lib as an argument.
 - Writes to MFL go only through `jobs/mfl-import.mjs` / `jobs/mfl-form.mjs`. No import cycles.
 - Outside services: members' pages depend only on MFL and GitHub Pages. The one exception is the
   devices form (Google Forms), which only receives error reports after the page has run. The daily
@@ -96,8 +97,7 @@ from AGENTS.md.
 - The highest-risk code is the job's writes to MFL. Each condition that decides a write has a test
   that fails without it, and each deadline or limit that decides one is tested at its edge. The
   per-run caps are exempt: a slip there only makes the job refuse to write.
-- Each outside service the job uses has a test for it being unreachable (not yet: nflverse and
-  DynastyProcess; #314).
+- Each outside service the job uses has a test for it being unreachable.
 
 ## Documentation
 - README: an overview plus a reference for the developer tools. docs/commissioner.md: the

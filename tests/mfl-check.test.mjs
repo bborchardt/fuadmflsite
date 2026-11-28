@@ -1,5 +1,5 @@
 // jobs/mfl-check.mjs: on the saved pages and exports every read is as v2 expects, and a page or
-// export MFL changed is named, while one it couldn't be asked for this time isn't taken for a change.
+// export MFL changed is named, and one MFL didn't give this time is named apart from a change.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
@@ -94,7 +94,7 @@ test("a page that isn't the one v2 reads is named as changed, by what it is and 
     assert.ok(!changed.some((item) => item.startsWith("a news article")));
 });
 
-test("a missing field or a page gone is a change; a refusal, an error or MFL's home page is only unchecked", async () => {
+test("a missing field or a page gone is a change; a refusal, an error or MFL's home page is unchecked, not a change", async () => {
     const exportRead = (each) => {
         if (each.type === "futureDraftPicks") {
             return checkShape("futureDraftPicks", {franchise: [{futureDraftPick: [{year: "2027", round: "1"}]}]});

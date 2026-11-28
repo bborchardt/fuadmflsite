@@ -259,8 +259,9 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   through v2's own reader, as the commissioner's login sees them, which is a member's view of the team
   it owns (the commissioner's own pages need MFL's switch, which the check doesn't make). One MFL has
   changed, or no longer has (HTTP 404), fails the run like a flag, naming the page, or the item and
-  field, usually before a member opens it; one MFL couldn't give this time (a refusal, an error, its
-  home page) is only logged and tried the next day. It only reads, and nothing of a page goes in the
+  field, usually before a member opens it. One MFL didn't give this time (a refusal, an error, its
+  home page) fails the run too, at once, named apart from a change, as a lasting refusal (a feed
+  answering 403) is a change v2 would meet. It only reads, and nothing of a page goes in the
   run's log, which is public. Out of season it leaves out what's of a week (live scoring, projections,
   the stats feed); Lineup passes as v2 takes it, MFL's refusal included (the season over). Pages are parsed with jsdom, not a browser, and MFL's scripts aren't run:
   Add/Drop's fields are found on the page rather than in its form, which MFL puts inside a table and
@@ -367,7 +368,8 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   `apply`, so the commissioner can check its decisions first.
 - **A test run is a dry run of the same job,** started by hand: `DRY_RUN` overrides the variables
   above, so nothing reaches MFL, `league-data` or the site. It can name another league, host, settings,
-  version, season or time, and only a dry run can: unticked, a manual run ignores them. It fails and
+  version, season or time, and only a dry run can: unticked, a manual run given any of them stops
+  before it starts, naming them, rather than run the real league with them ignored. It fails and
   emails like the real job, flags included, and shows what it found on the run's summary page. MFL's
   writes aren't exercised. A league the login isn't in gets no session, so it reads public data and the
   summary lists what that leaves unchecked. Only the real league's run sees `league-data`'s snapshots

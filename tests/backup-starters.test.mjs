@@ -34,6 +34,8 @@ test("the commissioner's lineup form gives the lineup's fields, a box per player
     assert.throws(() => readLineupForm(fixture("lineup-details.html"), {team: "0002", week: 8}), /no lineup form/);
     assert.equal(lineupSaved("So your saying there's a chance? Week 8 lineup SUBMITTED Warning(s): The lineup deadline …"), true);
     assert.equal(lineupSaved("Error(s) submitting lineup: You must select 1 PK"), false);
+    // MFL's answer can say both: the error wins
+    assert.equal(lineupSaved("Week 8 lineup SUBMITTED Error(s) submitting lineup: You must select 1 PK"), false);
 });
 
 test("Recalculate Standings for one week, no email to the owners", () => {
