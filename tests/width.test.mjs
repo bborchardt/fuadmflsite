@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {DOMParser, parseHTML} from "linkedom";
+import {DOMParser, parseHTML} from "./fixtures/dom.mjs";
 import {readCustomizeForm, saveFullWidth, widthMarkup} from "../site/v2/ui/width.js";
 
 const fixture = readFileSync(new URL("./fixtures/pages/member/csetup-FCUSTOM.html", import.meta.url), "utf8");

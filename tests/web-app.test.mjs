@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {LAUNCH, launchedApp, linkWebApp, watchBack, webAppManifest} from "../site/v2/ui/web-app.js";
 
 const ORIGIN = "https://www44.myfantasyleague.com";

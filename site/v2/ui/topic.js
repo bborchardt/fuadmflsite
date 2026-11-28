@@ -7,7 +7,7 @@
 
 import {clean, esc, initials} from "./html.js";
 import {stillOf} from "./team-pictures.js";
-import {clock, dayText} from "./home-model.js";
+import {clock, dayText} from "./format.js";
 import {mflTime} from "../lib/zone.js";
 
 // "Wed Sep 9 11:11:12 p.m. CT 2026" → "Wed Sep 9 · 11:11 p.m.", in the league's zone whatever zone the

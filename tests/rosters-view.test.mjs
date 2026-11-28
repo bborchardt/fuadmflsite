@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {draftMarkup, fillOwners, ownersOf, playerChips, playerLayout, playerRows, playersFrame, teamMarkup, teamsMarkup} from "../site/v2/ui/rosters-view.js";
 
 const seasons = [{season: 2026, used: 293, tight: true}, {season: 2027, used: 180, tight: false}];

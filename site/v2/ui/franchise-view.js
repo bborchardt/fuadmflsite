@@ -5,7 +5,7 @@ import {PREVIOUS_FRANCHISE_UNTIL_WEEK, TRADE_DEADLINE_WEEK, franchiseTopSalaries
 import {league as leagueStatus} from "../lib/settings.js";
 import {franchisePhase, readSnapshot, snapshotFileName} from "../lib/franchise.js";
 import {kickoffAt} from "./context.js";
-import {whenText} from "./home-model.js";
+import {whenText} from "./format.js";
 
 // null until MFL publishes the schedule
 async function kickoffs(season) {

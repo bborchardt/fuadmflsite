@@ -11,7 +11,8 @@ import settings, {league, leagueIdIn, resolveSettings} from "../site/v2/lib/sett
 import {testLeagueNote} from "../site/v2/ui/test-league.js";
 import {CONTRACT_WINDOW_HOURS, CONTRACT_WINDOW_TEXT as CONTRACT_WINDOW_TEXT_FUAD} from "../site/v2/lib/adds.js";
 import {MAX_YEARS, yearMentions} from "../site/v2/lib/contract-years.js";
-import {LENGTHS, isLengthLine, yearsIn} from "../site/v2/ui/add-model.js";
+import {isLengthLine, yearsIn} from "../site/v2/ui/add-model.js";
+import {LENGTHS} from "../site/v2/ui/moves-model.js";
 import {lineupPositions, seasonWeeks, withOthers} from "../site/v2/lib/rules.js";
 
 const file = JSON.parse(readFileSync(new URL("../site/v2/settings.json", import.meta.url), "utf8"));

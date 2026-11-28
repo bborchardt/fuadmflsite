@@ -19,9 +19,25 @@ import {postToContractTopic} from "./lengths-form.js";
 import {CONTRACT_WINDOW_TEXT} from "../lib/adds.js";
 import {watchList, whenPopupClosed} from "./watch.js";
 import {
-    addBlock, addsClosed, banner, bidsLeft, claimKey, commentLines, findClaim, firstLast, freeAgencyOver, fullNameLines, groupViews, isLengthLine,
-    lengthLine, lineFor, maxBid, readPlayerLists, rewriteComment, surname, teamState, yearsIn
+    addBlock,
+    addsClosed,
+    banner,
+    bidsLeft,
+    claimKey,
+    commentLines,
+    findClaim,
+    freeAgencyOver,
+    fullNameLines,
+    groupViews,
+    isLengthLine,
+    lengthLine,
+    lineFor,
+    maxBid,
+    readPlayerLists,
+    rewriteComment,
+    yearsIn
 } from "./add-model.js";
+import {firstLast, surname, teamState} from "./moves-model.js";
 import {
     bannerMarkup, controlSelector, deskHome, dialogMarkup, dropList, freeAgentList, freeAgentRowsMarkup, loadingMarkup, moveChecks, phoneHome, phonePlayers, phoneTitle, reviewForm
 } from "./add-view.js";

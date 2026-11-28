@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {openerName} from "../site/v2/ui/player-page.js";
 
 test("the popup's name until the page arrives comes only from what names the player", () => {

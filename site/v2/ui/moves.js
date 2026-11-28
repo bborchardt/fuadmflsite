@@ -11,7 +11,7 @@ import {cached} from "./store.js";
 import {allAtOnce, forget, mflConfirm, mflFetch, mflSend, pageFetch} from "./page-fetch.js";
 import {seasonFacts, seasonStarted} from "./context.js";
 import {playerList} from "./player-list.js";
-import {addPhase, pendingWithComments} from "./add-model.js";
+import {addPhase, pendingWithComments} from "./moves-model.js";
 import {cutDownAt} from "../lib/violations.js";
 import {strict, unlessChanged} from "./checked.js";
 
@@ -194,7 +194,7 @@ export function limitsApply({facts, calendar, season}, now = Date.now()) {
     return phase === "season" || (phase === "preseason" && Boolean(cut) && now / 1000 >= cut);
 }
 
-// Add's phase (add-model.js) from the season's dates (context.js seasonStarted); a draft that
+// Add's phase (moves-model.js) from the season's dates (context.js seasonStarted); a draft that
 // couldn't be checked counts as made.
 export function movesPhase(facts, now = Date.now()) {
     return addPhase({

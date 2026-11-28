@@ -4,10 +4,8 @@
 
 import {API_BASE, asArray, exportUrl, fetchExport, httpStatus} from "../lib/mfl.js";
 import settings from "../lib/settings.js";
-import {TIME_ZONE} from "../lib/zone.js";
 import {esc} from "./html.js";
-import {oneLineTimes, plural} from "./format.js";
-import {clock} from "./home-model.js";
+import {oneLineTimes, plural, weekdayClock} from "./format.js";
 import {openDialog} from "./dialog.js";
 import {lineupProjections, weekFeed} from "./projections.js";
 import {allAtOnce, mflConfirm, mflFetch, pageFetch} from "./page-fetch.js";
@@ -28,8 +26,7 @@ const LOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 const CLOSE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 
 const now = () => Date.now() / 1000;
-// "Sun 11:55 a.m."
-const lockText = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", timeZone: TIME_ZONE})} ${clock(seconds)}`;
+const lockText = weekdayClock;
 
 const pts = (value) => (value === null ? "—" : value.toFixed(1));
 

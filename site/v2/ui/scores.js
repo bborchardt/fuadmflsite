@@ -4,11 +4,10 @@
 
 import {API_BASE, asArray} from "../lib/mfl.js";
 import {armRetry, drawPanel, failedMarkup, pageChanged, placeholders, retryCutOff} from "./panel.js";
-import {dayText} from "./home-model.js";
 import {NO_STATS, gameStates, readStats} from "./live-scoring.js";
 import {allPlayRecords, bestCard, playoffPicture, roundCard, scoreCards, standings, starterLimits, teamSeason, weekState} from "./league-model.js";
 import {cardsMarkup, scoresFrame, seasonMarkup} from "./league-view.js";
-import {figure, ordinal} from "./format.js";
+import {figure, ordinal, dayText} from "./format.js";
 import {DEFAULT_END_WEEK, seasonWeeks} from "../lib/rules.js";
 import {roundOf} from "../lib/rounds.js";
 import {allAtOnce} from "./page-fetch.js";

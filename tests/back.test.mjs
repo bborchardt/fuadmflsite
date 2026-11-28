@@ -4,7 +4,7 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 
 const {window, document} = parseHTML("<!doctype html><html><body></body></html>");
 globalThis.window = window;
@@ -101,17 +101,27 @@ test("a section's view back from another under its own #", async () => {
 test("a page of its own loads again, unless the member has tapped or typed on it", async () => {
     const {reloadIfUntouched} = await import("../site/v2/ui/back.js");
     let reloads = 0;
-    const location = window.location;
-    Object.defineProperty(window, "location", {configurable: true, value: {hash: "", reload: () => reloads++}});
-    reloadIfUntouched("Lineup");
-    now += MOVES_KEPT;
-    document.dispatchEvent(new window.Event("visibilitychange"));
-    assert.equal(reloads, 1);
-    document.body.dispatchEvent(new window.Event("click", {bubbles: true}));
-    now += MOVES_KEPT;
-    document.dispatchEvent(new window.Event("visibilitychange"));
-    assert.equal(reloads, 1);
-    Object.defineProperty(window, "location", {configurable: true, value: location});
+    // jsdom's location can't be replaced, so the page's window is one whose location counts reloads
+    const location = {hash: "", reload: () => reloads++};
+    globalThis.window = new Proxy(window, {get: (target, name) => {
+        if (name === "location") {
+            return location;
+        }
+        const value = Reflect.get(target, name, target);
+        return typeof value === "function" && !/^[A-Z]/.test(String(name)) ? value.bind(target) : value;
+    }});
+    try {
+        reloadIfUntouched("Lineup");
+        now += MOVES_KEPT;
+        document.dispatchEvent(new window.Event("visibilitychange"));
+        assert.equal(reloads, 1);
+        document.body.dispatchEvent(new window.Event("click", {bubbles: true}));
+        now += MOVES_KEPT;
+        document.dispatchEvent(new window.Event("visibilitychange"));
+        assert.equal(reloads, 1);
+    } finally {
+        globalThis.window = window;
+    }
 });
 
 // Every screen takes part: a page of its own says what it does when shown again, and every panel on

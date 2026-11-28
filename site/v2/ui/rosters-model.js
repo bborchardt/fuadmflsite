@@ -4,9 +4,8 @@
 
 import {asArray, numberOf} from "../lib/mfl.js";
 import {POSITIONS, SALARY_CAP, positionOrder, rookieSalary} from "../lib/rules.js";
-import {CAP_TIGHT, cents, money, yearsText} from "./format.js";
+import {CAP_TIGHT, cents, money, yearsText, dayText} from "./format.js";
 import settings from "../lib/settings.js";
-import {dayText} from "./home-model.js";
 import {byAllPlay} from "./league-model.js";
 import {recordText} from "../lib/payouts.js";
 

@@ -2,8 +2,7 @@
 // Winners and Champions, from what league.js and scores.js load (league-model.js's shapes).
 
 import {esc} from "./html.js";
-import {figure, oneLineTimes} from "./format.js";
-import {clock, dayText} from "./home-model.js";
+import {figure, oneLineTimes, clock, dayText} from "./format.js";
 import {WEEKLY_PRIZE, gameText, ledger, pairLines, powerFacts, recordText, winningsLine} from "./league-model.js";
 import {withIcon} from "./team-pictures.js";
 

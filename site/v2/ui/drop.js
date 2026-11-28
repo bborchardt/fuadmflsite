@@ -9,7 +9,7 @@ import {
     WIDE, alertLine, capTone, doneLine, failedLine, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, rosterIds,
     loadFailed, sendMove, takeFlash
 } from "./moves.js";
-import {changeTone, signed, surname, teamState, usedTone} from "./add-model.js";
+import {changeTone, signed, surname, teamState, usedTone} from "./moves-model.js";
 import {checkDrop, dropRows, readRoster} from "./drop-model.js";
 import {money} from "./format.js";
 import {contractYears} from "./rosters-model.js";

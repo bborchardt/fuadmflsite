@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {groupViews, firstLast} from "../site/v2/ui/add-model.js";
+import {groupViews} from "../site/v2/ui/add-model.js";
+import {firstLast} from "../site/v2/ui/moves-model.js";
 import {controlSelector, deskHome, dropList, phoneHome, phonePlayers, reviewForm, statusMarkup} from "../site/v2/ui/add-view.js";
 
 // a team at $293 used, as Add's checks read it

@@ -4,7 +4,7 @@
 
 import {displayName} from "../lib/mfl.js";
 import {text} from "./player-page.js";
-import {LENGTH_PATTERN} from "./add-model.js";
+import {LENGTH_PATTERN} from "./moves-model.js";
 
 // "Add Marks, Woody HOU RB for $5.00 and drop None"
 const CLAIM = /^Add (.+) (\S+) ([A-Za-z]{1,4}) for \$([\d.]+) and drop (.+)$/;

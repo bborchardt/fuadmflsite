@@ -4,9 +4,17 @@ import {readFileSync} from "node:fs";
 import {pendingGroups, projectBids} from "../site/v2/lib/bids.js";
 import {playersFromExport} from "../site/v2/lib/league.js";
 import {
-    boardTopics, calendarDates, comingUp, contractTopic, freeAgencyEnd, homePhase, leagueAlerts, lineupProblems,
-    myAlerts, nextBidRun, recentMoves
+    boardTopics,
+    calendarDates,
+    comingUp,
+    contractTopic,
+    homePhase,
+    leagueAlerts,
+    lineupProblems,
+    myAlerts,
+    recentMoves
 } from "../site/v2/ui/home-model.js";
+import {freeAgencyEnd, nextBidRun} from "../site/v2/ui/calendar.js";
 import {pageTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";
 import {cutDownAt} from "../site/v2/lib/violations.js";
 

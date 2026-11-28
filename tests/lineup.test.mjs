@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {applyInjuries, lineupStatus, lineupWarnings, readName, tagOf, withKickoff} from "../site/v2/ui/lineup-model.js";
-import {clock} from "../site/v2/ui/home-model.js";
+import {clock} from "../site/v2/ui/format.js";
 import {TIME_ZONE} from "../site/v2/lib/zone.js";
 
 // the league's starter limits, as MFL's page heads each position
