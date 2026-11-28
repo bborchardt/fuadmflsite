@@ -35,7 +35,7 @@ from playwright.sync_api import sync_playwright
 REPO = Path(__file__).resolve().parents[2]
 LEAGUE_URL = "https://www44.myfantasyleague.com/{season}/home/{league}"
 PAGES = "https://bborchardt.github.io/fuadmflsite/"
-TYPES = {".js": "text/javascript", ".css": "text/css", ".json": "application/json"}
+TYPES = {".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".woff2": "font/woff2"}
 
 AREAS = """() => {
   const text = (el) => el ? el.textContent.replace(/\\s+/g, ' ').trim() : null;

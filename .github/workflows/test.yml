@@ -21,3 +21,5 @@ jobs:
       - run: npm test
       - run: npm run lint
       - run: npm run build
+      # v2's bundle within its budget, gzipped (REVIEW.md: Performance)
+      - run: node tools/bundle-budget.mjs

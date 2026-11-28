@@ -759,6 +759,9 @@ class Mfl:
             body = self.site.read(path)
             if body is None:
                 return route.fulfill(status=404, body="")
+            if path.endswith(".woff2"):
+                # fonts are read cross-origin, as Pages allows
+                return route.fulfill(body=body, content_type="font/woff2", headers={"access-control-allow-origin": "*"})
             return route.fulfill(body=body, content_type="text/css" if path.endswith(".css") else "text/javascript")
         # Barlow, as Google Fonts serves it (fonts/README.md)
         if url.netloc == "fonts.googleapis.com":
