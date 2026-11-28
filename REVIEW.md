@@ -54,7 +54,8 @@ from AGENTS.md.
   they take the version's from the context, as `const {names} = lib.<name>;`, the form
   `tests/guards.test.mjs` reads.
 - Writes to MFL go only through `jobs/mfl-import.mjs` / `jobs/mfl-form.mjs`. No import cycles.
-- Outside services: members' pages depend only on MFL and GitHub Pages. The exceptions are the
+- Outside services: members' pages depend only on MFL and GitHub Pages (v2's reads checked by
+  requests.py, a member's Home among them). The exceptions are the
   devices form (Google Forms), which only receives error reports after the page has run, and
   GitHub's API, which only the commissioner's Home asks, after My alerts first draws. The daily
   job depends on MFL, GitHub, and, for backup starters, nflverse's weekly rosters and
