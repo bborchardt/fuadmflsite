@@ -380,8 +380,9 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     // The commissioner, as 0000 or as their own team, is told when the daily job hasn't run. My alerts
     // adds it when drawn, from what was last read from GitHub within RUN_CHECKED, so it isn't in My
-    // alerts' saved copy and never holds the page up. It's read again after My alerts has drawn,
-    // once RUN_CHECKED has passed, and My alerts is drawn again from what it shows if it changed.
+    // alerts' saved copy and never holds the page up. It's read again after My alerts first draws and
+    // each time Home is shown again, once RUN_CHECKED has passed (an hour while the alert shows, so it
+    // clears soon after a run), and My alerts is drawn again from what it shows if it changed.
     const runRepo = loggedIn && dataBase && (franchiseId === "0000" || isTeamOfCommish(document)) ? repoOf(dataBase) : null;
     const lateRun = () => {
         const entry = runRepo && saved(RUN_KEY);
@@ -401,16 +402,19 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         if (!runRepo || checking || failed && Date.now() - failed.storedAt < HOUR) {
             return;
         }
-        checking = cached(RUN_KEY, RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
-            .then(() => {
-                if (drawnAlerts && titleOf(lateRun()) !== drawnAlerts.late && drawnAlerts.body.isConnected) {
-                    withLate(drawnAlerts.draw)(drawnAlerts.alerts, drawnAlerts.body);
-                }
-            }, (error) => {
+        checking = cached(RUN_KEY, lateRun() ? HOUR : RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
+            .catch((error) => {
                 save(RUN_FAILED_KEY, true, HOUR);
                 console.error("[fuad] My alerts couldn't check the daily chores' last run:", error);
             })
             .then(() => {
+                // a reading too old to use, with no new one, takes the alert away too
+                if (drawnAlerts && titleOf(lateRun()) !== drawnAlerts.late && drawnAlerts.body.isConnected) {
+                    withLate(drawnAlerts.draw)(drawnAlerts.alerts, drawnAlerts.body);
+                }
+            })
+            .catch((error) => console.warn("[fuad] couldn't draw My alerts again:", error))
+            .finally(() => {
                 checking = null;
             });
     };
@@ -516,7 +520,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             });
         }
     }
-    // after My alerts has drawn, and each time Home is shown again
+    // after My alerts first draws, and each time Home is shown again
     Promise.resolve(alertsShown).then(checkRun);
     refreshes.push(checkRun);
 

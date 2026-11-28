@@ -26,6 +26,8 @@ test("GitHub's list gives the last run that did the chores; none is none, anythi
     assert.deepEqual(readLastRun({total_count: 3, workflow_runs: [run("cancelled", "2026-11-28T17:00:00Z"), run("skipped", "2026-11-28T16:00:00Z"), run("failure", "2026-11-27T17:36:45Z")]}), {at});
     assert.deepEqual(readLastRun({total_count: 2, workflow_runs: [run("timed_out", "2026-11-27T17:36:45Z"), run("success", "2026-11-26T17:00:00Z")]}), {at});
     assert.deepEqual(readLastRun({total_count: 1, workflow_runs: [run("cancelled", "2026-11-28T17:00:00Z")]}), {at: null});
+    // a broken workflow file: the schedule fires, but no job starts
+    assert.deepEqual(readLastRun({total_count: 2, workflow_runs: [run("startup_failure", "2026-11-28T17:00:00Z"), run("success", "2026-11-27T17:36:45Z")]}), {at});
     assert.deepEqual(readLastRun({total_count: 0, workflow_runs: []}), {at: null});
     assert.equal(readLastRun({total_count: 0, workflow_runs: [run("success", "2026-11-28T17:00:00Z")]}), null);
     assert.equal(readLastRun({total_count: 1, workflow_runs: [{created_at: "2026-11-28T17:00:00Z"}]}), null);

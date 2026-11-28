@@ -446,10 +446,12 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
   never starts (the schedule turned off, an Actions outage). My alerts, as 0000 or as the
   commissioner's own team (whose pages have MFL's Become Commissioner link, `isTeamOfCommish` in
   `ui/looks.js`), shows "The daily chores haven't run on schedule since …", linking to the workflow,
-  once the last scheduled run that wasn't cancelled or skipped started more than 36 hours ago (a
-  failed one ran, and GitHub emails it; one started by hand doesn't mend the schedule). The page asks
-  GitHub's API for the last 10 (`runsUrl` in `ui/home-model.js`, the repository read from the Pages
-  address) after My alerts has drawn, at most once in 6 hours, or an hour after a read that failed.
+  once the last scheduled run that ran its jobs (not cancelled, skipped or failed to start) started
+  more than 36 hours ago (a failed one ran, and GitHub emails it; one started by hand doesn't mend the
+  schedule). The page asks GitHub's API for the last 10 (`runsUrl` in `ui/home-model.js`, the
+  repository read from the Pages address) after My alerts first draws and when Home is shown again,
+  at most once in 6 hours (once an hour while the alert shows, so it clears soon after a run), or an
+  hour after a read that failed.
   The answer is kept in the browser and used for 6 hours, added to My alerts as it's drawn, so it
   isn't in My alerts' saved copy; a fresh one that changes the alert draws My alerts again from what
   it shows, with nothing more asked of MFL. GitHub answers a browser without a login 60 times an hour. No other member's
