@@ -1,5 +1,6 @@
 // A chore's context as jobs/daily.mjs makes it (jobs/chore-context.mjs), with v2's lib and the real
-// session, but MFL answered from `exports` and `pages` here: nothing leaves the machine.
+// session, but MFL answered from `exports` and `pages` here. The chores' own fetches (nflverse, GitHub
+// Pages) are refused, so nothing leaves the machine.
 //   exports  {TYPE or "TYPE:W": section body}; a number in place of a body is an HTTP status
 //   pages    {"/2026/path?query": html}
 // Every request is in `requests`, every line the run printed in `printed`, and its chore log and flags
@@ -16,6 +17,9 @@ import {runLog} from "../../jobs/run-log.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const lib = await loadLib(root, "v2");
 export const HOST = "https://www44.myfantasyleague.com";
+globalThis.fetch = async (url) => {
+    throw new Error(`tests/fixtures/chore-context.mjs doesn't answer ${url}`);
+};
 const made = [];
 export const cleanUp = () => made.splice(0).forEach((dir) => rmSync(dir, {recursive: true, force: true}));
 

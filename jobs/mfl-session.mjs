@@ -22,9 +22,9 @@ const mflError = (message) => Object.assign(new Error(message), {fromMfl: true})
 const commishCookie = (response) => (response.headers.getSetCookie ? response.headers.getSetCookie() : []).map((each) => each.split(";")[0])
     .find((each) => each.startsWith("MFL_IS_COMMISH="));
 
-// `fetchImpl` and `sleep` are the global fetch and a timer unless a test gives its own
+// `fetchImpl`, `sleep` and `clock` are the global fetch, a timer and Date.now unless a test gives its own
 export function mflSession({lib, host, leagueId, userAgent, log, fetchImpl = (url, init) => fetch(url, init),
-    sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), spacing = SPACING_MS, timeout = TIMEOUT_MS}) {
+    sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), clock = () => Date.now(), spacing = SPACING_MS, timeout = TIMEOUT_MS}) {
     const {API_BASE, asArray, exportUrl, fetchExport} = lib.mfl;
     // after login these carry the commissioner's session cookie: never send them anywhere else
     const headers = {"User-Agent": userAgent};
@@ -35,8 +35,8 @@ export function mflSession({lib, host, leagueId, userAgent, log, fetchImpl = (ur
 
     // spaced even when several start at once: MFL throttles bursts with HTTP 429
     async function spaced(url, init) {
-        const wait = nextRequestAt - Date.now();
-        nextRequestAt = Math.max(Date.now(), nextRequestAt) + spacing;
+        const wait = nextRequestAt - clock();
+        nextRequestAt = Math.max(clock(), nextRequestAt) + spacing;
         if (wait > 0) {
             await sleep(wait);
         }

@@ -33,12 +33,11 @@ function session(answers, options = {}) {
 }
 
 test("requests asked at once go out a spacing apart, each with a timeout", async () => {
-    const {session: mflSessionMade, requests, waits} = session([page("a"), page("b"), page("c")], {spacing: 1000});
+    // the clock stands still, as the three are asked in the same moment
+    const {session: mflSessionMade, requests, waits} = session([page("a"), page("b"), page("c")], {spacing: 1000, clock: () => 5000});
     await Promise.all(["/a", "/b", "/c"].map((path) => mflSessionMade.fetch(`${HOST}${path}`, {})));
     assert.equal(requests.length, 3);
-    assert.equal(waits.length, 2);
-    // the second waits about a spacing, the third about two
-    assert.ok(waits[0] > 900 && waits[0] <= 1000 && waits[1] > 1900 && waits[1] <= 2000, String(waits));
+    assert.deepEqual(waits, [1000, 2000]);
     assert.ok(requests.every((request) => request.signal instanceof AbortSignal));
 });
 

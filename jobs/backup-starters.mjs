@@ -270,7 +270,7 @@ function backupWeeksDone(ctx) {
     }
     return (existsSync(file) ? JSON.parse(readFileSync(file, "utf8"))[season] : null) || null;
 }
-// the first week not yet settled, for payouts when the chore didn't finish; none before its first run
+// the first week not yet settled; none before the chore's first run
 export function firstOpenBackupWeek(ctx) {
     const record = backupWeeksDone(ctx);
     if (record === null) {
@@ -282,6 +282,9 @@ export function firstOpenBackupWeek(ctx) {
     }
     return week;
 }
+// payouts' first week to wait, when the chore didn't finish and so didn't say: the first not yet
+// settled, or none while the chore only logs, as run's own openFrom
+export const openFromAfterFailure = (ctx) => (ctx.apply.backups ? firstOpenBackupWeek(ctx) : Infinity);
 function markBackupWeeks(ctx, weeks) {
     const {season} = ctx;
     const file = backupsFile(ctx);

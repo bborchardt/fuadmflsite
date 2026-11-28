@@ -24,7 +24,7 @@ export async function run(ctx, {built, rosters, transactions, playerNames, cutDo
     const {decideYears, teamPlayers} = lib.contractYears;
     const applyContractYears = ctx.apply.contractYears;
     const pending = pendingAdds({rosters, transactions, players: playerNames});
-    // an add before the cut-down date has until then, through the form (offseasonLengths)
+    // an add before the cut-down date has until then, through the form (contract-lengths.mjs)
     const from = formsEnd(built, cutDown);
     if (!from) {
         log(`Neither the cut-down date nor week 1's kickoff is known; ${built.started ? "every" : "no"} add is taken as owing its length within the hour.`);

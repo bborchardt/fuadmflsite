@@ -244,9 +244,9 @@ try {
         // before payouts, which wait for a week's backups
         const backups = await chore("Backup starters", () => backupStarters.run(ctx, state));
         backupsChanged = Boolean(backups && backups.changed);
-        // when the chore failed, the weeks it left open aren't known, so from the first not yet settled
-        const openFrom = backups ? backups.openFrom : apply.backups ? backupStarters.firstOpenBackupWeek(ctx) : Infinity;
-        await chore("Payouts", () => payouts.run(ctx, state, openFrom));
+        // when the chore failed, the weeks it left open aren't known; a record that can't be read either
+        // stops only payouts
+        await chore("Payouts", () => payouts.run(ctx, state, backups ? backups.openFrom : backupStarters.openFromAfterFailure(ctx)));
         // it writes nothing, so last
         await chore("MFL check", () => mflCheck.run(ctx, state));
     }

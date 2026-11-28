@@ -48,7 +48,7 @@ from AGENTS.md.
   `jobs/run-log.mjs`. Each chore is `jobs/<chore>.mjs`, taking the context `jobs/chore-context.mjs`
   makes (lib, the MFL session, log, choreLog, needsAttention, dryRun, the shared reads and the
   import); a new chore starts that way. A value one chore needs from another is passed in
-  explicitly, and no module-level variable holds a run's state. `jobs/<chore>.mjs` import no lib/:
+  explicitly. No chore module, nor the session or the run log, holds a run's state at module level. `jobs/<chore>.mjs` import no lib/:
   they take the version's from the context, as `const {names} = lib.<name>;`, the form
   `tests/guards.test.mjs` reads.
 - Writes to MFL go only through `jobs/mfl-import.mjs` / `jobs/mfl-form.mjs`. No import cycles.

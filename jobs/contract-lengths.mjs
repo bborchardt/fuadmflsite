@@ -26,7 +26,7 @@ export async function run(ctx, {built, rosters, playerNames, cutDown}, over, rfa
         log("Neither the cut-down date nor week 1's kickoff is known, so later adds can't be told apart; offseason contract lengths skipped.");
         return;
     }
-    // one added since owes his within the hour (contractYears), even once traded on
+    // one added since owes his within the hour (contract-years.mjs), even once traded on
     const later = (id) => addedSince(built, id, from);
     const teams = asArray(rosters.franchise).map((team) => ({id: team.id, due: lengthsDue(rosters, team.id).filter((id) => !later(id) && !rfas.has(id))}))
         .filter((team) => team.due.length);
