@@ -14,9 +14,10 @@ const versions = readdirSync(join(root, "site")).filter((name) => /^v\d+$/.test(
 
 // what the daily job's modules take from the version's lib/: {file: [names]}, each read as
 // `const {names} = lib.<name>;` (jobs/chore-context.mjs); one with a default (`name = null`) is optional.
-// `uses` counts every way of reaching the lib, `reads` only that one, so another (a nested or whole
-// destructure, a bracket) leaves them unequal. A comment is from `//` at a line's start or after a
-// space, so an address's https:// isn't one.
+// `uses` counts every mention of `lib` in the code but its declaration and the shorthand `{lib, …}`
+// that hands it on whole, and `reads` only that form, so any other (a nested destructure, a bracket,
+// a spread) leaves them unequal. Only a whole line's comment is left out: a mention in a trailing one, or in a string's
+// words, counts, so the test fails on it rather than missing a use.
 const JOBS = join(root, "jobs");
 function needsIn(sources) {
     const files = Object.fromEntries(LIB_FILES.map((file) => [libKey(file), file]));
@@ -24,8 +25,14 @@ function needsIn(sources) {
     let reads = 0;
     let uses = 0;
     for (const text of sources) {
-        const source = text.replace(/(^|\s)\/\/.*$/gm, "$1");
-        uses += (source.match(/\blib\s*\.\s*[A-Za-z]\w*|\blib\s*\[|=\s*(?:ctx\s*\.\s*)?lib\s*[;,)]|\{[^{}]*\blib\b[^{}]*\}\s*=\s*lib\b/g) || []).length;
+        const source = text.replace(/^\s*\/\/.*$/gm, "");
+        // the identifier, alone or as ctx.lib: not a path's lib/, a string's "lib", or loadLib
+        for (const found of source.matchAll(/(?:(?<![\w$./"'`-])|(?<=\bctx\s*\.\s*)|(?<=\.\.\.\s*))lib(?![\w$])/g)) {
+            const before = source.slice(0, found.index);
+            const handedOn = /^\s*[,}]/.test(source.slice(found.index + 3)) && /[{,]\s*$/.test(before) && !/\.\.\.\s*$/.test(before);
+            const declared = /\b(?:const|let)\s+$/.test(before) && /^\s*=(?!=)/.test(source.slice(found.index + 3));
+            uses += handedOn || declared ? 0 : 1;
+        }
         for (const [, names, key] of source.matchAll(/const\s*\{([^{}]+)\}\s*=\s*(?:ctx\.)?lib\.(\w+)\s*;/g)) {
             reads++;
             const file = files[key] || `${key}, which LIB_FILES doesn't load`;
@@ -49,12 +56,14 @@ test("a use of the lib in any other form than the one read is noticed, and an ad
     const read = "const {asArray} = lib.mfl;";
     assert.deepEqual(needsIn([read]), {needs: {"mfl.js": ["asArray"]}, reads: 1, uses: 1});
     assert.deepEqual(needsIn([`const url = "https://x"; ${read}`]).needs, {"mfl.js": ["asArray"]});
-    for (const other of ["const {mfl: {asArray}} = ctx.lib;", "const {mfl} = lib;", "const x = lib[\"rules\"];", "const y = ctx.lib.mfl.asArray;", "run(lib.mfl);"]) {
+    for (const other of ["const {mfl: {asArray}} = ctx.lib;", "const {mfl} = lib;", "const x = lib[\"rules\"];", "const y = ctx.lib.mfl.asArray;", "run(lib.mfl);",
+        "const {lib: {mfl: {asArray}}} = ctx;", "function f({lib: {rules}}) {}", "const {mfl} = ctx.lib", "const z = lib?.mfl;", "const all = {...lib};",
+        "log(\"a // b\"); const y = lib[\"k\"];", "const {mfl} = lib, more = 1;"]) {
         const {reads, uses} = needsIn([read, other]);
         assert.ok(uses > reads, other);
     }
     // the lib handed on whole, as daily.mjs hands it to the session and the context, isn't a use
-    assert.equal(needsIn(["mflSession({lib, host});", "const {lib, session} = ctx;"]).uses, 0);
+    assert.equal(needsIn(["mflSession({lib, host});", "const {lib, session} = ctx;", "async function f({session, lib}, x) {}", "const lib = await loadLib(root, version);", "loadLib(root); join(\"lib\", file); \"site/v2/lib/x.js\";"]).uses, 0);
 });
 
 // the morning check's pages, read by the version's own ui/ readers (jobs/mfl-check.mjs pageChecks):
