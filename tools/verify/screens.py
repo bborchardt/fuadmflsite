@@ -77,6 +77,8 @@ BACKUPS_ON = 'window.fuadSettings = {extends: "48571", backupStarters: true};'
 # name: (url, saved exports to swap in, and "now" where it isn't NOW)
 SCREENS = {
     "home": (f"/2026/home/{LEAGUE}", {}),
+    # the daily job's last scheduled run three days back: the commissioner's own team is told
+    "home-run-late": (f"/2026/home/{LEAGUE}", {"run": "late"}),
     "add": (f"/2026/add_drop?L={LEAGUE}", {}),
     "add-claims": (f"/2026/add_drop?L={LEAGUE}", {"pendingWaivers": "pendingWaivers-claims.json", "page:add_drop": "add_drop-claims.html"}),
     "drop": (f"/2026/options?L={LEAGUE}&O=257", {}),
@@ -398,6 +400,12 @@ class Mfl:
     "fails-made", "refuses", "lags", "offline", "-noteam"; "unread" (made, the pending claims and
     rosters unread after); "board-fails" (the add made, the
     board post of its length refused). With swaps["window"], no free agent is locked."""
+
+    def runs(self):
+        now = datetime.fromisoformat(self.swaps.get("now", NOW).replace("Z", "+00:00"))
+        started = now - (timedelta(days=3) if self.swaps.get("run") == "late" else timedelta(hours=1))
+        return json.dumps({"total_count": 1, "workflow_runs": [{"event": "schedule", "status": "completed", "conclusion": "success",
+                                                                 "created_at": started.strftime("%Y-%m-%dT%H:%M:%SZ")}]})
 
     def __init__(self, site, swaps):
         self.site = site
@@ -758,6 +766,10 @@ class Mfl:
         if url.netloc == "fonts.gstatic.com":
             font = FONTS / url.path.rsplit("/", 1)[-1]
             return route.fulfill(body=font.read_bytes(), content_type="font/woff2") if font.exists() else route.fulfill(status=404, body="")
+        # GitHub's list of the daily job's scheduled runs, which the commissioner's Home asks for: the
+        # last an hour before the page's clock, or with swaps["run"] "late", three days before
+        if url.netloc == "api.github.com" and url.path.endswith("/actions/workflows/daily.yml/runs"):
+            return route.fulfill(content_type="application/json", headers={"access-control-allow-origin": "*"}, body=self.runs())
         if not url.netloc.endswith("myfantasyleague.com"):
             return route.abort()
         # a move: a POST, or a GET naming an ACTION (withdrawing an offer by its revoke link) or a claim

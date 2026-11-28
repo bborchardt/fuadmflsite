@@ -242,7 +242,8 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 - **A check My alerts can't make is logged, not shown:** trade offers, bids, the lineup, the draft
   or contract lengths MFL can't give leave that check's alerts out, as the member sees the same on
   its screen, and log `[fuad] My alerts couldn't check trade offers` as an error, so the header's
-  devices form shows how often.
+  devices form shows how often. So does the daily job's last run when GitHub can't give it, or gives
+  something that isn't its list of runs (`readLastRun`), which is asked for again on the next page.
 - **The season's facts are kept only whole:** the line under the wordmark, Moves' phase and Lineup's
   draft check go by week 1's kickoff, the season's end, the draft results and the calendar
   (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL fails to give (an error, a
@@ -441,6 +442,16 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
     by the next.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
   own reader while the hour is open, so owners see what will be set.
+- **The commissioner is told when the job hasn't run:** GitHub emails a run that fails, not one that
+  never starts (the schedule turned off, an Actions outage). My alerts, as 0000 or as the
+  commissioner's own team (whose pages have MFL's Become Commissioner link, `isTeamOfCommish` in
+  `ui/looks.js`), shows "The daily chores haven't run since …", linking to the workflow, once the last
+  finished scheduled run started more than 36 hours ago. The page asks GitHub's API for that run
+  (`runsUrl` in `ui/home-model.js`, the repository read from the Pages address) after My alerts has
+  drawn, at most once in 6 hours, keeping the answer in the browser, and draws My alerts again if
+  the alert changed. GitHub answers a browser without a login 60 times an hour. No other member's
+  page asks. A file the job published on Pages would have every member download v2 again each day,
+  as each deploy gives every file a new ETag.
 
 ## Previews and the beta
 

@@ -21,13 +21,20 @@ import {
     leagueAlerts,
     lineupProblems,
     myAlerts,
-    recentMoves
+    recentMoves,
+    readLastRun,
+    repoOf,
+    runAlert,
+    runsPage,
+    runsUrl
 } from "./home-model.js";
 import {nextBidRun} from "./calendar.js";
 import {clock, dayText} from "./format.js";
 import {draftPicked, kickoffAt} from "./context.js";
 import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";
 import {onBack} from "./back.js";
+import {isTeamOfCommish} from "./looks.js";
+import {cached, saved} from "./store.js";
 import {moveRows} from "./move-rows.js";
 import {lenient, strict} from "./checked.js";
 
@@ -371,6 +378,26 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         });
     };
 
+    // The commissioner, as 0000 or as their own team, is told when the daily job hasn't run. My alerts
+    // shows what was last read from GitHub; it's read again after My alerts has drawn, once
+    // RUN_CHECKED has passed, so it never holds the page up, and My alerts loads again if the alert
+    // changed.
+    const runRepo = loggedIn && dataBase && (franchiseId === "0000" || isTeamOfCommish(document)) ? repoOf(dataBase) : null;
+    const lateRun = () => {
+        const entry = runRepo && saved(RUN_KEY);
+        return entry ? runAlert(entry.value, runsPage(runRepo), nowSeconds()) : null;
+    };
+    const titleOf = (alert) => (alert ? alert.title : null);
+    let reloadAlerts = () => {};
+    const checkRun = () => {
+        if (runRepo) {
+            const shown = titleOf(lateRun());
+            cached(RUN_KEY, RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
+                .then(() => titleOf(lateRun()) !== shown && reloadAlerts())
+                .catch((error) => console.error("[fuad] My alerts couldn't check the daily chores' last run:", error));
+        }
+    };
+
     // A check My alerts couldn't make leaves its alerts out, as members can see the same on its screen
     // (Trades, Lineup); logged as an error, so the header's devices form counts how often. One MFL has
     // changed still fails the panel (checked.js).
@@ -382,8 +409,9 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         return null;
     };
 
+    let alertsShown;
     if (member) {
-        drawPanel(panels.alerts, {
+        alertsShown = drawPanel(panels.alerts, {
             heading: "My alerts",
             actions: '<span class="fuad-meta fuad-alert-count"></span>',
             what: "my alerts",
@@ -417,7 +445,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 const topic = contractTopic(board);
                 const cutDown = cutDownAt(timeline.calendar, context.season);
                 const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, cutDown || timeline.kickoffs.get(1)).catch(unchecked("contract lengths", {changedFails: false})) : null;
-                return myAlerts({
+                const alerts = myAlerts({
                     league: built,
                     franchiseId,
                     phase,
@@ -434,6 +462,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 }).map((alert) => (alert.action === "lengths"
                     ? {...alert, due: phase === "before-cut" ? (cutDown ? `by ${dayText(cutDown)}` : "before the season") : null, unread: owed.unread.length ? dayText(owed.unread[owed.unread.length - 1]) : null}
                     : alert));
+                const late = lateRun();
+                return late ? [late, ...alerts] : alerts;
             },
             render: (alerts, body) => {
                 panels.alerts.querySelector(".fuad-alert-count").textContent = alerts.length ? `${alerts.length} to do` : "";
@@ -449,15 +479,15 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
         });
     } else if (loggedIn) {
         const commish = franchiseId === "0000";
-        drawPanel(panels.alerts, {
+        alertsShown = drawPanel(panels.alerts, {
             heading: "My alerts",
             // the auction's and rookie draft's results, from the league's sheet (ui/load-form.js)
             actions: commish ? '<button type="button" class="fuad-text-button fuad-load-open">Load auction or rookie draft</button>' : "",
             what: "my alerts",
-            load: () => null,
+            load: () => lateRun(),
             refreshes,
-            render: (value, body) => {
-                body.innerHTML = '<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>';
+            render: (late, body) => {
+                body.innerHTML = `${late ? alertRows([late]) : ""}<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>`;
             }
         });
         if (commish) {
@@ -471,6 +501,13 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             });
         }
     }
+    // My alerts' own load, the one drawPanel just added
+    if (alertsShown) {
+        reloadAlerts = refreshes[refreshes.length - 1];
+    }
+    // after My alerts has drawn, and each time Home is shown again
+    Promise.resolve(alertsShown).then(checkRun);
+    refreshes.push(checkRun);
 
     const leagueShown = drawPanel(panels.league, {
         heading: "League alerts",
@@ -545,6 +582,33 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     // drawPanel resolves to null when the load failed with nothing cached
     return {root, shown: leagueShown.then((value) => value !== null, () => false)};
+}
+
+// The daily job's last scheduled run, kept for RUN_CHECKED: GitHub's API answers 60 requests an hour
+// to a browser without a login, and only the commissioner's asks
+export const RUN_KEY = "fuad.home.dailyRun";
+const HOUR = 60 * 60 * 1000;
+const RUN_CHECKED = 6 * HOUR;
+const RUN_KEPT = 7 * 24 * HOUR;
+const GITHUB_TIMEOUT = 20 * 1000;
+
+async function lastRunOf(repo) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GITHUB_TIMEOUT);
+    try {
+        // eslint-disable-next-line no-restricted-syntax -- GitHub's API, not MFL (REVIEW.md: Accepted decisions)
+        const response = await fetch(runsUrl(repo), {signal: controller.signal});
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        const lastRun = readLastRun(await response.json());
+        if (!lastRun) {
+            throw new Error("GitHub's list of runs has changed");
+        }
+        return lastRun;
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 // the viewer's starters this week from MFL's live scoring, and the week's NFL kickoffs by team
