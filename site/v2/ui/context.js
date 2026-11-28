@@ -121,7 +121,7 @@ export function seasonFacts({season, leagueId}) {
             draftKnown: Boolean(draftResults),
             draftDays: draftDays(calendar)
         };
-    }, () => complete);
+    }, {keep: () => complete});
 }
 
 export async function loadContext(context) {

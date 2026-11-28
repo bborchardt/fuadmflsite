@@ -42,13 +42,15 @@ test("cached: a failed load isn't kept, so the next asks again", () => withStora
 }));
 
 test("cached: a value `keep` turns down is used but not kept, so the next asks again", () => withStorage(async () => {
-    assert.equal(await cached("fuad.test.d", DAY, async () => "partial", () => false), "partial");
+    assert.equal(await cached("fuad.test.d", DAY, async () => "partial", {keep: () => false}), "partial");
     assert.equal(saved("fuad.test.d"), null);
-    assert.equal(await cached("fuad.test.d", DAY, async () => "whole", (value) => value === "whole"), "whole");
+    assert.equal(await cached("fuad.test.d", DAY, async () => "whole", {keep: (value) => value === "whole"}), "whole");
     assert.equal(saved("fuad.test.d").value, "whole");
 }));
 
-test("cached: with storage blocked, every call loads and none fails", async () => {
+test("cached: with storage blocked, every call loads and none fails", async (t) => {
+    // its one warning a page
+    t.mock.method(console, "warn", () => {});
     globalThis.window = {};
     Object.defineProperty(globalThis.window, "localStorage", {get() {
         throw new Error("SecurityError");
@@ -188,6 +190,69 @@ test("storage that's full warns once a page, in the console only, and the page c
         storage.set("fuad.a", "1");
         storage.set("fuad.b", "2");
         assert.deepEqual(warnings, ["[fuad] couldn't keep in browser storage:"]);
+    } finally {
+        delete globalThis.window;
+    }
+});
+
+test("a copy cachedOrStale may still show is kept as long, whichever read saved it", () => withStorage(async (items) => {
+    const expiry = (key) => {
+        const name = [...items.keys()].find((stored) => stored.startsWith(key));
+        const entry = JSON.parse(items.get(name));
+        return entry.expires - entry.storedAt;
+    };
+    // the refresh behind a stale copy
+    save("fuad.test.f", "old", 2 * DAY);
+    age(items, "fuad.test.f", DAY + 1);
+    let refreshed;
+    const done = new Promise((resolve) => {
+        refreshed = resolve;
+    });
+    await cachedOrStale("fuad.test.f", DAY, 2 * DAY, async () => {
+        setTimeout(refreshed);
+        return "new";
+    });
+    await done;
+    assert.equal(saved("fuad.test.f").value, "new");
+    assert.equal(expiry("fuad.test.f"), 2 * DAY);
+    // the player list's fresh read, which the shown ones read stale
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({players: {player: [{id: "1", name: "Last, First", position: "QB", team: "MIN"}]}}), {status: 200});
+    try {
+        const {playerList} = await import("../site/v2/ui/player-list.js");
+        await playerList(2026, {fresh: true});
+        assert.equal(expiry("fuad.playerList.2026"), 2 * DAY);
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+}));
+
+test("the page's first save sweeps before it writes, so what's swept makes room for it, and a kept answer with no expiry goes", async () => {
+    const items = new Map();
+    const room = 3;
+    const localStorage = {
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => {
+            if (!items.has(key) && items.size >= room) {
+                throw new Error("QuotaExceededError");
+            }
+            items.set(key, String(value));
+        },
+        removeItem: (key) => items.delete(key)
+    };
+    globalThis.window = {localStorage: new Proxy(localStorage, {
+        ownKeys: () => [...items.keys()],
+        getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
+    })};
+    const now = Date.now();
+    items.set("fuad.kickoff.2025.1", JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}));
+    items.set("fuad.keep.0001|https://x/export?TYPE=league", JSON.stringify({body: "{}"}));
+    items.set("fuad.beta", "v2");
+    try {
+        const store = await import("../site/v2/ui/store.js?room");
+        store.save("fuad.kickoff.2026.1", 1, DAY);
+        assert.equal(store.saved("fuad.kickoff.2026.1").value, 1);
+        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.kickoff.2026.1"]);
     } finally {
         delete globalThis.window;
     }

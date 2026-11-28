@@ -91,8 +91,8 @@ const kept = (key) => (keptEntry(key) || {}).body ?? null;
 
 // what's expired goes with the store's sweep, whose entries have `expires` too
 function keep(key, body, maxAge) {
-    storage.set(key, JSON.stringify({expires: Date.now() + maxAge, body}));
     sweep();
+    storage.set(key, JSON.stringify({expires: Date.now() + maxAge, body}));
 }
 
 // after a move made in v2, so the next page shows it: what a move changes is asked again
@@ -133,43 +133,50 @@ function thisWeeksSchedule() {
 // takes a while over the players' list
 export const READ_TIMEOUT = 20 * 1000;
 
-// Every read from MFL. After MFL answers 429 nothing is asked of it for a while, on any page; a read
-// in that time answers 429 at once, so it fails as MFL's refusal would. Moves aren't held. A read MFL
-// doesn't answer in READ_TIMEOUT fails as one cut off does (ui/panel.js cutOff), so a panel isn't
-// left on its placeholders. AbortSignal.timeout is newer than the oldest devices.
-export async function mflFetch(url, init = {}) {
-    const until = Number(storage.get(WAIT_KEY)) || 0;
-    if (Date.now() < until) {
-        return new Response("", {status: 429, statusText: HELD});
-    }
-    const controller = init.signal ? null : new AbortController();
-    let timedOut = false;
-    const timer = controller && setTimeout(() => {
-        timedOut = true;
-        controller.abort();
-    }, READ_TIMEOUT);
-    let response;
-    try {
-        response = await fetch(url, controller ? {...init, signal: controller.signal} : init);
-    } catch (error) {
-        throw timedOut ? Object.assign(new Error(`MFL didn't answer in ${READ_TIMEOUT / 1000} seconds`), {cutOff: true}) : error;
-    } finally {
-        clearTimeout(timer);
-    }
-    if (response.status === 429) {
-        storage.set(WAIT_KEY, String(Date.now() + WAIT));
-    }
-    return response;
-}
-
-// A move: sent even while reads are held, and a 429 holds them as one to a read does
-export async function mflSend(url, init) {
+// whatever asked it, MFL's 429 holds the reads after it, on every page
+async function asked(url, init) {
     const response = await fetch(url, init);
     if (response.status === 429) {
         storage.set(WAIT_KEY, String(Date.now() + WAIT));
     }
     return response;
 }
+
+// A read MFL doesn't answer in READ_TIMEOUT fails as one cut off does (ui/panel.js cutOff), so a
+// panel isn't left on its placeholders. AbortSignal.timeout is newer than the oldest devices.
+async function timed(url, init = {}) {
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, READ_TIMEOUT);
+    try {
+        return await asked(url, {...init, signal: controller.signal});
+    } catch (error) {
+        throw timedOut ? Object.assign(new Error(`MFL didn't answer in ${READ_TIMEOUT / 1000} seconds`), {cutOff: true}) : error;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// Every read from MFL, but a move's confirmation (mflConfirm). After MFL answers 429 nothing is asked
+// of it for a while, on any page; a read in that time answers 429 at once, so it fails as MFL's
+// refusal would.
+export async function mflFetch(url, init) {
+    const until = Number(storage.get(WAIT_KEY)) || 0;
+    if (Date.now() < until) {
+        return new Response("", {status: 429, statusText: HELD});
+    }
+    return timed(url, init);
+}
+
+// A read that confirms a move: not held, as the move itself isn't, since a move made but not
+// confirmed would show as failed; timed, as the move is already sent
+export const mflConfirm = timed;
+
+// A move: sent even while reads are held, and never timed, as one cut off may still have been made
+export const mflSend = asked;
 
 // Promise.all for reads asked at once: when several fail, a refusal (HTTP 429) is the error
 // thrown, whichever failed first, so the page says the server is busy

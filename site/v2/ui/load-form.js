@@ -11,6 +11,7 @@ import {openDialog} from "./dialog.js";
 import {money, yearsText} from "./format.js";
 import {esc} from "./html.js";
 import {readBack, send} from "./moves.js";
+import {mflConfirm} from "./page-fetch.js";
 import {ROOKIE_RANKED, rookieBaselines} from "../lib/rules.js";
 import {draftView} from "./franchise-view.js";
 
@@ -175,8 +176,8 @@ export function openLoadForm({context, built, opener, dataBase}) {
     const players = built.boardContext.playerNames;
     const teams = new Map([...built.franchises].map(([id, franchise]) => [id, franchise.teamName]));
     const franchises = asArray(built.raw.league.franchises && built.raw.league.franchises.franchise);
-    // MFL now, to plan and confirm a send: not held by MFL's wait, as a move's reads aren't (moves.js)
-    const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {init: {cache: "no-store"}, check: strict});
+    // MFL now, to plan and confirm a send, read as a move's confirmation is (moves.js)
+    const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {fetchImpl: mflConfirm, init: {cache: "no-store"}, check: strict});
     const teamCount = teams.size;
     // players unloaded whose salaries aren't cleared yet, kept across reads
     const clearing = new Set();

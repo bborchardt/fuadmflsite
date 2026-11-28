@@ -270,11 +270,65 @@ test("a read MFL doesn't start answering in 20 seconds fails as one cut off, and
         const exported = fetchExport(league("league"), "league", {fetchImpl: mflFetch});
         t.mock.timers.tick(20000);
         await assert.rejects(exported, (each) => each.cutOff === true && /network error \(MFL didn't answer in 20 seconds\)/.test(each.message));
-        const {mflSend} = await import("../site/v2/ui/page-fetch.js");
-        mflSend("https://www44.myfantasyleague.com/2026/add_drop", {method: "POST"});
+        const {mflConfirm, mflSend} = await import("../site/v2/ui/page-fetch.js");
+        const confirm = mflConfirm(league("rosters"));
+        t.mock.timers.tick(20000);
+        await assert.rejects(confirm, (each) => each.cutOff === true);
+        const count = signals.length;
+        // left pending: a move that's never answered
+        mflSend("https://www44.myfantasyleague.com/2026/add_drop", {method: "POST"}).catch(() => {});
+        await Promise.resolve();
+        assert.equal(signals.length, count + 1);
         assert.equal(signals.at(-1), undefined);
     } finally {
         globalThis.fetch = realFetch;
         delete globalThis.window;
     }
+});
+
+test("an answer that's come in isn't cut off while it's read, however long that takes", async (t) => {
+    t.mock.timers.enable({apis: ["setTimeout"]});
+    globalThis.window = {localStorage: {getItem: () => null, setItem: () => {}}};
+    const realFetch = globalThis.fetch;
+    let signal;
+    globalThis.fetch = async (url, init) => {
+        signal = init.signal;
+        return new Response("{}", {status: 200});
+    };
+    try {
+        const response = await mflFetch(league("players"));
+        t.mock.timers.tick(20000);
+        assert.equal(signal.aborted, false);
+        assert.equal(await response.text(), "{}");
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("a read confirming a move is asked while reads are held, and its 429 holds them", async () => {
+    const items = new Map([["fuad.mflWait", String(Date.now() + MINUTE)]]);
+    globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))}};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        return new Response("", {status: asked.length === 1 ? 200 : 429});
+    };
+    try {
+        const {mflConfirm} = await import("../site/v2/ui/page-fetch.js");
+        assert.equal((await mflConfirm(league("rosters"))).status, 200);
+        items.delete("fuad.mflWait");
+        assert.equal((await mflConfirm(league("pendingWaivers"))).status, 429);
+        assert.ok(Number(items.get("fuad.mflWait")) > Date.now());
+        assert.equal((await mflFetch(league("league"))).statusText, "held by v2 after MFL's 429");
+        assert.equal(asked.length, 2);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("fetchExport has no fetch of its own: a read that doesn't say how to ask fails at once", async () => {
+    await assert.rejects(fetchExport(league("rosters"), "rosters"), (error) => error instanceof TypeError && /fetchExport\(rosters\) needs a fetchImpl/.test(error.message));
 });

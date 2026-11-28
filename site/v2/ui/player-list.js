@@ -30,6 +30,6 @@ function load(season) {
 export async function playerList(season, {fresh = false} = {}) {
     const key = `${PLAYERS_KEY}.${season}`;
     // kept as long as the stale read below shows it, whichever read saved it
-    const rows = await (fresh ? cached(key, DAY, () => load(season), undefined, SHOWN_FOR) : cachedOrStale(key, DAY, SHOWN_FOR, () => load(season)));
+    const rows = await (fresh ? cached(key, DAY, () => load(season), {keptFor: SHOWN_FOR}) : cachedOrStale(key, DAY, SHOWN_FOR, () => load(season)));
     return {player: rows.map(([id, name, position, team]) => ({id, name, position, team}))};
 }

@@ -78,16 +78,17 @@ export function saved(key) {
 
 // `keptFor`, in ms: how long anything reads it, after which the sweep takes it out
 export function save(key, value, keptFor) {
+    sweep();
     const storedAt = Date.now();
     storage.set(keyOf(key), JSON.stringify(keptFor ? {storedAt, expires: storedAt + keptFor, value} : {storedAt, value}, keepUnknown));
-    sweep();
 }
 
 // the longest anything is read without an expiry of its own (a panel's saved copy, the launch's
 // season, an entry from before entries had one)
 const YEAR = 365 * 24 * 60 * 60 * 1000;
-// MFL's pages share this storage, and keys carry a season or week, so what's expired goes as the
-// first thing a page keeps is kept: reading every entry is slow on a phone, so once a page
+// MFL's pages share this storage, and keys carry a season or week, so what's expired goes just before
+// the first thing a page keeps is kept, making room for it: reading every entry is slow on a phone,
+// so once a page. page-fetch.js's kept answers (`fuad.keep.`) always have an expiry.
 let swept = false;
 export function sweep() {
     if (swept) {
@@ -106,8 +107,12 @@ export function sweep() {
             } catch (error) {
                 // not one of these (a look's folder, the beta's version)
             }
-            if (entry && typeof entry === "object"
-                && (typeof entry.expires === "number" ? entry.expires <= now : typeof entry.storedAt === "number" && now - entry.storedAt > YEAR)) {
+            if (!entry || typeof entry !== "object") {
+                continue;
+            }
+            const done = typeof entry.expires === "number" ? entry.expires <= now
+                : name.startsWith("fuad.keep.") || (typeof entry.storedAt === "number" && now - entry.storedAt > YEAR);
+            if (done) {
                 window.localStorage.removeItem(name);
             }
         }
@@ -117,7 +122,7 @@ export function sweep() {
 
 // `keep(value)` false: the value is used but not kept, so the next call loads again. `keptFor`: how
 // long it's read for, when longer than `maxAge` (cachedOrStale)
-export async function cached(key, maxAge, load, keep = () => true, keptFor = maxAge) {
+export async function cached(key, maxAge, load, {keep = () => true, keptFor = maxAge} = {}) {
     const entry = saved(key);
     if (entry && Date.now() - entry.storedAt < maxAge) {
         return entry.value;
@@ -134,7 +139,7 @@ export async function cached(key, maxAge, load, keep = () => true, keptFor = max
 export async function cachedOrStale(key, maxAge, staleAge, load) {
     const entry = saved(key);
     if (!entry || Date.now() - entry.storedAt >= staleAge) {
-        return cached(key, maxAge, load, undefined, staleAge);
+        return cached(key, maxAge, load, {keptFor: staleAge});
     }
     if (Date.now() - entry.storedAt >= maxAge) {
         Promise.resolve().then(load).then((value) => save(key, value, staleAge)).catch((error) => console.warn(`[fuad] couldn't refresh ${key}:`, error));

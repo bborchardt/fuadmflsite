@@ -67,8 +67,13 @@ export class MflError extends Error {
 export const HELD = "held by v2 after MFL's 429";
 export const httpStatus = (response) => `HTTP ${response.status}${response.statusText === HELD ? `, ${HELD}` : ""}`;
 
-// `check(section, body)`, when given, gives back the section or throws (the job's lib/shapes.js checkShape)
-export async function fetchExport(url, section, {fetchImpl = fetch, init, check} = {}) {
+// `check(section, body)`, when given, gives back the section or throws (the job's lib/shapes.js checkShape).
+// `fetchImpl` has no default: v2's reads go through ui/page-fetch.js, which a browser's own fetch
+// would skip unnoticed, and the job sends its own headers.
+export async function fetchExport(url, section, {fetchImpl, init, check} = {}) {
+    if (typeof fetchImpl !== "function") {
+        throw new TypeError(`fetchExport(${section}) needs a fetchImpl`);
+    }
     let response;
     try {
         response = await fetchImpl(url, init);

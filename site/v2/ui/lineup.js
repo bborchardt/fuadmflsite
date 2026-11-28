@@ -10,8 +10,8 @@ import {oneLineTimes, plural} from "./format.js";
 import {clock} from "./home-model.js";
 import {openDialog} from "./dialog.js";
 import {lineupProjections, weekFeed} from "./projections.js";
-import {allAtOnce, mflFetch, pageFetch} from "./page-fetch.js";
-import {send} from "./moves.js";
+import {allAtOnce, mflConfirm, mflFetch, pageFetch} from "./page-fetch.js";
+import {sent} from "./moves.js";
 import {strict} from "./checked.js";
 import {pageChanged, placeholders, retryCutOff} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
@@ -216,19 +216,20 @@ async function save(context, form, state, message = null) {
         }
         fields.set(box, message);
     }
-    let answer;
+    let response;
     try {
-        answer = await send(form.action, {method: "POST", body: fields});
+        response = await sent(form.action, {method: "POST", body: fields});
     } catch (error) {
         throw Object.assign(error, {sent: false});
     }
     try {
-        const answered = formIn(answer, state.page.week);
+        // MFL took it, so from here a failure, its answer cut off among them, is "not confirmed"
+        const answered = formIn(await response.text(), state.page.week);
         if (answered) {
             return answered;
         }
         const url = `${window.location.origin}/${context.season}/lineup?L=${encodeURIComponent(context.leagueId)}&WEEK=${state.page.week}&F=${encodeURIComponent(state.page.team)}`;
-        const again = await mflFetch(url, {credentials: "include", cache: "no-store"});
+        const again = await mflConfirm(url, {credentials: "include", cache: "no-store"});
         if (!again.ok) {
             throw new Error(`MFL answered ${httpStatus(again)}`);
         }

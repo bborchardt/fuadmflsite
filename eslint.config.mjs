@@ -13,8 +13,11 @@ import esx from "eslint-plugin-es-x";
 import html from "eslint-plugin-html";
 import globals from "globals";
 
-const NO_AT = {selector: "CallExpression[callee.property.name='at']", message: "ES2022 .at() is forbidden: older iPhones lack it."};
-const FETCH_MESSAGE = "Ask MFL through ui/page-fetch.js: mflFetch for a read, mflSend (or moves.js send) for a move.";
+// a later entry's no-restricted-syntax replaces an earlier one's for the files both match, so each
+// entry lists all its selectors: a selector for all of site/ goes in SITE_SYNTAX
+const SITE_SYNTAX = [{selector: "CallExpression[callee.property.name='at']", message: "ES2022 .at() is forbidden: older iPhones lack it."}];
+const FETCH_MESSAGE = "Ask MFL through ui/page-fetch.js: mflFetch for a read, mflConfirm for one confirming a move, mflSend (or moves.js send) for a move. "
+    + "A file of the site's own on Pages: fetch, with a disable comment saying so.";
 const NO_FETCH = [
     {selector: "CallExpression[callee.name='fetch']", message: FETCH_MESSAGE},
     {selector: "CallExpression[callee.object.name=/^(?:window|globalThis|self)$/][callee.property.name='fetch']", message: FETCH_MESSAGE}
@@ -48,7 +51,7 @@ export default [
             // the code's own `at` fields (message.at) read as Array.prototype.at; only calls are flagged
             "es-x/no-array-prototype-at": "off",
             "es-x/no-string-prototype-at": "off",
-            "no-restricted-syntax": ["error", NO_AT]
+            "no-restricted-syntax": ["error", ...SITE_SYNTAX]
         }
     },
     {
@@ -56,7 +59,7 @@ export default [
         // fetch is only for the site's own files on Pages, each with a disable comment saying so
         files: ["site/v2/ui/**/*.js"],
         ignores: ["site/v2/ui/page-fetch.js"],
-        rules: {"no-restricted-syntax": ["error", NO_AT, ...NO_FETCH]}
+        rules: {"no-restricted-syntax": ["error", ...SITE_SYNTAX, ...NO_FETCH]}
     },
     {
         // the frozen v1's contract readings, loaded only when asked for: an older Safari can't read them

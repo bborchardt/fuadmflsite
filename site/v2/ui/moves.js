@@ -8,7 +8,7 @@ import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {CAP_TIGHT} from "./format.js";
 import {cached} from "./store.js";
-import {allAtOnce, forget, mflFetch, mflSend, pageFetch} from "./page-fetch.js";
+import {allAtOnce, forget, mflConfirm, mflFetch, mflSend, pageFetch} from "./page-fetch.js";
 import {seasonFacts, seasonStarted} from "./context.js";
 import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
@@ -64,16 +64,21 @@ export function withoutOwners(league) {
     return {...league, franchises: {...league.franchises, franchise: Array.isArray(teams) ? teams.map(strip) : strip(teams)}};
 }
 
-// Every move sent to MFL, through mflSend, so its 429 holds reads too. What a move changes is
-// forgotten before and after it: a read in flight meanwhile may keep it again.
-export async function send(url, init) {
+// Every move sent to MFL, through mflSend, so its 429 holds reads too, to MFL's answer: failing on an
+// error status, but before its body is read, which a caller telling "not sent" from "sent, not
+// confirmed" reads itself. What a move changes is forgotten before and after it: a read in flight
+// meanwhile may keep it again.
+export async function sent(url, init) {
     forget();
     const response = await mflSend(url, {credentials: "include", ...init}).finally(forget);
     if (!response.ok) {
         throw new Error(`MFL answered ${httpStatus(response)}`);
     }
-    return response.text();
+    return response;
 }
+
+// a move, to the text of MFL's answer
+export const send = async (url, init) => (await sent(url, init)).text();
 
 // Reads of the roster to confirm a move, while it doesn't show it yet, since the rosters export can
 // lag a move (seen live: a move to IR made, the export read just after still had him active); how
@@ -145,13 +150,13 @@ export function refusal(html) {
     return found || null;
 }
 
-// Reads that confirm a move aren't held by MFL's wait (page-fetch.js), as the move itself isn't:
-// a move made but not confirmed would show as failed.
+// Reads that confirm a move go through mflConfirm (page-fetch.js): not held by MFL's wait, as the
+// move itself isn't, since a move made but not confirmed would show as failed.
 
 // the team's players and their status (`ROSTER`, `INJURED_RESERVE`), fresh, to confirm a move; null
 // when the team isn't in the answer
 export async function rosterStatuses(context, franchiseId) {
-    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {init: {cache: "no-store"}, check: strict});
+    const rosters = await fetchExport(exportUrl(window.location.origin, context.season, "rosters", {L: context.leagueId, FRANCHISE: franchiseId}), "rosters", {fetchImpl: mflConfirm, init: {cache: "no-store"}, check: strict});
     const team = asArray(rosters.franchise).find((entry) => entry.id === franchiseId);
     return team ? new Map(asArray(team.player).map((player) => [player.id, player.status])) : null;
 }
@@ -161,7 +166,7 @@ export const rosterIds = async (context, franchiseId) => [...((await rosterStatu
 
 // the pending claims, fresh, to confirm a move: the groups and each group's comment
 export async function freshPending(context) {
-    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {init: {cache: "no-store"}, check: strict});
+    const pending = await fetchExport(exportUrl(window.location.origin, context.season, "pendingWaivers", {L: context.leagueId}), "pendingWaivers", {fetchImpl: mflConfirm, init: {cache: "no-store"}, check: strict});
     const groups = pendingGroups(pending);
     return {groups, comments: new Map(pendingWithComments(pending, groups).map((group) => [group.round, group.comment]))};
 }
@@ -170,11 +175,11 @@ export async function freshPending(context) {
 export function freshTradesMade(context, since) {
     const days = Math.max(1, Math.ceil((Date.now() / 1000 - since) / (24 * 60 * 60)) + 1);
     const url = exportUrl(window.location.origin, context.season, "transactions", {L: context.leagueId, TRANS_TYPE: "TRADE", DAYS: days});
-    return fetchExport(url, "transactions", {init: {cache: "no-store"}, check: strict});
+    return fetchExport(url, "transactions", {fetchImpl: mflConfirm, init: {cache: "no-store"}, check: strict});
 }
 
 // the member's pending trades, fresh, to confirm a move
-export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {init: {cache: "no-store"}, check: strict});
+export const freshTrades = (context) => fetchExport(exportUrl(window.location.origin, context.season, "pendingTrades", {L: context.leagueId}), "pendingTrades", {fetchImpl: mflConfirm, init: {cache: "no-store"}, check: strict});
 
 // The roster limits hold from the final cut-down date (2.5); without one on the calendar, from week 1
 export function limitsApply({facts, calendar, season}, now = Date.now()) {
