@@ -13,7 +13,7 @@ import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
     loadFailed, sendMove, takeFlash
 } from "./moves.js";
-import {mflConfirm} from "./page-fetch.js";
+import {mflConfirm, mflFetch} from "./page-fetch.js";
 import {httpStatus} from "../lib/mfl.js";
 import {postToContractTopic} from "./lengths-form.js";
 import {CONTRACT_WINDOW_TEXT} from "../lib/adds.js";
@@ -130,20 +130,23 @@ async function confirm(sent, read, shows, what) {
 }
 
 // MFL's edit page for a group, read and posted with one claim's bid and drop and the group's comment;
-// MFL's answer
-async function saveGroup(context, franchiseId, round, change) {
+// MFL's answer. `read`: mflConfirm where a move has just been made, so finishing it isn't held
+// (moves.js), mflFetch where this is the first thing asked, held as any first read is. What fails
+// before the post is `sent: false`.
+async function saveGroup(context, franchiseId, round, change, {read = mflConfirm} = {}) {
     const {season, leagueId} = context;
     const url = `${window.location.origin}/${season}/options?L=${encodeURIComponent(leagueId)}&O=255&F=${encodeURIComponent(franchiseId)}&ROUND=${round}`;
-    // to plan the post, read as a move's confirmation is (moves.js)
-    const page = await mflConfirm(url, {credentials: "include", cache: "no-store"});
+    const page = await read(url, {credentials: "include", cache: "no-store"}).catch((error) => {
+        throw Object.assign(error, {sent: false});
+    });
     if (!page.ok) {
-        throw new Error(`MFL answered ${httpStatus(page)}`);
+        throw Object.assign(new Error(`MFL answered ${httpStatus(page)}`), {status: page.status, sent: false});
     }
     const doc = new DOMParser().parseFromString(await page.text(), "text/html");
     const form = doc.querySelector("form[name=editwr]");
     const comment = form && form.querySelector("textarea[name=comment]");
     if (!form || !comment) {
-        throw new Error("MFL's edit page couldn't be read");
+        throw Object.assign(new Error("MFL's edit page couldn't be read"), {sent: false});
     }
     const fields = new URLSearchParams(new FormData(form));
     if (change.claim) {
@@ -496,10 +499,15 @@ export async function drawAdd({context, franchiseId}) {
                 const found = claimOf(c.editing);
                 const others = found.group.claims.filter((claim) => claim.key !== c.editing).map((claim) => claim.addMfl);
                 const line = c.years ? lengthLine(fa.mflName, c.years, others) : null;
+                // the edit's first read, so held after MFL's 429 as Moves' own reads are
                 const {answer, error} = await saveGroup(context, franchiseId, c.round, {
                     claim: {mflName: fa.mflName, bid: found.claim.bid}, bid: checks.bid, drop: c.drop || null,
                     comment: (comment) => (line ? rewriteComment(comment, fa.mflName, line, others) : comment)
-                }).then((reply) => ({answer: reply, error: null}), (failed) => ({answer: "", error: failed}));
+                }, {read: mflFetch}).then((reply) => ({answer: reply, error: null}), (failed) => ({answer: "", error: failed}));
+                // nothing was sent, so there's nothing to read back
+                if (error && error.sent === false) {
+                    throw error.status === 429 ? new Refused("Server is busy. Try again in a few seconds") : error;
+                }
                 const claim = {add: c.add, bid: checks.bid, drop: c.drop || null};
                 const holds = (fresh) => hasClaim(fresh.groups, c.round, claim) && (!line || lineFor(commentLines(fresh.comments.get(c.round)), fa.mflName, others) === line);
                 const fresh = await readBack(() => freshPending(context), holds);
@@ -608,7 +616,8 @@ export async function drawAdd({context, franchiseId}) {
         state.busy = true;
         render();
         try {
-            await postToContractTopic(context, line);
+            // on its own, so its first read is held as any is
+            await postToContractTopic(context, line, {read: mflFetch});
             state.done = {text: `Posted “${line}”.`};
         } catch (error) {
             console.warn("[fuad] couldn't post the length:", error);

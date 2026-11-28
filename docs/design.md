@@ -641,8 +641,10 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   draws the page and a fresh one is asked for behind it. Moves' checks and Home, whose forms write to
   MFL, wait for a fresh one. On the home page, MFL's hidden chat module stops reading the chat every
   few seconds, as Home reads its own.
-- Every request v2 makes to MFL goes through `ui/page-fetch.js`: reads through `mflFetch`, the
-  reads that confirm a move or plan a form's send through `mflConfirm`, and moves (a move's form,
+- Every request v2 makes to MFL goes through `ui/page-fetch.js`: reads through `mflFetch`, an
+  action's first among them (a form read before its save, a bid's edit page before the edit), the
+  reads that confirm a move or finish one under way (a form's reads once it has written) through
+  `mflConfirm`, and moves (a move's form,
   the lineup, a chat post, the watch list, a skin or width saved) through `mflSend`. The lint
   (`npm run lint`) refuses `fetch` in `ui/`, called or passed on, but for the site's own files on
   Pages, and `fetchExport` (`lib/mfl.js`) has no fetch of its
@@ -650,7 +652,7 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   seconds, on any page; a panel with nothing to show says "Server is busy. Try again in a few
   seconds.", with Retry off until then, and Moves' screens fall back to MFL's page (Outside change).
   Moves and the reads confirming them aren't held, as a move made but not confirmed would show as
-  failed, and a form begun shouldn't stop partway; a move's read-back stops at MFL's refusal rather
+  failed, and one half made shouldn't stop there; a move's read-back stops at MFL's refusal rather
   than ask it again. A read held back fails as `HTTP 429, held by v2 after MFL's 429` in what's logged, so the
   devices form's rows tell MFL's refusals from the reads v2 held after one.
 - A read MFL hasn't started answering in 20 seconds is given up as one cut off (`ui/panel.js`

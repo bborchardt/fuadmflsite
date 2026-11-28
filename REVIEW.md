@@ -40,7 +40,7 @@ from AGENTS.md.
   go in a Moves module (`moves.js`). Helpers now in `home-model.js` and `add-model.js` move out the
   next time those files change.
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads, `mflConfirm` for
-  the reads that confirm a move or plan a form's send, and `mflSend` for moves, so a 429 holds reads on every page. A direct
+  the reads that confirm a move or finish one under way, and `mflSend` for moves, so a 429 holds reads on every page. A direct
   `fetch` is only for the site's own files on Pages. `ui/store.js`: localStorage.
 - `jobs/daily.mjs` only sequences: it runs the chores in order, collects flags and writes the
   summary. The MFL transport and session (login, request spacing, timeouts, waiting out refusals)

@@ -16,7 +16,7 @@ import globals from "globals";
 // a later entry's no-restricted-syntax replaces an earlier one's for the files both match, so each
 // entry lists all its selectors: a selector for all of site/ goes in SITE_SYNTAX
 const SITE_SYNTAX = [{selector: "CallExpression[callee.property.name='at']", message: "ES2022 .at() is forbidden: older iPhones lack it."}];
-const FETCH_MESSAGE = "Ask MFL through ui/page-fetch.js: mflFetch for a read, mflConfirm for one confirming a move or planning a form's send, mflSend (or moves.js send) for a move. "
+const FETCH_MESSAGE = "Ask MFL through ui/page-fetch.js: mflFetch for a read, mflConfirm for one confirming a move or finishing one under way, mflSend (or moves.js send) for a move. "
     + "A file of the site's own on Pages: fetch, with a disable comment saying so.";
 // called, or passed on (`{fetchImpl: fetch}`), which would skip page-fetch.js just as well
 const NO_FETCH = [

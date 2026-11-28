@@ -161,9 +161,9 @@ async function timed(url, init = {}) {
     }
 }
 
-// Every read from MFL, but one confirming a move or planning a form's send (mflConfirm). After MFL
-// answers 429 nothing is asked of it for a while, on any page; a read in that time answers 429 at
-// once, so it fails as MFL's refusal would.
+// Every read from MFL, an action's first among them, but one confirming a move or finishing one
+// under way (mflConfirm). After MFL answers 429 nothing is asked of it for a while, on any page; a
+// read in that time answers 429 at once, so it fails as MFL's refusal would.
 export async function mflFetch(url, init) {
     const until = Number(storage.get(WAIT_KEY)) || 0;
     if (Date.now() < until) {
@@ -172,9 +172,9 @@ export async function mflFetch(url, init) {
     return timed(url, init);
 }
 
-// A read that confirms a move or plans a form's send: not held, as the move itself isn't, since a
-// move made but not confirmed would show as failed and a form begun shouldn't stop partway; timed,
-// as a read can be given up without leaving a move half made
+// A read that confirms a move, or finishes one under way (a form's reads once it has written): not
+// held, as the move itself isn't, since a move made but not confirmed would show as failed, and one
+// half made shouldn't stop there; timed, as giving up a read sends nothing
 export const mflConfirm = timed;
 
 // A move: sent even while reads are held, and never timed, as one cut off may still have been made

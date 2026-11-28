@@ -12,18 +12,19 @@ import {contractTopic} from "./home-model.js";
 import {money} from "./format.js";
 import {esc} from "./html.js";
 import {send} from "./moves.js";
-import {mflConfirm} from "./page-fetch.js";
+import {mflConfirm, mflFetch} from "./page-fetch.js";
 
 // the board topic a length post starts when the league has none with "contract" in its name
 const NEW_TOPIC = "Contract lengths";
 
 const CLOSE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 
-// Posts `body` to the board (messageBoard import): a reply in the newest contract topic, or a new one
-export async function postToContractTopic(context, body) {
+// Posts `body` to the board (messageBoard import): a reply in the newest contract topic, or a new one.
+// `read` for the board: mflConfirm (the default) right after a move it finishes, mflFetch where it's
+// the first thing asked (moves.js).
+export async function postToContractTopic(context, body, {read = mflConfirm} = {}) {
     const {season, leagueId} = context;
-    // part of the post, so read as a move's confirmation is (moves.js)
-    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {fetchImpl: mflConfirm, init: {cache: "no-store"}, check: strict});
+    const board = await fetchExport(exportUrl(window.location.origin, season, "messageBoard", {L: leagueId, COUNT: 100}), "messageBoard", {fetchImpl: read, init: {cache: "no-store"}, check: strict});
     const topic = contractTopic(board);
     const fields = new URLSearchParams(topic ? {THREAD: topic.id, BODY: body} : {SUBJECT: NEW_TOPIC, BODY: body});
     const answer = await send(`${window.location.origin}/${season}/import?TYPE=messageBoard&L=${encodeURIComponent(leagueId)}`, {method: "POST", body: fields});
@@ -93,7 +94,7 @@ export function openLengthsForm({context, layer, players, active, due, unread, d
         // a name that's a number is read as an index by form.elements
         const lines = players.map(({player}, i) => ({player, years: Number(selects[i].value)}));
         try {
-            await postToContractTopic(context, formPost(lines));
+            await postToContractTopic(context, formPost(lines), {read: mflFetch});
             // the reload drops the dialog's history entry (dialog.js); closing first would race it
             onSent();
         } catch (failure) {

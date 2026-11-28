@@ -370,3 +370,33 @@ test("Moves' read confirming a move, and a watch list change, go to MFL while re
         delete globalThis.window;
     }
 });
+
+test("a length post's board read is held where it's the first thing asked, and not right after a move", async () => {
+    const items = new Map([["fuad.mflWait", String(Date.now() + MINUTE)]]);
+    globalThis.window = {
+        location: {origin: "https://www44.myfantasyleague.com", pathname: "/2026/home/48571"},
+        localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))},
+        addEventListener: () => {},
+        history: {state: null}
+    };
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(new URL(url).searchParams.get("TYPE"));
+        return String(url).includes("TYPE=messageBoard&L=") && String(url).includes("/import")
+            ? new Response("<status>OK</status>", {status: 200})
+            : new Response(JSON.stringify({messageBoard: {thread: []}}), {status: 200});
+    };
+    try {
+        const {mflFetch: held} = await import("../site/v2/ui/page-fetch.js");
+        const {postToContractTopic} = await import("../site/v2/ui/lengths-form.js");
+        const context = {season: 2026, leagueId: "48571"};
+        await assert.rejects(postToContractTopic(context, "Smith 2 years", {read: held}), /HTTP 429, held by v2/);
+        assert.deepEqual(asked, []);
+        await postToContractTopic(context, "Smith 2 years").catch(() => {});
+        assert.equal(asked[0], "messageBoard");
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});

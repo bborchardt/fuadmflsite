@@ -155,9 +155,9 @@ export function refusal(html) {
     return found || null;
 }
 
-// Reads that confirm a move, or plan a form's send, go through mflConfirm (page-fetch.js): not held by
-// MFL's wait, as the move itself isn't, since a move made but not confirmed would show as failed, and
-// a form begun shouldn't stop partway.
+// Reads that confirm a move, or finish one under way, go through mflConfirm (page-fetch.js): not held
+// by MFL's wait, as the move itself isn't, since a move made but not confirmed would show as failed,
+// and one half made shouldn't stop there. An action's first read, before anything is sent, is held.
 
 // the team's players and their status (`ROSTER`, `INJURED_RESERVE`), fresh, to confirm a move; null
 // when the team isn't in the answer
