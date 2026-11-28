@@ -277,7 +277,7 @@ return found ? {kind: found.kind, sig: found.sig, index: found.index} : null;
 BUILT = "built:"
 
 
-def listed(choices, what):
+def name_list(choices, what):
     """An argparse type for a comma-separated list of `choices` (`what` names one), so a name not
     among them fails before the run, with the names it could be."""
     def parse(text):

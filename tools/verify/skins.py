@@ -176,7 +176,7 @@ def check(job):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--refresh", action="store_true", help="fetch MFL's stylesheets again and update skins.json")
-    parser.add_argument("--only", type=harness.listed(list(harness.SCREENS), "screen"), help="screens to draw, comma-separated (default all)")
+    parser.add_argument("--only", type=harness.name_list(list(harness.SCREENS), "screen"), help="screens to draw, comma-separated (default all)")
     args = parser.parse_args()
     changed = fetch(args.refresh)
     for name in changed:

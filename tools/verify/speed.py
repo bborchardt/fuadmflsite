@@ -38,7 +38,7 @@ from urllib.parse import urlparse
 from playwright.async_api import async_playwright
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from screens import HOST, INIT, NOW, SCREENS, Mfl, Site, build_working_copy, listed  # noqa: E402
+from screens import HOST, INIT, NOW, SCREENS, Mfl, Site, build_working_copy, name_list  # noqa: E402
 
 # round trip (s), connection setup in round trips (DNS, TCP, TLS), link (bytes/s)
 NETS = {
@@ -291,10 +291,10 @@ def summarize(log, link, errors, final=0):
 
 async def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--screens", default="lineup,home", type=listed(list(SCREENS), "screen"), help="comma-separated (default lineup,home)")
-    parser.add_argument("--net", default="slow", type=listed(list(NETS), "net"), help="comma-separated connections (default slow)")
-    parser.add_argument("--path", default="beta,direct", type=listed(["beta", "direct"], "path"), help="comma-separated (default beta,direct)")
-    parser.add_argument("--cache", default="cold,stale", type=listed(["cold", "stale", "nextday"], "cache"), help="comma-separated (default cold,stale)")
+    parser.add_argument("--screens", default="lineup,home", type=name_list(list(SCREENS), "screen"), help="comma-separated (default lineup,home)")
+    parser.add_argument("--net", default="slow", type=name_list(list(NETS), "net"), help="comma-separated connections (default slow)")
+    parser.add_argument("--path", default="beta,direct", type=name_list(["beta", "direct"], "path"), help="comma-separated (default beta,direct)")
+    parser.add_argument("--cache", default="cold,stale", type=name_list(["cold", "stale", "nextday"], "cache"), help="comma-separated (default cold,stale)")
     which = parser.add_mutually_exclusive_group()
     which.add_argument("--ref", default=None, help="a git ref instead of the working copy")
     which.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
