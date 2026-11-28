@@ -7,6 +7,7 @@ import {pathToFileURL} from "node:url";
 import {join} from "node:path";
 import {mflHomePage} from "./mfl-form.mjs";
 import {pageSaver} from "./saved-pages.mjs";
+import {networkError} from "./network-error.mjs";
 
 // MFL's page as a browser's parser builds it; MFL's scripts aren't run. jsdom is loaded only by a run
 // that checks pages, as it is most of the job's start-up.
@@ -201,7 +202,7 @@ export async function run(ctx, {built, rosters, league}) {
                 return {status: response.status, body: await response.text(), served: response.url};
             } catch (error) {
                 // as the session's page says it: Node's own "fetch failed" reaches the commissioner's email
-                throw new Error(error.fromMfl ? error.message : `network error (${error.message})`);
+                throw new Error(error.fromMfl ? error.message : networkError(error));
             }
         },
         keep: saving.keep

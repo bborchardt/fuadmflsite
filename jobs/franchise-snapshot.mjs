@@ -3,6 +3,7 @@
 
 import {existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync} from "node:fs";
 import {dirname, join} from "node:path";
+import {withCause} from "./network-error.mjs";
 
 const LATE_AFTER_DAYS = 7;
 
@@ -69,7 +70,7 @@ export async function toPublish({dataDir, dataIsThisLeagues, pagesData, userAgen
                 stale.push(file);
             }
         } catch (error) {
-            log(`Couldn't check whether ${file} is published (${error.message}); will check again tomorrow.`);
+            log(`Couldn't check whether ${file} is published (${withCause(error)}); will check again tomorrow.`);
         }
     }
     return stale;

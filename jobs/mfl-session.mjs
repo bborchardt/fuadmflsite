@@ -2,6 +2,7 @@
 // it reads and the commissioner switch. Takes the version's lib, so imports no lib/.
 
 import {mflHomePage} from "./mfl-form.mjs";
+import {networkError} from "./network-error.mjs";
 
 // MFL asks for about a second between requests
 const SPACING_MS = 1000;
@@ -95,7 +96,7 @@ export function mflSession({lib, host, leagueId, userAgent, log, fetchImpl = (ur
         try {
             response = await ask(`${host}${path}`, {headers: asHeaders});
         } catch (error) {
-            throw new Error(`Couldn't load MFL's ${what}: ${error.fromMfl ? error.message : `network error (${error.message})`}`);
+            throw new Error(`Couldn't load MFL's ${what}: ${error.fromMfl ? error.message : networkError(error)}`);
         }
         if (!response.ok) {
             throw new Error(`Couldn't load MFL's ${what}: HTTP ${response.status}`);
@@ -141,7 +142,7 @@ export function mflSession({lib, host, leagueId, userAgent, log, fetchImpl = (ur
             });
             body = await response.text();
         } catch (error) {
-            return `MFL login failed: network error (${error.message})`;
+            return `MFL login failed: ${networkError(error)}`;
         }
         const error = (/<error>([^<]*)<\/error>/.exec(body) || [])[1];
         const value = (/<status\b[^>]*\bMFL_USER_ID="([^"]*)"/.exec(body) || [])[1];
