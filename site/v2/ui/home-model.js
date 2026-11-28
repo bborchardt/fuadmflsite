@@ -451,7 +451,7 @@ export function runAlert(lastRun, href, now) {
         tone: tones.red,
         mark: "!",
         title: lastRun.at === null ? "The daily chores haven’t run on schedule lately" : `The daily chores haven’t run on schedule since ${dayText(lastRun.at)}`,
-        detail: "Check Actions › Daily chores",
+        detail: "Actions › Daily chores",
         href
     };
 }

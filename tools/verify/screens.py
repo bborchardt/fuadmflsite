@@ -767,7 +767,7 @@ class Mfl:
             font = FONTS / url.path.rsplit("/", 1)[-1]
             return route.fulfill(body=font.read_bytes(), content_type="font/woff2") if font.exists() else route.fulfill(status=404, body="")
         # GitHub's list of the daily job's scheduled runs, which the commissioner's Home asks for: the
-        # last an hour before the page's clock, or with swaps["run"] "late", three days before
+        # last an hour before the screen's "now", or with swaps["run"] "late", three days before
         if url.netloc == "api.github.com" and url.path.endswith("/actions/workflows/daily.yml/runs"):
             return route.fulfill(content_type="application/json", headers={"access-control-allow-origin": "*"}, body=self.runs())
         if not url.netloc.endswith("myfantasyleague.com"):

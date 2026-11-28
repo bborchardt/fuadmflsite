@@ -41,7 +41,7 @@ test("the alert shows once the last run is more than 36 hours back", () => {
     assert.equal(runAlert({at}, href, at + RUN_LATE_HOURS * HOUR), null);
     const late = runAlert({at}, href, at + RUN_LATE_HOURS * HOUR + 1);
     assert.equal(late.title, "The daily chores haven’t run on schedule since Fri Nov 27");
-    assert.equal(late.detail, "Check Actions › Daily chores");
+    assert.equal(late.detail, "Actions › Daily chores");
     assert.equal(late.href, href);
     assert.equal(late.tone, "red");
     assert.equal(runAlert({at: null}, href, at).title, "The daily chores haven’t run on schedule lately");

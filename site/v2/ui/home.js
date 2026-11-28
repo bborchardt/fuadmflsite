@@ -599,9 +599,9 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     return {root, shown: leagueShown.then((value) => value !== null, () => false)};
 }
 
-// The daily job's last scheduled run, kept for RUN_CHECKED, or an hour after a read that failed:
-// GitHub's API answers 60 requests an hour to a browser without a login, and only the
-// commissioner's asks
+// The daily job's last scheduled run, kept a week but used for RUN_CHECKED, and not asked for again
+// for an hour after a read that failed: GitHub's API answers 60 requests an hour to a browser
+// without a login, and only the commissioner's asks
 export const RUN_KEY = "fuad.home.dailyRun";
 const RUN_FAILED_KEY = "fuad.home.dailyRunFailed";
 const HOUR = 60 * 60 * 1000;
