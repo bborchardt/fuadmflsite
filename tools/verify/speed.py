@@ -35,7 +35,7 @@ from urllib.parse import urlparse
 from playwright.async_api import async_playwright
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from screens import HOST, INIT, NOW, SCREENS, Mfl, Site, build_working_copy  # noqa: E402
+from screens import HOST, INIT, NOW, SCREENS, Mfl, Site, build_working_copy, listed  # noqa: E402
 
 # round trip (s), connection setup in round trips (DNS, TCP, TLS), link (bytes/s)
 NETS = {
@@ -287,11 +287,11 @@ def summarize(log, link, errors, final=0):
 
 
 async def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--screens", default="lineup,home")
-    parser.add_argument("--net", default="slow")
-    parser.add_argument("--path", default="beta,direct")
-    parser.add_argument("--cache", default="cold,stale")
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--screens", default="lineup,home", type=listed(list(SCREENS)), help="comma-separated (default lineup,home)")
+    parser.add_argument("--net", default="slow", type=listed(list(NETS)), help="comma-separated connections (default slow)")
+    parser.add_argument("--path", default="beta,direct", type=listed(["beta", "direct"]), help="comma-separated (default beta,direct)")
+    parser.add_argument("--cache", default="cold,stale", type=listed(["cold", "stale", "nextday"]), help="comma-separated (default cold,stale)")
     which = parser.add_mutually_exclusive_group()
     which.add_argument("--ref", default=None, help="a git ref instead of the working copy")
     which.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")

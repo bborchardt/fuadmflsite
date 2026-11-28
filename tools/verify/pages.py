@@ -149,7 +149,7 @@ def expected(name, viewer):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--record", action="store_true", help="print what each page did instead of comparing")
     args = parser.parse_args()
     built = harness.build_working_copy()

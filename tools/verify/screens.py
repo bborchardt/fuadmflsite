@@ -277,6 +277,18 @@ return found ? {kind: found.kind, sig: found.sig, index: found.index} : null;
 BUILT = "built:"
 
 
+def listed(choices):
+    """An argparse type for a comma-separated list of `choices`, so a name not among them fails
+    before the run, with the names it could be."""
+    def parse(text):
+        names = text.split(",")
+        unknown = [name for name in names if name not in choices]
+        if unknown:
+            raise argparse.ArgumentTypeError(f"unknown {', '.join(unknown)}: choose from {', '.join(choices)}")
+        return text
+    return parse
+
+
 def build_working_copy():
     """the working copy as Pages publishes it (tools/build.mjs: v2 bundled), as a ref Site reads"""
     out = tempfile.mkdtemp(prefix="fuad-built-")
