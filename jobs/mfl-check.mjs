@@ -112,8 +112,8 @@ export async function pageChecks({season, leagueId, franchise, partner, playerId
 // asked, `referer` the league's home page's path, to send as the referrer, for a feed.
 // `keep(page, answer, changed)`, when given, is told of each page MFL answered, and gives true when it
 // kept a copy, which a change's flag then says.
-// Resolves to {changed, unchecked, count}: what v2 can't read, which needs the commissioner, and what
-// couldn't be asked this time. Without a franchise, only the exports.
+// Resolves to {changed, unchecked, count}: what v2 can't read, and what MFL didn't give this time (a
+// refusal, an error, its home page), each flagged by the job. Without a franchise, only the exports.
 export async function checkMfl(context, {exportRead, pageRead, version, keep = () => false}) {
     const changed = [];
     const unchecked = [];

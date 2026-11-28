@@ -89,8 +89,8 @@ Actions tab. It:
   inactive starter who scored);
 - flags rule problems (cap, the roster limit, IR, anti-tanking) and anything it can't decide;
 - tries what v2 reads from MFL (its exports, pages and feeds, as a member sees them), and flags one
-  MFL has changed, usually before a member meets it. Left for you: nothing in MFL (see An "MFL
-  check" flag, under When something breaks).
+  MFL has changed, usually before a member meets it, or didn't give that morning. Left for you:
+  nothing in MFL (see An "MFL check" flag, under When something breaks).
 
 It records what it did in the chore log (`chore-log.md`, on the `league-data` branch).
 
@@ -107,7 +107,7 @@ gets it recorded twice.
   | `MFL_USER_AGENT` | secret | the client name registered with MFL; only for the job, never from your own computer |
   | `MFL_LEAGUE_ID` | variable | the league's id |
   | `MFL_HOST` | variable | the league's host, as `https://www44.myfantasyleague.com` |
-  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`, `RFA_SALARIES`, `BACKUP_STARTERS` | variable | `apply` to write that chore to MFL; anything else only logs what it would do. `BACKUP_STARTERS` is the exception: it takes `apply` or `log`, and otherwise the chore doesn't run at all, as a league without bylaw 16.5's backups handles them itself |
+  | `DROP_PENALTIES`, `CONTRACT_YEARS`, `PAYOUTS`, `RFA_SALARIES`, `BACKUP_STARTERS` | variable | `apply` to write that chore to MFL; `log` or unset only logs what it would do, each line saying which variable kept it from writing. `BACKUP_STARTERS` is the exception: unset, the chore doesn't run at all, as a league without bylaw 16.5's backups handles them itself. Any other value (`Apply`, `true`) fails the run with a flag naming it, and the chore only logs (backup starters: doesn't run). The run's summary lists what each is set to |
   | `RULES_VERSION` | variable | which version's league rules it uses; `v2` when unset |
 
 - **A flag:** anything it can't decide, or a rule problem, fails the run on purpose, so GitHub emails
@@ -116,8 +116,8 @@ gets it recorded twice.
 - **Run it now:** Actions › Daily chores › Run workflow, unticking **Dry run**. Left ticked, it only
   reports what it would do, on the run's summary page, and can try another league or settings: fill
   in only what to change (league, host when that league is on another server, settings as a header
-  line's for an unlisted league, version, season, time). Unticked, those are ignored. Each run reads
-  as much from MFL as a daily one.
+  line's for an unlisted league, version, season, time). Unticked, a run given any of them stops
+  before it starts, naming them. Each run reads as much from MFL as a daily one.
 - **A missing franchise snapshot:** v1's Commish tab (as 0000, outside the beta) has a **Show
   franchise snapshot** button that shows the snapshot as text. Save that text as
   `franchise-<season>.json` (e.g. `franchise-2026.json`), commit it to the `league-data` branch's
@@ -193,7 +193,9 @@ week 12's kickoff.
   read it again, which is a code change, with nothing to do in MFL. When the flag says "MFL's page is
   saved on the run", the run's page has it under Artifacts (`mfl-pages`, kept 14 days), cleaned, to
   fix v2 against. A page of your own team in the real league isn't saved, as the run's files are
-  public: run a dry run of the test league with **Save pages** ticked to get it.
+  public: run a dry run of the test league with **Save pages** ticked to get it. A flag that MFL
+  didn't give a read this time (HTTP 500, a refusal, its home page) needs nothing if the next run
+  reads it; one that keeps coming back may mean MFL changed it, which is a code change too.
 - **New saved pages for the tests:** at each stage of the season (preseason, the draft, the regular
   season, the playoffs, the offseason), a dry run with **Save pages** ticked puts every page the
   check reads on the run, cleaned. Run it on the test league (league `50965`) for the team pages, and

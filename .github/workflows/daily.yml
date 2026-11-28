@@ -6,8 +6,8 @@
 # master is protected and takes changes through pull requests, so nothing here pushes to it.
 #
 # A manual run is a dry run unless unticked: jobs/daily.mjs then writes nothing to MFL or league-data,
-# so the commit and publish steps below don't run. Its other inputs apply only to a dry run; unticked,
-# a manual run is the same as a scheduled one.
+# so the commit and publish steps below don't run. Its other inputs apply only to a dry run: unticked,
+# a manual run is the same as a scheduled one, and one given any of them stops before it starts.
 #
 # GitHub turns off scheduled workflows after 60 days without repository activity, so the
 # last step re-enables this workflow on every run.
@@ -61,6 +61,27 @@ jobs:
     outputs:
       publish: ${{ steps.run.outputs.publish }}
     steps:
+      # a real run would ignore them and work on the real league as scheduled
+      - name: Refuse a dry run's inputs on a real run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        env:
+          LEAGUE: ${{ inputs.league }}
+          HOST: ${{ inputs.host }}
+          SETTINGS: ${{ inputs.settings }}
+          VERSION: ${{ inputs.version }}
+          SEASON: ${{ inputs.season }}
+          NOW: ${{ inputs.now }}
+          SAVE_PAGES: ${{ inputs.save_pages == true && 'true' || '' }}
+        run: |
+          given=""
+          for name in LEAGUE HOST SETTINGS VERSION SEASON NOW SAVE_PAGES; do
+            if [ -n "${!name}" ]; then given="${given:+$given, }$(echo "$name" | tr "A-Z_" "a-z ")"; fi
+          done
+          if [ -n "$given" ]; then
+            echo "::error title=Not a dry run::Dry run is unticked, so these inputs would be ignored and the real league's chores run as scheduled: ${given}. Tick Dry run to use them, or clear them for a real run."
+            exit 1
+          fi
+
       - uses: actions/checkout@v7
         with:
           # a dry run tests the code of the branch it's started from

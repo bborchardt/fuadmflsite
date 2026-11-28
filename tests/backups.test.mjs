@@ -94,6 +94,20 @@ test("the lineup at a moment is the last submission before it that went through,
     assert.deepEqual(lineupAt(submissions, 150, ["x"]), ["a"]);
     assert.deepEqual(lineupAt(submissions, 400, ["x"]), ["b"]);
     assert.deepEqual(lineupAt(submissions, 50, ["x"]), ["x"]);
+    // one made at the moment itself is after it
+    assert.deepEqual(lineupAt(submissions, 200, ["x"]), ["a"]);
+});
+
+test("a pair's deadline is the first second it's too late: a request, a change or a removal then doesn't count", () => {
+    const deadline = (starter, backup) => (backup === "w4" ? 100 : 1000);
+    const pairsOf = (requests) => standingPairs(requests, deadline).pairs.map(({starter, backup}) => [starter, backup]);
+    assert.deepEqual(pairsOf([{at: 100, starter: "w1", backup: "w4"}]), []);
+    assert.deepEqual(pairsOf([{at: 99, starter: "w1", backup: "w4"}]), [["w1", "w4"]]);
+    // w4's pair locks at 100, so a change to w5 then, before w5's own deadline, is late
+    assert.deepEqual(pairsOf([{at: 50, starter: "w1", backup: "w4"}, {at: 100, starter: "w1", backup: "w5"}]), [["w1", "w4"]]);
+    assert.deepEqual(pairsOf([{at: 50, starter: "w1", backup: "w4"}, {at: 99, starter: "w1", backup: "w5"}]), [["w1", "w5"]]);
+    assert.deepEqual(pairsOf([{at: 50, starter: "w1", backup: "w4"}, {at: 100, starter: "w1", remove: true}]), [["w1", "w4"]]);
+    assert.deepEqual(pairsOf([{at: 50, starter: "w1", backup: "w4"}, {at: 99, starter: "w1", remove: true}]), []);
 });
 
 const rules = lineupRules({starters: {count: "10", position: [{name: "QB", limit: "1-2"}, {name: "RB", limit: "1-3"},
@@ -154,6 +168,9 @@ test("the week's lineup: backups in for inactive starters, a locked pair changed
     // a starter benched before the deadline has no backup (16.5.3)
     const notStarting = ["q1", "q2", "r1", "r2", "w5", "w2", "w3", "t1", "t2", "k1"];
     same(weekLineup({...base, pairs: [{starter: "w1", backup: "w4", starting: notStarting}], final: notStarting, out: new Set(["w1"])}).lineup, notStarting);
+    // nor one already starting at the deadline: a backup comes only from the bench (16.5.3)
+    const backupStarting = weekLineup({...base, pairs: [pair("w1", "w2")], final: starting, out: new Set(["w1"])});
+    assert.deepEqual([backupStarting.lineup, backupStarting.swaps, backupStarting.restored, backupStarting.flags], [starting, [], [], []]);
     // one backup for two starters (16.5.2)
     const twice = weekLineup({...base, pairs: [pair("w1", "w4"), pair("w2", "w4")], final: starting, out: new Set(["w1", "w2"])});
     assert.deepEqual([twice.lineup, twice.flags.map((flag) => flag.why)], [starting, ["same-backup", "same-backup"]]);

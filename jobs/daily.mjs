@@ -13,15 +13,17 @@
 //   GITHUB_OUTPUT               set by GitHub Actions; receives changed=true|false and publish=true|false
 //   GITHUB_STEP_SUMMARY         set by GitHub Actions; receives this run's chore log entries, shown on
 //                               the run's page (GitHub's failure email links to it)
-//   DROP_PENALTIES              "apply" to charge drop penalties; anything else only logs them
-//   CONTRACT_YEARS              "apply" to set contract years for adds; anything else only logs them
-//   PAYOUTS                     "apply" to record the league's payouts in MFL's accounting; anything
-//                               else only logs them
-//   RFA_SALARIES                "apply" to set the renewal's RFAs (1 year to 0) to $0.01; anything else
-//                               only logs them
+//   DROP_PENALTIES              "apply" to charge drop penalties; "log" or unset only logs them
+//   CONTRACT_YEARS              "apply" to set contract years for adds; "log" or unset only logs them
+//   PAYOUTS                     "apply" to record the league's payouts in MFL's accounting; "log" or
+//                               unset only logs them
+//   RFA_SALARIES                "apply" to set the renewal's RFAs (1 year to 0) to $0.01; "log" or
+//                               unset only logs them
 //   BACKUP_STARTERS             "apply" to start members' backups for inactive starters (bylaw 16.5);
-//                               "log" only logs them; unset or anything else, the chore doesn't run,
-//                               as a league without the rule handles backups itself, if at all
+//                               "log" only logs them; unset, the chore doesn't run, as a league
+//                               without the rule handles backups itself, if at all
+//                               Any other value of these is flagged, and the chore only logs (backup
+//                               starters: doesn't run)
 //   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
 //   SAVED_PAGES_DIR             where the check saves MFL's pages, cleaned as the capture bookmark
 //                               cleans them: a page it flags, and with SAVE_PAGES every one it reads
@@ -134,6 +136,18 @@ const applyRfaSalaries = !dryRun && process.env.RFA_SALARIES === "apply";
 const applyBackups = !dryRun && process.env.BACKUP_STARTERS === "apply";
 // unlike the other chores, off unless asked for: the rule is a league's own choice (settings.backupStarters)
 const backupsOff = !["apply", "log"].includes(process.env.BACKUP_STARTERS);
+const SWITCHES = ["DROP_PENALTIES", "CONTRACT_YEARS", "PAYOUTS", "RFA_SALARIES", "BACKUP_STARTERS"];
+// what a switch's value does, for the summary; an unset variable reaches the job as ""
+const switchState = (name) => {
+    const value = process.env[name] || "";
+    if (value === "apply") {
+        return "apply";
+    }
+    return `${name === "BACKUP_STARTERS" && value !== "log" ? "off" : "log only"} (${value ? `"${value}"` : "unset"})`;
+};
+const knownSwitch = (name) => ["", "apply", "log"].includes(process.env[name] || "");
+// a chore that only logs says why, so a switch left off isn't taken for a dry run
+const wouldPrefix = (name) => (dryRun ? "Dry run: would" : `${name} isn't "apply": would`);
 const dataIsThisLeagues = !dryRun || process.env.DATA_LEAGUE_ID === leagueId;
 // a season's weekly prizes and all-play payouts, with room for a backfill: more means something's wrong
 const MAX_PAYOUTS_PER_RUN = 30;
@@ -302,7 +316,8 @@ function writeSummary() {
     }
     const outcome = attention.length ? "Needs attention" : "OK";
     const lines = entries.length ? entries.map((entry) => `- ${entry}`).join("\n") : "Nothing to do.";
-    const notes = dryRunNotes.map((note) => `${note}\n\n`).join("");
+    const switches = `Chore switches: ${SWITCHES.map((name) => `${name} ${switchState(name)}`).join(", ")}${dryRun ? "; a dry run writes nothing, whatever they say" : ""}.`;
+    const notes = [...dryRunNotes, switches].map((note) => `${note}\n\n`).join("");
     try {
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Daily chores${dryRun ? " (dry run)" : ""}: ${outcome}\n\n${notes}${lines}\n`);
     } catch (error) {
@@ -381,10 +396,10 @@ async function contractYears(loggedIn, {built, rosters, transactions, playerName
     }
     if ((applyContractYears || dryRun) && contracts.length > MAX_CONTRACTS_PER_RUN) {
         throw new Error(`${contracts.length} added players are waiting for contract years, more than the `
-            + `${MAX_CONTRACTS_PER_RUN} expected in a day, so none were set. Check the Commish tab and set them by hand.`);
+            + `${MAX_CONTRACTS_PER_RUN} expected in a day, so none were set. Check the adds and set their years on MFL's Edit Player Salaries and Contracts page by hand.`);
     }
     if (!applyContractYears) {
-        contracts.forEach((contract) => choreLog(`Dry run: would set ${describe(contract)}.`));
+        contracts.forEach((contract) => choreLog(`${wouldPrefix("CONTRACT_YEARS")} set ${describe(contract)}.`));
         return;
     }
     await mflImport("salaries", contractsXml(contracts), {APPEND: "1"});
@@ -458,11 +473,11 @@ async function offseasonLengths(loggedIn, {built, rosters, playerNames, cutDown}
     const defaults = contracts.filter((contract) => contract.years === DEFAULT_YEARS && contract.source !== "the form").length;
     const rostered = salaries.size;
     if (defaults > rostered * MAX_DEFAULT_SHARE) {
-        throw new Error(`${defaults} of ${rostered} rostered players would get the default ${DEFAULT_YEARS} year, more than expected, so no lengths were set. Check the rosters and set them on MFL's Salaries page by hand.`);
+        throw new Error(`${defaults} of ${rostered} rostered players would get the default ${DEFAULT_YEARS} year, more than expected, so no lengths were set. Check the rosters and set them on MFL's Edit Player Salaries and Contracts page by hand.`);
     }
     const describe = (contract) => `${name(contract.playerId)} (${teamName(contract.team)}) to ${contract.years} year${contract.years === 1 ? "" : "s"} (${contract.source})`;
     if (!applyContractYears) {
-        contracts.forEach((contract) => choreLog(`Dry run: would set ${describe(contract)}.`));
+        contracts.forEach((contract) => choreLog(`${wouldPrefix("CONTRACT_YEARS")} set ${describe(contract)}.`));
         return;
     }
     await mflImport("salaries", contractsXml(contracts), {APPEND: "1"});
@@ -539,7 +554,7 @@ async function payouts(loggedIn, {built}) {
             + "Check MFL's accounting and enter them by hand.");
     }
     if (!applyPayouts) {
-        records.forEach((record) => choreLog(`Dry run: would record ${describe(record)}.`));
+        records.forEach((record) => choreLog(`${wouldPrefix("PAYOUTS")} record ${describe(record)}.`));
         return;
     }
     for (const record of records) {
@@ -576,7 +591,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     const rostered = asArray(rosters.franchise).reduce((total, team) => total + asArray(team.player).length, 0);
     if (rfas.length > rostered * MAX_RFA_SHARE) {
         throw new Error(`${rfas.length} of ${rostered} rostered players look like RFAs, more than expected, so none were set to $${RFA_SALARY}. `
-            + "Check the rosters against last season's and set them on MFL's Salaries page by hand.");
+            + "Check the rosters against last season's and set them on MFL's Edit Player Salaries and Contracts page by hand.");
     }
     const name = (rfa) => {
         const player = playerNames.get(rfa.playerId);
@@ -584,7 +599,7 @@ async function rfaSalariesChore(loggedIn, {built, rosters, transactions, playerN
     };
     const describe = (rfa) => `${name(rfa)} (${teamNameIn(built, rfa.franchiseId)})`;
     if (!applyRfaSalaries) {
-        rfas.forEach((rfa) => choreLog(`Dry run: would set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
+        rfas.forEach((rfa) => choreLog(`${wouldPrefix("RFA_SALARIES")} set RFA ${describe(rfa)} to $${RFA_SALARY}.`));
         return rfas.map((rfa) => rfa.playerId);
     }
     if (!loggedIn) {
@@ -1258,19 +1273,19 @@ async function dropPenalties(loggedIn, {penalties, lengthDueUnknown}, over) {
     if (unpriced.length) {
         needsAttention(`Cap chores: left as they are, since it can't be told whether they owe a penalty (${why}): `
             + `${unpriced.map((penalty) => penalty.explanation).join(", ")}. Charge any owed by hand with his full name, as here, and the next run `
-            + "clears his contract; clear the salary and years of one who owes nothing on MFL's Salaries page.");
+            + "clears his contract; clear the salary and years of one who owes nothing on MFL's Edit Player Salaries and Contracts page.");
     }
     const toApply = penalties.filter((penalty) => !over.has(penalty.franchiseId) && !unpriced.includes(penalty));
     // held penalties don't count: they can wait for weeks on a team over the cap
     if ((applyDropPenalties || dryRun) && toApply.length > MAX_PENALTIES_PER_RUN) {
         throw new Error(`${toApply.length} dropped players owe a cap penalty, more than the ${MAX_PENALTIES_PER_RUN} `
-            + `expected in a day, so none were charged. Check the Commish tab and charge them by hand.`);
+            + `expected in a day, so none were charged. Check the drops and charge them on MFL's Edit Salary Adjustments page by hand.`);
     }
     if (!applyDropPenalties) {
         for (const penalty of toApply) {
             choreLog(needsCharge(penalty)
-                ? `Dry run: would charge ${describe(penalty)}, then clear the player's contract.`
-                : `Dry run: would clear ${penalty.fullName}'s contract (${noCharge(penalty)}).`);
+                ? `${wouldPrefix("DROP_PENALTIES")} charge ${describe(penalty)}, then clear the player's contract.`
+                : `${wouldPrefix("DROP_PENALTIES")} clear ${penalty.fullName}'s contract (${noCharge(penalty)}).`);
         }
         return;
     }
@@ -1406,8 +1421,9 @@ async function mflCheck(loggedIn, {built, rosters, league}) {
     for (const item of changed) {
         needsAttention(`MFL check: ${item}`);
     }
+    // flagged at once, as a lasting refusal (a feed answering 403) is a change too
     for (const item of unchecked) {
-        log(`MFL check: ${item}; tried again tomorrow.`);
+        needsAttention(`MFL check: ${item}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`);
     }
     log(`MFL check: ${count - changed.length - unchecked.length} of ${count} reads as v2 expects.`);
 }
@@ -1561,6 +1577,11 @@ let iconsChanged = false;
 let backupsChanged = false;
 let publish = false;
 try {
+    // a mistyped "apply" would otherwise look like a switch left to log
+    for (const name of SWITCHES.filter((each) => !knownSwitch(each))) {
+        needsAttention(`${name} is "${process.env[name]}", which the job doesn't know, so ${name === "BACKUP_STARTERS" ? "the chore is off" : "the chore only logs"}. `
+            + "Set it to apply or log, or remove it, in the repository's variables (Settings › Secrets and variables › Actions).");
+    }
     season = await leagueSeason();
     if (dryRun) {
         const given = process.env.MFL_SETTINGS ? `, with the settings ${process.env.MFL_SETTINGS}` : "";
