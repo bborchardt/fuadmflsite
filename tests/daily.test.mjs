@@ -362,7 +362,7 @@ test("a snapshot changed by hand on league-data is published again", () => {
 test("GitHub Pages unreachable: what's published isn't known, so nothing is published, the run passes, and the next run checks again", () => {
     const result = run({scenario: {pagesUnreachable: true}});
     assert.equal(result.status, 0, result.stdout);
-    assert.match(result.stdout, /Couldn't check whether franchise-2025\.json is published \(fetch failed\); will check again tomorrow\./);
+    assert.match(result.stdout, /Couldn't check whether franchise-2025\.json is published \(fetch failed: ENOTFOUND\); will check again tomorrow\./);
     assert.equal(result.output.publish, "false");
     assert.ok(!result.entries.some((entry) => /Publishing snapshots/.test(entry)), result.entries.join("\n"));
 });
@@ -1350,7 +1350,7 @@ test("the check of what v2 reads: a page MFL no longer has, or didn't give, fail
     // none of (an error), a page turned away each time, and one the network failed
     const notGiven = (item) => `MFL check: ${item}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`;
     for (const item of ["Couldn't load rules: MFL said \"no rules in the scenario\"", "Couldn't load Career Records: MFL turned it away with its home page 3 times",
-        "Couldn't load League Champions: network error (fetch failed)"]) {
+        "Couldn't load League Champions: network error (fetch failed: UND_ERR_CONNECT_TIMEOUT)"]) {
         assert.ok(result.entries.includes(notGiven(item)), result.entries.join("\n"));
         assert.ok(result.stdout.includes(`- ${notGiven(item)}`), "in the run's failure annotation");
     }

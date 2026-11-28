@@ -113,12 +113,12 @@ test("stills are made when a picture is new or changed, kept when it can't be re
     }), etag: '"big"'};
     result = await update();
     assert.deepEqual(result.failed, [{team: "0001", reason: "larger than the job takes"}]);
-    // a request that fails outright
+    // a request that fails outright, with the code Node gives under it
     pictures["https://a.example/1.png"] = {get bytes() {
-        throw new TypeError("fetch failed");
+        throw new TypeError("fetch failed", {cause: Object.assign(new Error("Connect Timeout Error"), {code: "UND_ERR_CONNECT_TIMEOUT"})});
     }};
     result = await update();
-    assert.deepEqual(result.failed, [{team: "0001", reason: "fetch failed"}]);
+    assert.deepEqual(result.failed, [{team: "0001", reason: "fetch failed: UND_ERR_CONNECT_TIMEOUT"}]);
     assert.ok(existsSync(file("0001")));
     // an export with no icons at all removes none
     result = await update({sources: new Map()});

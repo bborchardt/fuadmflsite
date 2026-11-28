@@ -5,6 +5,7 @@
 import {existsSync, readFileSync, readdirSync, rmSync, writeFileSync, mkdirSync} from "node:fs";
 import {join} from "node:path";
 import sharp from "sharp";
+import {withCause} from "./network-error.mjs";
 
 // the largest spot, 34px, on a 3x screen
 export const ICON_PIXELS = 96;
@@ -104,7 +105,7 @@ export async function updateIcons({sources, dataDir, userAgent, fetchImpl = fetc
                 }
             }
         } catch (error) {
-            result.failed.push({team, reason: error.message});
+            result.failed.push({team, reason: withCause(error)});
             if (known[team]) {
                 next[team] = known[team];
             }
@@ -163,7 +164,7 @@ export async function toPublish({dataDir, pagesData, userAgent, log}) {
                 stale.push(file);
             }
         } catch (error) {
-            log(`Couldn't check whether icons/${file} is published (${error.message}); will check again tomorrow.`);
+            log(`Couldn't check whether icons/${file} is published (${withCause(error)}); will check again tomorrow.`);
         }
     }
     return stale;

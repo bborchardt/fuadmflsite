@@ -5,6 +5,7 @@
 import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {mflForm} from "./mfl-form.mjs";
+import {networkError} from "./network-error.mjs";
 
 // nflverse's weekly rosters: each player's status for each week's game, INA when he was inactive
 export const NFLVERSE_ROSTERS = (season) => `https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_${season}.csv`;
@@ -296,11 +297,16 @@ function markBackupWeeks(ctx, weeks) {
 // nflverse's files; plain fetches, not MFL's
 async function loadNflverse(season) {
     const load = async (url) => {
-        const response = await fetch(url, {signal: AbortSignal.timeout(60000)});
+        const response = await fetch(url, {signal: AbortSignal.timeout(60000)}).catch((error) => {
+            throw new Error(`Couldn't load ${url}: ${networkError(error)}`);
+        });
         if (!response.ok) {
             throw new Error(`Couldn't load ${url}: HTTP ${response.status}`);
         }
-        return readCsv(await response.text());
+        // the timeout covers the file's download too
+        return readCsv(await response.text().catch((error) => {
+            throw new Error(`Couldn't load ${url}: ${networkError(error)}`);
+        }));
     };
     const [rosters, ids] = await Promise.all([load(NFLVERSE_ROSTERS(season)), load(PLAYER_IDS)]);
     return {rosters, ids};

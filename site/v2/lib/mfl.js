@@ -67,6 +67,16 @@ export class MflError extends Error {
 export const HELD = "held by v2 after MFL's 429";
 export const httpStatus = (response) => `HTTP ${response.status}${response.statusText === HELD ? `, ${HELD}` : ""}`;
 
+// "network error (fetch failed: UND_ERR_CONNECT_TIMEOUT)": a failed request's message, and in Node the
+// code under it (a connect timeout, a reset, a DNS failure), or its message where it has no code,
+// which "fetch failed" alone doesn't say.
+// A browser gives no cause, so it reads "network error (Load failed)".
+export function networkError(error) {
+    const cause = error && error.cause;
+    const code = cause && (cause.code || (Array.isArray(cause.errors) && cause.errors.map((each) => each && each.code).find(Boolean)) || cause.message);
+    return `network error (${String((error && error.message) || error)}${code ? `: ${code}` : ""})`;
+}
+
 // `check(section, body)`, when given, gives back the section or throws (the job's lib/shapes.js checkShape).
 // `fetchImpl` has no default: v2's reads go through ui/page-fetch.js, which a browser's own fetch
 // would skip unnoticed, and the job sends its own headers.
@@ -79,7 +89,7 @@ export async function fetchExport(url, section, {fetchImpl, init, check} = {}) {
         response = await fetchImpl(url, init);
     } catch (error) {
         // `cutOff`: no answer came (ui/panel.js cutOff)
-        throw Object.assign(new MflError(section, `network error (${error.message})`), {cutOff: true});
+        throw Object.assign(new MflError(section, networkError(error)), {cutOff: true});
     }
     if (!response.ok) {
         throw new MflError(section, httpStatus(response), response.status);

@@ -40,6 +40,9 @@
 
 import {appendFileSync, readFileSync} from "node:fs";
 
+// a request that fails as Node's fetch does: "fetch failed", with the reason's code under it
+const failed = (code) => new TypeError("fetch failed", {cause: Object.assign(new Error(code), {code})});
+
 const scenario = JSON.parse(readFileSync(process.env.FAKE_MFL, "utf8"));
 const WEEK = 7 * 86400;
 // imports answered so far, for a list of importError
@@ -106,7 +109,7 @@ globalThis.fetch = async (input, init = {}) => {
     }
     if (url.hostname === "bborchardt.github.io") {
         if (scenario.pagesUnreachable) {
-            throw new TypeError("fetch failed");
+            throw failed("ENOTFOUND");
         }
         const file = url.pathname.split("/").pop();
         const published = (scenario.published || {})[url.pathname.includes("/data/icons/") ? `icons/${file}` : file];
@@ -122,7 +125,7 @@ globalThis.fetch = async (input, init = {}) => {
     const [, year, page] = url.pathname.split("/");
     const address = url.pathname + url.search;
     if ((scenario.networkErrors || []).includes(address)) {
-        throw new TypeError("fetch failed");
+        throw failed("UND_ERR_CONNECT_TIMEOUT");
     }
     if (turnedAway[address] > 0) {
         turnedAway[address]--;
