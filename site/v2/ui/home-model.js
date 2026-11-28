@@ -8,7 +8,7 @@ import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {DEFAULT_YEARS} from "../lib/contract-years.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
 import {clock, dayText, money, plural, whenText} from "./format.js";
-import {freeAgencyEnd, nextBidRun, nextWeekly, weeklyEvents} from "./moves-model.js";
+import {freeAgencyEnd, nextBidRun, nextWeekly, weeklyEvents} from "./calendar.js";
 
 const DAY = 24 * 60 * 60;
 // a date members act by is also in My alerts this close to it

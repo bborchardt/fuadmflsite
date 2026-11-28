@@ -1,4 +1,4 @@
-// How v2 writes amounts and counts, the same on every screen
+// How v2 writes amounts, counts and times, the same on every screen
 
 import {cents} from "../lib/payouts.js";
 import {TIME_ZONE, zoneLabel} from "../lib/zone.js";

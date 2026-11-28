@@ -6,9 +6,8 @@ import {displayName as firstLast} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
 import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
 import {cents, clock, dayText, weekdayClock} from "./format.js";
-import {
-    args, freeAgencyEnd, isIR, LENGTH_PATTERN, lastBidRun, nextWeekly, projection, readMarks, SUFFIX, surname
-} from "./moves-model.js";
+import {args, isIR, LENGTH_PATTERN, projection, readMarks, SUFFIX, surname} from "./moves-model.js";
+import {freeAgencyEnd, lastBidRun, nextWeekly} from "./calendar.js";
 import settings from "../lib/settings.js";
 import {normalize} from "../lib/names.js";
 import {TIME_ZONE} from "../lib/zone.js";

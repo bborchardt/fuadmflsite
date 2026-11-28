@@ -2,7 +2,8 @@
 """How a v2 screen loads on a slow phone connection, from the saved pages, without asking MFL anything.
 
     uv run --no-project --with playwright python tools/verify/speed.py [--screens lineup,home] [--net slow]
-        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--header] [--film DIR]
+        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--header] [--no-lookbehind] [--film DIR]
+        [--timeline]
 
 Each request is answered from tools/verify/screens/ (as screens.py does) after the delay a phone
 connection would add: a round trip per request, a connection setup per host, and the response's
@@ -18,6 +19,8 @@ then refused as before. MFL's page arrives whole, so its progressive drawing isn
          picture, font and script is asked again and answered unchanged (a round trip, no body);
          nextday: stale, after a visit whose saved copies (localStorage) are then made a day older
 --film   saves a screenshot every second there
+--timeline  prints each run's changes in what shows, as seconds:state: the page shown (v or -),
+         MFL's own content (M or -) and v2's screen (O or -), e.g. 0.4:--- 1.2:vM- 1.9:v-O
 
 Per run: when the page first shows anything, how long MFL's own content shows (the flash v2 should
 hide), when v2's screen is drawn and when it last changed (final: its data in), and the requests and
@@ -288,15 +291,15 @@ def summarize(log, link, errors, final=0):
 
 async def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--screens", default="lineup,home", type=listed(list(SCREENS)), help="comma-separated (default lineup,home)")
-    parser.add_argument("--net", default="slow", type=listed(list(NETS)), help="comma-separated connections (default slow)")
-    parser.add_argument("--path", default="beta,direct", type=listed(["beta", "direct"]), help="comma-separated (default beta,direct)")
-    parser.add_argument("--cache", default="cold,stale", type=listed(["cold", "stale", "nextday"]), help="comma-separated (default cold,stale)")
+    parser.add_argument("--screens", default="lineup,home", type=listed(list(SCREENS), "screen"), help="comma-separated (default lineup,home)")
+    parser.add_argument("--net", default="slow", type=listed(list(NETS), "net"), help="comma-separated connections (default slow)")
+    parser.add_argument("--path", default="beta,direct", type=listed(["beta", "direct"], "path"), help="comma-separated (default beta,direct)")
+    parser.add_argument("--cache", default="cold,stale", type=listed(["cold", "stale", "nextday"], "cache"), help="comma-separated (default cold,stale)")
     which = parser.add_mutually_exclusive_group()
     which.add_argument("--ref", default=None, help="a git ref instead of the working copy")
     which.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
-    parser.add_argument("--film", type=Path, default=None)
-    parser.add_argument("--timeline", action="store_true")
+    parser.add_argument("--film", type=Path, default=None, metavar="DIR", help="a screenshot every second, saved there")
+    parser.add_argument("--timeline", action="store_true", help="each run's changes in what shows (see above)")
     parser.add_argument("--header", action="store_true", help="mfl/message-header.html in place of the saved header")
     parser.add_argument("--no-lookbehind", action="store_true", help="a regex with lookbehind throws, as before Safari 16.4")
     args = parser.parse_args()

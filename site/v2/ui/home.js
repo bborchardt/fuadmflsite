@@ -23,7 +23,7 @@ import {
     myAlerts,
     recentMoves
 } from "./home-model.js";
-import {nextBidRun} from "./moves-model.js";
+import {nextBidRun} from "./calendar.js";
 import {clock, dayText} from "./format.js";
 import {draftPicked, kickoffAt} from "./context.js";
 import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";

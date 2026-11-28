@@ -110,15 +110,18 @@ test("a page of its own loads again, unless the member has tapped or typed on it
         const value = Reflect.get(target, name, target);
         return typeof value === "function" && !/^[A-Z]/.test(String(name)) ? value.bind(target) : value;
     }});
-    reloadIfUntouched("Lineup");
-    now += MOVES_KEPT;
-    document.dispatchEvent(new window.Event("visibilitychange"));
-    assert.equal(reloads, 1);
-    document.body.dispatchEvent(new window.Event("click", {bubbles: true}));
-    now += MOVES_KEPT;
-    document.dispatchEvent(new window.Event("visibilitychange"));
-    assert.equal(reloads, 1);
-    globalThis.window = window;
+    try {
+        reloadIfUntouched("Lineup");
+        now += MOVES_KEPT;
+        document.dispatchEvent(new window.Event("visibilitychange"));
+        assert.equal(reloads, 1);
+        document.body.dispatchEvent(new window.Event("click", {bubbles: true}));
+        now += MOVES_KEPT;
+        document.dispatchEvent(new window.Event("visibilitychange"));
+        assert.equal(reloads, 1);
+    } finally {
+        globalThis.window = window;
+    }
 });
 
 // Every screen takes part: a page of its own says what it does when shown again, and every panel on

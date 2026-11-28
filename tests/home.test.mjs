@@ -14,7 +14,7 @@ import {
     myAlerts,
     recentMoves
 } from "../site/v2/ui/home-model.js";
-import {freeAgencyEnd, nextBidRun} from "../site/v2/ui/moves-model.js";
+import {freeAgencyEnd, nextBidRun} from "../site/v2/ui/calendar.js";
 import {pageTopics, readChat, tradeOffers} from "../site/v2/ui/home-feeds.js";
 import {cutDownAt} from "../site/v2/lib/violations.js";
 

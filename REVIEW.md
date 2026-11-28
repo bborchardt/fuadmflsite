@@ -38,7 +38,7 @@ from AGENTS.md.
   `ui/<feature>.js`: wiring and fetches.
 - Shared display formatting (times, money, names) goes in `ui/format.js`. What Moves' sections share
   goes in `ui/moves-model.js` (no DOM or fetching, so models can use it) or `ui/moves.js` (fetches
-  and forms).
+  and forms). MFL's calendar, which Home and Add both read, is `ui/calendar.js`.
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads, `mflConfirm` for
   the reads that confirm a move or finish one under way, and `mflSend` for moves, so a 429 holds reads on every page. A direct
   `fetch` is only for the site's own files on Pages. `ui/store.js`: localStorage.

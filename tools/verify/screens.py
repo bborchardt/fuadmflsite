@@ -277,14 +277,13 @@ return found ? {kind: found.kind, sig: found.sig, index: found.index} : null;
 BUILT = "built:"
 
 
-def listed(choices):
-    """An argparse type for a comma-separated list of `choices`, so a name not among them fails
-    before the run, with the names it could be."""
+def listed(choices, what):
+    """An argparse type for a comma-separated list of `choices` (`what` names one), so a name not
+    among them fails before the run, with the names it could be."""
     def parse(text):
-        names = text.split(",")
-        unknown = [name for name in names if name not in choices]
+        unknown = [name for name in text.split(",") if name not in choices]
         if unknown:
-            raise argparse.ArgumentTypeError(f"unknown {', '.join(unknown)}: choose from {', '.join(choices)}")
+            raise argparse.ArgumentTypeError(f"no such {what}: {', '.join(repr(name) if not name else name for name in unknown)} ({what}s: {', '.join(choices)})")
         return text
     return parse
 
