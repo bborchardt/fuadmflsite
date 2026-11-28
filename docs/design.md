@@ -178,7 +178,7 @@ Items marked *(to do)* are the plan, not yet built.
   | `npm run lint`: stylelint (caniuse at the minimum, and a hand list) | CSS past the minimum in `site/` and the header's `<style>`: selectors (`:has()`), at-rules (`@container`, `@layer`), units (`dvh`), and the properties and functions the hand list names (`aspect-ratio`, `accent-color`, `color-mix()`) | Newer CSS neither caniuse's data nor the hand list knows; what's only partly supported at the minimum |
   | `tests/guards.test.mjs` | Regex lookbehind (needs 16.4) in `site/` and `mfl/` | Anything else |
   | `header.py` (Chromium, WebKit) | The header loading, falling back and covering as it should; a browser below the minimum (no `WeakRef`, or no `:where()`) getting `OLDER`; the device rows; the header placed in a member's home page tab too, running once | Old engines: below the minimum is simulated |
-  | `pages.py`, `requests.py` | Which screen takes each MFL page, a member's own home page layout included; v2 asking MFL for more | How it looks; what MFL's own modules do under v2, as their scripts aren't saved |
+  | `pages.py`, `requests.py` | Which screen takes each MFL page, a member's own home page layout included; v2 asking MFL for more; v2 reading from anywhere but MFL and Pages, but GitHub's runs on the commissioner's pages | How it looks; what MFL's own modules do under v2, as their scripts aren't saved |
   | `layout.py`: WebKit at 320, 360, 375, 390, 412 and 440 upright, 780 to 1280, and the app sideways; Chromium and Firefox at 360 and 1280 | Squeezed, offscreen, clipped or overlapping parts, and a control mostly past the edge of a box that scrolls sideways (`cut`), in v2's screens, the message board's pages it restyles and the moves fallen back to MFL's page; a row's text off its middle (`offcentre`); heights left wrong after the phone turns | Old engines; whether it looks good; Android's text scaling (iOS's page zoom is a narrower width, which 320 stands for). Drawn in Barlow, served by the harness (`tools/verify/fonts/`), so a Mac and CI measure what members see |
   | `layout.py --minimum` (WebKit at 320, 390 and 1280) | A page that needs an extra: the stylesheet drawn as a browser at the minimum reads it, what it marks as newer taken out as such a browser drops it (`tools/minimum-css.mjs`) | Newer CSS that isn't marked (the lint's to catch); what an old engine draws differently, not just lacks |
 
@@ -242,7 +242,8 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
 - **A check My alerts can't make is logged, not shown:** trade offers, bids, the lineup, the draft
   or contract lengths MFL can't give leave that check's alerts out, as the member sees the same on
   its screen, and log `[fuad] My alerts couldn't check trade offers` as an error, so the header's
-  devices form shows how often.
+  devices form shows how often. So does the daily job's last run when GitHub can't give it, or gives
+  something that isn't its list of runs (`readLastRun`), which is asked for again an hour on.
 - **The season's facts are kept only whole:** the line under the wordmark, Moves' phase and Lineup's
   draft check go by week 1's kickoff, the season's end, the draft results and the calendar
   (`seasonFacts` in `ui/context.js`), kept a day per viewer. A part MFL fails to give (an error, a
@@ -441,6 +442,21 @@ mode, translation, content blockers, password managers). Items marked *(to do)* 
     by the next.
 - **League Alerts (in v2, the owner's My alerts) confirms a free agent add's length** with the job's
   own reader while the hour is open, so owners see what will be set.
+- **The commissioner is told when the job hasn't run:** GitHub emails a run that fails, not one that
+  never starts (the schedule turned off, an Actions outage). My alerts, as 0000 or as the
+  commissioner's own team (whose pages have MFL's Become Commissioner link, `isTeamOfCommish` in
+  `ui/looks.js`), shows "The daily chores haven't run on schedule since …", linking to the workflow,
+  once the last scheduled run that ran its jobs (not cancelled, skipped or failed to start) started
+  more than 36 hours ago (a failed one ran, and GitHub emails it; one started by hand doesn't mend the
+  schedule). The page asks GitHub's API for the last 10 (`runsUrl` in `ui/home-model.js`, the
+  repository read from the Pages address) after My alerts first draws and when Home is shown again,
+  at most once in 6 hours (once an hour while the alert shows, so it clears soon after a run), or an
+  hour after a read that failed.
+  The answer is kept in the browser and used for 6 hours, added to My alerts as it's drawn, so it
+  isn't in My alerts' saved copy; a fresh one that changes the alert draws My alerts again from what
+  it shows, with nothing more asked of MFL. GitHub answers a browser without a login 60 times an hour. No other member's
+  page asks. A file the job published on Pages would have every member download v2 again each day,
+  as each deploy gives every file a new ETag.
 
 ## Previews and the beta
 

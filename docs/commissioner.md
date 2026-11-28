@@ -209,3 +209,13 @@ week 12's kickoff.
 - **The daily job failed:** see The daily job, under "A flag". A run that fails for any other reason
   (MFL down, a login refused) shows in the same email and summary. The next morning's run tries
   again, or you can run it by hand.
+- **"The daily chores haven't run on schedule since …" in My alerts:** the schedule hasn't started a
+  run in 36 hours, which GitHub doesn't email about. On Actions › Daily chores:
+  - a banner saying the workflow is disabled (GitHub turns off a public repository's schedule after
+    60 days without activity): **Enable workflow**
+  - runs marked as failing to start, or none at all since that day: the workflow file may be broken
+    (the run's page says why), or Actions may be down (githubstatus.com)
+  - Run workflow by hand, with **dry run** off, does the day's chores, but the alert stays until the
+    schedule runs again, as it's the schedule that's at fault. It clears within an hour of a
+    scheduled run. Why it's read from GitHub: docs/design.md, "The commissioner is told when the
+    job hasn't run".

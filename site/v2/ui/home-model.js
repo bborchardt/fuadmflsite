@@ -404,3 +404,54 @@ export function contractTopic(messageBoard) {
         .filter((thread) => /contract/i.test(thread.subject || ""))
         .sort((a, b) => Number(b.lastPostTime) - Number(a.lastPostTime))[0] || null;
 }
+
+// The commissioner's alert that the daily job hasn't run, from GitHub's list of its scheduled runs.
+// The job writes nothing a page could read without every member downloading v2 again (Pages gives
+// every file a new ETag on each deploy), so the commissioner's browser asks GitHub's API.
+export const RUN_LATE_HOURS = 36;
+const DAILY = "daily.yml";
+
+// the repository a GitHub Pages address is published from, or null for any other address
+export function repoOf(pagesUrl) {
+    const url = new URL(pagesUrl);
+    const owner = (url.hostname.match(/^([\w-]+)\.github\.io$/) || [])[1];
+    const repo = url.pathname.split("/")[1];
+    return owner && repo ? {owner, repo} : null;
+}
+
+// Scheduled runs only, which start on the default branch: the alert is about the schedule, which a
+// run started by hand doesn't mend. The last few, as a cancelled run did none of the chores.
+export const runsUrl = ({owner, repo}) => `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${DAILY}/runs?event=schedule&status=completed&per_page=10`;
+// a run the schedule started that then failed or timed out still ran: GitHub emails those. One that
+// never started its jobs didn't.
+const NOT_RAN = new Set(["cancelled", "skipped", "startup_failure", "stale", "action_required"]);
+export const runsPage = ({owner, repo}) => `https://github.com/${owner}/${repo}/actions/workflows/${DAILY}`;
+
+// `{at}`, the start in seconds of the last scheduled run that ran its jobs, `{at: null}` when none
+// listed did, or null for an answer that isn't GitHub's list of runs
+export function readLastRun(json) {
+    const runs = json && Array.isArray(json.workflow_runs) && typeof json.total_count === "number" ? json.workflow_runs : null;
+    if (!runs || runs.length > json.total_count || runs.some((run) => !run || typeof run.conclusion !== "string")) {
+        return null;
+    }
+    const ran = runs.find((run) => !NOT_RAN.has(run.conclusion));
+    if (!ran) {
+        return {at: null};
+    }
+    const at = Date.parse(ran.created_at) / 1000;
+    return Number.isFinite(at) ? {at} : null;
+}
+
+// the alert when the last scheduled run started more than RUN_LATE_HOURS ago, or null
+export function runAlert(lastRun, href, now) {
+    if (!lastRun || (lastRun.at !== null && now - lastRun.at <= RUN_LATE_HOURS * 60 * 60)) {
+        return null;
+    }
+    return {
+        tone: tones.red,
+        mark: "!",
+        title: lastRun.at === null ? "The daily chores haven’t run on schedule lately" : `The daily chores haven’t run on schedule since ${dayText(lastRun.at)}`,
+        detail: "Actions › Daily chores",
+        href
+    };
+}

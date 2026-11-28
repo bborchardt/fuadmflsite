@@ -42,7 +42,8 @@ from AGENTS.md.
   are `ui/calendar.js`.
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads, `mflConfirm` for
   the reads that confirm a move or finish one under way, and `mflSend` for moves, so a 429 holds reads on every page. A direct
-  `fetch` is only for the site's own files on Pages. `ui/store.js`: localStorage.
+  `fetch` is only for the site's own files on Pages, and GitHub's list of the daily job's runs
+  (below). `ui/store.js`: localStorage.
 - `jobs/daily.mjs` only sequences: it reads the environment, runs the chores in order, collects
   flags and writes the summary and outputs. The MFL transport and session (login, request spacing,
   timeouts, waiting out refusals) are `jobs/mfl-session.mjs`, the run's log and flags
@@ -53,8 +54,10 @@ from AGENTS.md.
   they take the version's from the context, as `const {names} = lib.<name>;`, the form
   `tests/guards.test.mjs` reads.
 - Writes to MFL go only through `jobs/mfl-import.mjs` / `jobs/mfl-form.mjs`. No import cycles.
-- Outside services: members' pages depend only on MFL and GitHub Pages. The one exception is the
-  devices form (Google Forms), which only receives error reports after the page has run. The daily
+- Outside services: members' pages depend only on MFL and GitHub Pages (v2's reads checked by
+  requests.py, a member's Home among them). The exceptions are the
+  devices form (Google Forms), which only receives error reports after the page has run, and
+  GitHub's API, which only the commissioner's Home asks, after My alerts first draws. The daily
   job depends on MFL, GitHub, and, for backup starters, nflverse's weekly rosters and
   DynastyProcess's player IDs. Any new outside service is a decision recorded under Accepted
   decisions, saying what happens while it's down.
@@ -120,6 +123,11 @@ from AGENTS.md.
 - Devices form (Google Forms): members' error reports go there after the page has run. While it's
   down, reports are lost and the page is unaffected. (mfl/message-header.html: the devices form,
   `DEVICES`)
+- GitHub's API (the daily job's last scheduled run): only the commissioner's Home asks, after My
+  alerts first draws and when Home is shown again, at most once in 6 hours (hourly while the alert
+  shows; an hour after a failure), for the alert that the job hasn't run on schedule in 36 hours.
+  While it's down, the alert isn't shown and the failure is logged; the page is unaffected.
+  (ui/home.js: `lastRunOf`, `checkRun`)
 - nflverse weekly rosters and DynastyProcess player IDs: backup starters reads them, and only when a
   week has backups waiting. While either is down, the run flags, nothing is written for unsettled
   weeks, payouts wait, and the next run tries again. (jobs/backup-starters.mjs: `loadNflverse`, and

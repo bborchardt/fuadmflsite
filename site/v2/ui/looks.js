@@ -77,7 +77,7 @@ export function applyLook(doc = document, look = lookOf(doc)) {
 // reads it too (mfl/message-header.html), for the loading cover.
 const TEAM_SKIN = "fuad.teamSkin.";
 const skinKey = (leagueId) => `${TEAM_SKIN}${leagueId}`;
-const isTeamOfCommish = (doc) => Boolean(doc.querySelector('.myfantasyleague_menu a[href*="BECOME=0000"], .welcome a[href*="BECOME=0000"]'));
+export const isTeamOfCommish = (doc) => Boolean(doc.querySelector('.myfantasyleague_menu a[href*="BECOME=0000"], .welcome a[href*="BECOME=0000"]'));
 
 // as the commissioner's own team, the skin it's in; a page whose skin can't be read leaves what's kept
 export function keepTeamSkin(doc = document, franchiseId = window.franchise_id, leagueId = window.league_id) {

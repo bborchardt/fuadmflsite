@@ -84,7 +84,8 @@ const NOT_PAGES = {
     readRules: "the rules export, checked by fetchExport",
     readBack: "a move's result, read back through a reader above",
     readThreads: "fetches the thread pages for readTopicPage",
-    readLineups: "fetches Lineup Details for readLineupDetails"
+    readLineups: "fetches Lineup Details for readLineupDetails",
+    readLastRun: "GitHub's list of the daily job's runs (tests/home-run.test.mjs)"
 };
 
 // nothing found reads as "none": a list, map or object of them with nothing in it

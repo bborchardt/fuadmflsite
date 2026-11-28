@@ -11,6 +11,8 @@ import {readCareer, readChampions, readSeries} from "../site/v2/ui/history-model
 import {BIDS_KEY} from "../site/v2/ui/move-rows.js";
 import {KEYS} from "../site/v2/ui/history.js";
 import {PLAYERS_KEY, playerRows} from "../site/v2/ui/player-list.js";
+import {RUN_KEY} from "../site/v2/ui/home.js";
+import {readLastRun} from "../site/v2/ui/home-model.js";
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
@@ -46,6 +48,8 @@ function outline(samples) {
 
 // [the key as pinned, the key v2 uses, its values from the saved pages, the outline as pinned]
 const stored = [
+    // from GitHub, not MFL: the daily job's last scheduled run, for the commissioner's alert
+    ["fuad.home.dailyRun", RUN_KEY, () => [readLastRun(JSON.parse(fixture("github-daily-runs.json"))), readLastRun({total_count: 0, workflow_runs: []})], "{at: null|number}"],
     ["fuad.bids", BIDS_KEY, () => [readBidRun(fixture("processed-waivers.html")), readBidRun(fixture("processed-waivers-backup.html"))],
         "[{awarded: null|number, claims: [{amount: number, name: string, nfl: string, position: string}], comment: string, refused: {*: string}, team: string}]"],
     ["fuad.history.champions", KEYS.champions, () => [readChampions(fixture("history-champions.html"))], "[{name: string, team: string, year: number}]"],
