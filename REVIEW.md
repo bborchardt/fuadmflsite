@@ -84,10 +84,11 @@ from AGENTS.md.
   path (v2 as the main version) first.
 - Most important: the number of requests to MFL, guarded in CI by requests.py against the base
   branch. Then round trips, hence one bundle.
-- Budget: v2's fuad.js at most 200 KB gzipped, raised only on purpose, as "more requests" is.
+- Budget: v2's fuad.js at most 200 KB gzipped, raised only on purpose, as "more requests" is
+  (`BUDGET_KB` in tools/bundle-budget.mjs, which fails CI's build over it).
 - Nothing a member waits on comes from a third party: before v2's screen is drawn, the page fetches
-  only from MFL and GitHub Pages (no outside stylesheet, `@import`, font or script; not yet:
-  fuad.css's Barlow fonts, #320).
+  only from MFL and GitHub Pages (no outside stylesheet, `@import`, font or script: the Barlow fonts
+  are v2's own, in `site/v2/fonts/`).
 - The job's speed doesn't matter; its request count does.
 
 ## Testing strategy

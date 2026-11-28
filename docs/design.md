@@ -49,7 +49,13 @@ Why the league site and the daily job work the way they do. MFL's own behavior i
 - **Published as few files as possible:** on a slow phone the wait is mostly round trips, one per
   level of imports, so GitHub Pages gets v2 bundled into one minified `fuad.js` (its on-demand
   parts still run only when asked for) and a minified `fuad.css`, built by `tools/build.mjs` in the
-  publish workflow; a stale cache then re-checks one file. v1 is published as written.
+  publish workflow; a stale cache then re-checks one file. v1 is published as written. CI fails a
+  `fuad.js` over its budget, gzipped (`tools/bundle-budget.mjs`), which also reports `fuad.css`'s.
+- **v2's fonts are its own:** Barlow and Barlow Condensed (SIL OFL) are published in `site/v2/fonts/`,
+  latin and latin-ext as Google serves them, the latin-ext files loaded only for a character in them.
+  `fuad.css` holds the first paint, so an `@import` of Google's stylesheet held it on a connection
+  to Google; fonts on Pages draw with `swap`, in the system font until they arrive. They're
+  downloaded again after each deploy, as every Pages file is, where Google's were kept a year.
 - **One folder per version, pinned per season.** MFL keeps each season's site and copies the
   messages forward at renewal, so a past season keeps the version, and the rules, it was played
   under. Rule changes and visible redesigns get a new version; small fixes go in place. A version
