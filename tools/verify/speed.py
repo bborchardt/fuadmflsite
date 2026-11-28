@@ -2,7 +2,7 @@
 """How a v2 screen loads on a slow phone connection, from the saved pages, without asking MFL anything.
 
     uv run --no-project --with playwright python tools/verify/speed.py [--screens lineup,home] [--net slow]
-        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--header] [--no-lookbehind] [--film DIR]
+        [--path beta,direct] [--cache cold,stale] [--ref master | --built] [--saved-header] [--no-lookbehind] [--film DIR]
         [--timeline]
 
 Each request is answered from tools/verify/screens/ (as screens.py does) after the delay a phone
@@ -11,10 +11,10 @@ gzipped size through one shared link. What the saved pages lack takes its typica
 Google's fonts, MFL's own styles and scripts, and the third-party scripts MFL's page loads, which are
 then refused as before. MFL's page arrives whole, so its progressive drawing isn't modeled.
 
---path   beta: the header loads v1, which hands the page to v2 (a beta member today); direct: the
-         header loads v2 itself
---header the saved pages' header replaced by mfl/message-header.html: beta is a beta member (MAIN
-         v1, the beta loaded directly), direct is MAIN v2
+--path   with mfl/message-header.html, the header members get: beta is a beta member (MAIN v1, the
+         beta loaded directly), direct is MAIN v2
+--saved-header  the saved pages' own, older header instead: beta is it loading v1, which hands the
+         page to v2; direct is it loading v2 with no cover, which no header does today
 --cache  cold: nothing cached; stale: cached more than GitHub Pages' 10 minutes, so every site file,
          picture, font and script is asked again and answered unchanged (a round trip, no body);
          nextday: stale, after a visit whose saved copies (localStorage) are then made a day older
@@ -164,8 +164,17 @@ async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, 
     url, swaps = SCREENS[name]
     mfl = Mfl(site, swaps)
     links = [Link(net)]
+    # requests not yet answered: data on its way, which a screen not yet changing may still be waiting on
+    in_flight = [0]
 
     async def handle(route):
+        in_flight[0] += 1
+        try:
+            return await answer(route)
+        finally:
+            in_flight[0] -= 1
+
+    async def answer(route):
         request = route.request
         url = urlparse(request.url)
         captured = Captured(request)
@@ -217,13 +226,14 @@ async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, 
     shots = 0
     if film:
         film.mkdir(parents=True, exist_ok=True)
-    # until v2's screen has been drawn and hasn't changed for 5 s (data can land a few seconds after
-    # the draw on a slow link), at most 60 s
+    # until v2's screen has been drawn, hasn't changed for 5 s, has no panel still loading
+    # (drawPanel's aria-busy) and has no request unanswered: data can land many seconds after the
+    # draw on a slow link, with nothing changing meanwhile. At most 60 s.
     last_change, last, log, final = time.monotonic(), None, [], 0
     while time.monotonic() - t0 < 60:
         await asyncio.sleep(0.25)
         try:
-            log, final = await page.evaluate("() => [window.__speed || [], window.__speedFinal || 0]")
+            log, final, busy = await page.evaluate("() => [window.__speed || [], window.__speedFinal || 0, Boolean(document.querySelector('[aria-busy=\"true\"]'))]")
         except Exception:
             continue
         if film and time.monotonic() - t0 >= shots:
@@ -234,7 +244,7 @@ async def run(browser, site, name, net, path, cache, film, no_lookbehind=False, 
             shots += 1
         if (log, final) != last:
             last, last_change = (log, final), time.monotonic()
-        if log and log[-1][1].endswith("O") and time.monotonic() - last_change > 5:
+        if log and log[-1][1].endswith("O") and time.monotonic() - last_change > 5 and not busy and not in_flight[0]:
             break
     await nav
     await context.close()
@@ -300,7 +310,7 @@ async def main():
     which.add_argument("--built", action="store_true", help="the working copy as Pages publishes it, bundled")
     parser.add_argument("--film", type=Path, default=None, metavar="DIR", help="a screenshot every second, saved there")
     parser.add_argument("--timeline", action="store_true", help="each run's changes in what shows (see above)")
-    parser.add_argument("--header", action="store_true", help="mfl/message-header.html in place of the saved header")
+    parser.add_argument("--saved-header", action="store_true", help="the saved pages' own header, not mfl/message-header.html")
     parser.add_argument("--no-lookbehind", action="store_true", help="a regex with lookbehind throws, as before Safari 16.4")
     args = parser.parse_args()
     site = Site(build_working_copy() if args.built else args.ref)
@@ -311,7 +321,7 @@ async def main():
             for net in args.net.split(","):
                 for path in args.path.split(","):
                     for cache in args.cache.split(","):
-                        r = await run(browser, site, name, net, path, cache, args.film, args.no_lookbehind, args.header)
+                        r = await run(browser, site, name, net, path, cache, args.film, args.no_lookbehind, not args.saved_header)
                         print(f"{name:8} {path:6} {net:5} {cache:7}  {r['shows']}  {r['mfl flash']}    {r['drawn']}  {r['final']}  {r['requests']:8} {r['kB']:4}")
                         if args.timeline:
                             print("   ", r["timeline"])
