@@ -1,4 +1,4 @@
-// Flags only: reversing a move is left to the commissioner.
+// The over-cap and league rules checks. Flags only: reversing a move is left to the commissioner.
 
 import {dropDate} from "./drop-penalties.mjs";
 
@@ -120,4 +120,70 @@ export function overCapMessage({teamName, total, cap, moves, held}) {
         message += ` Drop penalties held so the move can be reversed: ${held.join(", ")}.`;
     }
     return message;
+}
+
+const RULE_KINDS = new Set(["roster-over", "roster-under", "ir", "ir-roster", "injured-starter"]);
+
+// The league rules' flags. The flag lists recent moves, so a move that broke the limit can be
+// reversed. Returns the teams over 30, whose chores are held.
+export function leagueRules(ctx, {players, built, cutDown, penalties, transactions}) {
+    const {lib, now, log, needsAttention} = ctx;
+    const {OVER_AFTER_TRADE_HOURS, ROSTER_MAX} = lib.rules;
+    const {ruleViolations} = lib.violations;
+    const {TIME_ZONE} = lib.zone;
+    const overRoster = new Set();
+    if (built.seasonOver === null) {
+        return overRoster;
+    }
+    const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
+    const violations = ruleViolations(built, {now: now.getTime() / 1000, cutDown}).filter((item) => RULE_KINDS.has(item.kind));
+    for (const violation of violations) {
+        let text = violation.text;
+        if (violation.kind === "roster-over") {
+            overRoster.add(violation.franchiseId);
+            const moves = recentMoves(transactions, violation.franchiseId, {players, franchises: built.franchises, since, timeZone: TIME_ZONE});
+            const held = penalties.filter((penalty) => penalty.franchiseId === violation.franchiseId).map((penalty) => penalty.explanation);
+            text = overRosterMessage({text, max: ROSTER_MAX, graceHours: OVER_AFTER_TRADE_HOURS, moves, held, trade: tradeOverRoster(transactions, violation.franchiseId, since), timeZone: TIME_ZONE});
+        }
+        needsAttention(`League rules: ${text}`);
+    }
+    if (!violations.length) {
+        log("No roster, injured reserve or anti-tanking violations.");
+    }
+    return overRoster;
+}
+
+// The cap's flags; returns the over-cap franchise ids, whose chores are held
+export function overCap(ctx, {players, built, penalties, transactions}) {
+    const {lib, now, log, needsAttention} = ctx;
+    const {SALARY_CAP} = lib.rules;
+    const {overOnlyByRookies} = lib.league;
+    const {TIME_ZONE} = lib.zone;
+    const since = now.getTime() / 1000 - RECENT_MOVE_DAYS * 86400;
+    const over = new Set();
+    let excused = 0;
+    for (const {franchiseId, capTotal: total} of built.franchises.values()) {
+        if (total <= SALARY_CAP) {
+            continue;
+        }
+        const franchise = built.franchises.get(franchiseId);
+        if (overOnlyByRookies(franchise)) {
+            log(`${franchise.teamName} is at $${total} of $${SALARY_CAP} only by its unsigned rookies' $${franchise.unsignedRookieSalary}, `
+                + "which count once their lengths are set (bylaw 4.6); its chores aren't held.");
+            excused++;
+            continue;
+        }
+        over.add(franchiseId);
+        needsAttention(`Over the cap: ${overCapMessage({
+            teamName: built.franchises.get(franchiseId).teamName,
+            total,
+            cap: SALARY_CAP,
+            moves: recentMoves(transactions, franchiseId, {players, franchises: built.franchises, since, timeZone: TIME_ZONE}),
+            held: penalties.filter((penalty) => penalty.franchiseId === franchiseId).map((penalty) => penalty.explanation)
+        })}`);
+    }
+    if (!over.size && !excused) {
+        log("No team is over the cap.");
+    }
+    return over;
 }

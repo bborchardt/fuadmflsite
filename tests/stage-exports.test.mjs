@@ -14,7 +14,7 @@ const dirs = (dir) => readdirSync(dir, {withFileTypes: true}).filter((entry) => 
 const folders = dirs(STAGES).flatMap(dirs).map((league) => join(league, "exports")).filter(existsSync);
 // the rules other than an export's section's that the job reads one by, by the name the manifest gives
 const RULES = {WEEK_ROSTERS};
-// a franchise's fields the daily job's saving keeps (jobs/daily.mjs: FRANCHISE_FIELDS); the rest of
+// a franchise's fields the daily job's saving keeps (jobs/saved-pages.mjs: FRANCHISE_FIELDS); the rest of
 // a commissioner's league export is owners' contact details, logins and preferences
 const FRANCHISE_FIELDS = ["id", "name", "owner_name", "abbrev", "division", "icon", "logo", "salaryCapAmount", "bbidAvailableBalance", "waiverSortOrder", "future_draft_picks"];
 

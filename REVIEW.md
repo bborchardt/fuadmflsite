@@ -42,13 +42,15 @@ from AGENTS.md.
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads, `mflConfirm` for
   the reads that confirm a move or finish one under way, and `mflSend` for moves, so a 429 holds reads on every page. A direct
   `fetch` is only for the site's own files on Pages. `ui/store.js`: localStorage.
-- `jobs/daily.mjs` only sequences: it runs the chores in order, collects flags and writes the
-  summary. The MFL transport and session (login, request spacing, timeouts, waiting out refusals)
-  belong in their own module, and each chore in `jobs/<chore>.mjs`, taking a context object (lib,
-  the MFL session, log, choreLog, needsAttention, dryRun). A value one chore needs from another is
-  passed in explicitly. A new chore starts that way; an existing one moves out when its logic
-  changes, or under #326; an edit to its messages alone doesn't call for it. `jobs/<chore>.mjs`
-  import no lib/ and take the version's lib as an argument.
+- `jobs/daily.mjs` only sequences: it reads the environment, runs the chores in order, collects
+  flags and writes the summary and outputs. The MFL transport and session (login, request spacing,
+  timeouts, waiting out refusals) are `jobs/mfl-session.mjs`, the run's log and flags
+  `jobs/run-log.mjs`. Each chore is `jobs/<chore>.mjs`, taking the context `jobs/chore-context.mjs`
+  makes (lib, the MFL session, log, choreLog, needsAttention, dryRun, the shared reads and the
+  import); a new chore starts that way. A value one chore needs from another is passed in
+  explicitly, and no module-level variable holds a run's state. `jobs/<chore>.mjs` import no lib/:
+  they take the version's from the context, as `const {names} = lib.<name>;`, the form
+  `tests/guards.test.mjs` reads.
 - Writes to MFL go only through `jobs/mfl-import.mjs` / `jobs/mfl-form.mjs`. No import cycles.
 - Outside services: members' pages depend only on MFL and GitHub Pages. The one exception is the
   devices form (Google Forms), which only receives error reports after the page has run. The daily
@@ -119,8 +121,8 @@ from AGENTS.md.
   `DEVICES`)
 - nflverse weekly rosters and DynastyProcess player IDs: backup starters reads them, and only when a
   week has backups waiting. While either is down, the run flags, nothing is written for unsettled
-  weeks, payouts wait, and the next run tries again. (jobs/daily.mjs: `nflverseFiles`, and the
-  backup starters catch before payouts)
+  weeks, payouts wait, and the next run tries again. (jobs/backup-starters.mjs: `loadNflverse`, and
+  daily.mjs giving payouts the chore's first open week)
 - v2 is bundled into one file, for round trips on slow phones; code splitting measured no faster on
   "slow" and slower on "3g". (design.md)
 - v1 is frozen with its own lib/. (AGENTS.md)
