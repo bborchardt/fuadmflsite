@@ -8,7 +8,7 @@ import {SALARY_CAP, lineupPositions} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {CAP_TIGHT} from "./format.js";
 import {cached} from "./store.js";
-import {allAtOnce, forget, mflFetch, pageFetch} from "./page-fetch.js";
+import {allAtOnce, forget, mflFetch, mflSend, pageFetch} from "./page-fetch.js";
 import {seasonFacts, seasonStarted} from "./context.js";
 import {playerList} from "./player-list.js";
 import {addPhase, pendingWithComments} from "./add-model.js";
@@ -64,10 +64,11 @@ export function withoutOwners(league) {
     return {...league, franchises: {...league.franchises, franchise: Array.isArray(teams) ? teams.map(strip) : strip(teams)}};
 }
 
-// what a move changes is forgotten before and after it: a read in flight meanwhile may keep it again
+// Every move sent to MFL, through mflSend, so its 429 holds reads too. What a move changes is
+// forgotten before and after it: a read in flight meanwhile may keep it again.
 export async function send(url, init) {
     forget();
-    const response = await fetch(url, {credentials: "include", ...init}).finally(forget);
+    const response = await mflSend(url, {credentials: "include", ...init}).finally(forget);
     if (!response.ok) {
         throw new Error(`MFL answered ${httpStatus(response)}`);
     }

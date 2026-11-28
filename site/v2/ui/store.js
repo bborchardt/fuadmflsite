@@ -1,7 +1,9 @@
-// Browser storage that fails quietly: private windows and blocked storage just don't remember.
+// Browser storage that fails quietly: private windows and blocked storage just don't remember. A
+// full one is warned of once a page (only in the console), as it also drops the 429 hold's key.
 
 import {league} from "../lib/settings.js";
 
+let warned = false;
 export const storage = {
     get(key) {
         try {
@@ -14,6 +16,10 @@ export const storage = {
         try {
             window.localStorage.setItem(key, value);
         } catch (error) {
+            if (!warned) {
+                warned = true;
+                console.warn("[fuad] couldn't keep in browser storage:", error);
+            }
         }
     },
     remove(key) {
@@ -70,19 +76,55 @@ export function saved(key) {
     }
 }
 
-export function save(key, value) {
-    storage.set(keyOf(key), JSON.stringify({storedAt: Date.now(), value}, keepUnknown));
+// `keptFor`, in ms: how long anything reads it, after which the sweep takes it out
+export function save(key, value, keptFor) {
+    const storedAt = Date.now();
+    storage.set(keyOf(key), JSON.stringify(keptFor ? {storedAt, expires: storedAt + keptFor, value} : {storedAt, value}, keepUnknown));
+    sweep();
 }
 
-// `keep(value)` false: the value is used but not kept, so the next call loads again
-export async function cached(key, maxAge, load, keep = () => true) {
+// the longest anything is read without an expiry of its own (a panel's saved copy, the launch's
+// season, an entry from before entries had one)
+const YEAR = 365 * 24 * 60 * 60 * 1000;
+// MFL's pages share this storage, and keys carry a season or week, so what's expired goes as the
+// first thing a page keeps is kept: reading every entry is slow on a phone, so once a page
+let swept = false;
+export function sweep() {
+    if (swept) {
+        return;
+    }
+    swept = true;
+    const now = Date.now();
+    try {
+        for (const name of Object.keys(window.localStorage)) {
+            if (!name.startsWith("fuad.")) {
+                continue;
+            }
+            let entry = null;
+            try {
+                entry = JSON.parse(window.localStorage.getItem(name));
+            } catch (error) {
+                // not one of these (a look's folder, the beta's version)
+            }
+            if (entry && typeof entry === "object"
+                && (typeof entry.expires === "number" ? entry.expires <= now : typeof entry.storedAt === "number" && now - entry.storedAt > YEAR)) {
+                window.localStorage.removeItem(name);
+            }
+        }
+    } catch (error) {
+    }
+}
+
+// `keep(value)` false: the value is used but not kept, so the next call loads again. `keptFor`: how
+// long it's read for, when longer than `maxAge` (cachedOrStale)
+export async function cached(key, maxAge, load, keep = () => true, keptFor = maxAge) {
     const entry = saved(key);
     if (entry && Date.now() - entry.storedAt < maxAge) {
         return entry.value;
     }
     const value = await load();
     if (keep(value)) {
-        save(key, value);
+        save(key, value, keptFor);
     }
     return value;
 }
@@ -92,10 +134,10 @@ export async function cached(key, maxAge, load, keep = () => true) {
 export async function cachedOrStale(key, maxAge, staleAge, load) {
     const entry = saved(key);
     if (!entry || Date.now() - entry.storedAt >= staleAge) {
-        return cached(key, maxAge, load);
+        return cached(key, maxAge, load, undefined, staleAge);
     }
     if (Date.now() - entry.storedAt >= maxAge) {
-        Promise.resolve().then(load).then((value) => save(key, value)).catch((error) => console.warn(`[fuad] couldn't refresh ${key}:`, error));
+        Promise.resolve().then(load).then((value) => save(key, value, staleAge)).catch((error) => console.warn(`[fuad] couldn't refresh ${key}:`, error));
     }
     return entry.value;
 }

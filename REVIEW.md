@@ -41,8 +41,7 @@ from AGENTS.md.
   next time those files change.
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads and `mflSend` for
   moves, so a 429 holds reads on every page. A direct `fetch` is only for the site's own files on
-  Pages (not yet: moves.js `send`, lineup.js and home.js's chat post; #317). `ui/store.js`:
-  localStorage.
+  Pages. `ui/store.js`: localStorage.
 - `jobs/daily.mjs` only sequences: it runs the chores in order, collects flags and writes the
   summary. The MFL transport and session (login, request spacing, timeouts, waiting out refusals)
   belong in their own module, and each chore in `jobs/<chore>.mjs`, taking a context object (lib,

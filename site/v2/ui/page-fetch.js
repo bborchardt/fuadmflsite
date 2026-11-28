@@ -3,7 +3,7 @@
 // is forgotten, so Retry asks again. Exports that rarely change are also kept in the browser
 // (`keepFor`), so the next page reuses them instead of asking MFL again.
 
-import {storage} from "./store.js";
+import {storage, sweep} from "./store.js";
 import {TIME_ZONE} from "../lib/zone.js";
 import {HELD} from "../lib/mfl.js";
 
@@ -89,23 +89,10 @@ function keptEntry(key) {
 }
 const kept = (key) => (keptEntry(key) || {}).body ?? null;
 
-// MFL's own pages share this browser storage, so what's expired goes as the first thing a page keeps
-// is kept: reading every entry is slow on a phone, so once a page
-let swept = false;
+// what's expired goes with the store's sweep, whose entries have `expires` too
 function keep(key, body, maxAge) {
-    const now = Date.now();
-    if (!swept) {
-        swept = true;
-        try {
-            for (const name of Object.keys(window.localStorage)) {
-                if (name.startsWith(KEEP) && !((JSON.parse(window.localStorage.getItem(name)) || {}).expires > now)) {
-                    window.localStorage.removeItem(name);
-                }
-            }
-        } catch (error) {
-        }
-    }
-    storage.set(key, JSON.stringify({expires: now + maxAge, body}));
+    storage.set(key, JSON.stringify({expires: Date.now() + maxAge, body}));
+    sweep();
 }
 
 // after a move made in v2, so the next page shows it: what a move changes is asked again
@@ -142,14 +129,33 @@ function thisWeeksSchedule() {
     }
 }
 
+// how long a read waits for MFL to start answering; reading the answer isn't timed, as a slow phone
+// takes a while over the players' list
+export const READ_TIMEOUT = 20 * 1000;
+
 // Every read from MFL. After MFL answers 429 nothing is asked of it for a while, on any page; a read
-// in that time answers 429 at once, so it fails as MFL's refusal would. Moves aren't held.
-export async function mflFetch(url, init) {
+// in that time answers 429 at once, so it fails as MFL's refusal would. Moves aren't held. A read MFL
+// doesn't answer in READ_TIMEOUT fails as one cut off does (ui/panel.js cutOff), so a panel isn't
+// left on its placeholders. AbortSignal.timeout is newer than the oldest devices.
+export async function mflFetch(url, init = {}) {
     const until = Number(storage.get(WAIT_KEY)) || 0;
     if (Date.now() < until) {
         return new Response("", {status: 429, statusText: HELD});
     }
-    const response = await fetch(url, init);
+    const controller = init.signal ? null : new AbortController();
+    let timedOut = false;
+    const timer = controller && setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, READ_TIMEOUT);
+    let response;
+    try {
+        response = await fetch(url, controller ? {...init, signal: controller.signal} : init);
+    } catch (error) {
+        throw timedOut ? Object.assign(new Error(`MFL didn't answer in ${READ_TIMEOUT / 1000} seconds`), {cutOff: true}) : error;
+    } finally {
+        clearTimeout(timer);
+    }
     if (response.status === 429) {
         storage.set(WAIT_KEY, String(Date.now() + WAIT));
     }

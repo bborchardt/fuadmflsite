@@ -14,6 +14,7 @@ async function kickoffs(season) {
 }
 
 async function loadSnapshot(season, dataBase) {
+    // eslint-disable-next-line no-restricted-syntax -- the site's own snapshot on Pages, not MFL's
     const response = await fetch(new URL(snapshotFileName(season), dataBase), {cache: "no-cache"});
     if (response.status === 404) {
         return null;
