@@ -422,17 +422,18 @@ export function repoOf(pagesUrl) {
 // Scheduled runs only, which start on the default branch: the alert is about the schedule, which a
 // run started by hand doesn't mend. The last few, as a cancelled run did none of the chores.
 export const runsUrl = ({owner, repo}) => `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${DAILY}/runs?event=schedule&status=completed&per_page=10`;
-const RAN = new Set(["success", "failure"]);
+// a run the schedule started that then failed or timed out still ran: GitHub emails those
+const NOT_RAN = new Set(["cancelled", "skipped"]);
 export const runsPage = ({owner, repo}) => `https://github.com/${owner}/${repo}/actions/workflows/${DAILY}`;
 
-// `{at}`, the start in seconds of the last scheduled run that succeeded or failed, `{at: null}` when
-// none listed did, or null for an answer that isn't GitHub's list of runs
+// `{at}`, the start in seconds of the last scheduled run that wasn't cancelled or skipped, `{at: null}`
+// when none listed was, or null for an answer that isn't GitHub's list of runs
 export function readLastRun(json) {
     const runs = json && Array.isArray(json.workflow_runs) && typeof json.total_count === "number" ? json.workflow_runs : null;
     if (!runs || runs.length > json.total_count || runs.some((run) => !run || typeof run.conclusion !== "string")) {
         return null;
     }
-    const ran = runs.find((run) => RAN.has(run.conclusion));
+    const ran = runs.find((run) => !NOT_RAN.has(run.conclusion));
     if (!ran) {
         return {at: null};
     }

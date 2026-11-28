@@ -22,8 +22,9 @@ test("the repository is the one its GitHub Pages address is published from", () 
 test("GitHub's list gives the last run that did the chores; none is none, anything else not recognised", () => {
     assert.deepEqual(readLastRun(runs), {at});
     const run = (conclusion, created) => ({event: "schedule", status: "completed", conclusion, created_at: created});
-    // a cancelled or skipped run did none of the chores; a failed one ran them
+    // a cancelled or skipped run did none of the chores; a failed or timed-out one ran
     assert.deepEqual(readLastRun({total_count: 3, workflow_runs: [run("cancelled", "2026-11-28T17:00:00Z"), run("skipped", "2026-11-28T16:00:00Z"), run("failure", "2026-11-27T17:36:45Z")]}), {at});
+    assert.deepEqual(readLastRun({total_count: 2, workflow_runs: [run("timed_out", "2026-11-27T17:36:45Z"), run("success", "2026-11-26T17:00:00Z")]}), {at});
     assert.deepEqual(readLastRun({total_count: 1, workflow_runs: [run("cancelled", "2026-11-28T17:00:00Z")]}), {at: null});
     assert.deepEqual(readLastRun({total_count: 0, workflow_runs: []}), {at: null});
     assert.equal(readLastRun({total_count: 0, workflow_runs: [run("success", "2026-11-28T17:00:00Z")]}), null);

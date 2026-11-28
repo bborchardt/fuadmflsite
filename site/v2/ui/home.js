@@ -379,31 +379,39 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     };
 
     // The commissioner, as 0000 or as their own team, is told when the daily job hasn't run. My alerts
-    // shows what was last read from GitHub; it's read again after My alerts has drawn, once
-    // RUN_CHECKED has passed, so it never holds the page up, and My alerts is drawn again if the
-    // alert it showed changed, from the reads it already made.
+    // adds it when drawn, from what was last read from GitHub within RUN_CHECKED, so it isn't in My
+    // alerts' saved copy and never holds the page up. It's read again after My alerts has drawn,
+    // once RUN_CHECKED has passed, and My alerts is drawn again from what it shows if it changed.
     const runRepo = loggedIn && dataBase && (franchiseId === "0000" || isTeamOfCommish(document)) ? repoOf(dataBase) : null;
     const lateRun = () => {
         const entry = runRepo && saved(RUN_KEY);
-        return entry ? runAlert(entry.value, runsPage(runRepo), nowSeconds()) : null;
+        return entry && Date.now() - entry.storedAt < RUN_CHECKED ? runAlert(entry.value, runsPage(runRepo), nowSeconds()) : null;
     };
     const titleOf = (alert) => (alert ? alert.title : null);
-    let shownLate = null;
-    const withLate = (alerts) => {
+    // what My alerts last drew, so it can be drawn again with the late-run alert alone changed
+    let drawnAlerts = null;
+    const withLate = (draw) => (alerts, body) => {
         const late = lateRun();
-        shownLate = titleOf(late);
-        return late ? [late, ...alerts] : alerts;
+        drawnAlerts = {alerts, body, draw, late: titleOf(late)};
+        draw(late ? [late, ...alerts] : alerts, body);
     };
-    let redrawAlerts = () => {};
+    let checking = null;
     const checkRun = () => {
         const failed = runRepo && saved(RUN_FAILED_KEY);
-        if (!runRepo || failed && Date.now() - failed.storedAt < HOUR) {
+        if (!runRepo || checking || failed && Date.now() - failed.storedAt < HOUR) {
             return;
         }
-        cached(RUN_KEY, RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
-            .then(() => titleOf(lateRun()) !== shownLate && redrawAlerts(), (error) => {
+        checking = cached(RUN_KEY, RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
+            .then(() => {
+                if (drawnAlerts && titleOf(lateRun()) !== drawnAlerts.late && drawnAlerts.body.isConnected) {
+                    withLate(drawnAlerts.draw)(drawnAlerts.alerts, drawnAlerts.body);
+                }
+            }, (error) => {
                 save(RUN_FAILED_KEY, true, HOUR);
                 console.error("[fuad] My alerts couldn't check the daily chores' last run:", error);
+            })
+            .then(() => {
+                checking = null;
             });
     };
 
@@ -419,10 +427,6 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     };
 
     let alertsShown;
-    const alertsRun = refreshes.length;
-    // a redraw for the late-run alert alone reuses what My alerts last read from MFL
-    let fromMfl = null;
-    let again = false;
     if (member) {
         alertsShown = drawPanel(panels.alerts, {
             heading: "My alerts",
@@ -432,11 +436,6 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             rows: 3,
             refreshes,
             load: async () => {
-                const reuse = again && fromMfl;
-                again = false;
-                if (reuse) {
-                    return withLate(fromMfl);
-                }
                 const built = await league();
                 const week = Number(window.liveScoringWeek) || Number(built.week) || 1;
                 const [timeline, live, schedule, waivers, trades, board, lengths, upcoming, draft] = await Promise.all([
@@ -463,7 +462,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 const topic = contractTopic(board);
                 const cutDown = cutDownAt(timeline.calendar, context.season);
                 const owed = phase === "before-cut" || phase === "preseason" ? await lengthsOf(built, cutDown || timeline.kickoffs.get(1)).catch(unchecked("contract lengths", {changedFails: false})) : null;
-                const alerts = myAlerts({
+                return myAlerts({
                     league: built,
                     franchiseId,
                     phase,
@@ -480,10 +479,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 }).map((alert) => (alert.action === "lengths"
                     ? {...alert, due: phase === "before-cut" ? (cutDown ? `by ${dayText(cutDown)}` : "before the season") : null, unread: owed.unread.length ? dayText(owed.unread[owed.unread.length - 1]) : null}
                     : alert));
-                fromMfl = alerts;
-                return withLate(alerts);
             },
-            render: (alerts, body) => {
+            render: withLate((alerts, body) => {
                 panels.alerts.querySelector(".fuad-alert-count").textContent = alerts.length ? `${alerts.length} to do` : "";
                 body.innerHTML = alerts.length
                     ? alertRows(alerts)
@@ -493,7 +490,7 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 if (button && lengthsAlert) {
                     button.addEventListener("click", () => openLengths(lengthsAlert, button).catch((error) => console.warn("[fuad] couldn't open the lengths form:", error)));
                 }
-            }
+            })
         });
     } else if (loggedIn) {
         const commish = franchiseId === "0000";
@@ -502,11 +499,11 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             // the auction's and rookie draft's results, from the league's sheet (ui/load-form.js)
             actions: commish ? '<button type="button" class="fuad-text-button fuad-load-open">Load auction or rookie draft</button>' : "",
             what: "my alerts",
-            load: () => withLate([]),
+            load: () => [],
             refreshes,
-            render: (alerts, body) => {
+            render: withLate((alerts, body) => {
                 body.innerHTML = `${alerts.length ? alertRows(alerts) : ""}<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>`;
-            }
+            })
         });
         if (commish) {
             panels.alerts.addEventListener("click", (event) => {
@@ -518,14 +515,6 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 }
             });
         }
-    }
-    // My alerts' own load, the one its drawPanel added
-    if (alertsShown) {
-        const run = refreshes[alertsRun];
-        redrawAlerts = () => {
-            again = true;
-            run();
-        };
     }
     // after My alerts has drawn, and each time Home is shown again
     Promise.resolve(alertsShown).then(checkRun);
