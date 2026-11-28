@@ -15,9 +15,20 @@ import {CHECK, alertLine} from "./moves.js";
 import {STAR} from "./watch.js";
 import {contractYears} from "./rosters-model.js";
 import {
-    LENGTHS, addBlock, blockedText, changeTone, composeCheck, copyTargets, cutLater, dropCheck, dropGroups, droppedByTeam,
-    findClaim, freeAgentRows, injuryText, lengthLine, projection, signed, surname, usedDrops, usedTone
+    addBlock,
+    blockedText,
+    composeCheck,
+    copyTargets,
+    cutLater,
+    dropCheck,
+    droppedByTeam,
+    findClaim,
+    freeAgentRows,
+    injuryText,
+    lengthLine,
+    usedDrops
 } from "./add-model.js";
+import {LENGTHS, changeTone, dropGroups, projection, signed, surname, usedTone} from "./moves-model.js";
 import {money} from "./format.js";
 
 const NOTICE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"></path></svg>';

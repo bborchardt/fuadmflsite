@@ -2,7 +2,8 @@
 // saved copies.
 
 import {asArray} from "../lib/mfl.js";
-import {ORDINAL, TOPICS, dayText} from "./home-model.js";
+import {ORDINAL, TOPICS} from "./home-model.js";
+import {dayText} from "./format.js";
 import {mflTime} from "../lib/zone.js";
 
 const entities = {amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'"};

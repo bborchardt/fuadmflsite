@@ -11,7 +11,7 @@ import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {esc} from "./html.js";
 import {placeholders} from "./panel.js";
 import {alertLine, capTone, doneLine} from "./moves.js";
-import {changeTone, signed} from "./add-model.js";
+import {changeTone, signed} from "./moves-model.js";
 import {contractYears} from "./rosters-model.js";
 import {dropChoices, irBlockText} from "./ir-model.js";
 import {money} from "./format.js";

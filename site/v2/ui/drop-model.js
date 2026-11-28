@@ -4,7 +4,7 @@
 
 import {projectBids} from "../lib/bids.js";
 import {ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
-import {args, dropGroups, firstLast, isIR, projection, readMarks} from "./add-model.js";
+import {args, dropGroups, firstLast, isIR, projection, readMarks} from "./moves-model.js";
 import {cents} from "./format.js";
 
 // MFL's roster list on the Drop Players page (`playerDatabaseObj["picker"]`), from the page's

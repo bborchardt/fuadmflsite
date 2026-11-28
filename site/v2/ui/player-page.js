@@ -4,7 +4,7 @@
 
 import {displayName} from "../lib/mfl.js";
 import {clean} from "./html.js";
-import {whenText} from "./home-model.js";
+import {whenText} from "./format.js";
 import {mflTime} from "../lib/zone.js";
 
 export const NFL_TEAMS = {

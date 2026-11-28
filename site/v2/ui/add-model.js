@@ -2,53 +2,24 @@
 // no DOM here, so each can be checked against saved pages. A bid that could put a team over a limit
 // is invalid by league rule (5.5), so every move is checked with the pending bids as they could land.
 
-import {asArray, displayName as firstLast} from "../lib/mfl.js";
+import {displayName as firstLast} from "../lib/mfl.js";
 import {claimCapChange, projectBids} from "../lib/bids.js";
-import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib/rules.js";
-import {clock, dayText, freeAgencyEnd, lastBidRun, nextWeekly} from "./home-model.js";
-import {cents, money} from "./format.js";
+import {capPenalty, ROSTER_MAX, ROSTER_MIN, SALARY_CAP} from "../lib/rules.js";
+import {cents, clock, dayText, weekdayClock} from "./format.js";
+import {
+    args, freeAgencyEnd, isIR, LENGTH_PATTERN, lastBidRun, nextWeekly, projection, readMarks, SUFFIX, surname
+} from "./moves-model.js";
 import settings from "../lib/settings.js";
-import {SUFFIXES, normalize} from "../lib/names.js";
-import {MAX_YEARS, MIN_YEARS} from "../lib/contract-years.js";
+import {normalize} from "../lib/names.js";
 import {TIME_ZONE} from "../lib/zone.js";
 
-// the league's contract lengths
-export const LENGTHS = Array.from({length: MAX_YEARS - MIN_YEARS + 1}, (_, i) => MIN_YEARS + i);
-// one of them in a regular expression, the longest first so "10" isn't read as "1"
-export const LENGTH_PATTERN = `(?:${LENGTHS.slice().reverse().join("|")})`;
 // a player the team dropped can't be bid on by it for this long
 export const READD_HOURS = settings.adds.ownDropBidAfterHours;
-
-// "Harrison Jr." → "Harrison"
-const SUFFIX = new RegExp(`\\s+(${[...SUFFIXES].join("|")})\\.?$`, "i");
-
-// one `new Player2 (...)` call's arguments: quoted strings (names hold commas) and bare numbers
-export function args(text) {
-    return (text.match(/"(?:[^"\\]|\\.)*"|[^,\s][^,]*/g) || []).map((arg) => {
-        const trimmed = arg.trim();
-        return trimmed.startsWith("\"") ? trimmed.slice(1, -1).replace(/\\(.)/g, "$1") : trimmed;
-    });
-}
 
 const number = (value) => {
     const parsed = parseFloat(String(value).replace(/[$,]/g, ""));
     return Number.isFinite(parsed) ? parsed : null;
 };
-
-// "Montgomery, Tyren (R)#" → {mflName: "Montgomery, Tyren", mark: "#", rookie: true}. MFL's marks:
-// `#` locked by the global player lock, `!` his game has started, `*` dropped recently.
-export function readMarks(name) {
-    let rest = String(name).trim();
-    const mark = (rest.match(/[#!*]+$/) || [""])[0];
-    rest = rest.slice(0, rest.length - mark.length).trim();
-    const rookie = /\(R\)$/.test(rest);
-    return {mflName: rest.replace(/\s*\(R\)$/, ""), mark: mark ? mark[mark.length - 1] : null, rookie};
-}
-
-export {firstLast};
-
-// "Harrison Jr., Marvin" → "Harrison": the name a comment line goes by, as the job's reader takes it
-export const surname = (mflName) => String(mflName).split(",")[0].trim().replace(SUFFIX, "");
 
 // MFL's player lists on the Add/Drop page (`playerDatabaseObj["add"]` and `["drop"]`), from the
 // page's script text: {add: [...], drop: [...]}, each player with his index in MFL's list; null
@@ -91,18 +62,6 @@ export const injuryText = (code) => INJURIES[code] || "";
 
 // what MFL's page does with a pick: the `#`, `!` and `*` players go in as blind bids
 export const bidOnly = (player) => Boolean(player.mark);
-
-// The season's phase for Add: "closed" before the draft, "preseason" from the draft to week 1's
-// kickoff, "season", or "over" once week 17 is
-export function addPhase({started, over, drafted}) {
-    if (over) {
-        return "over";
-    }
-    if (started) {
-        return "season";
-    }
-    return drafted ? "preseason" : "closed";
-}
 
 // once free agency closes the next adds are the next draft's, on the next season's site
 export const addsClosed = (phase) => phase === "closed" || phase === "over";
@@ -171,7 +130,7 @@ export function droppedByTeam(players, franchiseId, now) {
     return blocked;
 }
 
-export const reAddText = (seconds) => `Dropped by you · bid from ${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", timeZone: TIME_ZONE})} ${clock(seconds)}`;
+export const reAddText = (seconds) => `Dropped by you · bid from ${weekdayClock(seconds)}`;
 
 // MFL's `pendingWaivers` comment, its line breaks mangled to `br/`
 export const commentLines = (comment) => String(comment || "").split(/\s*(?:<br\s*\/?>|br\/|\r?\n)\s*/).map((line) => line.trim()).filter(Boolean);
@@ -239,13 +198,6 @@ export function rewriteComment(comment, mflName, line, otherNames = []) {
 
 export const claimKey = (round, claim) => `${round}_${claim.add}_${claim.bid}_${claim.drop || "0000"}`;
 
-// The team as Add checks it: cap used, active players, the pending groups (lib/bids.js), and the
-// league model's players (for each drop's salary and cut penalty)
-export function teamState(league, franchiseId, groups) {
-    const franchise = league.franchises.get(franchiseId);
-    return franchise ? {franchise, groups, players: league.players} : null;
-}
-
 // projectBids with `change` applied to the groups: {round, claim} added, `without` (a claim key)
 // taken out first
 function projectWith(team, {add = null, without = null} = {}) {
@@ -260,10 +212,6 @@ function projectWith(team, {add = null, without = null} = {}) {
     }
     return projectBids(team.franchise, groups.filter((group) => group.claims.length), team.players);
 }
-
-export const projection = (team) => projectBids(team.franchise, team.groups, team.players);
-
-export const isIR = (player) => Boolean(player && player.status === "INJURED_RESERVE");
 
 // Why the team can't add anyone now, or null. Outside the limits only moves toward them are allowed
 // (10.5): over 30 active in season, no adds at all.
@@ -363,49 +311,8 @@ export function blockedText(why, bids) {
     return why ? `Blocked: ${why}` : "";
 }
 
-// The team's roster for the drop step, by position: each player's cut penalty and the cap change a
-// drop makes (his salary off, his penalty on), and whether the move can take him. `check(drop)`
-// returns the move's checks with that drop; `marks` maps ids to MFL's drop list entries; `positions`
-// the league's (lib/rules.js lineupPositions).
-export function dropGroups(team, {marks, check, immediate, usedIn = new Map(), positions}) {
-    const mine = [...team.players.values()].filter((player) => player.franchise === team.franchise);
-    return withOthers(positions, mine.map((player) => player.nflPosition))
-        .map((pos) => {
-            const players = mine.filter((player) => player.nflPosition === pos)
-                .sort((a, b) => b.salary - a.salary || b.years - a.years || a.fullName.localeCompare(b.fullName))
-                .map((player) => {
-                    const listed = marks.get(player.playerId) || {};
-                    const result = check(player.playerId);
-                    // an immediate add can't drop a player whose game has started; a bid drops him Wednesday
-                    const started = immediate && listed.mark === "!";
-                    return {
-                        player,
-                        listed,
-                        penalty: player.capPenalty,
-                        capChange: player.capPenalty - player.salary,
-                        why: started ? "Game started" : result.why,
-                        off: started || !result.fits,
-                        usedIn: usedIn.get(player.playerId) || null
-                    };
-                });
-            return {pos, players};
-        })
-        .filter((group) => group.players.length);
-}
-
 // What one length would cost to cut later, at `salary`
 export const cutLater = (salary, years) => capPenalty(years, salary);
-
-// a signed cap change: "+$5" (cap used goes up), "−$40" (down), "$0"
-export function signed(amount) {
-    const rounded = cents(amount);
-    return rounded > 0 ? `+${money(rounded)}` : rounded < 0 ? `−${money(-rounded)}` : "$0";
-}
-
-export const changeTone = (amount) => (amount > 0 ? "bad" : amount < 0 ? "good" : "");
-
-// cap used, red over the cap, green when it goes down
-export const usedTone = (from, to) => (to > SALARY_CAP ? "bad" : to < from ? "good" : "");
 
 // Free agents for the list, MFL's projection first. `blocked` is droppedByTeam's map.
 export function freeAgentRows(freeAgents, {blocked = new Map(), text = "", pos = "ALL", sort = "proj", bids = true, watched = null}) {
@@ -439,12 +346,6 @@ export function groupViews(team, pending, names) {
         });
         return {round: group.round, comment: group.comment, claims, max: Math.max(0, ...claims.map((claim) => claim.change))};
     });
-}
-
-// MFL's `pendingWaivers` with each group's comment, for groupViews
-export function pendingWithComments(pendingWaivers, groups) {
-    const comments = new Map(asArray(pendingWaivers && pendingWaivers.blindBidWaiverRequest).map((entry) => [Number(entry.round), entry.comments || ""]));
-    return groups.map((group) => ({...group, comment: comments.get(group.round) || ""}));
 }
 
 // The group a copy can go to: each other group and the next, if MFL allows another (`maxGroups`),

@@ -8,7 +8,7 @@ import {projectBids} from "../lib/bids.js";
 import {MIN_INJURY_REPORT} from "../lib/league.js";
 import {ROSTER_MAX, SALARY_CAP} from "../lib/rules.js";
 import {onNflIR} from "../lib/violations.js";
-import {projection} from "./add-model.js";
+import {projection} from "./moves-model.js";
 import {cents} from "./format.js";
 
 const IR = "INJURED_RESERVE";

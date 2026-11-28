@@ -6,10 +6,9 @@
 import {GAME_HOURS, asArray, mflProgram} from "../lib/mfl.js";
 import {projectBids} from "../lib/bids.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, withOthers} from "../lib/rules.js";
-import {firstLast, isIR, projection, surname} from "./add-model.js";
-import {clock, dayText} from "./home-model.js";
+import {firstLast, isIR, projection, surname} from "./moves-model.js";
 import {contractYears} from "./rosters-model.js";
-import {cents, money} from "./format.js";
+import {cents, money, clock, dayText} from "./format.js";
 import {TIME_ZONE, zoneOffset} from "../lib/zone.js";
 
 const HOUR = 3600;

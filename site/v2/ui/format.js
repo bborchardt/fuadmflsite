@@ -1,6 +1,7 @@
 // How v2 writes amounts and counts, the same on every screen
 
 import {cents} from "../lib/payouts.js";
+import {TIME_ZONE, zoneLabel} from "../lib/zone.js";
 
 export {cents, ordinal} from "../lib/payouts.js";
 
@@ -24,3 +25,13 @@ export const oneLineTimes = (text) => String(text).replace(/\b(\d{1,2}:\d{2}) ([
 
 // a contract's length: "1 yr", "3 yrs"
 export const yearsText = (years) => `${years} yr${years === 1 ? "" : "s"}`;
+
+// "Thu Oct 8"
+export const dayText = (seconds) => new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", timeZone: TIME_ZONE}).replace(",", "");
+// "7:42 p.m.", or "7:42 p.m. CT" where the device's clock differs
+export const clock = (seconds) => new Date(seconds * 1000).toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE})
+    .replace(/\s?AM$/, " a.m.").replace(/\s?PM$/, " p.m.") + zoneLabel(seconds);
+// "Thu Oct 8, 7:42 p.m."
+export const whenText = (seconds) => `${dayText(seconds)}, ${clock(seconds)}`;
+// "Sun 7:42 p.m."
+export const weekdayClock = (seconds) => `${new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", timeZone: TIME_ZONE})} ${clock(seconds)}`;

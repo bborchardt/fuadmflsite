@@ -11,11 +11,11 @@ import {esc} from "./html.js";
 import {drawPanel} from "./panel.js";
 import {lenient, strict} from "./checked.js";
 import {pageFetch} from "./page-fetch.js";
-import {clock, dayText, recentMoves} from "./home-model.js";
+import {recentMoves} from "./home-model.js";
 import {moveRows} from "./move-rows.js";
 import {playerList} from "./player-list.js";
 import {playerIdOf, readBidRun, runPlayers} from "./bids-model.js";
-import {plural, yearsText as lengthText} from "./format.js";
+import {plural, yearsText as lengthText, clock, dayText} from "./format.js";
 
 const KINDS = [["All", null], ["Adds", "Add"], ["Drops", "Drop"], ["Bids", "Bid"], ["Trades", "Trade"], ["IR", "IR"]];
 const CHEVRON_DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';

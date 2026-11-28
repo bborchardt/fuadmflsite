@@ -7,8 +7,8 @@ import {overOnlyByRookies} from "../lib/league.js";
 import {contractDeadline, windowClosed} from "../lib/adds.js";
 import {DEFAULT_YEARS} from "../lib/contract-years.js";
 import {ROSTER_MAX, ROSTER_MIN, SALARY_CAP, TRADE_DEADLINE_WEEK} from "../lib/rules.js";
-import {money, plural} from "./format.js";
-import {TIME_ZONE, zoneLabel, zoneOffset} from "../lib/zone.js";
+import {clock, dayText, money, plural, whenText} from "./format.js";
+import {freeAgencyEnd, nextBidRun, nextWeekly, weeklyEvents} from "./moves-model.js";
 
 const DAY = 24 * 60 * 60;
 // a date members act by is also in My alerts this close to it
@@ -26,13 +26,6 @@ const TO_DO = new Map([
 export const RECENT_MOVES = 10;
 export const TOPICS = 10;
 
-// "Thu Oct 8"
-export const dayText = (seconds) => new Date(seconds * 1000).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", timeZone: TIME_ZONE}).replace(",", "");
-// "7:42 p.m.", or "7:42 p.m. CT" where the device's clock differs
-export const clock = (seconds) => new Date(seconds * 1000).toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE})
-    .replace(/\s?AM$/, " a.m.").replace(/\s?PM$/, " p.m.") + zoneLabel(seconds);
-// "Thu Oct 8, 7:42 p.m."
-export const whenText = (seconds) => `${dayText(seconds)}, ${clock(seconds)}`;
 const lastName = (player) => String(player.fullName).split(" ").slice(1).join(" ") || player.fullName;
 
 const tones = {red: "red", orange: "orange", accent: "accent"};
@@ -138,55 +131,6 @@ export function comingUp({dates, kickoffs, weeks = null, calendar = null, now}) 
     return all.filter((date) => date.at > now && !(draftAhead && date.kind === "bids"))
         .map((date) => ({...date, soon: TO_DO.has(date.kind) && date.at - now <= SOON_DAYS * DAY}));
 }
-
-// `weeks` after `first` at the same clock time in the league's zone: MFL's weekly runs stay at
-// 11 p.m. when daylight time ends
-const weeksLater = (first, weeks) => {
-    const plain = first + weeks * 7 * DAY;
-    return plain + zoneOffset(first) - zoneOffset(plain);
-};
-
-// MFL's weekly calendar events with a time: `happens` is how many weeks one repeats after the first
-const weeklyEvents = (calendar, types) => asArray(calendar && calendar.event).filter((event) => types.includes(event.type) && Number(event.start_time) > 1e9);
-const lastRun = (event) => weeksLater(Number(event.start_time), Number(event.happens) || 0);
-
-// Free agency ends with the last time free agents go on waivers, or the last bid run after it;
-// null without a waiver lock on the calendar
-export function freeAgencyEnd(calendar) {
-    const waivers = weeklyEvents(calendar, ["WAIVER_LOCK", "WAIVER_BBID"]);
-    return waivers.some((event) => event.type === "WAIVER_LOCK") ? Math.max(...waivers.map(lastRun)) : null;
-}
-
-// The first time after `now` of an event repeated weekly from `first`, `repeats` times after it;
-// null once the last has passed
-export function weeklyAfter(first, now, repeats) {
-    let weeks = Math.max(0, Math.floor((now - first) / (7 * DAY)));
-    for (;;) {
-        if (weeks > repeats) {
-            return null;
-        }
-        const at = weeksLater(first, weeks);
-        if (at > now) {
-            return at;
-        }
-        weeks += 1;
-    }
-}
-
-// MFL's weekly event of a type after `now`, each repeated weekly as often as it says
-export function nextWeekly(calendar, type, now) {
-    const next = weeklyEvents(calendar, [type]).map((event) => weeklyAfter(Number(event.start_time), now, Number(event.happens) || 0)).filter(Boolean);
-    return next.length ? Math.min(...next) : null;
-}
-
-// the last blind bid run on the calendar, null without one
-export function lastBidRun(calendar) {
-    const runs = weeklyEvents(calendar, ["WAIVER_BBID"]);
-    return runs.length ? Math.max(...runs.map(lastRun)) : null;
-}
-
-// MFL's next blind bid run
-export const nextBidRun = (calendar, now) => nextWeekly(calendar, "WAIVER_BBID", now);
 
 // The viewer's starters this week that can't play: out, on IR, suspended, on a bye or with no NFL
 // team. `kickoffs` maps NFL teams to this week's kickoff (a team missing is on a bye); a game that

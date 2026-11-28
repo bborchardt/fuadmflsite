@@ -2,9 +2,30 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readYears} from "../site/v2/lib/contract-years.js";
 import {
-    addBlock, banner, bidsLeft, checkAdd, checkBid, commentLines, composeCheck, copyTargets, dropCheck, findClaim, droppedByTeam, freeAgencyOver, freeAgentRows, fullNameLines, isLengthLine, lengthLine, lineFor, maxBid,
-    readMarks, readPlayerLists, rewriteComment, surname, usedDrops, yearsIn
+    addBlock,
+    banner,
+    bidsLeft,
+    checkAdd,
+    checkBid,
+    commentLines,
+    composeCheck,
+    copyTargets,
+    dropCheck,
+    findClaim,
+    droppedByTeam,
+    freeAgencyOver,
+    freeAgentRows,
+    fullNameLines,
+    isLengthLine,
+    lengthLine,
+    lineFor,
+    maxBid,
+    readPlayerLists,
+    rewriteComment,
+    usedDrops,
+    yearsIn
 } from "../site/v2/ui/add-model.js";
+import {readMarks, surname} from "../site/v2/ui/moves-model.js";
 
 // MFL's Add/Drop page script, as saved from the clone on 18 Oct 2026
 const page = `

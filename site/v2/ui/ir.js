@@ -8,7 +8,7 @@ import {pageFetch} from "./page-fetch.js";
 import {strict, unlessChanged} from "./checked.js";
 import {pageChanged, placeholders} from "./panel.js";
 import {Refused, WIDE, failedLine, leaveFlash, limitsApply, loadData, loadFailed, readBack, refusal, rosterStatuses, send, takeFlash} from "./moves.js";
-import {teamState} from "./add-model.js";
+import {teamState} from "./moves-model.js";
 import {checkIR, dropChoices, injuryReport, irBlockText, irFields, irGroups, movesText, readIRPage, rosterFromPage, savedMoves} from "./ir-model.js";
 import {controlSelector, irMarkup, loadingMarkup, moveCount} from "./ir-view.js";
 import {replaceEntry} from "./dialog.js";
