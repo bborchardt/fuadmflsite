@@ -68,9 +68,16 @@ test("a move made in v2 forgets what it changes, and keeps the rest", () => {
 // first of the tests to keep anything, as the sweep is once a page
 test("what's expired goes when the page first keeps something, not each time; the viewer's own copy is used", async () => {
     const items = new Map();
+    // full, but for what the sweep takes out, until the page's first keep is in
+    let room = 2;
     const localStorage = {
         getItem: (key) => (items.has(key) ? items.get(key) : null),
-        setItem: (key, value) => items.set(key, String(value)),
+        setItem: (key, value) => {
+            if (!items.has(key) && items.size >= room) {
+                throw new Error("QuotaExceededError");
+            }
+            items.set(key, String(value));
+        },
         removeItem: (key) => items.delete(key)
     };
     globalThis.window = {
@@ -98,6 +105,7 @@ test("what's expired goes when the page first keeps something, not each time; th
         assert.deepEqual(asked, [league("league")]);
         assert.equal(items.has(`fuad.keep.0001|${old}`), false);
         assert.equal(items.has(`fuad.keep.0001|${league("league")}`), true);
+        room = Infinity;
         items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
         await pageFetch(league("calendar"));
         assert.equal(items.has(`fuad.keep.0001|${league("calendar")}`), true);
@@ -331,4 +339,34 @@ test("a read confirming a move is asked while reads are held, and its 429 holds 
 
 test("fetchExport has no fetch of its own: a read that doesn't say how to ask fails at once", async () => {
     await assert.rejects(fetchExport(league("rosters"), "rosters"), (error) => error instanceof TypeError && /fetchExport\(rosters\) needs a fetchImpl/.test(error.message));
+});
+
+test("Moves' read confirming a move, and a watch list change, go to MFL while reads are held", async () => {
+    const items = new Map([["fuad.mflWait", String(Date.now() + MINUTE)]]);
+    globalThis.window = {
+        location: {origin: "https://www44.myfantasyleague.com", pathname: "/2026/home/48571"},
+        localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))},
+        dispatchEvent: () => true
+    };
+    globalThis.CustomEvent ??= class extends Event {};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(new URL(url).pathname + (new URL(url).searchParams.get("TYPE") || ""));
+        return String(url).endsWith("/import")
+            ? new Response("<status>OK</status>", {status: 200})
+            : new Response(JSON.stringify({rosters: {franchise: {id: "0001", player: {id: "13604", status: "ROSTER", salary: "5", contractYear: "2"}}}}), {status: 200});
+    };
+    try {
+        const {rosterStatuses} = await import("../site/v2/ui/moves.js");
+        const statuses = await rosterStatuses({season: 2026, leagueId: "48571"}, "0001");
+        assert.equal(statuses.get("13604"), "ROSTER");
+        const {setWatched} = await import("../site/v2/ui/watch.js");
+        // the list itself is read through the held path, so only the change is looked for
+        await setWatched({season: 2026, leagueId: "48571"}, "13604", true).catch(() => {});
+        assert.deepEqual(asked, ["/2026/exportrosters", "/2026/import"]);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
 });

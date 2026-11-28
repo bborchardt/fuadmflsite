@@ -13,6 +13,8 @@ import {
     Refused, WIDE, failedLine, freshPending, leaveFlash, limitsApply, loadData, moveOutcome, movesPhase, readBack, refusal, rosterStatuses, send,
     loadFailed, sendMove, takeFlash
 } from "./moves.js";
+import {mflConfirm} from "./page-fetch.js";
+import {httpStatus} from "../lib/mfl.js";
 import {postToContractTopic} from "./lengths-form.js";
 import {CONTRACT_WINDOW_TEXT} from "../lib/adds.js";
 import {watchList, whenPopupClosed} from "./watch.js";
@@ -132,7 +134,12 @@ async function confirm(sent, read, shows, what) {
 async function saveGroup(context, franchiseId, round, change) {
     const {season, leagueId} = context;
     const url = `${window.location.origin}/${season}/options?L=${encodeURIComponent(leagueId)}&O=255&F=${encodeURIComponent(franchiseId)}&ROUND=${round}`;
-    const doc = new DOMParser().parseFromString(await send(url, {cache: "no-store"}), "text/html");
+    // to plan the post, read as a move's confirmation is (moves.js)
+    const page = await mflConfirm(url, {credentials: "include", cache: "no-store"});
+    if (!page.ok) {
+        throw new Error(`MFL answered ${httpStatus(page)}`);
+    }
+    const doc = new DOMParser().parseFromString(await page.text(), "text/html");
     const form = doc.querySelector("form[name=editwr]");
     const comment = form && form.querySelector("textarea[name=comment]");
     if (!form || !comment) {

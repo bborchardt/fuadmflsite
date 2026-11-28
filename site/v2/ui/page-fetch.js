@@ -143,7 +143,8 @@ async function asked(url, init) {
 }
 
 // A read MFL doesn't answer in READ_TIMEOUT fails as one cut off does (ui/panel.js cutOff), so a
-// panel isn't left on its placeholders. AbortSignal.timeout is newer than the oldest devices.
+// panel isn't left on its placeholders. AbortSignal.timeout is newer than the oldest devices, as is
+// AbortSignal.any, so a caller's own `signal` isn't used: the timeout's replaces it.
 async function timed(url, init = {}) {
     const controller = new AbortController();
     let timedOut = false;
@@ -160,9 +161,9 @@ async function timed(url, init = {}) {
     }
 }
 
-// Every read from MFL, but a move's confirmation (mflConfirm). After MFL answers 429 nothing is asked
-// of it for a while, on any page; a read in that time answers 429 at once, so it fails as MFL's
-// refusal would.
+// Every read from MFL, but one confirming a move or planning a form's send (mflConfirm). After MFL
+// answers 429 nothing is asked of it for a while, on any page; a read in that time answers 429 at
+// once, so it fails as MFL's refusal would.
 export async function mflFetch(url, init) {
     const until = Number(storage.get(WAIT_KEY)) || 0;
     if (Date.now() < until) {
@@ -171,8 +172,9 @@ export async function mflFetch(url, init) {
     return timed(url, init);
 }
 
-// A read that confirms a move: not held, as the move itself isn't, since a move made but not
-// confirmed would show as failed; timed, as the move is already sent
+// A read that confirms a move or plans a form's send: not held, as the move itself isn't, since a
+// move made but not confirmed would show as failed and a form begun shouldn't stop partway; timed,
+// as a read can be given up without leaving a move half made
 export const mflConfirm = timed;
 
 // A move: sent even while reads are held, and never timed, as one cut off may still have been made

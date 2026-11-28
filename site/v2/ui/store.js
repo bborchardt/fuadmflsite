@@ -88,7 +88,7 @@ export function save(key, value, keptFor) {
 const YEAR = 365 * 24 * 60 * 60 * 1000;
 // MFL's pages share this storage, and keys carry a season or week, so what's expired goes just before
 // the first thing a page keeps is kept, making room for it: reading every entry is slow on a phone,
-// so once a page. page-fetch.js's kept answers (`fuad.keep.`) always have an expiry.
+// so once a page.
 let swept = false;
 export function sweep() {
     if (swept) {
@@ -111,7 +111,7 @@ export function sweep() {
                 continue;
             }
             const done = typeof entry.expires === "number" ? entry.expires <= now
-                : name.startsWith("fuad.keep.") || (typeof entry.storedAt === "number" && now - entry.storedAt > YEAR);
+                : typeof entry.storedAt === "number" && now - entry.storedAt > YEAR;
             if (done) {
                 window.localStorage.removeItem(name);
             }

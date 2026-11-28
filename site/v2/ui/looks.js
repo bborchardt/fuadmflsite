@@ -7,7 +7,7 @@
 // the commissioner's choice would be shown it.
 
 import {esc} from "./html.js";
-import {mflFetch, mflSend} from "./page-fetch.js";
+import {mflConfirm, mflFetch, mflSend} from "./page-fetch.js";
 import {storage} from "./store.js";
 import {httpStatus} from "../lib/mfl.js";
 
@@ -223,7 +223,7 @@ const lookOfSkin = (skin, looks) => looks.find((look) => look !== looks[0] && lo
 // is sent throws `unconfirmed`, since MFL may have made it.
 export async function saveLook({season, leagueId}, look, looks = LOOKS) {
     const page = `${window.location.origin}/${season}/csetup?L=${encodeURIComponent(leagueId)}&C=SKIN`;
-    const readForm = async (get = mflSend) => {
+    const readForm = async (get = mflConfirm) => {
         const read = await get(page, {credentials: "include", cache: "no-store"});
         if (!read.ok) {
             throw failure(httpStatus(read), read.status);

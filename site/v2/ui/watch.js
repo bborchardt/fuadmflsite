@@ -4,7 +4,7 @@
 // which hear of a change through the window's `fuad-watch` event.
 
 import {exportUrl, httpStatus} from "../lib/mfl.js";
-import {mflFetch, pageFetch} from "./page-fetch.js";
+import {mflSend, pageFetch} from "./page-fetch.js";
 
 // the Watching chips' star (filled by fuad.css when pressed)
 export const STAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.85L12 16.9l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9z"></path></svg>';
@@ -52,8 +52,8 @@ export function watchState(list, playerId) {
     return change ? {on: change.on, done: change.done} : {on: list.has(String(playerId)), done: null};
 }
 
-// puts a player on the list or takes him off; throws if MFL doesn't say OK. Not through pageFetch,
-// which answers the same address once a page.
+// puts a player on the list or takes him off; throws if MFL doesn't say OK. A change to MFL, so sent
+// as a move is (mflSend): not held after MFL's 429 nor timed, as one cut off may still be made.
 export function setWatched(context, playerId, on) {
     const id = String(playerId);
     const change = {on, done: null};
@@ -68,7 +68,7 @@ export function setWatched(context, playerId, on) {
 }
 
 async function send({season, leagueId}, id, on) {
-    const response = await mflFetch(`${window.location.origin}/${season}/import`, {
+    const response = await mflSend(`${window.location.origin}/${season}/import`, {
         method: "POST",
         credentials: "include",
         headers: {"Content-Type": "application/x-www-form-urlencoded"},

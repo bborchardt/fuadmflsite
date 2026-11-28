@@ -227,7 +227,7 @@ test("a copy cachedOrStale may still show is kept as long, whichever read saved 
     }
 }));
 
-test("the page's first save sweeps before it writes, so what's swept makes room for it, and a kept answer with no expiry goes", async () => {
+test("the page's first save sweeps before it writes, so what's swept makes room for it", async () => {
     const items = new Map();
     const room = 3;
     const localStorage = {
@@ -246,7 +246,7 @@ test("the page's first save sweeps before it writes, so what's swept makes room 
     })};
     const now = Date.now();
     items.set("fuad.kickoff.2025.1", JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}));
-    items.set("fuad.keep.0001|https://x/export?TYPE=league", JSON.stringify({body: "{}"}));
+    items.set("fuad.kickoff.2025.2", JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}));
     items.set("fuad.beta", "v2");
     try {
         const store = await import("../site/v2/ui/store.js?room");

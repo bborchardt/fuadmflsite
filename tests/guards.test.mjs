@@ -67,12 +67,14 @@ test("nothing members' browsers run, but the frozen v1, uses a regex lookbehind 
 
 // the lint's own config, as `npm run lint` reads it: a later entry's no-restricted-syntax for the
 // same files would replace this rule without a word
-test("the lint refuses a request to MFL in v2's ui/ that skips page-fetch.js, and .at() with it", async () => {
+test("the lint refuses a request to MFL in v2's ui/ that skips page-fetch.js, fetch called or passed on, and .at() with it", async () => {
     const {ESLint} = await import("eslint");
     const eslint = new ESLint({cwd: root});
     const messages = async (code, file) => (await eslint.lintText(code, {filePath: join(root, file)}))[0].messages
         .filter((message) => message.ruleId === "no-restricted-syntax").map((message) => message.message.split(":")[0]);
-    const code = "export const a = () => fetch(\"x\");\nexport const b = () => window.fetch(\"x\");\nexport const c = (list) => list.at(-1);\n";
-    assert.deepEqual(await messages(code, "site/v2/ui/probe.js"), ["Ask MFL through ui/page-fetch.js", "Ask MFL through ui/page-fetch.js", "ES2022 .at() is forbidden"]);
+    const code = "export const a = () => fetch(\"x\");\nexport const b = () => window.fetch(\"x\");\nexport const c = (list) => list.at(-1);\n"
+        + "export const d = (read) => read({fetchImpl: fetch});\nexport const e = globalThis.fetch;\nexport const f = (x) => [x.fetch, {fetch: 1}];\n";
+    const ask = "Ask MFL through ui/page-fetch.js";
+    assert.deepEqual(await messages(code, "site/v2/ui/probe.js"), [ask, ask, "ES2022 .at() is forbidden", ask, ask]);
     assert.deepEqual(await messages(code, "site/v2/ui/page-fetch.js"), ["ES2022 .at() is forbidden"]);
 });

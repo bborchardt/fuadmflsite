@@ -64,11 +64,11 @@ export function withoutOwners(league) {
     return {...league, franchises: {...league.franchises, franchise: Array.isArray(teams) ? teams.map(strip) : strip(teams)}};
 }
 
-// Every move sent to MFL, through mflSend, so its 429 holds reads too, to MFL's answer: failing on an
-// error status, but before its body is read, which a caller telling "not sent" from "sent, not
-// confirmed" reads itself. What a move changes is forgotten before and after it: a read in flight
-// meanwhile may keep it again.
-export async function sent(url, init) {
+// Every move sent to MFL goes through mflSend, so its 429 holds reads too. This resolves to MFL's
+// answer unread, failing on an error status, so a caller can read the body itself and tell "not
+// sent" from "sent, not confirmed". What a move changes is forgotten before and after it: a read in
+// flight meanwhile may keep it again.
+export async function sendForAnswer(url, init) {
     forget();
     const response = await mflSend(url, {credentials: "include", ...init}).finally(forget);
     if (!response.ok) {
@@ -78,7 +78,7 @@ export async function sent(url, init) {
 }
 
 // a move, to the text of MFL's answer
-export const send = async (url, init) => (await sent(url, init)).text();
+export const send = async (url, init) => (await sendForAnswer(url, init)).text();
 
 // Reads of the roster to confirm a move, while it doesn't show it yet, since the rosters export can
 // lag a move (seen live: a move to IR made, the export read just after still had him active); how
@@ -107,15 +107,20 @@ export async function sendMove(url, init) {
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // What MFL holds after a move (`read`), read again while it doesn't show the move (`shows`): the
-// last read that worked, as a later one failing says nothing of the move; null when none did
+// last read that worked, as a later one failing says nothing of the move; null when none did. MFL's
+// refusal (HTTP 429) ends it, as it has asked to be left alone a while (page-fetch.js).
 export async function readBack(read, shows, {wait = pause} = {}) {
     let found = null;
     for (let tries = 0; tries < READS; tries += 1) {
         if (tries) {
             await wait(READ_GAP);
         }
-        found = (await read().catch(() => null)) || found;
-        if (found && shows(found)) {
+        let refused = false;
+        found = (await read().catch((error) => {
+            refused = Boolean(error) && error.status === 429;
+            return null;
+        })) || found;
+        if (refused || (found && shows(found))) {
             break;
         }
     }
@@ -150,8 +155,9 @@ export function refusal(html) {
     return found || null;
 }
 
-// Reads that confirm a move go through mflConfirm (page-fetch.js): not held by MFL's wait, as the
-// move itself isn't, since a move made but not confirmed would show as failed.
+// Reads that confirm a move, or plan a form's send, go through mflConfirm (page-fetch.js): not held by
+// MFL's wait, as the move itself isn't, since a move made but not confirmed would show as failed, and
+// a form begun shouldn't stop partway.
 
 // the team's players and their status (`ROSTER`, `INJURED_RESERVE`), fresh, to confirm a move; null
 // when the team isn't in the answer

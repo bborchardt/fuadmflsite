@@ -3,7 +3,7 @@
 // window then (fuad.css); that only shows on a window wider than the column, so the team sheet
 // offers the switch only there.
 
-import {mflFetch, mflSend} from "./page-fetch.js";
+import {mflConfirm, mflFetch, mflSend} from "./page-fetch.js";
 import {httpStatus} from "../lib/mfl.js";
 
 const TEXT = new Set(["hidden", "text", "password", "email", "url", "tel", "number", "search"]);
@@ -74,7 +74,7 @@ const failure = (message, status) => Object.assign(new Error(message), {status})
 // MFL may have made it.
 export async function saveFullWidth({season, leagueId}, on) {
     const page = `${window.location.origin}/${season}/csetup?L=${encodeURIComponent(leagueId)}&C=FCUSTOM`;
-    const readForm = async (get = mflSend) => {
+    const readForm = async (get = mflConfirm) => {
         const read = await get(page, {credentials: "include", cache: "no-store"});
         if (!read.ok) {
             throw failure(httpStatus(read), read.status);

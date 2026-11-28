@@ -11,7 +11,7 @@ import {clock} from "./home-model.js";
 import {openDialog} from "./dialog.js";
 import {lineupProjections, weekFeed} from "./projections.js";
 import {allAtOnce, mflConfirm, mflFetch, pageFetch} from "./page-fetch.js";
-import {sent} from "./moves.js";
+import {sendForAnswer} from "./moves.js";
 import {strict} from "./checked.js";
 import {pageChanged, placeholders, retryCutOff} from "./panel.js";
 import {relayoutWhenTurned} from "./turned.js";
@@ -218,7 +218,7 @@ async function save(context, form, state, message = null) {
     }
     let response;
     try {
-        response = await sent(form.action, {method: "POST", body: fields});
+        response = await sendForAnswer(form.action, {method: "POST", body: fields});
     } catch (error) {
         throw Object.assign(error, {sent: false});
     }
