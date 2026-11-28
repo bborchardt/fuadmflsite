@@ -4,7 +4,11 @@
 // would have every member download fuad.js again.
 //     node tools/stable-times.mjs dist
 // The time is a second within about eight years from 2010, picked by the file's SHA-256; Pages'
-// Last-Modified then shows that date, which nothing reads.
+// Last-Modified then shows that date, which nothing reads. A changed file can get an earlier time
+// than before: browsers send the ETag (If-None-Match), which a server goes by over If-Modified-Since,
+// so only a client that ignores ETags could keep the old copy. Two versions of a file at the same
+// size share an ETag one time in 2^28. It relies on the build giving the same files each time
+// (tests/stable-times.test.mjs).
 
 import {createHash} from "node:crypto";
 import {readFileSync, readdirSync, utimesSync} from "node:fs";
