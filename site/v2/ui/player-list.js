@@ -29,6 +29,7 @@ function load(season) {
 // the export's shape, {player: [{id, name, position, team}]}
 export async function playerList(season, {fresh = false} = {}) {
     const key = `${PLAYERS_KEY}.${season}`;
-    const rows = await (fresh ? cached(key, DAY, () => load(season)) : cachedOrStale(key, DAY, SHOWN_FOR, () => load(season)));
+    // kept as long as the stale read below shows it, whichever read saved it
+    const rows = await (fresh ? cached(key, DAY, () => load(season), {keptFor: SHOWN_FOR}) : cachedOrStale(key, DAY, SHOWN_FOR, () => load(season)));
     return {player: rows.map(([id, name, position, team]) => ({id, name, position, team}))};
 }

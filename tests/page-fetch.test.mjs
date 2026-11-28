@@ -65,6 +65,57 @@ test("a move made in v2 forgets what it changes, and keeps the rest", () => {
     delete globalThis.window;
 });
 
+// first of the tests to keep anything, as the sweep is once a page
+test("what's expired goes when the page first keeps something, not each time; the viewer's own copy is used", async () => {
+    const items = new Map();
+    // full, but for what the sweep takes out, until the page's first keep is in
+    let room = 2;
+    const localStorage = {
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => {
+            if (!items.has(key) && items.size >= room) {
+                throw new Error("QuotaExceededError");
+            }
+            items.set(key, String(value));
+        },
+        removeItem: (key) => items.delete(key)
+    };
+    globalThis.window = {
+        franchise_id: "0001",
+        liveScoringWeek: 6,
+        location: {pathname: "/2026/home/48571"},
+        localStorage: new Proxy(localStorage, {
+            ownKeys: () => [...items.keys()],
+            getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
+        })
+    };
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        const type = new URL(url).searchParams.get("TYPE");
+        return new Response(JSON.stringify({[type]: {name: "FUAD"}}), {status: 200});
+    };
+    try {
+        const old = league("injuries", "&W=1");
+        items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
+        items.set(`fuad.keep.guest|${league("league")}`, JSON.stringify({expires: Date.now() + MINUTE, body: '{"league":{"name":"guest"}}'}));
+        const {pageFetch} = await import("../site/v2/ui/page-fetch.js");
+        assert.equal((await (await pageFetch(league("league"))).json()).league.name, "FUAD");
+        assert.deepEqual(asked, [league("league")]);
+        assert.equal(items.has(`fuad.keep.0001|${old}`), false);
+        assert.equal(items.has(`fuad.keep.0001|${league("league")}`), true);
+        room = Infinity;
+        items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
+        await pageFetch(league("calendar"));
+        assert.equal(items.has(`fuad.keep.0001|${league("calendar")}`), true);
+        assert.equal(items.has(`fuad.keep.0001|${old}`), true, "swept once a page");
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
 test("after a move, the page asks again for what it changes, and not for the rest", async () => {
     const items = new Map();
     globalThis.window = {franchise_id: "0001", location: {pathname: "/2026/home/48571"}, localStorage: new Proxy({
@@ -80,7 +131,7 @@ test("after a move, the page asks again for what it changes, and not for the res
         return new Response(JSON.stringify({[type]: {}}), {status: 200});
     };
     try {
-        // a copy of its own, so the page's first sweep is left to the test below
+        // a copy of its own, so its answers are its own
         const {forget: forgetHere, pageFetch} = await import("../site/v2/ui/page-fetch.js?forget");
         const rosters = league("rosters", "&FRANCHISE=0001");
         const settings = league("league", "&X=forget");
@@ -126,48 +177,6 @@ test("only an answer with its section is kept, never MFL's error", () => {
     assert.equal(keepable(league("calendar"), '{"error":{"$t":"API requires logged in user"}}'), false);
     assert.equal(keepable(league("calendar"), '{"version":"1.0"}'), false);
     assert.equal(keepable(league("calendar"), "<html>"), false);
-});
-
-test("what's expired goes when the page first keeps something, not each time; the viewer's own copy is used", async () => {
-    const items = new Map();
-    const localStorage = {
-        getItem: (key) => (items.has(key) ? items.get(key) : null),
-        setItem: (key, value) => items.set(key, String(value)),
-        removeItem: (key) => items.delete(key)
-    };
-    globalThis.window = {
-        franchise_id: "0001",
-        liveScoringWeek: 6,
-        location: {pathname: "/2026/home/48571"},
-        localStorage: new Proxy(localStorage, {
-            ownKeys: () => [...items.keys()],
-            getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
-        })
-    };
-    const realFetch = globalThis.fetch;
-    const asked = [];
-    globalThis.fetch = async (url) => {
-        asked.push(url);
-        const type = new URL(url).searchParams.get("TYPE");
-        return new Response(JSON.stringify({[type]: {name: "FUAD"}}), {status: 200});
-    };
-    try {
-        const old = league("injuries", "&W=1");
-        items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
-        items.set(`fuad.keep.guest|${league("league")}`, JSON.stringify({expires: Date.now() + MINUTE, body: '{"league":{"name":"guest"}}'}));
-        const {pageFetch} = await import("../site/v2/ui/page-fetch.js");
-        assert.equal((await (await pageFetch(league("league"))).json()).league.name, "FUAD");
-        assert.deepEqual(asked, [league("league")]);
-        assert.equal(items.has(`fuad.keep.0001|${old}`), false);
-        assert.equal(items.has(`fuad.keep.0001|${league("league")}`), true);
-        items.set(`fuad.keep.0001|${old}`, JSON.stringify({expires: Date.now() - 1, body: "{}"}));
-        await pageFetch(league("calendar"));
-        assert.equal(items.has(`fuad.keep.0001|${league("calendar")}`), true);
-        assert.equal(items.has(`fuad.keep.0001|${old}`), true, "swept once a page");
-    } finally {
-        globalThis.fetch = realFetch;
-        delete globalThis.window;
-    }
 });
 
 test("a page left open asks again once an answer's keep time is over, the one kept or not", async () => {
@@ -216,4 +225,178 @@ test("reads asked at once fail with MFL's refusal, whichever failed first", asyn
     await assert.rejects(allAtOnce([early, late, Promise.resolve(1)]), (error) => error === refusal);
     await assert.rejects(allAtOnce([Promise.reject(new Error("first")), Promise.resolve(1)]), /first/);
     assert.deepEqual(await allAtOnce([1, Promise.resolve(2), null]), [1, 2, null]);
+});
+
+test("a move MFL answers with 429 holds the reads after it, as a read's 429 does", async () => {
+    const items = new Map();
+    globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))}};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        return new Response("", {status: 429});
+    };
+    try {
+        const {send} = await import("../site/v2/ui/moves.js");
+        await assert.rejects(send("https://www44.myfantasyleague.com/2026/add_drop", {method: "POST", body: "a=1"}), /HTTP 429/);
+        const read = await mflFetch(league("rosters"));
+        assert.equal(read.status, 429);
+        assert.deepEqual(asked, ["https://www44.myfantasyleague.com/2026/add_drop"]);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("a read MFL doesn't start answering in 20 seconds fails as one cut off, and a move isn't timed", {timeout: 10000}, async (t) => {
+    t.mock.timers.enable({apis: ["setTimeout"]});
+    globalThis.window = {localStorage: {getItem: () => null, setItem: () => {}}};
+    const realFetch = globalThis.fetch;
+    const signals = [];
+    // never answers, until its signal aborts it, as a browser's fetch does
+    globalThis.fetch = (url, init = {}) => new Promise((resolve, reject) => {
+        signals.push(init.signal);
+        if (init.signal) {
+            init.signal.addEventListener("abort", () => reject(Object.assign(new Error("The operation was aborted."), {name: "AbortError"})));
+        }
+    });
+    try {
+        const {cutOff} = await import("../site/v2/ui/panel.js");
+        const read = mflFetch(league("rosters"));
+        let settled = false;
+        read.catch(() => {}).finally(() => {
+            settled = true;
+        });
+        t.mock.timers.tick(19999);
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.equal(settled, false, "still waiting");
+        t.mock.timers.tick(1);
+        const error = await read.catch((each) => each);
+        assert.match(error.message, /MFL didn't answer in 20 seconds/);
+        assert.equal(cutOff(error), true);
+        // fetchExport's own failure for it, which a panel tries again
+        const exported = fetchExport(league("league"), "league", {fetchImpl: mflFetch});
+        t.mock.timers.tick(20000);
+        await assert.rejects(exported, (each) => each.cutOff === true && /network error \(MFL didn't answer in 20 seconds\)/.test(each.message));
+        const {mflConfirm, mflSend} = await import("../site/v2/ui/page-fetch.js");
+        const confirm = mflConfirm(league("rosters"));
+        t.mock.timers.tick(20000);
+        await assert.rejects(confirm, (each) => each.cutOff === true);
+        const count = signals.length;
+        // left pending: a move that's never answered
+        mflSend("https://www44.myfantasyleague.com/2026/add_drop", {method: "POST"}).catch(() => {});
+        await Promise.resolve();
+        assert.equal(signals.length, count + 1);
+        assert.equal(signals.at(-1), undefined);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("an answer that's come in isn't cut off while it's read, however long that takes", async (t) => {
+    t.mock.timers.enable({apis: ["setTimeout"]});
+    globalThis.window = {localStorage: {getItem: () => null, setItem: () => {}}};
+    const realFetch = globalThis.fetch;
+    let signal;
+    globalThis.fetch = async (url, init) => {
+        signal = init.signal;
+        return new Response("{}", {status: 200});
+    };
+    try {
+        const response = await mflFetch(league("players"));
+        t.mock.timers.tick(20000);
+        assert.equal(signal.aborted, false);
+        assert.equal(await response.text(), "{}");
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("a read confirming a move is asked while reads are held, and its 429 holds them", async () => {
+    const items = new Map([["fuad.mflWait", String(Date.now() + MINUTE)]]);
+    globalThis.window = {localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))}};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(url);
+        return new Response("", {status: asked.length === 1 ? 200 : 429});
+    };
+    try {
+        const {mflConfirm} = await import("../site/v2/ui/page-fetch.js");
+        assert.equal((await mflConfirm(league("rosters"))).status, 200);
+        items.delete("fuad.mflWait");
+        assert.equal((await mflConfirm(league("pendingWaivers"))).status, 429);
+        assert.ok(Number(items.get("fuad.mflWait")) > Date.now());
+        assert.equal((await mflFetch(league("league"))).statusText, "held by v2 after MFL's 429");
+        assert.equal(asked.length, 2);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("fetchExport has no fetch of its own: a read that doesn't say how to ask fails at once", async () => {
+    await assert.rejects(fetchExport(league("rosters"), "rosters"), (error) => error instanceof TypeError && /fetchExport\(rosters\) needs a fetchImpl/.test(error.message));
+});
+
+test("Moves' read confirming a move, and a watch list change, go to MFL while reads are held", async () => {
+    const items = new Map([["fuad.mflWait", String(Date.now() + MINUTE)]]);
+    globalThis.window = {
+        location: {origin: "https://www44.myfantasyleague.com", pathname: "/2026/home/48571"},
+        localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))},
+        dispatchEvent: () => true
+    };
+    globalThis.CustomEvent ??= class extends Event {};
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(new URL(url).pathname + (new URL(url).searchParams.get("TYPE") || ""));
+        return String(url).endsWith("/import")
+            ? new Response("<status>OK</status>", {status: 200})
+            : new Response(JSON.stringify({rosters: {franchise: {id: "0001", player: {id: "13604", status: "ROSTER", salary: "5", contractYear: "2"}}}}), {status: 200});
+    };
+    try {
+        const {rosterStatuses} = await import("../site/v2/ui/moves.js");
+        const statuses = await rosterStatuses({season: 2026, leagueId: "48571"}, "0001");
+        assert.equal(statuses.get("13604"), "ROSTER");
+        const {setWatched} = await import("../site/v2/ui/watch.js");
+        // the list itself is read through the held path, so only the change is looked for
+        await setWatched({season: 2026, leagueId: "48571"}, "13604", true).catch(() => {});
+        assert.deepEqual(asked, ["/2026/exportrosters", "/2026/import"]);
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
+});
+
+test("a length post's board read is held where it's the first thing asked, and not right after a move", async () => {
+    const items = new Map([["fuad.mflWait", String(Date.now() + MINUTE)]]);
+    globalThis.window = {
+        location: {origin: "https://www44.myfantasyleague.com", pathname: "/2026/home/48571"},
+        localStorage: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))},
+        addEventListener: () => {},
+        history: {state: null}
+    };
+    const realFetch = globalThis.fetch;
+    const asked = [];
+    globalThis.fetch = async (url) => {
+        asked.push(new URL(url).searchParams.get("TYPE"));
+        return String(url).includes("TYPE=messageBoard&L=") && String(url).includes("/import")
+            ? new Response("<status>OK</status>", {status: 200})
+            : new Response(JSON.stringify({messageBoard: {thread: []}}), {status: 200});
+    };
+    try {
+        const {mflFetch: held} = await import("../site/v2/ui/page-fetch.js");
+        const {postToContractTopic} = await import("../site/v2/ui/lengths-form.js");
+        const context = {season: 2026, leagueId: "48571"};
+        await assert.rejects(postToContractTopic(context, "Smith 2 years", {read: held}), /HTTP 429, held by v2/);
+        assert.deepEqual(asked, []);
+        await postToContractTopic(context, "Smith 2 years").catch(() => {});
+        assert.equal(asked[0], "messageBoard");
+    } finally {
+        globalThis.fetch = realFetch;
+        delete globalThis.window;
+    }
 });

@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DOMParser} from "linkedom";
-import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, limitsApply, loadFailed, moveOutcome, movesPhase, readBack, refusal, sendMove, withoutOwners} from "../site/v2/ui/moves.js";
+import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, limitsApply, loadFailed, moveOutcome, movesPhase, readBack, refusal, sendMove, sendForAnswer, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads
 function reads(...answers) {
@@ -43,6 +43,16 @@ test("after every read, what MFL last showed, though it lacks the move", async (
     assert.equal(log.waits.length, READS - 1);
 });
 
+test("MFL's refusal ends the read-back, keeping what was read before it", async () => {
+    const refused = Object.assign(new Error("MFL answered HTTP 429"), {status: 429});
+    const first = reads(refused, ["higbee"]);
+    assert.equal(await readBack(first.read, has("higbee"), {wait: first.wait}), null);
+    assert.deepEqual(first.log, {reads: 1, waits: []});
+    const later = reads(["lamar"], refused, ["higbee"]);
+    assert.deepEqual(await readBack(later.read, has("higbee"), {wait: later.wait}), ["lamar"]);
+    assert.equal(later.log.reads, 2);
+});
+
 test("a read that fails keeps the one before it; none read is null", async () => {
     const failed = new Error("MFL answered HTTP 500");
     assert.deepEqual(await readBack(reads(["lamar"], failed).read, has("higbee"), {wait: reads().wait}), ["lamar"]);
@@ -78,6 +88,23 @@ test("MFL's reason is a warning or error on its page, not its projections note",
     t.after(() => delete globalThis.DOMParser);
     assert.equal(refusal("<div class=\"pagebody\"><p class=\"warning\">Use projections from…</p><p class=\"error\">Player is not on your roster</p></div>"), "Player is not on your roster");
     assert.equal(refusal("<div class=\"warning\">Outside the page body</div><div class=\"pagebody\"></div>"), null);
+});
+
+test("a move sent gives MFL's answer unread, so a failure reading it isn't taken for one sending it", async (t) => {
+    const fetch = globalThis.fetch;
+    let read = false;
+    globalThis.fetch = async () => ({ok: true, status: 200, text: async () => {
+        read = true;
+        throw new TypeError("Load failed");
+    }});
+    t.after(() => {
+        globalThis.fetch = fetch;
+    });
+    const response = await sendForAnswer("https://mfl/lineup", {method: "POST"});
+    assert.equal(read, false);
+    await assert.rejects(response.text(), /Load failed/);
+    globalThis.fetch = async () => new Response("", {status: 500});
+    await assert.rejects(sendForAnswer("https://mfl/lineup", {method: "POST"}), /MFL answered HTTP 500/);
 });
 
 test("a move's send keeps MFL's answer, or the error it failed with", async (t) => {

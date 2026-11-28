@@ -42,13 +42,15 @@ test("cached: a failed load isn't kept, so the next asks again", () => withStora
 }));
 
 test("cached: a value `keep` turns down is used but not kept, so the next asks again", () => withStorage(async () => {
-    assert.equal(await cached("fuad.test.d", DAY, async () => "partial", () => false), "partial");
+    assert.equal(await cached("fuad.test.d", DAY, async () => "partial", {keep: () => false}), "partial");
     assert.equal(saved("fuad.test.d"), null);
-    assert.equal(await cached("fuad.test.d", DAY, async () => "whole", (value) => value === "whole"), "whole");
+    assert.equal(await cached("fuad.test.d", DAY, async () => "whole", {keep: (value) => value === "whole"}), "whole");
     assert.equal(saved("fuad.test.d").value, "whole");
 }));
 
-test("cached: with storage blocked, every call loads and none fails", async () => {
+test("cached: with storage blocked, every call loads and none fails", async (t) => {
+    // its one warning a page
+    t.mock.method(console, "warn", () => {});
     globalThis.window = {};
     Object.defineProperty(globalThis.window, "localStorage", {get() {
         throw new Error("SecurityError");
@@ -125,3 +127,133 @@ test("a number a panel doesn't know (NaN) is kept as one, not as null, which rea
     assert.ok(Number.isNaN(value.rows[0].amount));
     assert.equal(value.rows[1].amount, 2);
 }));
+
+test("cached: an entry says when it's done with, cachedOrStale's when its stale copy is", () => withStorage(async (items) => {
+    const before = Date.now();
+    await cached("fuad.rules.2026", DAY, async () => "rules");
+    await cachedOrStale("fuad.playerList.2026", DAY, 2 * DAY, async () => "players");
+    const entry = (key) => JSON.parse(items.get([...items.keys()].find((name) => name.startsWith(key))));
+    assert.ok(entry("fuad.rules.2026").expires >= before + DAY && entry("fuad.rules.2026").expires <= Date.now() + DAY);
+    assert.ok(entry("fuad.playerList.2026").expires >= before + 2 * DAY);
+    // a panel's saved copy has no expiry of its own
+    save("fuad.panel.home", {shown: true});
+    assert.equal("expires" in entry("fuad.panel.home"), false);
+}));
+
+test("what's done with goes at the page's first save, once: expired entries, and one without an expiry over a year old", async () => {
+    const items = new Map();
+    const localStorage = {
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => items.set(key, String(value)),
+        removeItem: (key) => items.delete(key)
+    };
+    globalThis.window = {localStorage: new Proxy(localStorage, {
+        ownKeys: () => [...items.keys()],
+        getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
+    })};
+    const now = Date.now();
+    const kept = {
+        "fuad.bids.2026.3@48571": JSON.stringify({storedAt: now - DAY, expires: now + DAY, value: 1}),
+        "fuad.panel.home@48571": JSON.stringify({storedAt: now - 300 * DAY, value: 1}),
+        "fuad.keep.0001|https://x/export?TYPE=league": JSON.stringify({expires: now + DAY, body: "{}"}),
+        "fuad.mflWait": String(now - 1),
+        "fuad.beta": "v2",
+        "MFL_something": JSON.stringify({expires: now - 1})
+    };
+    const gone = {
+        "fuad.kickoff.2025.1": JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}),
+        "fuad.series.2024.17.0001@48571": JSON.stringify({storedAt: now - 400 * DAY, value: 1}),
+        "fuad.keep.0001|https://x/export?TYPE=calendar": JSON.stringify({expires: now - 1, body: "{}"})
+    };
+    Object.entries({...kept, ...gone}).forEach(([key, value]) => items.set(key, value));
+    try {
+        const store = await import("../site/v2/ui/store.js?sweep");
+        store.save("fuad.rules.2026", "rules", DAY);
+        assert.deepEqual(Object.keys(gone).filter((key) => items.has(key)), []);
+        assert.deepEqual(Object.keys(kept).filter((key) => !items.has(key)), []);
+        items.set("fuad.kickoff.2025.2", JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}));
+        store.save("fuad.rules.2027", "rules", DAY);
+        assert.equal(items.has("fuad.kickoff.2025.2"), true, "once a page");
+    } finally {
+        delete globalThis.window;
+    }
+});
+
+test("storage that's full warns once a page, in the console only, and the page carries on", async (t) => {
+    globalThis.window = {localStorage: {getItem: () => null, setItem: () => {
+        throw new Error("QuotaExceededError");
+    }}};
+    const warnings = [];
+    t.mock.method(console, "warn", (...args) => warnings.push(args[0]));
+    try {
+        const {storage} = await import("../site/v2/ui/store.js?full");
+        storage.set("fuad.a", "1");
+        storage.set("fuad.b", "2");
+        assert.deepEqual(warnings, ["[fuad] couldn't keep in browser storage:"]);
+    } finally {
+        delete globalThis.window;
+    }
+});
+
+test("a copy cachedOrStale may still show is kept as long, whichever read saved it", () => withStorage(async (items) => {
+    const expiry = (key) => {
+        const name = [...items.keys()].find((stored) => stored.startsWith(key));
+        const entry = JSON.parse(items.get(name));
+        return entry.expires - entry.storedAt;
+    };
+    // the refresh behind a stale copy
+    save("fuad.test.f", "old", 2 * DAY);
+    age(items, "fuad.test.f", DAY + 1);
+    let refreshed;
+    const done = new Promise((resolve) => {
+        refreshed = resolve;
+    });
+    await cachedOrStale("fuad.test.f", DAY, 2 * DAY, async () => {
+        setTimeout(refreshed);
+        return "new";
+    });
+    await done;
+    assert.equal(saved("fuad.test.f").value, "new");
+    assert.equal(expiry("fuad.test.f"), 2 * DAY);
+    // the player list's fresh read, which the shown ones read stale
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({players: {player: [{id: "1", name: "Last, First", position: "QB", team: "MIN"}]}}), {status: 200});
+    try {
+        const {playerList} = await import("../site/v2/ui/player-list.js");
+        await playerList(2026, {fresh: true});
+        assert.equal(expiry("fuad.playerList.2026"), 2 * DAY);
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+}));
+
+test("the page's first save sweeps before it writes, so what's swept makes room for it", async () => {
+    const items = new Map();
+    const room = 3;
+    const localStorage = {
+        getItem: (key) => (items.has(key) ? items.get(key) : null),
+        setItem: (key, value) => {
+            if (!items.has(key) && items.size >= room) {
+                throw new Error("QuotaExceededError");
+            }
+            items.set(key, String(value));
+        },
+        removeItem: (key) => items.delete(key)
+    };
+    globalThis.window = {localStorage: new Proxy(localStorage, {
+        ownKeys: () => [...items.keys()],
+        getOwnPropertyDescriptor: () => ({enumerable: true, configurable: true})
+    })};
+    const now = Date.now();
+    items.set("fuad.kickoff.2025.1", JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}));
+    items.set("fuad.kickoff.2025.2", JSON.stringify({storedAt: now - 2 * DAY, expires: now - DAY, value: 1}));
+    items.set("fuad.beta", "v2");
+    try {
+        const store = await import("../site/v2/ui/store.js?room");
+        store.save("fuad.kickoff.2026.1", 1, DAY);
+        assert.equal(store.saved("fuad.kickoff.2026.1").value, 1);
+        assert.deepEqual([...items.keys()].sort(), ["fuad.beta", "fuad.kickoff.2026.1"]);
+    } finally {
+        delete globalThis.window;
+    }
+});

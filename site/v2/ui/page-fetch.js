@@ -3,7 +3,7 @@
 // is forgotten, so Retry asks again. Exports that rarely change are also kept in the browser
 // (`keepFor`), so the next page reuses them instead of asking MFL again.
 
-import {storage} from "./store.js";
+import {storage, sweep} from "./store.js";
 import {TIME_ZONE} from "../lib/zone.js";
 import {HELD} from "../lib/mfl.js";
 
@@ -89,23 +89,10 @@ function keptEntry(key) {
 }
 const kept = (key) => (keptEntry(key) || {}).body ?? null;
 
-// MFL's own pages share this browser storage, so what's expired goes as the first thing a page keeps
-// is kept: reading every entry is slow on a phone, so once a page
-let swept = false;
+// what's expired goes with the store's sweep, whose entries have `expires` too
 function keep(key, body, maxAge) {
-    const now = Date.now();
-    if (!swept) {
-        swept = true;
-        try {
-            for (const name of Object.keys(window.localStorage)) {
-                if (name.startsWith(KEEP) && !((JSON.parse(window.localStorage.getItem(name)) || {}).expires > now)) {
-                    window.localStorage.removeItem(name);
-                }
-            }
-        } catch (error) {
-        }
-    }
-    storage.set(key, JSON.stringify({expires: now + maxAge, body}));
+    sweep();
+    storage.set(key, JSON.stringify({expires: Date.now() + maxAge, body}));
 }
 
 // after a move made in v2, so the next page shows it: what a move changes is asked again
@@ -142,13 +129,12 @@ function thisWeeksSchedule() {
     }
 }
 
-// Every read from MFL. After MFL answers 429 nothing is asked of it for a while, on any page; a read
-// in that time answers 429 at once, so it fails as MFL's refusal would. Moves aren't held.
-export async function mflFetch(url, init) {
-    const until = Number(storage.get(WAIT_KEY)) || 0;
-    if (Date.now() < until) {
-        return new Response("", {status: 429, statusText: HELD});
-    }
+// how long a read waits for MFL to start answering; reading the answer isn't timed, as a slow phone
+// takes a while over the players' list
+export const READ_TIMEOUT = 20 * 1000;
+
+// whatever asked it, MFL's 429 holds the reads after it, on every page
+async function asked(url, init) {
     const response = await fetch(url, init);
     if (response.status === 429) {
         storage.set(WAIT_KEY, String(Date.now() + WAIT));
@@ -156,14 +142,43 @@ export async function mflFetch(url, init) {
     return response;
 }
 
-// A move: sent even while reads are held, and a 429 holds them as one to a read does
-export async function mflSend(url, init) {
-    const response = await fetch(url, init);
-    if (response.status === 429) {
-        storage.set(WAIT_KEY, String(Date.now() + WAIT));
+// A read MFL doesn't answer in READ_TIMEOUT fails as one cut off does (ui/panel.js cutOff), so a
+// panel isn't left on its placeholders. AbortSignal.timeout is newer than the oldest devices, as is
+// AbortSignal.any, so a caller's own `signal` isn't used: the timeout's replaces it.
+async function timed(url, init = {}) {
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, READ_TIMEOUT);
+    try {
+        return await asked(url, {...init, signal: controller.signal});
+    } catch (error) {
+        throw timedOut ? Object.assign(new Error(`MFL didn't answer in ${READ_TIMEOUT / 1000} seconds`), {cutOff: true}) : error;
+    } finally {
+        clearTimeout(timer);
     }
-    return response;
 }
+
+// Every read from MFL, an action's first among them, but one confirming a move or finishing one
+// under way (mflConfirm). After MFL answers 429 nothing is asked of it for a while, on any page; a
+// read in that time answers 429 at once, so it fails as MFL's refusal would.
+export async function mflFetch(url, init) {
+    const until = Number(storage.get(WAIT_KEY)) || 0;
+    if (Date.now() < until) {
+        return new Response("", {status: 429, statusText: HELD});
+    }
+    return timed(url, init);
+}
+
+// A read that confirms a move, or finishes one under way (a form's reads once it has written): not
+// held, as the move itself isn't, since a move made but not confirmed would show as failed, and one
+// half made shouldn't stop there; timed, as giving up a read sends nothing
+export const mflConfirm = timed;
+
+// A move: sent even while reads are held, and never timed, as one cut off may still have been made
+export const mflSend = asked;
 
 // Promise.all for reads asked at once: when several fail, a refusal (HTTP 429) is the error
 // thrown, whichever failed first, so the page says the server is busy

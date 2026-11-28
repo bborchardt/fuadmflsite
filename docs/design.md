@@ -641,11 +641,28 @@ They're in `lib/rules.js` and `lib/violations.js`, with the league's numbers in 
   draws the page and a fresh one is asked for behind it. Moves' checks and Home, whose forms write to
   MFL, wait for a fresh one. On the home page, MFL's hidden chat module stops reading the chat every
   few seconds, as Home reads its own.
-- After MFL refuses a request (HTTP 429), v2 asks it nothing for 30 seconds, on any page; a panel
-  with nothing to show says "Server is busy. Try again in a few seconds.", with Retry off until
-  then, and Moves' screens fall back to MFL's page (Outside change). Moves themselves aren't held.
-  A read held back fails as `HTTP 429, held by v2 after MFL's 429` in what's logged, so the devices
-  form's rows tell MFL's refusals from the reads v2 held after one.
+- Every request v2 makes to MFL goes through `ui/page-fetch.js`: reads through `mflFetch`, an
+  action's first among them (a form read before its save, a bid's edit page before the edit), the
+  reads that confirm a move or finish one under way (a form's reads once it has written) through
+  `mflConfirm`, and moves (a move's form,
+  the lineup, a chat post, the watch list, a skin or width saved) through `mflSend`. The lint
+  (`npm run lint`) refuses `fetch` in `ui/`, called or passed on, but for the site's own files on
+  Pages, and `fetchExport` (`lib/mfl.js`) has no fetch of its
+  own to fall back on. After MFL refuses one (HTTP 429), whichever it was, v2 holds its reads for 30
+  seconds, on any page; a panel with nothing to show says "Server is busy. Try again in a few
+  seconds.", with Retry off until then, and Moves' screens fall back to MFL's page (Outside change).
+  Moves and the reads confirming them aren't held, as a move made but not confirmed would show as
+  failed, and one half made shouldn't stop there; a move's read-back stops at MFL's refusal rather
+  than ask it again. A read held back fails as `HTTP 429, held by v2 after MFL's 429` in what's logged, so the
+  devices form's rows tell MFL's refusals from the reads v2 held after one.
+- A read MFL hasn't started answering in 20 seconds is given up as one cut off (`ui/panel.js`
+  `cutOff`): a panel tries it once more, then says it couldn't load, rather than wait on its
+  placeholders; a move's confirmation that times out fails as one MFL couldn't answer. Reading the
+  answer isn't timed, and a move never is, as one cut off may still be made.
+- What v2 keeps in browser storage (`ui/store.js`) says how long it's read. Once a page, just
+  before the first thing is kept, what's past that goes, and so does an entry with no time of its
+  own (a panel's saved copy) once it's a year old, as keys carry a season or week and would pile up
+  beside MFL's own. Storage that's full or blocked keeps nothing, with one console warning a page.
 - League › Scores runs MFL's own win probability on the same feeds, but its numbers can differ from
   MFL's page by a point or so: MFL's simulation carries a random value across every lineup it has
   shown since the page loaded.

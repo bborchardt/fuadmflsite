@@ -11,6 +11,7 @@ import {openDialog} from "./dialog.js";
 import {money, yearsText} from "./format.js";
 import {esc} from "./html.js";
 import {readBack, send} from "./moves.js";
+import {mflConfirm, mflFetch} from "./page-fetch.js";
 import {ROOKIE_RANKED, rookieBaselines} from "../lib/rules.js";
 import {draftView} from "./franchise-view.js";
 
@@ -175,8 +176,9 @@ export function openLoadForm({context, built, opener, dataBase}) {
     const players = built.boardContext.playerNames;
     const teams = new Map([...built.franchises].map(([id, franchise]) => [id, franchise.teamName]));
     const franchises = asArray(built.raw.league.franchises && built.raw.league.franchises.franchise);
-    // MFL now, to plan and confirm a send: not held by MFL's wait, as a move's reads aren't (moves.js)
-    const fresh = (type, params = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId, ...params}), type, {init: {cache: "no-store"}, check: strict});
+    // MFL now: held after MFL's 429 where it's the first thing asked (`first`), as any read is, and
+    // not once a send has written something, as a move's confirmation isn't (moves.js)
+    const fresh = (type, {first = false} = {}) => fetchExport(exportUrl(window.location.origin, context.season, type, {L: context.leagueId}), type, {fetchImpl: first ? mflFetch : mflConfirm, init: {cache: "no-store"}, check: strict});
     const teamCount = teams.size;
     // players unloaded whose salaries aren't cleared yet, kept across reads
     const clearing = new Set();
@@ -229,8 +231,8 @@ export function openLoadForm({context, built, opener, dataBase}) {
         state.error = "";
         render();
         try {
-            state.rosters = await fresh("rosters");
-            state.draft = state.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults").then((found) => found.draftUnit, () => null)) : null;
+            state.rosters = await fresh("rosters", {first: true});
+            state.draft = state.kind === "rookies" ? await wait(SPACING).then(() => fresh("draftResults", {first: true}).then((found) => found.draftUnit, () => null)) : null;
             if (state.kind === "rookies" && !scale.baselines) {
                 const view = await draftView(context.season, built, dataBase).catch((error) => {
                     throw new Error(`Couldn’t load the trade deadline salaries the rookie scale is set from: ${error.message}`);
@@ -264,7 +266,7 @@ export function openLoadForm({context, built, opener, dataBase}) {
         };
         try {
             // each team's roster as MFL has it now, each post its whole new roster
-            let rosters = await fresh("rosters");
+            let rosters = await fresh("rosters", {first: true});
             await wait(SPACING);
             if (result.kind === "rookies" && result.loadDraft) {
                 await step(`Loaded the draft’s ${result.picks.length} picks`, () => mflImport(context, "draftResults", {DATA: draftResultsXml(result.picks)}));

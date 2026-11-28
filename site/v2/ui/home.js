@@ -7,7 +7,7 @@ import {pendingGroups} from "../lib/bids.js";
 import {TRADE_DEADLINE_WEEK, seasonWeeks} from "../lib/rules.js";
 import {clean, esc} from "./html.js";
 import {drawPanel, pageChanged} from "./panel.js";
-import {MOVES_KEPT, mflFetch, pageFetch} from "./page-fetch.js";
+import {MOVES_KEPT, mflFetch, mflSend, pageFetch} from "./page-fetch.js";
 import {LEAVE_BETA, leaveBetaHref, withParam} from "../loader.js";
 import {cutDownAt} from "../lib/violations.js";
 import {addedSince, formLengths, lengthTopics, readFormPost} from "../lib/lengths.js";
@@ -208,7 +208,7 @@ function drawChat(mount, {context, franchiseId, teams, refreshes}) {
             result.textContent = "";
             try {
                 const url = `${window.location.origin}/${context.season}/chat_save?L=${context.leagueId}&MESSAGE=${encodeURIComponent(text)}&TO_FID=${encodeURIComponent(to.value)}`;
-                const response = await fetch(url, {credentials: "same-origin", cache: "no-store"});
+                const response = await mflSend(url, {credentials: "same-origin", cache: "no-store"});
                 if (!response.ok) {
                     throw new Error(httpStatus(response));
                 }
