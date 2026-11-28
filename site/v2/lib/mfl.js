@@ -68,12 +68,13 @@ export const HELD = "held by v2 after MFL's 429";
 export const httpStatus = (response) => `HTTP ${response.status}${response.statusText === HELD ? `, ${HELD}` : ""}`;
 
 // "network error (fetch failed: UND_ERR_CONNECT_TIMEOUT)": a failed request's message, and in Node the
-// code under it (a connect timeout, a reset, a DNS failure), which "fetch failed" alone doesn't say.
+// code under it (a connect timeout, a reset, a DNS failure), or its message where it has no code,
+// which "fetch failed" alone doesn't say.
 // A browser gives no cause, so it reads "network error (Load failed)".
 export function networkError(error) {
     const cause = error && error.cause;
-    const code = cause && (cause.code || (Array.isArray(cause.errors) && cause.errors.map((each) => each && each.code).find(Boolean)));
-    return `network error (${error && error.message}${code ? `: ${code}` : ""})`;
+    const code = cause && (cause.code || (Array.isArray(cause.errors) && cause.errors.map((each) => each && each.code).find(Boolean)) || cause.message);
+    return `network error (${String((error && error.message) || error)}${code ? `: ${code}` : ""})`;
 }
 
 // `check(section, body)`, when given, gives back the section or throws (the job's lib/shapes.js checkShape).

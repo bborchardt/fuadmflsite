@@ -303,7 +303,10 @@ async function loadNflverse(season) {
         if (!response.ok) {
             throw new Error(`Couldn't load ${url}: HTTP ${response.status}`);
         }
-        return readCsv(await response.text());
+        // the timeout covers the file's download too
+        return readCsv(await response.text().catch((error) => {
+            throw new Error(`Couldn't load ${url}: ${networkError(error)}`);
+        }));
     };
     const [rosters, ids] = await Promise.all([load(NFLVERSE_ROSTERS(season)), load(PLAYER_IDS)]);
     return {rosters, ids};

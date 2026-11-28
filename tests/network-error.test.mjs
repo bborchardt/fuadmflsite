@@ -18,6 +18,9 @@ test("Node's code under a failed fetch is said, in the lib's and the job's alike
         // a browser's has no cause, and the job's own timeout says so itself
         assert.equal(read(new TypeError("Load failed")), "network error (Load failed)");
         assert.equal(read(new DOMException("The operation was aborted due to timeout", "TimeoutError")), "network error (The operation was aborted due to timeout)");
+        // a reason with no code says its message; what isn't an Error says itself
+        assert.equal(read(new TypeError("fetch failed", {cause: new Error("invalid onError method")})), "network error (fetch failed: invalid onError method)");
+        assert.equal(read("offline"), "network error (offline)");
     }
     assert.equal(withCause(withCode("ENOTFOUND")), "fetch failed: ENOTFOUND");
 });
@@ -30,12 +33,12 @@ test("an export read that fails outright says the code, and is still a cut-off",
         (error) => error.cutOff === true && error.message === "Couldn't load players: network error (fetch failed: ECONNRESET)");
 });
 
-test("a connection refused by a real socket reads ECONNREFUSED", async () => {
-    // a port just freed on this machine: nothing listens there
-    const server = createServer();
+test("a connection a real server drops says Node's code for it", async (t) => {
+    // a server on this machine that closes every connection before answering
+    const server = createServer((socket) => socket.destroy());
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-    const {port} = server.address();
-    await new Promise((resolve) => server.close(resolve));
-    const error = await fetch(`http://127.0.0.1:${port}/`).catch((each) => each);
-    assert.equal(networkError(error), "network error (fetch failed: ECONNREFUSED)");
+    t.after(() => server.close());
+    const error = await fetch(`http://127.0.0.1:${server.address().port}/`, {signal: AbortSignal.timeout(5000)}).catch((each) => each);
+    // reset, or "other side closed" as the system tells it
+    assert.match(networkError(error), /^network error \(fetch failed: (ECONNRESET|UND_ERR_SOCKET)\)$/);
 });

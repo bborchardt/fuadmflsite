@@ -2,11 +2,12 @@
 // say: a connect timeout, a reset, a DNS failure. v2's lib/mfl.js has its own for export reads, as
 // the job's modules take no lib of their own.
 
-// "fetch failed: UND_ERR_CONNECT_TIMEOUT"; the message alone when there's no code under it
+// "fetch failed: UND_ERR_CONNECT_TIMEOUT", or the reason's message where it has no code; the message
+// alone when there's no reason under it
 export function withCause(error) {
     const cause = error && error.cause;
-    const code = cause && (cause.code || (Array.isArray(cause.errors) && cause.errors.map((each) => each && each.code).find(Boolean)));
-    return `${error && error.message}${code ? `: ${code}` : ""}`;
+    const code = cause && (cause.code || (Array.isArray(cause.errors) && cause.errors.map((each) => each && each.code).find(Boolean)) || cause.message);
+    return `${String((error && error.message) || error)}${code ? `: ${code}` : ""}`;
 }
 
 // "network error (fetch failed: UND_ERR_CONNECT_TIMEOUT)"
