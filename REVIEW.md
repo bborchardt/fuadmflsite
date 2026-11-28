@@ -123,7 +123,8 @@ from AGENTS.md.
   down, reports are lost and the page is unaffected. (mfl/message-header.html: the devices form,
   `DEVICES`)
 - GitHub's API (the daily job's last scheduled run): only the commissioner's Home asks, after My
-  alerts has drawn, at most once in 6 hours, for the alert that the job hasn't run in 36 hours.
+  alerts has drawn, at most once in 6 hours (an hour after a failure), for the alert that the job
+  hasn't run on schedule in 36 hours.
   While it's down, the alert isn't shown and the failure is logged; the page is unaffected.
   (ui/home.js: `lastRunOf`, `checkRun`)
 - nflverse weekly rosters and DynastyProcess player IDs: backup starters reads them, and only when a

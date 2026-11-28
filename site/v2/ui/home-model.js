@@ -419,21 +419,24 @@ export function repoOf(pagesUrl) {
     return owner && repo ? {owner, repo} : null;
 }
 
-// scheduled runs only start on the default branch, and a dry run started by hand isn't the chores
-export const runsUrl = ({owner, repo}) => `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${DAILY}/runs?event=schedule&status=completed&per_page=1`;
+// Scheduled runs only, which start on the default branch: the alert is about the schedule, which a
+// run started by hand doesn't mend. The last few, as a cancelled run did none of the chores.
+export const runsUrl = ({owner, repo}) => `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${DAILY}/runs?event=schedule&status=completed&per_page=10`;
+const RAN = new Set(["success", "failure"]);
 export const runsPage = ({owner, repo}) => `https://github.com/${owner}/${repo}/actions/workflows/${DAILY}`;
 
-// `{at}`, the last finished scheduled run's start in seconds, `{at: null}` when GitHub lists none, or
-// null for an answer that isn't GitHub's list of runs
+// `{at}`, the start in seconds of the last scheduled run that succeeded or failed, `{at: null}` when
+// none listed did, or null for an answer that isn't GitHub's list of runs
 export function readLastRun(json) {
     const runs = json && Array.isArray(json.workflow_runs) && typeof json.total_count === "number" ? json.workflow_runs : null;
-    if (!runs) {
+    if (!runs || runs.length > json.total_count || runs.some((run) => !run || typeof run.conclusion !== "string")) {
         return null;
     }
-    if (!runs.length) {
-        return json.total_count === 0 ? {at: null} : null;
+    const ran = runs.find((run) => RAN.has(run.conclusion));
+    if (!ran) {
+        return {at: null};
     }
-    const at = Date.parse(runs[0].created_at) / 1000;
+    const at = Date.parse(ran.created_at) / 1000;
     return Number.isFinite(at) ? {at} : null;
 }
 
@@ -445,7 +448,7 @@ export function runAlert(lastRun, href, now) {
     return {
         tone: tones.red,
         mark: "!",
-        title: lastRun.at === null ? "The daily chores haven’t run on schedule" : `The daily chores haven’t run since ${dayText(lastRun.at)}`,
+        title: lastRun.at === null ? "The daily chores haven’t run on schedule lately" : `The daily chores haven’t run on schedule since ${dayText(lastRun.at)}`,
         detail: "Check Actions › Daily chores",
         href
     };

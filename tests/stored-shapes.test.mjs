@@ -49,7 +49,7 @@ function outline(samples) {
 // [the key as pinned, the key v2 uses, its values from the saved pages, the outline as pinned]
 const stored = [
     // from GitHub, not MFL: the daily job's last scheduled run, for the commissioner's alert
-    ["fuad.home.dailyRun", RUN_KEY, () => [readLastRun(JSON.parse(fixture("github-daily-runs.json")))], "{at: number}"],
+    ["fuad.home.dailyRun", RUN_KEY, () => [readLastRun(JSON.parse(fixture("github-daily-runs.json"))), readLastRun({total_count: 0, workflow_runs: []})], "{at: null|number}"],
     ["fuad.bids", BIDS_KEY, () => [readBidRun(fixture("processed-waivers.html")), readBidRun(fixture("processed-waivers-backup.html"))],
         "[{awarded: null|number, claims: [{amount: number, name: string, nfl: string, position: string}], comment: string, refused: {*: string}, team: string}]"],
     ["fuad.history.champions", KEYS.champions, () => [readChampions(fixture("history-champions.html"))], "[{name: string, team: string, year: number}]"],

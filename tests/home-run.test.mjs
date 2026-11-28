@@ -13,17 +13,22 @@ const at = Date.parse("2026-11-27T17:36:45Z") / 1000;
 test("the repository is the one its GitHub Pages address is published from", () => {
     const repo = repoOf("https://bborchardt.github.io/fuadmflsite/data/");
     assert.deepEqual(repo, {owner: "bborchardt", repo: "fuadmflsite"});
-    assert.equal(runsUrl(repo), "https://api.github.com/repos/bborchardt/fuadmflsite/actions/workflows/daily.yml/runs?event=schedule&status=completed&per_page=1");
+    assert.equal(runsUrl(repo), "https://api.github.com/repos/bborchardt/fuadmflsite/actions/workflows/daily.yml/runs?event=schedule&status=completed&per_page=10");
     assert.equal(runsPage(repo), "https://github.com/bborchardt/fuadmflsite/actions/workflows/daily.yml");
     assert.equal(repoOf("http://localhost:8000/data/"), null);
     assert.equal(repoOf("https://bborchardt.github.io/"), null);
 });
 
-test("GitHub's list gives the last run's start; an empty list is none, anything else not recognised", () => {
+test("GitHub's list gives the last run that did the chores; none is none, anything else not recognised", () => {
     assert.deepEqual(readLastRun(runs), {at});
+    const run = (conclusion, created) => ({event: "schedule", status: "completed", conclusion, created_at: created});
+    // a cancelled or skipped run did none of the chores; a failed one ran them
+    assert.deepEqual(readLastRun({total_count: 3, workflow_runs: [run("cancelled", "2026-11-28T17:00:00Z"), run("skipped", "2026-11-28T16:00:00Z"), run("failure", "2026-11-27T17:36:45Z")]}), {at});
+    assert.deepEqual(readLastRun({total_count: 1, workflow_runs: [run("cancelled", "2026-11-28T17:00:00Z")]}), {at: null});
     assert.deepEqual(readLastRun({total_count: 0, workflow_runs: []}), {at: null});
-    assert.equal(readLastRun({total_count: 3, workflow_runs: []}), null);
-    assert.equal(readLastRun({total_count: 1, workflow_runs: [{created_at: "yesterday"}]}), null);
+    assert.equal(readLastRun({total_count: 0, workflow_runs: [run("success", "2026-11-28T17:00:00Z")]}), null);
+    assert.equal(readLastRun({total_count: 1, workflow_runs: [{created_at: "2026-11-28T17:00:00Z"}]}), null);
+    assert.equal(readLastRun({total_count: 1, workflow_runs: [run("success", "yesterday")]}), null);
     assert.equal(readLastRun({message: "API rate limit exceeded"}), null);
     assert.equal(readLastRun(null), null);
 });
@@ -32,11 +37,11 @@ test("the alert shows once the last run is more than 36 hours back", () => {
     const href = "https://github.com/o/r/actions/workflows/daily.yml";
     assert.equal(runAlert({at}, href, at + RUN_LATE_HOURS * HOUR), null);
     const late = runAlert({at}, href, at + RUN_LATE_HOURS * HOUR + 1);
-    assert.equal(late.title, "The daily chores haven’t run since Fri Nov 27");
+    assert.equal(late.title, "The daily chores haven’t run on schedule since Fri Nov 27");
     assert.equal(late.detail, "Check Actions › Daily chores");
     assert.equal(late.href, href);
     assert.equal(late.tone, "red");
-    assert.equal(runAlert({at: null}, href, at).title, "The daily chores haven’t run on schedule");
+    assert.equal(runAlert({at: null}, href, at).title, "The daily chores haven’t run on schedule lately");
     // not read yet, or not readable: nothing
     assert.equal(runAlert(null, href, at), null);
 });

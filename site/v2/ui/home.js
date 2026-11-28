@@ -34,7 +34,7 @@ import {draftPicked, kickoffAt} from "./context.js";
 import {pageTopics, readChat, tradeOffers} from "./home-feeds.js";
 import {onBack} from "./back.js";
 import {isTeamOfCommish} from "./looks.js";
-import {cached, saved} from "./store.js";
+import {cached, save, saved} from "./store.js";
 import {moveRows} from "./move-rows.js";
 import {lenient, strict} from "./checked.js";
 
@@ -380,22 +380,31 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
 
     // The commissioner, as 0000 or as their own team, is told when the daily job hasn't run. My alerts
     // shows what was last read from GitHub; it's read again after My alerts has drawn, once
-    // RUN_CHECKED has passed, so it never holds the page up, and My alerts loads again if the alert
-    // changed.
+    // RUN_CHECKED has passed, so it never holds the page up, and My alerts is drawn again if the
+    // alert it showed changed, from the reads it already made.
     const runRepo = loggedIn && dataBase && (franchiseId === "0000" || isTeamOfCommish(document)) ? repoOf(dataBase) : null;
     const lateRun = () => {
         const entry = runRepo && saved(RUN_KEY);
         return entry ? runAlert(entry.value, runsPage(runRepo), nowSeconds()) : null;
     };
     const titleOf = (alert) => (alert ? alert.title : null);
-    let reloadAlerts = () => {};
+    let shownLate = null;
+    const withLate = (alerts) => {
+        const late = lateRun();
+        shownLate = titleOf(late);
+        return late ? [late, ...alerts] : alerts;
+    };
+    let redrawAlerts = () => {};
     const checkRun = () => {
-        if (runRepo) {
-            const shown = titleOf(lateRun());
-            cached(RUN_KEY, RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
-                .then(() => titleOf(lateRun()) !== shown && reloadAlerts())
-                .catch((error) => console.error("[fuad] My alerts couldn't check the daily chores' last run:", error));
+        const failed = runRepo && saved(RUN_FAILED_KEY);
+        if (!runRepo || failed && Date.now() - failed.storedAt < HOUR) {
+            return;
         }
+        cached(RUN_KEY, RUN_CHECKED, () => lastRunOf(runRepo), {keptFor: RUN_KEPT})
+            .then(() => titleOf(lateRun()) !== shownLate && redrawAlerts(), (error) => {
+                save(RUN_FAILED_KEY, true, HOUR);
+                console.error("[fuad] My alerts couldn't check the daily chores' last run:", error);
+            });
     };
 
     // A check My alerts couldn't make leaves its alerts out, as members can see the same on its screen
@@ -410,6 +419,10 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     };
 
     let alertsShown;
+    const alertsRun = refreshes.length;
+    // a redraw for the late-run alert alone reuses what My alerts last read from MFL
+    let fromMfl = null;
+    let again = false;
     if (member) {
         alertsShown = drawPanel(panels.alerts, {
             heading: "My alerts",
@@ -419,6 +432,11 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             rows: 3,
             refreshes,
             load: async () => {
+                const reuse = again && fromMfl;
+                again = false;
+                if (reuse) {
+                    return withLate(fromMfl);
+                }
                 const built = await league();
                 const week = Number(window.liveScoringWeek) || Number(built.week) || 1;
                 const [timeline, live, schedule, waivers, trades, board, lengths, upcoming, draft] = await Promise.all([
@@ -462,8 +480,8 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
                 }).map((alert) => (alert.action === "lengths"
                     ? {...alert, due: phase === "before-cut" ? (cutDown ? `by ${dayText(cutDown)}` : "before the season") : null, unread: owed.unread.length ? dayText(owed.unread[owed.unread.length - 1]) : null}
                     : alert));
-                const late = lateRun();
-                return late ? [late, ...alerts] : alerts;
+                fromMfl = alerts;
+                return withLate(alerts);
             },
             render: (alerts, body) => {
                 panels.alerts.querySelector(".fuad-alert-count").textContent = alerts.length ? `${alerts.length} to do` : "";
@@ -484,10 +502,10 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             // the auction's and rookie draft's results, from the league's sheet (ui/load-form.js)
             actions: commish ? '<button type="button" class="fuad-text-button fuad-load-open">Load auction or rookie draft</button>' : "",
             what: "my alerts",
-            load: () => lateRun(),
+            load: () => withLate([]),
             refreshes,
-            render: (late, body) => {
-                body.innerHTML = `${late ? alertRows([late]) : ""}<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>`;
+            render: (alerts, body) => {
+                body.innerHTML = `${alerts.length ? alertRows(alerts) : ""}<p class="fuad-muted fuad-empty">Alerts are for members’ teams.</p>`;
             }
         });
         if (commish) {
@@ -501,9 +519,13 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
             });
         }
     }
-    // My alerts' own load, the one drawPanel just added
+    // My alerts' own load, the one its drawPanel added
     if (alertsShown) {
-        reloadAlerts = refreshes[refreshes.length - 1];
+        const run = refreshes[alertsRun];
+        redrawAlerts = () => {
+            again = true;
+            run();
+        };
     }
     // after My alerts has drawn, and each time Home is shown again
     Promise.resolve(alertsShown).then(checkRun);
@@ -584,9 +606,11 @@ export function drawHome({context, franchiseId, league, readings = () => Promise
     return {root, shown: leagueShown.then((value) => value !== null, () => false)};
 }
 
-// The daily job's last scheduled run, kept for RUN_CHECKED: GitHub's API answers 60 requests an hour
-// to a browser without a login, and only the commissioner's asks
+// The daily job's last scheduled run, kept for RUN_CHECKED, or an hour after a read that failed:
+// GitHub's API answers 60 requests an hour to a browser without a login, and only the
+// commissioner's asks
 export const RUN_KEY = "fuad.home.dailyRun";
+const RUN_FAILED_KEY = "fuad.home.dailyRunFailed";
 const HOUR = 60 * 60 * 1000;
 const RUN_CHECKED = 6 * HOUR;
 const RUN_KEPT = 7 * 24 * HOUR;
