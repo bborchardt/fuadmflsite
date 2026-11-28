@@ -137,9 +137,9 @@ test("a switch the job doesn't know fails the run, as a mistyped apply would onl
     assert.ok(mistyped.entries.includes("DROP_PENALTIES isn't \"apply\": would charge $1 to Alpha for Joe Mixon (1yrs@1, 10/23), then clear the player's contract."));
     assert.match(mistyped.summary, /Chore switches: DROP_PENALTIES log only \("Apply"\), CONTRACT_YEARS apply, PAYOUTS log only \("log"\), RFA_SALARIES log only \(unset\), BACKUP_STARTERS off \("true"\)\./);
     // a dry run says so of every switch
-    const dry = run({env: {DRY_RUN: "true", DATA_LEAGUE_ID: "48571", DROP_PENALTIES: "apply"}});
+    const dry = run({env: {DRY_RUN: "true", DATA_LEAGUE_ID: "48571", DROP_PENALTIES: "apply", BACKUP_STARTERS: "log"}});
     assert.equal(dry.status, 0, dry.stdout);
-    assert.match(dry.summary, /Chore switches: DROP_PENALTIES apply, .*; a dry run writes nothing, whatever they say\./);
+    assert.match(dry.summary, /Chore switches: DROP_PENALTIES apply, .*, BACKUP_STARTERS log only \("log"\); a dry run writes nothing, whatever they say\./);
     assert.match(dry.stdout, /Dry run: would charge \$1 to Alpha/);
 });
 
@@ -357,6 +357,14 @@ test("a snapshot changed by hand on league-data is published again", () => {
     const result = run({scenario: {published: {"franchise-2025.json": '{"season":2025,"old":true}\n'}}});
     assert.ok(result.entries.includes("Publishing snapshots that are new or changed since the site was last published: franchise-2025.json."));
     assert.equal(result.output.publish, "true");
+});
+
+test("GitHub Pages unreachable: what's published isn't known, so nothing is published, the run passes, and the next run checks again", () => {
+    const result = run({scenario: {pagesUnreachable: true}});
+    assert.equal(result.status, 0, result.stdout);
+    assert.match(result.stdout, /Couldn't check whether franchise-2025\.json is published \(fetch failed\); will check again tomorrow\./);
+    assert.equal(result.output.publish, "false");
+    assert.ok(!result.entries.some((entry) => /Publishing snapshots/.test(entry)), result.entries.join("\n"));
 });
 
 test("with nothing to do the chore log is left alone, but gets a heartbeat once a month", () => {
@@ -713,7 +721,7 @@ test("more default lengths than a quarter of the rostered players: none set", ()
     });
     const result = run({scenario: {exports}, env: {...LOGIN, CONTRACT_YEARS: "apply"}, now: "2026-09-11T12:00:00Z"});
     assert.equal(result.status, 1);
-    assert.ok(result.entries.some((entry) => /14 of 46 rostered players would get the default 1 year, more than expected, so no lengths were set/.test(entry)), result.entries.join("\n"));
+    assert.ok(result.entries.some((entry) => /14 of 46 rostered players would get the default 1 year, more than expected, so no lengths were set\. Check the rosters and set them on MFL.s Edit Player Salaries and Contracts page by hand\./.test(entry)), result.entries.join("\n"));
     assert.ok(!imports(result).some((data) => data.TYPE === "salaries"));
 });
 
@@ -847,7 +855,7 @@ test("RFA salaries: after the rollover and before week 1, players gone from 1 ye
     }));
     const flagged = run({scenario: misread, env: {...LOGIN, RFA_SALARIES: "apply"}, now: spring, files: {}});
     assert.equal(flagged.status, 1);
-    assert.match(flagged.summary, /RFA salaries: 4\d of 47 rostered players look like RFAs/);
+    assert.match(flagged.summary, /RFA salaries: 4\d of 47 rostered players look like RFAs, more than expected, so none were set to \$0\.01\. Check the rosters against last season.s and set them on MFL.s Edit Player Salaries and Contracts page by hand\./);
     assert.ok(!imports(flagged).some((body) => /0\.01/.test(body.DATA || "")));
 });
 
@@ -1157,7 +1165,9 @@ test("backup starters: a backup nflverse doesn't list is flagged, not started", 
 
 test("backup starters: nflverse or DynastyProcess unreachable is flagged, the week left open, and payouts wait for it", () => {
     const apply = {...LOGIN, BACKUP_STARTERS: "apply", PAYOUTS: "apply"};
-    const [rosters, ids] = Object.keys(backups().files);
+    const rosters = "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.csv";
+    const ids = "https://raw.githubusercontent.com/dynastyprocess/data/master/files/db_playerids.csv";
+    assert.ok([rosters, ids].every((address) => address in backups().files));
     for (const gone of [rosters, ids]) {
         const scenario = backups();
         delete scenario.files[gone];
@@ -1205,7 +1215,7 @@ test("backup starters: with BACKUP_STARTERS log only logged; a dry run writes no
     const logged = run({scenario: backups(), files: BACKUP_FILES, env: {...LOGIN, BACKUP_STARTERS: "log"}});
     assert.equal(logged.status, 0, logged.stdout);
     assert.deepEqual(logged.entries.filter((entry) => entry.startsWith("Backup starters")), [
-        "Backup starters: would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."
+        "Backup starters: BACKUP_STARTERS isn't \"apply\": would set Beta's week 6 lineup to Josh Allen, B0 Player: Josh Allen started for Tyler Warren, who was inactive."
     ]);
     assert.deepEqual([posted(logged, "lineup"), posted(logged, "csetup")], [[], []]);
     assert.ok(!logged.requests.some((request) => /BECOME=0000/.test(request.url)));
@@ -1304,13 +1314,14 @@ test("backup starters: a week without backups is settled without waiting for nfl
 
 test("the check of what v2 reads: a page MFL no longer has, or didn't give, fails the run, read as the login's own team; without one, only the exports", () => {
     const careerRecords = "/2026/options?L=48571&O=208";
-    const result = run({scenario: {myFranchise: "0001", turnedAway: {[careerRecords]: 3}, pages: {[careerRecords]: "<p>Career records</p>"}}, env: {...LOGIN, MFL_CHECK: "on"}});
+    const result = run({scenario: {myFranchise: "0001", turnedAway: {[careerRecords]: 3}, networkErrors: ["/2026/options?L=48571&O=194"], pages: {[careerRecords]: "<p>Career records</p>"}}, env: {...LOGIN, MFL_CHECK: "on"}});
     assert.equal(result.status, 1, result.stdout);
     assert.ok(result.entries.includes("MFL check: Add/Drop (/2026/add_drop?L=48571): MFL answered HTTP 404"), result.entries.join("\n"));
     // what MFL didn't give this time is flagged too, not taken for a change: an export the fake has
-    // none of (an error), and a page turned away each time
+    // none of (an error), a page turned away each time, and one the network failed
     const notGiven = (item) => `MFL check: ${item}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`;
-    for (const item of ["Couldn't load rules: MFL said \"no rules in the scenario\"", "Couldn't load Career Records: MFL turned it away with its home page 3 times"]) {
+    for (const item of ["Couldn't load rules: MFL said \"no rules in the scenario\"", "Couldn't load Career Records: MFL turned it away with its home page 3 times",
+        "Couldn't load League Champions: network error (fetch failed)"]) {
         assert.ok(result.entries.includes(notGiven(item)), result.entries.join("\n"));
         assert.ok(result.stdout.includes(`- ${notGiven(item)}`), "in the run's failure annotation");
     }

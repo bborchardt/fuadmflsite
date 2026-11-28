@@ -21,9 +21,9 @@
 //                               unset only logs them
 //   BACKUP_STARTERS             "apply" to start members' backups for inactive starters (bylaw 16.5);
 //                               "log" only logs them; unset, the chore doesn't run, as a league
-//                               without the rule handles backups itself, if at all
-//                               Any other value of these is flagged, and the chore only logs (backup
-//                               starters: doesn't run)
+//                               without the rule handles backups itself, if at all.
+//                               Of all five above, any other value is flagged, and its chore only
+//                               logs (backup starters: doesn't run)
 //   MFL_CHECK                   "off" skips the check of what v2 reads from MFL (jobs/mfl-check.mjs)
 //   SAVED_PAGES_DIR             where the check saves MFL's pages, cleaned as the capture bookmark
 //                               cleans them: a page it flags, and with SAVE_PAGES every one it reads
@@ -1005,7 +1005,7 @@ async function backupStarters(loggedIn, {league, playerNames, built}) {
             }
             if (!applyBackups) {
                 for (const {name, lineup, submit, what} of changed) {
-                    choreLog(`Backup starters: ${dryRun ? "dry run, " : ""}would ${submit ? `set ${name}'s week ${week} lineup to ${lineup.map(nameOf).join(", ")}`
+                    choreLog(`Backup starters: ${dryRun ? "dry run, would" : `BACKUP_STARTERS isn't "apply": would`} ${submit ? `set ${name}'s week ${week} lineup to ${lineup.map(nameOf).join(", ")}`
                         : `recalculate week ${week}, as MFL's results don't have ${name}'s lineup yet`}${what ? `: ${what}` : ""}.`);
                 }
             } else if (changed.length) {
@@ -1412,8 +1412,13 @@ async function mflCheck(loggedIn, {built, rosters, league}) {
         version,
         exportRead: ({type, params = {}, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}),
         pageRead: async (path, {referer} = {}) => {
-            const response = await mflAsk(`${host}${path}`, {headers: referer ? {...mflHeaders, Referer: `${host}${referer}`} : mflHeaders});
-            return {status: response.status, body: await response.text(), served: response.url};
+            try {
+                const response = await mflAsk(`${host}${path}`, {headers: referer ? {...mflHeaders, Referer: `${host}${referer}`} : mflHeaders});
+                return {status: response.status, body: await response.text(), served: response.url};
+            } catch (error) {
+                // as mflPage says it: Node's own "fetch failed" reaches the commissioner's email
+                throw new Error(error.fromMfl ? error.message : `network error (${error.message})`);
+            }
         },
         keep: saving.keep
     });
@@ -1423,7 +1428,8 @@ async function mflCheck(loggedIn, {built, rosters, league}) {
     }
     // flagged at once, as a lasting refusal (a feed answering 403) is a change too
     for (const item of unchecked) {
-        needsAttention(`MFL check: ${item}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`);
+        // MFL's own text may end in a full stop already
+        needsAttention(`MFL check: ${item.replace(/[.\s]+$/, "")}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`);
     }
     log(`MFL check: ${count - changed.length - unchecked.length} of ${count} reads as v2 expects.`);
 }

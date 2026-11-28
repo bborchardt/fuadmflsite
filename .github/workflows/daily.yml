@@ -73,9 +73,13 @@ jobs:
           NOW: ${{ inputs.now }}
           SAVE_PAGES: ${{ inputs.save_pages == true && 'true' || '' }}
         run: |
+          # each variable with the name the docs give its field; a field left with only spaces isn't given
           given=""
-          for name in LEAGUE HOST SETTINGS VERSION SEASON NOW SAVE_PAGES; do
-            if [ -n "${!name}" ]; then given="${given:+$given, }$(echo "$name" | tr "A-Z_" "a-z ")"; fi
+          for pair in LEAGUE:league HOST:host SETTINGS:settings VERSION:version SEASON:season NOW:time SAVE_PAGES:save_pages; do
+            variable="${pair%%:*}"
+            value="${!variable}"
+            value="${value//[[:space:]]/}"
+            if [ -n "$value" ]; then given="${given:+$given, }$(echo "${pair#*:}" | tr "_" " ")"; fi
           done
           if [ -n "$given" ]; then
             echo "::error title=Not a dry run::Dry run is unticked, so these inputs would be ignored and the real league's chores run as scheduled: ${given}. Tick Dry run to use them, or clear them for a real run."

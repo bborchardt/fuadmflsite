@@ -21,6 +21,7 @@
 //                 OK; any past the list's end are OK)
 //   published     {file: text} on GitHub Pages, an icon's still as "icons/<file>": {base64}; others
 //                 answer 404
+//   pagesUnreachable  true: every request to GitHub Pages fails, as a network error does
 //   waivers       the processed waivers page's HTML
 //   pictures      {address: {base64, etag}} for the team icons, anywhere; an etag the request sends
 //                 back is answered 304, a number in place of one is an HTTP status
@@ -29,6 +30,7 @@
 //   forms         {"/2026/lineup": html}: what a form posted there answers (default: Submit
 //                 Lineup's "SUBMITTED", and Recalculate Standings' "Calculating Week N Results")
 //   files         {address: text}: anywhere else, as nflverse's files on GitHub
+//   networkErrors ["/2026/path?query"]: every request there fails, as a network error does
 //   turnedAway    {"/2026/path?query": n}: the first n requests there (a page, a form's post, the
 //                 commissioner switch) answered with MFL's redirect to its home page
 //   redirects     {"/2026/path?query": location}: that address answered with a redirect there
@@ -103,6 +105,9 @@ globalThis.fetch = async (input, init = {}) => {
         return new Response(Buffer.from(picture.base64, "base64"), {status: 200, headers: picture.etag ? {ETag: picture.etag} : {}});
     }
     if (url.hostname === "bborchardt.github.io") {
+        if (scenario.pagesUnreachable) {
+            throw new TypeError("fetch failed");
+        }
         const file = url.pathname.split("/").pop();
         const published = (scenario.published || {})[url.pathname.includes("/data/icons/") ? `icons/${file}` : file];
         if (published && published.base64) {
@@ -116,6 +121,9 @@ globalThis.fetch = async (input, init = {}) => {
     }
     const [, year, page] = url.pathname.split("/");
     const address = url.pathname + url.search;
+    if ((scenario.networkErrors || []).includes(address)) {
+        throw new TypeError("fetch failed");
+    }
     if (turnedAway[address] > 0) {
         turnedAway[address]--;
         return new Response(null, {status: 302, headers: {Location: "http://home.myfantasyleague.com"}});

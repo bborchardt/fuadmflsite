@@ -188,14 +188,16 @@ week 12's kickoff.
 - **The beta fails to load or start:** that member gets `MAIN` instead, with a bar that leads out of
   the beta. To take the beta down for everyone, delete its offer line from MFL's header (Betas and
   versions).
-- **An "MFL check" flag:** MFL changed a page, feed or export v2 reads; the flag names which, and
-  the item and field for an export. Members see "—" or MFL's own page there until v2 is changed to
-  read it again, which is a code change, with nothing to do in MFL. When the flag says "MFL's page is
-  saved on the run", the run's page has it under Artifacts (`mfl-pages`, kept 14 days), cleaned, to
-  fix v2 against. A page of your own team in the real league isn't saved, as the run's files are
-  public: run a dry run of the test league with **Save pages** ticked to get it. A flag that MFL
-  didn't give a read this time (HTTP 500, a refusal, its home page) needs nothing if the next run
-  reads it; one that keeps coming back may mean MFL changed it, which is a code change too.
+- **An "MFL check" flag** is one of two kinds:
+  - **One ending "Nothing to do if the next run reads it":** MFL didn't give that page, feed or
+    export this morning (an error, a refusal, its home page, the network). It needs nothing if the
+    next run reads it; one that keeps coming back may mean MFL changed it, as below.
+  - **Anything else:** MFL changed a page, feed or export v2 reads; the flag names which, and the
+    item and field for an export. Members see "—" or MFL's own page there until v2 is changed to
+    read it again, which is a code change, with nothing to do in MFL. When the flag says "MFL's page
+    is saved on the run", the run's page has it under Artifacts (`mfl-pages`, kept 14 days),
+    cleaned, to fix v2 against. A page of your own team in the real league isn't saved, as the
+    run's files are public: run a dry run of the test league with **Save pages** ticked to get it.
 - **New saved pages for the tests:** at each stage of the season (preseason, the draft, the regular
   season, the playoffs, the offseason), a dry run with **Save pages** ticked puts every page the
   check reads on the run, cleaned. Run it on the test league (league `50965`) for the team pages, and

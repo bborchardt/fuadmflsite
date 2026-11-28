@@ -47,8 +47,9 @@ from AGENTS.md.
   summary. The MFL transport and session (login, request spacing, timeouts, waiting out refusals)
   belong in their own module, and each chore in `jobs/<chore>.mjs`, taking a context object (lib,
   the MFL session, log, choreLog, needsAttention, dryRun). A value one chore needs from another is
-  passed in explicitly. A new chore starts that way; an existing one moves out the next time it
-  changes. `jobs/<chore>.mjs` import no lib/ and take the version's lib as an argument.
+  passed in explicitly. A new chore starts that way; an existing one moves out when its logic
+  changes, or under #326; an edit to its messages alone doesn't call for it. `jobs/<chore>.mjs`
+  import no lib/ and take the version's lib as an argument.
 - Writes to MFL go only through `jobs/mfl-import.mjs` / `jobs/mfl-form.mjs`. No import cycles.
 - Outside services: members' pages depend only on MFL and GitHub Pages. The one exception is the
   devices form (Google Forms), which only receives error reports after the page has run. The daily
