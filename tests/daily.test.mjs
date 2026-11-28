@@ -1184,6 +1184,35 @@ test("backup starters: nflverse or DynastyProcess unreachable is flagged, the we
     }
 });
 
+test("backup starters failing outright: payouts wait from the first week not settled; a record that can't be read stops only payouts", () => {
+    const apply = {...LOGIN, BACKUP_STARTERS: "apply", PAYOUTS: "apply"};
+    const scenario = backups();
+    Object.assign(scenario.exports, {"weeklyResults:YTD": scoredWeeks(7), accounting: handWeek1, messageBoard: 500});
+    const prizes = (result) => imports(result).filter((each) => each.TYPE === "accounting").map((each) => each.DESCRIPTION);
+    const failed = run({scenario, files: {...BACKUP_FILES, "backup-starters.json": "{\"2026\": [1, 2, 3, 4]}\n"}, env: apply});
+    assert.equal(failed.status, 1);
+    assert.ok(failed.entries.some((entry) => /^Backup starters: .*messageBoard/.test(entry)), failed.entries.join("\n"));
+    assert.deepEqual(prizes(failed), ["Most Points Week 2", "Most Points Week 2", "Most Points Week 3", "Most Points Week 4"]);
+    assert.match(failed.stdout, /Payouts: week 5 waits for its backup starters\./);
+
+    const unreadable = run({scenario, files: {...BACKUP_FILES, "backup-starters.json": "{\"2026\": [1,"}, env: apply});
+    assert.ok(unreadable.entries.some((entry) => /^Payouts: .*JSON/.test(entry)), unreadable.entries.join("\n"));
+    assert.deepEqual(prizes(unreadable), []);
+    // the rest of the run goes on
+    assert.ok(!unreadable.entries.some((entry) => /^Failed:/.test(entry)), unreadable.entries.join("\n"));
+    assert.match(unreadable.stdout, /The 2026 trade deadline is /);
+});
+
+test("contract lengths wait while RFA salaries can't finish before week 1, as an unsettled RFA looks due a length", () => {
+    const exports = league();
+    exports.rosters.franchise[0].player[0].contractYear = "0";
+    const scenario = {seasons: [2026, 2027], exports: {...exports, "rosters@2026": 500, "weeklyResults:YTD": {}}, published: {}};
+    const result = run({scenario, env: {...LOGIN, CONTRACT_YEARS: "apply", RFA_SALARIES: "apply"}, now: "2027-04-01T12:00:00Z", files: {}});
+    assert.ok(result.entries.some((entry) => /^RFA salaries: last season's rosters couldn't be read/.test(entry)), result.entries.join("\n"));
+    assert.ok(result.entries.includes("Contract lengths: skipped: the RFA salaries didn't finish, so it isn't known which players are RFAs"), result.entries.join("\n"));
+    assert.deepEqual(imports(result).filter((each) => each.TYPE === "salaries"), []);
+});
+
 test("backup starters: a week that fails is flagged, and left for the next run", () => {
     const scenario = backups();
     scenario.pages["/2026/options?L=48571&O=210&FRANCHISE=0002&W=6"] = "<p>Something else</p>";

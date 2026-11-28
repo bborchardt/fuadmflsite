@@ -6,6 +6,7 @@
 import {pathToFileURL} from "node:url";
 import {join} from "node:path";
 import {mflHomePage} from "./mfl-form.mjs";
+import {pageSaver} from "./saved-pages.mjs";
 
 // MFL's page as a browser's parser builds it; MFL's scripts aren't run. jsdom is loaded only by a run
 // that checks pages, as it is most of the job's start-up.
@@ -167,4 +168,52 @@ export async function checkMfl(context, {exportRead, pageRead, version, keep = (
         }
     }
     return {changed, unchecked, count};
+}
+
+// What v2 reads from MFL that the chores don't, as the commissioner's own team sees it: a change MFL
+// made fails the run before a member meets it. Only the exports without a team of the login's.
+export async function run(ctx, {built, rosters, league}) {
+    const {lib, session, loggedIn, checkOff, version, season, host, leagueId, log, needsAttention, fetchFrom} = ctx;
+    const {API_BASE, asArray} = lib.mfl;
+    if (checkOff) {
+        return;
+    }
+    if (!loggedIn) {
+        log("The check of what v2 reads from MFL needs the commissioner login; skipped.");
+        return;
+    }
+    const entry = session.leagueEntry() || {};
+    const franchise = /^\d{4}$/.test(entry.franchise_id || "") && entry.franchise_id !== "0000" ? entry.franchise_id : null;
+    if (!franchise) {
+        needsAttention("MFL check: the commissioner login owns no team in this league that MFL names, so only the exports were checked, not members' pages.");
+    }
+    const mine = asArray(rosters.franchise).find((each) => each.id === franchise);
+    const context = {season, leagueId, franchise, inSeason: built.started === true && built.seasonOver === false,
+        partner: [...built.franchises.keys()].find((id) => id !== franchise) || null,
+        playerId: mine ? (asArray(mine.player)[0] || {}).id || null : null};
+    const saving = pageSaver(ctx, league);
+    const {changed, unchecked, count} = await checkMfl(context, {
+        version,
+        exportRead: ({type, params = {}, base}) => fetchFrom(base === "api" ? API_BASE : host, type, base === "api" ? params : {L: leagueId, ...params}),
+        pageRead: async (path, {referer} = {}) => {
+            try {
+                const response = await session.ask(`${host}${path}`, {headers: referer ? {...session.headers, Referer: `${host}${referer}`} : session.headers});
+                return {status: response.status, body: await response.text(), served: response.url};
+            } catch (error) {
+                // as the session's page says it: Node's own "fetch failed" reaches the commissioner's email
+                throw new Error(error.fromMfl ? error.message : `network error (${error.message})`);
+            }
+        },
+        keep: saving.keep
+    });
+    saving.finish(franchise);
+    for (const item of changed) {
+        needsAttention(`MFL check: ${item}`);
+    }
+    // flagged at once, as a lasting refusal (a feed answering 403) is a change too
+    for (const item of unchecked) {
+        // MFL's own text may end in a full stop already
+        needsAttention(`MFL check: ${item.replace(/[.\s]+$/, "")}. Nothing to do if the next run reads it; if it keeps failing, MFL may have changed it.`);
+    }
+    log(`MFL check: ${count - changed.length - unchecked.length} of ${count} reads as v2 expects.`);
 }

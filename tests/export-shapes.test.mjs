@@ -123,7 +123,7 @@ test("checkShape gives the section back, or throws an error marked as MFL's chan
 });
 
 test("every export the job reads has rules here", () => {
-    const job = readFileSync(join(root, "jobs", "daily.mjs"), "utf8");
+    const job = readdirSync(join(root, "jobs")).filter((file) => file.endsWith(".mjs")).map((file) => readFileSync(join(root, "jobs", file), "utf8")).join("\n");
     const read = [...job.matchAll(/fetchFrom\([^,]+,\s*"(\w+)"(?:,\s*\{[^}]*\},\s*"(\w+)")?/g)].map((found) => found[2] || found[1]);
     assert.ok(read.length > 20, `only ${read.length} reads found`);
     assert.deepEqual([...new Set(read)].filter((section) => !(section in SHAPES)), []);

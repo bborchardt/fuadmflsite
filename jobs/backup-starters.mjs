@@ -1,5 +1,10 @@
 // The daily job's side of backup starters (bylaw 16.5): who was inactive, from nflverse, and the
-// commissioner's forms it fills on MFL. Reading posts and the week's lineup is lib/backups.js.
+// commissioner's forms it fills on MFL, and the chore itself. Reading posts and the week's lineup is
+// lib/backups.js.
+
+import {existsSync, readFileSync, writeFileSync} from "node:fs";
+import {join} from "node:path";
+import {mflForm} from "./mfl-form.mjs";
 
 // nflverse's weekly rosters: each player's status for each week's game, INA when he was inactive
 export const NFLVERSE_ROSTERS = (season) => `https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_${season}.csv`;
@@ -252,4 +257,362 @@ export function weekFinder(kickoffs, championship) {
         }
         return week <= championship ? week : null;
     };
+}
+
+// the season's weeks whose backups are settled, on league-data, so each week is read once
+const backupsFile = ({dataDir}) => join(dataDir, "backup-starters.json");
+// null for a season the chore hasn't run in yet, as for a dry run of another league
+function backupWeeksDone(ctx) {
+    const {dataIsThisLeagues, season} = ctx;
+    const file = backupsFile(ctx);
+    if (!dataIsThisLeagues) {
+        return null;
+    }
+    return (existsSync(file) ? JSON.parse(readFileSync(file, "utf8"))[season] : null) || null;
+}
+// the first week not yet settled; none before the chore's first run
+export function firstOpenBackupWeek(ctx) {
+    const record = backupWeeksDone(ctx);
+    if (record === null) {
+        return Infinity;
+    }
+    let week = 1;
+    while (record.includes(week)) {
+        week++;
+    }
+    return week;
+}
+// payouts' first week to wait, when the chore didn't finish and so didn't say: the first not yet
+// settled, or none while the chore only logs, as run's own openFrom
+export const openFromAfterFailure = (ctx) => (ctx.apply.backups ? firstOpenBackupWeek(ctx) : Infinity);
+function markBackupWeeks(ctx, weeks) {
+    const {season} = ctx;
+    const file = backupsFile(ctx);
+    const all = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+    all[season] = [...new Set([...(all[season] || []), ...weeks])].sort((a, b) => a - b);
+    writeFileSync(file, JSON.stringify(all, null, 2) + "\n");
+}
+
+// nflverse's files; plain fetches, not MFL's
+async function loadNflverse(season) {
+    const load = async (url) => {
+        const response = await fetch(url, {signal: AbortSignal.timeout(60000)});
+        if (!response.ok) {
+            throw new Error(`Couldn't load ${url}: HTTP ${response.status}`);
+        }
+        return readCsv(await response.text());
+    };
+    const [rosters, ids] = await Promise.all([load(NFLVERSE_ROSTERS(season)), load(PLAYER_IDS)]);
+    return {rosters, ids};
+}
+
+// Bylaw 16.5: once a week's games are over and nflverse has every team's inactive list, each team's
+// backups for inactive starters go in, each pair locked as it was at its deadline, and the week is
+// recalculated. Resolves to {changed, openFrom}: whether league-data changed, and the first week
+// whose backups are still to go in, which payouts wait for. docs/design.md has the rules.
+export async function run(ctx, {league, playerNames, built}) {
+    const {lib, session, loggedIn, dryRun, now, season, host, leagueId, dataIsThisLeagues, backupsOff, log, choreLog, needsAttention, fetchFrom, weekResults} = ctx;
+    const {API_BASE, GAME_HOURS, asArray, displayName} = lib.mfl;
+    const {THREAD_TITLE, backupMessages, lineupAt, lineupRules, matchPlayer, namedWeek, pairDeadline, postAsks, postWeek, readLineupDetails, readTopicPage,
+        sourceRequests, standingPairs, weekLineup} = lib.backups;
+    const {DEFAULT_END_WEEK} = lib.rules;
+    const {WEEK_ROSTERS} = lib.shapes;
+    const {mflTime} = lib.zone;
+    const {normalize} = lib.names;
+    const applyBackups = ctx.apply.backups;
+    const untouched = {changed: false, openFrom: Infinity};
+    if (backupsOff) {
+        log("Backup starters: off (BACKUP_STARTERS isn't apply or log).");
+        return untouched;
+    }
+    if (!loggedIn) {
+        log("Backup starters: not checked, as the run isn't logged in (the board and the lineups need the commissioner).");
+        return untouched;
+    }
+    // read once, for the first week that needs them
+    let nflverse = null;
+    const nflverseFiles = async () => {
+        nflverse = nflverse || await loadNflverse(season);
+        return nflverse;
+    };
+    const schedules = new Map();
+    const schedule = async (week) => {
+        if (!schedules.has(week)) {
+            schedules.set(week, asArray((await fetchFrom(API_BASE, "nflSchedule", {W: week})).matchup));
+        }
+        return schedules.get(week);
+    };
+    const kickoffs = async (week) => (await schedule(week)).map((game) => Number(game.kickoff)).filter((seconds) => seconds > 0);
+    const championship = (built.weeks && built.weeks.championship) || DEFAULT_END_WEEK;
+    const weekOf = weekFinder(kickoffs, championship);
+    const settled = [];
+    const record = backupWeeksDone(ctx);
+    // the board's posts by week; every week over is checked, as any team's lineup can carry a message
+    const byWeek = new Map();
+    let done = new Set();
+    let current = null;
+    // the season's first run, backups or not, is written down, so a later one doesn't take its place
+    const finish = () => {
+        // the chore only logging, payouts don't wait
+        const openFrom = applyBackups ? Math.min(...Array.from({length: Math.max(0, current - 1)}, (_, i) => i + 1)
+            .filter((week) => !done.has(week) && !settled.includes(week))) : Infinity;
+        if ((!settled.length && record !== null) || dryRun || !dataIsThisLeagues) {
+            return {changed: false, openFrom};
+        }
+        markBackupWeeks(ctx, settled);
+        return {changed: true, openFrom};
+    };
+    if (!(await kickoffs(1)).length) {
+        log("Backup starters: MFL has no NFL schedule for the season yet.");
+        return untouched;
+    }
+    current = await weekOf(now.getTime() / 1000) || championship + 1;
+    // the chore's first run of a season starts with this week, earlier ones left as the commissioner settled them
+    if (record === null) {
+        for (let week = 1; week < current; week++) {
+            settled.push(week);
+        }
+        log(`Backup starters: first run this season, so weeks before week ${current} are left as they are.`);
+    }
+    done = new Set([...(record || []), ...settled]);
+    const board = await fetchFrom(host, "messageBoard", {L: leagueId, COUNT: 100});
+    const threads = asArray(board.thread).filter((thread) => String(thread.subject || "").trim().toLowerCase() === THREAD_TITLE.toLowerCase());
+    const posts = [];
+    for (const thread of threads) {
+        // by the pager's page number, page 1 being the topic's own address
+        const pages = new Map([["1", `/${season}/mb/topic_show.pl?bid=${season}${leagueId}&tid=${thread.id}`]]);
+        for (const path of pages.values()) {
+            const topic = readTopicPage(await session.page(path, `"${THREAD_TITLE}" thread`));
+            // a request counts from its last edit; its week is the post's own
+            posts.push(...topic.posts.map((post) => ({...post, thread: thread.id, at: mflTime(post.edited || post.posted), postedAt: mflTime(post.posted)})));
+            for (const href of topic.pages) {
+                const url = new URL(href, `${host}/${season}/mb/`);
+                const page = url.searchParams.get("page") || "1";
+                if (!pages.has(page)) {
+                    pages.set(page, url.pathname + url.search);
+                }
+            }
+        }
+    }
+    // every week before `open` is settled, so a post made before its last game is for one of them
+    let open = 1;
+    while (done.has(open)) {
+        open++;
+    }
+    const settledUntil = open > 1 ? Math.max(...await kickoffs(open - 1)) : -Infinity;
+    const teamNames = new Map(asArray(league.franchises && league.franchises.franchise).map((team) => [team.id, String(team.name || team.id).trim()]));
+    for (const post of posts.filter((each) => each.franchiseId && (!each.at || !each.postedAt))) {
+        needsAttention(`Backup starters: the time of ${teamNames.get(post.franchiseId) || post.franchiseId}'s post of ${post.posted} couldn't be read, so it wasn't.`);
+    }
+    for (const post of posts.filter((each) => each.franchiseId && each.at && each.postedAt)) {
+        const asks = postAsks(post);
+        if (!asks.week && post.at <= settledUntil) {
+            continue;
+        }
+        const named = namedWeek(asks, championship);
+        const postedWeek = named ? null : await weekOf(post.postedAt);
+        const editedWeek = named || post.at === post.postedAt ? postedWeek : await weekOf(post.at);
+        const {week, badWeek, editedLate} = postWeek(asks, {postedWeek, editedWeek}, championship);
+        if (week && !done.has(week)) {
+            byWeek.set(week, [...(byWeek.get(week) || []), {...post, asks, badWeek, editedLate}]);
+        }
+    }
+    const rules = lineupRules(league);
+    const nameOf = (id) => displayName((playerNames.get(id) || {name: id}).name);
+    const positionOf = (id) => (playerNames.get(id) || {}).position;
+    let former = null;
+    // a name as v2 writes it, of a player in the league's player list
+    const formerPlayer = (phrase) => {
+        former = former || new Set([...playerNames.values()].map((player) => normalize(displayName(player.name))));
+        return former.has(normalize(phrase));
+    };
+    let everyone = null;
+    const anyPlayer = () => {
+        everyone = everyone || new Map([...playerNames].map(([id, player]) => [`${player.name}|${player.position}`, id]));
+        return everyone;
+    };
+    const weeks = [...new Set([...byWeek.keys(), ...Array.from({length: Math.max(0, current - 1)}, (_, i) => i + 1)])]
+        .filter((week) => !done.has(week)).sort((a, b) => a - b);
+    for (const week of weeks) {
+        // a week that fails is flagged and left for the next run; the others go on
+        try {
+            const games = await schedule(week);
+            if (!games.length) {
+                log(`Backup starters: MFL has no NFL schedule for week ${week}.`);
+                continue;
+            }
+            const end = Math.max(...games.map((game) => Number(game.kickoff))) + GAME_HOURS * 3600;
+            if (!(end * 1000 < now.getTime())) {
+                log(`Backup starters: week ${week}'s games aren't over yet.`);
+                continue;
+            }
+            // every team's lineups for the week, each with its Optional Message
+            const details = new Map();
+            for (const team of teamNames.keys()) {
+                const name = teamNames.get(team) || team;
+                details.set(team, readLineupDetails(await session.page(`/${season}/options?L=${leagueId}&O=210&FRANCHISE=${team}&W=${week}`, `${name}'s week ${week} Lineup Details`))
+                    .filter((submission) => submission.week === week));
+            }
+            const sources = new Map();
+            const add = (team, source) => sources.set(team, [...(sources.get(team) || []), source]);
+            for (const post of byWeek.get(week) || []) {
+                add(post.franchiseId, {...post, label: `the post of ${post.edited || post.posted}`, dated: Boolean(post.asks.week)});
+            }
+            for (const [team, submissions] of details) {
+                for (const {submission, asks} of backupMessages(submissions, week)) {
+                    const at = mflTime(submission.at);
+                    if (at) {
+                        add(team, {asks, at, label: `the lineup message of ${submission.at}`, dated: true});
+                    }
+                }
+            }
+            // a week without backups doesn't wait for nflverse
+            if (!sources.size) {
+                settled.push(week);
+                continue;
+            }
+            const {rosters: rosterRows, ids} = await nflverseFiles();
+            const {statuses, reported} = weekStatuses(rosterRows, ids, week);
+            const playing = games.flatMap((game) => asArray(game.team).map((team) => team.id));
+            const missing = playing.filter((team) => !reported.has(team));
+            if (missing.length) {
+                const days = (now.getTime() / 1000 - end) / 86400;
+                const message = `Backup starters: nflverse doesn't have week ${week}'s inactive players for ${missing.join(", ")} yet`;
+                if (days > 4) {
+                    needsAttention(`${message}, ${Math.floor(days)} days after the week's games; its backups wait.`);
+                } else {
+                    log(`${message}; the week waits.`);
+                }
+                continue;
+            }
+            const teamOf = (id) => (statuses.get(id) || {}).team || (playerNames.get(id) || {}).team;
+            const kickoffOf = (id) => {
+                const game = games.find((each) => asArray(each.team).some((team) => team.id === teamOf(id)));
+                return game ? Number(game.kickoff) : null;
+            };
+            const rostersThen = asArray((await fetchFrom(host, "rosters", {L: leagueId, W: week}, "rosters", season, WEEK_ROSTERS)).franchise);
+            let lastWeek = null;
+            let savedResults = null;
+            const changed = [];
+            const problems = [];
+            for (const [team, teamSources] of sources) {
+                const name = teamNames.get(team) || team;
+                const flag = (why) => problems.push(`${name}, week ${week}: ${why}`);
+                const roster = asArray((rostersThen.find((each) => each.id === team) || {}).player)
+                    .map((entry) => ({id: entry.id, name: (playerNames.get(entry.id) || {name: ""}).name}));
+                const who = (phrase, source) => {
+                    const found = matchPlayer(phrase, roster);
+                    if (found.player) {
+                        return found.player.id;
+                    }
+                    // a player since dropped or traded: what named him no longer applies
+                    if (!found.ambiguous && formerPlayer(phrase)) {
+                        choreLog(`Backup starters: ${name}, week ${week}: "${phrase.trim()}" in ${source.label} isn't on the team, so that request doesn't apply.`);
+                        return null;
+                    }
+                    flag(`couldn't tell who "${phrase.trim()}" is in ${source.label}${found.ambiguous ? ` (${found.ambiguous.map((player) => displayName(player.name)).join(" or ")})` : ""}`);
+                    return null;
+                };
+                const requests = sourceRequests(teamSources, who, (why, source, clause) => flag({
+                    "edited-late": () => `the post of ${source.posted} was edited ${source.edited}, after its week; it wasn't read for week ${week}, as a new week's backups go in a new post`,
+                    "bad-week": () => `${source.label} names week ${source.asks.week}, which the season doesn't have; it was taken as week ${week}'s`,
+                    "weeks": () => `${source.label} names weeks ${source.asks.weeks.join(" and ")}`,
+                    "unreadable": () => `couldn't read "${clause}" in ${source.label}`
+                }[why]()));
+                const {pairs, late} = standingPairs(requests, pairDeadline(kickoffOf));
+                // a message restating every pair restates the locked ones too: those change nothing
+                const restated = (request) => pairs.some((pair) => pair.starter === request.starter && pair.backup === request.backup);
+                for (const request of late.filter((each) => each.backup && !restated(each))) {
+                    const why = `${nameOf(request.backup)} for ${nameOf(request.starter)} doesn't count, ${request.noGame ? "as one of them had no game" : "as it came after the pair's deadline"}`;
+                    // a post naming no week, made once the week's games began, may have meant the next
+                    if (!request.noGame && !request.source.dated) {
+                        flag(`${why}; ${request.source.label} names no week, so it was taken as week ${week}'s`);
+                    } else {
+                        choreLog(`Backup starters: ${name}, week ${week}: ${why}.`);
+                    }
+                }
+                if (!pairs.length) {
+                    continue;
+                }
+                // a lineup from early in the week can name a player gone by its end: the team's own first
+                const byName = (entry) => (roster.find((player) => player.name === entry.name && positionOf(player.id) === entry.pos)
+                    || roster.find((player) => player.name === entry.name) || {}).id || anyPlayer().get(`${entry.name}|${entry.pos}`);
+                const submissions = (details.get(team) || [])
+                    .map((submission) => ({...submission, at: mflTime(submission.at), starters: submission.starters.map(byName)}));
+                const {flags, change, notes} = await teamChange({team, week, pairs, submissions, statuses, positionOf, rules, kickoffOf, nameOf}, {lineupAt, weekLineup}, {
+                    saved: async () => {
+                        if (savedResults === null) {
+                            savedResults = await weekResults(week);
+                        }
+                        return savedResults;
+                    },
+                    lastWeek: async () => {
+                        if (lastWeek === null) {
+                            lastWeek = await weekResults(week - 1);
+                        }
+                        return lastWeek;
+                    },
+                    scores: async (ids) => asArray((await fetchFrom(host, "playerScores", {L: leagueId, W: week, PLAYERS: ids.join(",")})).playerScore)
+                });
+                flags.forEach(flag);
+                notes.forEach((note) => choreLog(`Backup starters: ${name}, week ${week}: ${note}.`));
+                if (change) {
+                    changed.push({team, name, ...change});
+                }
+            }
+            for (const problem of problems) {
+                needsAttention(`Backup starters: ${problem}.`);
+            }
+            if (!applyBackups) {
+                for (const {name, lineup, submit, what} of changed) {
+                    choreLog(`Backup starters: ${dryRun ? "dry run, would" : `BACKUP_STARTERS isn't "apply": would`} ${submit ? `set ${name}'s week ${week} lineup to ${lineup.map(nameOf).join(", ")}`
+                        : `recalculate week ${week}, as MFL's results don't have ${name}'s lineup yet`}${what ? `: ${what}` : ""}.`);
+                }
+            } else if (changed.length) {
+                const headers = await session.asCommissioner(season);
+                const unsaved = new Set();
+                const skipped = new Set();
+                for (const each of changed.filter((entry) => entry.submit)) {
+                    const form = readLineupForm(await session.page(`/${season}/lineup?L=${leagueId}&WEEK=${week}&F=${each.team}`, `Submit Lineup for team ${each.team}, week ${week}`, headers), {team: each.team, week});
+                    // a player on a bye, or gone from the team since, has no box: the commissioner's to finish
+                    const missing = each.lineup.filter((id) => !form.boxes.has(id));
+                    if (missing.length) {
+                        needsAttention(`Backup starters: ${each.name}'s week ${week} lineup wasn't set, as MFL's form has no box for ${missing.map(nameOf).join(", ")} (on a bye, or no longer on the team); it should be ${each.lineup.map(nameOf).join(", ")}.`);
+                        skipped.add(each.team);
+                        continue;
+                    }
+                    await mflForm({what: "Submit Lineup", path: `/${season}/lineup`, fields: lineupFields(form, each.lineup), ok: lineupSaved},
+                        {dryRun, host, headers, fetchImpl: session.ask});
+                }
+                const applied = changed.filter((each) => !skipped.has(each.team));
+                if (applied.length) {
+                    const fields = recalcFields(await session.page(`/${season}/csetup?L=${leagueId}&C=RECALC`, "Recalculate Standings", headers), week);
+                    await mflForm({what: "Recalculate Standings", path: `/${season}/csetup`, fields,
+                        // MFL's saved results, read next, say whether it worked: nothing in its answer is relied on
+                        ok: () => true}, {dryRun, host, headers, fetchImpl: session.ask});
+                    const results = await weekResults(week);
+                    for (const {team, name, lineup, submit, what} of applied) {
+                        const saved = startersIn(results, team);
+                        if (!sameLineup(saved, lineup)) {
+                            unsaved.add(team);
+                            needsAttention(`Backup starters: ${name}, week ${week}: ${submit ? "the lineup was set, but " : ""}after Recalculate Standings MFL's results `
+                                + `still have ${saved.map(nameOf).join(", ") || "no starters"}, so it may not have run; the next run tries again.`);
+                        } else {
+                            choreLog(`Backup starters: ${submit ? `set ${name}'s week ${week} lineup and recalculated the week`
+                                : `recalculated week ${week}, as MFL's results didn't have ${name}'s lineup yet`}${what ? `: ${what}` : ""}.`);
+                        }
+                    }
+                }
+                // the next run tries again
+                if (unsaved.size) {
+                    continue;
+                }
+            }
+            // while the chore only logs, the commissioner settles the week by hand
+            settled.push(week);
+        } catch (error) {
+            needsAttention(`Backup starters: week ${week} stopped: ${error.message}`);
+        }
+    }
+    return finish();
 }

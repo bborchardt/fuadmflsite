@@ -107,7 +107,7 @@ MFL documents little of this.
   `http://home.myfantasyleague.com`, which sets `MFL_USER_ID` and `MFL_USER_SETTINGS`; the next
   request, a second later, is answered. Requests from a logged-in browser's own page were all
   answered (24 of 24). The job asks again after a wait for a page, a form's post or the
-  commissioner switch turned away (`mflAsk`); an import turned away fails at once, as one posted
+  commissioner switch turned away (`jobs/mfl-session.mjs` ask); an import turned away fails at once, as one posted
   twice could charge a penalty twice. Its errors name MFL's home page should one reach it
   (`jobs/mfl-form.mjs`) (the clone and the league, Nov 2026).
 - **MFL's clock** (`readServerTime` in `mfl_common.js`) asks for `time.xml` only on a page with the

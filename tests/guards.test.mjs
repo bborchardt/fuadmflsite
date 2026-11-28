@@ -1,4 +1,4 @@
-// Checks for traps in AGENTS.md: the daily job reading exports a version's lib/ no longer has, a regex
+// Checks for traps in AGENTS.md: the daily job reading exports a version's lib/ or ui/ no longer has, a regex
 // older iPhones can't build in what members' browsers run, and the lint still refusing a request to
 // MFL that skips ui/page-fetch.js.
 
@@ -7,37 +7,98 @@ import assert from "node:assert/strict";
 import {readFileSync, readdirSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
+import {LIB_FILES, libKey} from "../jobs/chore-context.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const versions = readdirSync(join(root, "site")).filter((name) => /^v\d+$/.test(name)).sort();
 
-// what jobs/daily.mjs takes from `lib(...)`: {file: [names]}; one with a default (`name = null`) is
-// optional
-function dailyNeeds() {
-    const source = readFileSync(join(root, "jobs", "daily.mjs"), "utf8");
+// what the daily job's modules take from the version's lib/: {file: [names]}, each read as
+// `const {names} = lib.<name>;` (jobs/chore-context.mjs); one with a default (`name = null`) is optional.
+// `uses` counts every mention of `lib` in the code but its declaration and the shorthand `{lib, …}`
+// that hands it on whole, and `reads` only that form, so any other (a nested destructure, a bracket,
+// a spread) leaves them unequal. Only a whole line's comment is left out: a mention in a trailing one, or in a string's
+// words, counts, so the test fails on it rather than missing a use.
+const JOBS = join(root, "jobs");
+function needsIn(sources) {
+    const files = Object.fromEntries(LIB_FILES.map((file) => [libKey(file), file]));
     const needs = {};
-    for (const [, names, file] of source.matchAll(/const\s*\{([^}]+)\}\s*=\s*await\s+lib\(\s*["']([^"']+)["']\s*\)/g)) {
-        needs[file] = names.split(",").map((name) => name.trim()).filter((name) => name && !name.includes("="))
-            .map((name) => name.split(/\s*:\s*/)[0]);
+    let reads = 0;
+    let uses = 0;
+    for (const text of sources) {
+        const source = text.replace(/^\s*\/\/.*$/gm, "");
+        // the identifier, alone or as ctx.lib: not a path's lib/, a string's "lib", or loadLib
+        for (const found of source.matchAll(/(?:(?<![\w$./"'`-])|(?<=\bctx\s*\.\s*)|(?<=\.\.\.\s*))lib(?![\w$])/g)) {
+            const before = source.slice(0, found.index);
+            const handedOn = /^\s*[,}]/.test(source.slice(found.index + 3)) && /[{,]\s*$/.test(before) && !/\.\.\.\s*$/.test(before);
+            const declared = /\b(?:const|let)\s+$/.test(before) && /^\s*=(?!=)/.test(source.slice(found.index + 3));
+            uses += handedOn || declared ? 0 : 1;
+        }
+        for (const [, names, key] of source.matchAll(/const\s*\{([^{}]+)\}\s*=\s*(?:ctx\.)?lib\.(\w+)\s*;/g)) {
+            reads++;
+            const file = files[key] || `${key}, which LIB_FILES doesn't load`;
+            const taken = names.split(",").map((each) => each.trim()).filter((each) => each && !each.includes("=")).map((each) => each.split(/\s*:\s*/)[0]);
+            needs[file] = [...new Set([...(needs[file] || []), ...taken])];
+        }
     }
-    return {needs, calls: source.match(/\blib\(/g).length};
+    return {needs, reads, uses};
+}
+const jobNeeds = () => needsIn(readdirSync(JOBS).filter((each) => each.endsWith(".mjs")).map((name) => readFileSync(join(JOBS, name), "utf8")));
+
+test("the daily job's needs are read from its modules", () => {
+    const {needs, reads, uses} = jobNeeds();
+    // every use of the lib was read, so none is skipped silently
+    assert.equal(reads, uses, JSON.stringify(needs));
+    assert.deepEqual(Object.keys(needs).filter((file) => !LIB_FILES.includes(file)), []);
+    assert.ok(needs["league.js"].includes("buildLeague") && needs["mfl.js"].includes("fetchExport"));
+});
+
+test("a use of the lib in any other form than the one read is noticed, and an address isn't taken for a comment", () => {
+    const read = "const {asArray} = lib.mfl;";
+    assert.deepEqual(needsIn([read]), {needs: {"mfl.js": ["asArray"]}, reads: 1, uses: 1});
+    assert.deepEqual(needsIn([`const url = "https://x"; ${read}`]).needs, {"mfl.js": ["asArray"]});
+    for (const other of ["const {mfl: {asArray}} = ctx.lib;", "const {mfl} = lib;", "const x = lib[\"rules\"];", "const y = ctx.lib.mfl.asArray;", "run(lib.mfl);",
+        "const {lib: {mfl: {asArray}}} = ctx;", "function f({lib: {rules}}) {}", "const {mfl} = ctx.lib", "const z = lib?.mfl;", "const all = {...lib};",
+        "log(\"a // b\"); const y = lib[\"k\"];", "const {mfl} = lib, more = 1;"]) {
+        const {reads, uses} = needsIn([read, other]);
+        assert.ok(uses > reads, other);
+    }
+    // the lib handed on whole, as daily.mjs hands it to the session and the context, isn't a use
+    assert.equal(needsIn(["mflSession({lib, host});", "const {lib, session} = ctx;", "async function f({session, lib}, x) {}", "const lib = await loadLib(root, version);", "loadLib(root); join(\"lib\", file); \"site/v2/lib/x.js\";"]).uses, 0);
+});
+
+// the morning check's pages, read by the version's own ui/ readers (jobs/mfl-check.mjs pageChecks):
+// {file: [names]}
+function checkNeeds() {
+    const source = readFileSync(join(JOBS, "mfl-check.mjs"), "utf8");
+    const [, pattern, list] = /const \[([\s\S]*?)\] = await Promise\.all\(\[([\s\S]*?)\]\.map\(ui\)\)/.exec(source) || [];
+    const names = [...(pattern || "").matchAll(/\{([^}]*)\}/g)].map((found) => found[1].split(",").map((each) => each.trim()).filter(Boolean));
+    const files = [...(list || "").matchAll(/"([^"]+)"/g)].map((found) => found[1]);
+    return {names, files};
 }
 
-test("the daily job's needs are read from daily.mjs", () => {
-    const {needs, calls} = dailyNeeds();
-    // every lib(...) call was read, so none is skipped silently
-    assert.equal(Object.keys(needs).length, calls, JSON.stringify(needs));
-    assert.ok(needs["league.js"].includes("buildLeague"));
+test("the morning check's needs are read from mfl-check.mjs", () => {
+    const {names, files} = checkNeeds();
+    assert.ok(files.length > 10, `only ${files.length} files found`);
+    assert.equal(names.length, files.length);
+    assert.ok(names[files.indexOf("lineup-model.js")].includes("readLineupPage"));
 });
 
 // the job refuses v1
 for (const version of versions.filter((name) => name !== "v1")) {
     test(`${version}'s lib/ has every export the daily job reads, should RULES_VERSION name it`, async () => {
-        const {needs} = dailyNeeds();
+        const {needs} = jobNeeds();
         for (const [file, names] of Object.entries(needs)) {
             const module = await import(pathToFileURL(join(root, "site", version, "lib", file)).href);
             const missing = names.filter((name) => module[name] === undefined);
             assert.deepEqual(missing, [], `${version}/lib/${file}`);
+        }
+    });
+
+    test(`${version}'s ui/ has every reader the morning check uses, should RULES_VERSION name it`, async () => {
+        const {names, files} = checkNeeds();
+        for (const [i, file] of files.entries()) {
+            const module = await import(pathToFileURL(join(root, "site", version, "ui", file)).href);
+            assert.deepEqual(names[i].filter((name) => module[name] === undefined), [], `${version}/ui/${file}`);
         }
     });
 }

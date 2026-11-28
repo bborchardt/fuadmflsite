@@ -128,3 +128,43 @@ export async function updateIcons({sources, dataDir, userAgent, fetchImpl = fetc
     }
     return result;
 }
+
+// The chore: the stills of the team icons v2's lists show. A picture that can't be read is only
+// logged: it's its owner's, and the team's still stays as it was.
+export async function run(ctx, {league}) {
+    const {lib, dryRun, dataDir, repo, repoName, log, choreLog} = ctx;
+    const {asArray} = lib.mfl;
+    const names = new Map(asArray(((league || {}).franchises || {}).franchise).map((team) => [team.id, team.name]));
+    const named = (teams) => teams.map((team) => names.get(team) || team).join(", ");
+    const sources = iconSources(league, asArray);
+    const {written, removed, failed, knownChanged} = await updateIcons({
+        sources, dataDir, userAgent: `${repoName || "league-site"}-icons${repo ? ` (github.com/${repo})` : ""}`, write: !dryRun
+    });
+    if (written.length) {
+        choreLog(`${dryRun ? "Dry run: would update" : "Updated"} the team icons of ${named(written)}.`);
+    }
+    if (removed.length) {
+        choreLog(`${dryRun ? "Dry run: would remove" : "Removed"} the team icons of ${named(removed)}, who no longer have one.`);
+    }
+    for (const {team, reason} of failed) {
+        log(`Couldn't make ${named([team])}'s icon from ${sources.get(team)} (${reason}); its still is left as it was.`);
+    }
+    return {changed: !dryRun && (written.length > 0 || removed.length > 0 || knownChanged), publish: !dryRun && (written.length > 0 || removed.length > 0)};
+}
+
+// icon stills on league-data that the site doesn't have, as for snapshots
+export async function toPublish({dataDir, pagesData, userAgent, log}) {
+    const dir = join(dataDir, "data", "icons");
+    const stale = [];
+    for (const file of existsSync(dir) ? readdirSync(dir).filter((name) => name.endsWith(".webp")) : []) {
+        try {
+            const response = await fetch(new URL(`icons/${file}`, pagesData), {headers: {"User-Agent": userAgent}, cache: "no-store"});
+            if (response.status === 404 || (response.ok && !Buffer.from(await response.arrayBuffer()).equals(readFileSync(join(dir, file))))) {
+                stale.push(file);
+            }
+        } catch (error) {
+            log(`Couldn't check whether icons/${file} is published (${error.message}); will check again tomorrow.`);
+        }
+    }
+    return stale;
+}
