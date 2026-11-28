@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {dayOnly, insertTags, postedText, restyleBoard, restyleTopic, shortDate, topicTitle} from "../site/v2/ui/topic.js";
 
 const page = (name) => parseHTML(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8")).document;

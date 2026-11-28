@@ -36,9 +36,9 @@ from AGENTS.md.
 - `ui/*-model.js`: pure state and readers for its own feature, with no DOM or fetch. Other sections
   don't import a model for general helpers. `*-view.js`: HTML strings through `esc`.
   `ui/<feature>.js`: wiring and fetches.
-- Shared display formatting (times, money, names) goes in `ui/format.js`, and helpers Moves shares
-  go in a Moves module (`moves.js`). Helpers now in `home-model.js` and `add-model.js` move out the
-  next time those files change.
+- Shared display formatting (times, money, names) goes in `ui/format.js`. What Moves' sections share
+  goes in `ui/moves-model.js` (no DOM or fetching, so models can use it) or `ui/moves.js` (fetches
+  and forms).
 - `ui/page-fetch.js`: every request to MFL goes through it, `mflFetch` for reads, `mflConfirm` for
   the reads that confirm a move or finish one under way, and `mflSend` for moves, so a 429 holds reads on every page. A direct
   `fetch` is only for the site's own files on Pages. `ui/store.js`: localStorage.
@@ -67,7 +67,7 @@ from AGENTS.md.
 - The old-device minimum (ES2020, one bundled file) is a fixed constraint.
 - New runtime dependencies are rare (today jsdom and sharp).
 - One DOM parser outside a real browser: jsdom, the one the job reads MFL's pages with, while the
-  job needs it. Tests use it too (not yet: the tests on linkedom, #321).
+  job needs it. Tests use it too, through `tests/fixtures/dom.mjs`.
 - Cost is measured in one maintainer's reading time.
 - Logging for the devices form is to see that something fails, where, and roughly how often. Exact
   counts aren't worth code: a failure logged more than once, or logged by each caller, is left as it

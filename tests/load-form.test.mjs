@@ -1,16 +1,16 @@
-// The commissioner's Load results form (ui/load-form.js), drawn in linkedom with MFL's exports
+// The commissioner's Load results form (ui/load-form.js), drawn in jsdom with MFL's exports
 // answered here: a rookie sheet's plan is on the rookie scale however it's reached.
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 
-const {window, document} = parseHTML("<!doctype html><html><body></body></html>");
-window.history = {state: null, pushState: () => {}};
-Object.defineProperty(window, "location", {value: {origin: "https://www44.myfantasyleague.com"}});
+const {window, document} = parseHTML("<!doctype html><html><body></body></html>", {url: "https://www44.myfantasyleague.com/2026/home/48571"});
+// jsdom's own is read-only
+Object.defineProperty(window, "history", {value: {state: null, pushState: () => {}}});
 globalThis.window = window;
 globalThis.document = document;
-// linkedom lays nothing out: every control counts as shown, for the dialog's focus
+// jsdom lays nothing out: every control counts as shown, for the dialog's focus
 window.HTMLElement.prototype.getClientRects = () => [{}];
 const {openLoadForm} = await import("../site/v2/ui/load-form.js");
 

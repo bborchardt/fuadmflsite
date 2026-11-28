@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {betaOffer, decide, offeredVersion, previewBase, withParam} from "../site/v1/loader.js";
 import {betaOffer as betaOfferV2, leaveBetaHref} from "../site/v2/loader.js";
 

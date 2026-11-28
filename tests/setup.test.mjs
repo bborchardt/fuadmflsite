@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {restyleSetup} from "../site/v2/ui/setup.js";
 
 const page = (viewer, name) => parseHTML(readFileSync(new URL(`./fixtures/pages/${viewer}/csetup-${name}.html`, import.meta.url), "utf8")).document;

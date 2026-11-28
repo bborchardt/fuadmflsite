@@ -3,11 +3,12 @@
 
 import {mock, test} from "node:test";
 import assert from "node:assert/strict";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 
 const {window, document} = parseHTML("<!doctype html><html><body><div id=mount></div></body></html>");
 const items = new Map();
-window.localStorage = {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))};
+// jsdom's own is read-only
+Object.defineProperty(window, "localStorage", {value: {getItem: (key) => (items.has(key) ? items.get(key) : null), setItem: (key, value) => items.set(key, String(value))}});
 globalThis.window = window;
 globalThis.document = document;
 const {CUT_OFF_RETRY, cutOff, drawPanel, failedMarkup, retryCutOff} = await import("../site/v2/ui/panel.js");

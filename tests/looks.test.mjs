@@ -5,7 +5,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {DOMParser, parseHTML} from "linkedom";
+import {DOMParser, parseHTML} from "./fixtures/dom.mjs";
 import {LOOKS, applyLook, keepResponsive, lookOf, looksMarkup, commishLook, keepTeamSkin, markCommish, readSkinForm, saveLook, skinFolder} from "../site/v2/ui/looks.js";
 
 const fixture = readFileSync(new URL("./fixtures/skin-setup.html", import.meta.url), "utf8");

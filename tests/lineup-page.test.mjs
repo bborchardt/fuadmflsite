@@ -4,7 +4,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {applyInjuries, lineupForm, lineupRefusal, lineupStatus, readLineupPage} from "../site/v2/ui/lineup-model.js";
 
 const saved = readFileSync(new URL("../tools/verify/screens/lineup.html", import.meta.url), "utf8");
@@ -27,7 +27,6 @@ test("the week, the team, how many start at each position, and the weeks either 
 test("each player: name, team and position from MFL's label, the game, injury, and whether he starts", () => {
     const {players} = readLineupPage(pageOf());
     assert.equal(players.length, 30);
-    // linkedom has no .checked, so this reads MFL's checked attribute, as a browser does on load
     assert.equal(players.filter((player) => player.starter).length, 10);
     assert.deepEqual(withoutBox(players.find((player) => player.id === "13593")), {
         id: "13593", name: "Lamar Jackson", mflName: "Jackson, Lamar", nfl: "BAL", pos: "QB", opp: "@CLE Sun 12:00 p.m.", onBye: false, code: "O", injury: "Out",

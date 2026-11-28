@@ -1,7 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {iconMarkup, stillOf, teamPicturesMarkup, useTeamPictures, withIcon} from "../site/v2/ui/team-pictures.js";
 import {restyleTopic} from "../site/v2/ui/topic.js";
 
@@ -45,9 +45,8 @@ test("lists show the job's still for a team with an icon; the team's page the up
 test("a picture that won't load leaves the name; a logo that won't, the icon; a still that won't, the upload", () => {
     const {document} = parseHTML("<html><body><div id='list'></div><div id='team'></div><div id='post'></div></body></html>");
     useTeamPictures({dataBase: DATA, database, doc: document});
-    // a picture's error doesn't bubble in a browser, which the page's capturing listener catches;
-    // linkedom only reaches the document's listeners by bubbling
-    const fail = (image) => image.dispatchEvent(new document.defaultView.Event("error", {bubbles: true}));
+    // a picture's error doesn't bubble, which the page's capturing listener catches
+    const fail = (image) => image.dispatchEvent(new document.defaultView.Event("error"));
 
     document.getElementById("list").innerHTML = withIcon("0001", "Alpha");
     fail(document.querySelector("#list img"));

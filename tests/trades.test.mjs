@@ -1,8 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {parseHTML} from "linkedom";
-import {withForms} from "./fixtures/forms.mjs";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {
     answerFields, assetView, bidsAfter, blockReason, zoneParts, zoneSeconds, deadlineWeek, expiryChoices, findOffer,
     kickoffText, lockedText, offersOf, pickedSummary, pickGroups, proposalFields, readPick, readProposal, readTradesPage, rosterNotices,
@@ -275,7 +274,7 @@ test("the trade deadline's week comes from the calendar's TRADE event", () => {
     assert.equal(deadlineWeek({event: {type: "TRADE", start_time: "1799258400"}}, 11), 11);
 });
 
-const savedPage = (name) => withForms(parseHTML(readFileSync(new URL(`./fixtures/pages/member/${name}`, import.meta.url), "utf8")).document);
+const savedPage = (name) => parseHTML(readFileSync(new URL(`./fixtures/pages/member/${name}`, import.meta.url), "utf8")).document;
 
 test("MFL's Trades page: the teams to trade with, and no offers or revoke links when there are none", () => {
     const {answers, revokes, partners} = readTradesPage(savedPage("options-O05.html"));
@@ -295,7 +294,7 @@ test("MFL's Trades page once trades are closed: no teams to trade with, and its 
         .replace(/<form action="options" method="post">\s*<h3>Select Franchise[\s\S]*?<\/form>/,
             '<h3 class="warning">Note: Trades Are Not Allowed Now According To Your <a href="options?L=50965&O=123">League Calendar</a>');
     assert.doesNotMatch(text, /Select Franchise/);
-    const page = readTradesPage(withForms(parseHTML(text).document));
+    const page = readTradesPage(parseHTML(text).document);
     assert.deepEqual({partners: page.partners, closed: page.closed, answers: page.answers.size}, {partners: [], closed: true, answers: 0});
 });
 

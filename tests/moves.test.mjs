@@ -3,7 +3,7 @@
 
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {DOMParser} from "linkedom";
+import {DOMParser} from "./fixtures/dom.mjs";
 import {FALLBACK_TEXT, READ_GAP, READS, Refused, failedLine, limitsApply, loadFailed, moveOutcome, movesPhase, readBack, refusal, sendMove, sendForAnswer, withoutOwners} from "../site/v2/ui/moves.js";
 
 // a read that answers `answers` in turn (an Error rejects), and the waits between reads

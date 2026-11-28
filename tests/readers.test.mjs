@@ -6,7 +6,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync, readdirSync} from "node:fs";
-import {parseHTML} from "linkedom";
+import {parseHTML} from "./fixtures/dom.mjs";
 import {mflProgram} from "../site/v2/lib/mfl.js";
 import {readLineupDetails, readTopicPage} from "../site/v2/lib/backups.js";
 import {readProcessedWaivers} from "../site/v2/lib/contract-years.js";
@@ -40,7 +40,7 @@ const OTHERS = {
     "nothing": ""
 };
 
-// name: [read(text), its own page, or null where linkedom can't stand in for a browser (tested there)]
+// name: [read(text), its own page]
 const READERS = {
     readProcessedWaivers: [readProcessedWaivers, fixture("processed-waivers.html")],
     readLineupDetails: [readLineupDetails, fixture("backups/lineup-details.html")],
@@ -50,14 +50,12 @@ const READERS = {
     readRoster: [readRoster, fixture("pages/member/options-O257.html")],
     readBidRun: [readBidRun, fixture("pages/member/processed_waivers.html")],
     readLineupPage: [onDoc(readLineupPage), fixture("pages/member/lineup.html")],
-    // trades.test.mjs, with a stand-in for a browser's forms
-    readTradesPage: [onDoc(readTradesPage), null],
-    readProposal: [onDoc((page) => readProposal(page, "0001")), null],
+    readTradesPage: [onDoc(readTradesPage), fixture("pages/member/options-O05.html")],
+    readProposal: [onDoc((page) => readProposal(page, "0001")), fixture("pages/member/options-O05-propose.html")],
     readSkinForm: [onDoc(readSkinForm), fixture("pages/member/csetup-SKIN.html")],
     readCustomizeForm: [onDoc(readCustomizeForm), fixture("pages/member/csetup-FCUSTOM.html")],
     readSetupNav: [onDoc((page) => readSetupNav(page.querySelector("#withmenus > span.reportnavigation"))), fixture("pages/member/csetup-SKIN.html")],
-    // tools/verify/pages.py: linkedom leaves its table without MFL's rows, which a browser repairs
-    readIRPage: [onDoc((page) => readIRPage(page, "0001")), null],
+    readIRPage: [onDoc((page) => readIRPage(page, "0001")), fixture("pages/member/options-O18.html")],
     readPowerPage: [readPowerPage, fixture("pages/guest/options-O101.html")],
     readChampions: [readChampions, fixture("history-champions.html")],
     readCareer: [readCareer, fixture("history-career.html")],
@@ -99,10 +97,8 @@ function empty(value) {
 
 for (const [name, [read, own]] of Object.entries(READERS)) {
     test(`${name} reads its own page, and only its own`, () => {
-        if (own !== null) {
-            const found = read(own);
-            assert.ok(found && !empty(found), `${name} found nothing on its own page`);
-        }
+        const found = read(own);
+        assert.ok(found && !empty(found), `${name} found nothing on its own page`);
         for (const [what, page] of Object.entries(OTHERS)) {
             let found;
             try {
@@ -152,4 +148,9 @@ test("mflProgram names the page MFL drew, from its HTML or a document", () => {
     assert.equal(mflProgram(OTHERS["an empty page"]), null);
     assert.equal(mflProgram(doc(OTHERS["an empty page"])), null);
     assert.equal(mflProgram(""), null);
+});
+
+test("MFL's IR page is read whole, the table MFL leaves open as a browser repairs it", () => {
+    const page = readIRPage(doc(fixture("pages/member/options-O18.html")), "0001");
+    assert.deepEqual({active: page.active.length, reserve: page.reserve.length}, {active: 29, reserve: 2});
 });
